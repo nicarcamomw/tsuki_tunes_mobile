@@ -1,0 +1,94 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/track.dart';
+import '../models/artist.dart';
+
+class StorageService {
+  static const String _favTracksKey = 'tsuki_favorite_tracks';
+  static const String _recentTracksKey = 'tsuki_recent_tracks';
+  static const String _favArtistsKey = 'tsuki_favorite_artists';
+  static const String _artistVisitsKey = 'tsuki_artist_visits';
+
+  Future<List<Track>> getFavoriteTracks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_favTracksKey);
+    if (raw == null || raw.isEmpty) return [];
+
+    try {
+      final List decoded = json.decode(raw);
+      return decoded
+          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveFavoriteTracks(List<Track> tracks) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = tracks.map((t) => t.toJson()).toList();
+    await prefs.setString(_favTracksKey, json.encode(list));
+  }
+
+  Future<List<Track>> getRecentTracks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_recentTracksKey);
+    if (raw == null || raw.isEmpty) return [];
+
+    try {
+      final List decoded = json.decode(raw);
+      return decoded
+          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveRecentTracks(List<Track> tracks) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = tracks.map((t) => t.toJson()).toList();
+    await prefs.setString(_recentTracksKey, json.encode(list));
+  }
+
+  Future<List<Artist>> getFavoriteArtists() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_favArtistsKey);
+    if (raw == null || raw.isEmpty) return [];
+
+    try {
+      final List decoded = json.decode(raw);
+      return decoded
+          .map((item) => Artist.fromStorage(Map<String, dynamic>.from(item)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveFavoriteArtists(List<Artist> artists) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = artists.map((a) => a.toJson()).toList();
+    await prefs.setString(_favArtistsKey, json.encode(list));
+  }
+
+  // --- Artist visits tracking (for top artists calculation) ---
+
+  Future<Map<String, int>> getArtistVisits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_artistVisitsKey);
+    if (raw == null || raw.isEmpty) return {};
+
+    try {
+      final Map decoded = json.decode(raw);
+      return decoded.map((k, v) => MapEntry(k.toString(), v as int));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> saveArtistVisits(Map<String, int> visits) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_artistVisitsKey, json.encode(visits));
+  }
+}

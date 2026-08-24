@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "812277566403",
+    "project_id": "tsuki-tunes-web",
+    "storage_bucket": "tsuki-tunes-web.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:812277566403:android:1b009a83cf8b1557d0cb76",
+        "android_client_info": {
+          "package_name": "com.tsuki.tsuki_tunes_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "812277566403-406j84u67q0305golhrbmccj8dr41rfb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tsuki.tsuki_tunes_mobile",
+            "certificate_hash": "0987ef32db4591f073ed1fc671627538793d74c4"
+          }
+        },
+        {
+          "client_id": "812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD25bE-68aXXE7eK_cEhE-W-fppgd1PCg4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "812277566403-si18ri2kgtse5v4ns29n4b4rml2d5ovp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tsuki.tsukiTunesMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

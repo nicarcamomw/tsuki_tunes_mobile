@@ -1,0 +1,475 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import '../core/constants/app_colors.dart';
+import '../providers/audio_provider.dart';
+import '../providers/library_provider.dart';
+import '../widgets/rinnegan_visualizer.dart';
+
+class ExpandedPlayerScreen extends StatefulWidget {
+  const ExpandedPlayerScreen({super.key});
+
+  @override
+  State<ExpandedPlayerScreen> createState() => _ExpandedPlayerScreenState();
+}
+
+class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
+    with SingleTickerProviderStateMixin {
+  double _dragDy = 0;
+  bool _showQueue = false;
+  late final AnimationController _snapBack;
+  late Animation<double> _snapAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _snapBack = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
+
+  @override
+  void dispose() {
+    _snapBack.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (details.delta.dy > 0 || _dragDy > 0) {
+      setState(() => _dragDy = (_dragDy + details.delta.dy * 0.6).clamp(0, 400));
+    }
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (_dragDy > 80 || velocity > 400) {
+      Navigator.of(context).pop();
+    } else {
+      final startValue = _dragDy;
+      _snapAnimation = Tween<double>(begin: startValue, end: 0).animate(
+        CurvedAnimation(parent: _snapBack, curve: Curves.easeOutCubic),
+      )..addListener(() {
+          setState(() => _dragDy = _snapAnimation.value);
+        });
+      _snapBack.forward(from: 0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final audio = context.watch<AudioProvider>();
+    final track = audio.currentTrack;
+
+    if (track == null) {
+      return Scaffold(
+        backgroundColor: AppColors.bgDeep,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: const Center(
+          child: Text('No track selected',
+              style: TextStyle(color: AppColors.textSecondary)),
+        ),
+      );
+    }
+
+    final library = context.watch<LibraryProvider>();
+    final isListened = library.isTrackListened(track.id);
+
+    return GestureDetector(
+      onVerticalDragUpdate: _onVerticalDragUpdate,
+      onVerticalDragEnd: _onVerticalDragEnd,
+      child: Transform.translate(
+        offset: Offset(0, _dragDy),
+        child: Scaffold(
+          backgroundColor: AppColors.bgDeep,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Top bar
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.keyboard_arrow_down,
+                            size: 30, color: AppColors.textPrimary),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              'REPRODUCIENDO DESDE',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textMuted,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                            Text(
+                              track.albumTitle.isNotEmpty
+                                  ? track.albumTitle
+                                  : 'DEEZER PREVIEW',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.queue_music,
+                            color: AppColors.textPrimary),
+                        onPressed: () =>
+                            setState(() => _showQueue = !_showQueue),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Art or Queue
+                if (_showQueue)
+                  _buildQueueView(audio)
+                else ...[
+                  // Rinnegan Visualizer
+                  Hero(
+                    tag: 'player_art_${track.id}',
+                    child: RinneganVisualizer(
+                      isPlaying: audio.isPlaying,
+                      imageUrl: track.coverUrl,
+                      size: MediaQuery.of(context).size.width * 0.72,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+
+                const Spacer(),
+
+                // Track info + listened + favorite
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              track.title,
+                              style: GoogleFonts.orbitron(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textBright,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              track.fullArtistName,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Listened checkbox
+                      IconButton(
+                        iconSize: 26,
+                        icon: Icon(
+                          isListened
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
+                          color: isListened
+                              ? AppColors.accent
+                              : AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          if (isListened) {
+                            library.unmarkTrack(track.id);
+                          } else {
+                            library.markTrack(track);
+                          }
+                        },
+                      ),
+                      // Favorite
+                      IconButton(
+                        iconSize: 26,
+                        icon: Icon(
+                          library.isFavoriteTrack(track.id)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: library.isFavoriteTrack(track.id)
+                              ? AppColors.accent
+                              : AppColors.textSecondary,
+                        ),
+                        onPressed: () =>
+                            library.toggleFavoriteTrack(track),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Progress bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ProgressBar(
+                    progress: audio.position,
+                    total: audio.duration,
+                    buffered: audio.bufferedPosition,
+                    onSeek: (duration) => audio.seek(duration),
+                    progressBarColor: AppColors.accent,
+                    baseBarColor: AppColors.border,
+                    bufferedBarColor: AppColors.borderGlow,
+                    thumbColor: AppColors.accent,
+                    thumbGlowColor: AppColors.accentGlow,
+                    thumbRadius: 7.0,
+                    timeLabelTextStyle: GoogleFonts.jetBrainsMono(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Controls
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Shuffle
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            iconSize: 22,
+                            icon: Icon(
+                              Icons.shuffle,
+                              color: audio.isShuffle
+                                  ? AppColors.accent
+                                  : AppColors.textSecondary,
+                            ),
+                            onPressed: audio.toggleShuffle,
+                          ),
+                          if (audio.isShuffle)
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      // Previous
+                      IconButton(
+                        iconSize: 34,
+                        icon: const Icon(Icons.skip_previous,
+                            color: AppColors.textPrimary),
+                        onPressed: audio.previous,
+                      ),
+
+                      // Play/Pause
+                      GestureDetector(
+                        onTap: audio.togglePlay,
+                        child: Container(
+                          width: 68,
+                          height: 68,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.accentGlow,
+                                blurRadius: 18,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: audio.isBuffering
+                                ? const SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                              AppColors.textBright),
+                                    ),
+                                  )
+                                : Icon(
+                                    audio.isPlaying
+                                        ? Icons.pause
+                                        : Icons.play_arrow,
+                                    size: 36,
+                                    color: AppColors.textBright,
+                                  ),
+                          ),
+                        ),
+                      ),
+
+                      // Next
+                      IconButton(
+                        iconSize: 34,
+                        icon: const Icon(Icons.skip_next,
+                            color: AppColors.textPrimary),
+                        onPressed: audio.next,
+                      ),
+
+                      // Repeat
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            iconSize: 22,
+                            icon: Icon(
+                              Icons.repeat,
+                              color: audio.isLoop
+                                  ? AppColors.accent
+                                  : AppColors.textSecondary,
+                            ),
+                            onPressed: audio.toggleLoop,
+                          ),
+                          if (audio.isLoop)
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Device tag
+                Text(
+                  'AUDIO PREVIEW',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9,
+                    color: AppColors.textMuted,
+                    letterSpacing: 2,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQueueView(AudioProvider audio) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.bgCard,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'UP NEXT // QUEUE (${audio.queue.length})',
+                style: GoogleFonts.orbitron(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+            const Divider(color: AppColors.border, height: 1),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                itemCount: audio.queue.length,
+                itemBuilder: (context, i) {
+                  final t = audio.queue[i];
+                  final isCur = audio.currentTrack?.id == t.id;
+                  return ListTile(
+                    dense: true,
+                    leading: Text(
+                      (i + 1).toString().padLeft(2, '0'),
+                      style: GoogleFonts.jetBrainsMono(
+                        color: isCur
+                            ? AppColors.accent
+                            : AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    title: Text(
+                      t.title,
+                      style: TextStyle(
+                        color: isCur
+                            ? AppColors.accent
+                            : AppColors.textPrimary,
+                        fontWeight:
+                            isCur ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                    ),
+                    subtitle: Text(
+                      t.fullArtistName,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 11),
+                      maxLines: 1,
+                    ),
+                    trailing: isCur
+                        ? const Icon(Icons.equalizer,
+                            color: AppColors.accent, size: 18)
+                        : null,
+                    onTap: () {
+                      audio.playTrack(t);
+                      setState(() => _showQueue = false);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
