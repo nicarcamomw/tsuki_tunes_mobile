@@ -16,6 +16,7 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/app_custom_icons.dart';
 import '../services/lastfm_service.dart';
 import 'album_detail_screen.dart';
+import 'main_navigation_screen.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -35,6 +36,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   String _discographyFilter = 'all';
 
   bool _showStats = false;
+  bool _showAllTracks = false;
 
   @override
   void initState() {
@@ -112,7 +114,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           return listenedInAlbum >= album.tracksCount;
         });
 
-    final displayedTracks = _topTracks.take(5).toList();
+    final displayedTracks = _topTracks.take(_showAllTracks ? 10 : 5).toList();
 
     final cats = _categorizedAlbums;
 
@@ -150,15 +152,14 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     color: AppColors.bgDeep.withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isArtistComplete
-                          ? AppColors.accent.withValues(alpha: 0.6)
-                          : AppColors.textMuted.withValues(alpha: 0.3),
+                      color: AppColors.accent.withValues(alpha: 0.4),
                       width: 1,
                     ),
                   ),
                   child: OniMaskIcon(
                     isActive: isArtistComplete,
                     size: 22,
+                    showContainer: false,
                   ),
                 ),
               ),
@@ -418,7 +419,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     style: TextStyle(color: AppColors.textSecondary)),
               ),
             )
-          else
+          else ...[
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => TrackTile(
@@ -429,6 +430,55 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 childCount: displayedTracks.length,
               ),
             ),
+
+            if (_topTracks.length > 5)
+              SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 4),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showAllTracks = !_showAllTracks),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.textBright.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.textBright.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _showAllTracks ? 'Ver menos' : 'Ver más',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            AnimatedRotation(
+                              turns: _showAllTracks ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutCubic,
+                              child: const Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
 
           // Discography
           if (!_isLoading && _albums.isNotEmpty) ...[
@@ -533,7 +583,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
+        appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => AlbumDetailScreen(album: album),
           ),
@@ -602,8 +652,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ),
               ),
               if (isCompleted)
-                const Icon(Icons.check_circle,
-                    color: AppColors.success, size: 14),
+                const OniMaskIcon(isActive: true, size: 18),
             ],
           ),
         ],

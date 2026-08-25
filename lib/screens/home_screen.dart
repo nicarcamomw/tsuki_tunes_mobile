@@ -8,9 +8,11 @@ import '../models/album.dart';
 import '../services/deezer_api_service.dart';
 import '../providers/library_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/audio_provider.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/album_card.dart';
 import '../screens/artist_detail_screen.dart';
+import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -438,61 +440,213 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (auth.user?.photoURL != null)
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: NetworkImage(auth.user!.photoURL!),
-              ),
-            const SizedBox(height: 12),
-            Text(
-              auth.user?.displayName ?? '',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textBright,
-              ),
-            ),
-            Text(
-              auth.user?.email ?? '',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  auth.logout();
-                },
-                icon: const Icon(Icons.logout, color: AppColors.accent),
-                label: Text(
-                  'CERRAR SESIÓN',
+      builder: (ctx) {
+        final audioProvider = context.read<AudioProvider>();
+        final spotify = audioProvider.spotify;
+        return StatefulBuilder(
+          builder: (ctx, setModalState) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (auth.user?.photoURL != null)
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: NetworkImage(auth.user!.photoURL!),
+                  ),
+                const SizedBox(height: 12),
+                Text(
+                  auth.user?.displayName ?? '',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
+                    color: AppColors.textBright,
                   ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.accent),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                Text(
+                  auth.user?.email ?? '',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+
+                // Spotify connection
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMid,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: spotify.isConnected
+                          ? const Color(0xFF1DB954).withValues(alpha: 0.5)
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1DB954),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.music_note,
+                            color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Spotify',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textBright,
+                              ),
+                            ),
+                            Text(
+                              spotify.isConnected
+                                  ? (spotify.isPremium
+                                      ? 'Premium · ${spotify.displayName}'
+                                      : 'Conectado · ${spotify.displayName}')
+                                  : 'No conectado',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: spotify.isConnected
+                                    ? const Color(0xFF1DB954)
+                                    : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (spotify.isConnected)
+                        TextButton(
+                          onPressed: () async {
+                            await spotify.disconnect();
+                            await audioProvider.updateSpotifyState();
+                            setModalState(() {});
+                          },
+                          child: Text(
+                            'DESCONECTAR',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        )
+                      else
+                        OutlinedButton(
+                          onPressed: () async {
+                            setModalState(() {});
+                            try {
+                              final success = await spotify.connect();
+                              if (success) {
+                                await audioProvider.updateSpotifyState();
+                                setModalState(() {});
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Spotify conectado'),
+                                      backgroundColor: Color(0xFF1DB954),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'No se pudo conectar. Verifica que tu cuenta esté en User Management del Dashboard de Spotify.'),
+                                      backgroundColor: AppColors.accent,
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: AppColors.accent,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF1DB954)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                          ),
+                          child: Text(
+                            'CONECTAR',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1DB954),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                if (spotify.isConnected && !spotify.isPremium)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Se necesita Spotify Premium para reproducción completa',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
+                // Logout
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      auth.logout();
+                    },
+                    icon: const Icon(Icons.logout, color: AppColors.accent),
+                    label: Text(
+                      'CERRAR SESIÓN',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -555,7 +709,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return InkWell(
       onTap: () {
         if (artist != null) {
-          Navigator.of(context).push(
+          appNavigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ArtistDetailScreen(artist: artist),
             ),

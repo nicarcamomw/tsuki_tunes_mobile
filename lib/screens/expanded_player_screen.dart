@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/rinnegan_visualizer.dart';
+import '../widgets/oni_mask_icon.dart';
 
 class ExpandedPlayerScreen extends StatefulWidget {
   const ExpandedPlayerScreen({super.key});
@@ -194,24 +195,21 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           ],
                         ),
                       ),
-                      // Listened checkbox
-                      IconButton(
-                        iconSize: 26,
-                        icon: Icon(
-                          isListened
-                              ? Icons.check_circle
-                              : Icons.check_circle_outline,
-                          color: isListened
-                              ? AppColors.accent
-                              : AppColors.textSecondary,
-                        ),
-                        onPressed: () {
+                      GestureDetector(
+                        onTap: () {
                           if (isListened) {
                             library.unmarkTrack(track.id);
                           } else {
                             library.markTrack(track);
                           }
                         },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: OniMaskIcon(
+                            isActive: isListened,
+                            size: 30,
+                          ),
+                        ),
                       ),
                       // Favorite
                       IconButton(
@@ -377,10 +375,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                 // Device tag
                 Text(
-                  'AUDIO PREVIEW',
+                  audio.useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 9,
-                    color: AppColors.textMuted,
+                    color: audio.useSpotify
+                        ? const Color(0xFF1DB954)
+                        : AppColors.textMuted,
                     letterSpacing: 2,
                   ),
                 ),

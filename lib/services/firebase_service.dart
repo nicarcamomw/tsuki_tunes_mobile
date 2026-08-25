@@ -27,7 +27,9 @@ class FirebaseService {
     );
     _auth = FirebaseAuth.instance;
     _db = FirebaseFirestore.instance;
-    _googleSignIn = GoogleSignIn();
+    _googleSignIn = GoogleSignIn(
+      serverClientId: '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
+    );
     _initialized = true;
   }
 

@@ -9,6 +9,7 @@ import '../providers/audio_provider.dart';
 import '../models/track.dart';
 import '../models/album.dart';
 import '../screens/album_detail_screen.dart';
+import 'main_navigation_screen.dart';
 
 class _AlbumGroupData {
   final String albumId;
@@ -407,7 +408,7 @@ class _AlbumGroupTile extends StatelessWidget {
                     TextButton(
                       onPressed: () {
                         final album = _buildAlbumFromGroup(group);
-                        Navigator.of(context).push(
+                        appNavigatorKey.currentState?.push(
                           MaterialPageRoute(
                             builder: (_) => AlbumDetailScreen(album: album),
                           ),
@@ -458,7 +459,7 @@ class _AlbumGroupTile extends StatelessWidget {
                             albumId: td.albumId,
                             albumTitle: td.albumTitle,
                             coverUrl: td.coverUrl,
-                            previewUrl: '',
+                            previewUrl: td.previewUrl,
                             durationSeconds: td.duration,
                           ))
                       .toList();

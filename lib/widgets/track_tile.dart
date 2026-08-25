@@ -8,6 +8,7 @@ import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import 'audio_visualizer.dart';
+import 'oni_mask_icon.dart';
 
 class TrackTile extends StatelessWidget {
   final Track track;
@@ -177,15 +178,8 @@ class TrackTile extends StatelessWidget {
 
               // Listened checkbox (mark/unmark)
               if (showListenedCheckbox)
-                IconButton(
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: Icon(
-                    isListened ? Icons.check_circle : Icons.check_circle_outline,
-                    color: isListened ? AppColors.accent : AppColors.textSecondary,
-                  ),
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     if (isListened) {
                       if (onUnmark != null) {
                         onUnmark!();
@@ -196,6 +190,10 @@ class TrackTile extends StatelessWidget {
                       library.markTrack(track);
                     }
                   },
+                  child: OniMaskIcon(
+                    isActive: isListened,
+                    size: 24,
+                  ),
                 ),
             ],
           ),

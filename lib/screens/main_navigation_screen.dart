@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
+import '../providers/audio_provider.dart';
 import '../widgets/mini_player.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
+
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -15,6 +19,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  String? _lastShownError;
 
   final List<Widget> _screens = const [
     HomeScreen(),
@@ -24,19 +29,46 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final audio = context.watch<AudioProvider>();
+    final hasTrack = audio.currentTrack != null;
+
+    final spotifyError = audio.lastSpotifyError;
+    if (spotifyError != null && spotifyError != _lastShownError) {
+      _lastShownError = spotifyError;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(spotifyError, style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+              backgroundColor: AppColors.bgCard,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: Stack(
         children: [
-          // Current active screen
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens
-                .map((s) => RepaintBoundary(child: s))
-                .toList(),
+          // Navigator for detail screens that sit below the mini player
+          Positioned.fill(
+            child: Navigator(
+              key: appNavigatorKey,
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (_) => IndexedStack(
+                  index: _currentIndex,
+                  children: _screens
+                      .map((s) => RepaintBoundary(child: s))
+                      .toList(),
+                ),
+              ),
+            ),
           ),
 
-          // Bottom Floating Mini Player + Bottom Bar
+          // Mini Player + Bottom Nav always on top
           Positioned(
             left: 0,
             right: 0,
@@ -44,7 +76,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const MiniPlayer(),
+                if (hasTrack) const MiniPlayer(),
                 _buildCyberBottomNav(),
               ],
             ),
@@ -107,7 +139,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        if (_currentIndex == index) {
+          // Pop to root if tapping same tab
+          appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+        } else {
+          setState(() => _currentIndex = index);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         child: Column(

@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/expanded_player_screen.dart';
+import 'oni_mask_icon.dart';
 
 class MiniPlayer extends StatefulWidget {
   const MiniPlayer({super.key});
@@ -224,23 +225,21 @@ class _MiniPlayerState extends State<MiniPlayer>
                         ),
                       ),
                     ),
-                    IconButton(
-                      iconSize: 20,
-                      icon: Icon(
-                        isListened
-                            ? Icons.check_circle
-                            : Icons.check_circle_outline,
-                        color: isListened
-                            ? AppColors.accent
-                            : AppColors.textSecondary,
-                      ),
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () {
                         if (isListened) {
                           library.unmarkTrack(track.id);
                         } else {
                           library.markTrack(track);
                         }
                       },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: OniMaskIcon(
+                          isActive: isListened,
+                          size: 24,
+                        ),
+                      ),
                     ),
                     IconButton(
                       iconSize: 28,

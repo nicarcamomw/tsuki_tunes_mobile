@@ -11,7 +11,9 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/album_progress_bar.dart';
+import '../widgets/oni_mask_icon.dart';
 import '../screens/artist_detail_screen.dart';
+import '../screens/main_navigation_screen.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;
@@ -237,11 +239,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   GestureDetector(
                     onTap: () async {
                       if (albumData.artistId.isNotEmpty) {
-                        final nav = Navigator.of(context);
                         final artist =
                             await _api.getArtist(albumData.artistId);
                         if (mounted && artist != null) {
-                          nav.push(
+                          appNavigatorKey.currentState?.push(
                             MaterialPageRoute(
                               builder: (_) =>
                                   ArtistDetailScreen(artist: artist),
@@ -292,14 +293,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           onPressed: tracks.isNotEmpty
                               ? () => _toggleAll(albumData, library)
                               : null,
-                          icon: Icon(
-                            allListened
-                                ? Icons.check_circle
-                                : Icons.check_circle_outline,
-                            color: allListened
-                                ? AppColors.success
-                                : AppColors.accent,
-                            size: 18,
+                          icon: OniMaskIcon(
+                            isActive: allListened,
+                            size: 22,
                           ),
                           label: Text(
                             allListened ? 'TODO ESCUCHADO' : 'MARCAR TODO',

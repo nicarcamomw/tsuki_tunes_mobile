@@ -125,6 +125,12 @@ class _AuthGateState extends State<_AuthGate> {
     }
 
     if (!auth.isLoggedIn) {
+      if (_connectedUid != null) {
+        _connectedUid = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<LibraryProvider>().disconnectFirestore();
+        });
+      }
       return const LoginScreen();
     }
 

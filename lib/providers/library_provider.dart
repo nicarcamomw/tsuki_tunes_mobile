@@ -13,6 +13,7 @@ class ListenedTrackData {
   final String albumTitle;
   final String albumId;
   final String coverUrl;
+  final String previewUrl;
   final int duration;
   final DateTime? listenedAt;
 
@@ -23,6 +24,7 @@ class ListenedTrackData {
     required this.albumTitle,
     required this.albumId,
     required this.coverUrl,
+    this.previewUrl = '',
     required this.duration,
     this.listenedAt,
   });
@@ -39,6 +41,7 @@ class ListenedTrackData {
       albumTitle: data['albumTitle'] ?? '',
       albumId: data['albumId'] ?? '',
       coverUrl: data['coverUrl'] ?? '',
+      previewUrl: data['previewUrl'] ?? '',
       duration: data['duration'] ?? 0,
       listenedAt: listened,
     );
@@ -51,6 +54,7 @@ class ListenedTrackData {
         'albumTitle': albumTitle,
         'albumId': albumId,
         'coverUrl': coverUrl,
+        'previewUrl': previewUrl,
         'duration': duration,
         'listenedAt': FieldValue.serverTimestamp(),
       };
@@ -182,6 +186,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> markTrack(Track track) async {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return;
+    if (_listenedTrackIds.contains(track.id)) return;
 
     // Optimistic update
     final data = ListenedTrackData(
@@ -192,6 +197,7 @@ class LibraryProvider extends ChangeNotifier {
       albumId: track.albumId,
       coverUrl: track.coverUrl,
       duration: track.durationSeconds,
+      previewUrl: track.previewUrl,
       listenedAt: DateTime.now(),
     );
     _listenedTracks.add(data);
@@ -202,13 +208,16 @@ class LibraryProvider extends ChangeNotifier {
     try {
       final db = _firebase.db;
       final userDoc = db.collection('users').doc(uid);
-      await userDoc.collection('listenedTracks').doc(track.id).set(
-            data.toFirestore(),
-            SetOptions(merge: true),
-          );
-      await userDoc.update({
+      final batch = db.batch();
+      batch.set(
+        userDoc.collection('listenedTracks').doc(track.id),
+        data.toFirestore(),
+        SetOptions(merge: true),
+      );
+      batch.update(userDoc, {
         'stats.totalTracks': FieldValue.increment(1),
       });
+      await batch.commit();
     } catch (e) {
       // Rollback
       _listenedTracks.removeWhere((t) => t.trackId == track.id);
@@ -223,6 +232,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> unmarkTrack(String trackId) async {
     final uid = _firebase.currentUser?.uid;
     if (uid == null) return;
+    if (!_listenedTrackIds.contains(trackId)) return;
 
     // Optimistic update
     final removed =
@@ -235,10 +245,12 @@ class LibraryProvider extends ChangeNotifier {
     try {
       final db = _firebase.db;
       final userDoc = db.collection('users').doc(uid);
-      await userDoc.collection('listenedTracks').doc(trackId).delete();
-      await userDoc.update({
+      final batch = db.batch();
+      batch.delete(userDoc.collection('listenedTracks').doc(trackId));
+      batch.update(userDoc, {
         'stats.totalTracks': FieldValue.increment(-1),
       });
+      await batch.commit();
     } catch (e) {
       // Rollback
       _listenedTracks.addAll(removed);
@@ -267,6 +279,7 @@ class LibraryProvider extends ChangeNotifier {
               albumTitle: t.albumTitle,
               albumId: t.albumId,
               coverUrl: t.coverUrl,
+              previewUrl: t.previewUrl,
               duration: t.durationSeconds,
               listenedAt: DateTime.now(),
             ))

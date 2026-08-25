@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/artist.dart';
 import '../screens/artist_detail_screen.dart';
+import '../screens/main_navigation_screen.dart';
 
 class ArtistCard extends StatelessWidget {
   final Artist artist;
@@ -20,7 +21,7 @@ class ArtistCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
+        appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ArtistDetailScreen(artist: artist),
           ),
@@ -36,7 +37,7 @@ class ArtistCard extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderGlow, width: 1.5),
+                border: Border.all(color: AppColors.accent, width: 1.5),
                 boxShadow: const [
                   BoxShadow(
                     color: AppColors.accentDim,

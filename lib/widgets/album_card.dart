@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../screens/album_detail_screen.dart';
+import '../screens/main_navigation_screen.dart';
 
 class AlbumCard extends StatelessWidget {
   final Album album;
@@ -19,7 +20,7 @@ class AlbumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
+        appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => AlbumDetailScreen(album: album),
           ),
