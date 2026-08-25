@@ -65,7 +65,7 @@ class ArtistCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               artist.name,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -77,7 +77,7 @@ class ArtistCard extends StatelessWidget {
             if (artist.fansCount > 0)
               Text(
                 '${Formatters.formatNumber(artist.fansCount)} fans',
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   color: AppColors.accent,
                   fontWeight: FontWeight.w600,

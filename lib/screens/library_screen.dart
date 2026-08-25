@@ -124,7 +124,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 children: [
                   Text(
                     'Mi Biblioteca',
-                    style: GoogleFonts.orbitron(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
@@ -133,7 +133,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '$totalTracks canciones en $totalAlbums álbumes',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: AppColors.accent,
@@ -156,11 +156,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                     child: TextField(
                       controller: _filterController,
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.plusJakartaSans(
                           color: AppColors.textBright, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Filtrar álbumes o artistas...',
-                        hintStyle: GoogleFonts.spaceGrotesk(
+                        hintStyle: GoogleFonts.plusJakartaSans(
                             color: AppColors.textMuted, fontSize: 13),
                         prefixIcon: const Icon(Icons.filter_list,
                             color: AppColors.textSecondary, size: 18),
@@ -206,7 +206,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'BIBLIOTECA VACÍA',
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textSecondary,
@@ -216,7 +216,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Marca canciones como escuchadas para verlas aquí',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12, color: AppColors.textMuted),
                           ),
                         ],
@@ -265,7 +265,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
         child: Text(
           'VER MÁS ($remaining restantes)',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: AppColors.accent,
@@ -292,7 +292,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.orbitron(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
@@ -368,7 +368,7 @@ class _AlbumGroupTile extends StatelessWidget {
                           group.albumTitle.isNotEmpty
                               ? group.albumTitle
                               : 'Álbum desconocido',
-                          style: GoogleFonts.spaceGrotesk(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textBright,
@@ -381,7 +381,7 @@ class _AlbumGroupTile extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 group.artistName,
-                                style: GoogleFonts.spaceGrotesk(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -391,7 +391,7 @@ class _AlbumGroupTile extends StatelessWidget {
                             ),
                             Text(
                               ' · ${group.tracks.length} tracks',
-                              style: GoogleFonts.jetBrainsMono(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 color: AppColors.textMuted,
                               ),
@@ -420,7 +420,7 @@ class _AlbumGroupTile extends StatelessWidget {
                       ),
                       child: Text(
                         'Ver álbum',
-                        style: GoogleFonts.jetBrainsMono(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           color: AppColors.accent,
                           fontWeight: FontWeight.w600,
@@ -479,7 +479,7 @@ class _AlbumGroupTile extends StatelessWidget {
                           children: [
                             Text(
                               trackData.title,
-                              style: GoogleFonts.spaceGrotesk(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: isCurrentTrack
@@ -491,7 +491,7 @@ class _AlbumGroupTile extends StatelessWidget {
                             ),
                             Text(
                               trackData.artistName,
-                              style: GoogleFonts.spaceGrotesk(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                               ),
@@ -503,7 +503,7 @@ class _AlbumGroupTile extends StatelessWidget {
                       ),
                       Text(
                         Formatters.formatSeconds(trackData.duration),
-                        style: GoogleFonts.jetBrainsMono(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           color: AppColors.textMuted,
                         ),

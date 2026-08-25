@@ -58,13 +58,19 @@ class DeezerApiService {
 
   Future<dynamic> _fetchJson(String url) async {
     if (!kIsWeb) {
+      // Mobile/desktop: direct call, no CORS proxies needed
       try {
         final res =
             await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
         if (res.statusCode == 200) return json.decode(res.body);
-      } catch (_) {}
+        debugPrint('[DeezerAPI] HTTP ${res.statusCode} for $url');
+      } catch (e) {
+        debugPrint('[DeezerAPI] Network error for $url: $e');
+      }
+      return null;
     }
 
+    // Web: try CORS proxies first, then direct
     for (final proxy in _corsProxies) {
       try {
         final proxyUrl = '$proxy${Uri.encodeComponent(url)}';
@@ -72,15 +78,17 @@ class DeezerApiService {
             .get(Uri.parse(proxyUrl))
             .timeout(const Duration(seconds: 8));
         if (res.statusCode == 200) return json.decode(res.body);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[DeezerAPI] CORS proxy error: $e');
+      }
     }
 
-    if (kIsWeb) {
-      try {
-        final res =
-            await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-        if (res.statusCode == 200) return json.decode(res.body);
-      } catch (_) {}
+    try {
+      final res =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) return json.decode(res.body);
+    } catch (e) {
+      debugPrint('[DeezerAPI] Direct web fetch error for $url: $e');
     }
 
     return null;
@@ -152,7 +160,9 @@ class DeezerApiService {
         _setCache(cacheKey, artists, isSearch: true);
         return artists;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] searchArtists error: $e');
+    }
     return [];
   }
 
@@ -169,7 +179,9 @@ class DeezerApiService {
         _setCache(cacheKey, albums, isSearch: true);
         return albums;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] searchAlbums error: $e');
+    }
     return [];
   }
 
@@ -189,7 +201,9 @@ class DeezerApiService {
         _setCache(cacheKey, tracks, isSearch: true);
         return tracks;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] searchTracks error: $e');
+    }
     return [];
   }
 
@@ -212,7 +226,9 @@ class DeezerApiService {
         _setCache(cacheKey, tracks);
         return tracks;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] getChartTracks error: $e');
+    }
     return [];
   }
 
@@ -229,7 +245,9 @@ class DeezerApiService {
         _setCache(cacheKey, artists);
         return artists;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] getChartArtists error: $e');
+    }
     return [];
   }
 
@@ -268,7 +286,9 @@ class DeezerApiService {
           _setCache(cacheKey, artist);
           return artist;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[DeezerAPI] getArtist($id) error: $e');
+      }
       return null;
     });
   }
@@ -288,7 +308,9 @@ class DeezerApiService {
         _setCache(cacheKey, tracks);
         return tracks;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] getArtistTopTracks($artistId) error: $e');
+    }
     return [];
   }
 
@@ -307,7 +329,9 @@ class DeezerApiService {
         _setCache(cacheKey, albums);
         return albums;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeezerAPI] getArtistAlbums($artistId) error: $e');
+    }
     return [];
   }
 
@@ -324,7 +348,9 @@ class DeezerApiService {
           _setCache(cacheKey, album);
           return album;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[DeezerAPI] getAlbum($albumId) error: $e');
+      }
       return null;
     });
   }
@@ -342,7 +368,9 @@ class DeezerApiService {
           _setCache(cacheKey, track);
           return track;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[DeezerAPI] getTrack($trackId) error: $e');
+      }
       return null;
     });
   }

@@ -27,7 +27,7 @@ class AlbumProgressBar extends StatelessWidget {
           children: [
             Text(
               '$listened/$total escuchadas',
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -35,7 +35,7 @@ class AlbumProgressBar extends StatelessWidget {
             ),
             Text(
               '$percentage%',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: isCompleted ? AppColors.success : AppColors.accent,

@@ -70,7 +70,7 @@ class TrackTile extends StatelessWidget {
                   width: 24,
                   child: Text(
                     (index! + 1).toString().padLeft(2, '0'),
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
@@ -116,7 +116,7 @@ class TrackTile extends StatelessWidget {
                   children: [
                     Text(
                       track.title,
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color:
@@ -139,7 +139,7 @@ class TrackTile extends StatelessWidget {
                             ),
                             child: Text(
                               'E',
-                              style: GoogleFonts.jetBrainsMono(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textSecondary,
@@ -150,7 +150,7 @@ class TrackTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             track.fullArtistName,
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
@@ -167,7 +167,7 @@ class TrackTile extends StatelessWidget {
               // Duration
               Text(
                 Formatters.formatSeconds(track.durationSeconds),
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   color: AppColors.textMuted,
                 ),

@@ -197,7 +197,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                     children: [
                                       Text(
                                         track.title,
-                                        style: GoogleFonts.orbitron(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.textBright,
@@ -208,7 +208,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                       const SizedBox(height: 2),
                                       Text(
                                         track.fullArtistName,
-                                        style: GoogleFonts.spaceGrotesk(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11,
                                           color: AppColors.textSecondary,
                                         ),

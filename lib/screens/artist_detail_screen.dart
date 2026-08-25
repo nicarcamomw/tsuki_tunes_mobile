@@ -11,6 +11,10 @@ import '../services/deezer_api_service.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/track_tile.dart';
+import '../widgets/oni_mask_icon.dart';
+import '../widgets/distorted_artist_name.dart';
+import '../widgets/app_custom_icons.dart';
+import '../services/lastfm_service.dart';
 import 'album_detail_screen.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
@@ -26,9 +30,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   List<Track> _topTracks = [];
   List<Album> _albums = [];
+  List<String> _artistTags = [];
   bool _isLoading = true;
-  bool _showAllTopTracks = false;
   String _discographyFilter = 'all';
+
+  bool _showStats = false;
 
   @override
   void initState() {
@@ -49,15 +55,18 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       final results = await Future.wait([
         _api.getArtistTopTracks(widget.artist.id, limit: 10),
         _api.getArtistAlbums(widget.artist.id, limit: 250),
+        LastFmService.getArtistTags(widget.artist.name),
       ]);
       if (mounted) {
         setState(() {
           _topTracks = results[0] as List<Track>;
           _albums = results[1] as List<Album>;
+          _artistTags = results[2] as List<String>;
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ArtistDetail] loadArtistData error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -92,12 +101,18 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
-    final isFavArtist = library.isFavoriteArtist(widget.artist.id);
-    final audio = context.read<AudioProvider>();
 
-    final displayedTracks = _showAllTopTracks
-        ? _topTracks
-        : _topTracks.take(5).toList();
+    // Check if ALL albums have ALL tracks listened
+    final bool isArtistComplete = _albums.isNotEmpty &&
+        _albums.every((album) {
+          if (album.tracksCount <= 0) return false;
+          final listenedInAlbum = library.listenedTracks
+              .where((t) => t.albumId == album.id)
+              .length;
+          return listenedInAlbum >= album.tracksCount;
+        });
+
+    final displayedTracks = _topTracks.take(5).toList();
 
     final cats = _categorizedAlbums;
 
@@ -107,54 +122,48 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         slivers: [
           // Hero with parallax
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 270,
             pinned: true,
             backgroundColor: AppColors.bgDeep,
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.bgDeep.withValues(alpha: 0.6),
+                  color: AppColors.bgDeep.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
-                child: const Icon(Icons.arrow_back,
-                    color: AppColors.textBright, size: 20),
+                child: const Icon(Icons.chevron_left,
+                    color: AppColors.accent, size: 24),
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             actions: [
-              IconButton(
-                icon: Container(
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.bgDeep.withValues(alpha: 0.6),
+                    color: AppColors.bgDeep.withValues(alpha: 0.7),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isArtistComplete
+                          ? AppColors.accent.withValues(alpha: 0.6)
+                          : AppColors.textMuted.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
                   ),
-                  child: Icon(
-                    isFavArtist ? Icons.favorite : Icons.favorite_border,
-                    color: isFavArtist ? AppColors.accent : AppColors.textBright,
-                    size: 20,
+                  child: OniMaskIcon(
+                    isActive: isArtistComplete,
+                    size: 22,
                   ),
                 ),
-                onPressed: () =>
-                    library.toggleFavoriteArtist(widget.artist),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                widget.artist.name,
-                style: GoogleFonts.orbitron(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textBright,
-                  shadows: [
-                    const Shadow(
-                      blurRadius: 10,
-                      color: Colors.black,
-                    ),
-                  ],
-                ),
-              ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -162,19 +171,32 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     CachedNetworkImage(
                       imageUrl: widget.artist.getBestImage(size: 'xl'),
                       fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
                     ),
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: [0.0, 0.5, 1.0],
+                        stops: [0.0, 0.45, 0.80, 1.0],
                         colors: [
                           Colors.transparent,
-                          Color(0x8014171F),
+                          Colors.transparent,
+                          Color(0x990B0D13),
                           AppColors.bgDeep,
                         ],
                       ),
+                    ),
+                  ),
+                  // Name rendered directly on top of the photo with room for descenders
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 22,
+                    child: DistortedArtistName(
+                      name: widget.artist.name,
+                      artistId: widget.artist.id,
+                      fontSize: 30,
                     ),
                   ),
                 ],
@@ -185,7 +207,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           // Info section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -193,91 +215,184 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   Row(
                     children: [
                       if (widget.artist.fansCount > 0) ...[
-                        Text(
-                          '${Formatters.formatNumber(widget.artist.fansCount)} FANS',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
-                            letterSpacing: 1.5,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppCustomIcons.persona(
+                              size: 16,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${Formatters.formatNumber(widget.artist.fansCount)} fanáticos',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(width: 16),
                       ],
                       if (widget.artist.albumsCount > 0)
-                        Text(
-                          '${widget.artist.albumsCount} LANZAMIENTOS',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1,
+                        GestureDetector(
+                          onTap: () {
+                            setState(() => _showStats = !_showStats);
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppCustomIcons.cd(
+                                size: 16,
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${widget.artist.albumsCount} lanzamientos',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  decoration: _showStats
+                                      ? TextDecoration.underline
+                                      : TextDecoration.none,
+                                  decorationColor: AppColors.accent,
+                                  decorationThickness: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              AnimatedRotation(
+                                turns: _showStats ? 0.25 : 0.0,
+                                duration: const Duration(milliseconds: 250),
+                                child: const Icon(
+                                  Icons.chevron_right,
+                                  size: 16,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                     ],
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // Play popular button
-                  if (_topTracks.isNotEmpty)
-                    SizedBox(
+                  // Animated Glass Capsule Breakdown
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: Container(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          audio.playTrack(_topTracks.first,
-                              newQueue: _topTracks);
-                        },
-                        icon: const Icon(Icons.play_arrow,
-                            color: AppColors.accent),
-                        label: Text(
-                          'PLAY POPULAR',
-                          style: GoogleFonts.orbitron(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
-                          ),
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0x730C0C12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          width: 1,
                         ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.accent),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
+                        ],
+                      ),
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceEvenly,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: [
+                          if (cats['album']!.isNotEmpty)
+                            _buildBreakdownItem(
+                              AppCustomIcons.libreria(
+                                  size: 15, color: AppColors.accent),
+                              '${cats['album']!.length} ${cats['album']!.length == 1 ? 'álbum' : 'álbumes'}',
+                            ),
+                          if (_albums
+                              .where((a) => a.recordType == 'ep')
+                              .isNotEmpty)
+                            _buildBreakdownItem(
+                              AppCustomIcons.ep(
+                                  size: 15, color: AppColors.accent),
+                              '${_albums.where((a) => a.recordType == 'ep').length} ${_albums.where((a) => a.recordType == 'ep').length == 1 ? 'EP' : 'EPs'}',
+                            ),
+                          if (_albums
+                              .where((a) => a.recordType == 'single')
+                              .isNotEmpty)
+                            _buildBreakdownItem(
+                              AppCustomIcons.nota(
+                                  size: 15, color: AppColors.accent),
+                              '${_albums.where((a) => a.recordType == 'single').length} ${_albums.where((a) => a.recordType == 'single').length == 1 ? 'sencillo' : 'sencillos'}',
+                            ),
+                          if (cats['compile']!.isNotEmpty)
+                            _buildBreakdownItem(
+                              AppCustomIcons.grupo(
+                                  size: 15, color: AppColors.accent),
+                              '${cats['compile']!.length} aparece en',
+                            ),
+                        ],
                       ),
                     ),
+                    crossFadeState: _showStats
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 250),
+                  ),
 
-                  const SizedBox(height: 24),
+                  // Artist Category/Genre Tags
+                  if (_artistTags.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _artistTags.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.1),
+                            border:
+                                Border.all(color: AppColors.accent, width: 1),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Text(
+                            tag.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
 
-                  // Top Tracks header with toggle
+                  const SizedBox(height: 20),
+
+                  // Top Tracks header
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      AppCustomIcons.fuego(
+                        size: 18,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        '// POPULAR TRACKS',
-                        style: GoogleFonts.orbitron(
+                        'POPULARES',
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textBright,
                           letterSpacing: 1.2,
                         ),
                       ),
-                      if (_topTracks.length > 5)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() =>
-                                _showAllTopTracks = !_showAllTopTracks);
-                          },
-                          child: Text(
-                            _showAllTopTracks ? 'VER MENOS' : 'VER MÁS',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ],
@@ -325,7 +440,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   children: [
                     Text(
                       '// DISCOGRAFÍA',
-                      style: GoogleFonts.orbitron(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
@@ -396,7 +511,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: isSelected ? AppColors.textBright : AppColors.textSecondary,
@@ -465,7 +580,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           const SizedBox(height: 6),
           Text(
             album.title,
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -478,7 +593,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               Expanded(
                 child: Text(
                   '${album.year}  ·  ${Album.getAlbumTypeLabel(album.recordType)}',
-                  style: GoogleFonts.jetBrainsMono(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -493,6 +608,24 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBreakdownItem(Widget icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon,
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

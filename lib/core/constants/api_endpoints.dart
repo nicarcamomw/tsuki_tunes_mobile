@@ -12,7 +12,7 @@ class ApiEndpoints {
       '$deezerBase/search/album?q=${Uri.encodeComponent(query)}&limit=$limit';
 
   static String searchTracks(String query, {int limit = 25}) =>
-      '$deezerBase/search?q=${Uri.encodeComponent(query)}&limit=$limit';
+      '$deezerBase/search/track?q=${Uri.encodeComponent(query)}&limit=$limit';
 
   // Charts
   static const String chartTracks = '$deezerBase/chart/0/tracks?limit=25';

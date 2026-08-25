@@ -93,7 +93,7 @@ class _AuthGateState extends State<_AuthGate> {
             children: [
               Text(
                 'TSUKI TUNES',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: AppColors.accent,
@@ -103,7 +103,7 @@ class _AuthGateState extends State<_AuthGate> {
               const SizedBox(height: 16),
               Text(
                 'SYSTEM_INIT // LOADING DATABASE...',
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   color: AppColors.textSecondary,
                   letterSpacing: 2,

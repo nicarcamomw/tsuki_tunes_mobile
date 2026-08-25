@@ -45,3 +45,83 @@ flutter:
 
   assets:
     - assets/images/
+
+  fonts:
+    - family: SystemOfADown
+      fonts:
+        - asset: assets/fonts/sf_hollywood_hills.ttf
+    - family: Metallica
+      fonts:
+        - asset: assets/fonts/pastor_of_muppets.ttf
+    - family: HelveticaBlackOblique
+      fonts:
+        - asset: assets/fonts/helvetica_black_oblique.otf
+    - family: HelveticaBlackRegular
+      fonts:
+        - asset: assets/fonts/helvetica_black_regular.otf
+    - family: Sickness
+      fonts:
+        - asset: assets/fonts/sickness.ttf
+    - family: Satisfaction
+      fonts:
+        - asset: assets/fonts/satisfaction.ttf
+    - family: Squealer
+      fonts:
+        - asset: assets/fonts/squealer.ttf
+    - family: Optionyx
+      fonts:
+        - asset: assets/fonts/optio_nyx.otf
+    - family: Blackpink
+      fonts:
+        - asset: assets/fonts/blackpink.ttf
+    - family: EuroSwh
+      fonts:
+        - asset: assets/fonts/euroswh.ttf
+    - family: Resurrec
+      fonts:
+        - asset: assets/fonts/resurrec.ttf
+    - family: Bootle
+      fonts:
+        - asset: assets/fonts/bootle.ttf
+    - family: InstantZen
+      fonts:
+        - asset: assets/fonts/instant_zen.otf
+    - family: Densmore
+      fonts:
+        - asset: assets/fonts/densmore.ttf
+    - family: DaftFont
+      fonts:
+        - asset: assets/fonts/daft_font.ttf
+    - family: Trixie
+      fonts:
+        - asset: assets/fonts/trixie.ttf
+    - family: CenturyGothicItalic
+      fonts:
+        - asset: assets/fonts/century_gothic_italic.ttf
+    - family: Rammstein
+      fonts:
+        - asset: assets/fonts/rammstein.ttf
+    - family: Kashmir
+      fonts:
+        - asset: assets/fonts/kashmir.ttf
+    - family: FrizQuadrata
+      fonts:
+        - asset: assets/fonts/friz_quadrata.otf
+    - family: ScaryGlyphs
+      fonts:
+        - asset: assets/fonts/scary_glyphs.ttf
+    - family: LaBamba
+      fonts:
+        - asset: assets/fonts/la_bamba.otf
+    - family: LasVegas
+      fonts:
+        - asset: assets/fonts/las_vegas.ttf
+    - family: Jamiroquai
+      fonts:
+        - asset: assets/fonts/jamiroquai.ttf
+    - family: Americana
+      fonts:
+        - asset: assets/fonts/americana.otf
+    - family: Exo
+      fonts:
+        - asset: assets/fonts/exo.ttf

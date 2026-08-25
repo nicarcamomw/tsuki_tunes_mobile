@@ -108,7 +108,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           children: [
                             Text(
                               'REPRODUCIENDO DESDE',
-                              style: GoogleFonts.jetBrainsMono(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textMuted,
@@ -119,7 +119,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               track.albumTitle.isNotEmpty
                                   ? track.albumTitle
                                   : 'DEEZER PREVIEW',
-                              style: GoogleFonts.orbitron(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.accent,
@@ -172,7 +172,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           children: [
                             Text(
                               track.title,
-                              style: GoogleFonts.orbitron(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textBright,
@@ -184,7 +184,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             const SizedBox(height: 4),
                             Text(
                               track.fullArtistName,
-                              style: GoogleFonts.spaceGrotesk(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 color: AppColors.textSecondary,
                               ),
@@ -247,7 +247,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     thumbColor: AppColors.accent,
                     thumbGlowColor: AppColors.accentGlow,
                     thumbRadius: 7.0,
-                    timeLabelTextStyle: GoogleFonts.jetBrainsMono(
+                    timeLabelTextStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -378,7 +378,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 // Device tag
                 Text(
                   'AUDIO PREVIEW',
-                  style: GoogleFonts.jetBrainsMono(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 9,
                     color: AppColors.textMuted,
                     letterSpacing: 2,
@@ -410,7 +410,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               padding: const EdgeInsets.all(16),
               child: Text(
                 'UP NEXT // QUEUE (${audio.queue.length})',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
@@ -430,7 +430,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     dense: true,
                     leading: Text(
                       (i + 1).toString().padLeft(2, '0'),
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.plusJakartaSans(
                         color: isCur
                             ? AppColors.accent
                             : AppColors.textMuted,

@@ -84,7 +84,7 @@ class _CyberButtonState extends State<CyberButton> {
             ],
             Text(
               widget.text.toUpperCase(),
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: textColor,

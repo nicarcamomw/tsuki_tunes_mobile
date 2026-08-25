@@ -121,7 +121,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             const SizedBox(height: 3),
             Text(
               label,
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 color: isSelected ? AppColors.accent : AppColors.textSecondary,

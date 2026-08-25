@@ -49,7 +49,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[AlbumDetail] loadAlbumDetails error: $e');
       if (mounted) {
         setState(() {
           _fullAlbum = widget.album;
@@ -81,7 +82,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           );
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AlbumDetail] enrichTracks error: $e');
+    }
   }
 
   void _toggleAll(Album albumData, LibraryProvider library) {
@@ -129,7 +132,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             ),
             title: Text(
               'ALBUM DETAILS',
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accent,
@@ -206,7 +209,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ),
                     child: Text(
                       typeLabel.toUpperCase(),
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
@@ -220,7 +223,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   // Title
                   Text(
                     albumData.title,
-                    style: GoogleFonts.orbitron(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
@@ -249,7 +252,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     },
                     child: Text(
                       albumData.artistName,
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: AppColors.accent,
                         fontWeight: FontWeight.w600,
@@ -262,7 +265,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   // Meta
                   Text(
                     '${albumData.year.isNotEmpty ? albumData.year : "N/A"}  ·  ${tracks.isNotEmpty ? tracks.length : albumData.tracksCount} tracks  ·  ${Formatters.formatSeconds(totalDuration)}',
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
@@ -300,7 +303,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           ),
                           label: Text(
                             allListened ? 'TODO ESCUCHADO' : 'MARCAR TODO',
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: allListened
@@ -331,7 +334,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                               color: AppColors.accent, size: 18),
                           label: Text(
                             'PLAY',
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -377,7 +380,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Sincronizando...',
-                          style: GoogleFonts.jetBrainsMono(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             color: AppColors.textSecondary,
                           ),

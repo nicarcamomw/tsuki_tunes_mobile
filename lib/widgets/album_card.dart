@@ -66,7 +66,7 @@ class AlbumCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               album.title,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -76,7 +76,7 @@ class AlbumCard extends StatelessWidget {
             ),
             Text(
               album.artistName,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),

@@ -45,7 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       _computeTopArtists();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[HomeScreen] loadHomeData error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -80,7 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
           entry: entry,
           artist: matched,
         ));
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[HomeScreen] fetchTopArtistPictures error: $e');
         display.add(_TopArtistDisplay(entry: entry, artist: null));
       }
     }
@@ -107,7 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
             albums.add(album);
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[HomeScreen] loadLatestFromTopArtists error for ${top.entry.name}: $e');
+      }
     }
 
     if (mounted) {
@@ -128,7 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
         if (artistAlbums.isNotEmpty) {
           albums.add(artistAlbums.first);
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[HomeScreen] loadLatestFromFeatured error: $e');
+      }
     }
 
     if (mounted) {
@@ -173,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             'INICIO',
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
                               color: AppColors.textBright,
@@ -182,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           Text(
                             ' //',
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
                               color: AppColors.accent,
@@ -215,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(width: 6),
                                 Text(
                                   'ONLINE',
-                                  style: GoogleFonts.jetBrainsMono(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.accent,
@@ -292,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Text(
                       'ARTISTAS MÁS FRECUENTES',
-                      style: GoogleFonts.orbitron(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -317,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Text(
                       'ARTISTAS MÁS FRECUENTES',
-                      style: GoogleFonts.orbitron(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -343,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
                   child: Text(
                     'ÚLTIMOS LANZAMIENTOS PARA TI',
-                    style: GoogleFonts.orbitron(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
@@ -365,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
                               'Marca canciones como escuchadas para ver lanzamientos personalizados',
-                              style: GoogleFonts.spaceGrotesk(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
                               ),
@@ -393,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
                     child: Text(
                       'RECOMENDACIONES DEL SISTEMA',
-                      style: GoogleFonts.orbitron(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -445,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             Text(
               auth.user?.displayName ?? '',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textBright,
@@ -453,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Text(
               auth.user?.email ?? '',
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),
@@ -469,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(Icons.logout, color: AppColors.accent),
                 label: Text(
                   'CERRAR SESIÓN',
-                  style: GoogleFonts.orbitron(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
@@ -506,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
@@ -517,12 +523,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             value,
             style: isTextValue
-                ? GoogleFonts.orbitron(
+                ? GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: AppColors.sakura,
                   )
-                : GoogleFonts.orbitron(
+                : GoogleFonts.plusJakartaSans(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: AppColors.sakura,
@@ -533,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 4),
           Text(
             meta,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 9,
               color: AppColors.textMuted,
               letterSpacing: 0.8,
@@ -570,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 24,
               child: Text(
                 '$rank',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
@@ -601,7 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     entry.name,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
@@ -611,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Text(
                     'Afinidad: ${entry.score}',
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -651,7 +657,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 24,
               child: Text(
                 '$rank',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
@@ -678,7 +684,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     artist.name,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
@@ -688,7 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Text(
                     'DESTACADO',
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),

@@ -18,47 +18,47 @@ class CyberTheme {
         onSecondary: AppColors.bgDeep,
         outline: AppColors.border,
       ),
-      fontFamily: GoogleFonts.spaceGrotesk().fontFamily,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.orbitron(
+        displayLarge: GoogleFonts.plusJakartaSans(
           fontSize: 32,
           fontWeight: FontWeight.w900,
           color: AppColors.textBright,
           letterSpacing: 2.0,
         ),
-        displayMedium: GoogleFonts.orbitron(
+        displayMedium: GoogleFonts.plusJakartaSans(
           fontSize: 24,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.5,
         ),
-        headlineSmall: GoogleFonts.orbitron(
+        headlineSmall: GoogleFonts.plusJakartaSans(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: 1.0,
         ),
-        titleLarge: GoogleFonts.spaceGrotesk(
+        titleLarge: GoogleFonts.plusJakartaSans(
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        titleMedium: GoogleFonts.spaceGrotesk(
+        titleMedium: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        bodyLarge: GoogleFonts.spaceGrotesk(
+        bodyLarge: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
-        bodyMedium: GoogleFonts.spaceGrotesk(
+        bodyMedium: GoogleFonts.plusJakartaSans(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
-        labelSmall: GoogleFonts.jetBrainsMono(
+        labelSmall: GoogleFonts.plusJakartaSans(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.accent,
@@ -83,7 +83,7 @@ class CyberTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.bgMid,
-        hintStyle: GoogleFonts.jetBrainsMono(
+        hintStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.textMuted,
           fontSize: 13,
         ),

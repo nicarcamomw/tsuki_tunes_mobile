@@ -54,7 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   Text(
                     'Buscar',
-                    style: GoogleFonts.orbitron(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
@@ -62,7 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                   Text(
                     'Artistas, álbumes y canciones',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
@@ -82,10 +82,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: TextField(
                   controller: _controller,
-                  style: GoogleFonts.spaceGrotesk(color: AppColors.textBright, fontSize: 14),
+                  style: GoogleFonts.plusJakartaSans(color: AppColors.textBright, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: '¿Qué quieres escuchar?',
-                    hintStyle: GoogleFonts.spaceGrotesk(color: AppColors.textMuted, fontSize: 14),
+                    hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.textMuted, fontSize: 14),
                     prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
                     suffixIcon: _controller.text.isNotEmpty
                         ? IconButton(
@@ -125,7 +125,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       child: Text(
                         _tabs[index],
-                        style: GoogleFonts.orbitron(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isSelected ? AppColors.textBright : AppColors.textSecondary,
@@ -164,7 +164,7 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: 12),
           Text(
             'EXPLORA LA BASE DE DATOS',
-            style: GoogleFonts.orbitron(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
@@ -174,7 +174,7 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: 4),
           Text(
             'Escribe el nombre de un artista, canción o álbum',
-            style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.textMuted),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textMuted),
           ),
         ],
       ),
@@ -196,7 +196,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return Center(
         child: Text(
           'No se encontraron resultados para "${search.query}"',
-          style: GoogleFonts.spaceGrotesk(color: AppColors.textSecondary),
+          style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary),
         ),
       );
     }
@@ -211,7 +211,7 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Text(
               'ARTISTAS',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -236,7 +236,7 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
               'ÁLBUMES',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -261,7 +261,7 @@ class _SearchScreenState extends State<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
               'CANCIONES',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
