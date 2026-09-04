@@ -32,6 +32,8 @@ class AudioProvider extends ChangeNotifier {
   String? _prefetchedUri;
   String? _prefetchedForTrackId;
 
+  bool _completionHandled = false;
+
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
   StreamSubscription? _bufSub;
@@ -76,12 +78,18 @@ class AudioProvider extends ChangeNotifier {
     };
 
     final token = await _spotify.getValidToken();
-    debugPrint('Spotify: connecting native player with token=${token != null}');
+    if (token == null) {
+      debugPrint('Spotify: no valid token, skipping native connect');
+      _spotifyActive = false;
+      _useSpotify = false;
+      notifyListeners();
+      return;
+    }
+    debugPrint('Spotify: connecting native player with token');
     final connected = await _nativePlayer.connect(accessToken: token);
     _spotifyActive = connected;
     if (connected) {
       debugPrint('Spotify native player connected');
-      // Transfer playback to the phone
       try {
         await SpotifySdk.switchToLocalDevice();
         debugPrint('Spotify: switched to local device');
@@ -90,9 +98,16 @@ class AudioProvider extends ChangeNotifier {
       }
       await Future.delayed(const Duration(seconds: 1));
       final deviceId = await _spotify.getActiveDeviceId();
-      debugPrint('Spotify: device after connect = $deviceId');
+      if (deviceId == null) {
+        debugPrint('Spotify: no device found after connect, marking inactive');
+        _spotifyActive = false;
+        _useSpotify = false;
+      } else {
+        debugPrint('Spotify: device after connect = $deviceId');
+      }
     } else {
       debugPrint('Spotify native player failed to connect');
+      _useSpotify = false;
     }
     notifyListeners();
   }
@@ -215,6 +230,7 @@ class AudioProvider extends ChangeNotifier {
 
     _currentTrack = track;
     _position = Duration.zero;
+    _completionHandled = false;
     _duration = Duration(
         seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _isBuffering = true;
@@ -346,6 +362,19 @@ class AudioProvider extends ChangeNotifier {
     await playTrack(_queue[_currentIndex]);
   }
 
+  Future<void> stop() async {
+    _stopPositionTimer();
+    if (_spotifyActive) {
+      await _spotify.pause();
+    }
+    await _service.stop();
+    _currentTrack = null;
+    _isPlaying = false;
+    _isBuffering = false;
+    _position = Duration.zero;
+    notifyListeners();
+  }
+
   Future<void> seek(Duration pos) async {
     _position = pos;
     notifyListeners();
@@ -368,6 +397,9 @@ class AudioProvider extends ChangeNotifier {
   }
 
   void _handleTrackCompleted() {
+    if (_completionHandled) return;
+    _completionHandled = true;
+
     if (_isLoop) {
       seek(Duration.zero);
       if (_spotifyActive) {

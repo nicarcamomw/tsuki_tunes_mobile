@@ -7,6 +7,7 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/tap_scale.dart';
 
 class ExpandedPlayerScreen extends StatefulWidget {
   const ExpandedPlayerScreen({super.key});
@@ -195,7 +196,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           ],
                         ),
                       ),
-                      GestureDetector(
+                      TapScale(
                         onTap: () {
                           if (isListened) {
                             library.unmarkTrack(track.id);
@@ -203,6 +204,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             library.markTrack(track);
                           }
                         },
+                        scaleDown: 0.8,
                         child: Padding(
                           padding: const EdgeInsets.all(8),
                           child: OniMaskIcon(
@@ -212,18 +214,21 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         ),
                       ),
                       // Favorite
-                      IconButton(
-                        iconSize: 26,
-                        icon: Icon(
-                          library.isFavoriteTrack(track.id)
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: library.isFavoriteTrack(track.id)
-                              ? AppColors.accent
-                              : AppColors.textSecondary,
+                      TapScale(
+                        onTap: () => library.toggleFavoriteTrack(track),
+                        scaleDown: 0.8,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            library.isFavoriteTrack(track.id)
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            size: 26,
+                            color: library.isFavoriteTrack(track.id)
+                                ? AppColors.accent
+                                : AppColors.textSecondary,
+                          ),
                         ),
-                        onPressed: () =>
-                            library.toggleFavoriteTrack(track),
                       ),
                     ],
                   ),
@@ -261,42 +266,51 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       // Shuffle
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            iconSize: 22,
-                            icon: Icon(
-                              Icons.shuffle,
-                              color: audio.isShuffle
-                                  ? AppColors.accent
-                                  : AppColors.textSecondary,
-                            ),
-                            onPressed: audio.toggleShuffle,
-                          ),
-                          if (audio.isShuffle)
-                            Container(
-                              width: 4,
-                              height: 4,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.accent,
+                      TapScale(
+                        onTap: audio.toggleShuffle,
+                        scaleDown: 0.8,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.shuffle,
+                                size: 22,
+                                color: audio.isShuffle
+                                    ? AppColors.accent
+                                    : AppColors.textSecondary,
                               ),
-                            ),
-                        ],
+                              if (audio.isShuffle)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  width: 4,
+                                  height: 4,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
 
                       // Previous
-                      IconButton(
-                        iconSize: 34,
-                        icon: const Icon(Icons.skip_previous,
-                            color: AppColors.textPrimary),
-                        onPressed: audio.previous,
+                      TapScale(
+                        onTap: audio.previous,
+                        scaleDown: 0.85,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.skip_previous,
+                              size: 34, color: AppColors.textPrimary),
+                        ),
                       ),
 
                       // Play/Pause
-                      GestureDetector(
+                      TapScale(
                         onTap: audio.togglePlay,
+                        scaleDown: 0.88,
                         child: Container(
                           width: 68,
                           height: 68,
@@ -335,37 +349,45 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       ),
 
                       // Next
-                      IconButton(
-                        iconSize: 34,
-                        icon: const Icon(Icons.skip_next,
-                            color: AppColors.textPrimary),
-                        onPressed: audio.next,
+                      TapScale(
+                        onTap: audio.next,
+                        scaleDown: 0.85,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.skip_next,
+                              size: 34, color: AppColors.textPrimary),
+                        ),
                       ),
 
                       // Repeat
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            iconSize: 22,
-                            icon: Icon(
-                              Icons.repeat,
-                              color: audio.isLoop
-                                  ? AppColors.accent
-                                  : AppColors.textSecondary,
-                            ),
-                            onPressed: audio.toggleLoop,
-                          ),
-                          if (audio.isLoop)
-                            Container(
-                              width: 4,
-                              height: 4,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.accent,
+                      TapScale(
+                        onTap: audio.toggleLoop,
+                        scaleDown: 0.8,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.repeat,
+                                size: 22,
+                                color: audio.isLoop
+                                    ? AppColors.accent
+                                    : AppColors.textSecondary,
                               ),
-                            ),
-                        ],
+                              if (audio.isLoop)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  width: 4,
+                                  height: 4,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

@@ -158,14 +158,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: allListened
-                              ? AppColors.success
+                              ? AppColors.accent
                               : AppColors.accent,
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: allListened
-                                ? AppColors.success.withValues(alpha: 0.4)
+                                ? AppColors.accent.withValues(alpha: 0.4)
                                 : AppColors.accentGlow,
                             blurRadius: allListened ? 24 : 18,
                             spreadRadius: allListened ? 4 : 2,
@@ -303,14 +303,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: allListened
-                                  ? AppColors.success
+                                  ? AppColors.accent
                                   : AppColors.accent,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
                               color: allListened
-                                  ? AppColors.success
+                                  ? AppColors.accent
                                   : AppColors.accent,
                             ),
                             shape: RoundedRectangleBorder(

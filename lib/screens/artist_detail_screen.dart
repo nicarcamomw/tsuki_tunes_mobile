@@ -16,6 +16,7 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/app_custom_icons.dart';
 import '../services/lastfm_service.dart';
 import 'album_detail_screen.dart';
+import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
@@ -29,20 +30,35 @@ class ArtistDetailScreen extends StatefulWidget {
 
 class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
+  final ScrollController _scrollController = ScrollController();
   List<Track> _topTracks = [];
   List<Album> _albums = [];
   List<String> _artistTags = [];
   bool _isLoading = true;
-  String _discographyFilter = 'all';
-
   bool _showStats = false;
   bool _showAllTracks = false;
+  bool _showTitleInAppBar = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _loadArtistData();
     _trackVisit();
+  }
+
+  void _onScroll() {
+    final show = _scrollController.offset > 200;
+    if (show != _showTitleInAppBar) {
+      setState(() => _showTitleInAppBar = show);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _trackVisit() {
@@ -71,15 +87,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       debugPrint('[ArtistDetail] loadArtistData error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  List<Album> get _filteredAlbums {
-    if (_discographyFilter == 'all') return _albums;
-    if (_discographyFilter == 'single_ep') {
-      return _albums.where((a) =>
-          a.recordType == 'single' || a.recordType == 'ep').toList();
-    }
-    return _albums.where((a) => a.recordType == _discographyFilter).toList();
   }
 
   Map<String, List<Album>> get _categorizedAlbums {
@@ -121,12 +128,28 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           // Hero with parallax
           SliverAppBar(
             expandedHeight: 270,
             pinned: true,
             backgroundColor: AppColors.bgDeep,
+            title: AnimatedOpacity(
+              opacity: _showTitleInAppBar ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                widget.artist.name,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textBright,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            centerTitle: true,
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(6),
@@ -480,63 +503,40 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
           ],
 
-          // Discography
+          // Discography by category
           if (!_isLoading && _albums.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '// DISCOGRAFÍA',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Filter chips
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip('all', 'Todos'),
-                          if (cats['album']!.isNotEmpty)
-                            _buildFilterChip('album', 'Álbumes'),
-                          if (cats['single_ep']!.isNotEmpty)
-                            _buildFilterChip('single_ep', 'Singles/EPs'),
-                          if (cats['compile']!.isNotEmpty)
-                            _buildFilterChip('compile', 'Compilaciones'),
-                        ],
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                child: Text(
+                  '// DISCOGRAFÍA',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textBright,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ),
-
-            // Album grid
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.75,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final album = _filteredAlbums[index];
-                    return _buildDiscographyItem(context, album, library);
-                  },
-                  childCount: _filteredAlbums.length,
-                ),
+            if (cats['album']!.isNotEmpty)
+              ..._buildCategorySection('Álbumes', cats['album']!, 'album', library),
+            if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
+              ..._buildCategorySection(
+                'Singles',
+                _albums.where((a) => a.recordType == 'single').toList(),
+                'single',
+                library,
               ),
-            ),
+            if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
+              ..._buildCategorySection(
+                'EPs',
+                _albums.where((a) => a.recordType == 'ep').toList(),
+                'ep',
+                library,
+              ),
+            if (cats['compile']!.isNotEmpty)
+              ..._buildCategorySection('Aparece en', cats['compile']!, 'compile', library),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -545,30 +545,71 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
-  Widget _buildFilterChip(String value, String label) {
-    final isSelected = _discographyFilter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _discographyFilter = value),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.bgMid,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: isSelected ? AppColors.textBright : AppColors.textSecondary,
+  List<Widget> _buildCategorySection(
+      String title, List<Album> albums, String filterKey, LibraryProvider library) {
+    const maxVisible = 8;
+    final visible = albums.take(maxVisible).toList();
+    final hasMore = albums.length > maxVisible;
+
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (hasMore)
+                GestureDetector(
+                  onTap: () {
+                    appNavigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => ArtistDiscographyScreen(
+                          artistName: widget.artist.name,
+                          albums: _albums,
+                          initialFilter: filterKey,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Ver más',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
-    );
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.75,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) =>
+                _buildDiscographyItem(context, visible[index], library),
+            childCount: visible.length,
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildDiscographyItem(
@@ -598,14 +639,14 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
                   color: isCompleted
-                      ? AppColors.success.withValues(alpha: 0.6)
+                      ? AppColors.accent.withValues(alpha: 0.6)
                       : AppColors.border,
                   width: isCompleted ? 1.5 : 1,
                 ),
                 boxShadow: isCompleted
                     ? [
                         BoxShadow(
-                          color: AppColors.success.withValues(alpha: 0.3),
+                          color: AppColors.accent.withValues(alpha: 0.3),
                           blurRadius: 8,
                         )
                       ]
@@ -613,17 +654,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
-                child: album.coverUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: album.coverUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      )
-                    : Container(
-                        color: AppColors.bgMid,
-                        child: const Icon(Icons.album,
-                            color: AppColors.accent, size: 40),
-                      ),
+                child: _buildAlbumCover(album, isCompleted),
               ),
             ),
           ),
@@ -657,6 +688,31 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAlbumCover(Album album, bool isCompleted) {
+    final image = album.coverUrl.isNotEmpty
+        ? CachedNetworkImage(
+            imageUrl: album.coverUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          )
+        : Container(
+            color: AppColors.bgMid,
+            child: const Icon(Icons.album, color: AppColors.accent, size: 40),
+          );
+
+    if (isCompleted) return image;
+
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(<double>[
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0.2126, 0.7152, 0.0722, 0, 0,
+        0,      0,      0,      1, 0,
+      ]),
+      child: image,
     );
   }
 

@@ -7,6 +7,7 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/expanded_player_screen.dart';
 import 'oni_mask_icon.dart';
+import 'tap_scale.dart';
 
 class MiniPlayer extends StatefulWidget {
   const MiniPlayer({super.key});
@@ -225,7 +226,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                         ),
                       ),
                     ),
-                    GestureDetector(
+                    TapScale(
                       onTap: () {
                         if (isListened) {
                           library.unmarkTrack(track.id);
@@ -233,6 +234,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                           library.markTrack(track);
                         }
                       },
+                      scaleDown: 0.8,
                       child: Padding(
                         padding: const EdgeInsets.all(8),
                         child: OniMaskIcon(
@@ -241,31 +243,47 @@ class _MiniPlayerState extends State<MiniPlayer>
                         ),
                       ),
                     ),
-                    IconButton(
-                      iconSize: 28,
-                      icon: audio.isBuffering
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.accent),
+                    TapScale(
+                      onTap: audio.togglePlay,
+                      scaleDown: 0.85,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: audio.isBuffering
+                            ? const SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.accent),
+                                ),
+                              )
+                            : Icon(
+                                audio.isPlaying
+                                    ? Icons.pause_circle_filled
+                                    : Icons.play_circle_filled,
+                                size: 28,
+                                color: AppColors.accent,
                               ),
-                            )
-                          : Icon(
-                              audio.isPlaying
-                                  ? Icons.pause_circle_filled
-                                  : Icons.play_circle_filled,
-                              color: AppColors.accent,
-                            ),
-                      onPressed: audio.togglePlay,
+                      ),
                     ),
-                    IconButton(
-                      iconSize: 22,
-                      icon: const Icon(Icons.skip_next,
-                          color: AppColors.textPrimary),
-                      onPressed: audio.next,
+                    TapScale(
+                      onTap: audio.next,
+                      scaleDown: 0.85,
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.skip_next,
+                            size: 22, color: AppColors.textPrimary),
+                      ),
+                    ),
+                    TapScale(
+                      onTap: audio.stop,
+                      scaleDown: 0.85,
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(Icons.close,
+                            size: 18, color: AppColors.textMuted),
+                      ),
                     ),
                   ],
                 ),

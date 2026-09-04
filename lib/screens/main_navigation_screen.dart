@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/tap_scale.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
@@ -49,12 +50,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       });
     }
 
-    return Scaffold(
+    final bottomBarHeight = hasTrack ? 140.0 : 70.0;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final navigator = appNavigatorKey.currentState;
+        if (navigator != null && navigator.canPop()) {
+          navigator.pop();
+        } else if (_currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: Stack(
         children: [
-          // Navigator for detail screens that sit below the mini player
+          // Navigator with tab screens
           Positioned.fill(
+            bottom: bottomBarHeight,
             child: Navigator(
               key: appNavigatorKey,
               onGenerateRoute: (_) => MaterialPageRoute(
@@ -67,8 +82,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
             ),
           ),
-
-          // Mini Player + Bottom Nav always on top
+          // Mini Player + Bottom Nav
           Positioned(
             left: 0,
             right: 0,
@@ -83,6 +97,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -137,16 +152,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }) {
     final isSelected = _currentIndex == index;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return TapScale(
       onTap: () {
         if (_currentIndex == index) {
-          // Pop to root if tapping same tab
           appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
         } else {
           setState(() => _currentIndex = index);
         }
       },
+      scaleDown: 0.85,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         child: Column(

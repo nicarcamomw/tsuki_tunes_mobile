@@ -481,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: spotify.isConnected
-                          ? const Color(0xFF1DB954).withValues(alpha: 0.5)
+                          ? AppColors.accent.withValues(alpha: 0.5)
                           : AppColors.border,
                     ),
                   ),
@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1DB954),
+                          color: AppColors.accent,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.music_note,
@@ -519,7 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 color: spotify.isConnected
-                                    ? const Color(0xFF1DB954)
+                                    ? AppColors.accent
                                     : AppColors.textMuted,
                               ),
                             ),
@@ -555,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Spotify conectado'),
-                                      backgroundColor: Color(0xFF1DB954),
+                                      backgroundColor: AppColors.accent,
                                     ),
                                   );
                                 }
@@ -582,7 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             }
                           },
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF1DB954)),
+                            side: const BorderSide(color: AppColors.accent),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -594,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1DB954),
+                              color: AppColors.accent,
                             ),
                           ),
                         ),

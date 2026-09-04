@@ -26,8 +26,34 @@ class CyberButton extends StatefulWidget {
   State<CyberButton> createState() => _CyberButtonState();
 }
 
-class _CyberButtonState extends State<CyberButton> {
+class _CyberButtonState extends State<CyberButton>
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  late final AnimationController _scaleController;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 250),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
+      CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeOutBack,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,13 +62,22 @@ class _CyberButtonState extends State<CyberButton> {
     final textColor = widget.isPrimary ? AppColors.textBright : AppColors.textPrimary;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        _scaleController.forward();
+      },
       onTapUp: (_) {
         setState(() => _isPressed = false);
+        _scaleController.reverse();
         if (!widget.isLoading) widget.onPressed();
       },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
+      onTapCancel: () {
+        setState(() => _isPressed = false);
+        _scaleController.reverse();
+      },
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         width: widget.width,
         height: widget.height,
@@ -93,6 +128,7 @@ class _CyberButtonState extends State<CyberButton> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

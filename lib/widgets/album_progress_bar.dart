@@ -38,7 +38,7 @@ class AlbumProgressBar extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: isCompleted ? AppColors.success : AppColors.accent,
+                color: isCompleted ? AppColors.accent : AppColors.accent,
               ),
             ),
           ],
@@ -67,13 +67,13 @@ class AlbumProgressBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isCompleted
-                            ? [AppColors.success, AppColors.neonGreen]
+                            ? [AppColors.accent, AppColors.accent.withValues(alpha: 0.8)]
                             : [AppColors.accent, AppColors.accent.withValues(alpha: 0.7)],
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: isCompleted
-                              ? AppColors.success.withValues(alpha: 0.5)
+                              ? AppColors.accent.withValues(alpha: 0.5)
                               : AppColors.accentGlow,
                           blurRadius: 6,
                           spreadRadius: 1,

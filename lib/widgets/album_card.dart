@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
+import 'tap_scale.dart';
 
 class AlbumCard extends StatelessWidget {
   final Album album;
@@ -18,7 +19,7 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapScale(
       onTap: () {
         appNavigatorKey.currentState?.push(
           MaterialPageRoute(
@@ -26,6 +27,7 @@ class AlbumCard extends StatelessWidget {
           ),
         );
       },
+      scaleDown: 0.95,
       child: Container(
         width: width,
         margin: const EdgeInsets.only(right: 14),

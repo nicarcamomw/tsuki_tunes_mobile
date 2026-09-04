@@ -169,6 +169,7 @@ class SpotifyService {
       }
     } catch (e) {
       debugPrint('Spotify refresh error: $e');
+      await disconnect();
     }
   }
 
@@ -208,14 +209,44 @@ class SpotifyService {
       final query = Uri.encodeComponent('track:$title artist:$artist');
       final response = await http.get(
         Uri.parse(
-            'https://api.spotify.com/v1/search?q=$query&type=track&limit=1'),
+            'https://api.spotify.com/v1/search?q=$query&type=track&limit=10'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final items = data['tracks']?['items'];
-        if (items is List && items.isNotEmpty) {
+        final items = data['tracks']?['items'] as List?;
+        if (items != null && items.isNotEmpty) {
+          final normalizedArtist = artist.toLowerCase().trim();
+          final normalizedTitle = title.toLowerCase().trim();
+
+          // Find best match: exact artist + title match first
+          for (final item in items) {
+            final artists = (item['artists'] as List?) ?? [];
+            final trackName = (item['name'] as String? ?? '').toLowerCase().trim();
+            for (final a in artists) {
+              final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
+              if (spotifyArtist == normalizedArtist && trackName == normalizedTitle) {
+                debugPrint('Spotify: exact match "${item['name']}" by "${a['name']}"');
+                return item['uri'];
+              }
+            }
+          }
+
+          // Fallback: artist name contains match
+          for (final item in items) {
+            final artists = (item['artists'] as List?) ?? [];
+            for (final a in artists) {
+              final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
+              if (spotifyArtist.contains(normalizedArtist) || normalizedArtist.contains(spotifyArtist)) {
+                debugPrint('Spotify: partial match "${item['name']}" by "${a['name']}"');
+                return item['uri'];
+              }
+            }
+          }
+
+          // Last resort: first result
+          debugPrint('Spotify: no artist match, using first result "${items.first['name']}"');
           return items.first['uri'];
         }
       }

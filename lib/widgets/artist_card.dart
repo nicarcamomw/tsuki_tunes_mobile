@@ -6,6 +6,7 @@ import '../core/utils/formatters.dart';
 import '../models/artist.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
+import '../widgets/tap_scale.dart';
 
 class ArtistCard extends StatelessWidget {
   final Artist artist;
@@ -19,7 +20,7 @@ class ArtistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapScale(
       onTap: () {
         appNavigatorKey.currentState?.push(
           MaterialPageRoute(
@@ -27,6 +28,7 @@ class ArtistCard extends StatelessWidget {
           ),
         );
       },
+      scaleDown: 0.95,
       child: Container(
         width: size,
         margin: const EdgeInsets.only(right: 14),

@@ -9,6 +9,7 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import 'audio_visualizer.dart';
 import 'oni_mask_icon.dart';
+import 'tap_scale.dart';
 
 class TrackTile extends StatelessWidget {
   final Track track;
@@ -178,7 +179,7 @@ class TrackTile extends StatelessWidget {
 
               // Listened checkbox (mark/unmark)
               if (showListenedCheckbox)
-                GestureDetector(
+                TapScale(
                   onTap: () {
                     if (isListened) {
                       if (onUnmark != null) {
@@ -190,6 +191,7 @@ class TrackTile extends StatelessWidget {
                       library.markTrack(track);
                     }
                   },
+                  scaleDown: 0.8,
                   child: OniMaskIcon(
                     isActive: isListened,
                     size: 24,
