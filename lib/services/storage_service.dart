@@ -91,4 +91,17 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_artistVisitsKey, json.encode(visits));
   }
+
+  // --- Onboarding Persistence ---
+  static const String _onboardingKey = 'tsuki_has_completed_onboarding';
+
+  Future<bool> hasCompletedOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingKey) ?? false;
+  }
+
+  Future<void> setCompletedOnboarding(bool completed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, completed);
+  }
 }

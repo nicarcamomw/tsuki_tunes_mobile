@@ -8,7 +8,6 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../models/album.dart';
 import '../services/deezer_api_service.dart';
-import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/oni_mask_icon.dart';

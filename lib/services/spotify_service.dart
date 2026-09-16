@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SpotifyService {
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
@@ -24,16 +25,20 @@ class SpotifyService {
   DateTime? _tokenExpiry;
   Map<String, dynamic>? _profile;
   bool _isPremium = false;
+  String? _lastError;
+  String? _activeDeviceName;
 
-  bool get isConnected => _accessToken != null && _profile != null;
+  bool get isConnected => _accessToken != null;
   bool get isPremium => _isPremium;
   Map<String, dynamic>? get profile => _profile;
+  String? get lastError => _lastError;
+  String? get activeDeviceName => _activeDeviceName;
 
   Future<String?> getValidToken() async {
     await _ensureValidToken();
     return _accessToken;
   }
-  String? get displayName => _profile?['display_name'];
+  String? get displayName => _profile?['display_name'] ?? (_accessToken != null ? 'Usuario Spotify' : null);
   String? get profileImage {
     final images = _profile?['images'];
     if (images is List && images.isNotEmpty) {
@@ -78,6 +83,7 @@ class SpotifyService {
   }
 
   Future<bool> connect() async {
+    _lastError = null;
     try {
       final codeVerifier = _generateCodeVerifier();
       final codeChallenge = _generateCodeChallenge(codeVerifier);
@@ -100,12 +106,27 @@ class SpotifyService {
       );
 
       final uri = Uri.parse(result);
+      if (uri.queryParameters.containsKey('error')) {
+        _lastError = uri.queryParameters['error_description'] ?? uri.queryParameters['error'];
+        debugPrint('Spotify auth redirect error: $_lastError');
+        return false;
+      }
+
       final code = uri.queryParameters['code'];
-      if (code == null) return false;
+      if (code == null) {
+        _lastError = 'Código de autorización no encontrado en la respuesta.';
+        return false;
+      }
 
       return await _exchangeCode(code, codeVerifier);
     } catch (e) {
       debugPrint('Spotify connect error: $e');
+      final errStr = e.toString();
+      if (errStr.contains('CANCELED') || errStr.contains('user_canceled')) {
+        _lastError = 'Conexión cancelada por el usuario.';
+      } else {
+        _lastError = 'Error al conectar con Spotify: $e';
+      }
       return false;
     }
   }
@@ -124,7 +145,16 @@ class SpotifyService {
         },
       );
 
-      if (response.statusCode != 200) return false;
+      if (response.statusCode != 200) {
+        debugPrint('Spotify exchange failed (${response.statusCode}): ${response.body}');
+        try {
+          final data = json.decode(response.body);
+          _lastError = data['error_description'] ?? data['error'] ?? 'Fallo de autenticación (${response.statusCode})';
+        } catch (_) {
+          _lastError = 'Error de respuesta del servidor de Spotify (${response.statusCode})';
+        }
+        return false;
+      }
 
       final data = json.decode(response.body);
       _accessToken = data['access_token'];
@@ -134,9 +164,10 @@ class SpotifyService {
 
       await _saveTokens();
       await _fetchProfile();
-      return _profile != null;
+      return _accessToken != null;
     } catch (e) {
       debugPrint('Spotify exchange error: $e');
+      _lastError = 'Error de red durante el intercambio de tokens: $e';
       return false;
     }
   }
@@ -164,12 +195,21 @@ class SpotifyService {
         _tokenExpiry =
             DateTime.now().add(Duration(seconds: data['expires_in']));
         await _saveTokens();
+      } else if (response.statusCode == 400 || response.statusCode == 401) {
+        // Permanent invalid grant - token was revoked
+        try {
+          final data = json.decode(response.body);
+          if (data['error'] == 'invalid_grant') {
+            debugPrint('Spotify refresh token invalid_grant: disconnecting');
+            await disconnect();
+          }
+        } catch (_) {}
       } else {
-        await disconnect();
+        debugPrint('Spotify refresh transient status: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Spotify refresh error: $e');
-      await disconnect();
+      debugPrint('Spotify refresh network error: $e');
+      // Do not disconnect on network errors so playback can retry
     }
   }
 
@@ -197,6 +237,18 @@ class SpotifyService {
     } catch (e) {
       debugPrint('Spotify profile error: $e');
     }
+  }
+
+  Future<bool> openSpotifyApp() async {
+    final uri = Uri.parse('spotify:');
+    try {
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching Spotify app: $e');
+    }
+    return false;
   }
 
   // --- Playback ---
@@ -284,9 +336,11 @@ class SpotifyService {
                   orElse: () => devices.first,
                 );
           final deviceId = chosen['id'] as String?;
-          debugPrint('Spotify chosen device: ${chosen['name']} (${chosen['type']})');
+          _activeDeviceName = chosen['name'] as String?;
+          debugPrint('Spotify chosen device: $_activeDeviceName (${chosen['type']})');
           return deviceId;
         }
+        _activeDeviceName = null;
         debugPrint('Spotify: no devices found');
       }
     } catch (e) {
@@ -295,13 +349,33 @@ class SpotifyService {
     return null;
   }
 
+  Future<List<Map<String, dynamic>>> getDevices() async {
+    await _ensureValidToken();
+    if (_accessToken == null) return [];
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.spotify.com/v1/me/player/devices'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final devices = (data['devices'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        return devices;
+      }
+    } catch (e) {
+      debugPrint('Spotify getDevices error: $e');
+    }
+    return [];
+  }
+
   Future<bool> play({String? trackUri, List<String>? trackUris, String? deviceId}) async {
     await _ensureValidToken();
     if (_accessToken == null) return false;
 
     try {
       final targetDevice = deviceId ?? await getActiveDeviceId();
-      if (targetDevice == null) return false;
 
       final body = <String, dynamic>{};
       if (trackUris != null && trackUris.isNotEmpty) {
@@ -310,7 +384,10 @@ class SpotifyService {
         body['uris'] = [trackUri];
       }
 
-      final url = 'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice';
+      // Try with device ID first, fallback to no device
+      final url = targetDevice != null
+          ? 'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'
+          : 'https://api.spotify.com/v1/me/player/play';
       final response = await http.put(
         Uri.parse(url),
         headers: {
@@ -320,7 +397,23 @@ class SpotifyService {
         body: json.encode(body),
       );
 
-      debugPrint('Spotify play: ${response.statusCode}');
+      debugPrint('Spotify play: ${response.statusCode} (device=$targetDevice)');
+
+      // If failed with device, retry without device
+      if (response.statusCode != 204 && response.statusCode != 200 && targetDevice != null) {
+        debugPrint('Spotify play: retrying without device_id');
+        final retry = await http.put(
+          Uri.parse('https://api.spotify.com/v1/me/player/play'),
+          headers: {
+            'Authorization': 'Bearer $_accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(body),
+        );
+        debugPrint('Spotify play retry: ${retry.statusCode}');
+        return retry.statusCode == 204 || retry.statusCode == 200;
+      }
+
       return response.statusCode == 204 || response.statusCode == 200;
     } catch (e) {
       debugPrint('Spotify play error: $e');

@@ -52,7 +52,7 @@ class AudioProvider extends ChangeNotifier {
   Duration get position => _position;
   Duration get duration => _duration;
   Duration get bufferedPosition => _bufferedPosition;
-  bool get useSpotify => _useSpotify && _spotifyActive;
+  bool get useSpotify => _useSpotify;
   SpotifyService get spotify => _spotify;
   String? get lastSpotifyError => _lastSpotifyError;
 
@@ -72,9 +72,8 @@ class AudioProvider extends ChangeNotifier {
   Future<void> _connectNativePlayer() async {
     _nativePlayer.onStateChanged = _onNativeStateChanged;
     _nativePlayer.onError = (error) {
-      debugPrint('Spotify native error: $error');
-      _lastSpotifyError = error;
-      notifyListeners();
+      // Non-intrusive: don't show snackbar for background native remote fallback
+      debugPrint('Spotify native background notice: $error');
     };
 
     final token = await _spotify.getValidToken();
@@ -96,18 +95,8 @@ class AudioProvider extends ChangeNotifier {
       } catch (e) {
         debugPrint('Spotify: switchToLocalDevice error: $e');
       }
-      await Future.delayed(const Duration(seconds: 1));
-      final deviceId = await _spotify.getActiveDeviceId();
-      if (deviceId == null) {
-        debugPrint('Spotify: no device found after connect, marking inactive');
-        _spotifyActive = false;
-        _useSpotify = false;
-      } else {
-        debugPrint('Spotify: device after connect = $deviceId');
-      }
     } else {
-      debugPrint('Spotify native player failed to connect');
-      _useSpotify = false;
+      debugPrint('Spotify native player failed to connect (Web API still active)');
     }
     notifyListeners();
   }
@@ -159,7 +148,7 @@ class AudioProvider extends ChangeNotifier {
   void _startPositionTimer() {
     _spotifyPositionTimer?.cancel();
     _spotifyPositionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (_isPlaying && _spotifyActive) {
+      if (_isPlaying && _useSpotify) {
         _position += const Duration(milliseconds: 500);
         if (_position >= _duration && _duration > Duration.zero) {
           _stopPositionTimer();
@@ -237,7 +226,7 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_useSpotify && _spotifyActive) {
+      if (_useSpotify) {
         await _playViaSpotify(track);
       } else {
         await _service.playTrack(track);
@@ -273,7 +262,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}"');
-      _lastSpotifyError = 'No encontrada en Spotify, usando preview';
+      _lastSpotifyError = 'Pista no disponible en Spotify, reproduciendo vista previa';
       await _service.playTrack(track);
       _isBuffering = false;
       notifyListeners();
@@ -286,7 +275,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (!played) {
       debugPrint('Spotify: Web API play failed, falling back to preview');
-      _lastSpotifyError = 'Error de Spotify, usando preview';
+      _lastSpotifyError = 'Abre la app de Spotify para activar la reproducción completa';
       await _service.playTrack(track);
       _isBuffering = false;
       notifyListeners();
@@ -301,7 +290,7 @@ class AudioProvider extends ChangeNotifier {
   }
 
   void _prefetchNextTrack() {
-    if (!_useSpotify || !_spotifyActive) return;
+    if (!_useSpotify) return;
     if (_currentIndex < 0 || _currentIndex >= _queue.length - 1) return;
 
     final nextTrack = _queue[_currentIndex + 1];
@@ -317,7 +306,7 @@ class AudioProvider extends ChangeNotifier {
       return;
     }
 
-    if (_spotifyActive) {
+    if (_useSpotify) {
       if (_isPlaying) {
         await _spotify.pause();
         _isPlaying = false;
@@ -364,7 +353,7 @@ class AudioProvider extends ChangeNotifier {
 
   Future<void> stop() async {
     _stopPositionTimer();
-    if (_spotifyActive) {
+    if (_useSpotify) {
       await _spotify.pause();
     }
     await _service.stop();
@@ -379,7 +368,7 @@ class AudioProvider extends ChangeNotifier {
     _position = pos;
     notifyListeners();
 
-    if (_spotifyActive) {
+    if (_useSpotify) {
       await _spotify.seekTo(pos.inMilliseconds);
     } else {
       await _service.seek(pos);
@@ -402,7 +391,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (_isLoop) {
       seek(Duration.zero);
-      if (_spotifyActive) {
+      if (_useSpotify) {
         _spotify.resume();
       } else {
         _service.resume();

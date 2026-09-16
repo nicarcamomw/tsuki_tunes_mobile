@@ -7,13 +7,24 @@ class AuthProvider extends ChangeNotifier {
   final FirebaseService _firebase = FirebaseService();
 
   User? _user;
+  bool _isGuest = false;
   bool _loading = true;
+  String? _authError;
+  bool _wasCancelled = false;
   StreamSubscription<User?>? _authSub;
 
   User? get user => _user;
   bool get loading => _loading;
-  bool get isLoggedIn => _user != null;
-  String? get uid => _user?.uid;
+  bool get isGuest => _isGuest;
+  bool get isLoggedIn => _user != null || _isGuest;
+  String? get uid => _user?.uid ?? (_isGuest ? 'guest_user' : null);
+  String? get authError => _authError;
+  bool get wasCancelled => _wasCancelled;
+
+  void loginAsGuest() {
+    _isGuest = true;
+    notifyListeners();
+  }
 
   AuthProvider() {
     _init();
@@ -35,17 +46,31 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> loginWithGoogle() async {
+    _authError = null;
+    _wasCancelled = false;
     try {
+      if (!_firebase.isInitialized) {
+        await _firebase.initialize();
+      }
       final result = await _firebase.signInWithGoogle();
-      return result != null;
+      if (result == null) {
+        _wasCancelled = true;
+        notifyListeners();
+        return false;
+      }
+      return true;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
+      _authError = e.toString();
+      notifyListeners();
       return false;
     }
   }
 
   Future<void> logout() async {
+    _isGuest = false;
     await _firebase.signOut();
+    notifyListeners();
   }
 
   @override

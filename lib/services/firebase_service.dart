@@ -29,13 +29,21 @@ class FirebaseService {
     _db = FirebaseFirestore.instance;
     _googleSignIn = GoogleSignIn(
       serverClientId: '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
+      scopes: ['email'],
     );
     _initialized = true;
   }
 
   Future<UserCredential?> signInWithGoogle() async {
+    try {
+      await _googleSignIn?.signOut();
+    } catch (_) {}
+
     final googleUser = await _googleSignIn!.signIn();
-    if (googleUser == null) return null;
+    if (googleUser == null) {
+      // User cancelled or closed the picker
+      return null;
+    }
 
     final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
@@ -44,7 +52,15 @@ class FirebaseService {
     );
 
     final userCredential = await _auth!.signInWithCredential(credential);
-    await _syncUserProfile(userCredential.user!);
+    try {
+      if (userCredential.user != null) {
+        await _syncUserProfile(userCredential.user!);
+      }
+    } catch (e) {
+      // Non-blocking: Firestore permission/network errors shouldn't break sign-in
+      // ignore: avoid_print
+      print('Firestore profile sync non-fatal warning: $e');
+    }
     return userCredential;
   }
 

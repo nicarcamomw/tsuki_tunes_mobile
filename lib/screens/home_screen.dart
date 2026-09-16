@@ -13,6 +13,8 @@ import '../widgets/artist_card.dart';
 import '../widgets/album_card.dart';
 import '../screens/artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
+import 'login_screen.dart';
+import 'onboarding_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -527,20 +529,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       if (spotify.isConnected)
-                        TextButton(
-                          onPressed: () async {
-                            await spotify.disconnect();
-                            await audioProvider.updateSpotifyState();
-                            setModalState(() {});
-                          },
-                          child: Text(
-                            'DESCONECTAR',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.launch_rounded, size: 16, color: AppColors.accent),
+                              tooltip: 'Abrir Spotify',
+                              onPressed: () => spotify.openSpotifyApp(),
                             ),
-                          ),
+                            TextButton(
+                              onPressed: () async {
+                                await spotify.disconnect();
+                                await audioProvider.updateSpotifyState();
+                                setModalState(() {});
+                              },
+                              child: Text(
+                                'DESCONECTAR',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
                         )
                       else
                         OutlinedButton(
@@ -554,17 +566,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Spotify conectado'),
+                                      content: Text('Spotify sincronizado exitosamente'),
                                       backgroundColor: AppColors.accent,
                                     ),
                                   );
                                 }
                               } else {
                                 if (context.mounted) {
+                                  final msg = spotify.lastError ??
+                                      'No se pudo conectar. Verifica que tu cuenta esté en User Management del Dashboard de Spotify.';
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'No se pudo conectar. Verifica que tu cuenta esté en User Management del Dashboard de Spotify.'),
+                                    SnackBar(
+                                      content: Text(msg),
                                       backgroundColor: AppColors.accent,
                                     ),
                                   );
@@ -602,27 +615,89 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                if (spotify.isConnected && !spotify.isPremium)
+                if (spotify.isConnected) ...[
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      'Se necesita Spotify Premium para reproducción completa',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        color: AppColors.accent,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          spotify.isPremium ? Icons.verified_rounded : Icons.info_outline_rounded,
+                          size: 13,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            spotify.isPremium
+                                ? (spotify.activeDeviceName != null
+                                    ? 'Dispositivo activo: ${spotify.activeDeviceName}'
+                                    : 'Reproducción completa Premium activa')
+                                : 'Cuenta estándar: vista previa disponible',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ],
 
                 const SizedBox(height: 16),
 
-                // Logout
+                // Tutorial & Masks guide
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      auth.logout();
+                      Navigator.of(context, rootNavigator: true).push(
+                        MaterialPageRoute(
+                          builder: (pushedCtx) => OnboardingScreen(
+                            onComplete: () {
+                              if (Navigator.of(pushedCtx).canPop()) {
+                                Navigator.of(pushedCtx).pop();
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.auto_stories_rounded,
+                      color: AppColors.neonCyan,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'VER TUTORIAL Y GUÍA',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neonCyan,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: AppColors.neonCyan.withValues(alpha: 0.6),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Logout
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await _confirmLogout(context, auth);
                     },
                     icon: const Icon(Icons.logout, color: AppColors.accent),
                     label: Text(
@@ -648,6 +723,108 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.bgCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: AppColors.border, width: 1.0),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.power_settings_new_rounded, color: AppColors.accent, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'CERRAR SESIÓN',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas desconectar tu enlace y cerrar sesión?',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+            child: Text(
+              'SALIR',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && context.mounted) {
+      await _handleLogout(context, auth);
+    }
+  }
+
+  Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
+    try {
+      // 1. Detener reproducción activa y vaciar cola
+      final audioProvider = context.read<AudioProvider>();
+      await audioProvider.stop();
+
+      // 2. Desconectar listener de Firestore de la librería
+      if (context.mounted) {
+        context.read<LibraryProvider>().disconnectFirestore();
+      }
+
+      // 3. Cerrar sesión en Firebase y Google
+      await auth.logout();
+    } catch (e) {
+      debugPrint('Error durante el cierre de sesión: $e');
+    } finally {
+      // 4. Navegar a LoginScreen limpiando todo el árbol de navegación
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 350),
+          ),
+          (route) => false,
+        );
+      }
+    }
   }
 
   Widget _buildStatCard(String label, String value, String meta,
