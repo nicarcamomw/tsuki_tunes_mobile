@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../providers/library_provider.dart';
 import '../providers/audio_provider.dart';
+import '../providers/locale_provider.dart';
 import '../models/track.dart';
 import '../models/album.dart';
 import '../screens/album_detail_screen.dart';
@@ -36,19 +37,43 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
+  final ScrollController scrollController = ScrollController();
   final TextEditingController _filterController = TextEditingController();
   String _sortBy = 'recent';
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
 
   @override
+  void initState() {
+    super.initState();
+    NavigationEvents.onLibraryScrollToTop = scrollToTop;
+  }
+
+  @override
   void dispose() {
+    if (NavigationEvents.onLibraryScrollToTop == scrollToTop) {
+      NavigationEvents.onLibraryScrollToTop = null;
+    }
+    scrollController.dispose();
     _filterController.dispose();
     super.dispose();
   }
 
+  /// Scroll to top suave para respuesta a Double-Tap o tap activo en Library
+  void scrollToTop() {
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
     final listenedTracks = library.listenedTracks;
     final totalTracks = listenedTracks.length;
@@ -123,19 +148,42 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Mi Biblioteca',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textBright,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        strings.libraryTitle.toUpperCase(),
+                        style: locale.getTextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textBright,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Text(
+                        ' // 03',
+                        style: locale.getTextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$totalTracks canciones en $totalAlbums álbumes',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                    strings.libraryTelemetry,
+                    style: GoogleFonts.notoSansJp(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent.withValues(alpha: 0.8),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    strings.libraryStats(totalTracks, totalAlbums),
+                    style: locale.getTextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: AppColors.accent,
                     ),
@@ -157,11 +205,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                     child: TextField(
                       controller: _filterController,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                           color: AppColors.textBright, fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'Filtrar álbumes o artistas...',
-                        hintStyle: GoogleFonts.plusJakartaSans(
+                        hintText: strings.filterHint,
+                        hintStyle: locale.getTextStyle(
                             color: AppColors.textMuted, fontSize: 13),
                         prefixIcon: const Icon(Icons.filter_list,
                             color: AppColors.textSecondary, size: 18),
@@ -184,11 +232,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      _buildSortBtn('recent', 'Reciente'),
+                      _buildSortBtn('recent', strings.sortRecent, locale),
                       const SizedBox(width: 8),
-                      _buildSortBtn('alpha', 'A–Z'),
+                      _buildSortBtn('alpha', strings.sortAz, locale),
                       const SizedBox(width: 8),
-                      _buildSortBtn('artist', 'Artista'),
+                      _buildSortBtn('artist', strings.sortArtist, locale),
                     ],
                   ),
                 ],
@@ -199,37 +247,42 @@ class _LibraryScreenState extends State<LibraryScreen> {
             Expanded(
               child: totalTracks == 0
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.library_music_outlined,
-                              size: 54, color: AppColors.borderGlow),
-                          const SizedBox(height: 12),
-                          Text(
-                            'BIBLIOTECA VACÍA',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                              letterSpacing: 1.5,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.library_music_outlined,
+                                size: 54, color: AppColors.borderGlow),
+                            const SizedBox(height: 12),
+                            Text(
+                              strings.emptyLibraryTitle,
+                              textAlign: TextAlign.center,
+                              style: locale.getTextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Marca canciones como escuchadas para verlas aquí',
-                            style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12, color: AppColors.textMuted),
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            Text(
+                              strings.emptyLibrarySubtitle,
+                              textAlign: TextAlign.center,
+                              style: locale.getTextStyle(
+                                  fontSize: 12, color: AppColors.textMuted),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : ListView.builder(
+                      controller: scrollController,
                       padding: const EdgeInsets.only(bottom: 120),
-
                       itemCount: visible.length + (remaining > 0 ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == visible.length) {
-                          return _buildShowMoreButton(remaining);
+                          return _buildShowMoreButton(remaining, locale);
                         }
                         return _AlbumGroupTile(
                           group: visible[index],
@@ -255,7 +308,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildShowMoreButton(int remaining) {
+  Widget _buildShowMoreButton(int remaining, LocaleProvider locale) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: OutlinedButton(
@@ -265,8 +318,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
         child: Text(
-          'VER MÁS ($remaining restantes)',
-          style: GoogleFonts.plusJakartaSans(
+          locale.strings.showMore(remaining),
+          style: locale.getTextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: AppColors.accent,
@@ -276,7 +329,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildSortBtn(String value, String label) {
+  Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
     final isSelected = _sortBy == value;
     return Expanded(
       child: GestureDetector(
@@ -293,7 +346,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
@@ -320,6 +373,8 @@ class _AlbumGroupTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final audio = context.watch<AudioProvider>();
     final library = context.watch<LibraryProvider>();
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -368,8 +423,8 @@ class _AlbumGroupTile extends StatelessWidget {
                         Text(
                           group.albumTitle.isNotEmpty
                               ? group.albumTitle
-                              : 'Álbum desconocido',
-                          style: GoogleFonts.plusJakartaSans(
+                              : strings.unknownAlbum,
+                          style: locale.getTextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textBright,
@@ -391,8 +446,8 @@ class _AlbumGroupTile extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              ' · ${group.tracks.length} tracks',
-                              style: GoogleFonts.plusJakartaSans(
+                              ' · ${strings.trackCountLabel(group.tracks.length)}',
+                              style: locale.getTextStyle(
                                 fontSize: 10,
                                 color: AppColors.textMuted,
                               ),
@@ -420,8 +475,8 @@ class _AlbumGroupTile extends StatelessWidget {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
-                        'Ver álbum',
-                        style: GoogleFonts.plusJakartaSans(
+                        strings.viewAlbum,
+                        style: locale.getTextStyle(
                           fontSize: 10,
                           color: AppColors.accent,
                           fontWeight: FontWeight.w600,

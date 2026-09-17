@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Documentos/v2.0 - Documentacion de apartados.md",
+                "file": "Documentos/v3.0 - Documentacion de apartados.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "v2.0 - Documentacion de apartados"
+              "title": "v3.0 - Documentacion de apartados"
             }
           }
         ]
@@ -190,30 +190,31 @@
   },
   "active": "223b185e9e4f080c",
   "lastOpenFiles": [
-    "build/113bd967",
+    "lib/widgets/cyber_glitch_text.dart",
+    "lib/widgets/language_selector_sheet.dart",
+    "lib/providers/locale_provider.dart",
+    "lib/core/localization/app_strings.dart",
+    "lib/core/localization/app_language.dart",
+    "lib/core/localization",
+    "Documentos/v2.0 - Documentacion de apartados.md",
+    "Documentos/v3.0 - Documentacion de apartados.md",
+    "build/4f05ec9d",
     "build/app/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/flutter_assets/kernel_blob.bin.jar",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86_64/generate_cxx_metadata_625_timing.txt",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86/generate_cxx_metadata_625_timing.txt",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_619_timing.txt",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/arm64-v8a/generate_cxx_metadata_615_timing.txt",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/lucide_icons/assets/lucide.ttf",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/lucide_icons/assets",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/cupertino_icons/assets",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/lucide_icons",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/grupo.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/fuego.png",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86_64/generate_cxx_metadata_2172_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86/generate_cxx_metadata_2172_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_2172_timing.txt",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/tengu.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/persona.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/nota.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/libreria.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-512.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hero.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hannya.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/grupo.png",
     "Documentos/v1.0 - Documentacion de apartados.md",
     "Documentos/Documentacion de apartados de aplicacion movil Tsuki Tunes V1.md",
-    "Documentos/v2.0 - Documentacion de apartados.md",
     "Documentos/Documentacion de apartados de aplicacion movil Tsuki Tunes.md",
     "Documentos/Versiones/v1.0 - Documentacion de apartados.md"
   ]

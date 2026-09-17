@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/artist.dart';
+import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../widgets/tap_scale.dart';
@@ -20,8 +22,11 @@ class ArtistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+
     return TapScale(
       onTap: () {
+        FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ArtistDetailScreen(artist: artist),
@@ -79,8 +84,8 @@ class ArtistCard extends StatelessWidget {
             ),
             if (artist.fansCount > 0)
               Text(
-                '${Formatters.formatNumber(artist.fansCount)} fans',
-                style: GoogleFonts.plusJakartaSans(
+                locale.strings.artistFansCompact(Formatters.formatNumber(artist.fansCount)),
+                style: locale.getTextStyle(
                   fontSize: 10,
                   color: AppColors.accent,
                   fontWeight: FontWeight.w600,

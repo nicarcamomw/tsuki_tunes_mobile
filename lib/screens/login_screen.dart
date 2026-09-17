@@ -7,7 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
+import '../core/localization/app_strings.dart';
 import '../widgets/cyber_orb.dart';
+import '../widgets/cyber_glitch_text.dart';
 import 'main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,11 +24,13 @@ class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
   late final Ticker _ticker;
   late final AnimationController _shockwaveController;
+  late final AnimationController _rippleController;
   final GlobalKey _orbKey = GlobalKey();
   Offset? _cachedOrbCenter;
   double _time = 0.0;
   bool _isLoading = false;
   bool _loginSuccess = false;
+  Offset _buttonTapLocal = Offset.zero;
 
   // High-performance deterministic particle seeds for cyber dust / embers
   final List<_CyberParticle> _particles = _generateParticles();
@@ -74,6 +79,12 @@ class _LoginScreenState extends State<LoginScreen>
       }
     });
 
+    // Single-shot tactile shockwave burst inside Google button on tap (~550ms)
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+
     // Continuous monotonic ticker: NEVER wraps, NEVER resets, ZERO jump cuts!
     _ticker = createTicker((elapsed) {
       if (mounted) {
@@ -104,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _ticker.dispose();
     _shockwaveController.dispose();
+    _rippleController.dispose();
     super.dispose();
   }
 
@@ -122,9 +134,9 @@ class _LoginScreenState extends State<LoginScreen>
       } else {
         setState(() => _isLoading = false);
         if (!auth.wasCancelled) {
-        final msg = (auth.authError != null && auth.authError!.isNotEmpty)
-            ? 'Error al conectar con Google. Comprueba tu conexión e intenta de nuevo.'
-            : 'Error al sincronizar con Google. Intente nuevamente.';
+        final locale = context.read<LocaleProvider>();
+        final strings = locale.strings;
+        final msg = strings.loginGoogleError;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -134,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen>
                 Expanded(
                   child: Text(
                     msg,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: locale.getTextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -167,6 +179,8 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final t = _time;
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -222,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 6),
 
                   // Top Cyber Status Telemetry HUD Bar
-                  _buildHudTopBar(t),
+                  _buildHudTopBar(t, locale, strings),
 
                   const Spacer(flex: 3),
 
@@ -232,12 +246,12 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 16),
 
                   // Cyberpunk Neon Typography
-                  _buildBrandingHeader(t),
+                  _buildBrandingHeader(t, locale, strings),
 
                   const Spacer(flex: 3),
 
                   // Cyberpunk Neural Link Google Button
-                  _buildCyberAuthCard(t),
+                  _buildCyberAuthCard(t, locale, strings),
 
                   const Spacer(flex: 2),
 
@@ -276,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   // --- Top Navigation & Quick Catalog Access Bar (Option 3) ---
-  Widget _buildHudTopBar(double t) {
+  Widget _buildHudTopBar(double t, LocaleProvider locale, AppStrings strings) {
     final pulse = (sin(t * 2.5) * 0.5 + 0.5);
 
     return Padding(
@@ -325,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 child: Text(
-                  'v2.0',
+                  'v3.0',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 8.0,
                     fontWeight: FontWeight.w800,
@@ -366,8 +380,8 @@ class _LoginScreenState extends State<LoginScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'EXPLORAR CATÁLOGO',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.loginGuestExplore,
+                      style: locale.getTextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
@@ -501,42 +515,60 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // --- Branding Header ---
-  Widget _buildBrandingHeader(double t) {
-    final glowPulse = 20.0 + 8.0 * sin(t * 2.2);
+  // --- Cyberpunk Neon Typography ---
+  Widget _buildBrandingHeader(double t, LocaleProvider locale, AppStrings strings) {
+    final pulse = (sin(t * 3.0) * 0.5 + 0.5);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'TSUKI',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 34,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textBright,
-                letterSpacing: 7,
+        // Main Title
+        ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                Colors.white.withValues(alpha: 0.9),
+                AppColors.accent.withValues(alpha: 0.8),
+              ],
+              stops: const [0.0, 0.65, 1.0],
+            ).createShader(bounds);
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                'TSUKI',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4.5,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'TUNES',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 34,
-                fontWeight: FontWeight.w900,
-                color: AppColors.accent,
-                letterSpacing: 7,
-                shadows: [
-                  Shadow(
-                    color: AppColors.accentGlow,
-                    blurRadius: glowPulse,
-                  ),
-                ],
+              const SizedBox(width: 8),
+              Text(
+                'TUNES',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4.5,
+                  color: AppColors.accent,
+                  shadows: [
+                    Shadow(
+                      color: AppColors.accent.withValues(alpha: 0.5 + 0.3 * pulse),
+                      blurRadius: 16,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 7),
         Row(
@@ -550,15 +582,15 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              'TU BIBLIOTECA ',
-              style: GoogleFonts.plusJakartaSans(
+              strings.loginSubtitlePrefix,
+              style: locale.getTextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary,
                 letterSpacing: 2.2,
               ),
             ),
-            const CyberGlitchText(text: 'MUSICAL'),
+            CyberGlitchText(text: strings.loginSubtitleGlitch),
             const SizedBox(width: 8),
             Container(
               width: 18,
@@ -572,193 +604,196 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   // --- Cyberpunk Neural Link Google Button ---
-  Widget _buildCyberAuthCard(double t) {
+  Widget _buildCyberAuthCard(double t, LocaleProvider locale, AppStrings strings) {
     return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.32),
-                blurRadius: 26,
-                spreadRadius: 1,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.32),
+            blurRadius: 26,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Stack(
-              children: [
-                // 1. Cyberpunk Red & Crimson Gradient
-                Container(
-                  height: 54,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Color(0xFFFF1919),
-                        Color(0xFFE50914),
-                        Color(0xFF9E0B0B),
-                      ],
-                    ),
-                  ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          children: [
+            // 1. Cyberpunk Red & Crimson Gradient
+            Container(
+              height: 54,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFFFF1919),
+                    Color(0xFFE50914),
+                    Color(0xFF9E0B0B),
+                  ],
                 ),
+              ),
+            ),
 
-                // 2. Falling Lead-Colored Japanese Masks (Oni, Hannya, Tengu) inside button
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final w = constraints.maxWidth;
-                        final h = constraints.maxHeight;
+            // 2. Falling Lead-Colored Japanese Masks (Oni, Hannya, Tengu) inside button
+            Positioned.fill(
+              child: IgnorePointer(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final w = constraints.maxWidth;
+                    final h = constraints.maxHeight;
 
-                        return Stack(
-                          clipBehavior: Clip.hardEdge,
-                          children: _buttonMasks.map((mask) {
-                            // Falling straight down (normalized Y: 0.0 -> 1.0)
-                            final rawY = (mask.baseY + (t * mask.speed * 0.35)) % 1.0;
-                            // Smooth sine boundary fade (Zero pop or cuts)
-                            final edgeFade = sin(rawY * pi).clamp(0.0, 1.0);
-                            final opacity = mask.maxOpacity * edgeFade;
+                    return Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: _buttonMasks.map((mask) {
+                        // Falling straight down (normalized Y: 0.0 -> 1.0)
+                        final rawY = (mask.baseY + (t * mask.speed * 0.35)) % 1.0;
+                        // Smooth sine boundary fade (Zero pop or cuts)
+                        final edgeFade = sin(rawY * pi).clamp(0.0, 1.0);
+                        final opacity = mask.maxOpacity * edgeFade;
 
-                            if (opacity <= 0.01) return const SizedBox.shrink();
+                        if (opacity <= 0.01) return const SizedBox.shrink();
 
-                            // Falls completely straight down (no sway, no rotation)
-                            final posX = mask.baseX * (w - mask.size);
-                            final posY = (rawY * (h + mask.size)) - (mask.size * 0.5);
+                        // Falls completely straight down (no sway, no rotation)
+                        final posX = mask.baseX * (w - mask.size);
+                        final posY = (rawY * (h + mask.size)) - (mask.size * 0.5);
 
-                            return Positioned(
-                              left: posX,
-                              top: posY,
-                              child: Image.asset(
-                                mask.asset,
-                                width: mask.size,
-                                height: mask.size,
-                                fit: BoxFit.contain,
-                                color: const Color(0xFF2B2F38).withValues(alpha: opacity),
-                                colorBlendMode: BlendMode.srcIn,
-                              ),
-                            );
-                          }).toList(),
+                        return Positioned(
+                          left: posX,
+                          top: posY,
+                          child: Image.asset(
+                            mask.asset,
+                            width: mask.size,
+                            height: mask.size,
+                            fit: BoxFit.contain,
+                            color: const Color(0xFF2B2F38).withValues(alpha: opacity),
+                            colorBlendMode: BlendMode.srcIn,
+                          ),
                         );
-                      },
-                    ),
+                      }).toList(),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // 3. Slower, Less Frequent Luxurious Shimmer Sheen
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _ContinuousShimmerPainter(time: t),
+                ),
+              ),
+            ),
+
+            // 4. Cyberpunk Ripple Shockwave (Tactile Feedback on Tap)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: RepaintBoundary(
+                  child: AnimatedBuilder(
+                    animation: _rippleController,
+                    builder: (context, _) {
+                      if (_rippleController.value == 0.0 ||
+                          _rippleController.value == 1.0) {
+                        return const SizedBox.shrink();
+                      }
+                      return CustomPaint(
+                        painter: _ButtonRipplePainter(
+                          progress: _rippleController.value,
+                          center: _buttonTapLocal,
+                        ),
+                      );
+                    },
                   ),
                 ),
+              ),
+            ),
 
-                // 3. Slower, Less Frequent Luxurious Shimmer Sheen
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _ContinuousShimmerPainter(time: t),
-                    ),
-                  ),
-                ),
-
-
-                // Button Interaction
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: (_isLoading || _loginSuccess) ? null : _handleGoogleLogin,
-                    borderRadius: BorderRadius.circular(8),
-                    splashColor: Colors.white.withValues(alpha: 0.25),
-                    highlightColor: Colors.white.withValues(alpha: 0.1),
-                    child: SizedBox(
-                      height: 54,
-                      child: _loginSuccess
-                          ? Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle_rounded,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'ACCESO CONCEDIDO',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.0,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: 2.2,
-                                    ),
+            // Button Interaction
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (details) {
+                if (_isLoading || _loginSuccess) return;
+                _buttonTapLocal = details.localPosition;
+                _rippleController.forward(from: 0.0);
+              },
+              onTap: () {
+                if (_isLoading || _loginSuccess) return;
+                _handleGoogleLogin();
+              },
+              child: SizedBox(
+                height: 54,
+                child: _loginSuccess
+                    ? Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              strings.loginGranted,
+                              style: locale.getTextStyle(
+                                fontSize: 12.0,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : AnimatedOpacity(
+                        duration: const Duration(milliseconds: 250),
+                        opacity: _isLoading ? 0.35 : 1.0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Google Official 4-Color Emblem
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
-                            )
-                          : _isLoading
-                              ? Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'CONECTANDO MATRIZ...',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                          letterSpacing: 2.0,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    // Google Official 4-Color Emblem
-                                    Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(6),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.25),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const CustomPaint(
-                                        size: Size(16, 16),
-                                        painter: _GoogleLogoPainter(),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Text(
-                                      'INGRESAR CON GOOGLE',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        letterSpacing: 1.8,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                    ),
-                  ),
-                ),
-              ],
+                              alignment: Alignment.center,
+                              child: const CustomPaint(
+                                size: Size(16, 16),
+                                painter: _GoogleLogoPainter(),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Text(
+                              strings.loginGoogle,
+                              style: locale.getTextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1174,281 +1209,63 @@ class _ContinuousShimmerPainter extends CustomPainter {
       oldDelegate.time != time;
 }
 
-// ---------------------------------------------------------
-// CYBERPUNK RANDOM GLITCH & DISTORTION SYSTEM
-// ---------------------------------------------------------
+/// Cyberpunk Ripple Shockwave inside the Google Auth Button
+/// Emanates small, localized concentric EMP rings from the tap epicenter.
+/// Ultra-optimized for 120 FPS: zero allocations in paint() using static cached Paints.
+class _ButtonRipplePainter extends CustomPainter {
+  final double progress;
+  final Offset center;
 
-/// Ultra-Realistic Cyberpunk Glitch & Distortion Text Widget
-/// Calm for random intervals (2.0s - 4.5s), then triggers violent, crisp digital
-/// glitch bursts with multi-layer RGB Chromatic Aberration, slice displacements,
-/// scanline static, and cyber matrix glyph corruption.
-class CyberGlitchText extends StatefulWidget {
-  final String text;
-  final TextStyle? style;
+  const _ButtonRipplePainter({required this.progress, required this.center});
 
-  const CyberGlitchText({
-    super.key,
-    required this.text,
-    this.style,
-  });
+  // Reusable static Paint objects to guarantee 0 allocations during animation loop
+  static final Paint _glowPaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
 
-  @override
-  State<CyberGlitchText> createState() => _CyberGlitchTextState();
-}
-
-class _CyberGlitchTextState extends State<CyberGlitchText> {
-  Timer? _scheduleTimer;
-  Timer? _burstTicker;
-  final Random _rng = Random();
-
-  bool _isGlitching = false;
-  int _burstFrame = 0;
-  String _corruptedText = '';
-
-  // Glitch frame offsets & slice params
-  double _jitterX = 0.0;
-  double _jitterY = 0.0;
-  double _cyanDx = 0.0;
-  double _cyanDy = 0.0;
-  double _magentaDx = 0.0;
-  double _magentaDy = 0.0;
-  double _slice1Y = 0.3;
-  double _slice1Shift = 0.0;
-  double _slice2Y = 0.7;
-  double _slice2Shift = 0.0;
-  bool _whiteFlash = false;
-
-  // Cyber matrix glyph corruption candidates
-  static const List<String> _corruptions = [
-    'MU\$1C4L',
-    'M#S!CAL',
-    'M_S1C4L',
-    'MV\$IC/L',
-    'M[]S1CAL',
-    'M¥S!C4L',
-    'M0S1C4L',
-  ];
+  static final Paint _ringPaint = Paint()
+    ..isAntiAlias = true
+    ..style = PaintingStyle.stroke;
 
   @override
-  void initState() {
-    super.initState();
-    _corruptedText = widget.text;
-    _scheduleNextGlitch();
-  }
+  void paint(Canvas canvas, Size size) {
+    // Fallback to button center if touch coordinate is zero or unset
+    final epicenter = (center == Offset.zero)
+        ? Offset(size.width * 0.5, size.height * 0.5)
+        : center;
 
-  @override
-  void dispose() {
-    _scheduleTimer?.cancel();
-    _burstTicker?.cancel();
-    super.dispose();
-  }
+    // Compact, localized shockwave radius (~36px max radius, tight to the touch point)
+    final maxRadius = (size.height * 0.68).clamp(30.0, 38.0);
 
-  void _scheduleNextGlitch() {
-    _scheduleTimer?.cancel();
-    // Random pause between 2.2 and 4.8 seconds
-    final delayMs = 2200 + _rng.nextInt(2600);
-    _scheduleTimer = Timer(Duration(milliseconds: delayMs), _triggerBurst);
-  }
+    // 2 staggered concentric EMP rings with smooth quadratic decay (single-shot burst)
+    for (int i = 0; i < 2; i++) {
+      final p = progress - (i * 0.25);
+      if (p <= 0.0 || p >= 1.0) continue;
 
-  void _triggerBurst() {
-    if (!mounted) return;
-    _burstFrame = 0;
-    _isGlitching = true;
+      // Fast quadratic ease-out without allocating curve objects: p * (2.0 - p)
+      final easePhase = p * (2.0 - p);
+      final radius = maxRadius * easePhase;
+      final fade = 1.0 - p;
 
-    // Fast 38ms tick rate for authentic ~300ms digital glitch burst
-    _burstTicker?.cancel();
-    _burstTicker = Timer.periodic(const Duration(milliseconds: 38), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      _burstFrame++;
+      if (fade <= 0.04) continue;
 
-      // Burst finishes after 8 rapid frames (~300ms)
-      if (_burstFrame >= 8) {
-        timer.cancel();
-        if (mounted) {
-          setState(() {
-            _isGlitching = false;
-            _corruptedText = widget.text;
-            _jitterX = 0;
-            _jitterY = 0;
-            _cyanDx = 0;
-            _cyanDy = 0;
-            _magentaDx = 0;
-            _magentaDy = 0;
-            _slice1Shift = 0;
-            _slice2Shift = 0;
-            _whiteFlash = false;
-          });
-          _scheduleNextGlitch();
-        }
-        return;
-      }
+      // 1. Soft Crimson Energy Halo (Wider stroke, zero MaskFilter overhead)
+      _glowPaint
+        ..color = const Color(0xFFFF1919).withValues(alpha: fade * 0.35)
+        ..strokeWidth = 3.2 * fade;
+      canvas.drawCircle(epicenter, radius, _glowPaint);
 
-      setState(() {
-        _jitterX = (_rng.nextDouble() * 7.0) - 3.5;
-        _jitterY = (_rng.nextDouble() * 2.5) - 1.25;
-
-        // RGB Split Offsets (Cyan left, Magenta right)
-        _cyanDx = -(_rng.nextDouble() * 4.5 + 2.5);
-        _cyanDy = (_rng.nextDouble() * 2.0) - 1.0;
-
-        _magentaDx = (_rng.nextDouble() * 4.5 + 2.5);
-        _magentaDy = (_rng.nextDouble() * 2.0) - 1.0;
-
-        // Multi-slice parameters
-        _slice1Y = _rng.nextDouble() * 0.45;
-        _slice1Shift = (_rng.nextDouble() * 9.0) - 4.5;
-
-        _slice2Y = 0.5 + _rng.nextDouble() * 0.45;
-        _slice2Shift = (_rng.nextDouble() * 9.0) - 4.5;
-
-        _whiteFlash = _rng.nextDouble() > 0.65;
-
-        // Corrupted matrix text on glitch frames
-        if (_burstFrame % 2 == 1) {
-          _corruptedText = _corruptions[_rng.nextInt(_corruptions.length)];
-        } else {
-          _corruptedText = widget.text;
-        }
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final baseStyle = widget.style ??
-        GoogleFonts.plusJakartaSans(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 2.4,
-          color: AppColors.accent,
-        );
-
-    // Calm state: 100% clean, crisp red with deep neon glow
-    if (!_isGlitching) {
-      return Text(
-        widget.text,
-        style: baseStyle.copyWith(
-          color: AppColors.accent,
-          shadows: [
-            Shadow(
-              color: AppColors.accentGlow,
-              blurRadius: 10,
-            ),
-          ],
-        ),
-      );
+      // 2. White-Hot Crisp Core Ring
+      _ringPaint
+        ..color = Colors.white.withValues(alpha: fade * 0.65)
+        ..strokeWidth = 1.2 * fade;
+      canvas.drawCircle(epicenter, radius, _ringPaint);
     }
-
-    // Glitching state: multi-layer distorted stack
-    return Transform.translate(
-      offset: Offset(_jitterX, _jitterY),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          // 1. Dark Crimson Chromatic Aberration Underlayer
-          Transform.translate(
-            offset: Offset(_cyanDx, _cyanDy),
-            child: Text(
-              _corruptedText,
-              style: baseStyle.copyWith(
-                color: const Color(0xFFFF2B40).withValues(alpha: 0.85),
-              ),
-            ),
-          ),
-
-          // 2. Deep Ruby Chromatic Aberration Underlayer
-          Transform.translate(
-            offset: Offset(_magentaDx, _magentaDy),
-            child: Text(
-              _corruptedText,
-              style: baseStyle.copyWith(
-                color: const Color(0xFF9E0B0B).withValues(alpha: 0.85),
-              ),
-            ),
-          ),
-
-          // 3. Main Text (Red with potential white electrical flash)
-          Text(
-            _corruptedText,
-            style: baseStyle.copyWith(
-              color: _whiteFlash ? Colors.white : AppColors.accent,
-              shadows: [
-                Shadow(
-                  color: AppColors.accentGlow,
-                  blurRadius: 12,
-                ),
-                const Shadow(
-                  color: Color(0xFFFF2B40),
-                  blurRadius: 6,
-                  offset: Offset(-1.5, 0),
-                ),
-              ],
-            ),
-          ),
-
-          // 4. Horizontal Slice Displacements (Band 1)
-          ClipRect(
-            clipper: _MultiSliceClipper(
-              relativeTop: _slice1Y,
-              height: 4.0,
-            ),
-            child: Transform.translate(
-              offset: Offset(_slice1Shift, 0),
-              child: Text(
-                _corruptedText,
-                style: baseStyle.copyWith(
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(color: AppColors.accent, blurRadius: 6),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 5. Horizontal Slice Displacements (Band 2)
-          ClipRect(
-            clipper: _MultiSliceClipper(
-              relativeTop: _slice2Y,
-              height: 3.5,
-            ),
-            child: Transform.translate(
-              offset: Offset(_slice2Shift, 0),
-              child: Text(
-                _corruptedText,
-                style: baseStyle.copyWith(
-                  color: const Color(0xFFFF1919),
-                  shadows: [
-                    Shadow(color: AppColors.accentGlow, blurRadius: 6),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MultiSliceClipper extends CustomClipper<Rect> {
-  final double relativeTop;
-  final double height;
-
-  _MultiSliceClipper({required this.relativeTop, required this.height});
-
-  @override
-  Rect getClip(Size size) {
-    final top = relativeTop * size.height;
-    return Rect.fromLTWH(0, top.clamp(0.0, size.height), size.width, height);
   }
 
   @override
-  bool shouldReclip(covariant _MultiSliceClipper oldClipper) => true;
+  bool shouldRepaint(covariant _ButtonRipplePainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.center != center;
 }
 
 /// Official 4-Color Google 'G' Vector Painter

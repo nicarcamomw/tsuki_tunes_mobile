@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
+import '../providers/locale_provider.dart';
 
 class AlbumProgressBar extends StatelessWidget {
   final int listened;
@@ -18,6 +20,8 @@ class AlbumProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,8 +30,8 @@ class AlbumProgressBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '$listened/$total escuchadas',
-              style: GoogleFonts.plusJakartaSans(
+              locale.strings.albumProgressListened(listened, total),
+              style: locale.getTextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,

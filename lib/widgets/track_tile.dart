@@ -39,6 +39,7 @@ class TrackTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
+          FocusScope.of(context).unfocus();
           audio.playTrack(track, newQueue: queue);
         },
         child: Container(

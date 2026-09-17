@@ -4,8 +4,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../providers/auth_provider.dart';
+import '../providers/locale_provider.dart';
 import '../services/storage_service.dart';
+import '../widgets/cyber_glitch_text.dart';
+import '../widgets/cyber_nav_icon.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';
 
@@ -29,6 +33,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // Floating audio background particle matrix
   late final List<_OnboardingParticle> _particles;
 
+  // Random mask inside spinning vinyl record
+  static const _vinylMasks = [
+    'assets/images/oni.png',
+    'assets/images/hannya.png',
+    'assets/images/tengu.png',
+  ];
+  late final String _selectedVinylMask;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     final rng = Random(42);
     _particles = List.generate(24, (_) => _OnboardingParticle(rng));
+    _selectedVinylMask = _vinylMasks[Random().nextInt(_vinylMasks.length)];
 
     _ticker = createTicker((elapsed) {
       if (mounted) {
@@ -106,6 +119,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final t = _time;
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -157,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Column(
               children: [
                 // Top HUD Bar with Skip Action
-                _buildTopBar(t),
+                _buildTopBar(t, locale, strings),
 
                 // Center 3-Step Swipeable Carousel
                 Expanded(
@@ -167,15 +182,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       setState(() => _currentPage = index);
                     },
                     children: [
-                      _buildSlide1Identity(size, t),
-                      _buildSlide2Search(size, t),
-                      _buildSlide3Player(size, t),
+                      _buildSlide1Identity(size, t, locale, strings),
+                      _buildSlide2Search(size, t, locale, strings),
+                      _buildSlide3Player(size, t, locale, strings),
                     ],
                   ),
                 ),
 
                 // Bottom HUD: Page Indicator Dots & Action Button
-                _buildBottomControls(t),
+                _buildBottomControls(t, locale, strings),
                 const SizedBox(height: 12),
               ],
             ),
@@ -186,7 +201,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Top HUD Bar ---
-  Widget _buildTopBar(double t) {
+  Widget _buildTopBar(double t, LocaleProvider locale, AppStrings strings) {
     final pulse = (sin(t * 2.5) * 0.5 + 0.5);
 
     return Padding(
@@ -216,14 +231,28 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                'TSUKI TUNES // ONBOARDING',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textBright,
-                  letterSpacing: 1.8,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    strings.onboardingHeaderPrefix,
+                    style: locale.getTextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textBright,
+                      letterSpacing: 1.8,
+                    ),
+                  ),
+                  CyberGlitchText(
+                    text: strings.onboardingHeaderGlitch,
+                    style: locale.getTextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.accent,
+                      letterSpacing: 1.8,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -253,8 +282,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'SALTAR',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.onboardingSkip,
+                      style: locale.getTextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
@@ -278,7 +307,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Slide 1: Music Storage, Library & Favorites ---
-  Widget _buildSlide1Identity(Size size, double t) {
+  Widget _buildSlide1Identity(Size size, double t, LocaleProvider locale, AppStrings strings) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       physics: const BouncingScrollPhysics(),
@@ -287,7 +316,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           const SizedBox(height: 12),
 
           // Visual Centerpiece: Music Vault Album Sleeve + Spinning Vinyl + Favorite Heart
-          _buildMusicVaultGraphic(size, t),
+          _buildMusicVaultGraphic(size, t, locale, strings),
 
           const SizedBox(height: 10),
 
@@ -303,8 +332,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
             child: Text(
-              'TU COLECCIÓN • BIBLIOTECA',
-              style: GoogleFonts.plusJakartaSans(
+              strings.onboardingSlide1Badge,
+              style: locale.getTextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -317,9 +346,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Title
           Text(
-            'GUARDA TODA TU MÚSICA',
+            strings.onboardingSlide1Title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w900,
               color: AppColors.textBright,
@@ -337,9 +366,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Description (100% Real & Honest)
           Text(
-            'Guarda tus canciones y álbumes favoritos con un toque. Mantén tu colección musical organizada en tu teléfono y accede a tus temas en cualquier momento.',
+            strings.onboardingSlide1Desc,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -355,9 +384,29 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              _buildTechPill(Icons.favorite_rounded, 'CANCIONES FAVORITAS'),
-              _buildTechPill(Icons.smartphone_rounded, 'GUARDADO EN EL DISPOSITIVO'),
-              _buildTechPill(Icons.album_rounded, 'COLECCIÓN POR ÁLBUMES'),
+              _buildTechPill(
+                null,
+                strings.onboardingPillFavorites,
+                locale,
+                Image.asset(
+                  'assets/images/tengu.png',
+                  width: 12,
+                  height: 12,
+                  fit: BoxFit.contain,
+                  color: AppColors.accent,
+                  colorBlendMode: BlendMode.srcIn,
+                ),
+              ),
+              _buildTechPill(
+                Icons.cloud_done_rounded,
+                strings.onboardingPillStorage,
+                locale,
+              ),
+              _buildTechPill(
+                Icons.album_rounded,
+                strings.onboardingPillAlbums,
+                locale,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -367,7 +416,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Music Vault & Vinyl Showcase Graphic ---
-  Widget _buildMusicVaultGraphic(Size size, double t) {
+  Widget _buildMusicVaultGraphic(Size size, double t, LocaleProvider locale, AppStrings strings) {
     final pulse = sin(t * 3.0) * 0.5 + 0.5;
     final floatDy = sin(t * 1.5) * 6.0;
 
@@ -424,10 +473,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         left: 14,
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.library_music_rounded,
+                            const CyberNavIcon(
+                              index: 2,
+                              isSelected: true,
                               size: 16,
-                              color: AppColors.accent,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -522,40 +571,38 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             ),
                           ),
                         ),
-                        // Vinyl Center Label with Accent Glow
+                        // Vinyl Center Label with Rotating Japanese Mask
                         Container(
-                          width: 46,
-                          height: 46,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const RadialGradient(
                               colors: [
                                 Color(0xFFFF2B40),
-                                Color(0xFF990011),
+                                Color(0xFF7A000D),
                               ],
+                            ),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.8),
+                              width: 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.accent.withValues(alpha: 0.6),
-                                blurRadius: 8,
+                                blurRadius: 10,
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.music_note_rounded,
+                          child: Center(
+                            child: Image.asset(
+                              _selectedVinylMask,
+                              width: 25,
+                              height: 25,
+                              fit: BoxFit.contain,
                               color: Colors.white,
-                              size: 20,
+                              colorBlendMode: BlendMode.srcIn,
                             ),
-                          ),
-                        ),
-                        // Spindle Hole
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.bgDeep,
                           ),
                         ),
                       ],
@@ -564,7 +611,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
 
-              // Floating Glowing Favorite Heart Chip (In Front)
+              // Floating Glowing Favorite Chip (In Front)
               Positioned(
                 bottom: 12,
                 right: 28,
@@ -591,15 +638,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.favorite_rounded,
+                      Image.asset(
+                        'assets/images/tengu.png',
+                        width: 13,
+                        height: 13,
+                        fit: BoxFit.contain,
                         color: AppColors.accent,
-                        size: 13,
+                        colorBlendMode: BlendMode.srcIn,
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'FAVORITOS',
-                        style: GoogleFonts.plusJakartaSans(
+                        strings.tabFavorites.toUpperCase(),
+                        style: locale.getTextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -618,7 +668,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Slide 2: Search & Global Catalog (Deezer) ---
-  Widget _buildSlide2Search(Size size, double t) {
+  Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings strings) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       physics: const BouncingScrollPhysics(),
@@ -643,8 +693,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
             child: Text(
-              'EXPLORACIÓN • CATÁLOGO',
-              style: GoogleFonts.plusJakartaSans(
+              strings.onboardingSlide2Badge,
+              style: locale.getTextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF00D4FF),
@@ -657,9 +707,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Title
           Text(
-            'DESCUBRE MILLONES DE TEMAS',
+            strings.onboardingSlide2Title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
               color: AppColors.textBright,
@@ -677,9 +727,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Description
           Text(
-            'Busca cualquier artista, canción o disco en segundos. Explora tendencias globales y escucha avances en alta fidelidad al instante.',
+            strings.onboardingSlide2Desc,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -695,10 +745,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              _buildTechPill(Icons.search_rounded, 'BÚSQUEDA INSTANTÁNEA'),
-              _buildTechPill(Icons.language_rounded, 'MÁS DE 90M DE PISTAS'),
+              _buildTechPill(Icons.search_rounded, strings.onboardingPillSearch, locale),
+              _buildTechPill(Icons.language_rounded, strings.onboardingPillTracks, locale),
               _buildTechPill(
-                  Icons.play_circle_filled_rounded, 'PREVIEWS AL MOMENTO'),
+                  Icons.play_circle_filled_rounded, strings.onboardingPillPreview, locale),
             ],
           ),
           const SizedBox(height: 16),
@@ -969,7 +1019,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Slide 3: Immersive Music Player & Controls ---
-  Widget _buildSlide3Player(Size size, double t) {
+  Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings strings) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       physics: const BouncingScrollPhysics(),
@@ -994,8 +1044,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
             child: Text(
-              'EXPERIENCIA • REPRODUCTOR',
-              style: GoogleFonts.plusJakartaSans(
+              strings.onboardingSlide3Badge,
+              style: locale.getTextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -1008,9 +1058,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Title
           Text(
-            'REPRODUCTOR INMERSIVO',
+            strings.onboardingSlide3Title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 23,
               fontWeight: FontWeight.w900,
               color: AppColors.textBright,
@@ -1028,9 +1078,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           // Description
           Text(
-            'Control total de tu música con ecualizadores dinámicos, diseño a pantalla completa y controles fluidos a 120 FPS.',
+            strings.onboardingSlide3Desc,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -1046,9 +1096,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              _buildTechPill(Icons.equalizer_rounded, 'ECUALIZADOR REACTIVO'),
-              _buildTechPill(Icons.fullscreen_rounded, 'PANTALLA COMPLETA'),
-              _buildTechPill(Icons.speed_rounded, 'FLUIDEZ A 120 FPS'),
+              _buildTechPill(Icons.equalizer_rounded, strings.onboardingPillEqualizer, locale),
+              _buildTechPill(Icons.fullscreen_rounded, strings.onboardingPillFullscreen, locale),
+              _buildTechPill(Icons.speed_rounded, strings.onboardingPillCyberHUD, locale),
             ],
           ),
           const SizedBox(height: 16),
@@ -1280,7 +1330,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Tech Spec Micro Pill ---
-  Widget _buildTechPill(IconData icon, String text) {
+  Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widget? customIcon]) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -1294,16 +1344,25 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.accent),
+          if (customIcon != null)
+            customIcon
+          else if (icon != null)
+            Icon(icon, size: 12, color: AppColors.accent),
           const SizedBox(width: 5),
           Text(
             text,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 8.5,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.8,
-            ),
+            style: locale?.getTextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.8,
+                ) ??
+                GoogleFonts.plusJakartaSans(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.8,
+                ),
           ),
         ],
       ),
@@ -1311,7 +1370,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   // --- Bottom Controls: Dynamic HUD Dots & Action Button ---
-  Widget _buildBottomControls(double t) {
+  Widget _buildBottomControls(double t, LocaleProvider locale, AppStrings strings) {
     final isLastPage = _currentPage == 2;
     final pulse = sin(t * 3.0) * 0.5 + 0.5;
 
@@ -1390,8 +1449,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isLastPage ? 'EMPEZAR A ESCUCHAR' : 'SIGUIENTE',
-                      style: GoogleFonts.plusJakartaSans(
+                      isLastPage ? strings.onboardingStart : strings.onboardingNext,
+                      style: locale.getTextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                         color: isLastPage ? Colors.white : AppColors.textBright,

@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class TapScale extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final double scaleDown;
 
   const TapScale({
     super.key,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.scaleDown = 0.90,
   });
 
@@ -67,6 +69,12 @@ class _TapScaleState extends State<TapScale>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
+      onLongPress: widget.onLongPress != null
+          ? () {
+              _controller.reverse();
+              widget.onLongPress?.call();
+            }
+          : null,
       child: AnimatedBuilder(
         animation: _scale,
         builder: (context, child) => Transform.scale(

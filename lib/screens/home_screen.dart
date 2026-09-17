@@ -15,6 +15,8 @@ import '../screens/artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
+import '../providers/locale_provider.dart';
+import '../widgets/language_selector_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final ScrollController scrollController = ScrollController();
   final DeezerApiService _api = DeezerApiService();
   List<Artist> _featuredArtists = [];
   List<Album> _latestReleases = [];
@@ -34,7 +37,42 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    NavigationEvents.onHomeScrollToTop = scrollToTop;
+    NavigationEvents.onHomeOpenProfile = openProfile;
+    NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
+  }
+
+  @override
+  void dispose() {
+    if (NavigationEvents.onHomeScrollToTop == scrollToTop) {
+      NavigationEvents.onHomeScrollToTop = null;
+    }
+    if (NavigationEvents.onHomeOpenProfile == openProfile) {
+      NavigationEvents.onHomeOpenProfile = null;
+    }
+    if (NavigationEvents.onHomeRefresh == _loadHomeData) {
+      NavigationEvents.onHomeRefresh = null;
+    }
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Scroll to top suave para respuesta a Double-Tap o tap en Home
+  void scrollToTop() {
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  /// Abre el menú de perfil y Spotify para respuesta a Long-Press en Home
+  void openProfile() {
+    final auth = context.read<AuthProvider>();
+    _showProfileMenu(context, auth);
   }
 
   Future<void> _loadHomeData() async {
@@ -153,6 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final auth = context.watch<AuthProvider>();
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
 
     final listenedCount = library.listenedTracks.length;
     final artistsCount = library.uniqueArtistsCount;
@@ -169,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.bgCard,
         onRefresh: _loadHomeData,
         child: CustomScrollView(
+          controller: scrollController,
           slivers: [
             // Header: INICIO //
             SliverToBoxAdapter(
@@ -179,61 +220,104 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'INICIO',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textBright,
-                              letterSpacing: 2,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                strings.homeHeader.replaceAll(' // 01', ''),
+                                style: locale.getTextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textBright,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                              Text(
+                                ' // 01',
+                                style: locale.getTextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            ' //',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.accent,
+                            strings.homeTelemetry,
+                            style: GoogleFonts.notoSansJp(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accent.withValues(alpha: 0.8),
+                              letterSpacing: 1.2,
                             ),
                           ),
                         ],
                       ),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentDim,
-                              borderRadius: BorderRadius.circular(2),
-                              border: Border.all(
-                                  color: AppColors.accent.withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppColors.accent,
+                          Consumer<AudioProvider>(
+                            builder: (context, audio, _) {
+                              final isSpotify = audio.useSpotify || audio.spotify.isConnected;
+                              final badgeColor = isSpotify
+                                  ? const Color(0xFF1DB954)
+                                  : AppColors.accent;
+                              final badgeBg = isSpotify
+                                  ? const Color(0xFF1DB954).withValues(alpha: 0.14)
+                                  : AppColors.accentDim;
+                              final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(
+                                    color: badgeColor.withValues(alpha: 0.5),
+                                    width: 0.8,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: badgeColor.withValues(alpha: 0.2),
+                                      blurRadius: 6,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'ONLINE',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.accent,
-                                    letterSpacing: 1.5,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: badgeColor,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: badgeColor.withValues(alpha: 0.7),
+                                            blurRadius: 4,
+                                            spreadRadius: 0.5,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      badgeText,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: badgeColor,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                           if (auth.isLoggedIn) ...[
                             const SizedBox(width: 8),
@@ -278,16 +362,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Row(
                         children: [
                           _buildStatCard(
-                              'CANCIONES', '$listenedCount', 'ESCUCHADAS'),
+                              strings.statsTracks, '$listenedCount', strings.statsListened,
+                              locale: locale),
                           _buildStatCard(
-                              'ARTISTAS', '$artistsCount', 'EN SISTEMA'),
+                              strings.statsArtists, '$artistsCount', strings.statsInSystem,
+                              locale: locale),
                           _buildStatCard(
-                              'ÁLBUMES', '$albumsCount', 'EN SISTEMA'),
+                              strings.statsAlbums, '$albumsCount', strings.statsInSystem,
+                              locale: locale),
                           _buildStatCard(
-                            'ARTISTA TOP',
+                            strings.statsTopArtist,
                             topArtistName,
-                            'AFINIDAD: $topArtistScore',
+                            strings.statsAffinity(topArtistScore),
                             isTextValue: true,
+                            locale: locale,
                           ),
                         ],
                       ),
@@ -301,8 +389,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Text(
-                      'ARTISTAS MÁS FRECUENTES',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.topArtistsTitle,
+                      style: locale.getTextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -316,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     (context, index) {
                       final top = _topArtistsDisplay[index];
                       return _buildRankedArtistRow(
-                          context, top.entry, top.artist, index + 1);
+                          context, top.entry, top.artist, index + 1, locale);
                     },
                     childCount: _topArtistsDisplay.length,
                   ),
@@ -326,8 +414,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Text(
-                      'ARTISTAS MÁS FRECUENTES',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.topArtistsTitle,
+                      style: locale.getTextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -340,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final artist = _featuredArtists[index];
-                      return _buildFeaturedArtistRow(context, artist, index + 1);
+                      return _buildFeaturedArtistRow(context, artist, index + 1, locale);
                     },
                     childCount: _featuredArtists.take(5).length,
                   ),
@@ -352,8 +440,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
                   child: Text(
-                    'ÚLTIMOS LANZAMIENTOS PARA TI',
-                    style: GoogleFonts.plusJakartaSans(
+                    strings.latestReleasesTitle,
+                    style: locale.getTextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
@@ -374,8 +462,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
-                              'Marca canciones como escuchadas para ver lanzamientos personalizados',
-                              style: GoogleFonts.plusJakartaSans(
+                              strings.emptyReleases,
+                              style: locale.getTextStyle(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
                               ),
@@ -402,8 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
                     child: Text(
-                      'RECOMENDACIONES DEL SISTEMA',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.recommendedTitle,
+                      style: locale.getTextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
@@ -436,30 +524,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileMenu(BuildContext context, AuthProvider auth) {
+    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
       backgroundColor: AppColors.bgCard,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         final audioProvider = context.read<AudioProvider>();
         final spotify = audioProvider.spotify;
+        final locale = context.read<LocaleProvider>();
+        final strings = locale.strings;
+
         return StatefulBuilder(
-          builder: (ctx, setModalState) => Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (auth.user?.photoURL != null)
-                  CircleAvatar(
+          builder: (ctx, setModalState) => SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                MediaQuery.of(ctx).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderGlow,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  if (auth.user?.photoURL != null)
+                    CircleAvatar(
                     radius: 30,
                     backgroundImage: NetworkImage(auth.user!.photoURL!),
                   ),
                 const SizedBox(height: 12),
                 Text(
                   auth.user?.displayName ?? '',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: locale.getTextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
@@ -467,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Text(
                   auth.user?.email ?? '',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: locale.getTextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
@@ -506,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               'Spotify',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: locale.getTextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textBright,
@@ -515,10 +629,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               spotify.isConnected
                                   ? (spotify.isPremium
-                                      ? 'Premium · ${spotify.displayName}'
-                                      : 'Conectado · ${spotify.displayName}')
-                                  : 'No conectado',
-                              style: GoogleFonts.plusJakartaSans(
+                                      ? 'Premium · ${spotify.displayName ?? strings.spotifyDefaultUser}'
+                                      : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
+                                  : strings.spotifyNotConnected,
+                              style: locale.getTextStyle(
                                 fontSize: 10,
                                 color: spotify.isConnected
                                     ? AppColors.accent
@@ -534,7 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.launch_rounded, size: 16, color: AppColors.accent),
-                              tooltip: 'Abrir Spotify',
+                              tooltip: strings.openSpotifyTooltip,
                               onPressed: () => spotify.openSpotifyApp(),
                             ),
                             TextButton(
@@ -544,8 +658,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 setModalState(() {});
                               },
                               child: Text(
-                                'DESCONECTAR',
-                                style: GoogleFonts.plusJakartaSans(
+                                strings.spotifyDisconnect,
+                                style: locale.getTextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textSecondary,
@@ -565,19 +679,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                 setModalState(() {});
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Spotify sincronizado exitosamente'),
+                                    SnackBar(
+                                      content: Text(strings.spotifySyncSuccess),
                                       backgroundColor: AppColors.accent,
                                     ),
                                   );
                                 }
                               } else {
                                 if (context.mounted) {
-                                  final msg = spotify.lastError ??
-                                      'No se pudo conectar. Verifica que tu cuenta esté en User Management del Dashboard de Spotify.';
+                                  final rawError = spotify.lastError;
+                                  String msg = strings.spotifyConnectError;
+                                  if (rawError != null) {
+                                    final lower = rawError.toLowerCase();
+                                    if (lower.contains('cancel') || lower.contains('cancelada') || lower.contains('canceled_by_user')) {
+                                      msg = strings.spotifyCanceledByUser;
+                                    }
+                                  }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(msg),
+                                      content: Text(
+                                        msg,
+                                        style: locale.getTextStyle(fontSize: 12, color: Colors.white),
+                                      ),
                                       backgroundColor: AppColors.accent,
                                     ),
                                   );
@@ -587,7 +710,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Error: $e'),
+                                    content: Text('${strings.errorPrefix}: $e'),
                                     backgroundColor: AppColors.accent,
                                   ),
                                 );
@@ -603,8 +726,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 horizontal: 14, vertical: 6),
                           ),
                           child: Text(
-                            'CONECTAR',
-                            style: GoogleFonts.plusJakartaSans(
+                            strings.spotifyConnect,
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -630,10 +753,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             spotify.isPremium
                                 ? (spotify.activeDeviceName != null
-                                    ? 'Dispositivo activo: ${spotify.activeDeviceName}'
-                                    : 'Reproducción completa Premium activa')
-                                : 'Cuenta estándar: vista previa disponible',
-                            style: GoogleFonts.plusJakartaSans(
+                                    ? strings.spotifyActiveDevice(spotify.activeDeviceName!)
+                                    : strings.spotifyPremiumActive)
+                                : strings.spotifyStandardPreview,
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               color: AppColors.textSecondary,
                             ),
@@ -646,23 +769,86 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
+                // Language Selector Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await Future.delayed(const Duration(milliseconds: 120));
+                      if (context.mounted) {
+                        LanguageSelectorSheet.show(context);
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.language_rounded,
+                      color: AppColors.accent,
+                      size: 16,
+                    ),
+                    label: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          strings.languageOption,
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentDim,
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            locale.currentLanguage.tag,
+                            style: locale.getTextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: AppColors.accent.withValues(alpha: 0.6),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
                 // Tutorial & Masks guide
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(ctx);
-                      Navigator.of(context, rootNavigator: true).push(
-                        MaterialPageRoute(
-                          builder: (pushedCtx) => OnboardingScreen(
-                            onComplete: () {
-                              if (Navigator.of(pushedCtx).canPop()) {
-                                Navigator.of(pushedCtx).pop();
-                              }
-                            },
+                      await Future.delayed(const Duration(milliseconds: 120));
+                      if (context.mounted) {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (pushedCtx) => OnboardingScreen(
+                              onComplete: () {
+                                if (Navigator.of(pushedCtx).canPop()) {
+                                  Navigator.of(pushedCtx).pop();
+                                }
+                              },
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                     icon: const Icon(
                       Icons.auto_stories_rounded,
@@ -670,8 +856,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 16,
                     ),
                     label: Text(
-                      'VER TUTORIAL Y GUÍA',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.tutorialOption,
+                      style: locale.getTextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: AppColors.neonCyan,
@@ -701,8 +887,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     icon: const Icon(Icons.logout, color: AppColors.accent),
                     label: Text(
-                      'CERRAR SESIÓN',
-                      style: GoogleFonts.plusJakartaSans(
+                      strings.logoutOption,
+                      style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
@@ -716,18 +902,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  ).whenComplete(() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  });
+}
 
   Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
+    final locale = context.read<LocaleProvider>();
+    final strings = locale.strings;
     final shouldLogout = await showDialog<bool>(
       context: context,
+      useRootNavigator: true,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
@@ -739,8 +931,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const Icon(Icons.power_settings_new_rounded, color: AppColors.accent, size: 20),
             const SizedBox(width: 8),
             Text(
-              'CERRAR SESIÓN',
-              style: GoogleFonts.plusJakartaSans(
+              strings.logoutConfirmTitle,
+              style: locale.getTextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -750,8 +942,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         content: Text(
-          '¿Estás seguro de que deseas desconectar tu enlace y cerrar sesión?',
-          style: GoogleFonts.plusJakartaSans(
+          strings.logoutConfirmMessage,
+          style: locale.getTextStyle(
             fontSize: 13,
             color: AppColors.textSecondary,
           ),
@@ -760,8 +952,8 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: Text(
-              'CANCELAR',
-              style: GoogleFonts.plusJakartaSans(
+              strings.cancel,
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
@@ -776,11 +968,12 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
             child: Text(
-              'SALIR',
-              style: GoogleFonts.plusJakartaSans(
+              strings.logout,
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2,
+                color: Colors.white,
               ),
             ),
           ),
@@ -828,7 +1021,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatCard(String label, String value, String meta,
-      {bool isTextValue = false}) {
+      {bool isTextValue = false, LocaleProvider? locale}) {
     return Container(
       width: 140,
       margin: const EdgeInsets.only(right: 10),
@@ -843,38 +1036,59 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              letterSpacing: 1,
-            ),
+            style: locale?.getTextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1,
+                ) ??
+                GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1,
+                ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
             style: isTextValue
-                ? GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.sakura,
-                  )
-                : GoogleFonts.plusJakartaSans(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.sakura,
-                  ),
+                ? (locale?.getTextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.sakura,
+                    ) ??
+                    GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.sakura,
+                    ))
+                : (locale?.getTextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.sakura,
+                    ) ??
+                    GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.sakura,
+                    )),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             meta,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 9,
-              color: AppColors.textMuted,
-              letterSpacing: 0.8,
-            ),
+            style: locale?.getTextStyle(
+                  fontSize: 9,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.8,
+                ) ??
+                GoogleFonts.plusJakartaSans(
+                  fontSize: 9,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.8,
+                ),
           ),
         ],
       ),
@@ -882,7 +1096,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRankedArtistRow(
-      BuildContext context, TopArtistEntry entry, Artist? artist, int rank) {
+      BuildContext context, TopArtistEntry entry, Artist? artist, int rank, LocaleProvider locale) {
     return InkWell(
       onTap: () {
         if (artist != null) {
@@ -947,8 +1161,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Afinidad: ${entry.score}',
-                    style: GoogleFonts.plusJakartaSans(
+                    locale.strings.affinityScore(entry.score),
+                    style: locale.getTextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
@@ -965,7 +1179,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeaturedArtistRow(
-      BuildContext context, Artist artist, int rank) {
+      BuildContext context, Artist artist, int rank, LocaleProvider locale) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -1024,8 +1238,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'DESTACADO',
-                    style: GoogleFonts.plusJakartaSans(
+                    locale.strings.featured,
+                    style: locale.getTextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
                     ),

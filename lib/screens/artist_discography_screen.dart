@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
 import '../widgets/oni_mask_icon.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
@@ -64,6 +65,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
     final cats = _categories;
 
     return Scaffold(
@@ -93,15 +96,15 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildChip('all', 'Todos'),
+                    _buildChip('all', strings.tabAll, locale),
                     if (cats.containsKey('album'))
-                      _buildChip('album', 'Álbumes'),
+                      _buildChip('album', strings.tabAlbums, locale),
                     if (cats.containsKey('single'))
-                      _buildChip('single', 'Singles'),
+                      _buildChip('single', strings.tabSingles, locale),
                     if (cats.containsKey('ep'))
-                      _buildChip('ep', 'EPs'),
+                      _buildChip('ep', strings.tabEps, locale),
                     if (cats.containsKey('compile'))
-                      _buildChip('compile', 'Aparece en'),
+                      _buildChip('compile', strings.tabAppearsOn, locale),
                   ],
                 ),
               ),
@@ -119,7 +122,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final album = _filtered[index];
-                  return _buildItem(context, album, library);
+                  return _buildItem(context, album, library, locale, strings);
                 },
                 childCount: _filtered.length,
               ),
@@ -131,7 +134,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     );
   }
 
-  Widget _buildChip(String value, String label) {
+  Widget _buildChip(String value, String label, LocaleProvider locale) {
     final isSelected = _filter == value;
     return GestureDetector(
       onTap: () => setState(() => _filter = value),
@@ -147,7 +150,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: locale.getTextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: isSelected ? AppColors.textBright : AppColors.textSecondary,
@@ -157,7 +160,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     );
   }
 
-  Widget _buildItem(BuildContext context, Album album, LibraryProvider library) {
+  Widget _buildItem(
+      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, dynamic strings) {
     final listenedCount = album.tracksCount > 0
         ? library.listenedTracks.where((t) => t.albumId == album.id).length
         : 0;
@@ -201,7 +205,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           const SizedBox(height: 6),
           Text(
             album.title,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -213,8 +217,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${album.year}  ·  ${Album.getAlbumTypeLabel(album.recordType)}',
-                  style: GoogleFonts.plusJakartaSans(
+                  '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+                  style: locale.getTextStyle(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),

@@ -262,7 +262,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}"');
-      _lastSpotifyError = 'Pista no disponible en Spotify, reproduciendo vista previa';
+      _lastSpotifyError = 'spotify_track_unavailable';
       await _service.playTrack(track);
       _isBuffering = false;
       notifyListeners();
@@ -275,7 +275,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (!played) {
       debugPrint('Spotify: Web API play failed, falling back to preview');
-      _lastSpotifyError = 'Abre la app de Spotify para activar la reproducción completa';
+      _lastSpotifyError = 'spotify_open_app';
       await _service.playTrack(track);
       _isBuffering = false;
       notifyListeners();

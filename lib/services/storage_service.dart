@@ -104,4 +104,17 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingKey, completed);
   }
+
+  // --- Language Persistence ---
+  static const String _languageKey = 'tsuki_app_language';
+
+  Future<String> getAppLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_languageKey) ?? 'es';
+  }
+
+  Future<void> saveAppLanguage(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageKey, code);
+  }
 }

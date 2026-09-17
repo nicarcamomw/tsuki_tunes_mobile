@@ -21,6 +21,7 @@ class AlbumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return TapScale(
       onTap: () {
+        FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => AlbumDetailScreen(album: album),

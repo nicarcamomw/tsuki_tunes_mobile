@@ -1,11 +1,14 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
+import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/expanded_player_screen.dart';
+import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
@@ -21,6 +24,7 @@ class _MiniPlayerState extends State<MiniPlayer>
   double _swipeDx = 0;
   late final AnimationController _resetController;
   late Animation<double> _resetAnimation;
+  Track? _lastTrack;
 
   @override
   void initState() {
@@ -62,16 +66,18 @@ class _MiniPlayerState extends State<MiniPlayer>
   }
 
   void _openExpandedPlayer(BuildContext context) {
+    NavigationEvents.isPlayerExpanded.value = true;
     Navigator.of(context).push(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 350),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 320),
+        reverseTransitionDuration: const Duration(milliseconds: 280),
         pageBuilder: (context, anim, secondaryAnim) =>
             const ExpandedPlayerScreen(),
         transitionsBuilder: (context, anim, secondaryAnim, child) {
           final curved = CurvedAnimation(
             parent: anim,
-            curve: Curves.easeOutExpo,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
           );
           return SlideTransition(
             position: Tween(
@@ -82,13 +88,18 @@ class _MiniPlayerState extends State<MiniPlayer>
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      NavigationEvents.isPlayerExpanded.value = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final audio = context.watch<AudioProvider>();
-    final track = audio.currentTrack;
+    if (audio.currentTrack != null) {
+      _lastTrack = audio.currentTrack;
+    }
+    final track = audio.currentTrack ?? _lastTrack;
 
     if (track == null) return const SizedBox.shrink();
 
@@ -159,63 +170,89 @@ class _MiniPlayerState extends State<MiniPlayer>
                             ),
                             child: Row(
                               children: [
-                                Hero(
-                                  tag: 'player_art_${track.id}',
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: SizedBox(
-                                      width: 44,
-                                      height: 44,
-                                      child: track.coverUrl.isNotEmpty
-                                          ? CachedNetworkImage(
-                                              imageUrl: track.coverUrl,
-                                              fit: BoxFit.cover,
-                                              placeholder: (_, __) =>
-                                                  Container(
-                                                      color: AppColors.bgMid),
-                                              errorWidget: (_, __, ___) =>
-                                                  Container(
-                                                color: AppColors.bgMid,
-                                                child: const Icon(
-                                                    Icons.music_note,
-                                                    color: AppColors.accent),
-                                              ),
-                                            )
-                                          : Container(
-                                              color: AppColors.bgMid,
-                                              child: const Icon(
-                                                  Icons.music_note,
-                                                  color: AppColors.accent),
-                                            ),
+                                // Carátula de 44x44 con Micro-ecualizador en esquina
+                                Stack(
+                                  children: [
+                                    Hero(
+                                      tag: 'player_art_${track.id}',
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: SizedBox(
+                                          width: 44,
+                                          height: 44,
+                                          child: track.coverUrl.isNotEmpty
+                                              ? CachedNetworkImage(
+                                                  imageUrl: track.coverUrl,
+                                                  fit: BoxFit.cover,
+                                                  placeholder: (_, __) =>
+                                                      Container(
+                                                          color:
+                                                              AppColors.bgMid),
+                                                  errorWidget: (_, __, ___) =>
+                                                      Container(
+                                                    color: AppColors.bgMid,
+                                                    child: const Icon(
+                                                        Icons.music_note,
+                                                        color:
+                                                            AppColors.accent),
+                                                  ),
+                                                )
+                                              : Container(
+                                                  color: AppColors.bgMid,
+                                                  child: const Icon(
+                                                      Icons.music_note,
+                                                      color: AppColors.accent),
+                                                ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (audio.isPlaying)
+                                      Positioned(
+                                        bottom: 2,
+                                        right: 2,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 2.5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.78),
+                                            borderRadius:
+                                                BorderRadius.circular(3),
+                                            border: Border.all(
+                                              color: AppColors.accent
+                                                  .withValues(alpha: 0.4),
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          child: _MiniEqualizer(
+                                              isPlaying: audio.isPlaying),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 const SizedBox(width: 12),
+                                // Textos con desplazamiento automático Marquee
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(
-                                        track.title,
+                                      _MarqueeText(
+                                        text: track.title,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.textBright,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 2),
-                                      Text(
-                                        track.fullArtistName,
+                                      _MarqueeText(
+                                        text: track.fullArtistName,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11,
                                           color: AppColors.textSecondary,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),
@@ -291,6 +328,193 @@ class _MiniPlayerState extends State<MiniPlayer>
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// _MiniEqualizer: 3 barritas danzantes en la esquina de la carátula
+class _MiniEqualizer extends StatefulWidget {
+  final bool isPlaying;
+  const _MiniEqualizer({required this.isPlaying});
+
+  @override
+  State<_MiniEqualizer> createState() => _MiniEqualizerState();
+}
+
+class _MiniEqualizerState extends State<_MiniEqualizer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    if (widget.isPlaying) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_MiniEqualizer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying != oldWidget.isPlaying) {
+      if (widget.isPlaying) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final t = _controller.value * 2 * pi;
+        return SizedBox(
+          height: 10,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildBar(widget.isPlaying ? 2.5 + 6.5 * (sin(t * 1.8).abs()) : 3.0),
+              const SizedBox(width: 1.5),
+              _buildBar(widget.isPlaying ? 2.5 + 7.5 * (sin(t * 2.4 + 1.2).abs()) : 7.0),
+              const SizedBox(width: 1.5),
+              _buildBar(widget.isPlaying ? 2.5 + 5.5 * (sin(t * 1.4 + 2.4).abs()) : 4.0),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBar(double height) {
+    return Container(
+      width: 2.0,
+      height: height.clamp(2.0, 10.0),
+      decoration: BoxDecoration(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(1),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.accentGlow,
+            blurRadius: 3,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// _MarqueeText: Desplaza suavemente títulos o artistas largos en lugar de recortarlos
+class _MarqueeText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+
+  const _MarqueeText({
+    required this.text,
+    required this.style,
+  });
+
+  @override
+  State<_MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<_MarqueeText> {
+  late final ScrollController _scrollController;
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startMarqueeLoop());
+  }
+
+  @override
+  void didUpdateWidget(_MarqueeText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.text != oldWidget.text) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startMarqueeLoop());
+    }
+  }
+
+  @override
+  void dispose() {
+    _isScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startMarqueeLoop() async {
+    if (!mounted || _isScrolling) return;
+    _isScrolling = true;
+
+    while (mounted && _isScrolling) {
+      if (!_scrollController.hasClients) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        continue;
+      }
+
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      if (maxScroll <= 0) {
+        // El texto cabe perfectamente; no requiere scroll
+        await Future.delayed(const Duration(seconds: 1));
+        continue;
+      }
+
+      // Pausa inicial antes de comenzar a desplazarse
+      await Future.delayed(const Duration(milliseconds: 1800));
+      if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
+
+      // Desplazamiento suave hacia el final (~24 px/segundo)
+      final duration = Duration(
+        milliseconds: (maxScroll * 40).clamp(1200, 6000).toInt(),
+      );
+      await _scrollController.animateTo(
+        maxScroll,
+        duration: duration,
+        curve: Curves.linear,
+      );
+
+      // Pausa para leer el final
+      await Future.delayed(const Duration(milliseconds: 1800));
+      if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
+
+      // Retorno suave al inicio
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text(
+        widget.text,
+        style: widget.style,
+        maxLines: 1,
       ),
     );
   }

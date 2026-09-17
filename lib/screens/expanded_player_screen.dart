@@ -5,9 +5,11 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/tap_scale.dart';
+import 'main_navigation_screen.dart';
 
 class ExpandedPlayerScreen extends StatefulWidget {
   const ExpandedPlayerScreen({super.key});
@@ -47,6 +49,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   void _onVerticalDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
     if (_dragDy > 80 || velocity > 400) {
+      NavigationEvents.isPlayerExpanded.value = false;
       Navigator.of(context).pop();
     } else {
       final startValue = _dragDy;
@@ -61,21 +64,34 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
     final audio = context.watch<AudioProvider>();
     final track = audio.currentTrack;
 
     if (track == null) {
-      return Scaffold(
-        backgroundColor: AppColors.bgDeep,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down, size: 28),
-            onPressed: () => Navigator.of(context).pop(),
+      return PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, _) {
+          NavigationEvents.isPlayerExpanded.value = false;
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.bgDeep,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+              onPressed: () {
+                NavigationEvents.isPlayerExpanded.value = false;
+                Navigator.of(context).pop();
+              },
+            ),
           ),
-        ),
-        body: const Center(
-          child: Text('No track selected',
-              style: TextStyle(color: AppColors.textSecondary)),
+          body: Center(
+            child: Text(
+              strings.noTrackSelected,
+              style: locale.getTextStyle(color: AppColors.textSecondary),
+            ),
+          ),
         ),
       );
     }
@@ -83,71 +99,79 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final library = context.watch<LibraryProvider>();
     final isListened = library.isTrackListened(track.id);
 
-    return GestureDetector(
-      onVerticalDragUpdate: _onVerticalDragUpdate,
-      onVerticalDragEnd: _onVerticalDragEnd,
-      child: Transform.translate(
-        offset: Offset(0, _dragDy),
-        child: Scaffold(
-          backgroundColor: AppColors.bgDeep,
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Top bar
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.keyboard_arrow_down,
-                            size: 30, color: AppColors.textPrimary),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              'REPRODUCIENDO DESDE',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textMuted,
-                                letterSpacing: 2.0,
-                              ),
-                            ),
-                            Text(
-                              track.albumTitle.isNotEmpty
-                                  ? track.albumTitle
-                                  : 'DEEZER PREVIEW',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.accent,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        NavigationEvents.isPlayerExpanded.value = false;
+      },
+      child: GestureDetector(
+        onVerticalDragUpdate: _onVerticalDragUpdate,
+        onVerticalDragEnd: _onVerticalDragEnd,
+        child: Transform.translate(
+          offset: Offset(0, _dragDy),
+          child: Scaffold(
+            backgroundColor: AppColors.bgDeep,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Top bar
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_arrow_down,
+                              size: 30, color: AppColors.textPrimary),
+                          onPressed: () {
+                            NavigationEvents.isPlayerExpanded.value = false;
+                            Navigator.of(context).pop();
+                          },
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.queue_music,
-                            color: AppColors.textPrimary),
-                        onPressed: () =>
-                            setState(() => _showQueue = !_showQueue),
-                      ),
-                    ],
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                strings.playingFrom,
+                                style: locale.getTextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 2.0,
+                                ),
+                              ),
+                              Text(
+                                track.albumTitle.isNotEmpty
+                                    ? track.albumTitle
+                                    : 'DEEZER PREVIEW',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.accent,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.queue_music,
+                              color: AppColors.textPrimary),
+                          onPressed: () =>
+                              setState(() => _showQueue = !_showQueue),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const Spacer(),
+                  const Spacer(),
 
-                // Art or Queue
-                if (_showQueue)
-                  _buildQueueView(audio)
-                else ...[
+                  // Art or Queue
+                  if (_showQueue)
+                    _buildQueueView(audio, locale)
+                  else ...[
                   // Rinnegan Visualizer
                   Hero(
                     tag: 'player_art_${track.id}',
@@ -402,7 +426,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     fontSize: 9,
                     color: audio.useSpotify
                         ? const Color(0xFF1DB954)
-                        : AppColors.textMuted,
+                        : AppColors.accent,
                     letterSpacing: 2,
                   ),
                 ),
@@ -413,10 +437,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildQueueView(AudioProvider audio) {
+  Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -431,8 +456,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'UP NEXT // QUEUE (${audio.queue.length})',
-                style: GoogleFonts.plusJakartaSans(
+                locale.strings.queueTitle(audio.queue.length),
+                style: locale.getTextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,

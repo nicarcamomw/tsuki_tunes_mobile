@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../providers/search_provider.dart';
+import '../providers/locale_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/album_card.dart';
+import 'main_navigation_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -17,15 +20,41 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode focusNode = FocusNode();
   Timer? _debounce;
-  final List<String> _tabs = ['Todo', 'Artistas', 'Álbumes', 'Canciones'];
   int _selectedTabIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    NavigationEvents.onSearchFocus = focusSearchInput;
+    NavigationEvents.onSearchClear = clearAndFocus;
+  }
+
+  @override
   void dispose() {
+    if (NavigationEvents.onSearchFocus == focusSearchInput) {
+      NavigationEvents.onSearchFocus = null;
+    }
+    if (NavigationEvents.onSearchClear == clearAndFocus) {
+      NavigationEvents.onSearchClear = null;
+    }
     _debounce?.cancel();
     _controller.dispose();
+    focusNode.dispose();
     super.dispose();
+  }
+
+  /// Enfoca el campo de texto y despliega el teclado (Double-Tap o Tap activo)
+  void focusSearchInput() {
+    focusNode.requestFocus();
+  }
+
+  /// Limpia la búsqueda actual y re-enfoca el teclado (Long-Press en Search)
+  void clearAndFocus() {
+    _controller.clear();
+    context.read<SearchProvider>().clear();
+    focusNode.requestFocus();
   }
 
   void _onSearchChanged(String query, SearchProvider provider) {
@@ -33,121 +62,184 @@ class _SearchScreenState extends State<SearchScreen> {
     _debounce = Timer(const Duration(milliseconds: 400), () {
       provider.search(query);
     });
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchProvider>();
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
+    final tabs = [strings.tabAll, strings.tabArtists, strings.tabAlbums, strings.tabTracks];
 
-    return Scaffold(
-      backgroundColor: AppColors.bgDeep,
-      body: SafeArea(
-        bottom: false,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: AppColors.bgDeep,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          strings.searchTitle.toUpperCase(),
+                          style: locale.getTextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textBright,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        Text(
+                          ' // 02',
+                          style: locale.getTextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      strings.searchTelemetry,
+                      style: GoogleFonts.notoSansJp(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent.withValues(alpha: 0.8),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      strings.searchSubtitle,
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Search input
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMid,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: focusNode,
+                    style: locale.getTextStyle(color: AppColors.textBright, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: strings.searchHint,
+                      hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: 14),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                              onPressed: () {
+                                _controller.clear();
+                                search.clear();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    onChanged: (val) => _onSearchChanged(val, search),
+                  ),
+                ),
+              ),
+
+              // Tabs: ['Todo', 'Artistas', 'Álbumes', 'Canciones'] (localizadas)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: List.generate(tabs.length, (index) {
+                    final isSelected = _selectedTabIndex == index;
+                    return GestureDetector(
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        setState(() => _selectedTabIndex = index);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.accent : AppColors.bgMid,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isSelected ? AppColors.accent : AppColors.border,
+                          ),
+                        ),
+                        child: Text(
+                          tabs[index],
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? AppColors.textBright : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // Content
+              Expanded(
+                child: search.isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: AppColors.accent),
+                      )
+                    : search.query.isEmpty
+                        ? _buildEmptyState(strings, locale)
+                        : _buildResults(search, strings, locale),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppStrings strings, LocaleProvider locale) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Buscar',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textBright,
-                    ),
-                  ),
-                  Text(
-                    'Artistas, álbumes y canciones',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
+            const Icon(Icons.search, size: 54, color: AppColors.borderGlow),
+            const SizedBox(height: 12),
+            Text(
+              strings.emptyStateTitle,
+              style: locale.getTextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.5,
               ),
             ),
-
-            // Search input
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: TextField(
-                  controller: _controller,
-                  style: GoogleFonts.plusJakartaSans(color: AppColors.textBright, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: '¿Qué quieres escuchar?',
-                    hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.textMuted, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                    suffixIcon: _controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
-                            onPressed: () {
-                              _controller.clear();
-                              search.clear();
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  onChanged: (val) => _onSearchChanged(val, search),
-                ),
-              ),
-            ),
-
-            // Tabs matching web: ['Todo', 'Artistas', 'Álbumes', 'Canciones']
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                children: List.generate(_tabs.length, (index) {
-                  final isSelected = _selectedTabIndex == index;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedTabIndex = index),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.accent : AppColors.bgMid,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: isSelected ? AppColors.accent : AppColors.border,
-                        ),
-                      ),
-                      child: Text(
-                        _tabs[index],
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? AppColors.textBright : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Content
-            Expanded(
-              child: search.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.accent),
-                    )
-                  : search.query.isEmpty
-                      ? _buildEmptyState()
-                      : _buildResults(search),
+            const SizedBox(height: 4),
+            Text(
+              strings.emptyStateSubtitle,
+              style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -155,63 +247,40 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.search, size: 54, color: AppColors.borderGlow),
-          const SizedBox(height: 12),
-          Text(
-            'EXPLORA LA BASE DE DATOS',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Escribe el nombre de un artista, canción o álbum',
-            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResults(SearchProvider search) {
-    final currentTab = _tabs[_selectedTabIndex];
-    final showAll = currentTab == 'Todo';
-    final showArtists = showAll || currentTab == 'Artistas';
-    final showAlbums = showAll || currentTab == 'Álbumes';
-    final showTracks = showAll || currentTab == 'Canciones';
+  Widget _buildResults(SearchProvider search, AppStrings strings, LocaleProvider locale) {
+    final showAll = _selectedTabIndex == 0;
+    final showArtists = showAll || _selectedTabIndex == 1;
+    final showAlbums = showAll || _selectedTabIndex == 2;
+    final showTracks = showAll || _selectedTabIndex == 3;
 
     final hasArtists = search.artists.isNotEmpty;
     final hasAlbums = search.albums.isNotEmpty;
     final hasTracks = search.tracks.isNotEmpty;
 
     if (!hasArtists && !hasAlbums && !hasTracks) {
-      return Center(
-        child: Text(
-          'No se encontraron resultados para "${search.query}"',
-          style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary),
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Center(
+          child: Text(
+            strings.noResultsFor(search.query),
+            style: locale.getTextStyle(color: AppColors.textSecondary),
+          ),
         ),
       );
     }
 
     return ListView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(bottom: 120),
-
       children: [
         // Artists Section
         if (showArtists && hasArtists) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Text(
-              'ARTISTAS',
-              style: GoogleFonts.plusJakartaSans(
+              strings.tabArtists.toUpperCase(),
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -222,6 +291,7 @@ class _SearchScreenState extends State<SearchScreen> {
           SizedBox(
             height: 155,
             child: ListView.builder(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: search.artists.length,
@@ -235,8 +305,8 @@ class _SearchScreenState extends State<SearchScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              'ÁLBUMES',
-              style: GoogleFonts.plusJakartaSans(
+              strings.tabAlbums.toUpperCase(),
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
@@ -247,6 +317,7 @@ class _SearchScreenState extends State<SearchScreen> {
           SizedBox(
             height: 185,
             child: ListView.builder(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: search.albums.length,
@@ -260,8 +331,8 @@ class _SearchScreenState extends State<SearchScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              'CANCIONES',
-              style: GoogleFonts.plusJakartaSans(
+              strings.tabTracks.toUpperCase(),
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,

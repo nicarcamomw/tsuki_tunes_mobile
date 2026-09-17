@@ -38,7 +38,7 @@ class SpotifyService {
     await _ensureValidToken();
     return _accessToken;
   }
-  String? get displayName => _profile?['display_name'] ?? (_accessToken != null ? 'Usuario Spotify' : null);
+  String? get displayName => _profile?['display_name'];
   String? get profileImage {
     final images = _profile?['images'];
     if (images is List && images.isNotEmpty) {
@@ -114,7 +114,7 @@ class SpotifyService {
 
       final code = uri.queryParameters['code'];
       if (code == null) {
-        _lastError = 'Código de autorización no encontrado en la respuesta.';
+        _lastError = 'auth_code_not_found';
         return false;
       }
 
@@ -123,9 +123,9 @@ class SpotifyService {
       debugPrint('Spotify connect error: $e');
       final errStr = e.toString();
       if (errStr.contains('CANCELED') || errStr.contains('user_canceled')) {
-        _lastError = 'Conexión cancelada por el usuario.';
+        _lastError = 'canceled_by_user';
       } else {
-        _lastError = 'Error al conectar con Spotify: $e';
+        _lastError = 'connect_error: $e';
       }
       return false;
     }
@@ -149,9 +149,9 @@ class SpotifyService {
         debugPrint('Spotify exchange failed (${response.statusCode}): ${response.body}');
         try {
           final data = json.decode(response.body);
-          _lastError = data['error_description'] ?? data['error'] ?? 'Fallo de autenticación (${response.statusCode})';
+          _lastError = data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}';
         } catch (_) {
-          _lastError = 'Error de respuesta del servidor de Spotify (${response.statusCode})';
+          _lastError = 'server_error_${response.statusCode}';
         }
         return false;
       }
@@ -167,7 +167,7 @@ class SpotifyService {
       return _accessToken != null;
     } catch (e) {
       debugPrint('Spotify exchange error: $e');
-      _lastError = 'Error de red durante el intercambio de tokens: $e';
+      _lastError = 'network_error: $e';
       return false;
     }
   }

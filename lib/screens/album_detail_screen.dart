@@ -9,6 +9,7 @@ import '../models/album.dart';
 import '../services/deezer_api_service.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -107,6 +108,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
     final albumData = _fullAlbum ?? widget.album;
     final tracks = albumData.tracks;
     final audio = context.read<AudioProvider>();
@@ -117,7 +120,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         trackIds.where((id) => library.isTrackListened(id)).length;
     final allListened = listenedCount >= tracks.length && tracks.isNotEmpty;
     final totalDuration = albumData.totalDurationSeconds;
-    final typeLabel = Album.getAlbumTypeLabel(albumData.recordType);
+    final typeLabel = strings.albumTypeLabel(albumData.recordType);
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -133,8 +136,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              'ALBUM DETAILS',
-              style: GoogleFonts.plusJakartaSans(
+              strings.albumDetailsTitle,
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accent,
@@ -265,8 +268,12 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
                   // Meta
                   Text(
-                    '${albumData.year.isNotEmpty ? albumData.year : "N/A"}  ·  ${tracks.isNotEmpty ? tracks.length : albumData.tracksCount} tracks  ·  ${Formatters.formatSeconds(totalDuration)}',
-                    style: GoogleFonts.plusJakartaSans(
+                    strings.albumMeta(
+                      albumData.year.isNotEmpty ? albumData.year : "N/A",
+                      tracks.isNotEmpty ? tracks.length : albumData.tracksCount,
+                      Formatters.formatSeconds(totalDuration),
+                    ),
+                    style: locale.getTextStyle(
                       fontSize: 10,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
@@ -298,8 +305,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             size: 22,
                           ),
                           label: Text(
-                            allListened ? 'TODO ESCUCHADO' : 'MARCAR TODO',
-                            style: GoogleFonts.plusJakartaSans(
+                            allListened ? strings.allListened : strings.markAll,
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: allListened
@@ -329,8 +336,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           icon: const Icon(Icons.play_arrow,
                               color: AppColors.accent, size: 18),
                           label: Text(
-                            'PLAY',
-                            style: GoogleFonts.plusJakartaSans(
+                            strings.play,
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -375,8 +382,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Sincronizando...',
-                          style: GoogleFonts.plusJakartaSans(
+                          strings.syncing,
+                          style: locale.getTextStyle(
                             fontSize: 10,
                             color: AppColors.textSecondary,
                           ),
@@ -399,12 +406,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               ),
             )
           else if (tracks.isEmpty)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('No tracks available',
-                      style: TextStyle(color: AppColors.textSecondary)),
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    strings.noTracksAvailable,
+                    style: locale.getTextStyle(color: AppColors.textSecondary),
+                  ),
                 ),
               ),
             )

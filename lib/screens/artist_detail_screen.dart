@@ -9,6 +9,8 @@ import '../models/track.dart';
 import '../models/album.dart';
 import '../services/deezer_api_service.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
+import '../core/localization/app_strings.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/distorted_artist_name.dart';
@@ -108,6 +110,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
 
     // Check if ALL albums have ALL tracks listened
@@ -247,8 +251,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              '${Formatters.formatNumber(widget.artist.fansCount)} fanáticos',
-                              style: GoogleFonts.plusJakartaSans(
+                              strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
+                              style: locale.getTextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -273,8 +277,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '${widget.artist.albumsCount} lanzamientos',
-                                style: GoogleFonts.plusJakartaSans(
+                                strings.artistReleases(widget.artist.albumsCount),
+                                style: locale.getTextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
@@ -334,7 +338,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             _buildBreakdownItem(
                               AppCustomIcons.libreria(
                                   size: 15, color: AppColors.accent),
-                              '${cats['album']!.length} ${cats['album']!.length == 1 ? 'álbum' : 'álbumes'}',
+                              strings.albumCountLabel(cats['album']!.length),
+                              locale,
                             ),
                           if (_albums
                               .where((a) => a.recordType == 'ep')
@@ -342,7 +347,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             _buildBreakdownItem(
                               AppCustomIcons.ep(
                                   size: 15, color: AppColors.accent),
-                              '${_albums.where((a) => a.recordType == 'ep').length} ${_albums.where((a) => a.recordType == 'ep').length == 1 ? 'EP' : 'EPs'}',
+                              strings.epCountLabel(_albums.where((a) => a.recordType == 'ep').length),
+                              locale,
                             ),
                           if (_albums
                               .where((a) => a.recordType == 'single')
@@ -350,13 +356,15 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             _buildBreakdownItem(
                               AppCustomIcons.nota(
                                   size: 15, color: AppColors.accent),
-                              '${_albums.where((a) => a.recordType == 'single').length} ${_albums.where((a) => a.recordType == 'single').length == 1 ? 'sencillo' : 'sencillos'}',
+                              strings.singleCountLabel(_albums.where((a) => a.recordType == 'single').length),
+                              locale,
                             ),
                           if (cats['compile']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.grupo(
                                   size: 15, color: AppColors.accent),
-                              '${cats['compile']!.length} aparece en',
+                              strings.appearsOnCountLabel(cats['compile']!.length),
+                              locale,
                             ),
                         ],
                       ),
@@ -408,8 +416,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'POPULARES',
-                        style: GoogleFonts.plusJakartaSans(
+                        strings.popularTracks,
+                        style: locale.getTextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textBright,
@@ -434,11 +442,13 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             )
           else if (_topTracks.isEmpty)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('No tracks found',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  strings.noTracksFound,
+                  style: locale.getTextStyle(color: AppColors.textSecondary),
+                ),
               ),
             )
           else ...[
@@ -475,8 +485,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              _showAllTracks ? 'Ver menos' : 'Ver más',
-                              style: GoogleFonts.plusJakartaSans(
+                              _showAllTracks ? strings.showLessTracks : strings.showMoreTracks,
+                              style: locale.getTextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textSecondary,
@@ -508,8 +518,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
                 child: Text(
-                  '// DISCOGRAFÍA',
-                  style: GoogleFonts.plusJakartaSans(
+                  strings.discography,
+                  style: locale.getTextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
@@ -519,23 +529,27 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             ),
             if (cats['album']!.isNotEmpty)
-              ..._buildCategorySection('Álbumes', cats['album']!, 'album', library),
+              ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings),
             if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
               ..._buildCategorySection(
-                'Singles',
+                strings.tabSingles,
                 _albums.where((a) => a.recordType == 'single').toList(),
                 'single',
                 library,
+                locale,
+                strings,
               ),
             if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
               ..._buildCategorySection(
-                'EPs',
+                strings.tabEps,
                 _albums.where((a) => a.recordType == 'ep').toList(),
                 'ep',
                 library,
+                locale,
+                strings,
               ),
             if (cats['compile']!.isNotEmpty)
-              ..._buildCategorySection('Aparece en', cats['compile']!, 'compile', library),
+              ..._buildCategorySection(strings.tabAppearsOn, cats['compile']!, 'compile', library, locale, strings),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -545,7 +559,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   List<Widget> _buildCategorySection(
-      String title, List<Album> albums, String filterKey, LibraryProvider library) {
+      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings) {
     const maxVisible = 8;
     final visible = albums.take(maxVisible).toList();
     final hasMore = albums.length > maxVisible;
@@ -559,7 +573,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -580,8 +594,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     );
                   },
                   child: Text(
-                    'Ver más',
-                    style: GoogleFonts.plusJakartaSans(
+                    strings.seeMore,
+                    style: locale.getTextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.accent,
@@ -603,7 +617,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
           delegate: SliverChildBuilderDelegate(
             (context, index) =>
-                _buildDiscographyItem(context, visible[index], library),
+                _buildDiscographyItem(context, visible[index], library, locale, strings),
             childCount: visible.length,
           ),
         ),
@@ -612,7 +626,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   Widget _buildDiscographyItem(
-      BuildContext context, Album album, LibraryProvider library) {
+      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, AppStrings strings) {
     final listenedCount = album.tracksCount > 0
         ? library.listenedTracks
             .where((t) => t.albumId == album.id)
@@ -660,7 +674,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           const SizedBox(height: 6),
           Text(
             album.title,
-            style: GoogleFonts.plusJakartaSans(
+            style: locale.getTextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -672,8 +686,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${album.year}  ·  ${Album.getAlbumTypeLabel(album.recordType)}',
-                  style: GoogleFonts.plusJakartaSans(
+                  '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+                  style: locale.getTextStyle(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -715,7 +729,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
-  Widget _buildBreakdownItem(Widget icon, String label) {
+  Widget _buildBreakdownItem(Widget icon, String label, LocaleProvider locale) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -723,7 +737,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: locale.getTextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
