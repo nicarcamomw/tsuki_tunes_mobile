@@ -46,3 +46,14 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Secrets & API keys
+.env
+.env.*
+*.keystore
+*.jks
+
+# Firebase config (contains API keys)
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart

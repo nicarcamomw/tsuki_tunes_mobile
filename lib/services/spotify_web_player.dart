@@ -66,8 +66,7 @@ class SpotifyNativePlayer {
     _deviceId = null;
   }
 
-  void dispose() {
-    _stateSub?.cancel();
-    _isConnected = false;
+  Future<void> dispose() async {
+    await disconnect();
   }
 }

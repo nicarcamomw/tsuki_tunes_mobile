@@ -12,7 +12,6 @@ import 'providers/search_provider.dart';
 import 'providers/locale_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/onboarding_screen.dart';
 import 'services/storage_service.dart';
 
 void main() async {
@@ -86,47 +85,21 @@ class _AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<_AuthGate> {
   bool? _initialLoggedIn;
-  bool? _hasCompletedOnboarding;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkOnboarding();
-  }
-
-  Future<void> _checkOnboarding() async {
-    final completed = await StorageService().hasCompletedOnboarding();
-    if (mounted) {
-      setState(() {
-        _hasCompletedOnboarding = completed;
-      });
-    }
-  }
+  bool _firestoreConnected = false;
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    if (auth.loading || _hasCompletedOnboarding == null) {
+    if (auth.loading) {
       return const _CyberLoadingScreen();
-    }
-
-    if (_hasCompletedOnboarding == false) {
-      return OnboardingScreen(
-        onComplete: () {
-          if (mounted) {
-            setState(() {
-              _hasCompletedOnboarding = true;
-            });
-          }
-        },
-      );
     }
 
     _initialLoggedIn ??= auth.isLoggedIn;
 
     if (_initialLoggedIn == true) {
-      if (auth.uid != null) {
+      if (auth.uid != null && !_firestoreConnected) {
+        _firestoreConnected = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             context.read<LibraryProvider>().connectToFirestore(auth.uid!);

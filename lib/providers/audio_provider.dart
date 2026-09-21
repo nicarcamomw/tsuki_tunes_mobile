@@ -33,6 +33,7 @@ class AudioProvider extends ChangeNotifier {
   String? _prefetchedForTrackId;
 
   bool _completionHandled = false;
+  DateTime _lastPlayStart = DateTime(2000);
 
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -72,7 +73,6 @@ class AudioProvider extends ChangeNotifier {
   Future<void> _connectNativePlayer() async {
     _nativePlayer.onStateChanged = _onNativeStateChanged;
     _nativePlayer.onError = (error) {
-      // Non-intrusive: don't show snackbar for background native remote fallback
       debugPrint('Spotify native background notice: $error');
     };
 
@@ -84,8 +84,22 @@ class AudioProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+
     debugPrint('Spotify: connecting native player with token');
-    final connected = await _nativePlayer.connect(accessToken: token);
+    var connected = await _nativePlayer.connect(accessToken: token);
+
+    if (!connected) {
+      debugPrint('Spotify: native connect failed, launching Spotify app...');
+      await _spotify.openSpotifyApp();
+      await Future.delayed(const Duration(seconds: 4));
+
+      final freshToken = await _spotify.getValidToken();
+      if (freshToken != null) {
+        connected = await _nativePlayer.connect(accessToken: freshToken);
+        debugPrint('Spotify: retry native connect after app launch: $connected');
+      }
+    }
+
     _spotifyActive = connected;
     if (connected) {
       debugPrint('Spotify native player connected');
@@ -95,10 +109,28 @@ class AudioProvider extends ChangeNotifier {
       } catch (e) {
         debugPrint('Spotify: switchToLocalDevice error: $e');
       }
-    } else {
-      debugPrint('Spotify native player failed to connect (Web API still active)');
     }
+
+    // Pre-warm Web API device with retries (Spotify may need time to register)
+    _activateDeviceInBackground();
+
     notifyListeners();
+  }
+
+  Future<void> _activateDeviceInBackground() async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final deviceId = await _spotify.ensureActiveDevice();
+        if (deviceId != null) {
+          debugPrint('Spotify: startup device ready: $deviceId');
+          return;
+        }
+      } catch (e) {
+        debugPrint('Spotify: startup device attempt $attempt error: $e');
+      }
+      await Future.delayed(Duration(seconds: 2 + attempt * 2));
+    }
+    debugPrint('Spotify: no device activated at startup (will retry on play)');
   }
 
   Future<void> updateSpotifyState() async {
@@ -119,6 +151,10 @@ class AudioProvider extends ChangeNotifier {
   void _onNativeStateChanged(int positionMs, int durationMs, bool paused) {
     if (!_spotifyActive) return;
 
+    // Ignore stale SDK events from previous track for 3 seconds after new play
+    final msSincePlay = DateTime.now().difference(_lastPlayStart).inMilliseconds;
+    if (msSincePlay < 3000) return;
+
     final wasPlaying = _isPlaying;
     _isPlaying = !paused;
     _isBuffering = false;
@@ -128,7 +164,6 @@ class AudioProvider extends ChangeNotifier {
       _duration = Duration(milliseconds: durationMs);
     }
 
-    // Start/stop position timer based on play state
     if (_isPlaying) {
       _startPositionTimer();
     } else {
@@ -220,6 +255,7 @@ class AudioProvider extends ChangeNotifier {
     _currentTrack = track;
     _position = Duration.zero;
     _completionHandled = false;
+    _lastPlayStart = DateTime.now();
     _duration = Duration(
         seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _isBuffering = true;
@@ -270,11 +306,39 @@ class AudioProvider extends ChangeNotifier {
     }
 
     debugPrint('Spotify: found URI=$uri, playing via Web API...');
-    final played = await _spotify.play(trackUri: uri);
+    var played = await _spotify.play(trackUri: uri);
     debugPrint('Spotify: Web API play result=$played');
 
+    // If play failed, try launching Spotify app and retry
     if (!played) {
-      debugPrint('Spotify: Web API play failed, falling back to preview');
+      debugPrint('Spotify: play failed, launching Spotify app and retrying...');
+      await _spotify.openSpotifyApp();
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Try native connection again
+      if (!_spotifyActive) {
+        final token = await _spotify.getValidToken();
+        if (token != null) {
+          final connected = await _nativePlayer.connect(accessToken: token);
+          _spotifyActive = connected;
+          if (connected) {
+            try {
+              await SpotifySdk.switchToLocalDevice();
+              debugPrint('Spotify: switched to local device after relaunch');
+            } catch (e) {
+              debugPrint('Spotify: switchToLocalDevice error after relaunch: $e');
+            }
+            await Future.delayed(const Duration(milliseconds: 500));
+          }
+        }
+      }
+
+      played = await _spotify.play(trackUri: uri);
+      debugPrint('Spotify: retry after app launch result=$played');
+    }
+
+    if (!played) {
+      debugPrint('Spotify: all play attempts failed, falling back to preview');
       _lastSpotifyError = 'spotify_open_app';
       await _service.playTrack(track);
       _isBuffering = false;
@@ -347,7 +411,11 @@ class AudioProvider extends ChangeNotifier {
       return;
     }
 
-    _currentIndex = (_currentIndex - 1 + _queue.length) % _queue.length;
+    if (_currentIndex <= 0) {
+      _currentIndex = _queue.length - 1;
+    } else {
+      _currentIndex = _currentIndex - 1;
+    }
     await playTrack(_queue[_currentIndex]);
   }
 
@@ -387,15 +455,12 @@ class AudioProvider extends ChangeNotifier {
 
   void _handleTrackCompleted() {
     if (_completionHandled) return;
+    // Ignore completion events within 3 seconds of starting a new track
+    if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
     _completionHandled = true;
 
-    if (_isLoop) {
-      seek(Duration.zero);
-      if (_useSpotify) {
-        _spotify.resume();
-      } else {
-        _service.resume();
-      }
+    if (_isLoop && _currentTrack != null) {
+      playTrack(_currentTrack!);
     } else {
       next();
     }

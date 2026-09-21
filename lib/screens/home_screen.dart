@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
 
-      _computeTopArtists();
+      if (mounted) _computeTopArtists();
     } catch (e) {
       debugPrint('[HomeScreen] loadHomeData error: $e');
       if (mounted) setState(() => _isLoading = false);
@@ -165,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadLatestFromFeatured() async {
+    if (!mounted) return;
     setState(() => _releasesLoading = true);
     final albums = <Album>[];
 
@@ -261,12 +262,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Consumer<AudioProvider>(
                             builder: (context, audio, _) {
                               final isSpotify = audio.useSpotify || audio.spotify.isConnected;
-                              final badgeColor = isSpotify
-                                  ? const Color(0xFF1DB954)
-                                  : AppColors.accent;
-                              final badgeBg = isSpotify
-                                  ? const Color(0xFF1DB954).withValues(alpha: 0.14)
-                                  : AppColors.accentDim;
+                              final badgeColor = AppColors.accent;
+                              final badgeBg = AppColors.accentDim;
                               final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
 
                               return Container(

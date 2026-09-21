@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,6 +22,10 @@ class SpotifyService {
   static const _expiryKey = 'spotify_token_expiry';
   static const _profileKey = 'spotify_profile';
 
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
   String? _accessToken;
   String? _refreshToken;
   DateTime? _tokenExpiry;
@@ -27,6 +33,7 @@ class SpotifyService {
   bool _isPremium = false;
   String? _lastError;
   String? _activeDeviceName;
+  Completer<void>? _refreshLock;
 
   bool get isConnected => _accessToken != null;
   bool get isPremium => _isPremium;
@@ -48,14 +55,37 @@ class SpotifyService {
   }
 
   Future<void> loadSavedState() async {
+    // Migrate tokens from SharedPreferences to secure storage (one-time)
     final prefs = await SharedPreferences.getInstance();
-    _accessToken = prefs.getString(_tokenKey);
-    _refreshToken = prefs.getString(_refreshKey);
-    final expiryMs = prefs.getInt(_expiryKey);
-    if (expiryMs != null) {
-      _tokenExpiry = DateTime.fromMillisecondsSinceEpoch(expiryMs);
+    final legacyToken = prefs.getString(_tokenKey);
+    if (legacyToken != null) {
+      await _secureStorage.write(key: _tokenKey, value: legacyToken);
+      final legacyRefresh = prefs.getString(_refreshKey);
+      if (legacyRefresh != null) {
+        await _secureStorage.write(key: _refreshKey, value: legacyRefresh);
+      }
+      final legacyExpiry = prefs.getInt(_expiryKey);
+      if (legacyExpiry != null) {
+        await _secureStorage.write(key: _expiryKey, value: legacyExpiry.toString());
+      }
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_refreshKey);
+      await prefs.remove(_expiryKey);
     }
-    final profileJson = prefs.getString(_profileKey);
+
+    _accessToken = await _secureStorage.read(key: _tokenKey);
+    _refreshToken = await _secureStorage.read(key: _refreshKey);
+    final expiryStr = await _secureStorage.read(key: _expiryKey);
+    if (expiryStr != null) {
+      _tokenExpiry = DateTime.fromMillisecondsSinceEpoch(int.parse(expiryStr));
+    }
+    // Migrate profile from SharedPreferences to secure storage (one-time)
+    final legacyProfile = prefs.getString(_profileKey);
+    if (legacyProfile != null) {
+      await _secureStorage.write(key: _profileKey, value: legacyProfile);
+      await prefs.remove(_profileKey);
+    }
+    final profileJson = await _secureStorage.read(key: _profileKey);
     if (profileJson != null) {
       try {
         _profile = json.decode(profileJson);
@@ -112,6 +142,13 @@ class SpotifyService {
         return false;
       }
 
+      final returnedState = uri.queryParameters['state'];
+      if (returnedState != state) {
+        _lastError = 'oauth_state_mismatch';
+        debugPrint('Spotify auth: OAuth state mismatch (CSRF protection)');
+        return false;
+      }
+
       final code = uri.queryParameters['code'];
       if (code == null) {
         _lastError = 'auth_code_not_found';
@@ -146,7 +183,7 @@ class SpotifyService {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('Spotify exchange failed (${response.statusCode}): ${response.body}');
+        debugPrint('Spotify exchange failed (${response.statusCode})');
         try {
           final data = json.decode(response.body);
           _lastError = data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}';
@@ -215,7 +252,17 @@ class SpotifyService {
 
   Future<void> _ensureValidToken() async {
     if (_tokenExpiry != null && DateTime.now().isAfter(_tokenExpiry!)) {
-      await _refreshAccessToken();
+      if (_refreshLock != null) {
+        await _refreshLock!.future;
+        return;
+      }
+      _refreshLock = Completer<void>();
+      try {
+        await _refreshAccessToken();
+      } finally {
+        _refreshLock!.complete();
+        _refreshLock = null;
+      }
     }
   }
 
@@ -231,8 +278,7 @@ class SpotifyService {
       if (response.statusCode == 200) {
         _profile = json.decode(response.body);
         _isPremium = _profile?['product'] == 'premium';
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_profileKey, json.encode(_profile));
+        await _secureStorage.write(key: _profileKey, value: json.encode(_profile));
       }
     } catch (e) {
       debugPrint('Spotify profile error: $e');
@@ -370,12 +416,60 @@ class SpotifyService {
     return [];
   }
 
+  Future<bool> _transferPlayback(String deviceId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('https://api.spotify.com/v1/me/player'),
+        headers: {
+          'Authorization': 'Bearer $_accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'device_ids': [deviceId],
+          'play': false,
+        }),
+      );
+      debugPrint('Spotify transfer: ${response.statusCode}');
+      return response.statusCode == 204 || response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Spotify transfer error: $e');
+      return false;
+    }
+  }
+
+  Future<String?> ensureActiveDevice() async {
+    final devices = await getDevices();
+    if (devices.isEmpty) {
+      debugPrint('Spotify: no devices available at all');
+      return null;
+    }
+
+    // Check if any device is already active
+    final active = devices.where((d) => d['is_active'] == true).toList();
+    if (active.isNotEmpty) {
+      return active.first['id'] as String?;
+    }
+
+    // No active device — transfer to the best one
+    final smartphone = devices.where((d) => d['type'] == 'Smartphone').toList();
+    final target = smartphone.isNotEmpty ? smartphone.first : devices.first;
+    final targetId = target['id'] as String?;
+
+    if (targetId != null) {
+      debugPrint('Spotify: transferring playback to ${target['name']}');
+      await _transferPlayback(targetId);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+    return targetId;
+  }
+
   Future<bool> play({String? trackUri, List<String>? trackUris, String? deviceId}) async {
     await _ensureValidToken();
     if (_accessToken == null) return false;
 
     try {
-      final targetDevice = deviceId ?? await getActiveDeviceId();
+      // Ensure we have an active device
+      final targetDevice = deviceId ?? await ensureActiveDevice();
 
       final body = <String, dynamic>{};
       if (trackUris != null && trackUris.isNotEmpty) {
@@ -384,7 +478,6 @@ class SpotifyService {
         body['uris'] = [trackUri];
       }
 
-      // Try with device ID first, fallback to no device
       final url = targetDevice != null
           ? 'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'
           : 'https://api.spotify.com/v1/me/player/play';
@@ -399,11 +492,18 @@ class SpotifyService {
 
       debugPrint('Spotify play: ${response.statusCode} (device=$targetDevice)');
 
-      // If failed with device, retry without device
-      if (response.statusCode != 204 && response.statusCode != 200 && targetDevice != null) {
-        debugPrint('Spotify play: retrying without device_id');
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        return true;
+      }
+
+      // Play failed — try transfer + retry once
+      if (targetDevice != null) {
+        debugPrint('Spotify play failed, forcing transfer and retry');
+        await _transferPlayback(targetDevice);
+        await Future.delayed(const Duration(milliseconds: 800));
+
         final retry = await http.put(
-          Uri.parse('https://api.spotify.com/v1/me/player/play'),
+          Uri.parse('https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'),
           headers: {
             'Authorization': 'Bearer $_accessToken',
             'Content-Type': 'application/json',
@@ -414,7 +514,7 @@ class SpotifyService {
         return retry.statusCode == 204 || retry.statusCode == 200;
       }
 
-      return response.statusCode == 204 || response.statusCode == 200;
+      return false;
     } catch (e) {
       debugPrint('Spotify play error: $e');
       return false;
@@ -442,7 +542,7 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final deviceId = await getActiveDeviceId();
+      final deviceId = await ensureActiveDevice();
       final url = deviceId != null
           ? 'https://api.spotify.com/v1/me/player/play?device_id=$deviceId'
           : 'https://api.spotify.com/v1/me/player/play';
@@ -525,15 +625,17 @@ class SpotifyService {
   }
 
   Future<void> _saveTokens() async {
-    final prefs = await SharedPreferences.getInstance();
     if (_accessToken != null) {
-      await prefs.setString(_tokenKey, _accessToken!);
+      await _secureStorage.write(key: _tokenKey, value: _accessToken!);
     }
     if (_refreshToken != null) {
-      await prefs.setString(_refreshKey, _refreshToken!);
+      await _secureStorage.write(key: _refreshKey, value: _refreshToken!);
     }
     if (_tokenExpiry != null) {
-      await prefs.setInt(_expiryKey, _tokenExpiry!.millisecondsSinceEpoch);
+      await _secureStorage.write(
+        key: _expiryKey,
+        value: _tokenExpiry!.millisecondsSinceEpoch.toString(),
+      );
     }
   }
 
@@ -544,10 +646,9 @@ class SpotifyService {
     _profile = null;
     _isPremium = false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_refreshKey);
-    await prefs.remove(_expiryKey);
-    await prefs.remove(_profileKey);
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _refreshKey);
+    await _secureStorage.delete(key: _expiryKey);
+    await _secureStorage.delete(key: _profileKey);
   }
 }

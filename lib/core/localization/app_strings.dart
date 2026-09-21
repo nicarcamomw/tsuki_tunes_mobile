@@ -848,6 +848,24 @@ class AppStrings {
         AppLanguage.ja => 'カタログを探索',
       };
 
+  String get guestLibraryTitle => switch (language) {
+        AppLanguage.es => 'BIBLIOTECA BLOQUEADA',
+        AppLanguage.en => 'LIBRARY LOCKED',
+        AppLanguage.ja => 'ライブラリはロック中',
+      };
+
+  String get guestLibraryDesc => switch (language) {
+        AppLanguage.es => 'Inicia sesión con Google para guardar tu música, favoritos y historial de escucha.',
+        AppLanguage.en => 'Sign in with Google to save your music, favorites and listening history.',
+        AppLanguage.ja => 'Googleでログインして、音楽、お気に入り、視聴履歴を保存しましょう。',
+      };
+
+  String get guestLoginAction => switch (language) {
+        AppLanguage.es => 'INICIAR SESIÓN',
+        AppLanguage.en => 'SIGN IN',
+        AppLanguage.ja => 'ログイン',
+      };
+
   String get loginSubtitlePrefix => switch (language) {
         AppLanguage.es => 'TU BIBLIOTECA ',
         AppLanguage.en => 'YOUR MUSIC ',
@@ -864,6 +882,12 @@ class AppStrings {
         AppLanguage.es => 'INGRESAR CON GOOGLE',
         AppLanguage.en => 'SIGN IN WITH GOOGLE',
         AppLanguage.ja => 'Googleでログイン',
+      };
+
+  String get loginLoading => switch (language) {
+        AppLanguage.es => 'INGRESANDO...',
+        AppLanguage.en => 'SIGNING IN...',
+        AppLanguage.ja => 'ログイン中...',
       };
 
   String get loginGranted => switch (language) {

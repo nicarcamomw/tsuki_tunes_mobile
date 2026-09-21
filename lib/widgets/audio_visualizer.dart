@@ -33,16 +33,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
-    )..addListener(() {
-        if (widget.isPlaying && mounted) {
-          setState(() {
-            _targetHeights = List.generate(
-              widget.barCount,
-              (i) => 0.15 + _random.nextDouble() * 0.85,
-            );
-          });
-        }
-      });
+    );
 
     if (widget.isPlaying) {
       _controller.repeat(reverse: true);
@@ -72,35 +63,47 @@ class _AudioVisualizerState extends State<AudioVisualizer>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.maxHeight,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(widget.barCount, (index) {
-          final heightFactor = _targetHeights[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 1.5),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              width: 3,
-              height: widget.maxHeight * heightFactor,
-              decoration: BoxDecoration(
-                color: widget.isPlaying ? widget.activeColor : AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(1.5),
-                boxShadow: widget.isPlaying
-                    ? [
-                        BoxShadow(
-                          color: widget.activeColor.withValues(alpha: 0.4),
-                          blurRadius: 4,
-                          spreadRadius: 0.5,
-                        ),
-                      ]
-                    : null,
-              ),
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          if (widget.isPlaying) {
+            for (int i = 0; i < _targetHeights.length; i++) {
+              _targetHeights[i] = 0.15 + _random.nextDouble() * 0.85;
+            }
+          }
+          return SizedBox(
+            height: widget.maxHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(widget.barCount, (index) {
+                final heightFactor = _targetHeights[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    width: 3,
+                    height: widget.maxHeight * heightFactor,
+                    decoration: BoxDecoration(
+                      color: widget.isPlaying ? widget.activeColor : AppColors.borderGlow,
+                      borderRadius: BorderRadius.circular(1.5),
+                      boxShadow: widget.isPlaying
+                          ? [
+                              BoxShadow(
+                                color: widget.activeColor.withValues(alpha: 0.4),
+                                blurRadius: 4,
+                                spreadRadius: 0.5,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                );
+              }),
             ),
           );
-        }),
+        },
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import 'audio_visualizer.dart';
 import 'oni_mask_icon.dart';
@@ -178,8 +179,8 @@ class TrackTile extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              // Listened checkbox (mark/unmark)
-              if (showListenedCheckbox)
+              // Listened checkbox (mark/unmark) — disabled for guests
+              if (showListenedCheckbox && !context.read<AuthProvider>().isGuest)
                 TapScale(
                   onTap: () {
                     if (isListened) {

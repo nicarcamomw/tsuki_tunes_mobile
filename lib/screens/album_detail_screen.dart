@@ -356,9 +356,13 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         IconButton(
                           icon: const Icon(Icons.open_in_new,
                               color: AppColors.accent, size: 20),
-                          onPressed: () {
-                            launchUrl(Uri.parse(albumData.link!),
-                                mode: LaunchMode.externalApplication);
+                          onPressed: () async {
+                            try {
+                              final uri = Uri.parse(albumData.link!);
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } catch (e) {
+                              debugPrint('Could not launch external album URL: $e');
+                            }
                           },
                         ),
                       ],

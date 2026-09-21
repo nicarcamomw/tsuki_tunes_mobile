@@ -153,10 +153,9 @@ class DeezerApiService {
       final data = await _fetchJson(ApiEndpoints.searchArtists(query, limit: limit));
       if (data is Map<String, dynamic>) {
         final List items = data['data'] ?? [];
-        final artists = items
-            .map((item) => Artist.fromJson(item))
-            .where((a) => a.fansCount >= _minArtistFans)
-            .toList();
+        final all = items.map((item) => Artist.fromJson(item)).toList();
+        final filtered = all.where((a) => a.fansCount >= _minArtistFans).toList();
+        final artists = filtered.isNotEmpty ? filtered : all;
         _setCache(cacheKey, artists, isSearch: true);
         return artists;
       }
@@ -194,10 +193,9 @@ class DeezerApiService {
       final data = await _fetchJson(ApiEndpoints.searchTracks(query, limit: limit));
       if (data is Map<String, dynamic>) {
         final List items = data['data'] ?? [];
-        final tracks = items
-            .map((item) => Track.fromJson(item))
-            .where((t) => t.rank == null || t.rank! >= _minTrackRank)
-            .toList();
+        final all = items.map((item) => Track.fromJson(item)).toList();
+        final filtered = all.where((t) => t.rank == null || t.rank! >= _minTrackRank).toList();
+        final tracks = filtered.isNotEmpty ? filtered : all;
         _setCache(cacheKey, tracks, isSearch: true);
         return tracks;
       }

@@ -27,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     with SingleTickerProviderStateMixin {
   late final PageController _pageController;
   late final Ticker _ticker;
-  double _time = 0.0;
+  final ValueNotifier<double> _timeNotifier = ValueNotifier<double>(0.0);
   int _currentPage = 0;
 
   // Floating audio background particle matrix
@@ -52,9 +52,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     _ticker = createTicker((elapsed) {
       if (mounted) {
-        setState(() {
-          _time = elapsed.inMicroseconds / 1000000.0;
-        });
+        _timeNotifier.value = elapsed.inMicroseconds / 1000000.0;
       }
     });
     _ticker.start();
@@ -64,6 +62,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void dispose() {
     _pageController.dispose();
     _ticker.dispose();
+    _timeNotifier.dispose();
     super.dispose();
   }
 
@@ -118,7 +117,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final t = _time;
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
 
@@ -126,42 +124,56 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       backgroundColor: AppColors.bgDeep,
       body: Stack(
         children: [
-          // 1. Cyber Matrix Grid Background
+          // 1. Cyber Matrix Grid Background (static, zero CPU)
           Positioned.fill(
             child: CustomPaint(painter: const _CyberGridPainter()),
           ),
 
-          // 2. Continuous Drifting Cyber Audio Particles
+          // 2. Continuous Drifting Cyber Audio Particles (isolated repaint)
           Positioned.fill(
-            child: CustomPaint(
-              painter: _CyberParticlesPainter(
-                particles: _particles,
-                time: t,
+            child: RepaintBoundary(
+              child: ValueListenableBuilder<double>(
+                valueListenable: _timeNotifier,
+                builder: (context, t, _) {
+                  return CustomPaint(
+                    painter: _CyberParticlesPainter(
+                      particles: _particles,
+                      time: t,
+                    ),
+                  );
+                },
               ),
             ),
           ),
 
-          // 3. Ambient Plasma Glow in the Background
+          // 3. Ambient Plasma Glow in the Background (isolated repaint)
           Positioned(
             top: size.height * 0.15,
             left: size.width * 0.15,
             width: size.width * 0.7,
             height: size.width * 0.7,
             child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    radius: 0.55 + 0.08 * sin(t * 1.5),
-                    colors: [
-                      AppColors.accent.withValues(
-                        alpha: 0.20 + 0.06 * sin(t * 1.5),
+              child: RepaintBoundary(
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _timeNotifier,
+                  builder: (context, t, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          radius: 0.55 + 0.08 * sin(t * 1.5),
+                          colors: [
+                            AppColors.accent.withValues(
+                              alpha: 0.20 + 0.06 * sin(t * 1.5),
+                            ),
+                            AppColors.accent.withValues(alpha: 0.04),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.6, 1.0],
+                        ),
                       ),
-                      AppColors.accent.withValues(alpha: 0.04),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.6, 1.0],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -172,7 +184,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Column(
               children: [
                 // Top HUD Bar with Skip Action
-                _buildTopBar(t, locale, strings),
+                RepaintBoundary(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _timeNotifier,
+                    builder: (context, t, _) => _buildTopBar(t, locale, strings),
+                  ),
+                ),
 
                 // Center 3-Step Swipeable Carousel
                 Expanded(
@@ -182,15 +199,29 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       setState(() => _currentPage = index);
                     },
                     children: [
-                      _buildSlide1Identity(size, t, locale, strings),
-                      _buildSlide2Search(size, t, locale, strings),
-                      _buildSlide3Player(size, t, locale, strings),
+                      _AnimatedSlide(
+                        timeNotifier: _timeNotifier,
+                        builder: (t) => _buildSlide1Identity(size, t, locale, strings),
+                      ),
+                      _AnimatedSlide(
+                        timeNotifier: _timeNotifier,
+                        builder: (t) => _buildSlide2Search(size, t, locale, strings),
+                      ),
+                      _AnimatedSlide(
+                        timeNotifier: _timeNotifier,
+                        builder: (t) => _buildSlide3Player(size, t, locale, strings),
+                      ),
                     ],
                   ),
                 ),
 
                 // Bottom HUD: Page Indicator Dots & Action Button
-                _buildBottomControls(t, locale, strings),
+                RepaintBoundary(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _timeNotifier,
+                    builder: (context, t, _) => _buildBottomControls(t, locale, strings),
+                  ),
+                ),
                 const SizedBox(height: 12),
               ],
             ),
@@ -1471,6 +1502,24 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// --- Animated slide wrapper for isolated repaints ---
+class _AnimatedSlide extends StatelessWidget {
+  final ValueNotifier<double> timeNotifier;
+  final Widget Function(double t) builder;
+
+  const _AnimatedSlide({required this.timeNotifier, required this.builder});
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: ValueListenableBuilder<double>(
+        valueListenable: timeNotifier,
+        builder: (context, t, _) => builder(t),
       ),
     );
   }

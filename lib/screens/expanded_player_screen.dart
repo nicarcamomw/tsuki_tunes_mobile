@@ -32,6 +32,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+    _snapAnimation = const AlwaysStoppedAnimation(0.0);
+    _snapBack.addListener(() {
+      setState(() => _dragDy = _snapAnimation.value);
+    });
   }
 
   @override
@@ -55,9 +59,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       final startValue = _dragDy;
       _snapAnimation = Tween<double>(begin: startValue, end: 0).animate(
         CurvedAnimation(parent: _snapBack, curve: Curves.easeOutCubic),
-      )..addListener(() {
-          setState(() => _dragDy = _snapAnimation.value);
-        });
+      );
       _snapBack.forward(from: 0);
     }
   }
@@ -424,9 +426,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   audio.useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 9,
-                    color: audio.useSpotify
-                        ? const Color(0xFF1DB954)
-                        : AppColors.accent,
+                    color: AppColors.accent,
                     letterSpacing: 2,
                   ),
                 ),

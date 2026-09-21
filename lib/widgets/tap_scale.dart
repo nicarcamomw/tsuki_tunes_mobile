@@ -54,6 +54,7 @@ class _TapScaleState extends State<TapScale>
     if (_controller.isAnimating) {
       await _controller.forward();
     }
+    if (!mounted) return;
     _controller.reverse();
     widget.onTap?.call();
   }

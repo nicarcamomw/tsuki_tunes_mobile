@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/tap_scale.dart';
@@ -13,6 +14,7 @@ import '../providers/locale_provider.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
+import 'login_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -126,9 +128,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final isKeyboardOpen = keyboardHeight > 0;
     final bottomBarHeight = (hasTrack ? 140.0 : 70.0) + bottomPadding;
 
-    // Fix Bug 3 & Vulnerabilidad 3: SnackBar con margen flotante sobre la barra y mensaje desinfectado
     final spotifyError = audio.lastSpotifyError;
-    if (spotifyError != null && spotifyError != _lastShownError) {
+    if (spotifyError == null) {
+      _lastShownError = null;
+    } else if (spotifyError != _lastShownError) {
       _lastShownError = spotifyError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -227,7 +230,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           ),
                           RepaintBoundary(
                             child: _loadedTabs.contains(2)
-                                ? const LibraryScreen()
+                                ? (context.watch<AuthProvider>().isGuest
+                                    ? _GuestLibraryGate()
+                                    : const LibraryScreen())
                                 : const SizedBox.shrink(),
                           ),
                         ],
@@ -683,5 +688,79 @@ class _NestedNavigatorObserver extends NavigatorObserver {
   void didReplace({Route? newRoute, Route? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     onNavigationChanged();
+  }
+}
+
+class _GuestLibraryGate extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.lock_outline_rounded,
+              size: 48,
+              color: AppColors.accent.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              strings.guestLibraryTitle,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textBright,
+                letterSpacing: 2.0,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              strings.guestLibraryDesc,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (_) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  strings.guestLoginAction,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.8,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

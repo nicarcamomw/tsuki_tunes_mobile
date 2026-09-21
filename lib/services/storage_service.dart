@@ -81,7 +81,7 @@ class StorageService {
 
     try {
       final Map decoded = json.decode(raw);
-      return decoded.map((k, v) => MapEntry(k.toString(), v as int));
+      return decoded.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0));
     } catch (_) {
       return {};
     }

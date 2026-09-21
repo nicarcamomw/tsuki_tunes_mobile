@@ -214,9 +214,15 @@ class LibraryProvider extends ChangeNotifier {
         data.toFirestore(),
         SetOptions(merge: true),
       );
-      batch.update(userDoc, {
-        'stats.totalTracks': FieldValue.increment(1),
-      });
+      batch.set(
+        userDoc,
+        {
+          'stats': {
+            'totalTracks': FieldValue.increment(1),
+          },
+        },
+        SetOptions(merge: true),
+      );
       await batch.commit();
     } catch (e) {
       // Rollback
@@ -247,9 +253,15 @@ class LibraryProvider extends ChangeNotifier {
       final userDoc = db.collection('users').doc(uid);
       final batch = db.batch();
       batch.delete(userDoc.collection('listenedTracks').doc(trackId));
-      batch.update(userDoc, {
-        'stats.totalTracks': FieldValue.increment(-1),
-      });
+      batch.set(
+        userDoc,
+        {
+          'stats': {
+            'totalTracks': FieldValue.increment(-1),
+          },
+        },
+        SetOptions(merge: true),
+      );
       await batch.commit();
     } catch (e) {
       // Rollback
@@ -301,9 +313,15 @@ class LibraryProvider extends ChangeNotifier {
           SetOptions(merge: true),
         );
       }
-      batch.update(userDoc, {
-        'stats.totalTracks': FieldValue.increment(toMark.length),
-      });
+      batch.set(
+        userDoc,
+        {
+          'stats': {
+            'totalTracks': FieldValue.increment(toMark.length),
+          },
+        },
+        SetOptions(merge: true),
+      );
 
       await batch.commit();
     } catch (e) {
@@ -343,9 +361,15 @@ class LibraryProvider extends ChangeNotifier {
       for (final id in toUnmark) {
         batch.delete(userDoc.collection('listenedTracks').doc(id));
       }
-      batch.update(userDoc, {
-        'stats.totalTracks': FieldValue.increment(-toUnmark.length),
-      });
+      batch.set(
+        userDoc,
+        {
+          'stats': {
+            'totalTracks': FieldValue.increment(-toUnmark.length),
+          },
+        },
+        SetOptions(merge: true),
+      );
 
       await batch.commit();
     } catch (e) {

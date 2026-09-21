@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
-import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/expanded_player_screen.dart';
@@ -24,7 +23,6 @@ class _MiniPlayerState extends State<MiniPlayer>
   double _swipeDx = 0;
   late final AnimationController _resetController;
   late Animation<double> _resetAnimation;
-  Track? _lastTrack;
 
   @override
   void initState() {
@@ -33,6 +31,10 @@ class _MiniPlayerState extends State<MiniPlayer>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
+    _resetAnimation = const AlwaysStoppedAnimation(0.0);
+    _resetController.addListener(() {
+      setState(() => _swipeDx = _resetAnimation.value);
+    });
   }
 
   @override
@@ -59,9 +61,7 @@ class _MiniPlayerState extends State<MiniPlayer>
     final startValue = _swipeDx;
     _resetAnimation = Tween<double>(begin: startValue, end: 0).animate(
       CurvedAnimation(parent: _resetController, curve: Curves.easeOutCubic),
-    )..addListener(() {
-        setState(() => _swipeDx = _resetAnimation.value);
-      });
+    );
     _resetController.forward(from: 0);
   }
 
@@ -96,10 +96,7 @@ class _MiniPlayerState extends State<MiniPlayer>
   @override
   Widget build(BuildContext context) {
     final audio = context.watch<AudioProvider>();
-    if (audio.currentTrack != null) {
-      _lastTrack = audio.currentTrack;
-    }
-    final track = audio.currentTrack ?? _lastTrack;
+    final track = audio.currentTrack;
 
     if (track == null) return const SizedBox.shrink();
 

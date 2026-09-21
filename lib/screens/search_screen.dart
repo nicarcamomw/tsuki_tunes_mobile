@@ -145,15 +145,19 @@ class _SearchScreenState extends State<SearchScreen> {
                       hintText: strings.searchHint,
                       hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: 14),
                       prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
-                      suffixIcon: _controller.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
-                              onPressed: () {
-                                _controller.clear();
-                                search.clear();
-                              },
-                            )
-                          : null,
+                      suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _controller,
+                        builder: (context, value, _) {
+                          if (value.text.isEmpty) return const SizedBox.shrink();
+                          return IconButton(
+                            icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                            onPressed: () {
+                              _controller.clear();
+                              search.clear();
+                            },
+                          );
+                        },
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),

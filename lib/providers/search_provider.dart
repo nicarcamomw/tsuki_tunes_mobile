@@ -10,6 +10,7 @@ class SearchProvider extends ChangeNotifier {
   String _query = '';
   bool _isLoading = false;
   String _activeCategory = 'all';
+  int _searchGeneration = 0;
 
   List<Track> _tracks = [];
   List<Artist> _artists = [];
@@ -36,20 +37,26 @@ class SearchProvider extends ChangeNotifier {
 
     _query = cleanQuery;
     _isLoading = true;
+    final generation = ++_searchGeneration;
     notifyListeners();
 
     try {
       final results = await _api.search(_query);
+      if (generation != _searchGeneration) return;
       _tracks = results['tracks'] ?? [];
       _artists = results['artists'] ?? [];
       _albums = results['albums'] ?? [];
-    } catch (_) {
+    } catch (e) {
+      if (generation != _searchGeneration) return;
+      debugPrint('Search error: $e');
       _tracks = [];
       _artists = [];
       _albums = [];
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (generation == _searchGeneration) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -59,6 +66,7 @@ class SearchProvider extends ChangeNotifier {
     _artists = [];
     _albums = [];
     _isLoading = false;
+    _searchGeneration++;
     notifyListeners();
   }
 }

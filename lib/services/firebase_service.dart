@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,9 +16,18 @@ class FirebaseService {
   GoogleSignIn? _googleSignIn;
 
   bool get isInitialized => _initialized;
-  FirebaseAuth get auth => _auth!;
-  FirebaseFirestore get db => _db!;
-  GoogleSignIn get googleSignIn => _googleSignIn!;
+  FirebaseAuth get auth {
+    if (_auth == null) throw StateError('FirebaseService not initialized');
+    return _auth!;
+  }
+  FirebaseFirestore get db {
+    if (_db == null) throw StateError('FirebaseService not initialized');
+    return _db!;
+  }
+  GoogleSignIn get googleSignIn {
+    if (_googleSignIn == null) throw StateError('FirebaseService not initialized');
+    return _googleSignIn!;
+  }
   User? get currentUser => _auth?.currentUser;
 
   Future<void> initialize() async {
@@ -58,8 +68,7 @@ class FirebaseService {
       }
     } catch (e) {
       // Non-blocking: Firestore permission/network errors shouldn't break sign-in
-      // ignore: avoid_print
-      print('Firestore profile sync non-fatal warning: $e');
+      debugPrint('Firestore profile sync non-fatal warning: $e');
     }
     return userCredential;
   }
