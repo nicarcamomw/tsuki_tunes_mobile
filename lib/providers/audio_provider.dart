@@ -27,6 +27,7 @@ class AudioProvider extends ChangeNotifier {
   bool _useSpotify = false;
   bool _spotifyActive = false;
   String? _lastSpotifyError;
+  String? _lastPlaybackError;
 
   // Prefetch next track URI
   String? _prefetchedUri;
@@ -34,6 +35,7 @@ class AudioProvider extends ChangeNotifier {
 
   bool _completionHandled = false;
   DateTime _lastPlayStart = DateTime(2000);
+  int _playGeneration = 0;
 
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -56,6 +58,7 @@ class AudioProvider extends ChangeNotifier {
   bool get useSpotify => _useSpotify;
   SpotifyService get spotify => _spotify;
   String? get lastSpotifyError => _lastSpotifyError;
+  String? get lastPlaybackError => _lastPlaybackError;
 
   AudioProvider() {
     _initSubscriptions();
@@ -256,35 +259,39 @@ class AudioProvider extends ChangeNotifier {
     _position = Duration.zero;
     _completionHandled = false;
     _lastPlayStart = DateTime.now();
+    final gen = ++_playGeneration;
     _duration = Duration(
         seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _isBuffering = true;
     notifyListeners();
 
     try {
+      _lastPlaybackError = null;
       if (_useSpotify) {
         await _playViaSpotify(track);
       } else {
         await _service.playTrack(track);
       }
+      if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
       _prefetchNextTrack();
     } catch (e) {
+      if (gen != _playGeneration) return;
       _isBuffering = false;
+      _lastPlaybackError = 'playback_error';
       notifyListeners();
       debugPrint('Error playing track: $e');
     }
   }
 
   Future<void> _playViaSpotify(Track track) async {
+    final gen = _playGeneration;
     _lastSpotifyError = null;
 
-    // Stop just_audio to release audio focus
     try {
       await _service.stop();
     } catch (_) {}
 
-    // Use prefetched URI if available
     String? uri;
     if (_prefetchedForTrackId == track.id && _prefetchedUri != null) {
       uri = _prefetchedUri;
@@ -294,12 +301,14 @@ class AudioProvider extends ChangeNotifier {
     } else {
       debugPrint('Spotify: searching "${track.title}" by "${track.artistName}"');
       uri = await _spotify.searchTrack(track.title, track.artistName);
+      if (gen != _playGeneration) return;
     }
 
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}"');
       _lastSpotifyError = 'spotify_track_unavailable';
       await _service.playTrack(track);
+      if (gen != _playGeneration) return;
       _isBuffering = false;
       notifyListeners();
       return;
@@ -307,15 +316,15 @@ class AudioProvider extends ChangeNotifier {
 
     debugPrint('Spotify: found URI=$uri, playing via Web API...');
     var played = await _spotify.play(trackUri: uri);
+    if (gen != _playGeneration) return;
     debugPrint('Spotify: Web API play result=$played');
 
-    // If play failed, try launching Spotify app and retry
     if (!played) {
       debugPrint('Spotify: play failed, launching Spotify app and retrying...');
       await _spotify.openSpotifyApp();
       await Future.delayed(const Duration(seconds: 2));
+      if (gen != _playGeneration) return;
 
-      // Try native connection again
       if (!_spotifyActive) {
         final token = await _spotify.getValidToken();
         if (token != null) {
@@ -329,11 +338,13 @@ class AudioProvider extends ChangeNotifier {
               debugPrint('Spotify: switchToLocalDevice error after relaunch: $e');
             }
             await Future.delayed(const Duration(milliseconds: 500));
+            if (gen != _playGeneration) return;
           }
         }
       }
 
       played = await _spotify.play(trackUri: uri);
+      if (gen != _playGeneration) return;
       debugPrint('Spotify: retry after app launch result=$played');
     }
 
@@ -341,6 +352,7 @@ class AudioProvider extends ChangeNotifier {
       debugPrint('Spotify: all play attempts failed, falling back to preview');
       _lastSpotifyError = 'spotify_open_app';
       await _service.playTrack(track);
+      if (gen != _playGeneration) return;
       _isBuffering = false;
       notifyListeners();
       return;

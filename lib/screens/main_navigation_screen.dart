@@ -10,11 +10,13 @@ import '../widgets/mini_player.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
+import '../widgets/fade_indexed_stack.dart';
+import '../widgets/guest_library_gate.dart';
 import '../providers/locale_provider.dart';
+import '../providers/connectivity_provider.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
-import 'login_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -39,6 +41,7 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
   String? _lastShownError;
+  String? _lastShownPlaybackError;
 
   // Timestamps para detección de Double-Tap a 0 ms de latencia
   DateTime? _lastTapTime;
@@ -118,17 +121,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
+    final hasTrack = context.select<AudioProvider, bool>((a) => a.currentTrack != null);
+    final spotifyError = context.select<AudioProvider, String?>((a) => a.lastSpotifyError);
+    final playbackError = context.select<AudioProvider, String?>((a) => a.lastPlaybackError);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
-    final hasTrack = audio.currentTrack != null;
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardOpen = keyboardHeight > 0;
     final bottomBarHeight = (hasTrack ? 140.0 : 70.0) + bottomPadding;
-
-    final spotifyError = audio.lastSpotifyError;
     if (spotifyError == null) {
       _lastShownError = null;
     } else if (spotifyError != _lastShownError) {
@@ -164,6 +166,51 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 borderRadius: BorderRadius.circular(6),
                 side: BorderSide(
                   color: AppColors.accent.withValues(alpha: 0.8),
+                  width: 1.2,
+                ),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    }
+
+    if (playbackError == null) {
+      _lastShownPlaybackError = null;
+    } else if (playbackError != _lastShownPlaybackError) {
+      _lastShownPlaybackError = playbackError;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      strings.playbackError,
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textBright,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.bgCard,
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(
+                bottom: bottomBarHeight + 12,
+                left: 16,
+                right: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(
+                  color: Colors.redAccent,
                   width: 1.2,
                 ),
               ),
@@ -218,7 +265,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     builder: (context, activeIndex, _) {
                       _loadedTabs.add(activeIndex);
 
-                      return _FadeIndexedStack(
+                      return FadeIndexedStack(
                         index: activeIndex,
                         duration: const Duration(milliseconds: 150),
                         children: [
@@ -231,7 +278,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           RepaintBoundary(
                             child: _loadedTabs.contains(2)
                                 ? (context.watch<AuthProvider>().isGuest
-                                    ? _GuestLibraryGate()
+                                    ? const GuestLibraryGate()
                                     : const LibraryScreen())
                                 : const SizedBox.shrink(),
                           ),
@@ -244,6 +291,45 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             // Mini Player animado + Bottom Nav
             // Ocultar limpiamente hacia abajo cuando el teclado está activo o el reproductor está expandido
+            // Offline banner
+            Builder(
+              builder: (context) {
+                final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
+                return AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  offset: isOnline ? const Offset(0, -1) : Offset.zero,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: isOnline ? 0.0 : 1.0,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        color: Colors.redAccent.withValues(alpha: 0.9),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.wifi_off, size: 14, color: Colors.white),
+                            const SizedBox(width: 6),
+                            Text(
+                              strings.offline,
+                              style: locale.getTextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
             Positioned(
               left: 0,
               right: 0,
@@ -465,6 +551,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final isSelected = selectedIndex == index;
 
     return TapScale(
+      semanticLabel: label,
       onTap: () => _onNavItemTap(index),
       onLongPress: () => _onNavItemLongPress(index),
       scaleDown: 0.85,
@@ -540,126 +627,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-/// _FadeIndexedStack: Preserva el estado y scroll de IndexedStack con una
-/// micro-transición de fade cinematográfico de 150 ms entre pestañas a 120 FPS Zero-GC.
-class _FadeIndexedStack extends StatefulWidget {
-  final int index;
-  final List<Widget> children;
-  final Duration duration;
-
-  const _FadeIndexedStack({
-    required this.index,
-    required this.children,
-    this.duration = const Duration(milliseconds: 150),
-  });
-
-  @override
-  State<_FadeIndexedStack> createState() => _FadeIndexedStackState();
-}
-
-class _FadeIndexedStackState extends State<_FadeIndexedStack>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  int _targetIndex = 0;
-  int _previousIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _targetIndex = widget.index;
-    _previousIndex = widget.index;
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-      value: 1.0,
-    );
-  }
-
-  @override
-  void didUpdateWidget(_FadeIndexedStack oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.index != _targetIndex) {
-      if (_controller.isAnimating) {
-        // Caso 1: Si el usuario vuelve a la pestaña anterior a mitad de transición,
-        // encadenamos el progreso simétricamente sin ningún salto ni parpadeo visual
-        if (widget.index == _previousIndex) {
-          final currentProgress = _controller.value;
-          _previousIndex = _targetIndex;
-          _targetIndex = widget.index;
-          _controller.forward(from: (1.0 - currentProgress).clamp(0.0, 1.0));
-          return;
-        }
-
-        // Caso 2: Si salta a una tercera pestaña cuando la entrante aún tenía < 50% de opacidad,
-        // conservamos la pestaña de origen dominante como base de salida para evitar un destello abrupto
-        if (_controller.value < 0.5) {
-          _targetIndex = widget.index;
-          _controller.forward(from: 0.0);
-          return;
-        }
-      }
-
-      _previousIndex = _targetIndex;
-      _targetIndex = widget.index;
-      _controller.forward(from: 0.0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        // Fix Bug 1: Zero-GC transform sin instanciar CurvedAnimation en cada frame
-        final progress = Curves.easeInOut.transform(_controller.value);
-        final isAnimating = _controller.isAnimating;
-
-        return Stack(
-          fit: StackFit.expand,
-          children: List.generate(widget.children.length, (i) {
-            final isTarget = i == _targetIndex;
-            final isPrevious = i == _previousIndex && isAnimating;
-            final isOffstage = !isTarget && !isPrevious;
-
-            double opacity;
-            if (isAnimating) {
-              if (isTarget) {
-                opacity = progress;
-              } else if (isPrevious) {
-                opacity = 1.0 - progress;
-              } else {
-                opacity = 0.0;
-              }
-            } else {
-              opacity = isTarget ? 1.0 : 0.0;
-            }
-
-            return Offstage(
-              offstage: isOffstage,
-              child: ExcludeFocus(
-                excluding: !isTarget,
-                child: IgnorePointer(
-                  ignoring: !isTarget,
-                  child: Opacity(
-                    opacity: opacity.clamp(0.0, 1.0),
-                    child: widget.children[i],
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
 /// Observer para sincronizar el estado de Predictive Back cuando se apilan o desapilan
 /// pantallas de detalle (artistas, álbumes, discografía) dentro de appNavigatorKey.
 class _NestedNavigatorObserver extends NavigatorObserver {
@@ -691,76 +658,3 @@ class _NestedNavigatorObserver extends NavigatorObserver {
   }
 }
 
-class _GuestLibraryGate extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
-    final strings = locale.strings;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.lock_outline_rounded,
-              size: 48,
-              color: AppColors.accent.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              strings.guestLibraryTitle,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textBright,
-                letterSpacing: 2.0,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              strings.guestLibraryDesc,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (_) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  strings.guestLoginAction,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.8,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class LastFmService {
-  static const String _apiKey = '20ab04496a59664c5fb0dbd7405c69dc';
+  static const String _apiKey = String.fromEnvironment('LASTFM_API_KEY');
 
   static Future<List<String>> getArtistTags(String artistName) async {
     try {

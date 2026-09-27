@@ -1,7 +1,8 @@
 import 'package:just_audio/just_audio.dart';
 import '../models/track.dart';
+import 'contracts/audio_player_contract.dart';
 
-class AudioPlayerService {
+class AudioPlayerService implements AudioPlayerContract {
   final AudioPlayer _player = AudioPlayer();
 
   AudioPlayer get player => _player;

@@ -261,6 +261,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                       ),
                     ),
                     TapScale(
+                      semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
                       onTap: () {
                         if (isListened) {
                           library.unmarkTrack(track.id);
@@ -278,6 +279,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                       ),
                     ),
                     TapScale(
+                      semanticLabel: audio.isPlaying ? 'Pause' : 'Play',
                       onTap: audio.togglePlay,
                       scaleDown: 0.85,
                       child: Padding(
@@ -302,6 +304,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                       ),
                     ),
                     TapScale(
+                      semanticLabel: 'Next track',
                       onTap: audio.next,
                       scaleDown: 0.85,
                       child: const Padding(
@@ -311,6 +314,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                       ),
                     ),
                     TapScale(
+                      semanticLabel: 'Stop playback',
                       onTap: audio.stop,
                       scaleDown: 0.85,
                       child: const Padding(

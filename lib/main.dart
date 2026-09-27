@@ -10,6 +10,7 @@ import 'providers/audio_provider.dart';
 import 'providers/library_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/storage_service.dart';
@@ -37,6 +38,7 @@ class TsukiTunesApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
@@ -84,8 +86,7 @@ class _AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<_AuthGate> {
-  bool? _initialLoggedIn;
-  bool _firestoreConnected = false;
+  String? _connectedUid;
 
   @override
   Widget build(BuildContext context) {
@@ -95,18 +96,26 @@ class _AuthGateState extends State<_AuthGate> {
       return const _CyberLoadingScreen();
     }
 
-    _initialLoggedIn ??= auth.isLoggedIn;
-
-    if (_initialLoggedIn == true) {
-      if (auth.uid != null && !_firestoreConnected) {
-        _firestoreConnected = true;
+    if (auth.isLoggedIn) {
+      final uid = auth.uid;
+      if (uid != null && !auth.isGuest && _connectedUid != uid) {
+        _connectedUid = uid;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            context.read<LibraryProvider>().connectToFirestore(auth.uid!);
+            context.read<LibraryProvider>().connectToFirestore(uid);
           }
         });
       }
       return const MainNavigationScreen();
+    }
+
+    if (_connectedUid != null) {
+      _connectedUid = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<LibraryProvider>().disconnectFirestore();
+        }
+      });
     }
 
     return const LoginScreen();

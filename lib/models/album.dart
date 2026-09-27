@@ -39,21 +39,6 @@ class Album {
     return tracks.fold(0, (sum, t) => sum + t.durationSeconds);
   }
 
-  static String getAlbumTypeLabel(String? type) {
-    switch (type) {
-      case 'album':
-        return 'Álbum';
-      case 'single':
-        return 'Sencillo';
-      case 'ep':
-        return 'EP';
-      case 'compile':
-        return 'Compilación';
-      default:
-        return 'Álbum';
-    }
-  }
-
   factory Album.fromJson(Map<String, dynamic> json) {
     final artistJson =
         json['artist'] is Map<String, dynamic> ? json['artist'] : null;
@@ -103,5 +88,35 @@ class Album {
       'tracksCount': tracksCount,
       'link': link,
     };
+  }
+
+  Album copyWith({
+    String? id,
+    String? title,
+    String? coverUrl,
+    String? coverXl,
+    String? artistId,
+    String? artistName,
+    String? releaseDate,
+    String? recordType,
+    int? fansCount,
+    int? tracksCount,
+    String? link,
+    List<Track>? tracks,
+  }) {
+    return Album(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      coverUrl: coverUrl ?? this.coverUrl,
+      coverXl: coverXl ?? this.coverXl,
+      artistId: artistId ?? this.artistId,
+      artistName: artistName ?? this.artistName,
+      releaseDate: releaseDate ?? this.releaseDate,
+      recordType: recordType ?? this.recordType,
+      fansCount: fansCount ?? this.fansCount,
+      tracksCount: tracksCount ?? this.tracksCount,
+      link: link ?? this.link,
+      tracks: tracks ?? this.tracks,
+    );
   }
 }

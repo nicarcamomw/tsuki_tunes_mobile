@@ -5,6 +5,7 @@ class TapScale extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final double scaleDown;
+  final String? semanticLabel;
 
   const TapScale({
     super.key,
@@ -12,6 +13,7 @@ class TapScale extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.scaleDown = 0.90,
+    this.semanticLabel,
   });
 
   @override
@@ -65,7 +67,7 @@ class _TapScaleState extends State<TapScale>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    Widget result = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -85,5 +87,13 @@ class _TapScaleState extends State<TapScale>
         child: widget.child,
       ),
     );
+    if (widget.semanticLabel != null) {
+      result = Semantics(
+        button: true,
+        label: widget.semanticLabel,
+        child: result,
+      );
+    }
+    return result;
   }
 }

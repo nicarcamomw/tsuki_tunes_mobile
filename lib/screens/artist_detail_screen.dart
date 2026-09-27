@@ -36,6 +36,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   List<Album> _albums = [];
   List<String> _artistTags = [];
   bool _isLoading = true;
+  bool _hasError = false;
   bool _showStats = false;
   bool _showAllTracks = false;
   bool _showTitleInAppBar = false;
@@ -69,7 +70,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   Future<void> _loadArtistData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
     try {
       final results = await Future.wait([
         _api.getArtistTopTracks(widget.artist.id, limit: 10),
@@ -83,10 +87,43 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           _artistTags = results[2] as List<String>;
           _isLoading = false;
         });
+        _enrichAlbumsWithSavedTracks(_albums);
       }
     } catch (e) {
       debugPrint('[ArtistDetail] loadArtistData error: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _enrichAlbumsWithSavedTracks(List<Album> albums) async {
+    if (!mounted) return;
+    final library = context.read<LibraryProvider>();
+    final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
+    final toFetch = albums.where((a) {
+      if (!savedAlbumIds.contains(a.id)) return false;
+      return library.getAlbumTracksCount(a.id) <= 0 && a.tracksCount <= 0;
+    }).toList();
+
+    if (toFetch.isEmpty) return;
+
+    try {
+      final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
+      for (final res in results) {
+        if (res != null) {
+          final count = res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+          if (count > 0) {
+            library.registerAlbumTrackCount(res.id, count);
+          }
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('[ArtistDetail] _enrichAlbumsWithSavedTracks error: $e');
     }
   }
 
@@ -116,13 +153,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
     // Check if ALL albums have ALL tracks listened
     final bool isArtistComplete = _albums.isNotEmpty &&
-        _albums.every((album) {
-          if (album.tracksCount <= 0) return false;
-          final listenedInAlbum = library.listenedTracks
-              .where((t) => t.albumId == album.id)
-              .length;
-          return listenedInAlbum >= album.tracksCount;
-        });
+        _albums.every((album) =>
+            library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount));
 
     final displayedTracks = _topTracks.take(_showAllTracks ? 10 : 5).toList();
 
@@ -441,6 +473,49 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ),
               ),
             )
+          else if (_hasError && _topTracks.isEmpty)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textMuted),
+                      const SizedBox(height: 10),
+                      Text(
+                        strings.searchError,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 14),
+                      GestureDetector(
+                        onTap: _loadArtistData,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            strings.retry,
+                            style: locale.getTextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
           else if (_topTracks.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -582,8 +657,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
               if (hasMore)
                 GestureDetector(
-                  onTap: () {
-                    appNavigatorKey.currentState?.push(
+                  onTap: () async {
+                    await appNavigatorKey.currentState?.push(
                       MaterialPageRoute(
                         builder: (_) => ArtistDiscographyScreen(
                           artistName: widget.artist.name,
@@ -592,6 +667,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                       ),
                     );
+                    if (mounted) {
+                      _enrichAlbumsWithSavedTracks(_albums);
+                      setState(() {});
+                    }
                   },
                   child: Text(
                     strings.seeMore,
@@ -627,21 +706,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   Widget _buildDiscographyItem(
       BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, AppStrings strings) {
-    final listenedCount = album.tracksCount > 0
-        ? library.listenedTracks
-            .where((t) => t.albumId == album.id)
-            .length
-        : 0;
     final isCompleted =
-        album.tracksCount > 0 && listenedCount >= album.tracksCount;
+        library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
     return GestureDetector(
-      onTap: () {
-        appNavigatorKey.currentState?.push(
+      onTap: () async {
+        await appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => AlbumDetailScreen(album: album),
           ),
         );
+        if (mounted) {
+          _enrichAlbumsWithSavedTracks(_albums);
+          setState(() {});
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

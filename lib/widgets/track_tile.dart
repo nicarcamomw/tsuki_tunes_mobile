@@ -30,18 +30,20 @@ class TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
-    final library = context.watch<LibraryProvider>();
-    final isCurrent = audio.currentTrack?.id == track.id;
-    final isPlaying = isCurrent && audio.isPlaying;
-    final isListened = library.isTrackListened(track.id);
+    final currentTrackId = context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
+    final isAudioPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
+    final isListened = context.select<LibraryProvider, bool>((l) => l.isTrackListened(track.id));
+    final isCurrent = currentTrackId == track.id;
+    final isPlaying = isCurrent && isAudioPlaying;
 
-    return Material(
+    return Semantics(
+      label: '${track.title}, ${track.fullArtistName}',
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
           FocusScope.of(context).unfocus();
-          audio.playTrack(track, newQueue: queue);
+          context.read<AudioProvider>().playTrack(track, newQueue: queue);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -182,15 +184,17 @@ class TrackTile extends StatelessWidget {
               // Listened checkbox (mark/unmark) — disabled for guests
               if (showListenedCheckbox && !context.read<AuthProvider>().isGuest)
                 TapScale(
+                  semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
                   onTap: () {
+                    final lib = context.read<LibraryProvider>();
                     if (isListened) {
                       if (onUnmark != null) {
                         onUnmark!();
                       } else {
-                        library.unmarkTrack(track.id);
+                        lib.unmarkTrack(track.id);
                       }
                     } else {
-                      library.markTrack(track);
+                      lib.markTrack(track);
                     }
                   },
                   scaleDown: 0.8,
@@ -202,6 +206,7 @@ class TrackTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../models/album.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -28,12 +29,43 @@ class ArtistDiscographyScreen extends StatefulWidget {
 }
 
 class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
+  final DeezerApiService _api = DeezerApiService();
   late String _filter;
 
   @override
   void initState() {
     super.initState();
     _filter = widget.initialFilter;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _enrichAlbumsWithSavedTracks();
+    });
+  }
+
+  Future<void> _enrichAlbumsWithSavedTracks() async {
+    if (!mounted) return;
+    final library = context.read<LibraryProvider>();
+    final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
+    final toFetch = widget.albums.where((a) {
+      if (!savedAlbumIds.contains(a.id)) return false;
+      return library.getAlbumTracksCount(a.id) <= 0 && a.tracksCount <= 0;
+    }).toList();
+
+    if (toFetch.isEmpty) return;
+
+    try {
+      final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
+      for (final res in results) {
+        if (res != null) {
+          final count = res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+          if (count > 0) {
+            library.registerAlbumTrackCount(res.id, count);
+          }
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('[ArtistDiscography] _enrichAlbumsWithSavedTracks error: $e');
+    }
   }
 
   List<Album> get _filtered {
@@ -162,17 +194,18 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
 
   Widget _buildItem(
       BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, dynamic strings) {
-    final listenedCount = album.tracksCount > 0
-        ? library.listenedTracks.where((t) => t.albumId == album.id).length
-        : 0;
     final isCompleted =
-        album.tracksCount > 0 && listenedCount >= album.tracksCount;
+        library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
     return GestureDetector(
-      onTap: () {
-        appNavigatorKey.currentState?.push(
+      onTap: () async {
+        await appNavigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
         );
+        if (mounted) {
+          _enrichAlbumsWithSavedTracks();
+          setState(() {});
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import '../core/constants/app_colors.dart';
+import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -68,8 +69,13 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   Widget build(BuildContext context) {
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
-    final audio = context.watch<AudioProvider>();
-    final track = audio.currentTrack;
+    final audio = context.read<AudioProvider>();
+    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
+    final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
+    final isBuffering = context.select<AudioProvider, bool>((a) => a.isBuffering);
+    final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
+    final isLoop = context.select<AudioProvider, bool>((a) => a.isLoop);
+    final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
 
     if (track == null) {
       return PopScope(
@@ -178,7 +184,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   Hero(
                     tag: 'player_art_${track.id}',
                     child: RinneganVisualizer(
-                      isPlaying: audio.isPlaying,
+                      isPlaying: isPlaying,
                       imageUrl: track.coverUrl,
                       size: MediaQuery.of(context).size.width * 0.72,
                     ),
@@ -223,6 +229,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         ),
                       ),
                       TapScale(
+                        semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
                         onTap: () {
                           if (isListened) {
                             library.unmarkTrack(track.id);
@@ -239,23 +246,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           ),
                         ),
                       ),
-                      // Favorite
-                      TapScale(
-                        onTap: () => library.toggleFavoriteTrack(track),
-                        scaleDown: 0.8,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            library.isFavoriteTrack(track.id)
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            size: 26,
-                            color: library.isFavoriteTrack(track.id)
-                                ? AppColors.accent
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -265,20 +255,22 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 // Progress bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: ProgressBar(
-                    progress: audio.position,
-                    total: audio.duration,
-                    buffered: audio.bufferedPosition,
-                    onSeek: (duration) => audio.seek(duration),
-                    progressBarColor: AppColors.accent,
-                    baseBarColor: AppColors.border,
-                    bufferedBarColor: AppColors.borderGlow,
-                    thumbColor: AppColors.accent,
-                    thumbGlowColor: AppColors.accentGlow,
-                    thumbRadius: 7.0,
-                    timeLabelTextStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
+                  child: Consumer<AudioProvider>(
+                    builder: (context, audioPos, _) => ProgressBar(
+                      progress: audioPos.position,
+                      total: audioPos.duration,
+                      buffered: audioPos.bufferedPosition,
+                      onSeek: audioPos.seek,
+                      progressBarColor: AppColors.accent,
+                      baseBarColor: AppColors.border,
+                      bufferedBarColor: AppColors.borderGlow,
+                      thumbColor: AppColors.accent,
+                      thumbGlowColor: AppColors.accentGlow,
+                      thumbRadius: 7.0,
+                      timeLabelTextStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -293,6 +285,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     children: [
                       // Shuffle
                       TapScale(
+                        semanticLabel: isShuffle ? 'Shuffle on' : 'Shuffle off',
                         onTap: audio.toggleShuffle,
                         scaleDown: 0.8,
                         child: Padding(
@@ -303,11 +296,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               Icon(
                                 Icons.shuffle,
                                 size: 22,
-                                color: audio.isShuffle
+                                color: isShuffle
                                     ? AppColors.accent
                                     : AppColors.textSecondary,
                               ),
-                              if (audio.isShuffle)
+                              if (isShuffle)
                                 Container(
                                   margin: const EdgeInsets.only(top: 4),
                                   width: 4,
@@ -324,6 +317,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Previous
                       TapScale(
+                        semanticLabel: 'Previous track',
                         onTap: audio.previous,
                         scaleDown: 0.85,
                         child: const Padding(
@@ -335,6 +329,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Play/Pause
                       TapScale(
+                        semanticLabel: isPlaying ? 'Pause' : 'Play',
                         onTap: audio.togglePlay,
                         scaleDown: 0.88,
                         child: Container(
@@ -352,7 +347,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             ],
                           ),
                           child: Center(
-                            child: audio.isBuffering
+                            child: isBuffering
                                 ? const SizedBox(
                                     width: 28,
                                     height: 28,
@@ -364,7 +359,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                     ),
                                   )
                                 : Icon(
-                                    audio.isPlaying
+                                    isPlaying
                                         ? Icons.pause
                                         : Icons.play_arrow,
                                     size: 36,
@@ -376,6 +371,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Next
                       TapScale(
+                        semanticLabel: 'Next track',
                         onTap: audio.next,
                         scaleDown: 0.85,
                         child: const Padding(
@@ -387,6 +383,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Repeat
                       TapScale(
+                        semanticLabel: isLoop ? 'Repeat on' : 'Repeat off',
                         onTap: audio.toggleLoop,
                         scaleDown: 0.8,
                         child: Padding(
@@ -397,11 +394,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               Icon(
                                 Icons.repeat,
                                 size: 22,
-                                color: audio.isLoop
+                                color: isLoop
                                     ? AppColors.accent
                                     : AppColors.textSecondary,
                               ),
-                              if (audio.isLoop)
+                              if (isLoop)
                                 Container(
                                   margin: const EdgeInsets.only(top: 4),
                                   width: 4,
@@ -423,7 +420,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                 // Device tag
                 Text(
-                  audio.useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
+                  useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 9,
                     color: AppColors.accent,

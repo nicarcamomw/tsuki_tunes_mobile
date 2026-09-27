@@ -914,4 +914,29 @@ class AppStrings {
         AppLanguage.en => 'CYBER AUDIO PLAYER',
         AppLanguage.ja => '電脳音楽プレイヤー',
       };
+
+  // --- Error / Connectivity ---
+  String get searchError => switch (language) {
+        AppLanguage.es => 'Error al buscar. Revisa tu conexión.',
+        AppLanguage.en => 'Search failed. Check your connection.',
+        AppLanguage.ja => '検索に失敗しました。接続を確認してください。',
+      };
+
+  String get retry => switch (language) {
+        AppLanguage.es => 'REINTENTAR',
+        AppLanguage.en => 'RETRY',
+        AppLanguage.ja => '再試行',
+      };
+
+  String get offline => switch (language) {
+        AppLanguage.es => 'Sin conexión a internet',
+        AppLanguage.en => 'No internet connection',
+        AppLanguage.ja => 'インターネット接続なし',
+      };
+
+  String get playbackError => switch (language) {
+        AppLanguage.es => 'Error al reproducir esta pista',
+        AppLanguage.en => 'Error playing this track',
+        AppLanguage.ja => 'この曲の再生に失敗しました',
+      };
 }

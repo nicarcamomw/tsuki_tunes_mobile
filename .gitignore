@@ -52,6 +52,7 @@ app.*.map.json
 .env.*
 *.keystore
 *.jks
+**/key.properties
 
 # Firebase config (contains API keys)
 **/google-services.json

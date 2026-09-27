@@ -5,6 +5,7 @@ import '../core/constants/api_endpoints.dart';
 import '../models/track.dart';
 import '../models/artist.dart';
 import '../models/album.dart';
+import 'contracts/music_api_contract.dart';
 
 class _CacheEntry {
   final dynamic data;
@@ -13,7 +14,7 @@ class _CacheEntry {
   bool get isExpired => DateTime.now().isAfter(expiry);
 }
 
-class DeezerApiService {
+class DeezerApiService implements MusicApiContract {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
   DeezerApiService._internal();

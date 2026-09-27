@@ -140,8 +140,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: TextField(
                     controller: _controller,
                     focusNode: focusNode,
+                    maxLength: 100,
                     style: locale.getTextStyle(color: AppColors.textBright, fontSize: 14),
                     decoration: InputDecoration(
+                      counterText: '',
                       hintText: strings.searchHint,
                       hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: 14),
                       prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
@@ -210,9 +212,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     ? const Center(
                         child: CircularProgressIndicator(color: AppColors.accent),
                       )
-                    : search.query.isEmpty
-                        ? _buildEmptyState(strings, locale)
-                        : _buildResults(search, strings, locale),
+                    : search.hasError
+                        ? _buildErrorState(search, strings, locale)
+                        : search.query.isEmpty
+                            ? _buildEmptyState(strings, locale)
+                            : _buildResults(search, strings, locale),
               ),
             ],
           ),
@@ -247,6 +251,48 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(SearchProvider search, AppStrings strings, LocaleProvider locale) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+          const SizedBox(height: 12),
+          Text(
+            strings.searchError,
+            style: locale.getTextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () => search.retryLastSearch(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                strings.retry,
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

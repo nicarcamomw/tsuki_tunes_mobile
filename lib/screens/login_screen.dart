@@ -118,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen>
   void _handleGuestExplore() {
     final auth = context.read<AuthProvider>();
     auth.loginAsGuest();
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>

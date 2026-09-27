@@ -29,6 +29,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   Album? _fullAlbum;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -37,14 +38,25 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   }
 
   Future<void> _loadAlbumDetails() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
     try {
       final res = await _api.getAlbum(widget.album.id);
       if (mounted && res != null) {
+        final totalTracks =
+            res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+        if (totalTracks > 0) {
+          context.read<LibraryProvider>().registerAlbumTrackCount(
+                res.id,
+                totalTracks,
+              );
+        }
         setState(() {
           _fullAlbum = res;
           _isLoading = false;
         });
-        // Background enrichment
         _enrichTracks(res);
       } else if (mounted) {
         setState(() {
@@ -56,6 +68,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       debugPrint('[AlbumDetail] loadAlbumDetails error: $e');
       if (mounted) {
         setState(() {
+          _hasError = true;
           _fullAlbum = widget.album;
           _isLoading = false;
         });
@@ -69,20 +82,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final enriched = await _api.enrichTracksWithContributors(album.tracks);
       if (mounted) {
         setState(() {
-          _fullAlbum = Album(
-            id: album.id,
-            title: album.title,
-            coverUrl: album.coverUrl,
-            coverXl: album.coverXl,
-            artistId: album.artistId,
-            artistName: album.artistName,
-            releaseDate: album.releaseDate,
-            recordType: album.recordType,
-            fansCount: album.fansCount,
-            tracksCount: album.tracksCount,
-            link: album.link,
-            tracks: enriched,
-          );
+          _fullAlbum = album.copyWith(tracks: enriched);
         });
       }
     } catch (e) {
@@ -102,7 +102,13 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     } else {
       final toMark =
           tracks.where((t) => !library.isTrackListened(t.id)).toList();
-      library.markAlbumTracks(toMark);
+      library.markAlbumTracks(
+        toMark,
+        albumId: albumData.id,
+        totalTracks: albumData.tracksCount > 0
+            ? albumData.tracksCount
+            : tracks.length,
+      );
     }
   }
 
@@ -406,6 +412,49 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(32),
                   child: CircularProgressIndicator(color: AppColors.accent),
+                ),
+              ),
+            )
+          else if (_hasError && tracks.isEmpty)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textMuted),
+                      const SizedBox(height: 10),
+                      Text(
+                        strings.searchError,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 14),
+                      GestureDetector(
+                        onTap: _loadAlbumDetails,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            strings.retry,
+                            style: locale.getTextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
