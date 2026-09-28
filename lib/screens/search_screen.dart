@@ -74,7 +74,10 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: AppColors.bgDeep,
-        body: SafeArea(
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SafeArea(
           bottom: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,6 +223,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ],
           ),
+        ),
+        ),
         ),
       ),
     );

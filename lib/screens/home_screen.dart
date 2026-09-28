@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -15,6 +16,7 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../screens/artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
 import '../providers/locale_provider.dart';
+import '../widgets/skeleton_loader.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Album> _latestReleases = [];
   List<_TopArtistDisplay> _topArtistsDisplay = [];
   bool _isLoading = true;
+  bool _hasError = false;
   bool _releasesLoading = false;
 
   @override
@@ -56,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Scroll to top suave para respuesta a Double-Tap o tap en Home
   void scrollToTop() {
     if (scrollController.hasClients) {
       scrollController.animateTo(
@@ -67,14 +69,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Abre el menú de perfil y Spotify para respuesta a Long-Press en Home
   void openProfile() {
     final auth = context.read<AuthProvider>();
     ProfileBottomSheet.show(context, auth);
   }
 
   Future<void> _loadHomeData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
     try {
       final featured = await _api.getFeaturedArtists();
       if (mounted) {
@@ -87,7 +91,12 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) _computeTopArtists();
     } catch (e) {
       debugPrint('[HomeScreen] loadHomeData error: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
     }
   }
 
@@ -196,14 +205,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
-      body: RefreshIndicator(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
         onRefresh: _loadHomeData,
         child: CustomScrollView(
           controller: scrollController,
           slivers: [
-            // Header: INICIO //
             SliverToBoxAdapter(
               child: SafeArea(
                 bottom: false,
@@ -309,7 +320,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           if (auth.isLoggedIn) ...[
                             const SizedBox(width: 8),
-                            GestureDetector(
+                            Semantics(
+                              button: true,
+                              label: strings.profileTitle,
+                              child: GestureDetector(
                               onTap: () => ProfileBottomSheet.show(context, auth),
                               child: CircleAvatar(
                                 radius: 14,
@@ -323,6 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : null,
                               ),
                             ),
+                            ),
                           ],
                         ],
                       ),
@@ -333,13 +348,161 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             if (_isLoading)
-              const SliverFillRemaining(
+              const HomeSkeletonLoader()
+            else if (_hasError)
+              SliverFillRemaining(
                 child: Center(
-                  child: CircularProgressIndicator(color: AppColors.accent),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent.withValues(alpha: 0.1),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.wifi_off_rounded,
+                            color: AppColors.accent,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          strings.homeLoadError,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          strings.homeLoadErrorSubtitle,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _loadHomeData();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 10),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.accent.withValues(alpha: 0.6),
+                              ),
+                              borderRadius: BorderRadius.circular(2),
+                              color: AppColors.accent.withValues(alpha: 0.08),
+                            ),
+                            child: Text(
+                              strings.retry,
+                              style: locale.getTextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.accent,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               )
             else ...[
-              // Stats Row
+              if (auth.isLoggedIn && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.accent.withValues(alpha: 0.1),
+                              border: Border.all(
+                                color: AppColors.accent.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.headphones_rounded,
+                              color: AppColors.accent,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            strings.homeEmptyTitle,
+                            textAlign: TextAlign.center,
+                            style: locale.getTextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            strings.homeEmptySubtitle,
+                            textAlign: TextAlign.center,
+                            style: locale.getTextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              NavigationEvents.switchTab?.call(1);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 10),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: AppColors.accent.withValues(alpha: 0.6),
+                                ),
+                                borderRadius: BorderRadius.circular(2),
+                                color: AppColors.accent.withValues(alpha: 0.08),
+                              ),
+                              child: Text(
+                                strings.homeEmptyAction,
+                                style: locale.getTextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.accent,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else ...[
               if (auth.isLoggedIn)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -371,7 +534,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              // Top Artists (real ranking)
               if (_topArtistsDisplay.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
@@ -423,7 +585,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
 
-              // Latest Releases
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
@@ -440,11 +601,26 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SliverToBoxAdapter(
                 child: _releasesLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 185,
-                        child: Center(
-                            child: CircularProgressIndicator(
-                                color: AppColors.accent)),
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: List.generate(3, (_) => const Padding(
+                            padding: EdgeInsets.only(right: 14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SkeletonLoader(width: 135, height: 135),
+                                SizedBox(height: 8),
+                                SkeletonLoader(width: 110, height: 13),
+                                SizedBox(height: 4),
+                                SkeletonLoader(width: 80, height: 11),
+                              ],
+                            ),
+                          )),
+                        ),
                       )
                     : _latestReleases.isEmpty
                         ? Padding(
@@ -472,7 +648,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
               ),
 
-              // Recommendations (featured artists)
               if (_featuredArtists.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
@@ -505,16 +680,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
+            ],
           ],
         ),
+      ),
+      ),
       ),
     );
   }
 
-
   Widget _buildStatCard(String label, String value, String meta,
       {bool isTextValue = false, LocaleProvider? locale}) {
-    return Container(
+    return Semantics(
+      label: '$label: $value, $meta',
+      child: Container(
       width: 140,
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.all(12),
@@ -584,12 +763,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildRankedArtistRow(
       BuildContext context, TopArtistEntry entry, Artist? artist, int rank, LocaleProvider locale) {
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: '${locale.strings.tabArtists} $rank, ${entry.name}',
+      child: InkWell(
       onTap: () {
         if (artist != null) {
           appNavigatorKey.currentState?.push(
@@ -667,12 +850,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
   Widget _buildFeaturedArtistRow(
       BuildContext context, Artist artist, int rank, LocaleProvider locale) {
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: '${locale.strings.featured} $rank, ${artist.name}',
+      child: InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -744,6 +931,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

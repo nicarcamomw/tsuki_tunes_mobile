@@ -60,7 +60,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      debugPrint('Firebase init error: $e');
+      debugPrint('Auth init error: $e');
       _loading = false;
       notifyListeners();
     }
@@ -90,6 +90,10 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     _isGuest = false;
+    _guestUid = null;
+    // Remove orphaned guest UID from persistent storage
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_guestUidKey);
     await _firebase.signOut();
     notifyListeners();
   }

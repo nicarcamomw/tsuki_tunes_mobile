@@ -216,8 +216,14 @@ class LibraryProvider extends ChangeNotifier {
   String? _currentUid;
   String? get currentUid => _currentUid;
 
+  bool _canSyncToFirestore(String uid) {
+    if (uid.isEmpty || uid.startsWith('guest_')) return false;
+    if (_firebase.currentUser == null) return false;
+    return true;
+  }
+
   Future<void> connectToFirestore(String uid) async {
-    if (uid.isEmpty) return;
+    if (!_canSyncToFirestore(uid)) return;
     if (_currentUid == uid && _tracksSubscription != null) return;
     _currentUid = uid;
 
@@ -238,13 +244,13 @@ class LibraryProvider extends ChangeNotifier {
       debugPrint('[LibraryProvider] Error restoring cached tracks: $e');
     }
 
-    // 2. Real-time Firestore sync (listen directly without restrictive filters)
+    // 2. Real-time Firestore sync — NO limit to avoid silent data truncation
     final db = _firebase.db;
     final userDoc = db.collection('users').doc(uid);
 
     _tracksSubscription = userDoc
         .collection('listenedTracks')
-        .limit(500)
+        .orderBy('listenedAt', descending: true)
         .snapshots()
         .listen((snapshot) {
       _listenedTracks = snapshot.docs
@@ -294,8 +300,13 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> markTrack(Track track) async {
     final uid = _currentUid ?? _firebase.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
     if (_listenedTrackIds.contains(track.id)) return;
+
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
 
     // Optimistic update
     final data = ListenedTrackData(
@@ -341,7 +352,15 @@ class LibraryProvider extends ChangeNotifier {
       );
       await batch.commit();
     } catch (e) {
-      debugPrint('markTrack Firestore sync warning: $e');
+      debugPrint('[LibraryProvider] markTrack rollback — Firestore failed: $e');
+      _listenedTracks = prevTracks;
+      _listenedTrackIds = prevIds;
+      _totalTracksCount = prevCount;
+      notifyListeners();
+      _storage.saveCachedListenedTracks(
+        uid,
+        _listenedTracks.map((t) => t.toJson()).toList(),
+      );
     } finally {
       _endSync();
     }
@@ -349,8 +368,13 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> unmarkTrack(String trackId) async {
     final uid = _currentUid ?? _firebase.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
     if (!_listenedTrackIds.contains(trackId)) return;
+
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
 
     // Optimistic update
     _listenedTracks.removeWhere((t) => t.trackId == trackId);
@@ -381,7 +405,15 @@ class LibraryProvider extends ChangeNotifier {
       );
       await batch.commit();
     } catch (e) {
-      debugPrint('unmarkTrack Firestore sync warning: $e');
+      debugPrint('[LibraryProvider] unmarkTrack rollback — Firestore failed: $e');
+      _listenedTracks = prevTracks;
+      _listenedTrackIds = prevIds;
+      _totalTracksCount = prevCount;
+      notifyListeners();
+      _storage.saveCachedListenedTracks(
+        uid,
+        _listenedTracks.map((t) => t.toJson()).toList(),
+      );
     } finally {
       _endSync();
     }
@@ -390,7 +422,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> markAlbumTracks(List<Track> tracks,
       {String? albumId, int? totalTracks}) async {
     final uid = _currentUid ?? _firebase.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
 
     if (albumId != null && totalTracks != null && totalTracks > 0) {
       registerAlbumTrackCount(albumId, totalTracks);
@@ -427,6 +459,11 @@ class LibraryProvider extends ChangeNotifier {
       _listenedTracks.map((t) => t.toJson()).toList(),
     );
 
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
+
     _startSync();
     try {
       final db = _firebase.db;
@@ -459,7 +496,15 @@ class LibraryProvider extends ChangeNotifier {
         await batch.commit();
       }
     } catch (e) {
-      debugPrint('markAlbumTracks Firestore sync warning: $e');
+      debugPrint('[LibraryProvider] markAlbumTracks rollback — Firestore failed: $e');
+      _listenedTracks = prevTracks;
+      _listenedTrackIds = prevIds;
+      _totalTracksCount = prevCount;
+      notifyListeners();
+      _storage.saveCachedListenedTracks(
+        uid,
+        _listenedTracks.map((t) => t.toJson()).toList(),
+      );
     } finally {
       _endSync();
     }
@@ -467,7 +512,7 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> unmarkAlbumTracks(List<String> trackIds) async {
     final uid = _currentUid ?? _firebase.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
 
     final toUnmark =
         trackIds.where((id) => _listenedTrackIds.contains(id)).toList();
@@ -484,6 +529,11 @@ class LibraryProvider extends ChangeNotifier {
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
     );
+
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
 
     _startSync();
     try {
@@ -513,7 +563,15 @@ class LibraryProvider extends ChangeNotifier {
         await batch.commit();
       }
     } catch (e) {
-      debugPrint('unmarkAlbumTracks Firestore sync warning: $e');
+      debugPrint('[LibraryProvider] unmarkAlbumTracks rollback — Firestore failed: $e');
+      _listenedTracks = prevTracks;
+      _listenedTrackIds = prevIds;
+      _totalTracksCount = prevCount;
+      notifyListeners();
+      _storage.saveCachedListenedTracks(
+        uid,
+        _listenedTracks.map((t) => t.toJson()).toList(),
+      );
     } finally {
       _endSync();
     }

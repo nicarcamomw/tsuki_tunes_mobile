@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,11 +11,13 @@ import '../services/deezer_api_service.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
+import '../widgets/skeleton_loader.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;
@@ -42,6 +45,17 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
+    final isOnline = context.read<ConnectivityProvider>().isOnline;
+    if (!isOnline) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _fullAlbum = widget.album;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
     try {
       final res = await _api.getAlbum(widget.album.id);
       if (mounted && res != null) {
@@ -91,6 +105,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   }
 
   void _toggleAll(Album albumData, LibraryProvider library) {
+    HapticFeedback.mediumImpact();
     final tracks = albumData.tracks;
     final trackIds = tracks.map((t) => t.id).toList();
     final listenedInAlbum =
@@ -130,7 +145,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
-      body: CustomScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: RefreshIndicator(
+        color: AppColors.accent,
+        backgroundColor: AppColors.bgCard,
+        onRefresh: _loadAlbumDetails,
+        child: CustomScrollView(
         slivers: [
           // App Bar
           SliverAppBar(
@@ -360,6 +382,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       if (albumData.link != null) ...[
                         const SizedBox(width: 8),
                         IconButton(
+                          tooltip: 'Deezer',
                           icon: const Icon(Icons.open_in_new,
                               color: AppColors.accent, size: 20),
                           onPressed: () async {
@@ -407,14 +430,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
           // Tracklist
           if (_isLoading)
-            const SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(color: AppColors.accent),
-                ),
-              ),
-            )
+            const AlbumDetailSkeletonLoader()
           else if (_hasError && tracks.isEmpty)
             SliverToBoxAdapter(
               child: Center(
@@ -433,7 +449,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 14),
-                      GestureDetector(
+                      Semantics(
+                        button: true,
+                        label: strings.retry,
+                        child: GestureDetector(
                         onTap: _loadAlbumDetails,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -452,6 +471,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             ),
                           ),
                         ),
+                      ),
                       ),
                     ],
                   ),
@@ -487,6 +507,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
+      ),
+      ),
+      ),
       ),
     );
   }

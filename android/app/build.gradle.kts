@@ -51,7 +51,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            // Using debug signing key for testing on device so Google Sign-In SHA-1 matches google-services.json
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

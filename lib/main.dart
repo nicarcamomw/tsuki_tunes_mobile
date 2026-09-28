@@ -134,39 +134,51 @@ class _CyberLoadingScreen extends StatelessWidget {
       backgroundColor: AppColors.bgDeep,
       body: Stack(
         children: [
+          // Cyber grid background
+          Positioned.fill(
+            child: CustomPaint(painter: const _LoadingGridPainter()),
+          ),
+
           // Ambient neon glow in background
           Center(
             child: Container(
-              width: 280,
-              height: 280,
+              width: 320,
+              height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.accent.withValues(alpha: 0.18),
-                    AppColors.accent.withValues(alpha: 0.05),
+                    AppColors.accent.withValues(alpha: 0.22),
+                    AppColors.accent.withValues(alpha: 0.08),
+                    AppColors.accent.withValues(alpha: 0.02),
                     Colors.transparent,
                   ],
-                  stops: const [0.0, 0.55, 1.0],
+                  stops: const [0.0, 0.4, 0.65, 1.0],
                 ),
               ),
             ),
           ),
+
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Cyber Oni Mecha Mask with breathing pulse animation
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 130,
+                  height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.35),
-                        blurRadius: 40,
-                        spreadRadius: 4,
+                        color: AppColors.accent.withValues(alpha: 0.4),
+                        blurRadius: 50,
+                        spreadRadius: 6,
+                      ),
+                      BoxShadow(
+                        color: AppColors.accent.withValues(alpha: 0.15),
+                        blurRadius: 80,
+                        spreadRadius: 20,
                       ),
                     ],
                   ),
@@ -178,45 +190,83 @@ class _CyberLoadingScreen extends StatelessWidget {
                     .animate(onPlay: (controller) => controller.repeat(reverse: true))
                     .scale(
                       begin: const Offset(0.95, 0.95),
-                      end: const Offset(1.04, 1.04),
+                      end: const Offset(1.05, 1.05),
                       duration: 1400.ms,
                       curve: Curves.easeInOut,
                     ),
-                const SizedBox(height: 32),
-
-                // App Title with Cyberpunk Glow
-                Text(
-                  'TSUKI TUNES',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textBright,
-                    letterSpacing: 6,
-                    shadows: [
-                      Shadow(
-                        color: AppColors.accent.withValues(alpha: 0.7),
-                        blurRadius: 18,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Subtitle
-                Text(
-                  strings.loadingSubtitle,
-                  style: locale.getTextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
-                    letterSpacing: 4,
-                  ),
-                ),
                 const SizedBox(height: 36),
+
+                // App Title — TSUKI white, TUNES crimson (matching login)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'TSUKI',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textBright,
+                        letterSpacing: 5,
+                        shadows: [
+                          Shadow(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'TUNES',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.accent,
+                        letterSpacing: 5,
+                        shadows: [
+                          Shadow(
+                            color: AppColors.accent.withValues(alpha: 0.65),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Subtitle with decorative lines
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 1.2,
+                      color: AppColors.accent.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      strings.loadingSubtitle,
+                      style: locale.getTextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 18,
+                      height: 1.2,
+                      color: AppColors.accent.withValues(alpha: 0.6),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
 
                 // Cyber Equalizer Bars
                 const _CyberEqualizer(),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
 
                 // Status Terminal Text
                 Text(
@@ -282,5 +332,38 @@ class _CyberEqualizer extends StatelessWidget {
       }),
     );
   }
+}
+
+class _LoadingGridPainter extends CustomPainter {
+  const _LoadingGridPainter();
+
+  static final Paint _linePaint = Paint()
+    ..color = const Color(0x08FFFFFF)
+    ..strokeWidth = 0.5;
+
+  static final Paint _crossPaint = Paint()
+    ..color = AppColors.accent.withValues(alpha: 0.1)
+    ..strokeWidth = 0.8;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const spacing = 44.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _linePaint);
+    }
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _linePaint);
+    }
+    const crossSize = 3.0;
+    for (double x = spacing; x < size.width; x += spacing * 2) {
+      for (double y = spacing; y < size.height; y += spacing * 2) {
+        canvas.drawLine(Offset(x - crossSize, y), Offset(x + crossSize, y), _crossPaint);
+        canvas.drawLine(Offset(x, y - crossSize), Offset(x, y + crossSize), _crossPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LoadingGridPainter oldDelegate) => false;
 }
 

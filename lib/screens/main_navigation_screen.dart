@@ -28,6 +28,7 @@ class NavigationEvents {
   static VoidCallback? onSearchFocus;
   static VoidCallback? onSearchClear;
   static VoidCallback? onLibraryScrollToTop;
+  static void Function(int)? switchTab;
   static final ValueNotifier<bool> isPlayerExpanded = ValueNotifier<bool>(false);
 }
 
@@ -64,6 +65,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _tabNotifier.addListener(_updateCanPop);
+    NavigationEvents.switchTab = _switchToTab;
+  }
+
+  void _switchToTab(int index) {
+    if (index >= 0 && index < 3) {
+      _tabNotifier.value = index;
+    }
   }
 
   @override
@@ -87,6 +95,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   void dispose() {
+    if (NavigationEvents.switchTab == _switchToTab) {
+      NavigationEvents.switchTab = null;
+    }
     _tabNotifier.removeListener(_updateCanPop);
     _tabNotifier.dispose();
     _canPopNotifier.dispose();
@@ -292,42 +303,47 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             // Mini Player animado + Bottom Nav
             // Ocultar limpiamente hacia abajo cuando el teclado está activo o el reproductor está expandido
             // Offline banner
-            Builder(
-              builder: (context) {
-                final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
-                return AnimatedSlide(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOutCubic,
-                  offset: isOnline ? const Offset(0, -1) : Offset.zero,
-                  child: AnimatedOpacity(
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: Builder(
+                builder: (context) {
+                  final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
+                  return AnimatedSlide(
                     duration: const Duration(milliseconds: 300),
-                    opacity: isOnline ? 0.0 : 1.0,
-                    child: SafeArea(
-                      bottom: false,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        color: Colors.redAccent.withValues(alpha: 0.9),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.wifi_off, size: 14, color: Colors.white),
-                            const SizedBox(width: 6),
-                            Text(
-                              strings.offline,
-                              style: locale.getTextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                    curve: Curves.easeInOutCubic,
+                    offset: isOnline ? const Offset(0, -1) : Offset.zero,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isOnline ? 0.0 : 1.0,
+                      child: SafeArea(
+                        bottom: false,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          color: Colors.redAccent.withValues(alpha: 0.9),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.wifi_off, size: 14, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Text(
+                                strings.offline,
+                                style: locale.getTextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
 
             Positioned(

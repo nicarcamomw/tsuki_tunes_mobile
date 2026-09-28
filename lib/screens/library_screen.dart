@@ -137,7 +137,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
-      body: SafeArea(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,6 +307,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

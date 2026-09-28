@@ -939,4 +939,41 @@ class AppStrings {
         AppLanguage.en => 'Error playing this track',
         AppLanguage.ja => 'この曲の再生に失敗しました',
       };
+
+  // --- Home Screen Error & Empty States ---
+  String get homeLoadError => switch (language) {
+        AppLanguage.es => 'ERROR DE ENLACE // DATOS NO DISPONIBLES',
+        AppLanguage.en => 'LINK ERROR // DATA UNAVAILABLE',
+        AppLanguage.ja => 'リンクエラー // データ取得不可',
+      };
+
+  String get homeLoadErrorSubtitle => switch (language) {
+        AppLanguage.es => 'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.',
+        AppLanguage.en => 'Could not connect to the server. Check your connection and try again.',
+        AppLanguage.ja => 'サーバーに接続できませんでした。接続を確認して再試行してください。',
+      };
+
+  String get homeEmptyTitle => switch (language) {
+        AppLanguage.es => 'SISTEMA EN ESPERA',
+        AppLanguage.en => 'SYSTEM STANDBY',
+        AppLanguage.ja => 'システム待機中',
+      };
+
+  String get homeEmptySubtitle => switch (language) {
+        AppLanguage.es => 'Busca y reproduce canciones para que el sistema aprenda tus gustos y personalice tu inicio.',
+        AppLanguage.en => 'Search and play tracks so the system learns your taste and personalizes your home.',
+        AppLanguage.ja => '楽曲を検索・再生すると、システムがあなたの好みを学習し、ホームをパーソナライズします。',
+      };
+
+  String get homeEmptyAction => switch (language) {
+        AppLanguage.es => 'IR A BUSCAR',
+        AppLanguage.en => 'GO TO SEARCH',
+        AppLanguage.ja => '検索へ移動',
+      };
+
+  String get offlineNotice => switch (language) {
+        AppLanguage.es => 'MODO OFFLINE // Conecta a internet para cargar datos',
+        AppLanguage.en => 'OFFLINE MODE // Connect to the internet to load data',
+        AppLanguage.ja => 'オフラインモード // データの読み込みにはインターネット接続が必要です',
+      };
 }

@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"tsuki-tunes-web","appId":"1:812277566403:android:1b009a83cf8b1557d0cb76","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"tsuki-tunes-web","configurations":{"android":"1:812277566403:android:1b009a83cf8b1557d0cb76","ios":"1:812277566403:ios:91ddd298c4d4a0cfd0cb76","macos":"1:812277566403:ios:91ddd298c4d4a0cfd0cb76","web":"1:812277566403:web:355f65a02f286eead0cb76","windows":"1:812277566403:web:23e588cd57a7f471d0cb76"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "tsuki-tunes-web",
+          "appId": "1:812277566403:android:1b009a83cf8b1557d0cb76",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "tsuki-tunes-web",
+          "configurations": {
+            "android": "1:812277566403:android:1b009a83cf8b1557d0cb76",
+            "ios": "1:812277566403:ios:91ddd298c4d4a0cfd0cb76",
+            "macos": "1:812277566403:ios:91ddd298c4d4a0cfd0cb76",
+            "web": "1:812277566403:web:355f65a02f286eead0cb76",
+            "windows": "1:812277566403:web:23e588cd57a7f471d0cb76"
+          }
+        }
+      }
+    }
+  }
+}

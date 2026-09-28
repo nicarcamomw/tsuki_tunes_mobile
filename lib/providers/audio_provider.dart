@@ -41,7 +41,11 @@ class AudioProvider extends ChangeNotifier {
   StreamSubscription? _durSub;
   StreamSubscription? _bufSub;
   StreamSubscription? _stateSub;
+  StreamSubscription? _eventSub;
   Timer? _spotifyPositionTimer;
+  Timer? _retryTimer;
+  int _retryCount = 0;
+  static const int _maxPlaybackRetries = 3;
 
   Function(Track)? onTrackStarted;
 
@@ -209,6 +213,8 @@ class AudioProvider extends ChangeNotifier {
         _position = pos;
         notifyListeners();
       }
+    }, onError: (e) {
+      debugPrint('[AudioProvider] positionStream error: $e');
     });
 
     _durSub = _service.durationStream.listen((dur) {
@@ -216,6 +222,8 @@ class AudioProvider extends ChangeNotifier {
         _duration = dur;
         notifyListeners();
       }
+    }, onError: (e) {
+      debugPrint('[AudioProvider] durationStream error: $e');
     });
 
     _bufSub = _service.bufferedPositionStream.listen((buf) {
@@ -223,6 +231,8 @@ class AudioProvider extends ChangeNotifier {
         _bufferedPosition = buf;
         notifyListeners();
       }
+    }, onError: (e) {
+      debugPrint('[AudioProvider] bufferedPositionStream error: $e');
     });
 
     _stateSub = _service.playerStateStream.listen((state) {
@@ -237,7 +247,63 @@ class AudioProvider extends ChangeNotifier {
 
         notifyListeners();
       }
+    }, onError: (e) {
+      debugPrint('[AudioProvider] playerStateStream error: $e');
+      _handlePlaybackError(e);
     });
+
+    _eventSub = _service.playbackEventStream.listen((_) {
+      // Stream monitors native audio pipeline
+    }, onError: (e) {
+      debugPrint('[AudioProvider] playbackEventStream error: $e');
+      _handlePlaybackError(e);
+    });
+  }
+
+  void _handlePlaybackError(Object error) {
+    if (_useSpotify || _currentTrack == null) return;
+    if (_retryTimer?.isActive == true) return;
+
+    if (_retryCount < _maxPlaybackRetries) {
+      _retryCount++;
+      _isBuffering = true;
+      _lastPlaybackError = null;
+      notifyListeners();
+
+      final delayMs = 1000 * _retryCount;
+      debugPrint('[AudioProvider] Retrying playback in ${delayMs}ms (attempt $_retryCount/$_maxPlaybackRetries) at position $_position');
+
+      _retryTimer?.cancel();
+      _retryTimer = Timer(Duration(milliseconds: delayMs), () async {
+        final track = _currentTrack;
+        if (track != null) {
+          try {
+            await _service.playTrack(track, initialPosition: _position);
+            _retryCount = 0;
+            _isBuffering = false;
+            _isPlaying = true;
+            _lastPlaybackError = null;
+            notifyListeners();
+          } catch (e) {
+            debugPrint('[AudioProvider] Auto-retry attempt #$_retryCount failed: $e');
+            if (_retryCount >= _maxPlaybackRetries) {
+              _isBuffering = false;
+              _isPlaying = false;
+              _lastPlaybackError = 'playback_error';
+              notifyListeners();
+            } else {
+              _handlePlaybackError(e);
+            }
+          }
+        }
+      });
+    } else {
+      _retryCount = 0;
+      _isBuffering = false;
+      _isPlaying = false;
+      _lastPlaybackError = 'playback_error';
+      notifyListeners();
+    }
   }
 
   Future<void> playTrack(Track track, {List<Track>? newQueue}) async {
@@ -255,6 +321,8 @@ class AudioProvider extends ChangeNotifier {
       _currentIndex = _queue.indexWhere((t) => t.id == track.id);
     }
 
+    _retryTimer?.cancel();
+    _retryCount = 0;
     _currentTrack = track;
     _position = Duration.zero;
     _completionHandled = false;
@@ -393,6 +461,8 @@ class AudioProvider extends ChangeNotifier {
       notifyListeners();
     } else {
       if (_isPlaying) {
+        _retryTimer?.cancel();
+        _retryCount = 0;
         await _service.pause();
       } else {
         await _service.resume();
@@ -433,6 +503,8 @@ class AudioProvider extends ChangeNotifier {
 
   Future<void> stop() async {
     _stopPositionTimer();
+    _retryTimer?.cancel();
+    _retryCount = 0;
     if (_useSpotify) {
       await _spotify.pause();
     }
@@ -484,7 +556,9 @@ class AudioProvider extends ChangeNotifier {
     _durSub?.cancel();
     _bufSub?.cancel();
     _stateSub?.cancel();
+    _eventSub?.cancel();
     _stopPositionTimer();
+    _retryTimer?.cancel();
     _nativePlayer.dispose();
     _service.dispose();
     super.dispose();

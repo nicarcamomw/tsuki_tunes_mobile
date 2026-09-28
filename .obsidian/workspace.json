@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Documentos/Apartados a revisar en un proyecto informático 1.md",
+                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Apartados a revisar en un proyecto informático 1"
+              "title": "Apartados a revisar en un proyecto informático (TSUKI TUNES)"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Documentos/Documentacion de apartados de aplicacion movil Tsuki Tunes.md",
+                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -174,8 +174,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -190,29 +189,29 @@
   },
   "active": "223b185e9e4f080c",
   "lastOpenFiles": [
-    "build/app/intermediates/flutter/release/flutter_assets/shaders/ink_sparkle.frag.spirv",
-    "lib/services/contracts/spotify_contract.dart",
-    "lib/services/contracts/storage_contract.dart",
-    "lib/services/contracts/audio_player_contract.dart",
-    "lib/services/contracts/music_api_contract.dart",
-    "lib/services/contracts",
-    "lib/widgets/profile_bottom_sheet.dart",
-    "lib/widgets/profile_bottom_sheet.dart.tmp.12576.3f38d54538ba",
-    "lib/widgets/guest_library_gate.dart",
-    "lib/widgets/fade_indexed_stack.dart",
-    "build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/fuego.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/flecha.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/oni.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/tengu.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/persona.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/nota.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/libreria.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/icon-512.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/icon-192.png",
-    "build/app/intermediates/assets/release/mergeReleaseAssets/flutter_assets/assets/images/hero.png",
+    "cert.der",
+    "firebase-debug.log",
+    "build/60729e9a",
+    "build/app/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/flutter_assets/kernel_blob.bin.jar",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86_64/generate_cxx_metadata_2283_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86/generate_cxx_metadata_2283_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_2283_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/arm64-v8a/generate_cxx_metadata_2283_timing.txt",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/shaders/stretch_effect.frag",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/shaders/ink_sparkle.frag",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/shaders",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/grupo.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/tengu.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/persona.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/nota.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/libreria.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-512.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hero.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hannya.png",
     "Documentos/v4.0 - Documentacion de apartados.md",
-    "Documentos/Apartados a revisar en un proyecto informático 1.md",
+    "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
     "Documentos/v3.0 - Documentacion de apartados.md",
     "Documentos/v2.0 - Documentacion de apartados.md",
     "Documentos/v1.0 - Documentacion de apartados.md",

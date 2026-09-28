@@ -110,7 +110,9 @@ class _MiniPlayerState extends State<MiniPlayer>
 
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
-    return RepaintBoundary(
+    return Semantics(
+      label: '${track.title}, ${track.fullArtistName}',
+      child: RepaintBoundary(
       child: GestureDetector(
         onVerticalDragEnd: (details) {
           if ((details.primaryVelocity ?? 0) < -300) {
@@ -330,6 +332,7 @@ class _MiniPlayerState extends State<MiniPlayer>
           ),
         ),
       ),
+    ),
     );
   }
 }

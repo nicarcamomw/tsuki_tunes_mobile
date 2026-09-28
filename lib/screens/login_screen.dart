@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen>
     _shockwaveController.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         final auth = context.read<AuthProvider>();
-        if (auth.uid != null) {
+        if (auth.uid != null && !auth.isGuest) {
           context.read<LibraryProvider>().connectToFirestore(auth.uid!);
         }
         _navigateAfterLogin();
@@ -115,9 +115,9 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _handleGuestExplore() {
+  Future<void> _handleGuestExplore() async {
     final auth = context.read<AuthProvider>();
-    auth.loginAsGuest();
+    await auth.loginAsGuest();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
@@ -712,18 +712,35 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
-          width: 1.0,
+          color: AppColors.accent.withValues(alpha: 0.7),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.25),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            // 1. Dark background matching page
+            // 1. Crimson gradient background
             Container(
               height: 54,
-              color: AppColors.bgDeep,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF2A0A0D),
+                    Color(0xFF1A0608),
+                    Color(0xFF250A0E),
+                  ],
+                ),
+              ),
             ),
 
             // 2. Falling Japanese Masks (Direct canvas draw, 0 GC, 120 FPS)
@@ -747,22 +764,6 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                   ),
                 ),
               ),
-
-            // 3. Ultra-Fast Cyber Laser Shimmer Sheen (0.95s sweep, 3.2s interval, 120 FPS)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: RepaintBoundary(
-                  child: ValueListenableBuilder<double>(
-                    valueListenable: widget.timeListenable,
-                    builder: (context, t, _) {
-                      return CustomPaint(
-                        painter: _ContinuousLaserShimmerPainter(time: t),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
 
             // 4. Concentric Shockwave Ripple on Tap (Snappy 440ms, full-button expansion)
             Positioned.fill(
@@ -1323,74 +1324,6 @@ class _ButtonMaskPainter extends CustomPainter {
       oldDelegate.tengu != tengu;
 }
 
-/// Single-pass gradient shimmer — ONE fill draw call replaces 3 stroke calls
-class _ContinuousLaserShimmerPainter extends CustomPainter {
-  final double time;
-
-  _ContinuousLaserShimmerPainter({required this.time});
-
-  static final Paint _shimmerPaint = Paint()..isAntiAlias = true;
-  static final Path _bandPath = Path();
-
-  static const double _sweepDuration = 1.5;
-  static const double _pauseDuration = 4.0;
-  static const double _totalCycle = _sweepDuration + _pauseDuration;
-  static const double _bandWidth = 40.0;
-  static const double _halfBand = _bandWidth / 2;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cycle = time % _totalCycle;
-    if (cycle > _sweepDuration) return;
-
-    final progress = cycle / _sweepDuration;
-    final eased = 0.5 - 0.5 * cos(progress * pi);
-
-    final edgeAlpha = (progress < 0.15)
-        ? (progress / 0.15)
-        : (progress > 0.85)
-            ? ((1.0 - progress) / 0.15)
-            : 1.0;
-
-    final slant = tan(22 * pi / 180) * size.height;
-    final totalTravel = size.width + slant + _bandWidth + 60.0;
-    final currentX = -_halfBand - 10.0 + (totalTravel * eased);
-
-    _bandPath
-      ..reset()
-      ..moveTo(currentX - _halfBand + slant, -4)
-      ..lineTo(currentX + _halfBand + slant, -4)
-      ..lineTo(currentX + _halfBand, size.height + 4)
-      ..lineTo(currentX - _halfBand, size.height + 4)
-      ..close();
-
-    _shimmerPaint.shader = ui.Gradient.linear(
-      Offset(currentX - _halfBand, 0),
-      Offset(currentX + _halfBand, 0),
-      [
-        const Color(0x00FFFFFF),
-        Color.fromRGBO(255, 255, 255, 0.08 * edgeAlpha),
-        Color.fromRGBO(255, 255, 255, 0.28 * edgeAlpha),
-        Color.fromRGBO(255, 255, 255, 0.82 * edgeAlpha),
-        Color.fromRGBO(255, 255, 255, 0.28 * edgeAlpha),
-        Color.fromRGBO(255, 255, 255, 0.08 * edgeAlpha),
-        const Color(0x00FFFFFF),
-      ],
-      const [0.0, 0.12, 0.35, 0.5, 0.65, 0.88, 1.0],
-    );
-
-    canvas.drawPath(_bandPath, _shimmerPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ContinuousLaserShimmerPainter oldDelegate) {
-    if (oldDelegate.time == time) return false;
-    final oldCycle = oldDelegate.time % _totalCycle;
-    final newCycle = time % _totalCycle;
-    if (oldCycle > _sweepDuration && newCycle > _sweepDuration) return false;
-    return true;
-  }
-}
 
 /// Water droplet ripple effect — concentric rings expand from tap point like a drop hitting water
 class _ButtonShockwaveRipplePainter extends CustomPainter {

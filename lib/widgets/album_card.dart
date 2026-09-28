@@ -20,6 +20,7 @@ class AlbumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TapScale(
+      semanticLabel: '${album.title}, ${album.artistName}',
       onTap: () {
         FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
@@ -51,20 +52,22 @@ class AlbumCard extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
-                child: album.coverUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: album.coverUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(color: AppColors.bgMid),
-                        errorWidget: (_, __, ___) => Container(
+                child: ExcludeSemantics(
+                  child: album.coverUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: album.coverUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(color: AppColors.bgMid),
+                          errorWidget: (_, __, ___) => Container(
+                            color: AppColors.bgMid,
+                            child: const Icon(Icons.album, color: AppColors.accent),
+                          ),
+                        )
+                      : Container(
                           color: AppColors.bgMid,
                           child: const Icon(Icons.album, color: AppColors.accent),
                         ),
-                      )
-                    : Container(
-                        color: AppColors.bgMid,
-                        child: const Icon(Icons.album, color: AppColors.accent),
-                      ),
+                ),
               ),
             ),
             const SizedBox(height: 8),

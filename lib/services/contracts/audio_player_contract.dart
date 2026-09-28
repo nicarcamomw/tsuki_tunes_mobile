@@ -7,8 +7,9 @@ abstract class AudioPlayerContract {
   Stream<Duration> get bufferedPositionStream;
   Stream<PlayerState> get playerStateStream;
   Stream<bool> get playingStream;
+  Stream<PlaybackEvent> get playbackEventStream;
 
-  Future<void> playTrack(Track track);
+  Future<void> playTrack(Track track, {Duration? initialPosition});
   Future<void> resume();
   Future<void> pause();
   Future<void> stop();

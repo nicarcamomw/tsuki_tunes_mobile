@@ -119,7 +119,10 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: CustomScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -162,6 +165,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
+      ),
+      ),
       ),
     );
   }

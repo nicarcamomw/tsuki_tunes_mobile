@@ -30,7 +30,7 @@ class ApiEndpoints {
 
   // Default curated artist IDs from Tsuki Tunes
   static const List<String> featuredArtistIds = [
-    '384238',   // Ed Sheeran
+    '384236',   // Ed Sheeran
     '4050205',  // The Weeknd
     '12246',    // Taylor Swift
     '246791',   // Drake

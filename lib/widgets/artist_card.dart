@@ -25,6 +25,7 @@ class ArtistCard extends StatelessWidget {
     final locale = context.watch<LocaleProvider>();
 
     return TapScale(
+      semanticLabel: '${artist.name}, ${locale.strings.tabArtists}',
       onTap: () {
         FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
@@ -54,20 +55,22 @@ class ArtistCard extends StatelessWidget {
                 ],
               ),
               child: ClipOval(
-                child: artist.pictureUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: artist.pictureUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(color: AppColors.bgMid),
-                        errorWidget: (_, __, ___) => Container(
+                child: ExcludeSemantics(
+                  child: artist.pictureUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: artist.pictureUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(color: AppColors.bgMid),
+                          errorWidget: (_, __, ___) => Container(
+                            color: AppColors.bgMid,
+                            child: const Icon(Icons.person, color: AppColors.accent),
+                          ),
+                        )
+                      : Container(
                           color: AppColors.bgMid,
                           child: const Icon(Icons.person, color: AppColors.accent),
                         ),
-                      )
-                    : Container(
-                        color: AppColors.bgMid,
-                        child: const Icon(Icons.person, color: AppColors.accent),
-                      ),
+                ),
               ),
             ),
             const SizedBox(height: 8),

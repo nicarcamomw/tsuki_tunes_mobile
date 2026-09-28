@@ -11,6 +11,7 @@ class StorageService implements StorageContract {
   static const String _artistVisitsKey = 'tsuki_artist_visits';
   static const String _albumTrackCountsKey = 'tsuki_album_track_counts';
 
+  @override
   Future<List<Track>> getFavoriteTracks() async {
     final prefs = await SharedPreferences.getInstance();
     final String? raw = prefs.getString(_favTracksKey);
@@ -26,12 +27,14 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveFavoriteTracks(List<Track> tracks) async {
     final prefs = await SharedPreferences.getInstance();
     final list = tracks.map((t) => t.toJson()).toList();
     await prefs.setString(_favTracksKey, json.encode(list));
   }
 
+  @override
   Future<List<Track>> getRecentTracks() async {
     final prefs = await SharedPreferences.getInstance();
     final String? raw = prefs.getString(_recentTracksKey);
@@ -47,12 +50,14 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveRecentTracks(List<Track> tracks) async {
     final prefs = await SharedPreferences.getInstance();
     final list = tracks.map((t) => t.toJson()).toList();
     await prefs.setString(_recentTracksKey, json.encode(list));
   }
 
+  @override
   Future<List<Artist>> getFavoriteArtists() async {
     final prefs = await SharedPreferences.getInstance();
     final String? raw = prefs.getString(_favArtistsKey);
@@ -68,6 +73,7 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveFavoriteArtists(List<Artist> artists) async {
     final prefs = await SharedPreferences.getInstance();
     final list = artists.map((a) => a.toJson()).toList();
@@ -76,6 +82,7 @@ class StorageService implements StorageContract {
 
   // --- Artist visits tracking (for top artists calculation) ---
 
+  @override
   Future<Map<String, int>> getArtistVisits() async {
     final prefs = await SharedPreferences.getInstance();
     final String? raw = prefs.getString(_artistVisitsKey);
@@ -89,6 +96,7 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveArtistVisits(Map<String, int> visits) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_artistVisitsKey, json.encode(visits));
@@ -96,6 +104,7 @@ class StorageService implements StorageContract {
 
   // --- Album Track Counts Cache ---
 
+  @override
   Future<Map<String, int>> getAlbumTrackCounts() async {
     final prefs = await SharedPreferences.getInstance();
     final String? raw = prefs.getString(_albumTrackCountsKey);
@@ -109,6 +118,7 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveAlbumTrackCounts(Map<String, int> counts) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_albumTrackCountsKey, json.encode(counts));
@@ -118,6 +128,7 @@ class StorageService implements StorageContract {
 
   static String _cachedTracksKey(String uid) => 'tsuki_cached_tracks_$uid';
 
+  @override
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid) async {
     if (uid.isEmpty) return [];
     final prefs = await SharedPreferences.getInstance();
@@ -132,6 +143,7 @@ class StorageService implements StorageContract {
     }
   }
 
+  @override
   Future<void> saveCachedListenedTracks(
       String uid, List<Map<String, dynamic>> tracks) async {
     if (uid.isEmpty) return;
@@ -142,11 +154,13 @@ class StorageService implements StorageContract {
   // --- Onboarding Persistence ---
   static const String _onboardingKey = 'tsuki_has_completed_onboarding';
 
+  @override
   Future<bool> hasCompletedOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_onboardingKey) ?? false;
   }
 
+  @override
   Future<void> setCompletedOnboarding(bool completed) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingKey, completed);
@@ -155,11 +169,13 @@ class StorageService implements StorageContract {
   // --- Language Persistence ---
   static const String _languageKey = 'tsuki_app_language';
 
+  @override
   Future<String> getAppLanguage() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_languageKey) ?? 'es';
   }
 
+  @override
   Future<void> saveAppLanguage(String code) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_languageKey, code);

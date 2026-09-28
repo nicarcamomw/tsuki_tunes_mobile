@@ -10,6 +10,7 @@ import '../models/album.dart';
 import '../services/deezer_api_service.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../core/localization/app_strings.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -19,6 +20,7 @@ import '../services/lastfm_service.dart';
 import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
+import '../widgets/skeleton_loader.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -74,6 +76,16 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
+    final isOnline = context.read<ConnectivityProvider>().isOnline;
+    if (!isOnline) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
     try {
       final results = await Future.wait([
         _api.getArtistTopTracks(widget.artist.id, limit: 10),
@@ -162,7 +174,14 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
-      body: CustomScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: RefreshIndicator(
+        color: AppColors.accent,
+        backgroundColor: AppColors.bgCard,
+        onRefresh: _loadArtistData,
+        child: CustomScrollView(
         controller: _scrollController,
         slivers: [
           // Hero with parallax
@@ -465,14 +484,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
           // Top Tracks
           if (_isLoading)
-            const SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(color: AppColors.accent),
-                ),
-              ),
-            )
+            const ArtistDetailSkeletonLoader()
           else if (_hasError && _topTracks.isEmpty)
             SliverToBoxAdapter(
               child: Center(
@@ -491,7 +503,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 14),
-                      GestureDetector(
+                      Semantics(
+                        button: true,
+                        label: strings.retry,
+                        child: GestureDetector(
                         onTap: _loadArtistData,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -510,6 +525,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             ),
                           ),
                         ),
+                      ),
                       ),
                     ],
                   ),
@@ -629,6 +645,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
+      ),
+      ),
+      ),
       ),
     );
   }
