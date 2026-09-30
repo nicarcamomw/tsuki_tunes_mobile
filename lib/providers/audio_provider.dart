@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
 import '../models/track.dart';
@@ -10,7 +11,7 @@ import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
 
-class AudioProvider extends ChangeNotifier {
+class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service = AudioPlayerService();
   final SpotifyService _spotify = SpotifyService();
   final SpotifyNativePlayer _nativePlayer = SpotifyNativePlayer();
@@ -35,6 +36,9 @@ class AudioProvider extends ChangeNotifier {
   // Prefetch next track URI
   String? _prefetchedUri;
   String? _prefetchedForTrackId;
+  String? _prefetchedTargetTrackId;
+  int _prefetchGeneration = 0;
+  int? _nextShuffleIndex;
 
   bool _completionHandled = false;
   bool _crossfadeTriggered = false;
@@ -52,8 +56,13 @@ class AudioProvider extends ChangeNotifier {
   static const int _shuffleHistorySize = 5;
   final Random _shuffleRng = Random();
 
+  // Playback history for shuffle previous navigation (up to 50 entries)
+  final List<int> _playHistory = [];
+  static const int _maxPlayHistory = 50;
+
   // Sleep timer
   Timer? _sleepTimer;
+  DateTime? _sleepTimerDeadline;
   Duration? _sleepTimerRemaining;
   bool _stopAfterCurrentTrack = false;
 
@@ -84,8 +93,41 @@ class AudioProvider extends ChangeNotifier {
   String? get lastSpotifyError => _lastSpotifyError;
   String? get lastPlaybackError => _lastPlaybackError;
   int get crossfadeSeconds => _crossfadeSeconds;
-  Duration? get sleepTimerRemaining => _sleepTimerRemaining;
-  bool get isSleepTimerActive => _sleepTimerRemaining != null || _stopAfterCurrentTrack;
+  Duration? get sleepTimerRemaining {
+    if (_sleepTimerDeadline != null) {
+      final diff = _sleepTimerDeadline!.difference(DateTime.now());
+      return diff.isNegative ? Duration.zero : diff;
+    }
+    return _sleepTimerRemaining;
+  }
+  bool get isSleepTimerActive =>
+      _sleepTimerDeadline != null || _sleepTimerRemaining != null || _stopAfterCurrentTrack;
+  int? get nextShuffleIndex => _nextShuffleIndex;
+
+  @visibleForTesting
+  List<int> get playHistory => List.unmodifiable(_playHistory);
+
+  void _addToPlayHistory(int index) {
+    if (index >= 0 && index < _queue.length) {
+      _playHistory.add(index);
+      if (_playHistory.length > _maxPlayHistory) {
+        _playHistory.removeAt(0);
+      }
+    }
+  }
+
+  @visibleForTesting
+  DateTime? get sleepTimerDeadline => _sleepTimerDeadline;
+
+  @visibleForTesting
+  void setSleepTimerDeadlineForTesting(DateTime? deadline) {
+    _sleepTimerDeadline = deadline;
+  }
+
+  @visibleForTesting
+  void setPositionForTesting(Duration pos) {
+    _position = pos;
+  }
 
   Future<void> setCrossfadeSeconds(int seconds) async {
     _crossfadeSeconds = seconds.clamp(0, 12);
@@ -94,9 +136,17 @@ class AudioProvider extends ChangeNotifier {
   }
 
   AudioProvider() {
+    WidgetsBinding.instance.addObserver(this);
     _initSubscriptions();
     _initSpotify();
     _initCrossfade();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkSleepTimer();
+    }
   }
 
   Future<void> _initCrossfade() async {
@@ -303,9 +353,64 @@ class AudioProvider extends ChangeNotifier {
     });
   }
 
+  String _classifyPlaybackError(Object error, [Track? track]) {
+    final errStr = error.toString().toLowerCase();
+
+    // 1. No preview available
+    if (track != null && track.previewUrl.trim().isEmpty) {
+      return 'no_preview_available';
+    }
+    if (errStr.contains('preview is unavailable') ||
+        errStr.contains('no preview') ||
+        errStr.contains('preview_unavailable')) {
+      return 'no_preview_available';
+    }
+
+    // 2. Network error
+    if (error is SocketException ||
+        error is TimeoutException ||
+        errStr.contains('socketexception') ||
+        errStr.contains('network') ||
+        errStr.contains('connection') ||
+        errStr.contains('timeout') ||
+        errStr.contains('failed host lookup') ||
+        errStr.contains('unreachable') ||
+        errStr.contains('timed out')) {
+      return 'network_error';
+    }
+
+    // 3. Format unsupported
+    if (errStr.contains('format') ||
+        errStr.contains('unsupported') ||
+        errStr.contains('codec') ||
+        errStr.contains('decode') ||
+        errStr.contains('demux') ||
+        errStr.contains('extractor')) {
+      return 'format_unsupported';
+    }
+
+    return 'playback_error';
+  }
+
+  @visibleForTesting
+  String classifyPlaybackError(Object error, [Track? track]) =>
+      _classifyPlaybackError(error, track);
+
   void _handlePlaybackError(Object error) {
     if (_useSpotify || _currentTrack == null) return;
     if (_retryTimer?.isActive == true) return;
+
+    final classified = _classifyPlaybackError(error, _currentTrack);
+    // Non-transient errors: abort immediate retry and report specific error
+    if (classified == 'no_preview_available' || classified == 'format_unsupported') {
+      _retryTimer?.cancel();
+      _retryCount = 0;
+      _isBuffering = false;
+      _isPlaying = false;
+      _lastPlaybackError = classified;
+      notifyListeners();
+      return;
+    }
 
     if (_retryCount < _maxPlaybackRetries) {
       _retryCount++;
@@ -332,7 +437,7 @@ class AudioProvider extends ChangeNotifier {
             if (_retryCount >= _maxPlaybackRetries) {
               _isBuffering = false;
               _isPlaying = false;
-              _lastPlaybackError = 'playback_error';
+              _lastPlaybackError = _classifyPlaybackError(e, track);
               notifyListeners();
             } else {
               _handlePlaybackError(e);
@@ -344,7 +449,7 @@ class AudioProvider extends ChangeNotifier {
       _retryCount = 0;
       _isBuffering = false;
       _isPlaying = false;
-      _lastPlaybackError = 'playback_error';
+      _lastPlaybackError = classified;
       notifyListeners();
     }
   }
@@ -357,6 +462,7 @@ class AudioProvider extends ChangeNotifier {
         _queue.insert(0, track);
         _currentIndex = 0;
       }
+      _playHistory.clear();
     } else if (!_queue.any((t) => t.id == track.id)) {
       _queue.add(track);
       _currentIndex = _queue.length - 1;
@@ -367,6 +473,7 @@ class AudioProvider extends ChangeNotifier {
     _retryTimer?.cancel();
     _retryCount = 0;
     _currentTrack = track;
+    _nextShuffleIndex = null;
     _position = Duration.zero;
     _completionHandled = false;
     _crossfadeTriggered = false;
@@ -390,7 +497,7 @@ class AudioProvider extends ChangeNotifier {
     } catch (e) {
       if (gen != _playGeneration) return;
       _isBuffering = false;
-      _lastPlaybackError = 'playback_error';
+      _lastPlaybackError = _classifyPlaybackError(e, track);
       notifyListeners();
       debugPrint('Error playing track: $e');
     }
@@ -409,10 +516,11 @@ class AudioProvider extends ChangeNotifier {
       uri = _prefetchedUri;
       _prefetchedUri = null;
       _prefetchedForTrackId = null;
+      _prefetchedTargetTrackId = null;
       debugPrint('Spotify: using prefetched URI for "${track.title}"');
     } else {
       debugPrint('Spotify: searching "${track.title}" by "${track.artistName}"');
-      uri = await _spotify.searchTrack(track.title, track.artistName);
+      uri = await _spotify.searchTrack(track.title, track.artistName, trackId: track.id);
       if (gen != _playGeneration) return;
     }
 
@@ -480,21 +588,60 @@ class AudioProvider extends ChangeNotifier {
     _prefetchNextTrack();
   }
 
-  void _prefetchNextTrack() {
-    if (_currentIndex < 0 || _currentIndex >= _queue.length - 1) return;
+  /// Returns the upcoming track index without advancing the queue pointer.
+  /// When shuffle is active, pre-determines and memoizes the next track index
+  /// so background prefetching (Deezer audio precache & Spotify URI search)
+  /// and actual playback (next, crossfade, track completion) target the exact same track.
+  int? _peekNextIndex() {
+    if (_queue.isEmpty || _currentIndex < 0) return null;
 
-    final nextTrack = _queue[_currentIndex + 1];
+    if (_isShuffle && _queue.length > 1) {
+      if (_nextShuffleIndex == null ||
+          _nextShuffleIndex! < 0 ||
+          _nextShuffleIndex! >= _queue.length ||
+          _nextShuffleIndex == _currentIndex) {
+        _nextShuffleIndex = _pickSmartNext();
+      }
+      return _nextShuffleIndex;
+    }
+
+    if (_currentIndex + 1 < _queue.length) {
+      return _currentIndex + 1;
+    } else if (_isLoop && _queue.isNotEmpty) {
+      return 0;
+    }
+
+    return null;
+  }
+
+  @visibleForTesting
+  int? peekNextIndex() => _peekNextIndex();
+
+  void _prefetchNextTrack() {
+    final nextIdx = _peekNextIndex();
+    if (nextIdx == null || nextIdx < 0 || nextIdx >= _queue.length) return;
+
+    final nextTrack = _queue[nextIdx];
 
     // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
     AudioPrecacheService().precacheTrack(nextTrack);
 
     // 2. Predictive URI resolution for Spotify (Zero-latency track start)
     if (_useSpotify) {
-      _spotify.searchTrack(nextTrack.title, nextTrack.artistName).then((uri) {
+      if (_prefetchedTargetTrackId == nextTrack.id) return;
+      _prefetchedTargetTrackId = nextTrack.id;
+      _prefetchedUri = null;
+      _prefetchedForTrackId = null;
+      final gen = ++_prefetchGeneration;
+      _spotify.searchTrack(nextTrack.title, nextTrack.artistName, trackId: nextTrack.id).then((uri) {
+        if (gen != _prefetchGeneration) return;
         _prefetchedUri = uri;
         _prefetchedForTrackId = nextTrack.id;
         debugPrint('[AudioProvider] Prefetched Spotify URI for "${nextTrack.title}"');
       }).catchError((e) {
+        if (gen == _prefetchGeneration) {
+          _prefetchedTargetTrackId = null;
+        }
         debugPrint('[AudioProvider] Spotify prefetch non-fatal error: $e');
       });
     }
@@ -590,8 +737,18 @@ class AudioProvider extends ChangeNotifier {
   Future<void> next() async {
     if (_queue.isEmpty) return;
 
+    _addToPlayHistory(_currentIndex);
+
     if (_isShuffle && _queue.length > 1) {
-      _currentIndex = _pickSmartNext();
+      if (_nextShuffleIndex != null &&
+          _nextShuffleIndex! >= 0 &&
+          _nextShuffleIndex! < _queue.length &&
+          _nextShuffleIndex != _currentIndex) {
+        _currentIndex = _nextShuffleIndex!;
+      } else {
+        _currentIndex = _pickSmartNext();
+      }
+      _nextShuffleIndex = null;
     } else {
       _currentIndex = (_currentIndex + 1) % _queue.length;
     }
@@ -609,10 +766,19 @@ class AudioProvider extends ChangeNotifier {
       return;
     }
 
-    if (_currentIndex <= 0) {
-      _currentIndex = _queue.length - 1;
+    if (_isShuffle && _playHistory.isNotEmpty) {
+      final prevIndex = _playHistory.removeLast();
+      if (prevIndex >= 0 && prevIndex < _queue.length) {
+        _currentIndex = prevIndex;
+      } else {
+        _currentIndex = _currentIndex <= 0 ? _queue.length - 1 : _currentIndex - 1;
+      }
     } else {
-      _currentIndex = _currentIndex - 1;
+      if (_currentIndex <= 0) {
+        _currentIndex = _queue.length - 1;
+      } else {
+        _currentIndex = _currentIndex - 1;
+      }
     }
     await playTrack(_queue[_currentIndex]);
   }
@@ -621,6 +787,11 @@ class AudioProvider extends ChangeNotifier {
     _stopPositionTimer();
     _retryTimer?.cancel();
     _retryCount = 0;
+    _nextShuffleIndex = null;
+    _prefetchedUri = null;
+    _prefetchedForTrackId = null;
+    _prefetchedTargetTrackId = null;
+    _playHistory.clear();
     if (_useSpotify) {
       await _spotify.pause();
     }
@@ -650,11 +821,19 @@ class AudioProvider extends ChangeNotifier {
 
   void toggleShuffle() {
     _isShuffle = !_isShuffle;
+    _nextShuffleIndex = null;
+    _prefetchedTargetTrackId = null;
+    if (_currentTrack != null) {
+      _prefetchNextTrack();
+    }
     notifyListeners();
   }
 
   void toggleLoop() {
     _isLoop = !_isLoop;
+    if (!_isShuffle && _currentIndex == _queue.length - 1) {
+      _prefetchNextTrack();
+    }
     notifyListeners();
   }
 
@@ -670,6 +849,8 @@ class AudioProvider extends ChangeNotifier {
     if (_currentTrack != null) {
       _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
     }
+    _nextShuffleIndex = null;
+    _playHistory.clear();
     _prefetchNextTrack();
     notifyListeners();
   }
@@ -680,6 +861,8 @@ class AudioProvider extends ChangeNotifier {
 
     final wasCurrent = index == _currentIndex;
     _queue.removeAt(index);
+    _nextShuffleIndex = null;
+    _playHistory.clear();
 
     if (_queue.isEmpty) {
       stop();
@@ -693,12 +876,18 @@ class AudioProvider extends ChangeNotifier {
       if (_currentTrack != null) {
         _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
       }
+      _prefetchNextTrack();
       notifyListeners();
     }
   }
 
   /// Clears the entire queue except for the currently playing track.
   void clearQueue() {
+    _nextShuffleIndex = null;
+    _prefetchedUri = null;
+    _prefetchedForTrackId = null;
+    _prefetchedTargetTrackId = null;
+    _playHistory.clear();
     if (_currentTrack != null) {
       _queue = [_currentTrack!];
       _currentIndex = 0;
@@ -716,6 +905,7 @@ class AudioProvider extends ChangeNotifier {
 
     if (_stopAfterCurrentTrack) {
       _stopAfterCurrentTrack = false;
+      _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       stop();
       return;
@@ -729,6 +919,7 @@ class AudioProvider extends ChangeNotifier {
   }
 
   void _checkCrossfade(Duration pos) {
+    if (_isLoop) return;
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered || _useSpotify || _spotifyActive) return;
     if (_stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
@@ -740,12 +931,26 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
+  @visibleForTesting
+  bool get crossfadeTriggered => _crossfadeTriggered;
+
+  @visibleForTesting
+  void checkCrossfade(Duration pos) => _checkCrossfade(pos);
+
   Future<void> _triggerCrossfade() async {
     if (_queue.isEmpty || _crossfadeTriggered) return;
 
     int nextIdx;
     if (_isShuffle && _queue.length > 1) {
-      nextIdx = _pickSmartNext();
+      if (_nextShuffleIndex != null &&
+          _nextShuffleIndex! >= 0 &&
+          _nextShuffleIndex! < _queue.length &&
+          _nextShuffleIndex != _currentIndex) {
+        nextIdx = _nextShuffleIndex!;
+      } else {
+        nextIdx = _pickSmartNext();
+      }
+      _nextShuffleIndex = null;
     } else if (_currentIndex + 1 < _queue.length) {
       nextIdx = _currentIndex + 1;
     } else if (_isLoop && _queue.isNotEmpty) {
@@ -754,6 +959,7 @@ class AudioProvider extends ChangeNotifier {
       return;
     }
 
+    _addToPlayHistory(_currentIndex);
     _crossfadeTriggered = true;
     final nextTrack = _queue[nextIdx];
     if (_isShuffle) _recordShuffleHistory(nextTrack);
@@ -787,6 +993,7 @@ class AudioProvider extends ChangeNotifier {
     _sleepTimer = null;
 
     if (duration == null) {
+      _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       _stopAfterCurrentTrack = false;
       notifyListeners();
@@ -794,35 +1001,46 @@ class AudioProvider extends ChangeNotifier {
     }
 
     if (duration == Duration.zero) {
+      _sleepTimerDeadline = null;
       _stopAfterCurrentTrack = true;
       _sleepTimerRemaining = null;
       notifyListeners();
       return;
     }
 
+    _sleepTimerDeadline = DateTime.now().add(duration);
     _sleepTimerRemaining = duration;
     _stopAfterCurrentTrack = false;
     notifyListeners();
 
     _sleepTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_sleepTimerRemaining == null) {
-        _sleepTimer?.cancel();
-        _sleepTimer = null;
-        return;
-      }
-      _sleepTimerRemaining = _sleepTimerRemaining! - const Duration(seconds: 1);
-      if (_sleepTimerRemaining!.inSeconds <= 0) {
-        _sleepTimer?.cancel();
-        _sleepTimer = null;
-        _stopAfterCurrentTrack = true;
-        _sleepTimerRemaining = null;
-      }
-      notifyListeners();
+      checkSleepTimer();
     });
+  }
+
+  void checkSleepTimer() {
+    if (_sleepTimerDeadline == null) {
+      _sleepTimer?.cancel();
+      _sleepTimer = null;
+      return;
+    }
+    final remaining = _sleepTimerDeadline!.difference(DateTime.now());
+    if (remaining.inSeconds <= 0) {
+      _sleepTimer?.cancel();
+      _sleepTimer = null;
+      _sleepTimerDeadline = null;
+      _sleepTimerRemaining = null;
+      _stopAfterCurrentTrack = false;
+      stop();
+    } else {
+      _sleepTimerRemaining = remaining;
+      notifyListeners();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

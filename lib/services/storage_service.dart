@@ -10,6 +10,7 @@ class StorageService implements StorageContract {
   static const String _favArtistsKey = 'tsuki_favorite_artists';
   static const String _artistVisitsKey = 'tsuki_artist_visits';
   static const String _albumTrackCountsKey = 'tsuki_album_track_counts';
+  static const String _spotifyUriCacheKey = 'tsuki_spotify_uri_cache';
 
   @override
   Future<List<Track>> getFavoriteTracks() async {
@@ -122,6 +123,28 @@ class StorageService implements StorageContract {
   Future<void> saveAlbumTrackCounts(Map<String, int> counts) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_albumTrackCountsKey, json.encode(counts));
+  }
+
+  // --- Spotify Resolved URI Cache (deezer_id -> spotify_uri) ---
+
+  @override
+  Future<Map<String, String>> getSpotifyUriCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_spotifyUriCacheKey);
+    if (raw == null || raw.isEmpty) return {};
+
+    try {
+      final Map decoded = json.decode(raw);
+      return decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  @override
+  Future<void> saveSpotifyUriCache(Map<String, String> cache) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_spotifyUriCacheKey, json.encode(cache));
   }
 
   // --- User Cached Listened Tracks (Instant Cold Start & Offline Reliability) ---

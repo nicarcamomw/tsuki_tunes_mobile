@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'storage_service.dart';
 
 class SpotifyService {
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
@@ -34,6 +35,12 @@ class SpotifyService {
   String? _lastError;
   String? _activeDeviceName;
   Completer<void>? _refreshLock;
+
+  // URI cache: deezer_id / query -> spotify_uri (persisted in SharedPreferences)
+  final Map<String, String> _uriCache = {};
+  bool _uriCacheLoaded = false;
+  static const int _maxUriCacheEntries = 2000;
+  Timer? _saveCacheTimer;
 
   bool get isConnected => _accessToken != null;
   bool get isPremium => _isPremium;
@@ -98,6 +105,77 @@ class SpotifyService {
         await _refreshAccessToken();
       }
     }
+
+    await _ensureUriCacheLoaded();
+  }
+
+  Future<void> _ensureUriCacheLoaded() async {
+    if (_uriCacheLoaded) return;
+    try {
+      final loaded = await StorageService().getSpotifyUriCache();
+      _uriCache.addAll(loaded);
+      _uriCacheLoaded = true;
+    } catch (e) {
+      debugPrint('[SpotifyService] error loading URI cache: $e');
+    }
+  }
+
+  String? _getFromCache(String? trackId, String title, String artist) {
+    if (trackId != null && trackId.isNotEmpty) {
+      final cached = _uriCache.remove(trackId);
+      if (cached != null) {
+        _uriCache[trackId] = cached; // LRU touch
+        return cached;
+      }
+    }
+    final fallbackKey = '${artist.toLowerCase().trim()}:::${title.toLowerCase().trim()}';
+    final cachedFallback = _uriCache.remove(fallbackKey);
+    if (cachedFallback != null) {
+      _uriCache[fallbackKey] = cachedFallback; // LRU touch
+      if (trackId != null && trackId.isNotEmpty) {
+        _uriCache[trackId] = cachedFallback;
+      }
+      return cachedFallback;
+    }
+    return null;
+  }
+
+  void _saveToCache(String? trackId, String title, String artist, String uri) {
+    if (trackId != null && trackId.isNotEmpty) {
+      _uriCache.remove(trackId);
+      _uriCache[trackId] = uri;
+    }
+    final fallbackKey = '${artist.toLowerCase().trim()}:::${title.toLowerCase().trim()}';
+    _uriCache.remove(fallbackKey);
+    _uriCache[fallbackKey] = uri;
+
+    while (_uriCache.length > _maxUriCacheEntries) {
+      _uriCache.remove(_uriCache.keys.first);
+    }
+
+    _scheduleSaveCache();
+  }
+
+  void _scheduleSaveCache() {
+    _saveCacheTimer?.cancel();
+    _saveCacheTimer = Timer(const Duration(milliseconds: 500), () {
+      StorageService().saveSpotifyUriCache(_uriCache);
+    });
+  }
+
+  @visibleForTesting
+  Map<String, String> get uriCache => _uriCache;
+
+  @visibleForTesting
+  void populateUriCacheForTesting(Map<String, String> cache) {
+    _uriCache.addAll(cache);
+    _uriCacheLoaded = true;
+  }
+
+  @visibleForTesting
+  void clearUriCache() {
+    _uriCache.clear();
+    StorageService().saveSpotifyUriCache({});
   }
 
   String _generateCodeVerifier() {
@@ -299,7 +377,15 @@ class SpotifyService {
 
   // --- Playback ---
 
-  Future<String?> searchTrack(String title, String artist) async {
+  Future<String?> searchTrack(String title, String artist, {String? trackId}) async {
+    await _ensureUriCacheLoaded();
+
+    final cachedUri = _getFromCache(trackId, title, artist);
+    if (cachedUri != null) {
+      debugPrint('Spotify: using locally cached URI for "$title" (${trackId ?? 'no-id'}): $cachedUri');
+      return cachedUri;
+    }
+
     await _ensureValidToken();
     if (_accessToken == null) return null;
 
@@ -325,8 +411,10 @@ class SpotifyService {
             for (final a in artists) {
               final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
               if (spotifyArtist == normalizedArtist && trackName == normalizedTitle) {
+                final resolvedUri = item['uri'] as String;
                 debugPrint('Spotify: exact match "${item['name']}" by "${a['name']}"');
-                return item['uri'];
+                _saveToCache(trackId, title, artist, resolvedUri);
+                return resolvedUri;
               }
             }
           }
@@ -337,15 +425,19 @@ class SpotifyService {
             for (final a in artists) {
               final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
               if (spotifyArtist.contains(normalizedArtist) || normalizedArtist.contains(spotifyArtist)) {
+                final resolvedUri = item['uri'] as String;
                 debugPrint('Spotify: partial match "${item['name']}" by "${a['name']}"');
-                return item['uri'];
+                _saveToCache(trackId, title, artist, resolvedUri);
+                return resolvedUri;
               }
             }
           }
 
           // Last resort: first result
+          final firstUri = items.first['uri'] as String;
           debugPrint('Spotify: no artist match, using first result "${items.first['name']}"');
-          return items.first['uri'];
+          _saveToCache(trackId, title, artist, firstUri);
+          return firstUri;
         }
       }
     } catch (e) {

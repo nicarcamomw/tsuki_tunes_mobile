@@ -12,6 +12,7 @@ import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/guest_library_gate.dart';
+import '../core/localization/app_strings.dart';
 import '../providers/locale_provider.dart';
 import '../providers/connectivity_provider.dart';
 import 'home_screen.dart';
@@ -130,6 +131,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return raw;
   }
 
+  String _sanitizePlaybackError(String error, AppStrings strings) {
+    switch (error) {
+      case 'no_preview_available':
+        return strings.playbackNoPreview;
+      case 'network_error':
+        return strings.playbackNetworkError;
+      case 'format_unsupported':
+        return strings.playbackFormatUnsupported;
+      case 'playback_error':
+      default:
+        return strings.playbackError;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasTrack = context.select<AudioProvider, bool>((a) => a.currentTrack != null);
@@ -197,11 +212,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                  Icon(
+                    playbackError == 'network_error'
+                        ? Icons.wifi_off_rounded
+                        : (playbackError == 'no_preview_available'
+                            ? Icons.music_off_rounded
+                            : Icons.error_outline),
+                    color: Colors.redAccent,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      strings.playbackError,
+                      _sanitizePlaybackError(playbackError, strings),
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

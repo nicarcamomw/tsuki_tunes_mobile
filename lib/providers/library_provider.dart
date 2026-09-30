@@ -142,6 +142,7 @@ class LibraryProvider extends ChangeNotifier {
 
   // Album track counts cache (albumId -> totalTracks)
   Map<String, int> _albumTrackCounts = {};
+  bool _listenedTracksLoaded = false;
 
   // Firestore subscriptions
   StreamSubscription? _tracksSubscription;
@@ -160,12 +161,26 @@ class LibraryProvider extends ChangeNotifier {
   Map<String, int> get artistVisits => Map.unmodifiable(_artistVisits);
 
   int getAlbumTracksCount(String albumId) => _albumTrackCounts[albumId] ?? 0;
+  bool get listenedTracksLoaded => _listenedTracksLoaded;
+  @visibleForTesting
+  Map<String, int> get albumTrackCounts => _albumTrackCounts;
 
   void registerAlbumTrackCount(String albumId, int count) {
     if (albumId.isEmpty || count <= 0) return;
     if (_albumTrackCounts[albumId] == count) return;
     _albumTrackCounts[albumId] = count;
-    _storage.saveAlbumTrackCounts(_albumTrackCounts);
+
+    // Only persist if this album has listened tracks associated with it.
+    // If not listened yet, keep in memory for active view without bloating storage.
+    final hasListened = _listenedTracks.any((t) => t.albumId == albumId);
+    if (hasListened) {
+      _pruneAlbumTrackCounts(forceSave: true);
+    } else if (_listenedTracksLoaded &&
+        _albumTrackCounts.length > _listenedTracks.length + 20) {
+      // Memory safeguard: keep in-memory cache bounded when browsing many unlistened albums
+      _pruneAlbumTrackCounts();
+      _albumTrackCounts[albumId] = count;
+    }
     notifyListeners();
   }
 
@@ -216,8 +231,25 @@ class LibraryProvider extends ChangeNotifier {
   String? _currentUid;
   String? get currentUid => _currentUid;
 
+  @visibleForTesting
+  bool bypassAuthForTesting = false;
+
+  @visibleForTesting
+  void setUidForTesting(String? uid) {
+    _currentUid = uid;
+  }
+
+  @visibleForTesting
+  Future<void> Function(List<ListenedTrackData> chunk, String uid)?
+      markAlbumChunkHandlerForTesting;
+
+  @visibleForTesting
+  Future<void> Function(List<String> chunkIds, String uid)?
+      unmarkAlbumChunkHandlerForTesting;
+
   bool _canSyncToFirestore(String uid) {
     if (uid.isEmpty || uid.startsWith('guest_')) return false;
+    if (bypassAuthForTesting) return true;
     if (_firebase.currentUser == null) return false;
     return true;
   }
@@ -242,6 +274,8 @@ class LibraryProvider extends ChangeNotifier {
             cached.map((e) => ListenedTrackData.fromJson(e)).toList();
         _listenedTrackIds = _listenedTracks.map((t) => t.trackId).toSet();
         _totalTracksCount = _listenedTracks.length;
+        _listenedTracksLoaded = true;
+        _pruneAlbumTrackCounts();
         notifyListeners();
       }
     } catch (e) {
@@ -262,6 +296,7 @@ class LibraryProvider extends ChangeNotifier {
           .toList();
       _listenedTrackIds = _listenedTracks.map((t) => t.trackId).toSet();
       _totalTracksCount = _listenedTracks.length;
+      _listenedTracksLoaded = true;
       notifyListeners();
 
       _storage.saveCachedListenedTracks(
@@ -321,6 +356,7 @@ class LibraryProvider extends ChangeNotifier {
 
       if (changed) {
         _totalTracksCount = _listenedTracks.length;
+        _pruneAlbumTrackCounts();
         notifyListeners();
         _storage.saveCachedListenedTracks(
           uid,
@@ -346,8 +382,8 @@ class LibraryProvider extends ChangeNotifier {
     });
   }
 
-  void _pruneAlbumTrackCounts() {
-    if (_albumTrackCounts.isEmpty) return;
+  void _pruneAlbumTrackCounts({bool forceSave = false}) {
+    if (!_listenedTracksLoaded || _albumTrackCounts.isEmpty) return;
     final activeAlbumIds = <String>{};
     for (final t in _listenedTracks) {
       if (t.albumId.isNotEmpty) activeAlbumIds.add(t.albumId);
@@ -355,11 +391,30 @@ class LibraryProvider extends ChangeNotifier {
     final before = _albumTrackCounts.length;
     _albumTrackCounts
         .removeWhere((albumId, _) => !activeAlbumIds.contains(albumId));
-    if (_albumTrackCounts.length < before) {
+    if (_albumTrackCounts.length < before || forceSave) {
       _storage.saveAlbumTrackCounts(_albumTrackCounts);
-      debugPrint(
-          '[LibraryProvider] Pruned ${before - _albumTrackCounts.length} orphaned albumTrackCounts');
+      if (_albumTrackCounts.length < before) {
+        debugPrint(
+            '[LibraryProvider] Pruned ${before - _albumTrackCounts.length} orphaned albumTrackCounts');
+      }
     }
+  }
+
+  @visibleForTesting
+  void pruneAlbumTrackCounts({bool forceSave = false}) =>
+      _pruneAlbumTrackCounts(forceSave: forceSave);
+
+  @visibleForTesting
+  void setListenedTracksLoadedForTesting(bool loaded) {
+    _listenedTracksLoaded = loaded;
+  }
+
+  @visibleForTesting
+  void setListenedTracksForTesting(List<ListenedTrackData> tracks) {
+    _listenedTracks = List.from(tracks);
+    _listenedTrackIds = tracks.map((t) => t.trackId).toSet();
+    _totalTracksCount = tracks.length;
+    _listenedTracksLoaded = true;
   }
 
   void disconnectFirestore() {
@@ -369,6 +424,7 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTracks = [];
     _listenedTrackIds = {};
     _totalTracksCount = 0;
+    _listenedTracksLoaded = false;
     notifyListeners();
   }
 
@@ -401,6 +457,9 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTracks.add(data);
     _listenedTrackIds.add(track.id);
     _totalTracksCount = _listenedTracks.length;
+    if (track.albumId.isNotEmpty && _albumTrackCounts.containsKey(track.albumId)) {
+      _pruneAlbumTrackCounts(forceSave: true);
+    }
     notifyListeners();
 
     // Cache locally immediately
@@ -458,6 +517,7 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTracks.removeWhere((t) => t.trackId == trackId);
     _listenedTrackIds.remove(trackId);
     _totalTracksCount = _listenedTracks.length;
+    _pruneAlbumTrackCounts();
     notifyListeners();
 
     // Cache locally immediately
@@ -508,8 +568,13 @@ class LibraryProvider extends ChangeNotifier {
       registerAlbumTrackCount(tracks.first.albumId, tracks.length);
     }
 
-    final toMark =
-        tracks.where((t) => !_listenedTrackIds.contains(t.id)).toList();
+    final seen = <String>{};
+    final toMark = <Track>[];
+    for (final t in tracks) {
+      if (!_listenedTrackIds.contains(t.id) && seen.add(t.id)) {
+        toMark.add(t);
+      }
+    }
     if (toMark.isEmpty) return;
 
     // Snapshot pre-mutation state for rollback
@@ -534,6 +599,7 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTracks.addAll(newData);
     _listenedTrackIds.addAll(toMark.map((t) => t.id));
     _totalTracksCount = _listenedTracks.length;
+    _pruneAlbumTrackCounts(forceSave: true);
     notifyListeners();
 
     // Cache locally immediately
@@ -543,41 +609,60 @@ class LibraryProvider extends ChangeNotifier {
     );
 
     _startSync();
+    final committedData = <ListenedTrackData>[];
     try {
-      final db = _firebase.db;
-      final userDoc = db.collection('users').doc(uid);
+      final customHandler = markAlbumChunkHandlerForTesting;
+      final db = customHandler == null ? _firebase.db : null;
+      final userDoc = db?.collection('users').doc(uid);
       const batchLimit = 450;
 
       for (var i = 0; i < newData.length; i += batchLimit) {
         final chunk = newData.sublist(
             i, i + batchLimit > newData.length ? newData.length : i + batchLimit);
-        final batch = db.batch();
 
-        for (final data in chunk) {
-          batch.set(
-            userDoc.collection('listenedTracks').doc(data.trackId),
-            data.toFirestore(),
-            SetOptions(merge: true),
-          );
-        }
-        if (i == 0) {
+        if (customHandler != null) {
+          await customHandler(chunk, uid);
+        } else if (db != null && userDoc != null) {
+          final batch = db.batch();
+          for (final data in chunk) {
+            batch.set(
+              userDoc.collection('listenedTracks').doc(data.trackId),
+              data.toFirestore(),
+              SetOptions(merge: true),
+            );
+          }
           batch.set(
             userDoc,
             {
               'stats': {
-                'totalTracks': FieldValue.increment(toMark.length),
+                'totalTracks': FieldValue.increment(chunk.length),
               },
             },
             SetOptions(merge: true),
           );
+          await batch.commit();
         }
-        await batch.commit();
+        committedData.addAll(chunk);
       }
     } catch (e) {
       debugPrint('[LibraryProvider] markAlbumTracks rollback — Firestore failed: $e');
-      _listenedTracks = prevTracks;
-      _listenedTrackIds = prevIds;
-      _totalTracksCount = prevCount;
+      if (committedData.isEmpty) {
+        _listenedTracks = prevTracks;
+        _listenedTrackIds = prevIds;
+        _totalTracksCount = prevCount;
+      } else {
+        // Only rollback uncommitted tracks, preserving tracks committed in earlier batches
+        final committedIds = committedData.map((d) => d.trackId).toSet();
+        final uncommittedIds = toMark
+            .map((t) => t.id)
+            .where((id) => !committedIds.contains(id))
+            .toSet();
+
+        _listenedTracks.removeWhere((t) => uncommittedIds.contains(t.trackId));
+        _listenedTrackIds.removeAll(uncommittedIds);
+        _totalTracksCount = _listenedTracks.length;
+      }
+      _pruneAlbumTrackCounts(forceSave: true);
       notifyListeners();
       _storage.saveCachedListenedTracks(
         uid,
@@ -593,7 +678,7 @@ class LibraryProvider extends ChangeNotifier {
     if (uid == null || !_canSyncToFirestore(uid)) return;
 
     final toUnmark =
-        trackIds.where((id) => _listenedTrackIds.contains(id)).toList();
+        trackIds.toSet().where((id) => _listenedTrackIds.contains(id)).toList();
     if (toUnmark.isEmpty) return;
 
     // Snapshot pre-mutation state for rollback
@@ -605,6 +690,7 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTracks.removeWhere((t) => toUnmark.contains(t.trackId));
     _listenedTrackIds.removeAll(toUnmark);
     _totalTracksCount = _listenedTracks.length;
+    _pruneAlbumTrackCounts();
     notifyListeners();
 
     // Cache locally immediately
@@ -614,37 +700,58 @@ class LibraryProvider extends ChangeNotifier {
     );
 
     _startSync();
+    final committedUnmarkedIds = <String>[];
     try {
-      final db = _firebase.db;
-      final userDoc = db.collection('users').doc(uid);
+      final customHandler = unmarkAlbumChunkHandlerForTesting;
+      final db = customHandler == null ? _firebase.db : null;
+      final userDoc = db?.collection('users').doc(uid);
       const batchLimit = 450;
 
       for (var i = 0; i < toUnmark.length; i += batchLimit) {
         final chunk = toUnmark.sublist(
             i, i + batchLimit > toUnmark.length ? toUnmark.length : i + batchLimit);
-        final batch = db.batch();
 
-        for (final id in chunk) {
-          batch.delete(userDoc.collection('listenedTracks').doc(id));
-        }
-        if (i == 0) {
+        if (customHandler != null) {
+          await customHandler(chunk, uid);
+        } else if (db != null && userDoc != null) {
+          final batch = db.batch();
+          for (final id in chunk) {
+            batch.delete(userDoc.collection('listenedTracks').doc(id));
+          }
           batch.set(
             userDoc,
             {
               'stats': {
-                'totalTracks': FieldValue.increment(-toUnmark.length),
+                'totalTracks': FieldValue.increment(-chunk.length),
               },
             },
             SetOptions(merge: true),
           );
+          await batch.commit();
         }
-        await batch.commit();
+        committedUnmarkedIds.addAll(chunk);
       }
     } catch (e) {
       debugPrint('[LibraryProvider] unmarkAlbumTracks rollback — Firestore failed: $e');
-      _listenedTracks = prevTracks;
-      _listenedTrackIds = prevIds;
-      _totalTracksCount = prevCount;
+      if (committedUnmarkedIds.isEmpty) {
+        _listenedTracks = prevTracks;
+        _listenedTrackIds = prevIds;
+        _totalTracksCount = prevCount;
+      } else {
+        // Partial delete: only restore the tracks that failed to be deleted from Firestore
+        final committedSet = committedUnmarkedIds.toSet();
+        final failedToDeleteIds =
+            toUnmark.where((id) => !committedSet.contains(id)).toSet();
+
+        final tracksToRestore = prevTracks
+            .where((t) => failedToDeleteIds.contains(t.trackId))
+            .toList();
+
+        _listenedTracks.addAll(tracksToRestore);
+        _listenedTrackIds.addAll(failedToDeleteIds);
+        _totalTracksCount = _listenedTracks.length;
+      }
+      _pruneAlbumTrackCounts(forceSave: true);
       notifyListeners();
       _storage.saveCachedListenedTracks(
         uid,

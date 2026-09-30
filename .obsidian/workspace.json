@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
+                "file": "Documentos/Sin título.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Apartados a revisar en un proyecto informático (TSUKI TUNES)"
+              "title": "Sin título"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
+                "file": "Documentos/Sin título.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -189,30 +189,31 @@
   },
   "active": "223b185e9e4f080c",
   "lastOpenFiles": [
-    "Documentos/Sin título.md",
-    "build/d5c73761",
-    "build/app/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/flutter_assets/kernel_blob.bin.jar",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_280_timing.txt",
-    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/arm64-v8a/generate_cxx_metadata_280_timing.txt",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/lucide_icons/assets/lucide.ttf",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/lucide_icons/assets",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hero.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/packages/cupertino_icons/assets",
+    "build/test_cache/build/2b3db8a7",
+    "build/test_cache/build/c9026c6c",
+    "build/test_cache/build/9e598979",
+    "build/test_cache/build/423da14",
+    "build/test_cache/build/12ad4ca6",
+    "build/test_cache/build/1440436e",
+    "build/test_cache/build/28e9594f",
+    "build/test_cache/build/14b917c4",
+    "test/audio_fixes_test.dart",
+    "build/test_cache/build/7aa352ce",
+    "build/test_cache/build/b1abd8fd",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/tengu.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/persona.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/fuego%20pro.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/nota.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/libreria.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-512.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hannya.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/grupo.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/sf_hollywood_hills.ttf",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/trixie.ttf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hero.png",
+    "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
+    "Documentos/Sin título.md",
     "Documentos/v4.0 - Documentacion de apartados.md",
     "SPOTIFY_Y_MINIPLAYER_EXPLICACION.md",
-    "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
     "Documentos/v3.0 - Documentacion de apartados.md",
     "Documentos/v2.0 - Documentacion de apartados.md",
     "Documentos/v1.0 - Documentacion de apartados.md",

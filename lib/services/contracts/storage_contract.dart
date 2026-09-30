@@ -20,4 +20,7 @@ abstract class StorageContract {
   Future<void> saveAppLanguage(String code);
   Future<int> getCrossfadeSeconds();
   Future<void> saveCrossfadeSeconds(int seconds);
+  Future<Map<String, String>> getSpotifyUriCache();
+  Future<void> saveSpotifyUriCache(Map<String, String> cache);
 }
+

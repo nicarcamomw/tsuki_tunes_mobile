@@ -1012,6 +1012,24 @@ class AppStrings {
         AppLanguage.ja => 'この曲の再生に失敗しました',
       };
 
+  String get playbackNoPreview => switch (language) {
+        AppLanguage.es => 'Esta pista no tiene vista previa de audio disponible',
+        AppLanguage.en => 'Audio preview is unavailable for this track',
+        AppLanguage.ja => 'この曲のプレビュー音源は利用できません',
+      };
+
+  String get playbackNetworkError => switch (language) {
+        AppLanguage.es => 'Error de conexión al reproducir el audio. Revisa tu internet',
+        AppLanguage.en => 'Network error loading audio. Check your connection',
+        AppLanguage.ja => 'オーディオの再生中にネットワークエラーが発生しました。接続を確認してください',
+      };
+
+  String get playbackFormatUnsupported => switch (language) {
+        AppLanguage.es => 'Formato de audio no compatible con este dispositivo',
+        AppLanguage.en => 'Audio format is not supported on this device',
+        AppLanguage.ja => 'この端末ではサポートされていないオーディオ形式です',
+      };
+
   // --- Home Screen Error & Empty States ---
   String get homeLoadError => switch (language) {
         AppLanguage.es => 'ERROR DE ENLACE // DATOS NO DISPONIBLES',

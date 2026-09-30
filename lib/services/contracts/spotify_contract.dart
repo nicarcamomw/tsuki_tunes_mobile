@@ -9,7 +9,7 @@ abstract class SpotifyContract {
   Future<bool> connect();
   Future<void> disconnect();
   Future<String?> getValidToken();
-  Future<String?> searchTrack(String title, String artist);
+  Future<String?> searchTrack(String title, String artist, {String? trackId});
   Future<bool> play({required String trackUri});
   Future<void> pause();
   Future<void> resume();
