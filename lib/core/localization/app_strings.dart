@@ -1067,6 +1067,12 @@ class AppStrings {
         AppLanguage.ja => 'オフラインモード // データの読み込みにはインターネット接続が必要です',
       };
 
+  String get offlineNoCache => switch (language) {
+        AppLanguage.es => 'Sin conexión y este track no está en caché',
+        AppLanguage.en => 'Offline and this track is not cached',
+        AppLanguage.ja => 'オフラインでこのトラックはキャッシュされていません',
+      };
+
   // --- Sleep Timer ---
   String get sleepTimer => switch (language) {
         AppLanguage.es => 'TEMPORIZADOR',

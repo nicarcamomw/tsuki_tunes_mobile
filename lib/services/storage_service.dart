@@ -218,4 +218,39 @@ class StorageService implements StorageContract {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_crossfadeKey, seconds);
   }
+
+  // --- Playback State Persistence ---
+  static const String _playbackStateKey = 'tsuki_playback_state';
+
+  @override
+  Future<Map<String, dynamic>?> getPlaybackState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_playbackStateKey);
+    if (raw == null || raw.isEmpty) return null;
+
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (queue == null || queue.isEmpty) {
+      await prefs.remove(_playbackStateKey);
+    } else {
+      final state = {
+        'queue': queue.map((t) => t.toJson()).toList(),
+        'currentIndex': currentIndex ?? 0,
+        'position': positionMs ?? 0,
+      };
+      await prefs.setString(_playbackStateKey, json.encode(state));
+    }
+  }
 }

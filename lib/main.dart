@@ -45,10 +45,11 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => LocaleProvider(storage: StorageService()),
         ),
-        ChangeNotifierProxyProvider<LibraryProvider, AudioProvider>(
+        ChangeNotifierProxyProvider2<LibraryProvider, ConnectivityProvider, AudioProvider>(
           create: (_) => AudioProvider(),
-          update: (_, library, audio) {
+          update: (_, library, connectivity, audio) {
             audio ??= AudioProvider();
+            audio.setConnectivityProvider(connectivity);
             audio.onTrackStarted = (track) {
               library.addRecentTrack(track);
             };

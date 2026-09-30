@@ -22,5 +22,7 @@ abstract class StorageContract {
   Future<void> saveCrossfadeSeconds(int seconds);
   Future<Map<String, String>> getSpotifyUriCache();
   Future<void> saveSpotifyUriCache(Map<String, String> cache);
+  Future<Map<String, dynamic>?> getPlaybackState();
+  Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]);
 }
 

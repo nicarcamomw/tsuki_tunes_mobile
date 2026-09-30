@@ -10,11 +10,18 @@ import '../services/audio_precache_service.dart';
 import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
+import 'connectivity_provider.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
-  final AudioPlayerService _service = AudioPlayerService();
+  final AudioPlayerService _service;
   final SpotifyService _spotify = SpotifyService();
   final SpotifyNativePlayer _nativePlayer = SpotifyNativePlayer();
+  final StorageService _storage;
+  ConnectivityProvider? _connectivityProvider;
+  Timer? _persistTimer;
+
+  @visibleForTesting
+  Function(Track track)? onPrecacheTrackForTesting;
 
   Track? _currentTrack;
   List<Track> _queue = [];
@@ -132,12 +139,48 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> setCrossfadeSeconds(int seconds) async {
     _crossfadeSeconds = seconds.clamp(0, 12);
     notifyListeners();
-    await StorageService().saveCrossfadeSeconds(_crossfadeSeconds);
+    await _storage.saveCrossfadeSeconds(_crossfadeSeconds);
   }
 
-  AudioProvider() {
+  ConnectivityProvider? get connectivityProvider => _connectivityProvider;
+
+  void setConnectivityProvider(ConnectivityProvider cp) {
+    _connectivityProvider = cp;
+  }
+
+  bool _canPlayOffline(Track track) {
+    if (_connectivityProvider?.isOnline ?? true) return true;
+    return AudioPrecacheService().getCachedFilePath(track.id) != null;
+  }
+
+  @visibleForTesting
+  bool canPlayOfflineForTesting(Track track) => _canPlayOffline(track);
+
+  void _prefetchUpcoming([int count = 3]) {
+    if (_queue.isEmpty) return;
+    for (var i = 1; i <= count; i++) {
+      final idx = (_currentIndex + i) % _queue.length;
+      if (idx != _currentIndex) {
+        final track = _queue[idx];
+        onPrecacheTrackForTesting?.call(track);
+        AudioPrecacheService().precacheTrack(track);
+      }
+    }
+  }
+
+  @visibleForTesting
+  void prefetchUpcomingForTesting([int count = 3]) => _prefetchUpcoming(count);
+
+  AudioProvider({
+    AudioPlayerService? service,
+    StorageService? storage,
+    ConnectivityProvider? connectivityProvider,
+  })  : _service = service ?? AudioPlayerService(),
+        _storage = storage ?? StorageService(),
+        _connectivityProvider = connectivityProvider {
     WidgetsBinding.instance.addObserver(this);
     _initSubscriptions();
+    _restorePlaybackState();
     _initSpotify();
     _initCrossfade();
   }
@@ -149,9 +192,90 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  void _persistPlaybackState() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 500), () async {
+      if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+        await _storage.savePlaybackState(null);
+        return;
+      }
+      await _storage.savePlaybackState(
+        _queue,
+        _currentIndex,
+        _position.inMilliseconds,
+      );
+    });
+  }
+
+  @visibleForTesting
+  void persistPlaybackStateNowForTesting() {
+    _persistTimer?.cancel();
+    if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+      _storage.savePlaybackState(null);
+      return;
+    }
+    _storage.savePlaybackState(
+      _queue,
+      _currentIndex,
+      _position.inMilliseconds,
+    );
+  }
+
+  Future<void> _restorePlaybackState() async {
+    try {
+      final state = await _storage.getPlaybackState();
+      if (state == null) return;
+
+      if (_currentTrack != null || _queue.isNotEmpty || _isPlaying) return;
+
+      final rawQueue = state['queue'];
+      final rawIndex = state['currentIndex'];
+      final rawPosMs = state['position'];
+
+      if (rawQueue is! List || rawQueue.isEmpty) return;
+
+      final restoredQueue = <Track>[];
+      for (final item in rawQueue) {
+        if (item is Map) {
+          restoredQueue.add(Track.fromStorage(Map<String, dynamic>.from(item)));
+        }
+      }
+
+      if (restoredQueue.isEmpty) return;
+
+      int restoredIndex = (rawIndex is num) ? rawIndex.toInt() : 0;
+      if (restoredIndex < 0 || restoredIndex >= restoredQueue.length) {
+        restoredIndex = 0;
+      }
+
+      final restoredTrack = restoredQueue[restoredIndex];
+      final posMs = (rawPosMs is num) ? rawPosMs.toInt() : 0;
+
+      _queue = restoredQueue;
+      _currentIndex = restoredIndex;
+      _currentTrack = restoredTrack;
+      _position = Duration(milliseconds: posMs);
+      _duration = Duration(
+          seconds: restoredTrack.durationSeconds > 0
+              ? restoredTrack.durationSeconds
+              : 30);
+      _isPlaying = false;
+      _isBuffering = false;
+
+      _prefetchNextTrack();
+      notifyListeners();
+      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_queue.length} tracks in queue)');
+    } catch (e) {
+      debugPrint('[AudioProvider] Error restoring playback state: $e');
+    }
+  }
+
+  @visibleForTesting
+  Future<void> restorePlaybackStateForTesting() => _restorePlaybackState();
+
   Future<void> _initCrossfade() async {
     try {
-      _crossfadeSeconds = await StorageService().getCrossfadeSeconds();
+      _crossfadeSeconds = await _storage.getCrossfadeSeconds();
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
@@ -463,6 +587,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _currentIndex = 0;
       }
       _playHistory.clear();
+      _prefetchUpcoming();
     } else if (!_queue.any((t) => t.id == track.id)) {
       _queue.add(track);
       _currentIndex = _queue.length - 1;
@@ -486,6 +611,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       _lastPlaybackError = null;
+
+      if (!_canPlayOffline(track)) {
+        _isBuffering = false;
+        _lastPlaybackError = 'network_error';
+        notifyListeners();
+        return;
+      }
+
       if (_useSpotify) {
         await _playViaSpotify(track);
       } else {
@@ -493,6 +626,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
+      _persistPlaybackState();
       _prefetchNextTrack();
     } catch (e) {
       if (gen != _playGeneration) return;
@@ -672,7 +806,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _retryCount = 0;
         await _service.pause();
       } else {
-        await _service.resume();
+        if (_currentTrack != null && _service.player.audioSource == null) {
+          final savedPos = _position;
+          await playTrack(_currentTrack!);
+          if (savedPos > Duration.zero) {
+            await seek(savedPos);
+          }
+        } else {
+          await _service.resume();
+        }
       }
     }
   }
@@ -737,25 +879,78 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> next() async {
     if (_queue.isEmpty) return;
 
-    _addToPlayHistory(_currentIndex);
+    final isOnline = _connectivityProvider?.isOnline ?? true;
+    if (!isOnline && !_queue.any((t) => _canPlayOffline(t))) {
+      _lastPlaybackError = 'network_error';
+      notifyListeners();
+      return;
+    }
 
     if (_isShuffle && _queue.length > 1) {
-      if (_nextShuffleIndex != null &&
-          _nextShuffleIndex! >= 0 &&
-          _nextShuffleIndex! < _queue.length &&
-          _nextShuffleIndex != _currentIndex) {
-        _currentIndex = _nextShuffleIndex!;
+      if (!isOnline) {
+        if (_nextShuffleIndex != null &&
+            _nextShuffleIndex! >= 0 &&
+            _nextShuffleIndex! < _queue.length &&
+            _nextShuffleIndex != _currentIndex &&
+            _canPlayOffline(_queue[_nextShuffleIndex!])) {
+          _addToPlayHistory(_currentIndex);
+          _currentIndex = _nextShuffleIndex!;
+        } else {
+          final cachedCandidates = [
+            for (int i = 0; i < _queue.length; i++)
+              if (i != _currentIndex && _canPlayOffline(_queue[i])) i
+          ];
+          if (cachedCandidates.isNotEmpty) {
+            _addToPlayHistory(_currentIndex);
+            _currentIndex = cachedCandidates[_shuffleRng.nextInt(cachedCandidates.length)];
+          } else {
+            _lastPlaybackError = 'network_error';
+            notifyListeners();
+            return;
+          }
+        }
       } else {
-        _currentIndex = _pickSmartNext();
+        _addToPlayHistory(_currentIndex);
+        if (_nextShuffleIndex != null &&
+            _nextShuffleIndex! >= 0 &&
+            _nextShuffleIndex! < _queue.length &&
+            _nextShuffleIndex != _currentIndex) {
+          _currentIndex = _nextShuffleIndex!;
+        } else {
+          _currentIndex = _pickSmartNext();
+        }
       }
       _nextShuffleIndex = null;
     } else {
-      _currentIndex = (_currentIndex + 1) % _queue.length;
+      if (!isOnline) {
+        int targetIndex = -1;
+        for (int step = 1; step < _queue.length; step++) {
+          final idx = (_currentIndex + step) % _queue.length;
+          if (_canPlayOffline(_queue[idx])) {
+            targetIndex = idx;
+            break;
+          }
+        }
+        if (targetIndex != -1) {
+          _addToPlayHistory(_currentIndex);
+          _currentIndex = targetIndex;
+        } else if (_queue.length == 1 && _canPlayOffline(_queue[0])) {
+          _currentIndex = 0;
+        } else {
+          _lastPlaybackError = 'network_error';
+          notifyListeners();
+          return;
+        }
+      } else {
+        _addToPlayHistory(_currentIndex);
+        _currentIndex = (_currentIndex + 1) % _queue.length;
+      }
     }
 
     final nextTrack = _queue[_currentIndex];
     if (_isShuffle) _recordShuffleHistory(nextTrack);
     await playTrack(nextTrack);
+    _persistPlaybackState();
   }
 
   Future<void> previous() async {
@@ -766,24 +961,86 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
+    final isOnline = _connectivityProvider?.isOnline ?? true;
+    if (!isOnline && !_queue.any((t) => _canPlayOffline(t))) {
+      _lastPlaybackError = 'network_error';
+      notifyListeners();
+      return;
+    }
+
     if (_isShuffle && _playHistory.isNotEmpty) {
-      final prevIndex = _playHistory.removeLast();
-      if (prevIndex >= 0 && prevIndex < _queue.length) {
-        _currentIndex = prevIndex;
+      if (!isOnline) {
+        int? targetIdx;
+        while (_playHistory.isNotEmpty) {
+          final prevIndex = _playHistory.removeLast();
+          if (prevIndex >= 0 &&
+              prevIndex < _queue.length &&
+              _canPlayOffline(_queue[prevIndex])) {
+            targetIdx = prevIndex;
+            break;
+          }
+        }
+        if (targetIdx != null) {
+          _currentIndex = targetIdx;
+        } else {
+          int fallbackIdx = -1;
+          for (int step = 1; step < _queue.length; step++) {
+            final idx = (_currentIndex - step + _queue.length) % _queue.length;
+            if (_canPlayOffline(_queue[idx])) {
+              fallbackIdx = idx;
+              break;
+            }
+          }
+          if (fallbackIdx != -1) {
+            _currentIndex = fallbackIdx;
+          } else {
+            _lastPlaybackError = 'network_error';
+            notifyListeners();
+            return;
+          }
+        }
       } else {
-        _currentIndex = _currentIndex <= 0 ? _queue.length - 1 : _currentIndex - 1;
+        final prevIndex = _playHistory.removeLast();
+        if (prevIndex >= 0 && prevIndex < _queue.length) {
+          _currentIndex = prevIndex;
+        } else {
+          _currentIndex = _currentIndex <= 0 ? _queue.length - 1 : _currentIndex - 1;
+        }
       }
     } else {
-      if (_currentIndex <= 0) {
-        _currentIndex = _queue.length - 1;
+      if (!isOnline) {
+        int targetIndex = -1;
+        for (int step = 1; step < _queue.length; step++) {
+          final idx = (_currentIndex - step + _queue.length) % _queue.length;
+          if (_canPlayOffline(_queue[idx])) {
+            targetIndex = idx;
+            break;
+          }
+        }
+        if (targetIndex != -1) {
+          _currentIndex = targetIndex;
+        } else if (_queue.length == 1 && _canPlayOffline(_queue[0])) {
+          _currentIndex = 0;
+        } else {
+          _lastPlaybackError = 'network_error';
+          notifyListeners();
+          return;
+        }
       } else {
-        _currentIndex = _currentIndex - 1;
+        if (_currentIndex <= 0) {
+          _currentIndex = _queue.length - 1;
+        } else {
+          _currentIndex = _currentIndex - 1;
+        }
       }
     }
     await playTrack(_queue[_currentIndex]);
+    _persistPlaybackState();
   }
 
   Future<void> stop() async {
+    _persistTimer?.cancel();
+    _storage.savePlaybackState(null);
     _stopPositionTimer();
     _retryTimer?.cancel();
     _retryCount = 0;
@@ -852,6 +1109,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _nextShuffleIndex = null;
     _playHistory.clear();
     _prefetchNextTrack();
+    _persistPlaybackState();
     notifyListeners();
   }
 
@@ -879,6 +1137,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _prefetchNextTrack();
       notifyListeners();
     }
+    _persistPlaybackState();
   }
 
   /// Clears the entire queue except for the currently playing track.
@@ -895,6 +1154,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _queue = [];
       _currentIndex = -1;
     }
+    _persistPlaybackState();
     notifyListeners();
   }
 
@@ -1041,6 +1301,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _persistTimer?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

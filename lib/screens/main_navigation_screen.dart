@@ -131,12 +131,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return raw;
   }
 
-  String _sanitizePlaybackError(String error, AppStrings strings) {
+  String _sanitizePlaybackError(String error, AppStrings strings, {bool isOnline = true}) {
     switch (error) {
       case 'no_preview_available':
         return strings.playbackNoPreview;
       case 'network_error':
-        return strings.playbackNetworkError;
+        return !isOnline ? strings.offlineNoCache : strings.playbackNetworkError;
       case 'format_unsupported':
         return strings.playbackFormatUnsupported;
       case 'playback_error':
@@ -150,6 +150,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final hasTrack = context.select<AudioProvider, bool>((a) => a.currentTrack != null);
     final spotifyError = context.select<AudioProvider, String?>((a) => a.lastSpotifyError);
     final playbackError = context.select<AudioProvider, String?>((a) => a.lastPlaybackError);
+    final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
 
@@ -224,7 +225,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _sanitizePlaybackError(playbackError, strings),
+                      _sanitizePlaybackError(playbackError, strings, isOnline: isOnline),
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

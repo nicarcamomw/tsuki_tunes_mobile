@@ -18,7 +18,6 @@
 
 
 
-- **Queue persistence** — si el app muere, la cola y el track actual se pierden. Falta save/restore en StorageService.
 - **Offline playback** — sin internet no hay forma de reproducir nada. Los previews precacheados existen en disco pero no hay flujo para tocarlos offline.
 - **Repeat queue mode** — solo hay repeat-one. No hay modo "repetir toda la cola" (loop queue), que es standard en cualquier player.
 - **`previous()` en shuffle** — ya lo sabes, sin history stack.
