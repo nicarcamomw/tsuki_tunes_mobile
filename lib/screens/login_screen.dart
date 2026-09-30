@@ -15,6 +15,7 @@ import '../core/localization/app_strings.dart';
 import '../services/storage_service.dart';
 import '../widgets/cyber_orb.dart';
 import '../widgets/cyber_glitch_text.dart';
+import '../widgets/spectrum_wave_visualizer.dart';
 import 'onboarding_screen.dart';
 import 'main_navigation_screen.dart';
 
@@ -258,6 +259,26 @@ class _LoginScreenState extends State<LoginScreen>
                   builder: (context, t, _) {
                     return CustomPaint(
                       painter: _PlasmaGlowPainter(time: t),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          // 4. Ambient Horizontal Spectrum Waves (Behind UI, lower screen)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: size.height * 0.10,
+            height: size.height * 0.22,
+            child: IgnorePointer(
+              child: RepaintBoundary(
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _timeNotifier,
+                  builder: (context, t, _) {
+                    return CustomPaint(
+                      painter: SpectrumWavePainter(time: t, intensity: 0.5),
                     );
                   },
                 ),

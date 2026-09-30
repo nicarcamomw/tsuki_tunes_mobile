@@ -230,7 +230,11 @@ class LibraryProvider extends ChangeNotifier {
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
 
-    // 1. Instant local cache restore (0ms startup - tracks never disappear!)
+    final db = _firebase.db;
+    final userDoc = db.collection('users').doc(uid);
+    final tracksCol = userDoc.collection('listenedTracks');
+
+    // 1. Instant local cache restore (0ms cold start — tracks never disappear)
     try {
       final cached = await _storage.getCachedListenedTracks(uid);
       if (cached.isNotEmpty && _currentUid == uid) {
@@ -244,15 +248,14 @@ class LibraryProvider extends ChangeNotifier {
       debugPrint('[LibraryProvider] Error restoring cached tracks: $e');
     }
 
-    // 2. Real-time Firestore sync — NO limit to avoid silent data truncation
-    final db = _firebase.db;
-    final userDoc = db.collection('users').doc(uid);
+    // 2. One-time full fetch — same read cost as a listener's first snapshot,
+    //    but avoids re-reading the entire collection on every reconnection.
+    DateTime? deltaBoundary;
+    try {
+      final snapshot =
+          await tracksCol.orderBy('listenedAt', descending: true).get();
+      if (_currentUid != uid) return;
 
-    _tracksSubscription = userDoc
-        .collection('listenedTracks')
-        .orderBy('listenedAt', descending: true)
-        .snapshots()
-        .listen((snapshot) {
       _listenedTracks = snapshot.docs
           .map((doc) =>
               ListenedTrackData.fromFirestore(doc.data(), docId: doc.id))
@@ -261,15 +264,74 @@ class LibraryProvider extends ChangeNotifier {
       _totalTracksCount = _listenedTracks.length;
       notifyListeners();
 
-      // Persist to local cache for instant cold start next time
       _storage.saveCachedListenedTracks(
         uid,
         _listenedTracks.map((t) => t.toJson()).toList(),
       );
+
+      for (final t in _listenedTracks) {
+        if (t.listenedAt != null &&
+            (deltaBoundary == null || t.listenedAt!.isAfter(deltaBoundary))) {
+          deltaBoundary = t.listenedAt;
+        }
+      }
+      _pruneAlbumTrackCounts();
+    } catch (e) {
+      debugPrint('[LibraryProvider] Initial Firestore fetch error: $e');
+    }
+
+    // 3. Delta listener — only docs newer than the latest known timestamp.
+    //    Reconnections after 30+ min re-read only THIS query's result set
+    //    (typically 0-few docs) instead of the entire 2000+ collection.
+    final deltaQuery = deltaBoundary != null
+        ? tracksCol
+            .where('listenedAt',
+                isGreaterThan: Timestamp.fromDate(deltaBoundary))
+            .orderBy('listenedAt', descending: true)
+        : tracksCol.orderBy('listenedAt', descending: true);
+
+    _tracksSubscription = deltaQuery.snapshots().listen((snapshot) {
+      if (_currentUid != uid) return;
+
+      bool changed = false;
+      for (final change in snapshot.docChanges) {
+        final docData = change.doc.data();
+        if (docData == null) continue;
+
+        final data =
+            ListenedTrackData.fromFirestore(docData, docId: change.doc.id);
+
+        if (change.type == DocumentChangeType.removed) {
+          if (_listenedTrackIds.remove(data.trackId)) {
+            _listenedTracks.removeWhere((t) => t.trackId == data.trackId);
+            changed = true;
+          }
+        } else {
+          final idx =
+              _listenedTracks.indexWhere((t) => t.trackId == data.trackId);
+          if (idx != -1) {
+            _listenedTracks[idx] = data;
+          } else {
+            _listenedTracks.insert(0, data);
+            _listenedTrackIds.add(data.trackId);
+          }
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        _totalTracksCount = _listenedTracks.length;
+        notifyListeners();
+        _storage.saveCachedListenedTracks(
+          uid,
+          _listenedTracks.map((t) => t.toJson()).toList(),
+        );
+      }
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Firestore listenedTracks sync error: $e');
+      debugPrint('[LibraryProvider] Firestore delta sync error: $e');
     });
 
+    // 4. Stats doc listener
     _statsSubscription = userDoc.snapshots().listen((snapshot) {
       if (snapshot.exists) {
         final data = snapshot.data();
@@ -282,6 +344,22 @@ class LibraryProvider extends ChangeNotifier {
     }, onError: (e) {
       debugPrint('[LibraryProvider] Firestore stats sync error: $e');
     });
+  }
+
+  void _pruneAlbumTrackCounts() {
+    if (_albumTrackCounts.isEmpty) return;
+    final activeAlbumIds = <String>{};
+    for (final t in _listenedTracks) {
+      if (t.albumId.isNotEmpty) activeAlbumIds.add(t.albumId);
+    }
+    final before = _albumTrackCounts.length;
+    _albumTrackCounts
+        .removeWhere((albumId, _) => !activeAlbumIds.contains(albumId));
+    if (_albumTrackCounts.length < before) {
+      _storage.saveAlbumTrackCounts(_albumTrackCounts);
+      debugPrint(
+          '[LibraryProvider] Pruned ${before - _albumTrackCounts.length} orphaned albumTrackCounts');
+    }
   }
 
   void disconnectFirestore() {
@@ -434,6 +512,11 @@ class LibraryProvider extends ChangeNotifier {
         tracks.where((t) => !_listenedTrackIds.contains(t.id)).toList();
     if (toMark.isEmpty) return;
 
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
+
     // Optimistic update
     final newData = toMark
         .map((t) => ListenedTrackData(
@@ -458,11 +541,6 @@ class LibraryProvider extends ChangeNotifier {
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
     );
-
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
-    final prevIds = Set<String>.from(_listenedTrackIds);
-    final prevCount = _totalTracksCount;
 
     _startSync();
     try {
@@ -518,6 +596,11 @@ class LibraryProvider extends ChangeNotifier {
         trackIds.where((id) => _listenedTrackIds.contains(id)).toList();
     if (toUnmark.isEmpty) return;
 
+    // Snapshot pre-mutation state for rollback
+    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
+    final prevIds = Set<String>.from(_listenedTrackIds);
+    final prevCount = _totalTracksCount;
+
     // Optimistic update
     _listenedTracks.removeWhere((t) => toUnmark.contains(t.trackId));
     _listenedTrackIds.removeAll(toUnmark);
@@ -529,11 +612,6 @@ class LibraryProvider extends ChangeNotifier {
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
     );
-
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_listenedTracks);
-    final prevIds = Set<String>.from(_listenedTrackIds);
-    final prevCount = _totalTracksCount;
 
     _startSync();
     try {

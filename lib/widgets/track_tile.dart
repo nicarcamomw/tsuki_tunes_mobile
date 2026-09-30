@@ -9,7 +9,6 @@ import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
-import 'audio_visualizer.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
@@ -65,11 +64,26 @@ class TrackTile extends StatelessWidget {
               if (isCurrent)
                 SizedBox(
                   width: 24,
-                  child: AudioVisualizer(
-                    isPlaying: isPlaying,
-                    barCount: 3,
-                    maxHeight: 14,
-                    activeColor: AppColors.accent,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOut,
+                      width: isPlaying ? 10 : 7,
+                      height: isPlaying ? 10 : 7,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.accent,
+                        boxShadow: isPlaying
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(alpha: 0.7),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
                   ),
                 )
               else if (index != null)

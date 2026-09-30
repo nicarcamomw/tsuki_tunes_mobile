@@ -1048,4 +1048,41 @@ class AppStrings {
         AppLanguage.en => 'OFFLINE MODE // Connect to the internet to load data',
         AppLanguage.ja => 'オフラインモード // データの読み込みにはインターネット接続が必要です',
       };
+
+  // --- Sleep Timer ---
+  String get sleepTimer => switch (language) {
+        AppLanguage.es => 'TEMPORIZADOR',
+        AppLanguage.en => 'SLEEP TIMER',
+        AppLanguage.ja => 'スリープタイマー',
+      };
+
+  String get sleepTimerOff => switch (language) {
+        AppLanguage.es => 'DESACTIVADO',
+        AppLanguage.en => 'OFF',
+        AppLanguage.ja => 'オフ',
+      };
+
+  String get sleepTimerEndOfTrack => switch (language) {
+        AppLanguage.es => 'AL TERMINAR ESTA CANCIÓN',
+        AppLanguage.en => 'END OF CURRENT TRACK',
+        AppLanguage.ja => '現在の曲の終わりに',
+      };
+
+  String sleepTimerMinutes(int minutes) => switch (language) {
+        AppLanguage.es => '$minutes MINUTOS',
+        AppLanguage.en => '$minutes MINUTES',
+        AppLanguage.ja => '$minutes分',
+      };
+
+  String sleepTimerRemainingLabel(String time) => switch (language) {
+        AppLanguage.es => 'APAGADO EN $time',
+        AppLanguage.en => 'STOPPING IN $time',
+        AppLanguage.ja => '$timeで停止',
+      };
+
+  String get sleepTimerEndOfTrackShort => switch (language) {
+        AppLanguage.es => 'ÚLTIMA CANCIÓN',
+        AppLanguage.en => 'LAST TRACK',
+        AppLanguage.ja => 'ラストトラック',
+      };
 }

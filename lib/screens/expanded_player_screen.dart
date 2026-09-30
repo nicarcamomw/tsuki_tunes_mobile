@@ -549,13 +549,23 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                 const SizedBox(height: 12),
 
-                // Device tag
-                Text(
-                  useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 9,
-                    color: AppColors.accent,
-                    letterSpacing: 2,
+                // Device tag + Sleep Timer
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SizedBox(width: 40),
+                      Text(
+                        useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          color: AppColors.accent,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      _buildSleepTimerButton(context, audio, locale),
+                    ],
                   ),
                 ),
 
@@ -568,6 +578,183 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     ),
   );
 }
+
+  Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
+    final strings = locale.strings;
+    final isActive = context.select<AudioProvider, bool>((a) => a.isSleepTimerActive);
+    final remaining = context.select<AudioProvider, Duration?>((a) => a.sleepTimerRemaining);
+
+    String label = '';
+    if (remaining != null) {
+      final m = remaining.inMinutes;
+      final s = remaining.inSeconds % 60;
+      label = '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+
+    return TapScale(
+      semanticLabel: strings.sleepTimer,
+      onTap: () => _showSleepTimerSheet(context, audio, locale),
+      scaleDown: 0.85,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.accent.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: isActive ? Border.all(color: AppColors.accent.withValues(alpha: 0.4)) : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.bedtime_outlined,
+              size: 16,
+              color: isActive ? AppColors.accent : AppColors.textMuted,
+            ),
+            if (label.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ] else if (isActive) ...[
+              const SizedBox(width: 4),
+              Text(
+                strings.sleepTimerEndOfTrackShort,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSleepTimerSheet(BuildContext context, AudioProvider audio, LocaleProvider locale) {
+    final strings = locale.strings;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.bgMid,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.bedtime_outlined, color: AppColors.accent, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      strings.sleepTimer,
+                      style: locale.getTextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _sleepTimerOption(
+                  strings.sleepTimerOff,
+                  !audio.isSleepTimerActive,
+                  locale,
+                  () { audio.setSleepTimer(null); Navigator.pop(context); },
+                ),
+                _sleepTimerOption(
+                  strings.sleepTimerEndOfTrack,
+                  audio.isSleepTimerActive && audio.sleepTimerRemaining == null,
+                  locale,
+                  () { audio.setSleepTimer(Duration.zero); Navigator.pop(context); },
+                ),
+                _sleepTimerOption(
+                  strings.sleepTimerMinutes(15),
+                  false,
+                  locale,
+                  () { audio.setSleepTimer(const Duration(minutes: 15)); Navigator.pop(context); },
+                ),
+                _sleepTimerOption(
+                  strings.sleepTimerMinutes(30),
+                  false,
+                  locale,
+                  () { audio.setSleepTimer(const Duration(minutes: 30)); Navigator.pop(context); },
+                ),
+                _sleepTimerOption(
+                  strings.sleepTimerMinutes(45),
+                  false,
+                  locale,
+                  () { audio.setSleepTimer(const Duration(minutes: 45)); Navigator.pop(context); },
+                ),
+                _sleepTimerOption(
+                  strings.sleepTimerMinutes(60),
+                  false,
+                  locale,
+                  () { audio.setSleepTimer(const Duration(minutes: 60)); Navigator.pop(context); },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sleepTimerOption(String label, bool isSelected, LocaleProvider locale, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        margin: const EdgeInsets.only(bottom: 2),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? AppColors.accent : AppColors.textPrimary,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: AppColors.accent, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
     final queue = audio.queue;

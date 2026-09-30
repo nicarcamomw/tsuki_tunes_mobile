@@ -14,6 +14,7 @@ import '../providers/locale_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/album_progress_bar.dart';
+import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -426,6 +427,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 ],
               ),
             ),
+          ),
+
+          // Spectrum wave visualizer separator
+          SliverToBoxAdapter(
+            child: SpectrumWaveVisualizer(height: 36),
           ),
 
           // Tracklist

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
@@ -41,6 +42,21 @@ class AudioProvider extends ChangeNotifier {
   DateTime _lastPlayStart = DateTime(2000);
   int _playGeneration = 0;
 
+  // Wall-clock position tracking for Spotify (avoids timer drift)
+  Duration _spotifySyncPosition = Duration.zero;
+  DateTime _spotifySyncTime = DateTime(2000);
+
+  // Smart shuffle history — recent artistIds to avoid consecutive repeats
+  final List<String> _shuffleArtistHistory = [];
+  final List<String> _shuffleAlbumHistory = [];
+  static const int _shuffleHistorySize = 5;
+  final Random _shuffleRng = Random();
+
+  // Sleep timer
+  Timer? _sleepTimer;
+  Duration? _sleepTimerRemaining;
+  bool _stopAfterCurrentTrack = false;
+
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
   StreamSubscription? _bufSub;
@@ -68,6 +84,8 @@ class AudioProvider extends ChangeNotifier {
   String? get lastSpotifyError => _lastSpotifyError;
   String? get lastPlaybackError => _lastPlaybackError;
   int get crossfadeSeconds => _crossfadeSeconds;
+  Duration? get sleepTimerRemaining => _sleepTimerRemaining;
+  bool get isSleepTimerActive => _sleepTimerRemaining != null || _stopAfterCurrentTrack;
 
   Future<void> setCrossfadeSeconds(int seconds) async {
     _crossfadeSeconds = seconds.clamp(0, 12);
@@ -187,6 +205,8 @@ class AudioProvider extends ChangeNotifier {
     _isPlaying = !paused;
     _isBuffering = false;
     _position = Duration(milliseconds: positionMs);
+    _spotifySyncPosition = _position;
+    _spotifySyncTime = DateTime.now();
 
     if (durationMs > 0) {
       _duration = Duration(milliseconds: durationMs);
@@ -212,7 +232,8 @@ class AudioProvider extends ChangeNotifier {
     _spotifyPositionTimer?.cancel();
     _spotifyPositionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       if (_isPlaying && _useSpotify) {
-        _position += const Duration(milliseconds: 500);
+        final elapsed = DateTime.now().difference(_spotifySyncTime);
+        _position = _spotifySyncPosition + elapsed;
         if (_position >= _duration && _duration > Duration.zero) {
           _stopPositionTimer();
           _handleTrackCompleted();
@@ -452,6 +473,8 @@ class AudioProvider extends ChangeNotifier {
     _isPlaying = true;
     _isBuffering = false;
     _position = Duration.zero;
+    _spotifySyncPosition = Duration.zero;
+    _spotifySyncTime = DateTime.now();
     _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
@@ -487,9 +510,13 @@ class AudioProvider extends ChangeNotifier {
       if (_isPlaying) {
         await _spotify.pause();
         _isPlaying = false;
+        _stopPositionTimer();
       } else {
         await _spotify.resume();
         _isPlaying = true;
+        _spotifySyncPosition = _position;
+        _spotifySyncTime = DateTime.now();
+        _startPositionTimer();
       }
       notifyListeners();
     } else {
@@ -503,19 +530,75 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
+  /// Picks the next track index using weighted scoring to avoid
+  /// consecutive same-artist/album repeats. Heavier penalty for
+  /// artists/albums heard most recently.
+  int _pickSmartNext() {
+    final candidates = <int>[];
+    for (int i = 0; i < _queue.length; i++) {
+      if (i != _currentIndex) candidates.add(i);
+    }
+    if (candidates.isEmpty) return _currentIndex;
+    if (candidates.length == 1) return candidates.first;
+
+    // Score each candidate — higher is better
+    double bestScore = double.negativeInfinity;
+    final scores = <double>[];
+
+    for (final idx in candidates) {
+      final track = _queue[idx];
+      double score = _shuffleRng.nextDouble(); // base randomness [0, 1)
+
+      // Penalize if artist was played recently (heavier for more recent)
+      final artistPos = _shuffleArtistHistory.lastIndexOf(track.artistId);
+      if (artistPos != -1) {
+        final recency = _shuffleArtistHistory.length - artistPos;
+        score -= 3.0 / recency; // -3.0 if last, -1.5 if second-to-last, etc.
+      }
+
+      // Penalize if album was played recently
+      final albumPos = _shuffleAlbumHistory.lastIndexOf(track.albumId);
+      if (albumPos != -1) {
+        final recency = _shuffleAlbumHistory.length - albumPos;
+        score -= 1.5 / recency;
+      }
+
+      scores.add(score);
+      if (score > bestScore) bestScore = score;
+    }
+
+    // Collect all candidates within 0.3 of the best score for a tie-break
+    final topTier = <int>[];
+    for (int i = 0; i < candidates.length; i++) {
+      if (scores[i] >= bestScore - 0.3) topTier.add(candidates[i]);
+    }
+
+    return topTier[_shuffleRng.nextInt(topTier.length)];
+  }
+
+  void _recordShuffleHistory(Track track) {
+    _shuffleArtistHistory.add(track.artistId);
+    if (_shuffleArtistHistory.length > _shuffleHistorySize) {
+      _shuffleArtistHistory.removeAt(0);
+    }
+    _shuffleAlbumHistory.add(track.albumId);
+    if (_shuffleAlbumHistory.length > _shuffleHistorySize) {
+      _shuffleAlbumHistory.removeAt(0);
+    }
+  }
+
   Future<void> next() async {
     if (_queue.isEmpty) return;
 
     if (_isShuffle && _queue.length > 1) {
-      final list = List.generate(_queue.length, (i) => i)
-        ..remove(_currentIndex);
-      list.shuffle();
-      _currentIndex = list.first;
+      _currentIndex = _pickSmartNext();
     } else {
       _currentIndex = (_currentIndex + 1) % _queue.length;
     }
 
-    await playTrack(_queue[_currentIndex]);
+    final nextTrack = _queue[_currentIndex];
+    if (_isShuffle) _recordShuffleHistory(nextTrack);
+    await playTrack(nextTrack);
   }
 
   Future<void> previous() async {
@@ -552,6 +635,10 @@ class AudioProvider extends ChangeNotifier {
   Future<void> seek(Duration pos) async {
     _position = pos;
     _crossfadeTriggered = false;
+    if (_useSpotify) {
+      _spotifySyncPosition = pos;
+      _spotifySyncTime = DateTime.now();
+    }
     notifyListeners();
 
     if (_useSpotify) {
@@ -624,9 +711,15 @@ class AudioProvider extends ChangeNotifier {
 
   void _handleTrackCompleted() {
     if (_completionHandled || _crossfadeTriggered) return;
-    // Ignore completion events within 3 seconds of starting a new track
     if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
     _completionHandled = true;
+
+    if (_stopAfterCurrentTrack) {
+      _stopAfterCurrentTrack = false;
+      _sleepTimerRemaining = null;
+      stop();
+      return;
+    }
 
     if (_isLoop && _currentTrack != null) {
       playTrack(_currentTrack!);
@@ -637,6 +730,7 @@ class AudioProvider extends ChangeNotifier {
 
   void _checkCrossfade(Duration pos) {
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered || _useSpotify || _spotifyActive) return;
+    if (_stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
     if (pos.inSeconds < 2) return;
 
@@ -651,9 +745,7 @@ class AudioProvider extends ChangeNotifier {
 
     int nextIdx;
     if (_isShuffle && _queue.length > 1) {
-      final list = List.generate(_queue.length, (i) => i)..remove(_currentIndex);
-      list.shuffle();
-      nextIdx = list.first;
+      nextIdx = _pickSmartNext();
     } else if (_currentIndex + 1 < _queue.length) {
       nextIdx = _currentIndex + 1;
     } else if (_isLoop && _queue.isNotEmpty) {
@@ -664,6 +756,7 @@ class AudioProvider extends ChangeNotifier {
 
     _crossfadeTriggered = true;
     final nextTrack = _queue[nextIdx];
+    if (_isShuffle) _recordShuffleHistory(nextTrack);
     _currentIndex = nextIdx;
     _currentTrack = nextTrack;
     _position = Duration.zero;
@@ -689,6 +782,45 @@ class AudioProvider extends ChangeNotifier {
     }
   }
 
+  void setSleepTimer(Duration? duration) {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+
+    if (duration == null) {
+      _sleepTimerRemaining = null;
+      _stopAfterCurrentTrack = false;
+      notifyListeners();
+      return;
+    }
+
+    if (duration == Duration.zero) {
+      _stopAfterCurrentTrack = true;
+      _sleepTimerRemaining = null;
+      notifyListeners();
+      return;
+    }
+
+    _sleepTimerRemaining = duration;
+    _stopAfterCurrentTrack = false;
+    notifyListeners();
+
+    _sleepTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_sleepTimerRemaining == null) {
+        _sleepTimer?.cancel();
+        _sleepTimer = null;
+        return;
+      }
+      _sleepTimerRemaining = _sleepTimerRemaining! - const Duration(seconds: 1);
+      if (_sleepTimerRemaining!.inSeconds <= 0) {
+        _sleepTimer?.cancel();
+        _sleepTimer = null;
+        _stopAfterCurrentTrack = true;
+        _sleepTimerRemaining = null;
+      }
+      notifyListeners();
+    });
+  }
+
   @override
   void dispose() {
     _posSub?.cancel();
@@ -698,6 +830,7 @@ class AudioProvider extends ChangeNotifier {
     _eventSub?.cancel();
     _stopPositionTimer();
     _retryTimer?.cancel();
+    _sleepTimer?.cancel();
     _nativePlayer.dispose();
     _service.dispose();
     super.dispose();
