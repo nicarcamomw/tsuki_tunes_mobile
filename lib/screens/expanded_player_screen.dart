@@ -125,7 +125,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
     final isBuffering = context.select<AudioProvider, bool>((a) => a.isBuffering);
     final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
-    final isLoop = context.select<AudioProvider, bool>((a) => a.isLoop);
+    final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
 
     if (track == null) {
@@ -514,8 +514,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Repeat
                       TapScale(
-                        semanticLabel: isLoop ? 'Repeat on' : 'Repeat off',
-                        onTap: audio.toggleLoop,
+                        semanticLabel: switch (repeatMode) {
+                          PlaybackRepeatMode.off => strings.repeatOff,
+                          PlaybackRepeatMode.all => strings.repeatAll,
+                          PlaybackRepeatMode.one => strings.repeatOne,
+                        },
+                        onTap: audio.toggleRepeat,
                         scaleDown: 0.8,
                         child: Padding(
                           padding: const EdgeInsets.all(8),
@@ -523,13 +527,15 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.repeat,
+                                repeatMode == PlaybackRepeatMode.one
+                                    ? Icons.repeat_one
+                                    : Icons.repeat,
                                 size: 22,
-                                color: isLoop
+                                color: repeatMode != PlaybackRepeatMode.off
                                     ? AppColors.accent
                                     : AppColors.textSecondary,
                               ),
-                              if (isLoop)
+                              if (repeatMode != PlaybackRepeatMode.off)
                                 Container(
                                   margin: const EdgeInsets.only(top: 4),
                                   width: 4,

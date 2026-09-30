@@ -545,7 +545,6 @@ class ProfileBottomSheet {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
               ],
             ),
           ),

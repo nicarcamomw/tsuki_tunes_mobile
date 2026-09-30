@@ -1073,6 +1073,24 @@ class AppStrings {
         AppLanguage.ja => 'オフラインでこのトラックはキャッシュされていません',
       };
 
+  String get repeatOff => switch (language) {
+        AppLanguage.es => 'Repetición desactivada',
+        AppLanguage.en => 'Repeat off',
+        AppLanguage.ja => 'リピートオフ',
+      };
+
+  String get repeatAll => switch (language) {
+        AppLanguage.es => 'Repetir toda la cola',
+        AppLanguage.en => 'Repeat queue',
+        AppLanguage.ja => 'キュー全体をリピート',
+      };
+
+  String get repeatOne => switch (language) {
+        AppLanguage.es => 'Repetir esta canción',
+        AppLanguage.en => 'Repeat track',
+        AppLanguage.ja => 'この曲をリピート',
+      };
+
   // --- Sleep Timer ---
   String get sleepTimer => switch (language) {
         AppLanguage.es => 'TEMPORIZADOR',

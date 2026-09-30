@@ -225,19 +225,30 @@ void main() {
       provider.playTrack(tracks[0], newQueue: tracks);
     });
 
-    test('Loop mode blocks crossfade trigger completely', () {
-      provider.toggleLoop();
-      expect(provider.isLoop, isTrue);
+    test('Repeat-one blocks crossfade trigger completely', () {
+      provider.setRepeatMode(PlaybackRepeatMode.one);
+      expect(provider.isRepeatOne, isTrue);
 
       // Remaining duration = 180s - 177s = 3s <= 5s crossfade threshold
       provider.checkCrossfade(const Duration(seconds: 177));
 
-      // In loop mode, crossfade must NOT be triggered
+      // In repeat-one mode, crossfade must NOT be triggered
       expect(provider.crossfadeTriggered, isFalse);
     });
 
-    test('Non-loop mode allows crossfade trigger', () {
-      expect(provider.isLoop, isFalse);
+    test('Repeat-all allows crossfade trigger', () {
+      provider.setRepeatMode(PlaybackRepeatMode.all);
+      expect(provider.isRepeatAll, isTrue);
+
+      // Remaining duration = 180s - 177s = 3s <= 5s crossfade threshold
+      provider.checkCrossfade(const Duration(seconds: 177));
+
+      // Crossfade should work in repeat-all
+      expect(provider.crossfadeTriggered, isTrue);
+    });
+
+    test('Repeat-off allows crossfade trigger', () {
+      expect(provider.repeatMode, equals(PlaybackRepeatMode.off));
       expect(provider.crossfadeSeconds, equals(5));
 
       // Remaining duration = 180s - 177s = 3s <= 5s crossfade threshold

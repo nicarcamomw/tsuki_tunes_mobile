@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
 import '../models/track.dart';
+import '../models/repeat_mode.dart';
+export '../models/repeat_mode.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/spotify_service.dart';
@@ -30,7 +32,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _isPlaying = false;
   bool _isBuffering = false;
   bool _isShuffle = false;
-  bool _isLoop = false;
+  PlaybackRepeatMode _repeatMode = PlaybackRepeatMode.off;
   Duration _position = Duration.zero;
   Duration _duration = const Duration(seconds: 30);
   Duration _bufferedPosition = Duration.zero;
@@ -91,7 +93,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
   bool get isShuffle => _isShuffle;
-  bool get isLoop => _isLoop;
+  PlaybackRepeatMode get repeatMode => _repeatMode;
+  bool get isLoop => _repeatMode != PlaybackRepeatMode.off;
+  bool get isRepeatAll => _repeatMode == PlaybackRepeatMode.all;
+  bool get isRepeatOne => _repeatMode == PlaybackRepeatMode.one;
   Duration get position => _position;
   Duration get duration => _duration;
   Duration get bufferedPosition => _bufferedPosition;
@@ -290,7 +295,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _connectNativePlayer() async {
+  Future<void> _connectNativePlayer({bool allowAppLaunch = false}) async {
     _nativePlayer.onStateChanged = _onNativeStateChanged;
     _nativePlayer.onError = (error) {
       debugPrint('Spotify native background notice: $error');
@@ -308,7 +313,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('Spotify: connecting native player with token');
     var connected = await _nativePlayer.connect(accessToken: token);
 
-    if (!connected) {
+    if (!connected && allowAppLaunch) {
       debugPrint('Spotify: native connect failed, launching Spotify app...');
       await _spotify.openSpotifyApp();
       await Future.delayed(const Duration(seconds: 4));
@@ -318,6 +323,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         connected = await _nativePlayer.connect(accessToken: freshToken);
         debugPrint('Spotify: retry native connect after app launch: $connected');
       }
+    } else if (!connected) {
+      debugPrint('Spotify: native connect failed at startup, will retry on play');
     }
 
     _spotifyActive = connected;
@@ -332,7 +339,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     // Pre-warm Web API device with retries (Spotify may need time to register)
-    _activateDeviceInBackground();
+    if (connected) {
+      _activateDeviceInBackground();
+    }
 
     notifyListeners();
   }
@@ -674,32 +683,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('Spotify: Web API play result=$played');
 
     if (!played) {
-      debugPrint('Spotify: play failed, launching Spotify app and retrying...');
-      await _spotify.openSpotifyApp();
-      await Future.delayed(const Duration(seconds: 2));
-      if (gen != _playGeneration) return;
-
+      debugPrint('Spotify: play failed, reconnecting native player...');
       if (!_spotifyActive) {
-        final token = await _spotify.getValidToken();
-        if (token != null) {
-          final connected = await _nativePlayer.connect(accessToken: token);
-          _spotifyActive = connected;
-          if (connected) {
-            try {
-              await SpotifySdk.switchToLocalDevice();
-              debugPrint('Spotify: switched to local device after relaunch');
-            } catch (e) {
-              debugPrint('Spotify: switchToLocalDevice error after relaunch: $e');
-            }
-            await Future.delayed(const Duration(milliseconds: 500));
-            if (gen != _playGeneration) return;
-          }
-        }
+        await _connectNativePlayer(allowAppLaunch: true);
+        if (gen != _playGeneration) return;
+      } else {
+        await _spotify.openSpotifyApp();
+        await Future.delayed(const Duration(seconds: 2));
+        if (gen != _playGeneration) return;
       }
 
       played = await _spotify.play(trackUri: uri);
       if (gen != _playGeneration) return;
-      debugPrint('Spotify: retry after app launch result=$played');
+      debugPrint('Spotify: retry after reconnect result=$played');
     }
 
     if (!played) {
@@ -741,8 +737,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (_currentIndex + 1 < _queue.length) {
       return _currentIndex + 1;
-    } else if (_isLoop && _queue.isNotEmpty) {
+    } else if (_repeatMode == PlaybackRepeatMode.all && _queue.isNotEmpty) {
       return 0;
+    } else if (_repeatMode == PlaybackRepeatMode.one) {
+      return _currentIndex;
     }
 
     return null;
@@ -1086,9 +1084,32 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void toggleLoop() {
-    _isLoop = !_isLoop;
-    if (!_isShuffle && _currentIndex == _queue.length - 1) {
+  void toggleRepeat() {
+    switch (_repeatMode) {
+      case PlaybackRepeatMode.off:
+        _repeatMode = PlaybackRepeatMode.all;
+        break;
+      case PlaybackRepeatMode.all:
+        _repeatMode = PlaybackRepeatMode.one;
+        break;
+      case PlaybackRepeatMode.one:
+        _repeatMode = PlaybackRepeatMode.off;
+        break;
+    }
+    _nextShuffleIndex = null;
+    if (_currentIndex == _queue.length - 1) {
+      _prefetchNextTrack();
+    }
+    notifyListeners();
+  }
+
+  void toggleLoop() => toggleRepeat();
+
+  void setRepeatMode(PlaybackRepeatMode mode) {
+    if (_repeatMode == mode) return;
+    _repeatMode = mode;
+    _nextShuffleIndex = null;
+    if (_currentIndex == _queue.length - 1) {
       _prefetchNextTrack();
     }
     notifyListeners();
@@ -1158,6 +1179,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  @visibleForTesting
+  Future<void> handleTrackCompletedForTesting() async {
+    _completionHandled = false;
+    _crossfadeTriggered = false;
+    _lastPlayStart = DateTime.now().subtract(const Duration(seconds: 10));
+    _handleTrackCompleted();
+    await Future.delayed(Duration.zero);
+  }
+
   void _handleTrackCompleted() {
     if (_completionHandled || _crossfadeTriggered) return;
     if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
@@ -1171,15 +1201,31 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (_isLoop && _currentTrack != null) {
+    if (_repeatMode == PlaybackRepeatMode.one && _currentTrack != null) {
       playTrack(_currentTrack!);
-    } else {
+    } else if (_repeatMode == PlaybackRepeatMode.all) {
       next();
+    } else {
+      // PlaybackRepeatMode.off
+      if (_isShuffle) {
+        if (_playHistory.toSet().length >= _queue.length - 1 &&
+            !_playHistory.contains(_currentIndex)) {
+          stop();
+        } else {
+          next();
+        }
+      } else {
+        if (_currentIndex + 1 < _queue.length) {
+          next();
+        } else {
+          stop();
+        }
+      }
     }
   }
 
   void _checkCrossfade(Duration pos) {
-    if (_isLoop) return;
+    if (_repeatMode == PlaybackRepeatMode.one) return;
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered || _useSpotify || _spotifyActive) return;
     if (_stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
@@ -1213,7 +1259,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _nextShuffleIndex = null;
     } else if (_currentIndex + 1 < _queue.length) {
       nextIdx = _currentIndex + 1;
-    } else if (_isLoop && _queue.isNotEmpty) {
+    } else if (_repeatMode == PlaybackRepeatMode.all && _queue.isNotEmpty) {
       nextIdx = 0;
     } else {
       return;

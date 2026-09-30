@@ -13,6 +13,7 @@ import 'providers/locale_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/storage_service.dart';
 
 void main() async {
@@ -88,6 +89,8 @@ class _AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<_AuthGate> {
   String? _connectedUid;
+  bool? _hasCompletedOnboarding;
+  bool _onboardingChecked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -107,11 +110,32 @@ class _AuthGateState extends State<_AuthGate> {
           }
         });
       }
+
+      if (!_onboardingChecked) {
+        _onboardingChecked = true;
+        StorageService().hasCompletedOnboarding().then((completed) {
+          if (mounted) {
+            setState(() => _hasCompletedOnboarding = completed);
+          }
+        });
+        return const _CyberLoadingScreen();
+      }
+
+      if (_hasCompletedOnboarding == null) {
+        return const _CyberLoadingScreen();
+      }
+
+      if (!_hasCompletedOnboarding!) {
+        return const OnboardingScreen();
+      }
+
       return const MainNavigationScreen();
     }
 
     if (_connectedUid != null) {
       _connectedUid = null;
+      _onboardingChecked = false;
+      _hasCompletedOnboarding = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           context.read<LibraryProvider>().disconnectFirestore();
