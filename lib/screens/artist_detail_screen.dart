@@ -17,6 +17,7 @@ import '../widgets/oni_mask_icon.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/app_custom_icons.dart';
 import '../services/lastfm_service.dart';
+import '../models/artist_albums_page.dart';
 import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
@@ -36,6 +37,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   List<Track> _topTracks = [];
   List<Album> _albums = [];
+  int _totalAlbums = 0;
   List<String> _artistTags = [];
   bool _isLoading = true;
   bool _hasError = false;
@@ -89,13 +91,15 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     try {
       final results = await Future.wait([
         _api.getArtistTopTracks(widget.artist.id, limit: 10),
-        _api.getArtistAlbums(widget.artist.id, limit: 250),
+        _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
         LastFmService.getArtistTags(widget.artist.name),
       ]);
       if (mounted) {
+        final pagedAlbums = results[1] as ArtistAlbumsPage;
         setState(() {
           _topTracks = results[0] as List<Track>;
-          _albums = results[1] as List<Album>;
+          _albums = pagedAlbums.items;
+          _totalAlbums = pagedAlbums.total;
           _artistTags = results[2] as List<String>;
           _isLoading = false;
         });
@@ -677,16 +681,24 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               if (hasMore)
                 GestureDetector(
                   onTap: () async {
-                    await appNavigatorKey.currentState?.push(
+                    final updated =
+                        await appNavigatorKey.currentState?.push<List<Album>>(
                       MaterialPageRoute(
                         builder: (_) => ArtistDiscographyScreen(
+                          artistId: widget.artist.id,
                           artistName: widget.artist.name,
                           albums: _albums,
+                          totalAlbums: _totalAlbums,
                           initialFilter: filterKey,
                         ),
                       ),
                     );
                     if (mounted) {
+                      if (updated != null && updated.length > _albums.length) {
+                        setState(() {
+                          _albums = updated;
+                        });
+                      }
                       _enrichAlbumsWithSavedTracks(_albums);
                       setState(() {});
                     }

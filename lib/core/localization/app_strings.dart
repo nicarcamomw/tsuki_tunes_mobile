@@ -255,6 +255,30 @@ class AppStrings {
         AppLanguage.ja => 'プロフィール // 設定',
       };
 
+  String get crossfadeTitle => switch (language) {
+        AppLanguage.es => 'CROSSFADE PROGRESIVO',
+        AppLanguage.en => 'SMOOTH CROSSFADE',
+        AppLanguage.ja => 'クロスフェード',
+      };
+
+  String get crossfadeSubtitle => switch (language) {
+        AppLanguage.es => 'Transición suave de DJ entre canciones sin silencios',
+        AppLanguage.en => 'Smooth DJ mix transitions between songs without gaps',
+        AppLanguage.ja => '曲間の無音をなくしDJのようにスムーズにつなぐ',
+      };
+
+  String get crossfadeOff => switch (language) {
+        AppLanguage.es => 'Desactivado',
+        AppLanguage.en => 'Disabled',
+        AppLanguage.ja => 'オフ',
+      };
+
+  String crossfadeSecondsLabel(int seconds) => switch (language) {
+        AppLanguage.es => '$seconds seg',
+        AppLanguage.en => '${seconds}s',
+        AppLanguage.ja => '$seconds 秒',
+      };
+
   String get languageOption => switch (language) {
         AppLanguage.es => 'IDIOMA DEL SISTEMA',
         AppLanguage.en => 'SYSTEM LANGUAGE',
@@ -599,6 +623,54 @@ class AppStrings {
         AppLanguage.es => 'No se encontraron canciones',
         AppLanguage.en => 'No tracks found',
         AppLanguage.ja => '楽曲が見つかりませんでした',
+      };
+
+  String get loadingMoreAlbums => switch (language) {
+        AppLanguage.es => 'Cargando más lanzamientos...',
+        AppLanguage.en => 'Loading more releases...',
+        AppLanguage.ja => 'リリースを読み込み中...',
+      };
+
+  String get retryLoading => switch (language) {
+        AppLanguage.es => 'Reintentar',
+        AppLanguage.en => 'Retry',
+        AppLanguage.ja => '再試行',
+      };
+
+  String get allAlbumsLoaded => switch (language) {
+        AppLanguage.es => '// FIN DEL CATÁLOGO',
+        AppLanguage.en => '// END OF CATALOG',
+        AppLanguage.ja => '// カタログ終了',
+      };
+
+  String get lyrics => switch (language) {
+        AppLanguage.es => 'LETRAS',
+        AppLanguage.en => 'LYRICS',
+        AppLanguage.ja => '歌詞',
+      };
+
+  String get lyricsLoading => switch (language) {
+        AppLanguage.es => '// SINCRONIZANDO LETRAS...',
+        AppLanguage.en => '// SYNCING LYRICS...',
+        AppLanguage.ja => '// 歌詞を同期中...',
+      };
+
+  String get noLyricsFound => switch (language) {
+        AppLanguage.es => '// LETRAS NO DISPONIBLES //',
+        AppLanguage.en => '// NO LYRICS AVAILABLE //',
+        AppLanguage.ja => '// 歌詞が見つかりません //',
+      };
+
+  String get instrumentalTrack => switch (language) {
+        AppLanguage.es => '// PISTA INSTRUMENTAL //',
+        AppLanguage.en => '// INSTRUMENTAL TRACK //',
+        AppLanguage.ja => '// インストゥルメンタル //',
+      };
+
+  String get syncedTapToSeek => switch (language) {
+        AppLanguage.es => 'Toca un verso para saltar',
+        AppLanguage.en => 'Tap line to seek',
+        AppLanguage.ja => 'タップして再生位置を移動',
       };
 
   // --- Telemetry & Spotify Errors in Nav ---

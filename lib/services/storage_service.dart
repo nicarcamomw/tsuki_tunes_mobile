@@ -180,4 +180,19 @@ class StorageService implements StorageContract {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_languageKey, code);
   }
+
+  // --- Crossfade Persistence ---
+  static const String _crossfadeKey = 'tsuki_crossfade_seconds';
+
+  @override
+  Future<int> getCrossfadeSeconds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_crossfadeKey) ?? 3;
+  }
+
+  @override
+  Future<void> saveCrossfadeSeconds(int seconds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_crossfadeKey, seconds);
+  }
 }

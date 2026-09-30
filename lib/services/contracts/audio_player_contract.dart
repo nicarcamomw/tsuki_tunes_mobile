@@ -10,6 +10,7 @@ abstract class AudioPlayerContract {
   Stream<PlaybackEvent> get playbackEventStream;
 
   Future<void> playTrack(Track track, {Duration? initialPosition});
+  Future<void> crossfadeTo(Track nextTrack, int durationSeconds);
   Future<void> resume();
   Future<void> pause();
   Future<void> stop();

@@ -5,6 +5,7 @@ import '../core/constants/api_endpoints.dart';
 import '../models/track.dart';
 import '../models/artist.dart';
 import '../models/album.dart';
+import '../models/artist_albums_page.dart';
 import 'contracts/music_api_contract.dart';
 
 class _CacheEntry {
@@ -64,9 +65,41 @@ class DeezerApiService implements MusicApiContract {
     if (!kIsWeb) {
       // Mobile/desktop: direct call, no CORS proxies needed
       try {
-        final res =
+        var res =
             await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-        if (res.statusCode == 200) return json.decode(res.body);
+
+        // Auto-recovery for HTTP 429 Too Many Requests (Deezer rate limit)
+        if (res.statusCode == 429) {
+          debugPrint('[DeezerAPI] HTTP 429 rate limit for $url. Waiting 1s before retry...');
+          await Future.delayed(const Duration(milliseconds: 1000));
+          res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+        }
+
+        if (res.statusCode == 200) {
+          final decoded = json.decode(res.body);
+          // Check for Deezer quota limit error returned with HTTP 200 (code 4 or 800)
+          if (decoded is Map<String, dynamic> && decoded['error'] != null) {
+            final errCode = decoded['error']['code'];
+            if (errCode == 4 || errCode == 800) {
+              debugPrint('[DeezerAPI] Quota limit code $errCode for $url. Waiting 1s before retry...');
+              await Future.delayed(const Duration(milliseconds: 1000));
+              final retryRes =
+                  await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+              if (retryRes.statusCode == 200) {
+                final retryDecoded = json.decode(retryRes.body);
+                if (retryDecoded is Map<String, dynamic> && retryDecoded['error'] == null) {
+                  return retryDecoded;
+                }
+              }
+            }
+            final msg = '[DeezerAPI] Error in response for $url: ${decoded['error']}';
+            debugPrint(msg);
+            if (throwOnError) throw DeezerApiException(msg);
+            return null;
+          }
+          return decoded;
+        }
+
         final msg = '[DeezerAPI] HTTP ${res.statusCode} for $url';
         debugPrint(msg);
         if (throwOnError) throw DeezerApiException(msg);
@@ -330,21 +363,63 @@ class DeezerApiService implements MusicApiContract {
   }
 
   @override
+  Future<ArtistAlbumsPage> getArtistAlbumsPage(
+    String artistId, {
+    int limit = 50,
+    int index = 0,
+  }) async {
+    final cacheKey = 'artist_albums_page_${artistId}_${limit}_$index';
+    final cached = _getCached<ArtistAlbumsPage>(cacheKey);
+    if (cached != null) return cached;
+
+    return _deduped(cacheKey, () async {
+      try {
+        final data = await _fetchJson(
+            ApiEndpoints.artistAlbums(artistId, limit: limit, index: index));
+        if (data is Map<String, dynamic>) {
+          final List list = data['data'] ?? [];
+          final items = list.map((item) => Album.fromJson(item)).toList();
+          final int total =
+              (data['total'] is int) ? data['total'] : items.length;
+          final bool hasMore =
+              (index + items.length) < total && items.isNotEmpty;
+          final page = ArtistAlbumsPage(
+            items: items,
+            total: total,
+            hasMore: hasMore,
+            nextIndex: index + items.length,
+          );
+          _setCache(cacheKey, page);
+          return page;
+        }
+      } catch (e) {
+        debugPrint(
+            '[DeezerAPI] getArtistAlbumsPage($artistId, index: $index) error: $e');
+      }
+      return ArtistAlbumsPage.empty;
+    });
+  }
+
+  @override
   Future<List<Album>> getArtistAlbums(String artistId,
-      {int limit = 250}) async {
-    final cacheKey = 'artist_albums_$artistId';
+      {int limit = 250, int index = 0}) async {
+    final cacheKey = 'artist_albums_${artistId}_${limit}_$index';
     final cached = _getCached<List<Album>>(cacheKey);
     if (cached != null) return cached;
 
+    if (index == 0) {
+      final oldCached = _getCached<List<Album>>('artist_albums_$artistId');
+      if (oldCached != null) return oldCached;
+    }
+
     try {
-      final data = await _fetchJson(
-          ApiEndpoints.artistAlbums(artistId, limit: limit));
-      if (data is Map<String, dynamic>) {
-        final List list = data['data'] ?? [];
-        final albums = list.map((item) => Album.fromJson(item)).toList();
-        _setCache(cacheKey, albums);
-        return albums;
+      final page =
+          await getArtistAlbumsPage(artistId, limit: limit, index: index);
+      if (index == 0) {
+        _setCache('artist_albums_$artistId', page.items);
       }
+      _setCache(cacheKey, page.items);
+      return page.items;
     } catch (e) {
       debugPrint('[DeezerAPI] getArtistAlbums($artistId) error: $e');
     }

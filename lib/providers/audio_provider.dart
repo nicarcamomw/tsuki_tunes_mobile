@@ -4,8 +4,10 @@ import 'package:just_audio/just_audio.dart';
 import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
 import '../models/track.dart';
 import '../services/audio_player_service.dart';
+import '../services/audio_precache_service.dart';
 import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
+import '../services/storage_service.dart';
 
 class AudioProvider extends ChangeNotifier {
   final AudioPlayerService _service = AudioPlayerService();
@@ -34,6 +36,8 @@ class AudioProvider extends ChangeNotifier {
   String? _prefetchedForTrackId;
 
   bool _completionHandled = false;
+  bool _crossfadeTriggered = false;
+  int _crossfadeSeconds = 3;
   DateTime _lastPlayStart = DateTime(2000);
   int _playGeneration = 0;
 
@@ -63,10 +67,27 @@ class AudioProvider extends ChangeNotifier {
   SpotifyService get spotify => _spotify;
   String? get lastSpotifyError => _lastSpotifyError;
   String? get lastPlaybackError => _lastPlaybackError;
+  int get crossfadeSeconds => _crossfadeSeconds;
+
+  Future<void> setCrossfadeSeconds(int seconds) async {
+    _crossfadeSeconds = seconds.clamp(0, 12);
+    notifyListeners();
+    await StorageService().saveCrossfadeSeconds(_crossfadeSeconds);
+  }
 
   AudioProvider() {
     _initSubscriptions();
     _initSpotify();
+    _initCrossfade();
+  }
+
+  Future<void> _initCrossfade() async {
+    try {
+      _crossfadeSeconds = await StorageService().getCrossfadeSeconds();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+    }
   }
 
   Future<void> _initSpotify() async {
@@ -211,6 +232,7 @@ class AudioProvider extends ChangeNotifier {
     _posSub = _service.positionStream.listen((pos) {
       if (!_spotifyActive) {
         _position = pos;
+        _checkCrossfade(pos);
         notifyListeners();
       }
     }, onError: (e) {
@@ -326,6 +348,7 @@ class AudioProvider extends ChangeNotifier {
     _currentTrack = track;
     _position = Duration.zero;
     _completionHandled = false;
+    _crossfadeTriggered = false;
     _lastPlayStart = DateTime.now();
     final gen = ++_playGeneration;
     _duration = Duration(
@@ -431,17 +454,27 @@ class AudioProvider extends ChangeNotifier {
     _position = Duration.zero;
     _startPositionTimer();
     notifyListeners();
+    _prefetchNextTrack();
   }
 
   void _prefetchNextTrack() {
-    if (!_useSpotify) return;
     if (_currentIndex < 0 || _currentIndex >= _queue.length - 1) return;
 
     final nextTrack = _queue[_currentIndex + 1];
-    _spotify.searchTrack(nextTrack.title, nextTrack.artistName).then((uri) {
-      _prefetchedUri = uri;
-      _prefetchedForTrackId = nextTrack.id;
-    });
+
+    // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
+    AudioPrecacheService().precacheTrack(nextTrack);
+
+    // 2. Predictive URI resolution for Spotify (Zero-latency track start)
+    if (_useSpotify) {
+      _spotify.searchTrack(nextTrack.title, nextTrack.artistName).then((uri) {
+        _prefetchedUri = uri;
+        _prefetchedForTrackId = nextTrack.id;
+        debugPrint('[AudioProvider] Prefetched Spotify URI for "${nextTrack.title}"');
+      }).catchError((e) {
+        debugPrint('[AudioProvider] Spotify prefetch non-fatal error: $e');
+      });
+    }
   }
 
   Future<void> togglePlay() async {
@@ -518,6 +551,7 @@ class AudioProvider extends ChangeNotifier {
 
   Future<void> seek(Duration pos) async {
     _position = pos;
+    _crossfadeTriggered = false;
     notifyListeners();
 
     if (_useSpotify) {
@@ -537,8 +571,59 @@ class AudioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reorders the playback queue from [oldIndex] to [newIndex].
+  void reorderQueue(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _queue.length) return;
+    if (newIndex < 0 || newIndex >= _queue.length) return;
+
+    final track = _queue.removeAt(oldIndex);
+    _queue.insert(newIndex, track);
+
+    // Keep currentIndex pointer in sync with current track
+    if (_currentTrack != null) {
+      _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
+    }
+    _prefetchNextTrack();
+    notifyListeners();
+  }
+
+  /// Removes the track at [index] from the playback queue.
+  void removeFromQueue(int index) {
+    if (index < 0 || index >= _queue.length) return;
+
+    final wasCurrent = index == _currentIndex;
+    _queue.removeAt(index);
+
+    if (_queue.isEmpty) {
+      stop();
+      return;
+    }
+
+    if (wasCurrent) {
+      final nextIndex = index >= _queue.length ? 0 : index;
+      playTrack(_queue[nextIndex]);
+    } else {
+      if (_currentTrack != null) {
+        _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
+      }
+      notifyListeners();
+    }
+  }
+
+  /// Clears the entire queue except for the currently playing track.
+  void clearQueue() {
+    if (_currentTrack != null) {
+      _queue = [_currentTrack!];
+      _currentIndex = 0;
+    } else {
+      _queue = [];
+      _currentIndex = -1;
+    }
+    notifyListeners();
+  }
+
   void _handleTrackCompleted() {
-    if (_completionHandled) return;
+    if (_completionHandled || _crossfadeTriggered) return;
     // Ignore completion events within 3 seconds of starting a new track
     if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
     _completionHandled = true;
@@ -547,6 +632,60 @@ class AudioProvider extends ChangeNotifier {
       playTrack(_currentTrack!);
     } else {
       next();
+    }
+  }
+
+  void _checkCrossfade(Duration pos) {
+    if (_crossfadeSeconds <= 0 || _crossfadeTriggered || _useSpotify || _spotifyActive) return;
+    if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
+    if (pos.inSeconds < 2) return;
+
+    final remaining = _duration - pos;
+    if (remaining <= Duration(seconds: _crossfadeSeconds)) {
+      _triggerCrossfade();
+    }
+  }
+
+  Future<void> _triggerCrossfade() async {
+    if (_queue.isEmpty || _crossfadeTriggered) return;
+
+    int nextIdx;
+    if (_isShuffle && _queue.length > 1) {
+      final list = List.generate(_queue.length, (i) => i)..remove(_currentIndex);
+      list.shuffle();
+      nextIdx = list.first;
+    } else if (_currentIndex + 1 < _queue.length) {
+      nextIdx = _currentIndex + 1;
+    } else if (_isLoop && _queue.isNotEmpty) {
+      nextIdx = 0;
+    } else {
+      return;
+    }
+
+    _crossfadeTriggered = true;
+    final nextTrack = _queue[nextIdx];
+    _currentIndex = nextIdx;
+    _currentTrack = nextTrack;
+    _position = Duration.zero;
+    _duration = Duration(
+        seconds: nextTrack.durationSeconds > 0 ? nextTrack.durationSeconds : 30);
+    _lastPlayStart = DateTime.now();
+    final gen = ++_playGeneration;
+    _completionHandled = false;
+
+    debugPrint('[AudioProvider] Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
+    notifyListeners();
+    onTrackStarted?.call(nextTrack);
+    _prefetchNextTrack();
+
+    try {
+      await _service.crossfadeTo(nextTrack, _crossfadeSeconds);
+      if (gen != _playGeneration) return;
+      _crossfadeTriggered = false;
+    } catch (e) {
+      debugPrint('[AudioProvider] Crossfade error: $e');
+      if (gen != _playGeneration) return;
+      _crossfadeTriggered = false;
     }
   }
 

@@ -9,6 +9,7 @@ class ConnectivityProvider extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _sub;
   Timer? _periodicTimer;
   int _checkCounter = 0;
+  bool _disposed = false;
 
   bool get isOnline => _isOnline;
 
@@ -18,15 +19,19 @@ class ConnectivityProvider extends ChangeNotifier {
 
   Future<void> _init() async {
     final result = await _connectivity.checkConnectivity();
+    if (_disposed) return;
     await _updateStatus(result);
+    if (_disposed) return;
 
     _sub = _connectivity.onConnectivityChanged.listen((results) {
+      if (_disposed) return;
       _updateStatus(results);
     });
 
     // Verificación periódica cada 30 segundos para detectar caídas de internet
     // sin desconexión del router WiFi (WiFi sin internet).
     _periodicTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_disposed) return;
       checkReachability();
     });
   }
@@ -55,6 +60,7 @@ class ConnectivityProvider extends ChangeNotifier {
   }
 
   void _setOnline(bool online) {
+    if (_disposed) return;
     if (_isOnline != online) {
       _isOnline = online;
       notifyListeners();
@@ -122,6 +128,7 @@ class ConnectivityProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _sub?.cancel();
     _periodicTimer?.cancel();
     super.dispose();

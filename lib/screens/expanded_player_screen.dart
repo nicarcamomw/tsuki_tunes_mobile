@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
@@ -10,7 +13,15 @@ import '../providers/locale_provider.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/tap_scale.dart';
+import '../services/lyrics_service.dart';
+import '../models/synced_lyrics.dart';
+import '../models/album.dart';
+import '../models/artist.dart';
+import 'album_detail_screen.dart';
+import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
+
+enum _CenterViewMode { artwork, lyrics, queue }
 
 class ExpandedPlayerScreen extends StatefulWidget {
   const ExpandedPlayerScreen({super.key});
@@ -22,7 +33,15 @@ class ExpandedPlayerScreen extends StatefulWidget {
 class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     with SingleTickerProviderStateMixin {
   double _dragDy = 0;
-  bool _showQueue = false;
+  _CenterViewMode _viewMode = _CenterViewMode.artwork;
+  SyncedLyrics? _lyrics;
+  bool _isLoadingLyrics = false;
+  String? _lastLoadedTrackId;
+  final ScrollController _lyricsScrollController = ScrollController();
+  int _lastActiveLyricIndex = -1;
+  bool _userInteracting = false;
+  Timer? _resumeAutoScrollTimer;
+  final Map<int, GlobalKey> _lineKeys = {};
   late final AnimationController _snapBack;
   late Animation<double> _snapAnimation;
 
@@ -42,6 +61,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   @override
   void dispose() {
     _snapBack.dispose();
+    _lyricsScrollController.dispose();
+    _resumeAutoScrollTimer?.cancel();
     super.dispose();
   }
 
@@ -62,6 +83,36 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         CurvedAnimation(parent: _snapBack, curve: Curves.easeOutCubic),
       );
       _snapBack.forward(from: 0);
+    }
+  }
+
+  void _navigateToSource(BuildContext context, Track track) {
+    if (track.albumId.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AlbumDetailScreen(
+            album: Album(
+              id: track.albumId,
+              title: track.albumTitle.isNotEmpty ? track.albumTitle : 'Álbum',
+              coverUrl: track.coverUrl,
+              artistId: track.artistId,
+              artistName: track.artistName,
+            ),
+          ),
+        ),
+      );
+    } else if (track.artistId.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ArtistDetailScreen(
+            artist: Artist(
+              id: track.artistId,
+              name: track.artistName,
+              pictureUrl: track.coverUrl,
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -138,62 +189,121 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           },
                         ),
                         Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                strings.playingFrom,
-                                style: locale.getTextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textMuted,
-                                  letterSpacing: 2.0,
-                                ),
+                          child: InkWell(
+                            onTap: () => _navigateToSource(context, track),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 4, horizontal: 8),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        strings.playingFrom,
+                                        style: locale.getTextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textMuted,
+                                          letterSpacing: 2.0,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.chevron_right,
+                                        size: 11,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    track.albumTitle.isNotEmpty
+                                        ? track.albumTitle
+                                        : (track.artistName.isNotEmpty
+                                            ? track.artistName
+                                            : 'DEEZER PREVIEW'),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.accent,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                track.albumTitle.isNotEmpty
-                                    ? track.albumTitle
-                                    : 'DEEZER PREVIEW',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.accent,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.queue_music,
-                              color: AppColors.textPrimary),
-                          onPressed: () =>
-                              setState(() => _showQueue = !_showQueue),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.lyrics_outlined,
+                                color: _viewMode == _CenterViewMode.lyrics
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  if (_viewMode == _CenterViewMode.lyrics) {
+                                    _viewMode = _CenterViewMode.artwork;
+                                  } else {
+                                    _viewMode = _CenterViewMode.lyrics;
+                                    _lastActiveLyricIndex = -1;
+                                    _lineKeys.clear();
+                                    _userInteracting = false;
+                                    _resumeAutoScrollTimer?.cancel();
+                                  }
+                                });
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.queue_music,
+                                color: _viewMode == _CenterViewMode.queue
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _viewMode =
+                                      _viewMode == _CenterViewMode.queue
+                                          ? _CenterViewMode.artwork
+                                          : _CenterViewMode.queue;
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
 
-                  const Spacer(),
-
-                  // Art or Queue
-                  if (_showQueue)
+                  // Art, Lyrics or Queue
+                  if (_viewMode == _CenterViewMode.queue)
                     _buildQueueView(audio, locale)
+                  else if (_viewMode == _CenterViewMode.lyrics)
+                    _buildLyricsView(audio, locale, track)
                   else ...[
-                  // Rinnegan Visualizer
-                  Hero(
-                    tag: 'player_art_${track.id}',
-                    child: RinneganVisualizer(
-                      isPlaying: isPlaying,
-                      imageUrl: track.coverUrl,
-                      size: MediaQuery.of(context).size.width * 0.72,
+                    const Spacer(),
+                    // Rinnegan Visualizer
+                    Hero(
+                      tag: 'player_art_${track.id}',
+                      child: RinneganVisualizer(
+                        isPlaying: isPlaying,
+                        imageUrl: track.coverUrl,
+                        size: MediaQuery.of(context).size.width * 0.72,
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
-
-                const Spacer(),
+                    const SizedBox(height: 24),
+                    const Spacer(),
+                  ],
 
                 // Track info + listened + favorite
                 Padding(
@@ -216,14 +326,35 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              track.fullArtistName,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
+                            GestureDetector(
+                              onTap: () {
+                                if (track.artistId.isNotEmpty) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ArtistDetailScreen(
+                                        artist: Artist(
+                                          id: track.artistId,
+                                          name: track.artistName,
+                                          pictureUrl: track.coverUrl,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Text(
+                                  track.fullArtistName,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -439,75 +570,427 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 }
 
   Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
+    final queue = audio.queue;
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border),
+          color: AppColors.bgMid.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.borderGlow.withValues(alpha: 0.5),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withValues(alpha: 0.06),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                locale.strings.queueTitle(audio.queue.length),
-                style: locale.getTextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
-                  letterSpacing: 1.5,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.queue_music,
+                            color: AppColors.accent, size: 16),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'SIGUIENTES EN LA COLA',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: 0.6,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            '${queue.length}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (queue.length > 1)
+                    Semantics(
+                      button: true,
+                      label: 'Limpiar cola',
+                      child: GestureDetector(
+                        onTap: () => audio.clearQueue(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.bgHover,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.delete_sweep_outlined,
+                                  size: 13, color: AppColors.textMuted),
+                              const SizedBox(width: 4),
+                              Text(
+                                'LIMPIAR',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                itemCount: audio.queue.length,
-                itemBuilder: (context, i) {
-                  final t = audio.queue[i];
-                  final isCur = audio.currentTrack?.id == t.id;
-                  return ListTile(
-                    dense: true,
-                    leading: Text(
-                      (i + 1).toString().padLeft(2, '0'),
-                      style: GoogleFonts.plusJakartaSans(
-                        color: isCur
-                            ? AppColors.accent
-                            : AppColors.textMuted,
-                        fontSize: 12,
+              child: queue.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.queue_music_rounded,
+                              size: 44,
+                              color: AppColors.textMuted.withValues(alpha: 0.4)),
+                          const SizedBox(height: 10),
+                          Text(
+                            'COLA VACÍA',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textMuted,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Agrega canciones para continuar la sesión',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ReorderableListView.builder(
+                      buildDefaultDragHandles: false,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6, horizontal: 8),
+                      itemCount: queue.length,
+                      onReorderItem: (oldIndex, newIndex) {
+                        audio.reorderQueue(oldIndex, newIndex);
+                      },
+                      itemBuilder: (context, i) {
+                        final t = queue[i];
+                        final isCur = audio.currentTrack?.id == t.id;
+                        return Container(
+                          key: ValueKey('queue_${t.id}_$i'),
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isCur
+                                ? AppColors.accent.withValues(alpha: 0.12)
+                                : AppColors.bgMid.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isCur
+                                  ? AppColors.accent.withValues(alpha: 0.5)
+                                  : AppColors.border.withValues(alpha: 0.4),
+                              width: isCur ? 1.2 : 0.8,
+                            ),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () {
+                              audio.playTrack(t);
+                              setState(
+                                  () => _viewMode = _CenterViewMode.artwork);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    child: isCur
+                                        ? const Icon(Icons.equalizer,
+                                            color: AppColors.accent, size: 16)
+                                        : Text(
+                                            (i + 1).toString().padLeft(2, '0'),
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: AppColors.textMuted,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: SizedBox(
+                                      width: 36,
+                                      height: 36,
+                                      child: t.coverUrl.isNotEmpty
+                                          ? CachedNetworkImage(
+                                              imageUrl: t.coverUrl,
+                                              fit: BoxFit.cover,
+                                              placeholder: (_, __) => Container(
+                                                color: AppColors.bgHover,
+                                                child: const Icon(
+                                                    Icons.music_note,
+                                                    size: 16,
+                                                    color: AppColors.textMuted),
+                                              ),
+                                              errorWidget: (_, __, ___) =>
+                                                  Container(
+                                                color: AppColors.bgHover,
+                                                child: const Icon(
+                                                    Icons.music_note,
+                                                    size: 16,
+                                                    color: AppColors.textMuted),
+                                              ),
+                                            )
+                                          : Container(
+                                              color: AppColors.bgHover,
+                                              child: const Icon(
+                                                  Icons.music_note,
+                                                  size: 16,
+                                                  color: AppColors.textMuted),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          t.title,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: isCur
+                                                ? AppColors.accent
+                                                : AppColors.textBright,
+                                            fontWeight: isCur
+                                                ? FontWeight.w700
+                                                : FontWeight.w600,
+                                            fontSize: 12.5,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          t.fullArtistName,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 10.5,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Semantics(
+                                    button: true,
+                                    label: 'Eliminar de la cola',
+                                    child: GestureDetector(
+                                      onTap: () => audio.removeFromQueue(i),
+                                      behavior: HitTestBehavior.opaque,
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(6),
+                                        child: Icon(
+                                          Icons.close,
+                                          color: AppColors.textMuted,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  ReorderableDragStartListener(
+                                    index: i,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 4, vertical: 6),
+                                      child: Icon(
+                                        Icons.drag_indicator_rounded,
+                                        color: AppColors.textMuted,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadLyricsForTrack(Track track) async {
+    if (_lastLoadedTrackId == track.id && _lyrics != null) return;
+    _lastLoadedTrackId = track.id;
+    _lineKeys.clear();
+    _lastActiveLyricIndex = -1;
+    _userInteracting = false;
+    _resumeAutoScrollTimer?.cancel();
+
+    setState(() {
+      _isLoadingLyrics = true;
+      _lyrics = null;
+    });
+
+    try {
+      final lyrics =
+          await LyricsService().getLyrics(track.title, track.artistName);
+      if (!mounted || _lastLoadedTrackId != track.id) return;
+      setState(() {
+        _lyrics = lyrics;
+        _isLoadingLyrics = false;
+        _lastActiveLyricIndex = -1;
+        _lineKeys.clear();
+      });
+    } catch (e) {
+      if (mounted && _lastLoadedTrackId == track.id) {
+        setState(() {
+          _lyrics = null;
+          _isLoadingLyrics = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildLyricsView(
+      AudioProvider audio, LocaleProvider locale, Track track) {
+    if (_lastLoadedTrackId != track.id && !_isLoadingLyrics) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadLyricsForTrack(track);
+      });
+    }
+
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.bgMid.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.borderGlow.withValues(alpha: 0.5),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withValues(alpha: 0.06),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.lyrics,
+                            color: AppColors.accent, size: 16),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            locale.strings.lyrics,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: 1.0,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_lyrics?.isSynced == true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Text(
+                        locale.strings.syncedTapToSeek,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accent,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
-                    title: Text(
-                      t.title,
-                      style: TextStyle(
-                        color: isCur
-                            ? AppColors.accent
-                            : AppColors.textPrimary,
-                        fontWeight:
-                            isCur ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                    ),
-                    subtitle: Text(
-                      t.fullArtistName,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 11),
-                      maxLines: 1,
-                    ),
-                    trailing: isCur
-                        ? const Icon(Icons.equalizer,
-                            color: AppColors.accent, size: 18)
-                        : null,
-                    onTap: () {
-                      audio.playTrack(t);
-                      setState(() => _showQueue = false);
-                    },
-                  );
+                ],
+              ),
+            ),
+            const Divider(color: AppColors.border, height: 1),
+            Expanded(
+              child: Consumer<AudioProvider>(
+                builder: (context, liveAudio, _) {
+                  return _buildLyricsContent(liveAudio, locale);
                 },
               ),
             ),
@@ -515,5 +998,296 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildLyricsContent(AudioProvider audio, LocaleProvider locale) {
+    if (_isLoadingLyrics) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.accent,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              locale.strings.lyricsLoading,
+              style: locale.getTextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_lyrics == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.subtitles_off_outlined,
+                color: AppColors.textMuted, size: 36),
+            const SizedBox(height: 10),
+            Text(
+              locale.strings.noLyricsFound,
+              style: locale.getTextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_lyrics!.isInstrumental) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.graphic_eq, color: AppColors.accent, size: 40),
+            const SizedBox(height: 12),
+            Text(
+              locale.strings.instrumentalTrack,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_lyrics!.isSynced && _lyrics!.lines.isNotEmpty) {
+      final position = audio.position;
+      final activeIndex = _lyrics!.activeIndexAt(position);
+
+      final bool isFirstScroll = _lastActiveLyricIndex == -1;
+      if (activeIndex != _lastActiveLyricIndex && activeIndex >= 0) {
+        _lastActiveLyricIndex = activeIndex;
+        if (!_userInteracting) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _scrollToActiveLine(activeIndex, immediate: isFirstScroll);
+            }
+          });
+        }
+      }
+
+      return Stack(
+        children: [
+          NotificationListener<UserScrollNotification>(
+            onNotification: (notification) {
+              if (notification.direction != ScrollDirection.idle) {
+                _userInteracting = true;
+                _resumeAutoScrollTimer?.cancel();
+                _resumeAutoScrollTimer =
+                    Timer(const Duration(milliseconds: 3000), () {
+                  if (mounted) {
+                    setState(() => _userInteracting = false);
+                    _scrollToActiveLine(_lastActiveLyricIndex);
+                  }
+                });
+              }
+              return false;
+            },
+            child: ListView.builder(
+              controller: _lyricsScrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              itemCount: _lyrics!.lines.length,
+              itemBuilder: (context, i) {
+                final line = _lyrics!.lines[i];
+                final isActive = i == activeIndex;
+                final key = _lineKeys.putIfAbsent(i, () => GlobalKey());
+
+                return GestureDetector(
+                  key: key,
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    audio.seek(line.time);
+                    _userInteracting = false;
+                    _resumeAutoScrollTimer?.cancel();
+                    _scrollToActiveLine(i);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.accent.withValues(alpha: 0.14)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.accent.withValues(alpha: 0.5)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Text(
+                      line.text,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: isActive ? 17 : 13,
+                        fontWeight:
+                            isActive ? FontWeight.w800 : FontWeight.w500,
+                        color: isActive
+                            ? AppColors.accent
+                            : AppColors.textPrimary.withValues(alpha: 0.4),
+                        shadows: isActive
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.accent
+                                      .withValues(alpha: 0.7),
+                                  blurRadius: 12,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (_userInteracting && activeIndex >= 0)
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _userInteracting = false);
+                    _resumeAutoScrollTimer?.cancel();
+                    _scrollToActiveLine(activeIndex);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgDeep,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.8),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sync,
+                            size: 13, color: AppColors.accent),
+                        const SizedBox(width: 6),
+                        Text(
+                          'SIGUIENDO CANCIÓN',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Text(
+        _lyrics!.plainLyrics,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          height: 1.8,
+          color: AppColors.textPrimary.withValues(alpha: 0.8),
+        ),
+      ),
+    );
+  }
+
+  void _scrollToActiveLine(int index, {bool immediate = false}) {
+    if (index < 0 || _lyrics == null || index >= _lyrics!.lines.length) return;
+    if (!_lyricsScrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _lyricsScrollController.hasClients) {
+          _scrollToActiveLine(index, immediate: immediate);
+        }
+      });
+      return;
+    }
+
+    final key = _lineKeys[index];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: immediate ? Duration.zero : const Duration(milliseconds: 380),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.35,
+      );
+      return;
+    }
+
+    // Line context not yet mounted (off-screen beyond cacheExtent).
+    // Estimate target offset and jump/animate controller so item is built.
+    final double viewport = _lyricsScrollController.position.hasViewportDimension
+        ? _lyricsScrollController.position.viewportDimension
+        : 300.0;
+    final double estimatedOffset = (index * 54.0 - (viewport * 0.35)).clamp(
+      0.0,
+      _lyricsScrollController.position.maxScrollExtent > 0
+          ? _lyricsScrollController.position.maxScrollExtent
+          : (index * 54.0),
+    );
+
+    if (immediate) {
+      _lyricsScrollController.jumpTo(estimatedOffset);
+    } else {
+      _lyricsScrollController.animateTo(
+        estimatedOffset,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final retryKey = _lineKeys[index];
+      if (retryKey?.currentContext != null) {
+        Scrollable.ensureVisible(
+          retryKey!.currentContext!,
+          duration: immediate ? Duration.zero : const Duration(milliseconds: 200),
+          curve: Curves.easeInOutCubic,
+          alignment: 0.35,
+        );
+      }
+    });
   }
 }

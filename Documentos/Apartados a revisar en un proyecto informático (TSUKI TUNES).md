@@ -19,6 +19,10 @@
 - ¿Funciona en todos los casos esperados?
 - ¿Falla de forma controlada?
 
+
+Síntesis: El sistema cumple al 100% con sus funciones principales (búsqueda, reproducción, biblioteca y autenticación) y destaca por su alta tolerancia a fallos: implementa letras sincronizadas en tiempo real (Synced Lyrics LRC con auto-scroll y salto interactivo tap-to-seek), un motor de pre-carga predictiva de audio en segundo plano (Zero-Latency / Gapless Playback con pre-resolución de URIs de Spotify), detecta caídas reales de internet mediante sockets activos, recupera automáticamente la reproducción en curso ante micro-cortes, gestiona cuotas y rate limits de APIs externas sin congelar la interfaz, procesa catálogos masivos (+250 discos) mediante paginación infinita bajo demanda y aísla de forma segura el modo invitado de la persistencia en Firestore; garantizando así una operación controlada, estable y sin fisuras tanto en flujos normales como en situaciones extremas.
+
+
 - [x] ## 2. Usabilidad (UX/UI) (ready)
 
 ¿Es fácil y agradable de usar?

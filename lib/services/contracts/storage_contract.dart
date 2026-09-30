@@ -18,4 +18,6 @@ abstract class StorageContract {
   Future<void> setCompletedOnboarding(bool completed);
   Future<String> getAppLanguage();
   Future<void> saveAppLanguage(String code);
+  Future<int> getCrossfadeSeconds();
+  Future<void> saveCrossfadeSeconds(int seconds);
 }

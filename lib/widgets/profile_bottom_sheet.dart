@@ -254,7 +254,163 @@ class ProfileBottomSheet {
                   ),
                 ],
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // Crossfade Progresivo (Ajustes de audio DJ)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMid,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: audioProvider.crossfadeSeconds > 0
+                          ? AppColors.neonCyan.withValues(alpha: 0.35)
+                          : AppColors.border,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: audioProvider.crossfadeSeconds > 0
+                                  ? AppColors.neonCyan.withValues(alpha: 0.15)
+                                  : AppColors.bgCard,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: audioProvider.crossfadeSeconds > 0
+                                    ? AppColors.neonCyan
+                                    : AppColors.border,
+                                width: 1,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.graphic_eq_rounded,
+                              color: audioProvider.crossfadeSeconds > 0
+                                  ? AppColors.neonCyan
+                                  : AppColors.textMuted,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  strings.crossfadeTitle,
+                                  style: locale.getTextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8,
+                                    color: AppColors.textBright,
+                                  ),
+                                ),
+                                Text(
+                                  strings.crossfadeSubtitle,
+                                  style: locale.getTextStyle(
+                                    fontSize: 9.5,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: audioProvider.crossfadeSeconds > 0
+                                  ? AppColors.neonCyan.withValues(alpha: 0.12)
+                                  : AppColors.bgCard,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: audioProvider.crossfadeSeconds > 0
+                                    ? AppColors.neonCyan.withValues(alpha: 0.7)
+                                    : AppColors.border,
+                              ),
+                            ),
+                            child: Text(
+                              audioProvider.crossfadeSeconds > 0
+                                  ? strings.crossfadeSecondsLabel(audioProvider.crossfadeSeconds)
+                                  : strings.crossfadeOff,
+                              style: locale.getTextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: audioProvider.crossfadeSeconds > 0
+                                    ? AppColors.neonCyan
+                                    : AppColors.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SliderTheme(
+                        data: SliderTheme.of(ctx).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                          activeTrackColor: AppColors.neonCyan,
+                          inactiveTrackColor: AppColors.border,
+                          thumbColor: AppColors.neonCyan,
+                          overlayColor: AppColors.neonCyan.withValues(alpha: 0.2),
+                        ),
+                        child: Slider(
+                          value: audioProvider.crossfadeSeconds.toDouble(),
+                          min: 0,
+                          max: 12,
+                          divisions: 12,
+                          onChanged: (val) {
+                            final sec = val.round();
+                            audioProvider.setCrossfadeSeconds(sec);
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '0s (${strings.crossfadeOff})',
+                              style: locale.getTextStyle(
+                                fontSize: 9,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            Text(
+                              '3s (DJ)',
+                              style: locale.getTextStyle(
+                                fontSize: 9,
+                                color: audioProvider.crossfadeSeconds == 3
+                                    ? AppColors.neonCyan
+                                    : AppColors.textMuted,
+                                fontWeight: audioProvider.crossfadeSeconds == 3
+                                    ? FontWeight.w700
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            Text(
+                              '12s (Max)',
+                              style: locale.getTextStyle(
+                                fontSize: 9,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
 
                 // Language Selector Button
                 SizedBox(

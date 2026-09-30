@@ -12,14 +12,18 @@ import 'main_navigation_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ArtistDiscographyScreen extends StatefulWidget {
+  final String? artistId;
   final String artistName;
   final List<Album> albums;
+  final int totalAlbums;
   final String initialFilter;
 
   const ArtistDiscographyScreen({
     super.key,
+    this.artistId,
     required this.artistName,
     required this.albums,
+    this.totalAlbums = 0,
     this.initialFilter = 'all',
   });
 
@@ -31,21 +35,121 @@ class ArtistDiscographyScreen extends StatefulWidget {
 class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   final DeezerApiService _api = DeezerApiService();
   late String _filter;
+  late final ScrollController _scrollController;
+  late List<Album> _allAlbums;
+  late int _totalAlbums;
+  late bool _hasMore;
+  bool _isLoadingMore = false;
+  bool _loadMoreError = false;
 
   @override
   void initState() {
     super.initState();
     _filter = widget.initialFilter;
+    _allAlbums = List<Album>.from(widget.albums);
+    _totalAlbums = widget.totalAlbums > 0
+        ? widget.totalAlbums
+        : (_allAlbums.length >= 250 ? 9999 : _allAlbums.length);
+    _hasMore = (widget.artistId != null) &&
+        (_totalAlbums > _allAlbums.length || _allAlbums.length >= 250);
+    _scrollController = ScrollController()..addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _enrichAlbumsWithSavedTracks();
+      _checkAutoFill();
     });
   }
 
-  Future<void> _enrichAlbumsWithSavedTracks() async {
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (currentScroll >= maxScroll - 400 && !_isLoadingMore && _hasMore) {
+      _loadMoreAlbums();
+    }
+  }
+
+  void _setFilter(String value) {
+    if (_filter == value) return;
+    setState(() => _filter = value);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkAutoFill());
+  }
+
+  void _checkAutoFill() {
+    if (!mounted || _isLoadingMore || !_hasMore || widget.artistId == null) {
+      return;
+    }
+    // Proactively load next batch if current filter has very few visible items
+    if (_filtered.length < 8) {
+      _loadMoreAlbums();
+    }
+  }
+
+  Future<void> _loadMoreAlbums() async {
+    if (widget.artistId == null || _isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+      _loadMoreError = false;
+    });
+
+    try {
+      final page = await _api.getArtistAlbumsPage(
+        widget.artistId!,
+        limit: 100,
+        index: _allAlbums.length,
+      );
+
+      if (!mounted) return;
+
+      if (page.items.isEmpty) {
+        setState(() {
+          _hasMore = false;
+          _isLoadingMore = false;
+        });
+        return;
+      }
+
+      final existingIds = _allAlbums.map((a) => a.id).toSet();
+      final newItems =
+          page.items.where((a) => !existingIds.contains(a.id)).toList();
+
+      setState(() {
+        _allAlbums.addAll(newItems);
+        _totalAlbums = page.total > 0 ? page.total : _allAlbums.length;
+        _hasMore = page.hasMore && (_allAlbums.length < _totalAlbums);
+        _isLoadingMore = false;
+      });
+
+      if (newItems.isNotEmpty) {
+        _enrichAlbumsWithSavedTracks(newItems);
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkAutoFill());
+    } catch (e) {
+      debugPrint('[ArtistDiscography] _loadMoreAlbums error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          _loadMoreError = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _enrichAlbumsWithSavedTracks([List<Album>? albumsToCheck]) async {
     if (!mounted) return;
+    final targetAlbums = albumsToCheck ?? _allAlbums;
     final library = context.read<LibraryProvider>();
     final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
-    final toFetch = widget.albums.where((a) {
+    final toFetch = targetAlbums.where((a) {
       if (!savedAlbumIds.contains(a.id)) return false;
       return library.getAlbumTracksCount(a.id) <= 0 && a.tracksCount <= 0;
     }).toList();
@@ -56,7 +160,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
       final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
       for (final res in results) {
         if (res != null) {
-          final count = res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+          final count =
+              res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
           if (count > 0) {
             library.registerAlbumTrackCount(res.id, count);
           }
@@ -69,18 +174,18 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   }
 
   List<Album> get _filtered {
-    if (_filter == 'all') return widget.albums;
+    if (_filter == 'all') return _allAlbums;
     if (_filter == 'single_ep') {
-      return widget.albums
+      return _allAlbums
           .where((a) => a.recordType == 'single' || a.recordType == 'ep')
           .toList();
     }
-    return widget.albums.where((a) => a.recordType == _filter).toList();
+    return _allAlbums.where((a) => a.recordType == _filter).toList();
   }
 
   Map<String, List<Album>> get _categories {
     final Map<String, List<Album>> cats = {};
-    for (final a in widget.albums) {
+    for (final a in _allAlbums) {
       if (a.recordType == 'album') {
         cats.putIfAbsent('album', () => []).add(a);
       } else if (a.recordType == 'single') {
@@ -101,72 +206,169 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     final strings = locale.strings;
     final cats = _categories;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgDeep,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).pop(_allAlbums);
+      },
+      child: Scaffold(
         backgroundColor: AppColors.bgDeep,
-        title: Text(
-          widget.artistName,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textBright,
+        appBar: AppBar(
+          backgroundColor: AppColors.bgDeep,
+          title: Text(
+            widget.artistName,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textBright,
+            ),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.chevron_left, color: AppColors.accent),
+            onPressed: () => Navigator.of(context).pop(_allAlbums),
           ),
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left, color: AppColors.accent),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildChip('all', strings.tabAll, locale),
-                    if (cats.containsKey('album'))
-                      _buildChip('album', strings.tabAlbums, locale),
-                    if (cats.containsKey('single'))
-                      _buildChip('single', strings.tabSingles, locale),
-                    if (cats.containsKey('ep'))
-                      _buildChip('ep', strings.tabEps, locale),
-                    if (cats.containsKey('compile'))
-                      _buildChip('compile', strings.tabAppearsOn, locale),
-                  ],
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildChip('all', strings.tabAll, locale),
+                          if (cats.containsKey('album'))
+                            _buildChip('album', strings.tabAlbums, locale),
+                          if (cats.containsKey('single'))
+                            _buildChip('single', strings.tabSingles, locale),
+                          if (cats.containsKey('ep'))
+                            _buildChip('ep', strings.tabEps, locale),
+                          if (cats.containsKey('compile'))
+                            _buildChip('compile', strings.tabAppearsOn, locale),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final album = _filtered[index];
+                        return _buildItem(
+                            context, album, library, locale, strings);
+                      },
+                      childCount: _filtered.length,
+                    ),
+                  ),
+                ),
+                if (_isLoadingMore)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              strings.loadingMoreAlbums,
+                              style: locale.getTextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.accent,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_loadMoreError)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          onTap: _loadMoreAlbums,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.bgMid,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                  color: AppColors.accent
+                                      .withValues(alpha: 0.5)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.refresh,
+                                    size: 14, color: AppColors.accent),
+                                const SizedBox(width: 8),
+                                Text(
+                                  strings.retryLoading,
+                                  style: locale.getTextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textBright,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!_hasMore && _allAlbums.length > 20)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      child: Center(
+                        child: Text(
+                          '${strings.allAlbumsLoaded} (${_filtered.length})',
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final album = _filtered[index];
-                  return _buildItem(context, album, library, locale, strings);
-                },
-                childCount: _filtered.length,
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
-        ],
-      ),
-      ),
+        ),
       ),
     );
   }
@@ -174,7 +376,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   Widget _buildChip(String value, String label, LocaleProvider locale) {
     final isSelected = _filter == value;
     return GestureDetector(
-      onTap: () => setState(() => _filter = value),
+      onTap: () => _setFilter(value),
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -197,8 +399,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     );
   }
 
-  Widget _buildItem(
-      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, dynamic strings) {
+  Widget _buildItem(BuildContext context, Album album, LibraryProvider library,
+      LocaleProvider locale, dynamic strings) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
