@@ -93,13 +93,18 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         _api.getArtistTopTracks(widget.artist.id, limit: 10),
         _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
         LastFmService.getArtistTags(widget.artist.name),
+        _api.getArtistCompilations(widget.artist.id),
       ]);
       if (mounted) {
         final pagedAlbums = results[1] as ArtistAlbumsPage;
+        final compilations = results[3] as List<Album>;
+        final existingIds = pagedAlbums.items.map((a) => a.id).toSet();
+        final uniqueCompilations =
+            compilations.where((c) => !existingIds.contains(c.id)).toList();
         setState(() {
           _topTracks = results[0] as List<Track>;
-          _albums = pagedAlbums.items;
-          _totalAlbums = pagedAlbums.total;
+          _albums = [...pagedAlbums.items, ...uniqueCompilations];
+          _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
           _artistTags = results[2] as List<String>;
           _isLoading = false;
         });
@@ -547,64 +552,81 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             )
           else ...[
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => TrackTile(
-                  track: displayedTracks[index],
-                  index: index,
-                  queue: _topTracks,
-                ),
-                childCount: displayedTracks.length,
-              ),
-            ),
-
-            if (_topTracks.length > 5)
-              SliverToBoxAdapter(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 4),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _showAllTracks = !_showAllTracks),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.textBright.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.textBright.withValues(alpha: 0.08),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  for (int i = 0; i < (_topTracks.length > 5 ? 5 : _topTracks.length); i++)
+                    TrackTile(
+                      track: _topTracks[i],
+                      index: i,
+                      queue: _topTracks,
+                    ),
+                  if (_topTracks.length > 5)
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: Column(
+                        children: _showAllTracks
+                            ? [
+                                for (int i = 5; i < _topTracks.take(10).length; i++)
+                                  TrackTile(
+                                    track: _topTracks[i],
+                                    index: i,
+                                    queue: _topTracks,
+                                  ),
+                              ]
+                            : const [],
+                      ),
+                    ),
+                  if (_topTracks.length > 5)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6, bottom: 4),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _showAllTracks = !_showAllTracks),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.textBright.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.textBright.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _showAllTracks ? strings.showLessTracks : strings.showMoreTracks,
+                                  style: locale.getTextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                AnimatedRotation(
+                                  turns: _showAllTracks ? 0.5 : 0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutCubic,
+                                  child: const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    size: 16,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _showAllTracks ? strings.showLessTracks : strings.showMoreTracks,
-                              style: locale.getTextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            AnimatedRotation(
-                              turns: _showAllTracks ? 0.5 : 0,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOutCubic,
-                              child: const Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 16,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
+            ),
           ],
 
           // Discography by category
@@ -612,33 +634,48 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
-                child: Text(
-                  strings.discography,
-                  style: locale.getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textBright,
-                    letterSpacing: 1.2,
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '// ',
+                        style: locale.getTextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.accent,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      TextSpan(
+                        text: strings.discography.replaceAll('// ', ''),
+                        style: locale.getTextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textBright,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
             if (cats['album']!.isNotEmpty)
               ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings),
-            if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
-              ..._buildCategorySection(
-                strings.tabSingles,
-                _albums.where((a) => a.recordType == 'single').toList(),
-                'single',
-                library,
-                locale,
-                strings,
-              ),
             if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
               ..._buildCategorySection(
                 strings.tabEps,
                 _albums.where((a) => a.recordType == 'ep').toList(),
                 'ep',
+                library,
+                locale,
+                strings,
+              ),
+            if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
+              ..._buildCategorySection(
+                strings.tabSingles,
+                _albums.where((a) => a.recordType == 'single').toList(),
+                'single',
                 library,
                 locale,
                 strings,
@@ -669,14 +706,27 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 14,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
               if (hasMore)
                 GestureDetector(
@@ -721,9 +771,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.7,
             crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            mainAxisSpacing: 4,
           ),
           delegate: SliverChildBuilderDelegate(
             (context, index) =>
@@ -755,24 +805,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          AspectRatio(
+            aspectRatio: 1,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: isCompleted
-                      ? AppColors.accent.withValues(alpha: 0.6)
-                      : AppColors.border,
-                  width: isCompleted ? 1.5 : 1,
-                ),
-                boxShadow: isCompleted
-                    ? [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                        )
-                      ]
-                    : null,
+                border: Border.all(color: AppColors.border, width: 1),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
@@ -786,27 +824,19 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             style: locale.getTextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: isCompleted ? AppColors.accent : AppColors.textPrimary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
-                  style: locale.getTextStyle(
-                    fontSize: 10,
-                    color: AppColors.textMuted,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isCompleted)
-                const OniMaskIcon(isActive: true, size: 18),
-            ],
+          Text(
+            '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+            style: locale.getTextStyle(
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -819,6 +849,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             imageUrl: album.coverUrl,
             fit: BoxFit.cover,
             width: double.infinity,
+            height: double.infinity,
           )
         : Container(
             color: AppColors.bgMid,

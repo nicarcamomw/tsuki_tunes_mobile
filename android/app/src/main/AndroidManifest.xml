@@ -42,6 +42,10 @@
                 <data android:scheme="com.tsuki.tsukitunesmobile" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".MusicForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

@@ -28,6 +28,8 @@ class ProfileBottomSheet {
         final locale = context.read<LocaleProvider>();
         final strings = locale.strings;
 
+        bool isConnecting = false;
+
         return StatefulBuilder(
           builder: (ctx, setModalState) => SafeArea(
             top: false,
@@ -114,16 +116,20 @@ class ProfileBottomSheet {
                               ),
                             ),
                             Text(
-                              spotify.isConnected
-                                  ? (spotify.isPremium
-                                      ? 'Premium · ${spotify.displayName ?? strings.spotifyDefaultUser}'
-                                      : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
-                                  : strings.spotifyNotConnected,
+                              isConnecting
+                                  ? strings.spotifyConnecting
+                                  : spotify.isConnected
+                                      ? (spotify.isPremium
+                                          ? 'Premium · ${spotify.displayName ?? strings.spotifyDefaultUser}'
+                                          : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
+                                      : strings.spotifyNotConnected,
                               style: locale.getTextStyle(
                                 fontSize: 10,
-                                color: spotify.isConnected
+                                color: isConnecting
                                     ? AppColors.accent
-                                    : AppColors.textMuted,
+                                    : spotify.isConnected
+                                        ? AppColors.accent
+                                        : AppColors.textMuted,
                               ),
                             ),
                           ],
@@ -155,12 +161,23 @@ class ProfileBottomSheet {
                             ),
                           ],
                         )
+                      else if (isConnecting)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accent,
+                          ),
+                        )
                       else
                         OutlinedButton(
                           onPressed: () async {
+                            isConnecting = true;
                             setModalState(() {});
                             try {
                               final success = await spotify.connect();
+                              isConnecting = false;
                               if (success) {
                                 await audioProvider.updateSpotifyState();
                                 setModalState(() {});
@@ -173,6 +190,7 @@ class ProfileBottomSheet {
                                   );
                                 }
                               } else {
+                                setModalState(() {});
                                 if (context.mounted) {
                                   final rawError = spotify.lastError;
                                   String msg = strings.spotifyConnectError;
@@ -194,6 +212,8 @@ class ProfileBottomSheet {
                                 }
                               }
                             } catch (e) {
+                              isConnecting = false;
+                              setModalState(() {});
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

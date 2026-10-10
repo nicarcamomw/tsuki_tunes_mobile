@@ -5,7 +5,6 @@ import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../widgets/oni_mask_icon.dart';
 import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
@@ -101,10 +100,12 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     });
 
     try {
+      final nonCompileCount =
+          _allAlbums.where((a) => a.recordType != 'compile').length;
       final page = await _api.getArtistAlbumsPage(
         widget.artistId!,
         limit: 100,
-        index: _allAlbums.length,
+        index: nonCompileCount,
       );
 
       if (!mounted) return;
@@ -226,7 +227,19 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           ),
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.chevron_left, color: AppColors.accent),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.bgDeep.withValues(alpha: 0.7),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.4),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(Icons.chevron_left,
+                  color: AppColors.accent, size: 24),
+            ),
             onPressed: () => Navigator.of(context).pop(_allAlbums),
           ),
         ),
@@ -263,9 +276,9 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.75,
+                      childAspectRatio: 0.7,
                       crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      mainAxisSpacing: 4,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -417,24 +430,12 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          AspectRatio(
+            aspectRatio: 1,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: isCompleted
-                      ? AppColors.accent.withValues(alpha: 0.6)
-                      : AppColors.border,
-                  width: isCompleted ? 1.5 : 1,
-                ),
-                boxShadow: isCompleted
-                    ? [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                        )
-                      ]
-                    : null,
+                border: Border.all(color: AppColors.border, width: 1),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
@@ -448,26 +449,19 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             style: locale.getTextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: isCompleted ? AppColors.accent : AppColors.textPrimary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
-                  style: locale.getTextStyle(
-                    fontSize: 10,
-                    color: AppColors.textMuted,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isCompleted) const OniMaskIcon(isActive: true, size: 18),
-            ],
+          Text(
+            '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+            style: locale.getTextStyle(
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -480,6 +474,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             imageUrl: album.coverUrl,
             fit: BoxFit.cover,
             width: double.infinity,
+            height: double.infinity,
           )
         : Container(
             color: AppColors.bgMid,

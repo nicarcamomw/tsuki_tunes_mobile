@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
@@ -10,6 +11,7 @@ export '../models/repeat_mode.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/spotify_service.dart';
+import '../services/foreground_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
 import 'connectivity_provider.dart';
@@ -18,6 +20,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service;
   final SpotifyService _spotify = SpotifyService();
   final SpotifyNativePlayer _nativePlayer = SpotifyNativePlayer();
+  final ForegroundService _foregroundService = ForegroundService();
   final StorageService _storage;
   ConnectivityProvider? _connectivityProvider;
   Timer? _persistTimer;
@@ -184,6 +187,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _storage = storage ?? StorageService(),
         _connectivityProvider = connectivityProvider {
     WidgetsBinding.instance.addObserver(this);
+    _initAudioSession();
     _initSubscriptions();
     _restorePlaybackState();
     _initSpotify();
@@ -287,15 +291,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _initSpotify() async {
-    await _spotify.loadSavedState();
-    _useSpotify = _spotify.isConnected && _spotify.isPremium;
-    if (_useSpotify) {
-      await _connectNativePlayer();
+  Future<void> _initAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration.music());
+    } catch (e) {
+      debugPrint('[AudioProvider] AudioSession config error: $e');
     }
   }
 
-  Future<void> _connectNativePlayer({bool allowAppLaunch = false}) async {
+  Future<void> _initSpotify() async {
+    await _spotify.loadSavedState();
+    _useSpotify = _spotify.isConnected && _spotify.isPremium;
+  }
+
+  Future<void> _connectNativePlayer() async {
     _nativePlayer.onStateChanged = _onNativeStateChanged;
     _nativePlayer.onError = (error) {
       debugPrint('Spotify native background notice: $error');
@@ -313,18 +323,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('Spotify: connecting native player with token');
     var connected = await _nativePlayer.connect(accessToken: token);
 
-    if (!connected && allowAppLaunch) {
-      debugPrint('Spotify: native connect failed, launching Spotify app...');
-      await _spotify.openSpotifyApp();
-      await Future.delayed(const Duration(seconds: 4));
-
-      final freshToken = await _spotify.getValidToken();
-      if (freshToken != null) {
-        connected = await _nativePlayer.connect(accessToken: freshToken);
-        debugPrint('Spotify: retry native connect after app launch: $connected');
-      }
-    } else if (!connected) {
-      debugPrint('Spotify: native connect failed at startup, will retry on play');
+    if (!connected) {
+      debugPrint('Spotify: native connect failed, will retry on play');
     }
 
     _spotifyActive = connected;
@@ -635,6 +635,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
+      _foregroundService.start(
+        title: track.title,
+        artist: track.artistName,
+      );
       _persistPlaybackState();
       _prefetchNextTrack();
     } catch (e) {
@@ -683,19 +687,23 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('Spotify: Web API play result=$played');
 
     if (!played) {
-      debugPrint('Spotify: play failed, reconnecting native player...');
-      if (!_spotifyActive) {
-        await _connectNativePlayer(allowAppLaunch: true);
-        if (gen != _playGeneration) return;
-      } else {
-        await _spotify.openSpotifyApp();
-        await Future.delayed(const Duration(seconds: 2));
-        if (gen != _playGeneration) return;
-      }
-
+      debugPrint('Spotify: Web API play failed, trying ensureActiveDevice...');
+      await _spotify.ensureActiveDevice();
+      if (gen != _playGeneration) return;
       played = await _spotify.play(trackUri: uri);
       if (gen != _playGeneration) return;
-      debugPrint('Spotify: retry after reconnect result=$played');
+      debugPrint('Spotify: retry with ensureActiveDevice result=$played');
+    }
+
+    if (!played && !_spotifyActive) {
+      debugPrint('Spotify: connecting native player as last resort...');
+      await _connectNativePlayer();
+      if (gen != _playGeneration) return;
+      if (_spotifyActive) {
+        played = await _spotify.play(trackUri: uri);
+        if (gen != _playGeneration) return;
+        debugPrint('Spotify: retry after native connect result=$played');
+      }
     }
 
     if (!played) {
@@ -706,6 +714,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _isBuffering = false;
       notifyListeners();
       return;
+    }
+
+    if (!_spotifyActive) {
+      _connectNativePlayer();
     }
 
     _isPlaying = true;
@@ -1051,6 +1063,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       await _spotify.pause();
     }
     await _service.stop();
+    _foregroundService.stop();
     _currentTrack = null;
     _isPlaying = false;
     _isBuffering = false;

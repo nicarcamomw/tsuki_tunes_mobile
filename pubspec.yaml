@@ -41,7 +41,7 @@ dependencies:
 
   # Spotify Native Playback
   spotify_sdk: ^4.0.0
-
+  audio_session: ^0.1.25
 dev_dependencies:
   flutter_test:
     sdk: flutter

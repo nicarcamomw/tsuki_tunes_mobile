@@ -325,32 +325,56 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     children: [
                       // Mark all / All listened
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: tracks.isNotEmpty
-                              ? () => _toggleAll(albumData, library)
-                              : null,
-                          icon: OniMaskIcon(
-                            isActive: allListened,
-                            size: 22,
-                          ),
-                          label: Text(
-                            allListened ? strings.allListened : strings.markAll,
-                            style: locale.getTextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: allListened
-                                  ? AppColors.accent
-                                  : AppColors.accent,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: allListened
-                                  ? AppColors.accent
-                                  : AppColors.accent,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                        child: Material(
+                          color: allListened
+                              ? AppColors.accent.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4),
+                          child: InkWell(
+                            onTap: tracks.isNotEmpty
+                                ? () => _toggleAll(albumData, library)
+                                : null,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: allListened
+                                      ? AppColors.accent
+                                      : AppColors.border,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Image.asset(
+                                      'assets/images/tengu.png',
+                                      color: allListened
+                                          ? AppColors.accent
+                                          : AppColors.textMuted,
+                                      colorBlendMode: BlendMode.srcIn,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    allListened
+                                        ? strings.allListened
+                                        : strings.markAll,
+                                    style: locale.getTextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: allListened
+                                          ? AppColors.accent
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

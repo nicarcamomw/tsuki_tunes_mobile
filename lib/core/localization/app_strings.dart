@@ -363,6 +363,12 @@ class AppStrings {
         AppLanguage.ja => '未接続',
       };
 
+  String get spotifyConnecting => switch (language) {
+        AppLanguage.es => 'Conectando...',
+        AppLanguage.en => 'Connecting...',
+        AppLanguage.ja => '接続中...',
+      };
+
   String get spotifyDefaultUser => switch (language) {
         AppLanguage.es => 'Usuario Spotify',
         AppLanguage.en => 'Spotify User',
