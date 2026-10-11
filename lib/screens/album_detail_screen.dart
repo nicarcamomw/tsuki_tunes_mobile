@@ -15,7 +15,7 @@ import '../providers/connectivity_provider.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
-import '../widgets/oni_mask_icon.dart';
+
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../widgets/skeleton_loader.dart';
@@ -134,7 +134,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     final strings = locale.strings;
     final albumData = _fullAlbum ?? widget.album;
     final tracks = albumData.tracks;
-    final audio = context.read<AudioProvider>();
+    final audio = context.watch<AudioProvider>();
     final library = context.watch<LibraryProvider>();
 
     final trackIds = tracks.map((t) => t.id).toList();
@@ -173,6 +173,32 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 letterSpacing: 2,
               ),
             ),
+            actions: [
+              if (albumData.link != null || audio.useSpotify)
+                IconButton(
+                  tooltip: audio.useSpotify ? 'Spotify' : 'Deezer',
+                  icon: const Icon(Icons.open_in_new,
+                      color: AppColors.accent, size: 20),
+                  onPressed: () async {
+                    try {
+                      if (audio.useSpotify) {
+                        final searchQuery = Uri.encodeComponent(
+                            '${albumData.title} ${albumData.artistName}');
+                        final uri = Uri.parse(
+                            'https://open.spotify.com/search/$searchQuery');
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      } else if (albumData.link != null) {
+                        final uri = Uri.parse(albumData.link!);
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    } catch (e) {
+                      debugPrint('Could not launch external album URL: $e');
+                    }
+                  },
+                ),
+            ],
           ),
 
           // Album Hero
@@ -403,23 +429,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             ),
                           ),
                         ),
-                      // Deezer link
-                      if (albumData.link != null) ...[
-                        const SizedBox(width: 8),
-                        IconButton(
-                          tooltip: 'Deezer',
-                          icon: const Icon(Icons.open_in_new,
-                              color: AppColors.accent, size: 20),
-                          onPressed: () async {
-                            try {
-                              final uri = Uri.parse(albumData.link!);
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
-                            } catch (e) {
-                              debugPrint('Could not launch external album URL: $e');
-                            }
-                          },
-                        ),
-                      ],
                     ],
                   ),
 

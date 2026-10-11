@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,6 +45,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   bool _showStats = false;
   bool _showAllTracks = false;
   bool _showTitleInAppBar = false;
+  bool _showStoredContent = false;
 
   @override
   void initState() {
@@ -101,9 +103,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         final existingIds = pagedAlbums.items.map((a) => a.id).toSet();
         final uniqueCompilations =
             compilations.where((c) => !existingIds.contains(c.id)).toList();
+        final allAlbums = [...pagedAlbums.items, ...uniqueCompilations];
         setState(() {
           _topTracks = results[0] as List<Track>;
-          _albums = [...pagedAlbums.items, ...uniqueCompilations];
+          _albums = allAlbums;
           _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
           _artistTags = results[2] as List<String>;
           _isLoading = false;
@@ -124,6 +127,13 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   Future<void> _enrichAlbumsWithSavedTracks(List<Album> albums) async {
     if (!mounted) return;
     final library = context.read<LibraryProvider>();
+
+    for (final a in albums) {
+      if (a.tracksCount > 0 && library.getAlbumTracksCount(a.id) <= 0) {
+        library.registerAlbumTrackCount(a.id, a.tracksCount);
+      }
+    }
+
     final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
     final toFetch = albums.where((a) {
       if (!savedAlbumIds.contains(a.id)) return false;
@@ -176,8 +186,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final bool isArtistComplete = _albums.isNotEmpty &&
         _albums.every((album) =>
             library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount));
-
-    final displayedTracks = _topTracks.take(_showAllTracks ? 10 : 5).toList();
 
     final cats = _categorizedAlbums;
 
@@ -630,6 +638,13 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ],
 
           // Discography by category
+          // Stored content section
+          if (!_isLoading) ...[
+            SliverToBoxAdapter(
+              child: _buildStoredContentSection(library, locale, strings),
+            ),
+          ],
+
           if (!_isLoading && _albums.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
@@ -661,7 +676,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             ),
             if (cats['album']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings),
+              ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings, icon: Icons.album_rounded),
             if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
               ..._buildCategorySection(
                 strings.tabEps,
@@ -670,6 +685,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 library,
                 locale,
                 strings,
+                icon: Icons.album_outlined,
               ),
             if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
               ..._buildCategorySection(
@@ -679,9 +695,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 library,
                 locale,
                 strings,
+                icon: Icons.music_note_rounded,
               ),
             if (cats['compile']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAppearsOn, cats['compile']!, 'compile', library, locale, strings),
+              ..._buildCategorySection(strings.tabAppearsOn, cats['compile']!, 'compile', library, locale, strings, icon: Icons.groups_rounded),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -694,7 +711,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   List<Widget> _buildCategorySection(
-      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings, {IconData? icon}) {
     const maxVisible = 8;
     final visible = albums.take(maxVisible).toList();
     final hasMore = albums.length > maxVisible;
@@ -708,15 +725,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 3,
-                    height: 14,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
+                  if (icon != null) ...[
+                    Icon(icon, size: 16, color: AppColors.accent),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    Container(
+                      width: 3,
+                      height: 14,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
+                  ],
                   Text(
                     title,
                     style: locale.getTextStyle(
@@ -866,6 +888,267 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         0,      0,      0,      1, 0,
       ]),
       child: image,
+    );
+  }
+
+  Widget _buildStoredContentSection(
+      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+    final artistName = widget.artist.name;
+    final artistTracks = library.listenedTracks
+        .where((t) => t.artistName.toLowerCase() == artistName.toLowerCase())
+        .toList();
+    final songCount = artistTracks.length;
+
+    final albumCats = <String, List<Album>>{
+      'album': [],
+      'ep': [],
+      'single': [],
+      'compile': [],
+    };
+    for (final album in _albums) {
+      final key = albumCats.containsKey(album.recordType)
+          ? album.recordType
+          : 'album';
+      albumCats[key]!.add(album);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text(
+                  strings.storedContentTitle,
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textBright,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.bgCard.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Header - tappable to expand
+                GestureDetector(
+                  onTap: () => setState(() => _showStoredContent = !_showStoredContent),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
+                            child: widget.artist.pictureUrl.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: widget.artist.pictureUrl,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.person,
+                                        color: AppColors.textMuted, size: 20),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                strings.storedContentSongs(songCount),
+                                style: locale.getTextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textBright,
+                                ),
+                              ),
+                              Text(
+                                strings.storedContentFrom(artistName),
+                                style: locale.getTextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        AnimatedRotation(
+                          turns: _showStoredContent ? 0.25 : 0.0,
+                          duration: const Duration(milliseconds: 250),
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: songCount > 0
+                                ? AppColors.accent
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Expandable content
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOut,
+                  child: _showStoredContent
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 1,
+                                color: AppColors.border.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  _buildStoredStat(
+                                    Icons.album_rounded,
+                                    strings.tabAlbums,
+                                    albumCats['album']!,
+                                    library,
+                                    locale,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStoredStat(
+                                    Icons.disc_full_rounded,
+                                    strings.tabEps,
+                                    albumCats['ep']!,
+                                    library,
+                                    locale,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  _buildStoredStat(
+                                    Icons.music_note_rounded,
+                                    strings.tabSingles,
+                                    albumCats['single']!,
+                                    library,
+                                    locale,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStoredStat(
+                                    Icons.people_rounded,
+                                    strings.tabAppearsOn,
+                                    albumCats['compile']!,
+                                    library,
+                                    locale,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoredStat(
+    IconData icon,
+    String label,
+    List<Album> albums,
+    LibraryProvider library,
+    LocaleProvider locale,
+  ) {
+    final completed =
+        albums.where((a) => library.isAlbumCompleted(a.id, albumTracksCount: a.tracksCount)).length;
+    final total = albums.length;
+    final progress = total > 0 ? completed / total : 0.0;
+
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.bgDeep.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: completed > 0
+                ? AppColors.accent.withValues(alpha: 0.3)
+                : AppColors.border.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: AppColors.accent),
+                const SizedBox(width: 6),
+                Text(
+                  label.toUpperCase(),
+                  style: locale.getTextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '$completed/$total',
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: completed > 0 ? AppColors.accent : AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 3,
+                backgroundColor: AppColors.border.withValues(alpha: 0.3),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  completed == total && total > 0
+                      ? AppColors.accent
+                      : AppColors.accent.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

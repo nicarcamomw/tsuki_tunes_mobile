@@ -1,11 +1,11 @@
 
 
-- [x] ## 1. Funcionalidad
+- [ ] ## 1. Funcionalidad
 
 ¿Hace lo que dice que hace?
 
-- Requisitos funcionales cumplidos
-- Casos de uso completos
+- Requisitos funcionales cumplidos / 100
+- Casos de uso completos / 100
 - Flujos normales y alternativos
 - Manejo de errores funcionales
 - Estados del sistema bien definidos

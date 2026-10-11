@@ -390,17 +390,36 @@ class SpotifyService {
     if (_accessToken == null) return null;
 
     try {
-      final query = Uri.encodeComponent('track:$title artist:$artist');
-      final response = await http.get(
-        Uri.parse(
-            'https://api.spotify.com/v1/search?q=$query&type=track&limit=10'),
-        headers: {'Authorization': 'Bearer $_accessToken'},
-      );
+      // Try structured query first, then simple query as fallback
+      final queries = [
+        Uri.encodeComponent('track:$title artist:$artist'),
+        Uri.encodeComponent('$title $artist'),
+      ];
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final items = data['tracks']?['items'] as List?;
-        if (items != null && items.isNotEmpty) {
+      for (int q = 0; q < queries.length; q++) {
+        final response = await http.get(
+          Uri.parse(
+              'https://api.spotify.com/v1/search?q=${queries[q]}&type=track&limit=10'),
+          headers: {'Authorization': 'Bearer $_accessToken'},
+        );
+
+        if (response.statusCode == 401) {
+          await _ensureValidToken();
+          if (_accessToken == null) return null;
+          continue;
+        }
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final items = data['tracks']?['items'] as List?;
+          if (items == null || items.isEmpty) {
+            if (q == 0) {
+              debugPrint('Spotify: structured query returned no results, trying simple query');
+              continue;
+            }
+            break;
+          }
+
           final normalizedArtist = artist.toLowerCase().trim();
           final normalizedTitle = title.toLowerCase().trim();
 
@@ -433,11 +452,21 @@ class SpotifyService {
             }
           }
 
-          // Last resort: first result
-          final firstUri = items.first['uri'] as String;
-          debugPrint('Spotify: no artist match, using first result "${items.first['name']}"');
-          _saveToCache(trackId, title, artist, firstUri);
-          return firstUri;
+          // Last resort: first result with matching title
+          for (final item in items) {
+            final trackName = (item['name'] as String? ?? '').toLowerCase().trim();
+            if (trackName == normalizedTitle) {
+              final resolvedUri = item['uri'] as String;
+              debugPrint('Spotify: title-only match "${item['name']}"');
+              _saveToCache(trackId, title, artist, resolvedUri);
+              return resolvedUri;
+            }
+          }
+
+          if (q == 0) {
+            debugPrint('Spotify: no title match in structured query, trying simple query');
+            continue;
+          }
         }
       }
     } catch (e) {
@@ -536,19 +565,39 @@ class SpotifyService {
       return null;
     }
 
-    // Check if any device is already active
+    for (final d in devices) {
+      debugPrint('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
+    }
+
+    final smartphones = devices.where((d) => d['type'] == 'Smartphone').toList();
+
+    // If a smartphone is already active, use it
+    final activePhone = smartphones.where((d) => d['is_active'] == true).toList();
+    if (activePhone.isNotEmpty) {
+      debugPrint('Spotify: using active smartphone ${activePhone.first['name']}');
+      return activePhone.first['id'] as String?;
+    }
+
+    // If there's a smartphone but not active, transfer to it
+    if (smartphones.isNotEmpty) {
+      final phoneId = smartphones.first['id'] as String?;
+      if (phoneId != null) {
+        debugPrint('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
+        await _transferPlayback(phoneId);
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      return phoneId;
+    }
+
+    // No smartphone found — fallback to active device or first available
     final active = devices.where((d) => d['is_active'] == true).toList();
     if (active.isNotEmpty) {
       return active.first['id'] as String?;
     }
 
-    // No active device — transfer to the best one
-    final smartphone = devices.where((d) => d['type'] == 'Smartphone').toList();
-    final target = smartphone.isNotEmpty ? smartphone.first : devices.first;
-    final targetId = target['id'] as String?;
-
+    final targetId = devices.first['id'] as String?;
     if (targetId != null) {
-      debugPrint('Spotify: transferring playback to ${target['name']}');
+      debugPrint('Spotify: transferring to fallback ${devices.first['name']}');
       await _transferPlayback(targetId);
       await Future.delayed(const Duration(milliseconds: 500));
     }
@@ -586,6 +635,22 @@ class SpotifyService {
 
       if (response.statusCode == 204 || response.statusCode == 200) {
         return true;
+      }
+
+      if (response.statusCode == 401) {
+        await _ensureValidToken();
+        if (_accessToken == null) return false;
+        final retry401 = await http.put(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'Bearer $_accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(body),
+        );
+        if (retry401.statusCode == 204 || retry401.statusCode == 200) {
+          return true;
+        }
       }
 
       // Play failed — try transfer + retry once

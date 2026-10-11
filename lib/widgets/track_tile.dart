@@ -9,6 +9,7 @@ import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
@@ -44,6 +45,10 @@ class TrackTile extends StatelessWidget {
         onTap: () {
           FocusScope.of(context).unfocus();
           context.read<AudioProvider>().playTrack(track, newQueue: queue);
+        },
+        onLongPress: () {
+          HapticFeedback.mediumImpact();
+          _showTrackMenu(context);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -223,6 +228,95 @@ class TrackTile extends StatelessWidget {
           ),
         ),
       ),
+      ),
+    );
+  }
+
+  void _showTrackMenu(BuildContext context) {
+    final strings = context.read<LocaleProvider>().strings;
+    final locale = context.read<LocaleProvider>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: track.coverUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: track.coverUrl,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(color: AppColors.bgMid),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          track.title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textBright,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          track.fullArtistName,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: AppColors.border, height: 1),
+            ListTile(
+              leading: const Icon(Icons.queue_music, color: AppColors.accent),
+              title: Text(
+                strings.addToQueue,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  color: AppColors.textBright,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.read<AudioProvider>().addToQueue(track);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(strings.addedToQueue),
+                    backgroundColor: AppColors.bgCard,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

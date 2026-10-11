@@ -401,9 +401,9 @@ class AppStrings {
       };
 
   String get emptyReleases => switch (language) {
-        AppLanguage.es => 'Marca canciones como escuchadas para ver lanzamientos personalizados',
-        AppLanguage.en => 'Mark tracks as listened to see tailored releases',
-        AppLanguage.ja => '楽曲を記録するとおすすめの新譜が表示されます',
+        AppLanguage.es => 'Si no hay artistas con canciones guardadas, aquí aparecerán tus lanzamientos recientes recomendados',
+        AppLanguage.en => 'Once you save songs from artists, their recent releases will appear here',
+        AppLanguage.ja => 'アーティストの曲を保存すると、最近のリリースがここに表示されます',
       };
 
   String affinityScore(dynamic score) => switch (language) {
@@ -496,6 +496,30 @@ class AppStrings {
         AppLanguage.es => 'REPRODUCIR',
         AppLanguage.en => 'PLAY',
         AppLanguage.ja => '再生',
+      };
+
+  String get playAll => switch (language) {
+        AppLanguage.es => 'REPRODUCIR TODO',
+        AppLanguage.en => 'PLAY ALL',
+        AppLanguage.ja => 'すべて再生',
+      };
+
+  String get shuffle => switch (language) {
+        AppLanguage.es => 'ALEATORIO',
+        AppLanguage.en => 'SHUFFLE',
+        AppLanguage.ja => 'シャッフル',
+      };
+
+  String get addToQueue => switch (language) {
+        AppLanguage.es => 'Agregar a la cola',
+        AppLanguage.en => 'Add to queue',
+        AppLanguage.ja => 'キューに追加',
+      };
+
+  String get addedToQueue => switch (language) {
+        AppLanguage.es => 'Agregado a la cola',
+        AppLanguage.en => 'Added to queue',
+        AppLanguage.ja => 'キューに追加しました',
       };
 
   String get syncing => switch (language) {
@@ -608,7 +632,7 @@ class AppStrings {
       };
 
   String get tabSingles => switch (language) {
-        AppLanguage.es => 'Singles',
+        AppLanguage.es => 'Sencillos',
         AppLanguage.en => 'Singles',
         AppLanguage.ja => 'シングル',
       };
@@ -623,6 +647,24 @@ class AppStrings {
         AppLanguage.es => 'Aparece en',
         AppLanguage.en => 'Appears on',
         AppLanguage.ja => '参加作品',
+      };
+
+  String get storedContentTitle => switch (language) {
+        AppLanguage.es => 'CONTENIDO ALMACENADO',
+        AppLanguage.en => 'STORED CONTENT',
+        AppLanguage.ja => '保存済みコンテンツ',
+      };
+
+  String storedContentSongs(int count) => switch (language) {
+        AppLanguage.es => '$count canciones',
+        AppLanguage.en => '$count songs',
+        AppLanguage.ja => '$count曲',
+      };
+
+  String storedContentFrom(String artist) => switch (language) {
+        AppLanguage.es => 'De $artist',
+        AppLanguage.en => 'By $artist',
+        AppLanguage.ja => '$artistの曲',
       };
 
   String get noTracksFound => switch (language) {

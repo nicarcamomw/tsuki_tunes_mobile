@@ -122,213 +122,217 @@ class _MiniPlayerState extends State<MiniPlayer>
         child: Container(
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           decoration: BoxDecoration(
-            color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.accent, width: 1.2),
             boxShadow: const [
               BoxShadow(
                 color: AppColors.accentGlow,
                 blurRadius: 12,
-                spreadRadius: 1,
                 offset: Offset(0, 2),
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 2.5,
-                  backgroundColor: AppColors.border,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.accent),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.8),
+            child: Container(
+              color: AppColors.bgCard,
+          child: GestureDetector(
+            onHorizontalDragUpdate: _onHorizontalDragUpdate,
+            onHorizontalDragEnd: (details) =>
+                _onHorizontalDragEnd(details, audio),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 2.5,
+                    backgroundColor: AppColors.border,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.accent),
                 ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _openExpandedPlayer(context),
-                        onHorizontalDragUpdate: _onHorizontalDragUpdate,
-                        onHorizontalDragEnd: (details) =>
-                            _onHorizontalDragEnd(details, audio),
-                        child: Transform.translate(
-                          offset: Offset(_swipeDx * 0.3, 0),
-                          child: ColorFiltered(
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withValues(
-                                  alpha: (1.0 - swipeOpacity) * 0.7),
-                              BlendMode.srcATop,
-                            ),
-                            child: Row(
-                              children: [
-                                // Carátula de 44x44 con Micro-ecualizador en esquina
-                                Stack(
-                                  children: [
-                                    Hero(
-                                      tag: 'player_art_${track.id}',
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: SizedBox(
-                                          width: 44,
-                                          height: 44,
-                                          child: track.coverUrl.isNotEmpty
-                                              ? CachedNetworkImage(
-                                                  imageUrl: track.coverUrl,
-                                                  fit: BoxFit.cover,
-                                                  placeholder: (_, __) =>
-                                                      Container(
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _openExpandedPlayer(context),
+                          child: Transform.translate(
+                            offset: Offset(_swipeDx * 0.3, 0),
+                            child: ColorFiltered(
+                              colorFilter: ColorFilter.mode(
+                                Colors.black.withValues(
+                                    alpha: (1.0 - swipeOpacity) * 0.7),
+                                BlendMode.srcATop,
+                              ),
+                              child: Row(
+                                children: [
+                                  Stack(
+                                    children: [
+                                      Hero(
+                                        tag: 'player_art_${track.id}',
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: SizedBox(
+                                            width: 44,
+                                            height: 44,
+                                            child: track.coverUrl.isNotEmpty
+                                                ? CachedNetworkImage(
+                                                    imageUrl: track.coverUrl,
+                                                    fit: BoxFit.cover,
+                                                    placeholder: (_, __) =>
+                                                        Container(
+                                                            color:
+                                                                AppColors.bgMid),
+                                                    errorWidget: (_, __, ___) =>
+                                                        Container(
+                                                      color: AppColors.bgMid,
+                                                      child: const Icon(
+                                                          Icons.music_note,
                                                           color:
-                                                              AppColors.bgMid),
-                                                  errorWidget: (_, __, ___) =>
-                                                      Container(
+                                                              AppColors.accent),
+                                                    ),
+                                                  )
+                                                : Container(
                                                     color: AppColors.bgMid,
                                                     child: const Icon(
                                                         Icons.music_note,
-                                                        color:
-                                                            AppColors.accent),
+                                                        color: AppColors.accent),
                                                   ),
-                                                )
-                                              : Container(
-                                                  color: AppColors.bgMid,
-                                                  child: const Icon(
-                                                      Icons.music_note,
-                                                      color: AppColors.accent),
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-                                    if (audio.isPlaying)
-                                      Positioned(
-                                        bottom: 2,
-                                        right: 2,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 2.5, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black
-                                                .withValues(alpha: 0.78),
-                                            borderRadius:
-                                                BorderRadius.circular(3),
-                                            border: Border.all(
-                                              color: AppColors.accent
-                                                  .withValues(alpha: 0.4),
-                                              width: 0.5,
-                                            ),
                                           ),
-                                          child: _MiniEqualizer(
-                                              isPlaying: audio.isPlaying),
                                         ),
                                       ),
-                                  ],
-                                ),
-                                const SizedBox(width: 12),
-                                // Textos con desplazamiento automático Marquee
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _MarqueeText(
-                                        text: track.title,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textBright,
+                                      if (audio.isPlaying)
+                                        Positioned(
+                                          bottom: 2,
+                                          right: 2,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 2.5, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.78),
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                              border: Border.all(
+                                                color: AppColors.accent
+                                                    .withValues(alpha: 0.4),
+                                                width: 0.5,
+                                              ),
+                                            ),
+                                            child: _MiniEqualizer(
+                                                isPlaying: audio.isPlaying),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      _MarqueeText(
-                                        text: track.fullArtistName,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _MarqueeText(
+                                          text: track.title,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textBright,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        _MarqueeText(
+                                          text: audio.spotifyFallbackActive
+                                              ? '${track.fullArtistName}  ·  Preview'
+                                              : track.fullArtistName,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            color: audio.spotifyFallbackActive
+                                                ? AppColors.accent.withValues(alpha: 0.7)
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    TapScale(
-                      semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
-                      onTap: () {
-                        if (isListened) {
-                          library.unmarkTrack(track.id);
-                        } else {
-                          library.markTrack(track);
-                        }
-                      },
-                      scaleDown: 0.8,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: OniMaskIcon(
-                          isActive: isListened,
-                          size: 24,
+                      const SizedBox(width: 6),
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: TapScale(
+                          semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
+                          onTap: () {
+                            if (isListened) {
+                              library.unmarkTrack(track.id);
+                            } else {
+                              library.markTrack(track);
+                            }
+                          },
+                          scaleDown: 0.8,
+                          child: Center(
+                            child: OniMaskIcon(
+                              isActive: isListened,
+                              size: 22,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    TapScale(
-                      semanticLabel: audio.isPlaying ? 'Pause' : 'Play',
-                      onTap: audio.togglePlay,
-                      scaleDown: 0.85,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: audio.isBuffering
-                            ? const SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.accent),
-                                ),
-                              )
-                            : Icon(
-                                audio.isPlaying
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_filled,
-                                size: 28,
-                                color: AppColors.accent,
-                              ),
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: TapScale(
+                          semanticLabel: audio.isPlaying ? 'Pause' : 'Play',
+                          onTap: audio.togglePlay,
+                          scaleDown: 0.85,
+                          child: Center(
+                            child: audio.isBuffering
+                                ? const SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.accent),
+                                    ),
+                                  )
+                                : Icon(
+                                    audio.isPlaying
+                                        ? Icons.pause_circle_filled
+                                        : Icons.play_circle_filled,
+                                    size: 28,
+                                    color: AppColors.accent,
+                                  ),
+                          ),
+                        ),
                       ),
-                    ),
-                    TapScale(
-                      semanticLabel: 'Next track',
-                      onTap: audio.next,
-                      scaleDown: 0.85,
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Icon(Icons.skip_next,
-                            size: 22, color: AppColors.textPrimary),
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: TapScale(
+                          semanticLabel: 'Stop playback',
+                          onTap: audio.stop,
+                          scaleDown: 0.85,
+                          child: const Center(
+                            child: Icon(Icons.close,
+                                size: 18, color: AppColors.textMuted),
+                          ),
+                        ),
                       ),
-                    ),
-                    TapScale(
-                      semanticLabel: 'Stop playback',
-                      onTap: audio.stop,
-                      scaleDown: 0.85,
-                      child: const Padding(
-                        padding: EdgeInsets.all(6),
-                        child: Icon(Icons.close,
-                            size: 18, color: AppColors.textMuted),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+            ),
           ),
         ),
       ),

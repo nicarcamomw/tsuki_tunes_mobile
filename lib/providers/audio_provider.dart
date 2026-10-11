@@ -42,6 +42,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   bool _useSpotify = false;
   bool _spotifyActive = false;
+  bool _spotifyFallbackActive = false;
   String? _lastSpotifyError;
   String? _lastPlaybackError;
 
@@ -104,6 +105,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Duration get duration => _duration;
   Duration get bufferedPosition => _bufferedPosition;
   bool get useSpotify => _useSpotify;
+  bool get spotifyFallbackActive => _spotifyFallbackActive;
   SpotifyService get spotify => _spotify;
   String? get lastSpotifyError => _lastSpotifyError;
   String? get lastPlaybackError => _lastPlaybackError;
@@ -198,6 +200,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       checkSleepTimer();
+      _checkBackgroundCompletion();
+      if (_useSpotify && _isPlaying) {
+        _startPositionTimer();
+      }
+    }
+  }
+
+  void _checkBackgroundCompletion() {
+    if (!_isPlaying || _currentTrack == null) return;
+    if (_useSpotify) {
+      final elapsed = DateTime.now().difference(_spotifySyncTime);
+      final estimatedPos = _spotifySyncPosition + elapsed;
+      if (estimatedPos >= _duration && _duration > Duration.zero) {
+        _handleTrackCompleted();
+      }
     }
   }
 
@@ -305,70 +322,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
   }
 
-  Future<void> _connectNativePlayer() async {
-    _nativePlayer.onStateChanged = _onNativeStateChanged;
-    _nativePlayer.onError = (error) {
-      debugPrint('Spotify native background notice: $error');
-    };
-
-    final token = await _spotify.getValidToken();
-    if (token == null) {
-      debugPrint('Spotify: no valid token, skipping native connect');
-      _spotifyActive = false;
-      _useSpotify = false;
-      notifyListeners();
-      return;
-    }
-
-    debugPrint('Spotify: connecting native player with token');
-    var connected = await _nativePlayer.connect(accessToken: token);
-
-    if (!connected) {
-      debugPrint('Spotify: native connect failed, will retry on play');
-    }
-
-    _spotifyActive = connected;
-    if (connected) {
-      debugPrint('Spotify native player connected');
-      try {
-        await SpotifySdk.switchToLocalDevice();
-        debugPrint('Spotify: switched to local device');
-      } catch (e) {
-        debugPrint('Spotify: switchToLocalDevice error: $e');
-      }
-    }
-
-    // Pre-warm Web API device with retries (Spotify may need time to register)
-    if (connected) {
-      _activateDeviceInBackground();
-    }
-
-    notifyListeners();
-  }
-
-  Future<void> _activateDeviceInBackground() async {
-    for (var attempt = 0; attempt < 3; attempt++) {
-      try {
-        final deviceId = await _spotify.ensureActiveDevice();
-        if (deviceId != null) {
-          debugPrint('Spotify: startup device ready: $deviceId');
-          return;
-        }
-      } catch (e) {
-        debugPrint('Spotify: startup device attempt $attempt error: $e');
-      }
-      await Future.delayed(Duration(seconds: 2 + attempt * 2));
-    }
-    debugPrint('Spotify: no device activated at startup (will retry on play)');
-  }
 
   Future<void> updateSpotifyState() async {
     final wasSpotify = _useSpotify;
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
 
-    if (_useSpotify && !wasSpotify) {
-      await _connectNativePlayer();
-    } else if (!_useSpotify && wasSpotify) {
+    if (!_useSpotify && wasSpotify) {
       _spotifyActive = false;
       _stopPositionTimer();
       await _nativePlayer.disconnect();
@@ -377,44 +336,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void _onNativeStateChanged(int positionMs, int durationMs, bool paused) {
-    if (!_spotifyActive) return;
-
-    // Ignore stale SDK events from previous track for 3 seconds after new play
-    final msSincePlay = DateTime.now().difference(_lastPlayStart).inMilliseconds;
-    if (msSincePlay < 3000) return;
-
-    final wasPlaying = _isPlaying;
-    _isPlaying = !paused;
-    _isBuffering = false;
-    _position = Duration(milliseconds: positionMs);
-    _spotifySyncPosition = _position;
-    _spotifySyncTime = DateTime.now();
-
-    if (durationMs > 0) {
-      _duration = Duration(milliseconds: durationMs);
-    }
-
-    if (_isPlaying) {
-      _startPositionTimer();
-    } else {
-      _stopPositionTimer();
-    }
-
-    // Track ended detection
-    if (paused && wasPlaying && positionMs == 0) {
-      _stopPositionTimer();
-      _handleTrackCompleted();
-      return;
-    }
-
-    notifyListeners();
-  }
-
   void _startPositionTimer() {
     _spotifyPositionTimer?.cancel();
-    _spotifyPositionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (_isPlaying && _useSpotify) {
+    _spotifyPositionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_isPlaying && _useSpotify && !_completionHandled) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         _position = _spotifySyncPosition + elapsed;
         if (_position >= _duration && _duration > Duration.zero) {
@@ -672,8 +597,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (uri == null) {
-      debugPrint('Spotify: track not found "${track.title}"');
+      debugPrint('Spotify: track not found "${track.title}", falling back to preview');
       _lastSpotifyError = 'spotify_track_unavailable';
+      _spotifyFallbackActive = true;
       await _service.playTrack(track);
       if (gen != _playGeneration) return;
       _isBuffering = false;
@@ -695,20 +621,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       debugPrint('Spotify: retry with ensureActiveDevice result=$played');
     }
 
-    if (!played && !_spotifyActive) {
-      debugPrint('Spotify: connecting native player as last resort...');
-      await _connectNativePlayer();
-      if (gen != _playGeneration) return;
-      if (_spotifyActive) {
-        played = await _spotify.play(trackUri: uri);
-        if (gen != _playGeneration) return;
-        debugPrint('Spotify: retry after native connect result=$played');
-      }
-    }
-
     if (!played) {
       debugPrint('Spotify: all play attempts failed, falling back to preview');
       _lastSpotifyError = 'spotify_open_app';
+      _spotifyFallbackActive = true;
       await _service.playTrack(track);
       if (gen != _playGeneration) return;
       _isBuffering = false;
@@ -716,10 +632,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (!_spotifyActive) {
-      _connectNativePlayer();
-    }
-
+    _spotifyFallbackActive = false;
     _isPlaying = true;
     _isBuffering = false;
     _position = Duration.zero;
@@ -978,7 +891,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (_isShuffle && _playHistory.isNotEmpty) {
+    if (_isShuffle) {
+      if (_playHistory.isEmpty) {
+        await seek(Duration.zero);
+        return;
+      }
       if (!isOnline) {
         int? targetIdx;
         while (_playHistory.isNotEmpty) {
@@ -993,28 +910,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (targetIdx != null) {
           _currentIndex = targetIdx;
         } else {
-          int fallbackIdx = -1;
-          for (int step = 1; step < _queue.length; step++) {
-            final idx = (_currentIndex - step + _queue.length) % _queue.length;
-            if (_canPlayOffline(_queue[idx])) {
-              fallbackIdx = idx;
-              break;
-            }
-          }
-          if (fallbackIdx != -1) {
-            _currentIndex = fallbackIdx;
-          } else {
-            _lastPlaybackError = 'network_error';
-            notifyListeners();
-            return;
-          }
+          await seek(Duration.zero);
+          return;
         }
       } else {
         final prevIndex = _playHistory.removeLast();
         if (prevIndex >= 0 && prevIndex < _queue.length) {
           _currentIndex = prevIndex;
         } else {
-          _currentIndex = _currentIndex <= 0 ? _queue.length - 1 : _currentIndex - 1;
+          await seek(Duration.zero);
+          return;
         }
       }
     } else {
@@ -1060,7 +965,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     _playHistory.clear();
     if (_useSpotify) {
-      await _spotify.pause();
+      try { await SpotifySdk.pause(); } catch (_) {}
+      _spotify.pause();
     }
     await _service.stop();
     _foregroundService.stop();
@@ -1147,14 +1053,62 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void addToQueue(Track track) {
+    if (_queue.any((t) => t.id == track.id)) return;
+    final insertAt = _currentIndex + 1;
+    final pos = insertAt < _queue.length ? insertAt : _queue.length;
+    _queue.insert(pos, track);
+    _shiftIndicesAfterInsert(pos, 1);
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
+  void addAllToQueue(List<Track> tracks) {
+    final existing = _queue.map((t) => t.id).toSet();
+    final newTracks = tracks.where((t) => !existing.contains(t.id)).toList();
+    if (newTracks.isEmpty) return;
+    final insertAt = _currentIndex + 1;
+    final pos = insertAt < _queue.length ? insertAt : _queue.length;
+    _queue.insertAll(pos, newTracks);
+    _shiftIndicesAfterInsert(pos, newTracks.length);
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
+  void _shiftIndicesAfterInsert(int insertPos, int count) {
+    if (_nextShuffleIndex != null && _nextShuffleIndex! >= insertPos) {
+      _nextShuffleIndex = _nextShuffleIndex! + count;
+    }
+    for (int i = 0; i < _playHistory.length; i++) {
+      if (_playHistory[i] >= insertPos) {
+        _playHistory[i] += count;
+      }
+    }
+  }
+
   /// Removes the track at [index] from the playback queue.
   void removeFromQueue(int index) {
     if (index < 0 || index >= _queue.length) return;
 
     final wasCurrent = index == _currentIndex;
     _queue.removeAt(index);
-    _nextShuffleIndex = null;
-    _playHistory.clear();
+
+    // Adjust or invalidate shuffle index
+    if (_nextShuffleIndex != null) {
+      if (_nextShuffleIndex == index) {
+        _nextShuffleIndex = null;
+      } else if (_nextShuffleIndex! > index) {
+        _nextShuffleIndex = _nextShuffleIndex! - 1;
+      }
+    }
+
+    // Adjust play history indices
+    _playHistory.removeWhere((i) => i == index);
+    for (int i = 0; i < _playHistory.length; i++) {
+      if (_playHistory[i] > index) {
+        _playHistory[i] -= 1;
+      }
+    }
 
     if (_queue.isEmpty) {
       stop();

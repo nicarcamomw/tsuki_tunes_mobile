@@ -139,29 +139,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
     setState(() => _releasesLoading = true);
-    final validTops = tops.take(5).where((t) => t.artist != null).toList();
+    final validTops = tops.take(10).where((t) => t.artist != null).toList();
+    final cutoff = DateTime.now().subtract(const Duration(days: 365));
     final results = await Future.wait(validTops.map((top) async {
       try {
         final artistAlbums = await _api.getArtistAlbums(top.artist!.id);
-        return artistAlbums.isNotEmpty ? artistAlbums.first : null;
+        if (artistAlbums.isEmpty) return <Album>[];
+        return artistAlbums.map((a) {
+          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
+            return a.copyWith(artistName: top.entry.name);
+          }
+          return a;
+        }).toList();
       } catch (e) {
         debugPrint('[HomeScreen] loadLatestFromTopArtists error for ${top.entry.name}: $e');
-        return null;
+        return <Album>[];
       }
     }));
 
-    final albums = <Album>[];
+    final allAlbums = <Album>[];
     final seenIds = <String>{};
-    for (final album in results) {
-      if (album != null && !seenIds.contains(album.id)) {
-        seenIds.add(album.id);
-        albums.add(album);
+    for (final albumList in results) {
+      for (final album in albumList) {
+        if (!seenIds.contains(album.id) && album.releaseDate.isNotEmpty) {
+          final parsed = DateTime.tryParse(album.releaseDate);
+          if (parsed != null && parsed.isAfter(cutoff)) {
+            seenIds.add(album.id);
+            allAlbums.add(album);
+          }
+        }
       }
     }
 
+    allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
+
     if (mounted) {
       setState(() {
-        _latestReleases = albums;
+        _latestReleases = allAlbums.take(15).toList();
         _releasesLoading = false;
       });
     }
@@ -170,20 +184,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadLatestFromFeatured() async {
     if (!mounted) return;
     setState(() => _releasesLoading = true);
-    final results = await Future.wait(_featuredArtists.take(4).map((artist) async {
+    final cutoff = DateTime.now().subtract(const Duration(days: 365));
+    final results = await Future.wait(_featuredArtists.take(6).map((artist) async {
       try {
         final artistAlbums = await _api.getArtistAlbums(artist.id);
-        return artistAlbums.isNotEmpty ? artistAlbums.first : null;
+        if (artistAlbums.isEmpty) return <Album>[];
+        return artistAlbums.map((a) {
+          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
+            return a.copyWith(artistName: artist.name);
+          }
+          return a;
+        }).toList();
       } catch (e) {
         debugPrint('[HomeScreen] loadLatestFromFeatured error: $e');
-        return null;
+        return <Album>[];
       }
     }));
-    final albums = results.whereType<Album>().toList();
+
+    final allAlbums = <Album>[];
+    final seenIds = <String>{};
+    for (final albumList in results) {
+      for (final album in albumList) {
+        if (!seenIds.contains(album.id) && album.releaseDate.isNotEmpty) {
+          final parsed = DateTime.tryParse(album.releaseDate);
+          if (parsed != null && parsed.isAfter(cutoff)) {
+            seenIds.add(album.id);
+            allAlbums.add(album);
+          }
+        }
+      }
+    }
+
+    allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
 
     if (mounted) {
       setState(() {
-        _latestReleases = albums;
+        _latestReleases = allAlbums.take(15).toList();
         _releasesLoading = false;
       });
     }
@@ -727,22 +763,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? (locale?.getTextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.sakura,
+                      color: AppColors.accent,
                     ) ??
                     GoogleFonts.plusJakartaSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.sakura,
+                      color: AppColors.accent,
                     ))
                 : (locale?.getTextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.sakura,
+                      color: AppColors.accent,
                     ) ??
                     GoogleFonts.plusJakartaSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.sakura,
+                      color: AppColors.accent,
                     )),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

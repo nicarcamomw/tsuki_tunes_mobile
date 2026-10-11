@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../providers/library_provider.dart';
 import '../providers/audio_provider.dart';
+import 'package:flutter/services.dart';
 import '../providers/locale_provider.dart';
 import '../models/track.dart';
 import '../models/album.dart';
@@ -246,6 +247,68 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
 
+            // Play controls
+            if (totalTracks > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final allTracks = _buildAllTracks(listenedTracks);
+                          if (allTracks.isNotEmpty) {
+                            final audio = context.read<AudioProvider>();
+                            audio.playTrack(allTracks.first, newQueue: allTracks);
+                          }
+                        },
+                        icon: const Icon(Icons.play_arrow, color: AppColors.accent, size: 18),
+                        label: Text(
+                          strings.playAll,
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.accent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final allTracks = _buildAllTracks(listenedTracks);
+                          if (allTracks.isNotEmpty) {
+                            final shuffled = List<Track>.from(allTracks)..shuffle();
+                            final audio = context.read<AudioProvider>();
+                            audio.playTrack(shuffled.first, newQueue: shuffled);
+                          }
+                        },
+                        icon: const Icon(Icons.shuffle, color: AppColors.accent, size: 18),
+                        label: Text(
+                          strings.shuffle,
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.accent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Content
             Expanded(
               child: totalTracks == 0
@@ -311,6 +374,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       ),
     );
+  }
+
+  List<Track> _buildAllTracks(List<ListenedTrackData> listened) {
+    return listened
+        .map((td) => Track(
+              id: td.trackId,
+              title: td.title,
+              artistId: '',
+              artistName: td.artistName,
+              albumId: td.albumId,
+              albumTitle: td.albumTitle,
+              coverUrl: td.coverUrl,
+              previewUrl: td.previewUrl,
+              durationSeconds: td.duration,
+            ))
+        .toList();
   }
 
   Widget _buildShowMoreButton(int remaining, LocaleProvider locale) {
@@ -527,6 +606,28 @@ class _AlbumGroupTile extends StatelessWidget {
                       (t) => t.id == trackData.trackId,
                       orElse: () => queue.first);
                   audio.playTrack(track, newQueue: queue);
+                },
+                onLongPress: () {
+                  HapticFeedback.mediumImpact();
+                  final track = Track(
+                    id: trackData.trackId,
+                    title: trackData.title,
+                    artistId: '',
+                    artistName: trackData.artistName,
+                    albumId: trackData.albumId,
+                    albumTitle: trackData.albumTitle,
+                    coverUrl: trackData.coverUrl,
+                    previewUrl: trackData.previewUrl,
+                    durationSeconds: trackData.duration,
+                  );
+                  audio.addToQueue(track);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(strings.addedToQueue),
+                      backgroundColor: AppColors.bgCard,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
