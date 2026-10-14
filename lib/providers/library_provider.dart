@@ -190,9 +190,8 @@ class LibraryProvider extends ChangeNotifier {
         _listenedTracks.where((t) => t.albumId == albumId).length;
     if (listenedCount == 0) return false;
 
-    final total = albumTracksCount > 0
-        ? albumTracksCount
-        : (_albumTrackCounts[albumId] ?? 0);
+    final registered = _albumTrackCounts[albumId] ?? 0;
+    final total = registered > 0 ? registered : albumTracksCount;
 
     if (total <= 0) return false;
     return listenedCount >= total;

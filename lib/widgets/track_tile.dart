@@ -247,6 +247,7 @@ class TrackTile extends StatelessWidget {
   void _showTrackMenu(BuildContext context) {
     final strings = context.read<LocaleProvider>().strings;
     final locale = context.read<LocaleProvider>();
+    final hasTrack = context.read<AudioProvider>().currentTrack != null;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.bgCard,
@@ -254,6 +255,8 @@ class TrackTile extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: hasTrack ? 140 : 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -326,6 +329,7 @@ class TrackTile extends StatelessWidget {
                     backgroundColor: AppColors.bgCard,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
                     duration: const Duration(seconds: 2),
                   ),
                 );
@@ -352,6 +356,7 @@ class TrackTile extends StatelessWidget {
                     backgroundColor: AppColors.bgCard,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
                     duration: const Duration(seconds: 2),
                   ),
                 );
@@ -418,6 +423,7 @@ class TrackTile extends StatelessWidget {
               ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );

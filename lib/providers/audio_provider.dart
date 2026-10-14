@@ -202,7 +202,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       checkSleepTimer();
       _checkBackgroundCompletion();
-      if (_useSpotify && _spotifyActive && _isPlaying) {
+      if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
         _syncSpotifyPlaybackState();
       }
@@ -210,11 +210,20 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _checkBackgroundCompletion() {
-    if (!_isPlaying || _currentTrack == null) return;
+    if (_currentTrack == null) return;
     if (_useSpotify && _spotifyActive) {
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
       if (estimatedPos >= _duration && _duration > Duration.zero) {
+        _completionHandled = false;
+        _crossfadeTriggered = false;
+        _handleTrackCompleted();
+      }
+    } else {
+      final state = _service.player.processingState;
+      if (state == ProcessingState.completed) {
+        _completionHandled = false;
+        _crossfadeTriggered = false;
         _handleTrackCompleted();
       }
     }

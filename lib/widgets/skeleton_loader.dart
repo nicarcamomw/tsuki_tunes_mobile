@@ -166,20 +166,8 @@ class AlbumDetailSkeletonLoader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
-            const Center(
-              child: SkeletonLoader(width: 200, height: 200),
-            ),
-            const SizedBox(height: 20),
-            const Center(
-              child: SkeletonLoader(width: 180, height: 18),
-            ),
             const SizedBox(height: 8),
-            const Center(
-              child: SkeletonLoader(width: 120, height: 12),
-            ),
-            const SizedBox(height: 24),
-            ...List.generate(6, (_) => const Padding(
+            ...List.generate(8, (_) => const Padding(
               padding: EdgeInsets.only(bottom: 6),
               child: _TrackRowSkeleton(),
             )),

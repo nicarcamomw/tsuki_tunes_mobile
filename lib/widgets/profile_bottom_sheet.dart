@@ -191,6 +191,7 @@ class ProfileBottomSheet {
                                       backgroundColor: AppColors.bgCard,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 }
@@ -214,6 +215,7 @@ class ProfileBottomSheet {
                                       backgroundColor: AppColors.bgCard,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                      duration: const Duration(seconds: 3),
                                     ),
                                   );
                                 }
@@ -230,7 +232,7 @@ class ProfileBottomSheet {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            '${strings.errorPrefix}: $e',
+                                            strings.spotifyConnectError,
                                             style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
                                           ),
                                         ),

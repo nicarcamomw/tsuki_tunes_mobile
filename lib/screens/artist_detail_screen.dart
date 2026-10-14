@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
@@ -145,7 +146,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
       for (final res in results) {
         if (res != null) {
-          final count = res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+          final count = res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
           if (count > 0) {
             library.registerAlbumTrackCount(res.id, count);
           }
@@ -332,6 +333,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       if (widget.artist.albumsCount > 0)
                         GestureDetector(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             setState(() => _showStats = !_showStats);
                           },
                           behavior: HitTestBehavior.opaque,
@@ -523,7 +525,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         button: true,
                         label: strings.retry,
                         child: GestureDetector(
-                        onTap: _loadArtistData,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _loadArtistData();
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(
@@ -591,7 +596,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 4),
                         child: GestureDetector(
-                          onTap: () => setState(() => _showAllTracks = !_showAllTracks),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _showAllTracks = !_showAllTracks);
+                          },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
@@ -752,6 +760,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               if (hasMore)
                 GestureDetector(
                   onTap: () async {
+                    HapticFeedback.lightImpact();
                     final updated =
                         await appNavigatorKey.currentState?.push<List<Album>>(
                       MaterialPageRoute(
@@ -950,7 +959,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               children: [
                 // Header - tappable to expand
                 GestureDetector(
-                  onTap: () => setState(() => _showStoredContent = !_showStoredContent),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _showStoredContent = !_showStoredContent);
+                  },
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsets.all(14),

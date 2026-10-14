@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
@@ -161,7 +162,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
       for (final res in results) {
         if (res != null) {
           final count =
-              res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+              res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
           if (count > 0) {
             library.registerAlbumTrackCount(res.id, count);
           }
@@ -269,26 +270,42 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 4,
+                if (_filtered.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Text(
+                          strings.noResults,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final album = _filtered[index];
-                        return _buildItem(
-                            context, album, library, locale, strings);
-                      },
-                      childCount: _filtered.length,
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.7,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 4,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final album = _filtered[index];
+                          return _buildItem(
+                              context, album, library, locale, strings);
+                        },
+                        childCount: _filtered.length,
+                      ),
                     ),
                   ),
-                ),
                 if (_isLoadingMore)
                   SliverToBoxAdapter(
                     child: Padding(
@@ -388,7 +405,10 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   Widget _buildChip(String value, String label, LocaleProvider locale) {
     final isSelected = _filter == value;
     return GestureDetector(
-      onTap: () => _setFilter(value),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _setFilter(value);
+      },
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),

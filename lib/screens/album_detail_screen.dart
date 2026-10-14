@@ -60,7 +60,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final res = await _api.getAlbum(widget.album.id);
       if (mounted && res != null) {
         final totalTracks =
-            res.tracksCount > 0 ? res.tracksCount : res.tracks.length;
+            res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
         if (totalTracks > 0) {
           context.read<LibraryProvider>().registerAlbumTrackCount(
                 res.id,
@@ -377,19 +377,26 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                                   SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: Image.asset(
-                                      'assets/images/tengu.png',
-                                      color: allListened
-                                          ? AppColors.accent
-                                          : AppColors.textMuted,
-                                      colorBlendMode: BlendMode.srcIn,
-                                    ),
+                                    child: library.syncing
+                                        ? const CircularProgressIndicator(
+                                            strokeWidth: 1.5,
+                                            color: AppColors.accent,
+                                          )
+                                        : Image.asset(
+                                            'assets/images/tengu.png',
+                                            color: allListened
+                                                ? AppColors.accent
+                                                : AppColors.textMuted,
+                                            colorBlendMode: BlendMode.srcIn,
+                                          ),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    allListened
-                                        ? strings.allListened
-                                        : strings.markAll,
+                                    library.syncing
+                                        ? strings.syncing
+                                        : (allListened
+                                            ? strings.allListened
+                                            : strings.markAll),
                                     style: locale.getTextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -432,30 +439,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   ),
 
                   const SizedBox(height: 8),
-
-                  // Sync indicator
-                  if (library.syncing)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          strings.syncing,
-                          style: locale.getTextStyle(
-                            fontSize: 10,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class TapScale extends StatefulWidget {
   final Widget child;
@@ -58,6 +59,7 @@ class _TapScaleState extends State<TapScale>
     }
     if (!mounted) return;
     _controller.reverse();
+    HapticFeedback.lightImpact();
     widget.onTap?.call();
   }
 

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
@@ -21,6 +22,8 @@ class MiniPlayer extends StatefulWidget {
 class _MiniPlayerState extends State<MiniPlayer>
     with SingleTickerProviderStateMixin {
   double _swipeDx = 0;
+  bool _swipeLocked = false;
+  bool _hapticFired = false;
   late final AnimationController _resetController;
   late Animation<double> _resetAnimation;
 
@@ -29,7 +32,7 @@ class _MiniPlayerState extends State<MiniPlayer>
     super.initState();
     _resetController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 250),
     );
     _resetAnimation = const AlwaysStoppedAnimation(0.0);
     _resetController.addListener(() {
@@ -44,25 +47,51 @@ class _MiniPlayerState extends State<MiniPlayer>
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_swipeLocked) return;
     setState(() {
-      _swipeDx += details.delta.dx;
+      _swipeDx = (_swipeDx + details.delta.dx).clamp(-160.0, 160.0);
+      if (!_hapticFired && _swipeDx.abs() > _swipeThreshold) {
+        _hapticFired = true;
+        HapticFeedback.lightImpact();
+      } else if (_hapticFired && _swipeDx.abs() < _swipeThreshold * 0.6) {
+        _hapticFired = false;
+      }
     });
   }
 
+  double get _swipeThreshold {
+    final w = MediaQuery.sizeOf(context).width;
+    return (w * 0.2).clamp(70.0, 120.0);
+  }
+
   void _onHorizontalDragEnd(DragEndDetails details, AudioProvider audio) {
+    if (_swipeLocked) return;
+
     final velocity = details.primaryVelocity ?? 0;
-    if (_swipeDx.abs() > 60 || velocity.abs() > 400) {
-      if (_swipeDx > 0 || velocity > 400) {
-        audio.previous();
-      } else {
+    final hasQueue = audio.queue.length > 1;
+    final fastSwipe = velocity.abs() > 700;
+    final farSwipe = _swipeDx.abs() > _swipeThreshold;
+    final triggered = hasQueue && !audio.isBuffering && (fastSwipe || farSwipe);
+
+    if (triggered) {
+      final goNext = fastSwipe ? velocity < 0 : _swipeDx < 0;
+      _swipeLocked = true;
+      HapticFeedback.mediumImpact();
+
+      if (goNext) {
         audio.next();
+      } else {
+        audio.previous();
       }
     }
-    final startValue = _swipeDx;
-    _resetAnimation = Tween<double>(begin: startValue, end: 0).animate(
+
+    _hapticFired = false;
+    _resetAnimation = Tween<double>(begin: _swipeDx, end: 0.0).animate(
       CurvedAnimation(parent: _resetController, curve: Curves.easeOutCubic),
     );
-    _resetController.forward(from: 0);
+    _resetController.forward(from: 0).whenComplete(() {
+      _swipeLocked = false;
+    });
   }
 
   void _openExpandedPlayer(BuildContext context) {
@@ -296,7 +325,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                         height: 36,
                         child: TapScale(
                           semanticLabel: audio.isPlaying ? context.read<LocaleProvider>().strings.a11yPause : context.read<LocaleProvider>().strings.a11yPlay,
-                          onTap: audio.togglePlay,
+                          onTap: audio.isBuffering ? null : audio.togglePlay,
                           scaleDown: 0.85,
                           child: Center(
                             child: audio.isBuffering

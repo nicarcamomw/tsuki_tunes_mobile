@@ -88,7 +88,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
   void _navigateToSource(BuildContext context, Track track) {
     if (track.albumId.isNotEmpty) {
-      Navigator.of(context).push(
+      Navigator.of(context).pop();
+      appNavigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => AlbumDetailScreen(
             album: Album(
@@ -102,7 +103,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         ),
       );
     } else if (track.artistId.isNotEmpty) {
-      Navigator.of(context).push(
+      Navigator.of(context).pop();
+      appNavigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => ArtistDetailScreen(
             artist: Artist(
@@ -127,6 +129,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
     final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
+    final playbackError = context.select<AudioProvider, String?>((a) => a.lastPlaybackError);
 
     if (track == null) {
       return PopScope(
@@ -330,8 +333,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             const SizedBox(height: 4),
                             GestureDetector(
                               onTap: () {
+                                HapticFeedback.lightImpact();
                                 if (track.artistId.isNotEmpty) {
-                                  Navigator.of(context).push(
+                                  Navigator.of(context).pop();
+                                  appNavigatorKey.currentState?.push(
                                     MaterialPageRoute(
                                       builder: (_) => ArtistDetailScreen(
                                         artist: Artist(
@@ -408,6 +413,26 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   ),
                 ),
 
+                if (playbackError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.error, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          _sanitizePlaybackError(playbackError, strings),
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 const SizedBox(height: 12),
 
                 // Controls
@@ -463,7 +488,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       // Play/Pause
                       TapScale(
                         semanticLabel: isPlaying ? strings.a11yPause : strings.a11yPlay,
-                        onTap: audio.togglePlay,
+                        onTap: isBuffering ? null : audio.togglePlay,
                         scaleDown: 0.88,
                         child: Container(
                           width: 68,
@@ -586,6 +611,19 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     ),
   );
 }
+
+  String _sanitizePlaybackError(String error, dynamic strings) {
+    switch (error) {
+      case 'no_preview_available':
+        return strings.playbackNoPreview;
+      case 'network_error':
+        return strings.playbackNetworkError;
+      case 'format_unsupported':
+        return strings.playbackFormatUnsupported;
+      default:
+        return strings.playbackError;
+    }
+  }
 
   Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
     final strings = locale.strings;
@@ -843,6 +881,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       label: strings.queueClearLabel,
                       child: GestureDetector(
                         onTap: () {
+                          HapticFeedback.mediumImpact();
                           final savedQueue = List<Track>.from(queue);
                           audio.clearQueue();
                           ScaffoldMessenger.of(context).clearSnackBars();
@@ -969,7 +1008,23 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             ),
                             child: const Icon(Icons.delete_outline, color: AppColors.accent, size: 20),
                           ),
-                          onDismissed: (_) => audio.removeFromQueue(i),
+                          onDismissed: (_) {
+                            audio.removeFromQueue(i);
+                            HapticFeedback.lightImpact();
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  strings.removedFromQueue,
+                                  style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                ),
+                                backgroundColor: AppColors.bgCard,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
                           child: Container(
                           margin: const EdgeInsets.symmetric(vertical: 3),
                           decoration: BoxDecoration(
@@ -1084,7 +1139,23 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                     button: true,
                                     label: strings.queueRemoveLabel,
                                     child: GestureDetector(
-                                      onTap: () => audio.removeFromQueue(i),
+                                      onTap: () {
+                                        audio.removeFromQueue(i);
+                                        HapticFeedback.lightImpact();
+                                        ScaffoldMessenger.of(context).clearSnackBars();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              strings.removedFromQueue,
+                                              style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                            ),
+                                            backgroundColor: AppColors.bgCard,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      },
                                       behavior: HitTestBehavior.opaque,
                                       child: const Padding(
                                         padding: EdgeInsets.all(6),
@@ -1300,6 +1371,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () {
+                HapticFeedback.lightImpact();
                 _lastLoadedTrackId = null;
                 _loadLyricsForTrack(track);
               },

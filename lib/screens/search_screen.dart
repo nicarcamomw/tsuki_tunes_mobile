@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
@@ -186,6 +187,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     final isSelected = _selectedTabIndex == index;
                     return GestureDetector(
                       onTap: () {
+                        HapticFeedback.lightImpact();
                         FocusScope.of(context).unfocus();
                         setState(() => _selectedTabIndex = index);
                       },
@@ -290,7 +292,45 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
               GestureDetector(
-                onTap: () => search.clearHistory(),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: AppColors.bgCard,
+                      title: Text(
+                        strings.clearHistory,
+                        style: locale.getTextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textBright,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            strings.cancel,
+                            style: locale.getTextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            search.clearHistory();
+                          },
+                          child: Text(
+                            strings.confirm,
+                            style: locale.getTextStyle(
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
                 child: Text(
                   strings.clearHistory,
                   style: locale.getTextStyle(
@@ -368,7 +408,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: () => search.retryLastSearch(),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              search.retryLastSearch();
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
@@ -410,6 +453,24 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Text(
             strings.noResultsFor(search.query),
             style: locale.getTextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    // Check if the selected tab's specific results are empty
+    final tabHasResults = showAll ||
+        (_selectedTabIndex == 1 && hasArtists) ||
+        (_selectedTabIndex == 2 && hasAlbums) ||
+        (_selectedTabIndex == 3 && hasTracks);
+
+    if (!tabHasResults) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            strings.noResults,
+            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
         ),
       );

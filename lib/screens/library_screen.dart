@@ -43,6 +43,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String _sortBy = 'recent';
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -78,6 +79,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
         duration: const Duration(milliseconds: 380),
         curve: Curves.easeOutCubic,
       );
+    }
+  }
+
+  Future<void> _refreshData() async {
+    final library = context.read<LibraryProvider>();
+    try {
+      await library.refreshData();
+      setState(() => _hasError = false);
+    } catch (_) {
+      setState(() => _hasError = true);
     }
   }
 
@@ -323,14 +334,51 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: RefreshIndicator(
                 color: AppColors.accent,
                 backgroundColor: AppColors.bgCard,
-                onRefresh: () => library.refreshData(),
+                onRefresh: _refreshData,
                 child: totalTracks == 0
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           SizedBox(
                             height: MediaQuery.of(context).size.height * 0.5,
-                            child: Center(
+                            child: _hasError
+                                ? Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            strings.searchError,
+                                            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 14),
+                                          GestureDetector(
+                                            onTap: () {
+                                              HapticFeedback.lightImpact();
+                                              _refreshData();
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.accent.withValues(alpha: 0.15),
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                                              ),
+                                              child: Text(
+                                                strings.retry,
+                                                style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: 1.5),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Center(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 28),
                                 child: Column(
@@ -359,6 +407,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     const SizedBox(height: 16),
                                     GestureDetector(
                                       onTap: () {
+                                        HapticFeedback.lightImpact();
                                         NavigationEvents.switchTab?.call(1);
                                       },
                                       child: Container(
@@ -457,7 +506,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final isSelected = _sortBy == value;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _sortBy = value),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _sortBy = value);
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
@@ -677,6 +729,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                     durationSeconds: trackData.duration,
                   );
                   audio.addToQueue(track);
+                  final hasTrack = context.read<AudioProvider>().currentTrack != null;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -686,6 +739,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       backgroundColor: AppColors.bgCard,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
                       duration: const Duration(seconds: 2),
                     ),
                   );

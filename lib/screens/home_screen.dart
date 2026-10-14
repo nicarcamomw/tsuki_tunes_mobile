@@ -863,7 +863,7 @@ class _HomeScreenState extends State<HomeScreen> {
       label: '${locale.strings.featured} $rank, ${artist.name}',
       child: InkWell(
       onTap: () {
-        Navigator.of(context).push(
+        appNavigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ArtistDetailScreen(artist: artist),
           ),

@@ -174,6 +174,18 @@ class AppStrings {
         AppLanguage.ja => '「$query」に一致する結果が見つかりませんでした',
       };
 
+  String get noResults => switch (language) {
+        AppLanguage.es => 'No se encontraron resultados',
+        AppLanguage.en => 'No results found',
+        AppLanguage.ja => '結果が見つかりませんでした',
+      };
+
+  String get confirm => switch (language) {
+        AppLanguage.es => 'CONFIRMAR',
+        AppLanguage.en => 'CONFIRM',
+        AppLanguage.ja => '確認',
+      };
+
   // --- Library Screen ---
   String get libraryTitle => switch (language) {
         AppLanguage.es => 'Mi Biblioteca',
@@ -867,6 +879,12 @@ class AppStrings {
         AppLanguage.es => 'Eliminar de la cola',
         AppLanguage.en => 'Remove from queue',
         AppLanguage.ja => 'キューから削除',
+      };
+
+  String get removedFromQueue => switch (language) {
+        AppLanguage.es => 'Eliminado de la cola',
+        AppLanguage.en => 'Removed from queue',
+        AppLanguage.ja => 'キューから削除しました',
       };
 
   String get lyricsFollowing => switch (language) {
