@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/locale_provider.dart';
 
@@ -39,7 +38,7 @@ class AlbumProgressBar extends StatelessWidget {
             ),
             Text(
               '$percentage%',
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: isCompleted ? AppColors.accent : AppColors.accent,

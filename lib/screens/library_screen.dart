@@ -157,7 +157,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           children: [
             // Page Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -356,6 +356,31 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                       style: locale.getTextStyle(
                                           fontSize: 12, color: AppColors.textMuted),
                                     ),
+                                    const SizedBox(height: 16),
+                                    GestureDetector(
+                                      onTap: () {
+                                        NavigationEvents.switchTab?.call(1);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: AppColors.accent.withValues(alpha: 0.6),
+                                          ),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          strings.homeEmptyAction,
+                                          style: locale.getTextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.accent,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -546,7 +571,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                             Flexible(
                               child: Text(
                                 group.artistName,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: locale.getTextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -654,8 +679,13 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                   audio.addToQueue(track);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(strings.addedToQueue),
+                      content: Text(
+                        strings.addedToQueue,
+                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                      ),
                       backgroundColor: AppColors.bgCard,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       duration: const Duration(seconds: 2),
                     ),
                   );
@@ -672,7 +702,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                           children: [
                             Text(
                               trackData.title,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: locale.getTextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: isCurrentTrack
@@ -684,7 +714,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                             ),
                             Text(
                               trackData.artistName,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: locale.getTextStyle(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                               ),
@@ -696,7 +726,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       ),
                       Text(
                         Formatters.formatSeconds(trackData.duration),
-                        style: GoogleFonts.plusJakartaSans(
+                        style: locale.getTextStyle(
                           fontSize: 10,
                           color: AppColors.textMuted,
                         ),

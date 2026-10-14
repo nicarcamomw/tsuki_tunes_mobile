@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/artist_fonts.dart';
+import '../providers/locale_provider.dart';
 
 class DistortedArtistName extends StatelessWidget {
   final String name;
@@ -21,6 +22,7 @@ class DistortedArtistName extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.read<LocaleProvider>();
     final customFont = ArtistFonts.getFontFamily(artistId, name);
 
     if (customFont == null) {
@@ -28,7 +30,7 @@ class DistortedArtistName extends StatelessWidget {
       return Text(
         displayName,
         textAlign: textAlign,
-        style: GoogleFonts.plusJakartaSans(
+        style: locale.getTextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.w900,
           color: AppColors.textBright,

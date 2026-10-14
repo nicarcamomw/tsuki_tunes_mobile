@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
@@ -219,8 +218,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           backgroundColor: AppColors.bgDeep,
           title: Text(
             widget.artistName,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
+            style: locale.getTextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.textBright,
             ),

@@ -172,7 +172,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                           ),
                           child: Text(
                             lang.tag,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
                               color: isSelected
@@ -191,7 +191,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                             children: [
                               Text(
                                 lang.label,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: locale.getTextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
@@ -210,7 +210,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                                             ? AppColors.accent
                                             : AppColors.textSecondary,
                                       )
-                                    : GoogleFonts.plusJakartaSans(
+                                    : locale.getTextStyle(
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected
@@ -257,7 +257,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                                 const SizedBox(width: 5),
                                 Text(
                                   strings.activeStatus,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: locale.getTextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.accent,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/locale_provider.dart';
 import '../screens/login_screen.dart';
@@ -27,7 +26,7 @@ class GuestLibraryGate extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               strings.guestLibraryTitle,
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textBright,
@@ -38,7 +37,7 @@ class GuestLibraryGate extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               strings.guestLibraryDesc,
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -61,12 +60,12 @@ class GuestLibraryGate extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
                 child: Text(
                   strings.guestLoginAction,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: locale.getTextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.8,

@@ -164,23 +164,26 @@ class _LoginScreenState extends State<LoginScreen>
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.flash_off_rounded, color: Colors.white, size: 18),
-                  const SizedBox(width: 10),
+                  const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       msg,
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.textBright,
                       ),
                     ),
                   ),
                 ],
               ),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.bgCard,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+                side: const BorderSide(color: AppColors.error, width: 1.2),
+              ),
             ),
           );
         }
@@ -319,6 +322,40 @@ class _LoginScreenState extends State<LoginScreen>
                     strings: strings,
                   ),
 
+                  const SizedBox(height: 14),
+
+                  // Guest Explore Button (secondary, visible)
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _handleGuestExplore,
+                      borderRadius: BorderRadius.circular(24),
+                      splashColor: AppColors.accent.withValues(alpha: 0.2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: AppColors.accent.withValues(alpha: 0.35),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          strings.loginGuestExplore,
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const Spacer(flex: 2),
 
                   // Company Brand Footer (Isolated RepaintBoundary)
@@ -416,50 +453,6 @@ class _LoginScreenState extends State<LoginScreen>
             ],
           ),
 
-          // Right: Action Chip to Explore Catalog as Guest
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _handleGuestExplore,
-              borderRadius: BorderRadius.circular(20),
-              splashColor: AppColors.accent.withValues(alpha: 0.25),
-              highlightColor: AppColors.accent.withValues(alpha: 0.12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4.5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.45),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      strings.loginGuestExplore,
-                      style: locale.getTextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.accent,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 13,
-                      color: AppColors.accent,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -470,7 +463,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const _FooterDot(color: Color(0xFF00D4FF)),
+        const _FooterDot(color: AppColors.neonCyan),
         const SizedBox(width: 8),
 
         ShaderMask(
@@ -481,10 +474,10 @@ class _LoginScreenState extends State<LoginScreen>
               begin: Alignment(-1.1 + shift, 0.0),
               end: Alignment(1.1 + shift, 0.0),
               colors: const [
-                Color(0xFF00D4FF),
+                AppColors.neonCyan,
                 Color(0xFF0099FF),
                 Color(0xFFFF2B40),
-                Color(0xFFFF1919),
+                AppColors.accent,
               ],
               stops: const [0.0, 0.35, 0.70, 1.0],
             ).createShader(bounds);
@@ -501,7 +494,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(width: 8),
 
-        const _FooterDot(color: Color(0xFFFF1919)),
+        const _FooterDot(color: AppColors.accent),
       ],
     );
   }
@@ -1176,7 +1169,7 @@ class _CyberParticlesPainter extends CustomPainter {
       final finalAlpha = (p.maxOpacity * edgeFade * flicker).clamp(0.0, 1.0);
 
       final color = p.isCrimson
-          ? const Color(0xFFFF1919).withValues(alpha: finalAlpha)
+          ? AppColors.accent.withValues(alpha: finalAlpha)
           : const Color(0xFFFF3344).withValues(alpha: finalAlpha * 0.9);
 
       final pos = Offset(px, py);
@@ -1417,7 +1410,7 @@ class _ButtonShockwaveRipplePainter extends CustomPainter {
 
       if (ringAlpha > 0.05) {
         _ringPaint
-          ..color = const Color(0xFFFF1919).withValues(alpha: ringAlpha * 0.3)
+          ..color = AppColors.accent.withValues(alpha: ringAlpha * 0.3)
           ..strokeWidth = thickness + 3.0;
         canvas.drawCircle(epicenter, radius, _ringPaint);
       }

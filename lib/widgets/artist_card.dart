@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
@@ -45,12 +44,12 @@ class ArtistCard extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.accent, width: 1.5),
+                border: Border.all(color: AppColors.border, width: 1),
                 boxShadow: const [
                   BoxShadow(
                     color: AppColors.accentDim,
-                    blurRadius: 10,
-                    spreadRadius: 1,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
@@ -76,7 +75,7 @@ class ArtistCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               artist.name,
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,

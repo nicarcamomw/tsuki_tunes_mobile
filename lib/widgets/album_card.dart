@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../providers/locale_provider.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../screens/album_detail_screen.dart';
@@ -19,6 +20,8 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.read<LocaleProvider>();
+
     return TapScale(
       semanticLabel: '${album.title}, ${album.artistName}',
       onTap: () {
@@ -73,7 +76,7 @@ class AlbumCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               album.title,
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -83,7 +86,7 @@ class AlbumCard extends StatelessWidget {
             ),
             Text(
               album.artistName,
-              style: GoogleFonts.plusJakartaSans(
+              style: locale.getTextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),

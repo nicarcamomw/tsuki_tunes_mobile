@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants/app_colors.dart';
@@ -167,12 +166,12 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             title: Text(
               strings.albumDetailsTitle,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.accent,
-                letterSpacing: 2,
+                color: AppColors.textBright,
               ),
             ),
+            centerTitle: true,
             actions: [
               if (albumData.link != null || audio.useSpotify)
                 IconButton(
@@ -269,7 +268,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ),
                     child: Text(
                       typeLabel.toUpperCase(),
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
@@ -283,7 +282,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   // Title
                   Text(
                     albumData.title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: locale.getTextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
@@ -311,7 +310,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     },
                     child: Text(
                       albumData.artistName,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                         fontSize: 14,
                         color: AppColors.accent,
                         fontWeight: FontWeight.w600,
@@ -477,7 +476,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textMuted),
+                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
                       const SizedBox(height: 10),
                       Text(
                         strings.searchError,

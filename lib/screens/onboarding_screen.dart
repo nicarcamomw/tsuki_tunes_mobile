@@ -41,6 +41,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   ];
   late final String _selectedVinylMask;
 
+  bool _reduceMotion = false;
+  bool _tickerConfigured = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +58,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         _timeNotifier.value = elapsed.inMicroseconds / 1000000.0;
       }
     });
-    _ticker.start();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_tickerConfigured) {
+      _reduceMotion = MediaQuery.of(context).disableAnimations;
+      if (!_reduceMotion) {
+        _ticker.start();
+      }
+      _tickerConfigured = true;
+    }
   }
 
   @override
@@ -441,6 +455,199 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ],
           ),
           const SizedBox(height: 16),
+
+          // OniMask System Explanation
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.bgCard.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.3),
+                width: 0.8,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Not listened state
+                    Column(
+                      children: [
+                        Image.asset(
+                          'assets/images/tengu.png',
+                          width: 26,
+                          height: 26,
+                          fit: BoxFit.contain,
+                          color: AppColors.textMuted.withValues(alpha: 0.4),
+                          colorBlendMode: BlendMode.srcIn,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          strings.onboardingOniMaskNotListened,
+                          style: locale.getTextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textMuted,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: AppColors.accent.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    // Listened state
+                    Column(
+                      children: [
+                        Image.asset(
+                          'assets/images/tengu.png',
+                          width: 26,
+                          height: 26,
+                          fit: BoxFit.contain,
+                          color: AppColors.accent,
+                          colorBlendMode: BlendMode.srcIn,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          strings.onboardingOniMaskListened,
+                          style: locale.getTextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  strings.onboardingOniMaskHint,
+                  style: locale.getTextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Album Grayscale-to-Color Progress Explanation
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.bgCard.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.3),
+                width: 0.8,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Grayscale album (0%)
+                    Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            color: AppColors.bgMid,
+                            border: Border.all(
+                              color: AppColors.textMuted.withValues(alpha: 0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.album_rounded,
+                            size: 22,
+                            color: AppColors.textMuted.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          strings.onboardingAlbumProgress0,
+                          style: locale.getTextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textMuted,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: AppColors.accent.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    // Full color album (100%)
+                    Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            gradient: const LinearGradient(
+                              colors: [AppColors.accent, Color(0xFF8B0000)],
+                            ),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.5),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.album_rounded,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          strings.onboardingAlbumProgress100,
+                          style: locale.getTextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  strings.onboardingAlbumProgressHint,
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -716,10 +923,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF00D4FF).withValues(alpha: 0.12),
+              color: AppColors.neonCyan.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: const Color(0xFF00D4FF).withValues(alpha: 0.4),
+                color: AppColors.neonCyan.withValues(alpha: 0.4),
                 width: 0.8,
               ),
             ),
@@ -728,7 +935,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               style: locale.getTextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF00D4FF),
+                color: AppColors.neonCyan,
                 letterSpacing: 1.6,
               ),
             ),
@@ -747,7 +954,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               letterSpacing: 1.8,
               shadows: [
                 BoxShadow(
-                  color: const Color(0xFF00D4FF).withValues(alpha: 0.35),
+                  color: AppColors.neonCyan.withValues(alpha: 0.35),
                   blurRadius: 16,
                 ),
               ],
@@ -819,9 +1026,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00D4FF)
+                    AppColors.neonCyan
                         .withValues(alpha: 0.20 + 0.08 * pulse),
-                    const Color(0xFF00D4FF).withValues(alpha: 0.04),
+                    AppColors.neonCyan.withValues(alpha: 0.04),
                     Colors.transparent,
                   ],
                 ),
@@ -839,12 +1046,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   color: AppColors.bgCard.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF00D4FF).withValues(alpha: 0.6),
+                    color: AppColors.neonCyan.withValues(alpha: 0.6),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF00D4FF).withValues(alpha: 0.25),
+                      color: AppColors.neonCyan.withValues(alpha: 0.25),
                       blurRadius: 14,
                       offset: const Offset(0, 2),
                     ),
@@ -855,7 +1062,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     const Icon(
                       Icons.search_rounded,
                       size: 16,
-                      color: Color(0xFF00D4FF),
+                      color: AppColors.neonCyan,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -874,7 +1081,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00D4FF).withValues(alpha: 0.15),
+                        color: AppColors.neonCyan.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -882,7 +1089,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 7.5,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF00D4FF),
+                          color: AppColors.neonCyan,
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -924,7 +1131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFFF1919), Color(0xFF8B0000)],
+                            colors: [AppColors.accent, Color(0xFF8B0000)],
                           ),
                         ),
                         child: const Icon(Icons.music_note,
@@ -981,7 +1188,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     color: AppColors.bgCard.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF00D4FF).withValues(alpha: 0.45),
+                      color: AppColors.neonCyan.withValues(alpha: 0.45),
                       width: 1.0,
                     ),
                     boxShadow: [
@@ -1000,7 +1207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF00D4FF), Color(0xFF0055AA)],
+                            colors: [AppColors.neonCyan, Color(0xFF0055AA)],
                           ),
                         ),
                         child: const Icon(Icons.graphic_eq_rounded,
@@ -1035,7 +1242,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ),
                       const Icon(
                         Icons.play_circle_fill_rounded,
-                        color: Color(0xFF00D4FF),
+                        color: AppColors.neonCyan,
                         size: 22,
                       ),
                     ],
@@ -1192,7 +1399,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             AppColors.accent,
                             i % 2 == 0
                                 ? const Color(0xFFFF2B40)
-                                : const Color(0xFF00D4FF),
+                                : AppColors.neonCyan,
                           ],
                         ),
                         boxShadow: [
@@ -1269,7 +1476,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             height: 4,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF00D4FF), AppColors.accent],
+                                colors: [AppColors.neonCyan, AppColors.accent],
                               ),
                               borderRadius: BorderRadius.circular(2),
                               boxShadow: [

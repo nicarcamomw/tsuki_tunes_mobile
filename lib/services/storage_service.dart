@@ -204,6 +204,11 @@ class StorageService implements StorageContract {
     await prefs.setString(_languageKey, code);
   }
 
+  Future<bool> hasExplicitLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_languageKey);
+  }
+
   // --- Crossfade Persistence ---
   static const String _crossfadeKey = 'tsuki_crossfade_seconds';
 

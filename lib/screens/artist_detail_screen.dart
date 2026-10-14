@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
@@ -211,8 +210,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               duration: const Duration(milliseconds: 200),
               child: Text(
                 widget.artist.name,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
+                style: locale.getTextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                 ),
@@ -461,7 +460,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           ),
                           child: Text(
                             tag.toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.0,
@@ -509,7 +508,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.textMuted),
+                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
                       const SizedBox(height: 10),
                       Text(
                         strings.searchError,
@@ -648,7 +647,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           if (!_isLoading && _albums.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                 child: Text.rich(
                   TextSpan(
                     children: [
@@ -719,7 +718,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

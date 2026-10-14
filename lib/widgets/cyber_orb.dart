@@ -292,7 +292,7 @@ class _CrimsonOrbFluidPainter extends CustomPainter {
       canvas: canvas, center: center,
       baseRadius: radius * 0.64, waveAmp: 0.22, waveFreq: 3,
       rotAngle: time * 0.45, tilt: 0.60, thickness: radius * 0.46,
-      colors: const [Color(0xFFFF1919), Color(0xFFFF3B30), Color(0xFFB8001F)],
+      colors: const [AppColors.accent, Color(0xFFFF3B30), Color(0xFFB8001F)],
       blurSigma: 14,
     );
 
@@ -308,7 +308,7 @@ class _CrimsonOrbFluidPainter extends CustomPainter {
       canvas: canvas, center: center,
       baseRadius: radius * 0.68, waveAmp: 0.15, waveFreq: 4,
       rotAngle: time * 0.60 + pi * 1.2, tilt: 1.15, thickness: radius * 0.28,
-      colors: [const Color(0xFFFF6666), const Color(0xFFFF1919), const Color(0xFFFF1919).withValues(alpha: 0.2)],
+      colors: [const Color(0xFFFF6666), AppColors.accent, AppColors.accent.withValues(alpha: 0.2)],
       blurSigma: 8,
     );
 
@@ -317,7 +317,7 @@ class _CrimsonOrbFluidPainter extends CustomPainter {
       colors: [
         Colors.white.withValues(alpha: 0.85 + 0.15 * corePulse),
         const Color(0xFFFF3355).withValues(alpha: 0.70),
-        const Color(0xFFFF1919).withValues(alpha: 0.30),
+        AppColors.accent.withValues(alpha: 0.30),
         Colors.transparent,
       ],
       stops: const [0.0, 0.25, 0.55, 1.0],
@@ -451,7 +451,7 @@ class _OrbGlassReflectionPainter extends CustomPainter {
         begin: Alignment.bottomRight,
         end: Alignment.topLeft,
         colors: [
-          const Color(0xFFFF1919).withValues(alpha: 0.55),
+          AppColors.accent.withValues(alpha: 0.55),
           const Color(0xFFFF4D00).withValues(alpha: 0.30),
           Colors.transparent,
         ],

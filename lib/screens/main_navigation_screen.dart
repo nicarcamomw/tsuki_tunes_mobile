@@ -125,10 +125,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     if (lower.contains('open_app') || lower.contains('abre la app')) {
       return strings.spotifyOpenAppPrompt;
     }
-    if (raw.length > 80) {
-      return '${strings.audioStatusPrefix} ${raw.substring(0, 77)}...';
-    }
-    return raw;
+    return strings.playbackError;
   }
 
   String _sanitizePlaybackError(String error, AppStrings strings, {bool isOnline = true}) {
@@ -168,7 +165,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppColors.accent, size: 18),
+                  const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -191,10 +188,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
-                side: BorderSide(
-                  color: AppColors.accent.withValues(alpha: 0.8),
-                  width: 1.2,
-                ),
               ),
               duration: const Duration(seconds: 4),
             ),
@@ -219,7 +212,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         : (playbackError == 'no_preview_available'
                             ? Icons.music_off_rounded
                             : Icons.error_outline),
-                    color: Colors.redAccent,
+                    color: AppColors.error,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -245,7 +238,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
                 side: const BorderSide(
-                  color: Colors.redAccent,
+                  color: AppColors.error,
                   width: 1.2,
                 ),
               ),
@@ -346,7 +339,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 6),
-                          color: Colors.redAccent.withValues(alpha: 0.9),
+                          color: AppColors.error.withValues(alpha: 0.9),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/localization/app_language.dart';
@@ -22,13 +23,25 @@ class LocaleProvider extends ChangeNotifier {
     if (_isInitialized) return;
     try {
       final code = await storage.getAppLanguage();
-      _currentLanguage = AppLanguage.fromCode(code);
+      if (code == 'es' && !(await storage.hasExplicitLanguage())) {
+        _currentLanguage = _detectDeviceLanguage();
+      } else {
+        _currentLanguage = AppLanguage.fromCode(code);
+      }
     } catch (_) {
-      _currentLanguage = AppLanguage.es;
+      _currentLanguage = _detectDeviceLanguage();
     } finally {
       _isInitialized = true;
       notifyListeners();
     }
+  }
+
+  AppLanguage _detectDeviceLanguage() {
+    final locale = PlatformDispatcher.instance.locale;
+    final code = locale.languageCode.toLowerCase();
+    if (code == 'en') return AppLanguage.en;
+    if (code == 'ja') return AppLanguage.ja;
+    return AppLanguage.es;
   }
 
   Future<void> setLanguage(AppLanguage language, StorageService storage) async {

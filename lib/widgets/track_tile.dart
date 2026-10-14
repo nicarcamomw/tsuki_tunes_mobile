@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
@@ -39,6 +38,7 @@ class TrackTile extends StatelessWidget {
     final currentTrackId = context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
     final isAudioPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
     final isListened = context.select<LibraryProvider, bool>((l) => l.isTrackListened(track.id));
+    final locale = context.read<LocaleProvider>();
     final isCurrent = currentTrackId == track.id;
     final isPlaying = isCurrent && isAudioPlaying;
 
@@ -101,7 +101,7 @@ class TrackTile extends StatelessWidget {
                   width: 24,
                   child: Text(
                     (index! + 1).toString().padLeft(2, '0'),
-                    style: GoogleFonts.plusJakartaSans(
+                    style: locale.getTextStyle(
                       fontSize: 11,
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
@@ -147,7 +147,7 @@ class TrackTile extends StatelessWidget {
                   children: [
                     Text(
                       track.title,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color:
@@ -170,7 +170,7 @@ class TrackTile extends StatelessWidget {
                             ),
                             child: Text(
                               'E',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: locale.getTextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textSecondary,
@@ -181,7 +181,7 @@ class TrackTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             track.fullArtistName,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
@@ -198,7 +198,7 @@ class TrackTile extends StatelessWidget {
               // Duration
               Text(
                 Formatters.formatSeconds(track.durationSeconds),
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 11,
                   color: AppColors.textMuted,
                 ),
@@ -251,7 +251,7 @@ class TrackTile extends StatelessWidget {
       context: context,
       backgroundColor: AppColors.bgCard,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -281,7 +281,7 @@ class TrackTile extends StatelessWidget {
                       children: [
                         Text(
                           track.title,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: locale.getTextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textBright,
@@ -291,7 +291,7 @@ class TrackTile extends StatelessWidget {
                         ),
                         Text(
                           track.fullArtistName,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: locale.getTextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -319,9 +319,13 @@ class TrackTile extends StatelessWidget {
                 context.read<AudioProvider>().addToQueue(track);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(strings.addedPlayNext),
+                    content: Text(
+                      strings.addedPlayNext,
+                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                    ),
                     backgroundColor: AppColors.bgCard,
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     duration: const Duration(seconds: 2),
                   ),
                 );
@@ -341,9 +345,13 @@ class TrackTile extends StatelessWidget {
                 context.read<AudioProvider>().addToQueue(track);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(strings.addedToQueue),
+                    content: Text(
+                      strings.addedToQueue,
+                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                    ),
                     backgroundColor: AppColors.bgCard,
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     duration: const Duration(seconds: 2),
                   ),
                 );

@@ -285,6 +285,18 @@ class AppStrings {
         AppLanguage.ja => 'オフ',
       };
 
+  String get crossfadeDJ => switch (language) {
+        AppLanguage.es => 'DJ',
+        AppLanguage.en => 'DJ',
+        AppLanguage.ja => 'DJ',
+      };
+
+  String get crossfadeMax => switch (language) {
+        AppLanguage.es => 'Máx',
+        AppLanguage.en => 'Max',
+        AppLanguage.ja => '最大',
+      };
+
   String crossfadeSecondsLabel(int seconds) => switch (language) {
         AppLanguage.es => '$seconds seg',
         AppLanguage.en => '${seconds}s',
@@ -304,9 +316,9 @@ class AppStrings {
       };
 
   String get languageSelectorSubtitle => switch (language) {
-        AppLanguage.es => 'SELECCIONA EL PROTOCOLO DE IDIOMA Y HUD',
-        AppLanguage.en => 'SELECT LANGUAGE AND HUD PROTOCOL',
-        AppLanguage.ja => '言語およびHUD表示形式の選択',
+        AppLanguage.es => 'CAMBIA EL IDIOMA DE LA INTERFAZ',
+        AppLanguage.en => 'CHANGE THE INTERFACE LANGUAGE',
+        AppLanguage.ja => 'インターフェースの言語を変更',
       };
 
   String languageCardSubtitle(AppLanguage targetLang) => switch (targetLang) {
@@ -914,11 +926,6 @@ class AppStrings {
         AppLanguage.ja => 'スワイプで削除',
       };
 
-  String get longPressForOptions => switch (language) {
-        AppLanguage.es => 'Mantén presionado para opciones',
-        AppLanguage.en => 'Long press for options',
-        AppLanguage.ja => '長押しでオプション',
-      };
 
   // Listened toggle tooltip
   String get markAsListened => switch (language) {
@@ -1006,6 +1013,42 @@ class AppStrings {
         AppLanguage.es => 'COLECCIÓN POR ÁLBUMES',
         AppLanguage.en => 'ALBUM COLLECTION',
         AppLanguage.ja => 'アルバム分類',
+      };
+
+  String get onboardingOniMaskHint => switch (language) {
+        AppLanguage.es => 'Toca la máscara para marcar como escuchado',
+        AppLanguage.en => 'Tap the mask to mark as listened',
+        AppLanguage.ja => 'マスクをタップして既聴にする',
+      };
+
+  String get onboardingOniMaskNotListened => switch (language) {
+        AppLanguage.es => 'SIN ESCUCHAR',
+        AppLanguage.en => 'NOT LISTENED',
+        AppLanguage.ja => '未聴',
+      };
+
+  String get onboardingOniMaskListened => switch (language) {
+        AppLanguage.es => 'ESCUCHADO',
+        AppLanguage.en => 'LISTENED',
+        AppLanguage.ja => '既聴',
+      };
+
+  String get onboardingAlbumProgressHint => switch (language) {
+        AppLanguage.es => 'Las portadas ganan color a medida que escuchas más canciones del álbum',
+        AppLanguage.en => 'Covers gain color as you listen to more songs from the album',
+        AppLanguage.ja => 'アルバムの曲を聴くほどカバーに色がつきます',
+      };
+
+  String get onboardingAlbumProgress0 => switch (language) {
+        AppLanguage.es => '0%',
+        AppLanguage.en => '0%',
+        AppLanguage.ja => '0%',
+      };
+
+  String get onboardingAlbumProgress100 => switch (language) {
+        AppLanguage.es => '100%',
+        AppLanguage.en => '100%',
+        AppLanguage.ja => '100%',
       };
 
   String get onboardingSlide2Badge => switch (language) {
@@ -1299,5 +1342,60 @@ class AppStrings {
         AppLanguage.es => 'ÚLTIMA CANCIÓN',
         AppLanguage.en => 'LAST TRACK',
         AppLanguage.ja => 'ラストトラック',
+      };
+
+  // --- Accessibility Semantic Labels ---
+  String get a11yPlay => switch (language) {
+        AppLanguage.es => 'Reproducir',
+        AppLanguage.en => 'Play',
+        AppLanguage.ja => '再生',
+      };
+
+  String get a11yPause => switch (language) {
+        AppLanguage.es => 'Pausar',
+        AppLanguage.en => 'Pause',
+        AppLanguage.ja => '一時停止',
+      };
+
+  String get a11yStop => switch (language) {
+        AppLanguage.es => 'Detener reproducción',
+        AppLanguage.en => 'Stop playback',
+        AppLanguage.ja => '再生を停止',
+      };
+
+  String get a11yPrevious => switch (language) {
+        AppLanguage.es => 'Pista anterior',
+        AppLanguage.en => 'Previous track',
+        AppLanguage.ja => '前のトラック',
+      };
+
+  String get a11yNext => switch (language) {
+        AppLanguage.es => 'Siguiente pista',
+        AppLanguage.en => 'Next track',
+        AppLanguage.ja => '次のトラック',
+      };
+
+  String get a11yShuffleOn => switch (language) {
+        AppLanguage.es => 'Aleatorio activado',
+        AppLanguage.en => 'Shuffle on',
+        AppLanguage.ja => 'シャッフルオン',
+      };
+
+  String get a11yShuffleOff => switch (language) {
+        AppLanguage.es => 'Aleatorio desactivado',
+        AppLanguage.en => 'Shuffle off',
+        AppLanguage.ja => 'シャッフルオフ',
+      };
+
+  String get a11yMarkListened => switch (language) {
+        AppLanguage.es => 'Marcar como escuchado',
+        AppLanguage.en => 'Mark track as listened',
+        AppLanguage.ja => '既聴としてマーク',
+      };
+
+  String get a11yUnmarkListened => switch (language) {
+        AppLanguage.es => 'Desmarcar como escuchado',
+        AppLanguage.en => 'Unmark track',
+        AppLanguage.ja => '既聴マークを外す',
       };
 }

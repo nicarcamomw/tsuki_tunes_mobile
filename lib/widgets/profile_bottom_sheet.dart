@@ -184,8 +184,13 @@ class ProfileBottomSheet {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(strings.spotifySyncSuccess),
-                                      backgroundColor: AppColors.accent,
+                                      content: Text(
+                                        strings.spotifySyncSuccess,
+                                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                      ),
+                                      backgroundColor: AppColors.bgCard,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                     ),
                                   );
                                 }
@@ -204,9 +209,11 @@ class ProfileBottomSheet {
                                     SnackBar(
                                       content: Text(
                                         msg,
-                                        style: locale.getTextStyle(fontSize: 12, color: Colors.white),
+                                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
                                       ),
-                                      backgroundColor: AppColors.accent,
+                                      backgroundColor: AppColors.bgCard,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                     ),
                                   );
                                 }
@@ -217,8 +224,24 @@ class ProfileBottomSheet {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('${strings.errorPrefix}: $e'),
-                                    backgroundColor: AppColors.accent,
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '${strings.errorPrefix}: $e',
+                                            style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.bgCard,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                      side: const BorderSide(color: AppColors.error, width: 1.2),
+                                    ),
                                   ),
                                 );
                               }
@@ -405,7 +428,7 @@ class ProfileBottomSheet {
                               ),
                             ),
                             Text(
-                              '3s (DJ)',
+                              '3s (${strings.crossfadeDJ})',
                               style: locale.getTextStyle(
                                 fontSize: 9,
                                 color: audioProvider.crossfadeSeconds == 3
@@ -417,7 +440,7 @@ class ProfileBottomSheet {
                               ),
                             ),
                             Text(
-                              '12s (Max)',
+                              '12s (${strings.crossfadeMax})',
                               style: locale.getTextStyle(
                                 fontSize: 9,
                                 color: AppColors.textMuted,

@@ -90,7 +90,7 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -282,7 +282,7 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               Text(
                 strings.recentSearches,
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textMuted,
@@ -293,7 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 onTap: () => search.clearHistory(),
                 child: Text(
                   strings.clearHistory,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: locale.getTextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
@@ -330,7 +330,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         Expanded(
                           child: Text(
                             q,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 13,
                               color: AppColors.textPrimary,
                             ),

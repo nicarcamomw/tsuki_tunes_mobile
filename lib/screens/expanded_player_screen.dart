@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
@@ -227,7 +226,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         : (track.artistName.isNotEmpty
                                             ? track.artistName
                                             : 'DEEZER PREVIEW'),
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: locale.getTextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.accent,
@@ -319,7 +318,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           children: [
                             Text(
                               track.title,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: locale.getTextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textBright,
@@ -350,7 +349,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                 padding: const EdgeInsets.symmetric(vertical: 2),
                                 child: Text(
                                   track.fullArtistName,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: locale.getTextStyle(
                                     fontSize: 14,
                                     color: AppColors.textSecondary,
                                   ),
@@ -363,7 +362,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         ),
                       ),
                       TapScale(
-                        semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
+                        semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
                         onTap: () {
                           if (isListened) {
                             library.unmarkTrack(track.id);
@@ -401,7 +400,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       thumbColor: AppColors.accent,
                       thumbGlowColor: AppColors.accentGlow,
                       thumbRadius: 7.0,
-                      timeLabelTextStyle: GoogleFonts.plusJakartaSans(
+                      timeLabelTextStyle: locale.getTextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -419,7 +418,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     children: [
                       // Shuffle
                       TapScale(
-                        semanticLabel: isShuffle ? 'Shuffle on' : 'Shuffle off',
+                        semanticLabel: isShuffle ? strings.a11yShuffleOn : strings.a11yShuffleOff,
                         onTap: audio.toggleShuffle,
                         scaleDown: 0.8,
                         child: Padding(
@@ -451,7 +450,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Previous
                       TapScale(
-                        semanticLabel: 'Previous track',
+                        semanticLabel: strings.a11yPrevious,
                         onTap: audio.previous,
                         scaleDown: 0.85,
                         child: const Padding(
@@ -463,7 +462,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Play/Pause
                       TapScale(
-                        semanticLabel: isPlaying ? 'Pause' : 'Play',
+                        semanticLabel: isPlaying ? strings.a11yPause : strings.a11yPlay,
                         onTap: audio.togglePlay,
                         scaleDown: 0.88,
                         child: Container(
@@ -505,7 +504,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                       // Next
                       TapScale(
-                        semanticLabel: 'Next track',
+                        semanticLabel: strings.a11yNext,
                         onTap: audio.next,
                         scaleDown: 0.85,
                         child: const Padding(
@@ -567,7 +566,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       const SizedBox(width: 40),
                       Text(
                         useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: locale.getTextStyle(
                           fontSize: 9,
                           color: AppColors.accent,
                           letterSpacing: 2,
@@ -623,7 +622,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               const SizedBox(width: 4),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
@@ -634,7 +633,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               const SizedBox(width: 4),
               Text(
                 strings.sleepTimerEndOfTrackShort,
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
@@ -804,7 +803,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         Flexible(
                           child: Text(
                             strings.queueUpNext,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,
@@ -827,7 +826,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           ),
                           child: Text(
                             '${queue.length}',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
@@ -851,13 +850,15 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             SnackBar(
                               content: Text(
                                 strings.queueClearLabel,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
+                                style: locale.getTextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                   color: AppColors.textBright,
                                 ),
                               ),
                               backgroundColor: AppColors.bgCard,
                               behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                               duration: const Duration(seconds: 4),
                               action: SnackBarAction(
                                 label: strings.undo,
@@ -887,7 +888,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               const SizedBox(width: 4),
                               Text(
                                 strings.queueClear,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: locale.getTextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textMuted,
@@ -908,11 +909,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Text(
                   strings.swipeToRemoveHint,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: locale.getTextStyle(
                     fontSize: 9,
                     color: AppColors.textMuted.withValues(alpha: 0.5),
-                    fontStyle: FontStyle.italic,
-                  ),
+                  ).copyWith(fontStyle: FontStyle.italic),
                 ),
               ),
             Expanded(
@@ -927,7 +927,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           const SizedBox(height: 10),
                           Text(
                             strings.queueEmpty,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textMuted,
@@ -937,7 +937,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           const SizedBox(height: 4),
                           Text(
                             strings.queueEmptySubtitle,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 11,
                               color: AppColors.textSecondary,
                             ),
@@ -1003,7 +1003,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                             color: AppColors.accent, size: 16)
                                         : Text(
                                             (i + 1).toString().padLeft(2, '0'),
-                                            style: GoogleFonts.plusJakartaSans(
+                                            style: locale.getTextStyle(
                                               color: AppColors.textMuted,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
@@ -1055,7 +1055,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       children: [
                                         Text(
                                           t.title,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: locale.getTextStyle(
                                             color: isCur
                                                 ? AppColors.accent
                                                 : AppColors.textBright,
@@ -1070,7 +1070,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         const SizedBox(height: 2),
                                         Text(
                                           t.fullArtistName,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: locale.getTextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 10.5,
                                           ),
@@ -1199,7 +1199,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         Flexible(
                           child: Text(
                             locale.strings.lyrics,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: locale.getTextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,
@@ -1225,7 +1225,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       ),
                       child: Text(
                         locale.strings.syncedTapToSeek,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: locale.getTextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accent,
@@ -1317,7 +1317,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     const SizedBox(width: 6),
                     Text(
                       strings.lyricsRetry,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accent,
@@ -1424,7 +1424,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     child: Text(
                       line.text,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: locale.getTextStyle(
                         fontSize: isActive ? 17 : 13,
                         fontWeight:
                             isActive ? FontWeight.w800 : FontWeight.w500,
@@ -1483,7 +1483,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         const SizedBox(width: 6),
                         Text(
                           strings.lyricsFollowing,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: locale.getTextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppColors.accent,
@@ -1505,7 +1505,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       child: Text(
         _lyrics!.plainLyrics,
         textAlign: TextAlign.center,
-        style: GoogleFonts.plusJakartaSans(
+        style: locale.getTextStyle(
           fontSize: 13,
           height: 1.8,
           color: AppColors.textPrimary.withValues(alpha: 0.8),

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -255,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -342,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       badgeText,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: locale.getTextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
                                         color: badgeColor,
@@ -356,23 +357,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           if (auth.isLoggedIn) ...[
                             const SizedBox(width: 8),
-                            Semantics(
-                              button: true,
+                            _GearProfileButton(
+                              auth: auth,
                               label: strings.profileTitle,
-                              child: GestureDetector(
-                              onTap: () => ProfileBottomSheet.show(context, auth),
-                              child: CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppColors.bgCard,
-                                backgroundImage: auth.user?.photoURL != null
-                                    ? NetworkImage(auth.user!.photoURL!)
-                                    : null,
-                                child: auth.user?.photoURL == null
-                                    ? const Icon(Icons.person,
-                                        size: 16, color: AppColors.accent)
-                                    : null,
-                              ),
-                            ),
                             ),
                           ],
                         ],
@@ -726,7 +713,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatCard(String label, String value, String meta,
-      {bool isTextValue = false, LocaleProvider? locale}) {
+      {bool isTextValue = false, required LocaleProvider locale}) {
     return Semantics(
       label: '$label: $value, $meta',
       child: Container(
@@ -743,59 +730,38 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             label,
-            style: locale?.getTextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1,
-                ) ??
-                GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1,
-                ),
+            style: locale.getTextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+              letterSpacing: 1,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
             style: isTextValue
-                ? (locale?.getTextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                    ) ??
-                    GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                    ))
-                : (locale?.getTextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.accent,
-                    ) ??
-                    GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.accent,
-                    )),
+                ? locale.getTextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
+                  )
+                : locale.getTextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.accent,
+                  ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             meta,
-            style: locale?.getTextStyle(
-                  fontSize: 9,
-                  color: AppColors.textMuted,
-                  letterSpacing: 0.8,
-                ) ??
-                GoogleFonts.plusJakartaSans(
-                  fontSize: 9,
-                  color: AppColors.textMuted,
-                  letterSpacing: 0.8,
-                ),
+            style: locale.getTextStyle(
+              fontSize: 9,
+              color: AppColors.textMuted,
+              letterSpacing: 0.8,
+            ),
           ),
         ],
       ),
@@ -832,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 24,
               child: Text(
                 '$rank',
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
@@ -863,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     entry.name,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: locale.getTextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
@@ -917,7 +883,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 24,
               child: Text(
                 '$rank',
-                style: GoogleFonts.plusJakartaSans(
+                style: locale.getTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
@@ -944,7 +910,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     artist.name,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: locale.getTextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
@@ -976,4 +942,147 @@ class _TopArtistDisplay {
   final TopArtistEntry entry;
   final Artist? artist;
   _TopArtistDisplay({required this.entry, this.artist});
+}
+
+class _GearProfileButton extends StatefulWidget {
+  final AuthProvider auth;
+  final String label;
+  const _GearProfileButton({required this.auth, required this.label});
+
+  @override
+  State<_GearProfileButton> createState() => _GearProfileButtonState();
+}
+
+class _GearProfileButtonState extends State<_GearProfileButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    _controller.forward(from: 0.0);
+    ProfileBottomSheet.show(context, widget.auth);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: GestureDetector(
+        onTap: _onTap,
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: _GearBorderPainter(
+                  color: AppColors.accent.withValues(alpha: 0.5),
+                  rotation: _controller.value * pi / 4,
+                ),
+                child: child,
+              );
+            },
+            child: Center(
+              child: CircleAvatar(
+                radius: 12,
+                backgroundColor: AppColors.bgCard,
+                backgroundImage: widget.auth.user?.photoURL != null
+                    ? NetworkImage(widget.auth.user!.photoURL!)
+                    : null,
+                child: widget.auth.user?.photoURL == null
+                    ? const Icon(Icons.person,
+                        size: 14, color: AppColors.accent)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GearBorderPainter extends CustomPainter {
+  final Color color;
+  final double rotation;
+  const _GearBorderPainter({required this.color, this.rotation = 0.0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final outerRadius = size.width / 2;
+    final innerRadius = outerRadius - 3.5;
+    const teethCount = 8;
+    const toothWidth = 0.28;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotation);
+    canvas.translate(-center.dx, -center.dy);
+
+    final path = Path();
+    for (int i = 0; i < teethCount; i++) {
+      final angle = (i / teethCount) * 2 * pi - pi / 2;
+      final nextAngle = ((i + 1) / teethCount) * 2 * pi - pi / 2;
+      final toothStart = angle - toothWidth / 2;
+      final toothEnd = angle + toothWidth / 2;
+      final gapStart = toothEnd;
+      final gapEnd = nextAngle - toothWidth / 2;
+
+      if (i == 0) {
+        path.moveTo(
+          center.dx + outerRadius * cos(toothStart),
+          center.dy + outerRadius * sin(toothStart),
+        );
+      }
+      path.arcTo(
+        Rect.fromCircle(center: center, radius: outerRadius),
+        toothStart,
+        toothEnd - toothStart,
+        false,
+      );
+      path.lineTo(
+        center.dx + innerRadius * cos(gapStart),
+        center.dy + innerRadius * sin(gapStart),
+      );
+      path.arcTo(
+        Rect.fromCircle(center: center, radius: innerRadius),
+        gapStart,
+        gapEnd - gapStart,
+        false,
+      );
+      path.lineTo(
+        center.dx + outerRadius * cos(gapEnd),
+        center.dy + outerRadius * sin(gapEnd),
+      );
+    }
+    path.close();
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawPath(path, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _GearBorderPainter old) =>
+      old.color != color || old.rotation != rotation;
 }

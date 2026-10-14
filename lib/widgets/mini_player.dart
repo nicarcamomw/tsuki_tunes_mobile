@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
@@ -102,6 +101,7 @@ class _MiniPlayerState extends State<MiniPlayer>
     if (track == null) return const SizedBox.shrink();
 
     final library = context.watch<LibraryProvider>();
+    final locale = context.read<LocaleProvider>();
     final isListened = library.isTrackListened(track.id);
 
     final double progress = audio.duration.inMilliseconds > 0
@@ -236,7 +236,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                       children: [
                                         _MarqueeText(
                                           text: track.title,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: locale.getTextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.textBright,
@@ -247,7 +247,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                           text: audio.spotifyFallbackActive
                                               ? '${track.fullArtistName}  ·  Preview'
                                               : track.fullArtistName,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: locale.getTextStyle(
                                             fontSize: 11,
                                             color: audio.spotifyFallbackActive
                                                 ? AppColors.accent.withValues(alpha: 0.7)
@@ -295,7 +295,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                         width: 36,
                         height: 36,
                         child: TapScale(
-                          semanticLabel: audio.isPlaying ? 'Pause' : 'Play',
+                          semanticLabel: audio.isPlaying ? context.read<LocaleProvider>().strings.a11yPause : context.read<LocaleProvider>().strings.a11yPlay,
                           onTap: audio.togglePlay,
                           scaleDown: 0.85,
                           child: Center(
@@ -323,7 +323,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                         width: 36,
                         height: 36,
                         child: TapScale(
-                          semanticLabel: 'Stop playback',
+                          semanticLabel: context.read<LocaleProvider>().strings.a11yStop,
                           onTap: () {
                             final stoppedTrack = track;
                             final wasPlaying = audio.isPlaying;
@@ -335,13 +335,15 @@ class _MiniPlayerState extends State<MiniPlayer>
                               SnackBar(
                                 content: Text(
                                   strings.stoppedPlayback,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
+                                  style: locale.getTextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: AppColors.textBright,
                                   ),
                                 ),
                                 backgroundColor: AppColors.bgCard,
                                 behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 duration: const Duration(seconds: 4),
                                 action: SnackBarAction(
                                   label: strings.undo,
