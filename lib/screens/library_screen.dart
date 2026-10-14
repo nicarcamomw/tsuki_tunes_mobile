@@ -48,6 +48,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void initState() {
     super.initState();
     NavigationEvents.onLibraryScrollToTop = scrollToTop;
+    scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!scrollController.hasClients) return;
+    final maxScroll = scrollController.position.maxScrollExtent;
+    final currentScroll = scrollController.offset;
+    if (currentScroll >= maxScroll - 200) {
+      setState(() => _visibleCount += 50);
+    }
   }
 
   @override
@@ -134,7 +144,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
-    final remaining = albumGroups.length - visible.length;
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -311,62 +320,89 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
             // Content
             Expanded(
-              child: totalTracks == 0
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.library_music_outlined,
-                                size: 54, color: AppColors.borderGlow),
-                            const SizedBox(height: 12),
-                            Text(
-                              strings.emptyLibraryTitle,
-                              textAlign: TextAlign.center,
-                              style: locale.getTextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textSecondary,
-                                letterSpacing: 1.5,
+              child: RefreshIndicator(
+                color: AppColors.accent,
+                backgroundColor: AppColors.bgCard,
+                onRefresh: () => library.refreshData(),
+                child: totalTracks == 0
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 28),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.library_music_outlined,
+                                        size: 54, color: AppColors.borderGlow),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      strings.emptyLibraryTitle,
+                                      textAlign: TextAlign.center,
+                                      style: locale.getTextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textSecondary,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      strings.emptyLibrarySubtitle,
+                                      textAlign: TextAlign.center,
+                                      style: locale.getTextStyle(
+                                          fontSize: 12, color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              strings.emptyLibrarySubtitle,
-                              textAlign: TextAlign.center,
-                              style: locale.getTextStyle(
-                                  fontSize: 12, color: AppColors.textMuted),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.only(bottom: 120),
+                        itemCount: visible.length < albumGroups.length
+                            ? visible.length + 1
+                            : visible.length,
+                        itemBuilder: (context, index) {
+                          if (index == visible.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return _AlbumGroupTile(
+                            group: visible[index],
+                            isExpanded:
+                                _expandedAlbums.contains(visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle),
+                            onToggle: () {
+                              setState(() {
+                                final key = visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle;
+                                if (_expandedAlbums.contains(key)) {
+                                  _expandedAlbums.remove(key);
+                                } else {
+                                  _expandedAlbums.add(key);
+                                }
+                              });
+                            },
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.only(bottom: 120),
-                      itemCount: visible.length + (remaining > 0 ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == visible.length) {
-                          return _buildShowMoreButton(remaining, locale);
-                        }
-                        return _AlbumGroupTile(
-                          group: visible[index],
-                          isExpanded:
-                              _expandedAlbums.contains(visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle),
-                          onToggle: () {
-                            setState(() {
-                              final key = visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle;
-                              if (_expandedAlbums.contains(key)) {
-                                _expandedAlbums.remove(key);
-                              } else {
-                                _expandedAlbums.add(key);
-                              }
-                            });
-                          },
-                        );
-                      },
-                    ),
+              ),
             ),
           ],
         ),
@@ -390,27 +426,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
               durationSeconds: td.duration,
             ))
         .toList();
-  }
-
-  Widget _buildShowMoreButton(int remaining, LocaleProvider locale) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: OutlinedButton(
-        onPressed: () => setState(() => _visibleCount += 50),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.accent),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-        child: Text(
-          locale.strings.showMore(remaining),
-          style: locale.getTextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: AppColors.accent,
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
@@ -442,7 +457,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 }
 
-class _AlbumGroupTile extends StatelessWidget {
+class _AlbumGroupTile extends StatefulWidget {
   final _AlbumGroupData group;
   final bool isExpanded;
   final VoidCallback onToggle;
@@ -452,6 +467,16 @@ class _AlbumGroupTile extends StatelessWidget {
     required this.isExpanded,
     required this.onToggle,
   });
+
+  @override
+  State<_AlbumGroupTile> createState() => _AlbumGroupTileState();
+}
+
+class _AlbumGroupTileState extends State<_AlbumGroupTile>
+    with SingleTickerProviderStateMixin {
+  _AlbumGroupData get group => widget.group;
+  bool get isExpanded => widget.isExpanded;
+  VoidCallback get onToggle => widget.onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -579,12 +604,18 @@ class _AlbumGroupTile extends StatelessWidget {
           ),
 
           // Expanded track list
-          if (isExpanded) ...[
-            Container(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.5),
-            ),
-            ...group.tracks.map((trackData) {
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: isExpanded
+                ? Column(
+                    children: [
+                      Container(
+                        height: 1,
+                        color: AppColors.border.withValues(alpha: 0.5),
+                      ),
+                      ...group.tracks.map((trackData) {
               final isCurrentTrack =
                   audio.currentTrack?.id == trackData.trackId;
               return InkWell(
@@ -685,7 +716,10 @@ class _AlbumGroupTile extends StatelessWidget {
                 ),
               );
             }),
-          ],
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

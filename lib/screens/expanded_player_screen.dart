@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
@@ -250,6 +251,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                     : AppColors.textPrimary,
                               ),
                               onPressed: () {
+                                HapticFeedback.selectionClick();
                                 setState(() {
                                   if (_viewMode == _CenterViewMode.lyrics) {
                                     _viewMode = _CenterViewMode.artwork;
@@ -271,6 +273,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                     : AppColors.textPrimary,
                               ),
                               onPressed: () {
+                                HapticFeedback.selectionClick();
                                 setState(() {
                                   _viewMode =
                                       _viewMode == _CenterViewMode.queue
@@ -699,25 +702,25 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(15),
-                  false,
+                  audio.sleepTimerOriginalMinutes == 15,
                   locale,
                   () { audio.setSleepTimer(const Duration(minutes: 15)); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(30),
-                  false,
+                  audio.sleepTimerOriginalMinutes == 30,
                   locale,
                   () { audio.setSleepTimer(const Duration(minutes: 30)); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(45),
-                  false,
+                  audio.sleepTimerOriginalMinutes == 45,
                   locale,
                   () { audio.setSleepTimer(const Duration(minutes: 45)); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(60),
-                  false,
+                  audio.sleepTimerOriginalMinutes == 60,
                   locale,
                   () { audio.setSleepTimer(const Duration(minutes: 60)); Navigator.pop(context); },
                 ),
@@ -764,6 +767,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
   Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
     final queue = audio.queue;
+    final strings = locale.strings;
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -799,7 +803,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            'SIGUIENTES EN LA COLA',
+                            strings.queueUpNext,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
@@ -837,9 +841,36 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   if (queue.length > 1)
                     Semantics(
                       button: true,
-                      label: 'Limpiar cola',
+                      label: strings.queueClearLabel,
                       child: GestureDetector(
-                        onTap: () => audio.clearQueue(),
+                        onTap: () {
+                          final savedQueue = List<Track>.from(queue);
+                          audio.clearQueue();
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                strings.queueClearLabel,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  color: AppColors.textBright,
+                                ),
+                              ),
+                              backgroundColor: AppColors.bgCard,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 4),
+                              action: SnackBarAction(
+                                label: strings.undo,
+                                textColor: AppColors.accent,
+                                onPressed: () {
+                                  for (final t in savedQueue) {
+                                    audio.addToQueue(t);
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -855,7 +886,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                   size: 13, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Text(
-                                'LIMPIAR',
+                                strings.queueClear,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
@@ -872,6 +903,18 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            if (queue.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Text(
+                  strings.swipeToRemoveHint,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9,
+                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
             Expanded(
               child: queue.isEmpty
                   ? Center(
@@ -883,7 +926,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               color: AppColors.textMuted.withValues(alpha: 0.4)),
                           const SizedBox(height: 10),
                           Text(
-                            'COLA VACÍA',
+                            strings.queueEmpty,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -893,7 +936,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Agrega canciones para continuar la sesión',
+                            strings.queueEmptySubtitle,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               color: AppColors.textSecondary,
@@ -913,8 +956,21 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       itemBuilder: (context, i) {
                         final t = queue[i];
                         final isCur = audio.currentTrack?.id == t.id;
-                        return Container(
+                        return Dismissible(
                           key: ValueKey('queue_${t.id}_$i'),
+                          direction: isCur ? DismissDirection.none : DismissDirection.endToStart,
+                          background: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 3),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.delete_outline, color: AppColors.accent, size: 20),
+                          ),
+                          onDismissed: (_) => audio.removeFromQueue(i),
+                          child: Container(
                           margin: const EdgeInsets.symmetric(vertical: 3),
                           decoration: BoxDecoration(
                             color: isCur
@@ -1026,7 +1082,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                   ),
                                   Semantics(
                                     button: true,
-                                    label: 'Eliminar de la cola',
+                                    label: strings.queueRemoveLabel,
                                     child: GestureDetector(
                                       onTap: () => audio.removeFromQueue(i),
                                       behavior: HitTestBehavior.opaque,
@@ -1056,6 +1112,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               ),
                             ),
                           ),
+                        ),
                         );
                       },
                     ),
@@ -1183,7 +1240,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             Expanded(
               child: Consumer<AudioProvider>(
                 builder: (context, liveAudio, _) {
-                  return _buildLyricsContent(liveAudio, locale);
+                  return _buildLyricsContent(liveAudio, locale, track);
                 },
               ),
             ),
@@ -1193,7 +1250,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     );
   }
 
-  Widget _buildLyricsContent(AudioProvider audio, LocaleProvider locale) {
+  Widget _buildLyricsContent(AudioProvider audio, LocaleProvider locale, Track track) {
+    final strings = locale.strings;
     if (_isLoadingLyrics) {
       return Center(
         child: Column(
@@ -1237,6 +1295,36 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
                 letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                _lastLoadedTrackId = null;
+                _loadLyricsForTrack(track);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.bgHover,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.refresh, size: 14, color: AppColors.accent),
+                    const SizedBox(width: 6),
+                    Text(
+                      strings.lyricsRetry,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1394,7 +1482,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             size: 13, color: AppColors.accent),
                         const SizedBox(width: 6),
                         Text(
-                          'SIGUIENDO CANCIÓN',
+                          strings.lyricsFollowing,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

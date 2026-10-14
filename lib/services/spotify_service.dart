@@ -46,6 +46,7 @@ class SpotifyService {
   bool get isPremium => _isPremium;
   Map<String, dynamic>? get profile => _profile;
   String? get lastError => _lastError;
+  String? get accessToken => _accessToken;
   String? get activeDeviceName => _activeDeviceName;
 
   Future<String?> getValidToken() async {

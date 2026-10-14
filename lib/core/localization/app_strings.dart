@@ -108,6 +108,18 @@ class AppStrings {
         AppLanguage.ja => 'アーティスト・アルバム・楽曲',
       };
 
+  String get recentSearches => switch (language) {
+        AppLanguage.es => 'BÚSQUEDAS RECIENTES',
+        AppLanguage.en => 'RECENT SEARCHES',
+        AppLanguage.ja => '最近の検索',
+      };
+
+  String get clearHistory => switch (language) {
+        AppLanguage.es => 'LIMPIAR',
+        AppLanguage.en => 'CLEAR',
+        AppLanguage.ja => 'クリア',
+      };
+
   String get searchHint => switch (language) {
         AppLanguage.es => '¿Qué quieres escuchar?',
         AppLanguage.en => 'What do you want to hear?',
@@ -806,6 +818,119 @@ class AppStrings {
         AppLanguage.es => 'Ver álbum',
         AppLanguage.en => 'View album',
         AppLanguage.ja => 'アルバムを表示',
+      };
+
+  // --- Queue View (Expanded Player) ---
+  String get queueUpNext => switch (language) {
+        AppLanguage.es => 'SIGUIENTES EN LA COLA',
+        AppLanguage.en => 'UP NEXT IN QUEUE',
+        AppLanguage.ja => '次に再生',
+      };
+
+  String get queueClear => switch (language) {
+        AppLanguage.es => 'LIMPIAR',
+        AppLanguage.en => 'CLEAR',
+        AppLanguage.ja => 'クリア',
+      };
+
+  String get queueClearLabel => switch (language) {
+        AppLanguage.es => 'Limpiar cola',
+        AppLanguage.en => 'Clear queue',
+        AppLanguage.ja => 'キューをクリア',
+      };
+
+  String get queueEmpty => switch (language) {
+        AppLanguage.es => 'COLA VACÍA',
+        AppLanguage.en => 'QUEUE EMPTY',
+        AppLanguage.ja => 'キューは空です',
+      };
+
+  String get queueEmptySubtitle => switch (language) {
+        AppLanguage.es => 'Agrega canciones para continuar la sesión',
+        AppLanguage.en => 'Add songs to continue the session',
+        AppLanguage.ja => 'セッションを続けるには曲を追加してください',
+      };
+
+  String get queueRemoveLabel => switch (language) {
+        AppLanguage.es => 'Eliminar de la cola',
+        AppLanguage.en => 'Remove from queue',
+        AppLanguage.ja => 'キューから削除',
+      };
+
+  String get lyricsFollowing => switch (language) {
+        AppLanguage.es => 'SIGUIENDO CANCIÓN',
+        AppLanguage.en => 'FOLLOWING SONG',
+        AppLanguage.ja => '楽曲に追従中',
+      };
+
+  String get lyricsRetry => switch (language) {
+        AppLanguage.es => 'REINTENTAR',
+        AppLanguage.en => 'RETRY',
+        AppLanguage.ja => '再試行',
+      };
+
+  // --- Track Context Menu ---
+  String get goToArtist => switch (language) {
+        AppLanguage.es => 'Ir al artista',
+        AppLanguage.en => 'Go to artist',
+        AppLanguage.ja => 'アーティストへ移動',
+      };
+
+  String get goToAlbum => switch (language) {
+        AppLanguage.es => 'Ir al álbum',
+        AppLanguage.en => 'Go to album',
+        AppLanguage.ja => 'アルバムへ移動',
+      };
+
+  String get playNext => switch (language) {
+        AppLanguage.es => 'Reproducir siguiente',
+        AppLanguage.en => 'Play next',
+        AppLanguage.ja => '次に再生',
+      };
+
+  String get addedPlayNext => switch (language) {
+        AppLanguage.es => 'Se reproducirá a continuación',
+        AppLanguage.en => 'Will play next',
+        AppLanguage.ja => '次に再生されます',
+      };
+
+  // --- Mini Player ---
+  String get stoppedPlayback => switch (language) {
+        AppLanguage.es => 'Reproducción detenida',
+        AppLanguage.en => 'Playback stopped',
+        AppLanguage.ja => '再生を停止しました',
+      };
+
+  String get undo => switch (language) {
+        AppLanguage.es => 'DESHACER',
+        AppLanguage.en => 'UNDO',
+        AppLanguage.ja => '元に戻す',
+      };
+
+  // Gesture hints
+  String get swipeToRemoveHint => switch (language) {
+        AppLanguage.es => 'Desliza para eliminar',
+        AppLanguage.en => 'Swipe to remove',
+        AppLanguage.ja => 'スワイプで削除',
+      };
+
+  String get longPressForOptions => switch (language) {
+        AppLanguage.es => 'Mantén presionado para opciones',
+        AppLanguage.en => 'Long press for options',
+        AppLanguage.ja => '長押しでオプション',
+      };
+
+  // Listened toggle tooltip
+  String get markAsListened => switch (language) {
+        AppLanguage.es => 'Marcar como escuchada',
+        AppLanguage.en => 'Mark as listened',
+        AppLanguage.ja => '聴取済みにする',
+      };
+
+  String get unmarkAsListened => switch (language) {
+        AppLanguage.es => 'Desmarcar como escuchada',
+        AppLanguage.en => 'Unmark as listened',
+        AppLanguage.ja => '聴取済みを解除',
       };
 
   // --- Expanded Player ---

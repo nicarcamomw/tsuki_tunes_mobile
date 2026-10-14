@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
@@ -114,6 +115,7 @@ class _MiniPlayerState extends State<MiniPlayer>
       label: '${track.title}, ${track.fullArtistName}',
       child: RepaintBoundary(
       child: GestureDetector(
+        onTap: () => _openExpandedPlayer(context),
         onVerticalDragEnd: (details) {
           if ((details.primaryVelocity ?? 0) < -300) {
             _openExpandedPlayer(context);
@@ -156,9 +158,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                   child: Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () => _openExpandedPlayer(context),
-                          child: Transform.translate(
+                        child: Transform.translate(
                             offset: Offset(_swipeDx * 0.3, 0),
                             child: ColorFiltered(
                               colorFilter: ColorFilter.mode(
@@ -262,25 +262,31 @@ class _MiniPlayerState extends State<MiniPlayer>
                             ),
                           ),
                         ),
-                      ),
                       const SizedBox(width: 6),
-                      SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: TapScale(
-                          semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
-                          onTap: () {
-                            if (isListened) {
-                              library.unmarkTrack(track.id);
-                            } else {
-                              library.markTrack(track);
-                            }
-                          },
-                          scaleDown: 0.8,
-                          child: Center(
-                            child: OniMaskIcon(
-                              isActive: isListened,
-                              size: 22,
+                      Tooltip(
+                        message: isListened
+                            ? context.read<LocaleProvider>().strings.unmarkAsListened
+                            : context.read<LocaleProvider>().strings.markAsListened,
+                        child: SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: TapScale(
+                            semanticLabel: isListened
+                                ? context.read<LocaleProvider>().strings.unmarkAsListened
+                                : context.read<LocaleProvider>().strings.markAsListened,
+                            onTap: () {
+                              if (isListened) {
+                                library.unmarkTrack(track.id);
+                              } else {
+                                library.markTrack(track);
+                              }
+                            },
+                            scaleDown: 0.8,
+                            child: Center(
+                              child: OniMaskIcon(
+                                isActive: isListened,
+                                size: 22,
+                              ),
                             ),
                           ),
                         ),
@@ -318,7 +324,40 @@ class _MiniPlayerState extends State<MiniPlayer>
                         height: 36,
                         child: TapScale(
                           semanticLabel: 'Stop playback',
-                          onTap: audio.stop,
+                          onTap: () {
+                            final stoppedTrack = track;
+                            final wasPlaying = audio.isPlaying;
+                            final savedPosition = audio.position;
+                            audio.stop();
+                            final strings = context.read<LocaleProvider>().strings;
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  strings.stoppedPlayback,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    color: AppColors.textBright,
+                                  ),
+                                ),
+                                backgroundColor: AppColors.bgCard,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 4),
+                                action: SnackBarAction(
+                                  label: strings.undo,
+                                  textColor: AppColors.accent,
+                                  onPressed: () async {
+                                    await audio.playTrack(stoppedTrack);
+                                    await Future.delayed(const Duration(milliseconds: 500));
+                                    await audio.seek(savedPosition);
+                                    if (!wasPlaying) {
+                                      audio.togglePlay();
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                           scaleDown: 0.85,
                           child: const Center(
                             child: Icon(Icons.close,

@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:spotify_sdk/spotify_sdk.dart' hide Track;
 import '../models/track.dart';
 import '../models/repeat_mode.dart';
 export '../models/repeat_mode.dart';
@@ -78,6 +77,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   DateTime? _sleepTimerDeadline;
   Duration? _sleepTimerRemaining;
   bool _stopAfterCurrentTrack = false;
+  int? _sleepTimerOriginalMinutes;
 
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -119,6 +119,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
   bool get isSleepTimerActive =>
       _sleepTimerDeadline != null || _sleepTimerRemaining != null || _stopAfterCurrentTrack;
+  int? get sleepTimerOriginalMinutes => _sleepTimerOriginalMinutes;
   int? get nextShuffleIndex => _nextShuffleIndex;
 
   @visibleForTesting
@@ -201,15 +202,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       checkSleepTimer();
       _checkBackgroundCompletion();
-      if (_useSpotify && _isPlaying) {
+      if (_useSpotify && _spotifyActive && _isPlaying) {
         _startPositionTimer();
+        _syncSpotifyPlaybackState();
       }
     }
   }
 
   void _checkBackgroundCompletion() {
     if (!_isPlaying || _currentTrack == null) return;
-    if (_useSpotify) {
+    if (_useSpotify && _spotifyActive) {
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
       if (estimatedPos >= _duration && _duration > Duration.zero) {
@@ -308,10 +310,42 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  bool _spotifyInterrupted = false;
+
   Future<void> _initAudioSession() async {
     try {
       final session = await AudioSession.instance;
       await session.configure(const AudioSessionConfiguration.music());
+      session.interruptionEventStream.listen((event) {
+        if (!_spotifyActive) return;
+        if (event.begin) {
+          if (_isPlaying) {
+            _spotify.pause();
+            _isPlaying = false;
+            _stopPositionTimer();
+            _spotifyInterrupted = true;
+            notifyListeners();
+          }
+        } else {
+          if (_spotifyInterrupted) {
+            _spotifyInterrupted = false;
+            _spotify.resume();
+            _isPlaying = true;
+            _spotifySyncPosition = _position;
+            _spotifySyncTime = DateTime.now();
+            _startPositionTimer();
+            notifyListeners();
+          }
+        }
+      });
+      session.becomingNoisyEventStream.listen((_) {
+        if (_spotifyActive && _isPlaying) {
+          _spotify.pause();
+          _isPlaying = false;
+          _stopPositionTimer();
+          notifyListeners();
+        }
+      });
     } catch (e) {
       debugPrint('[AudioProvider] AudioSession config error: $e');
     }
@@ -320,6 +354,20 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _initSpotify() async {
     await _spotify.loadSavedState();
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
+    if (_useSpotify) {
+      _warmUpSpotifyDevice();
+    }
+  }
+
+  void _warmUpSpotifyDevice() {
+    Future.microtask(() async {
+      try {
+        final device = await _spotify.ensureActiveDevice();
+        debugPrint('[AudioProvider] Spotify device pre-warm: ${device ?? "no device found"}');
+      } catch (e) {
+        debugPrint('[AudioProvider] Spotify device pre-warm error: $e');
+      }
+    });
   }
 
 
@@ -329,17 +377,24 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (!_useSpotify && wasSpotify) {
       _spotifyActive = false;
+      _spotifyFallbackActive = false;
       _stopPositionTimer();
       await _nativePlayer.disconnect();
+    } else if (_useSpotify && !wasSpotify) {
+      _warmUpSpotifyDevice();
     }
 
     notifyListeners();
   }
 
+  int _spotifyPollTick = 0;
+
   void _startPositionTimer() {
     _spotifyPositionTimer?.cancel();
+    _spotifyPollTick = 0;
     _spotifyPositionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_isPlaying && _useSpotify && !_completionHandled) {
+      if (_isPlaying && _useSpotify && _spotifyActive && !_completionHandled) {
+        _spotifyPollTick++;
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         _position = _spotifySyncPosition + elapsed;
         if (_position >= _duration && _duration > Duration.zero) {
@@ -347,9 +402,66 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _handleTrackCompleted();
         } else {
           notifyListeners();
+          if (_spotifyPollTick % 15 == 0) {
+            _syncSpotifyPlaybackState();
+          }
         }
       }
     });
+  }
+
+  Future<void> _syncSpotifyPlaybackState() async {
+    try {
+      final state = await _spotify.getPlaybackState();
+      if (state == null || !_spotifyActive || _completionHandled) return;
+
+      final progressMs = state['progress_ms'] as int? ?? 0;
+      final isPlaying = state['is_playing'] as bool? ?? false;
+      final item = state['item'] as Map<String, dynamic>?;
+      final durationMs = item?['duration_ms'] as int? ?? 0;
+
+      // Detect playback transferred to another device
+      if (item != null && _currentTrack != null) {
+        final spotifyTrackName = (item['name'] as String? ?? '').toLowerCase().trim();
+        final ourTrackName = _currentTrack!.title.toLowerCase().trim();
+        if (spotifyTrackName.isNotEmpty && !spotifyTrackName.contains(ourTrackName) && !ourTrackName.contains(spotifyTrackName)) {
+          debugPrint('[AudioProvider] Spotify playing different track ("$spotifyTrackName" vs "$ourTrackName"), pausing');
+          _isPlaying = false;
+          _stopPositionTimer();
+          notifyListeners();
+          return;
+        }
+      }
+
+      _spotifySyncPosition = Duration(milliseconds: progressMs);
+      _spotifySyncTime = DateTime.now();
+      _position = _spotifySyncPosition;
+
+      if (durationMs > 0) {
+        _duration = Duration(milliseconds: durationMs);
+      }
+
+      if (!isPlaying && _isPlaying) {
+        if (durationMs > 0 && progressMs >= durationMs - 1000) {
+          _stopPositionTimer();
+          _handleTrackCompleted();
+          return;
+        }
+        _isPlaying = false;
+        _stopPositionTimer();
+        notifyListeners();
+        return;
+      }
+
+      if (isPlaying && !_isPlaying) {
+        _isPlaying = true;
+        _startPositionTimer();
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AudioProvider] Spotify state sync error: $e');
+    }
   }
 
   void _stopPositionTimer() {
@@ -455,7 +567,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _classifyPlaybackError(error, track);
 
   void _handlePlaybackError(Object error) {
-    if (_useSpotify || _currentTrack == null) return;
+    if ((_useSpotify && _spotifyActive && !_spotifyFallbackActive) || _currentTrack == null) return;
     if (_retryTimer?.isActive == true) return;
 
     final classified = _classifyPlaybackError(error, _currentTrack);
@@ -579,6 +691,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final gen = _playGeneration;
     _lastSpotifyError = null;
 
+    // Gate just_audio streams immediately to prevent state interference
+    _spotifyActive = true;
+    _spotifyFallbackActive = false;
+
     try {
       await _service.stop();
     } catch (_) {}
@@ -599,6 +715,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}", falling back to preview');
       _lastSpotifyError = 'spotify_track_unavailable';
+      _spotifyActive = false;
       _spotifyFallbackActive = true;
       await _service.playTrack(track);
       if (gen != _playGeneration) return;
@@ -622,9 +739,34 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (!played) {
+      debugPrint('Spotify: Web API exhausted, trying native SDK device registration...');
+      try {
+        final token = _spotify.accessToken;
+        if (token != null) {
+          final connected = await _nativePlayer.connect(accessToken: token);
+          if (gen != _playGeneration) return;
+          if (connected) {
+            debugPrint('Spotify: native SDK connected, waiting for device...');
+            await Future.delayed(const Duration(milliseconds: 1500));
+            if (gen != _playGeneration) return;
+            await _spotify.ensureActiveDevice();
+            if (gen != _playGeneration) return;
+            played = await _spotify.play(trackUri: uri);
+            if (gen != _playGeneration) return;
+            debugPrint('Spotify: post-native-connect play result=$played');
+          }
+        }
+      } catch (e) {
+        debugPrint('Spotify: native SDK fallback error: $e');
+      }
+    }
+
+    if (!played) {
       debugPrint('Spotify: all play attempts failed, falling back to preview');
       _lastSpotifyError = 'spotify_open_app';
+      _spotifyActive = false;
       _spotifyFallbackActive = true;
+      try { await _nativePlayer.disconnect(); } catch (_) {}
       await _service.playTrack(track);
       if (gen != _playGeneration) return;
       _isBuffering = false;
@@ -632,6 +774,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
+    _spotifyActive = true;
     _spotifyFallbackActive = false;
     _isPlaying = true;
     _isBuffering = false;
@@ -710,7 +853,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (_useSpotify) {
+    if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
       if (_isPlaying) {
         await _spotify.pause();
         _isPlaying = false;
@@ -964,10 +1107,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
     _playHistory.clear();
-    if (_useSpotify) {
-      try { await SpotifySdk.pause(); } catch (_) {}
-      _spotify.pause();
+    if (_useSpotify && _spotifyActive) {
+      try { await _spotify.pause(); } catch (_) {}
     }
+    _spotifyActive = false;
+    _spotifyFallbackActive = false;
     await _service.stop();
     _foregroundService.stop();
     _currentTrack = null;
@@ -980,15 +1124,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> seek(Duration pos) async {
     _position = pos;
     _crossfadeTriggered = false;
-    if (_useSpotify) {
+
+    if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
       _spotifySyncPosition = pos;
       _spotifySyncTime = DateTime.now();
-    }
-    notifyListeners();
-
-    if (_useSpotify) {
+      notifyListeners();
       await _spotify.seekTo(pos.inMilliseconds);
     } else {
+      notifyListeners();
       await _service.seek(pos);
     }
   }
@@ -1193,7 +1336,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   void _checkCrossfade(Duration pos) {
     if (_repeatMode == PlaybackRepeatMode.one) return;
-    if (_crossfadeSeconds <= 0 || _crossfadeTriggered || _useSpotify || _spotifyActive) return;
+    if (_crossfadeSeconds <= 0 || _crossfadeTriggered) return;
+    if (_useSpotify && !_spotifyFallbackActive) return;
     if (_stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
     if (pos.inSeconds < 2) return;
@@ -1255,9 +1399,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
     } catch (e) {
-      debugPrint('[AudioProvider] Crossfade error: $e');
+      debugPrint('[AudioProvider] Crossfade error, falling back to normal play: $e');
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
+      try {
+        await _service.playTrack(nextTrack);
+      } catch (_) {}
     }
   }
 
@@ -1269,6 +1416,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       _stopAfterCurrentTrack = false;
+      _sleepTimerOriginalMinutes = null;
       notifyListeners();
       return;
     }
@@ -1277,6 +1425,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerDeadline = null;
       _stopAfterCurrentTrack = true;
       _sleepTimerRemaining = null;
+      _sleepTimerOriginalMinutes = 0;
       notifyListeners();
       return;
     }
@@ -1284,6 +1433,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _sleepTimerDeadline = DateTime.now().add(duration);
     _sleepTimerRemaining = duration;
     _stopAfterCurrentTrack = false;
+    _sleepTimerOriginalMinutes = duration.inMinutes;
     notifyListeners();
 
     _sleepTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -1304,6 +1454,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       _stopAfterCurrentTrack = false;
+      _sleepTimerOriginalMinutes = null;
       stop();
     } else {
       _sleepTimerRemaining = remaining;

@@ -651,7 +651,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             Text(
               locale.strings.navHudSubtitle(index),
               style: GoogleFonts.notoSansJp(
-                fontSize: 7.5,
+                fontSize: 8.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected
                     ? AppColors.accent.withValues(alpha: 0.9)

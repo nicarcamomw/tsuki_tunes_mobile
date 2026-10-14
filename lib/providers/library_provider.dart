@@ -228,6 +228,13 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshData() async {
+    await _loadLocalData();
+    if (_currentUid != null) {
+      await connectToFirestore(_currentUid!);
+    }
+  }
+
   String? _currentUid;
   String? get currentUid => _currentUid;
 
@@ -321,7 +328,7 @@ class LibraryProvider extends ChangeNotifier {
     final deltaQuery = deltaBoundary != null
         ? tracksCol
             .where('listenedAt',
-                isGreaterThan: Timestamp.fromDate(deltaBoundary))
+                isGreaterThanOrEqualTo: Timestamp.fromDate(deltaBoundary))
             .orderBy('listenedAt', descending: true)
         : tracksCol.orderBy('listenedAt', descending: true);
 

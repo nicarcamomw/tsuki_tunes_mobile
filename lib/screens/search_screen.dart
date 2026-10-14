@@ -67,7 +67,13 @@ class _SearchScreenState extends State<SearchScreen> {
     final search = context.watch<SearchProvider>();
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
-    final tabs = [strings.tabAll, strings.tabArtists, strings.tabAlbums, strings.tabTracks];
+    final hasResults = search.artists.isNotEmpty || search.albums.isNotEmpty || search.tracks.isNotEmpty;
+    final tabs = [
+      strings.tabAll,
+      hasResults ? '${strings.tabArtists} (${search.artists.length})' : strings.tabArtists,
+      hasResults ? '${strings.tabAlbums} (${search.albums.length})' : strings.tabAlbums,
+      hasResults ? '${strings.tabTracks} (${search.tracks.length})' : strings.tabTracks,
+    ];
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -231,31 +237,115 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildEmptyState(AppStrings strings, LocaleProvider locale) {
+    final search = context.read<SearchProvider>();
+    final history = search.searchHistory;
+
+    if (history.isEmpty) {
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.search, size: 54, color: AppColors.borderGlow),
+              const SizedBox(height: 12),
+              Text(
+                strings.emptyStateTitle,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                strings.emptyStateSubtitle,
+                style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search, size: 54, color: AppColors.borderGlow),
-            const SizedBox(height: 12),
-            Text(
-              strings.emptyStateTitle,
-              style: locale.getTextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.5,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                strings.recentSearches,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMuted,
+                  letterSpacing: 1.2,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              strings.emptyStateSubtitle,
-              style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
-            ),
-          ],
-        ),
+              GestureDetector(
+                onTap: () => search.clearHistory(),
+                child: Text(
+                  strings.clearHistory,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...history.map((q) => Dismissible(
+                key: ValueKey('history_$q'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  child: const Icon(Icons.delete_outline,
+                      color: AppColors.accent, size: 18),
+                ),
+                onDismissed: (_) => search.removeFromHistory(q),
+                child: InkWell(
+                  onTap: () {
+                    _controller.text = q;
+                    search.search(q);
+                  },
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.history,
+                            size: 18, color: AppColors.textMuted),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            q,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.north_west,
+                            size: 14, color: AppColors.textMuted),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+        ],
       ),
     );
   }

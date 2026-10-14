@@ -5,11 +5,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
+import '../models/artist.dart';
+import '../models/album.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../screens/artist_detail_screen.dart';
+import '../screens/album_detail_screen.dart';
+import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
@@ -203,25 +208,32 @@ class TrackTile extends StatelessWidget {
 
               // Listened checkbox (mark/unmark) — disabled for guests
               if (showListenedCheckbox && !context.read<AuthProvider>().isGuest)
-                TapScale(
-                  semanticLabel: isListened ? 'Unmark track' : 'Mark track as listened',
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    final lib = context.read<LibraryProvider>();
-                    if (isListened) {
-                      if (onUnmark != null) {
-                        onUnmark!();
+                Tooltip(
+                  message: isListened
+                      ? context.read<LocaleProvider>().strings.unmarkAsListened
+                      : context.read<LocaleProvider>().strings.markAsListened,
+                  child: TapScale(
+                    semanticLabel: isListened
+                        ? context.read<LocaleProvider>().strings.unmarkAsListened
+                        : context.read<LocaleProvider>().strings.markAsListened,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      final lib = context.read<LibraryProvider>();
+                      if (isListened) {
+                        if (onUnmark != null) {
+                          onUnmark!();
+                        } else {
+                          lib.unmarkTrack(track.id);
+                        }
                       } else {
-                        lib.unmarkTrack(track.id);
+                        lib.markTrack(track);
                       }
-                    } else {
-                      lib.markTrack(track);
-                    }
-                  },
-                  scaleDown: 0.8,
-                  child: OniMaskIcon(
-                    isActive: isListened,
-                    size: 24,
+                    },
+                    scaleDown: 0.8,
+                    child: OniMaskIcon(
+                      isActive: isListened,
+                      size: 24,
+                    ),
                   ),
                 ),
             ],
@@ -294,6 +306,28 @@ class TrackTile extends StatelessWidget {
             ),
             const Divider(color: AppColors.border, height: 1),
             ListTile(
+              leading: const Icon(Icons.playlist_play, color: AppColors.accent),
+              title: Text(
+                strings.playNext,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  color: AppColors.textBright,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.read<AudioProvider>().addToQueue(track);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(strings.addedPlayNext),
+                    backgroundColor: AppColors.bgCard,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.queue_music, color: AppColors.accent),
               title: Text(
                 strings.addToQueue,
@@ -309,11 +343,71 @@ class TrackTile extends StatelessWidget {
                   SnackBar(
                     content: Text(strings.addedToQueue),
                     backgroundColor: AppColors.bgCard,
+                    behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 2),
                   ),
                 );
               },
             ),
+            if (track.artistId.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.person_outline, color: AppColors.accent),
+                title: Text(
+                  strings.goToArtist,
+                  style: locale.getTextStyle(
+                    fontSize: 14,
+                    color: AppColors.textBright,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  appNavigatorKey.currentState?.push(
+                    MaterialPageRoute(
+                      builder: (_) => ArtistDetailScreen(
+                        artist: Artist(
+                          id: track.artistId,
+                          name: track.artistName,
+                          pictureUrl: '',
+                          fansCount: 0,
+                          albumsCount: 0,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            if (track.albumId.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.album_outlined, color: AppColors.accent),
+                title: Text(
+                  strings.goToAlbum,
+                  style: locale.getTextStyle(
+                    fontSize: 14,
+                    color: AppColors.textBright,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  appNavigatorKey.currentState?.push(
+                    MaterialPageRoute(
+                      builder: (_) => AlbumDetailScreen(
+                        album: Album(
+                          id: track.albumId,
+                          title: track.albumTitle,
+                          coverUrl: track.coverUrl,
+                          artistId: track.artistId,
+                          artistName: track.artistName,
+                          releaseDate: '',
+                          recordType: 'album',
+                          fansCount: 0,
+                          tracksCount: 0,
+                          tracks: [],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             const SizedBox(height: 8),
           ],
         ),
