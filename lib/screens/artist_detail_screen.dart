@@ -9,6 +9,7 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../models/album.dart';
 import '../services/deezer_api_service.dart';
+import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/connectivity_provider.dart';
@@ -185,10 +186,14 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
 
-    // Check if ALL albums have ALL tracks listened
-    final bool isArtistComplete = _albums.isNotEmpty &&
-        _albums.every((album) =>
+    // Check if all own-discography albums have all tracks listened (excludes compilations)
+    final ownAlbums = _albums.where((a) => a.recordType != 'compile').toList();
+    final bool isArtistComplete = ownAlbums.isNotEmpty &&
+        ownAlbums.every((album) =>
+            album.tracksCount > 0 &&
             library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount));
+    final isFollowed = library.isArtistFollowed(widget.artist.id);
+    final isGuest = context.watch<AuthProvider>().isGuest;
 
     final cats = _categorizedAlbums;
 
@@ -243,20 +248,35 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 12),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgDeep.withValues(alpha: 0.7),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.4),
-                      width: 1,
+                child: Tooltip(
+                  message: isArtistComplete
+                      ? strings.artistCompleteTooltip
+                      : strings.artistIncompleteTooltip,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgDeep.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isArtistComplete
+                            ? AppColors.accent
+                            : AppColors.accent.withValues(alpha: 0.4),
+                        width: isArtistComplete ? 1.5 : 1,
+                      ),
+                      boxShadow: isArtistComplete
+                          ? [
+                              BoxShadow(
+                                color: AppColors.accentGlow,
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
                     ),
-                  ),
-                  child: OniMaskIcon(
-                    isActive: isArtistComplete,
-                    size: 22,
-                    showContainer: false,
+                    child: OniMaskIcon(
+                      isActive: isArtistComplete,
+                      size: 22,
+                      showContainer: false,
+                    ),
                   ),
                 ),
               ),
@@ -382,6 +402,68 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                     ],
                   ),
+
+                  // Follow button
+                  if (!isGuest) ...[
+                    const SizedBox(height: 14),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        if (isFollowed) {
+                          library.unfollowArtist(widget.artist.id);
+                        } else {
+                          library.followArtist(widget.artist);
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: isFollowed
+                              ? AppColors.accent.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isFollowed
+                                ? AppColors.accent
+                                : AppColors.accent.withValues(alpha: 0.5),
+                            width: 1.2,
+                          ),
+                          boxShadow: isFollowed
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.accentGlow.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isFollowed ? Icons.check : Icons.add,
+                              size: 14,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isFollowed
+                                  ? strings.unfollowArtist
+                                  : strings.followArtist,
+                              style: locale.getTextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.accent,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   // Animated Glass Capsule Breakdown
                   AnimatedCrossFade(

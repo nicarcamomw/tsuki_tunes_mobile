@@ -26,5 +26,7 @@ abstract class StorageContract {
   Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]);
   Future<List<Map<String, dynamic>>> getCachedPlaylists(String uid);
   Future<void> saveCachedPlaylists(String uid, List<Map<String, dynamic>> playlists);
+  Future<List<Map<String, dynamic>>> getCachedFollowedArtists(String uid);
+  Future<void> saveCachedFollowedArtists(String uid, List<Map<String, dynamic>> artists);
 }
 

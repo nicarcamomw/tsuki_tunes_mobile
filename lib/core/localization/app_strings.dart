@@ -1652,4 +1652,41 @@ class AppStrings {
         AppLanguage.en => 'SIMILAR ARTISTS',
         AppLanguage.ja => '類似アーティスト',
       };
+
+  // --- Follow Artist ---
+  String get followArtist => switch (language) {
+        AppLanguage.es => 'SEGUIR',
+        AppLanguage.en => 'FOLLOW',
+        AppLanguage.ja => 'フォロー',
+      };
+
+  String get unfollowArtist => switch (language) {
+        AppLanguage.es => 'SIGUIENDO',
+        AppLanguage.en => 'FOLLOWING',
+        AppLanguage.ja => 'フォロー中',
+      };
+
+  String get artistFollowed => switch (language) {
+        AppLanguage.es => 'Artista seguido',
+        AppLanguage.en => 'Artist followed',
+        AppLanguage.ja => 'アーティストをフォローしました',
+      };
+
+  String get artistUnfollowed => switch (language) {
+        AppLanguage.es => 'Dejaste de seguir',
+        AppLanguage.en => 'Unfollowed',
+        AppLanguage.ja => 'フォロー解除しました',
+      };
+
+  String get artistCompleteTooltip => switch (language) {
+        AppLanguage.es => 'Discografía completada',
+        AppLanguage.en => 'Discography completed',
+        AppLanguage.ja => 'ディスコグラフィー完了',
+      };
+
+  String get artistIncompleteTooltip => switch (language) {
+        AppLanguage.es => 'Discografía incompleta',
+        AppLanguage.en => 'Discography incomplete',
+        AppLanguage.ja => 'ディスコグラフィー未完了',
+      };
 }
