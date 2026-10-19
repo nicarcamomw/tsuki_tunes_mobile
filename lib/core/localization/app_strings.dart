@@ -1645,4 +1645,11 @@ class AppStrings {
         AppLanguage.en => 'SELECT PLAYLIST',
         AppLanguage.ja => 'プレイリストを選択',
       };
+
+  // --- Similar Artists ---
+  String get similarArtists => switch (language) {
+        AppLanguage.es => 'ARTISTAS SIMILARES',
+        AppLanguage.en => 'SIMILAR ARTISTS',
+        AppLanguage.ja => '類似アーティスト',
+      };
 }

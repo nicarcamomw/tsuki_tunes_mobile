@@ -494,6 +494,28 @@ class DeezerApiService implements MusicApiContract {
     });
   }
 
+  Future<List<Artist>> getRelatedArtists(String artistId, {int limit = 20}) async {
+    final cacheKey = 'artist_related_${artistId}_$limit';
+    final cached = _getCached<List<Artist>>(cacheKey);
+    if (cached != null) return cached;
+
+    return _deduped(cacheKey, () async {
+      try {
+        final data = await _fetchJson(
+            ApiEndpoints.artistRelated(artistId, limit: limit));
+        if (data is Map<String, dynamic>) {
+          final List list = data['data'] ?? [];
+          final artists = list.map((item) => Artist.fromJson(item)).toList();
+          _setCache(cacheKey, artists);
+          return artists;
+        }
+      } catch (e) {
+        debugPrint('[DeezerAPI] getRelatedArtists($artistId) error: $e');
+      }
+      return <Artist>[];
+    });
+  }
+
   @override
   Future<List<Track>> enrichTracksWithContributors(List<Track> tracks) async {
     final enriched = <Track>[];

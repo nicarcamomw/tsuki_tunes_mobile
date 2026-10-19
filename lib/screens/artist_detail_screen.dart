@@ -40,6 +40,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   List<Album> _albums = [];
   int _totalAlbums = 0;
   List<String> _artistTags = [];
+  List<Artist> _relatedArtists = [];
   bool _isLoading = true;
   bool _hasError = false;
   bool _showStats = false;
@@ -96,6 +97,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
         LastFmService.getArtistTags(widget.artist.name),
         _api.getArtistCompilations(widget.artist.id),
+        _api.getRelatedArtists(widget.artist.id),
       ]);
       if (mounted) {
         final pagedAlbums = results[1] as ArtistAlbumsPage;
@@ -109,6 +111,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           _albums = allAlbums;
           _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
           _artistTags = results[2] as List<String>;
+          _relatedArtists = results[4] as List<Artist>;
           _isLoading = false;
         });
         _enrichAlbumsWithSavedTracks(_albums);
@@ -662,6 +665,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             ),
           ],
 
+          // Similar Artists
+          if (!_isLoading && _relatedArtists.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _buildRelatedArtistsSection(locale, strings),
+            ),
+
           if (!_isLoading && _albums.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
@@ -919,12 +928,120 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
+  Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Text(
+                strings.similarArtists,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textBright,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 170,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _relatedArtists.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final artist = _relatedArtists[index];
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    appNavigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => ArtistDetailScreen(artist: artist),
+                      ),
+                    );
+                  },
+                  child: SizedBox(
+                    width: 110,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: artist.pictureUrl.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: artist.getBestImage(size: 'medium'),
+                                    fit: BoxFit.cover,
+                                    width: 100,
+                                    height: 100,
+                                  )
+                                : Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.person,
+                                        color: AppColors.textMuted, size: 36),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          artist.name,
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                        if (artist.fansCount > 0)
+                          Text(
+                            strings.artistFansCompact(
+                                Formatters.formatNumber(artist.fansCount)),
+                            style: locale.getTextStyle(
+                              fontSize: 9,
+                              color: AppColors.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStoredContentSection(
       LibraryProvider library, LocaleProvider locale, AppStrings strings) {
     final artistName = widget.artist.name;
-    final artistTracks = library.listenedTracks
-        .where((t) => t.artistName.toLowerCase() == artistName.toLowerCase())
-        .toList();
+    final artistNameLower = artistName.toLowerCase().trim();
+    final albumIds = _albums.map((a) => a.id).toSet();
+
+    final artistTracks = library.listenedTracks.where((t) {
+      if (albumIds.contains(t.albumId)) return true;
+      final trackArtists = t.artistName.toLowerCase().split(',').map((s) => s.trim());
+      return trackArtists.any((a) => a == artistNameLower);
+    }).toList();
     final songCount = artistTracks.length;
 
     final albumCats = <String, List<Album>>{

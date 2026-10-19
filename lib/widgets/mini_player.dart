@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -197,64 +196,10 @@ class _MiniPlayerState extends State<MiniPlayer>
                               ),
                               child: Row(
                                 children: [
-                                  Stack(
-                                    children: [
-                                      Hero(
-                                        tag: 'player_art_${track.id}',
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(4),
-                                          child: SizedBox(
-                                            width: 44,
-                                            height: 44,
-                                            child: track.coverUrl.isNotEmpty
-                                                ? CachedNetworkImage(
-                                                    imageUrl: track.coverUrl,
-                                                    fit: BoxFit.cover,
-                                                    placeholder: (_, __) =>
-                                                        Container(
-                                                            color:
-                                                                AppColors.bgMid),
-                                                    errorWidget: (_, __, ___) =>
-                                                        Container(
-                                                      color: AppColors.bgMid,
-                                                      child: const Icon(
-                                                          Icons.music_note,
-                                                          color:
-                                                              AppColors.accent),
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    color: AppColors.bgMid,
-                                                    child: const Icon(
-                                                        Icons.music_note,
-                                                        color: AppColors.accent),
-                                                  ),
-                                          ),
-                                        ),
-                                      ),
-                                      if (audio.isPlaying)
-                                        Positioned(
-                                          bottom: 2,
-                                          right: 2,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 2.5, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.78),
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
-                                              border: Border.all(
-                                                color: AppColors.accent
-                                                    .withValues(alpha: 0.4),
-                                                width: 0.5,
-                                              ),
-                                            ),
-                                            child: _MiniEqualizer(
-                                                isPlaying: audio.isPlaying),
-                                          ),
-                                        ),
-                                    ],
+                                  _BreathingCover(
+                                    trackId: track.id,
+                                    coverUrl: track.coverUrl,
+                                    isPlaying: audio.isPlaying,
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -291,110 +236,62 @@ class _MiniPlayerState extends State<MiniPlayer>
                             ),
                           ),
                         ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 10),
+                      // Oni mask (listened toggle)
                       Tooltip(
                         message: isListened
-                            ? context.read<LocaleProvider>().strings.unmarkAsListened
-                            : context.read<LocaleProvider>().strings.markAsListened,
-                        child: SizedBox(
-                          width: 36,
-                          height: 36,
-                          child: TapScale(
-                            semanticLabel: isListened
-                                ? context.read<LocaleProvider>().strings.unmarkAsListened
-                                : context.read<LocaleProvider>().strings.markAsListened,
-                            onTap: () {
-                              if (isListened) {
-                                library.unmarkTrack(track.id);
-                              } else {
-                                library.markTrack(track);
-                              }
-                            },
-                            scaleDown: 0.8,
-                            child: Center(
-                              child: OniMaskIcon(
-                                isActive: isListened,
-                                size: 22,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 36,
-                        height: 36,
+                            ? locale.strings.unmarkAsListened
+                            : locale.strings.markAsListened,
                         child: TapScale(
-                          semanticLabel: audio.isPlaying ? context.read<LocaleProvider>().strings.a11yPause : context.read<LocaleProvider>().strings.a11yPlay,
-                          onTap: audio.isBuffering ? null : audio.togglePlay,
-                          scaleDown: 0.85,
-                          child: Center(
-                            child: audio.isBuffering
-                                ? const SizedBox(
-                                    width: 28,
-                                    height: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          AppColors.accent),
-                                    ),
-                                  )
-                                : Icon(
-                                    audio.isPlaying
-                                        ? Icons.pause_circle_filled
-                                        : Icons.play_circle_filled,
-                                    size: 28,
-                                    color: AppColors.accent,
-                                  ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: TapScale(
-                          semanticLabel: context.read<LocaleProvider>().strings.a11yStop,
+                          semanticLabel: isListened
+                              ? locale.strings.unmarkAsListened
+                              : locale.strings.markAsListened,
                           onTap: () {
-                            final stoppedTrack = track;
-                            final wasPlaying = audio.isPlaying;
-                            final savedPosition = audio.position;
-                            audio.stop();
-                            final strings = context.read<LocaleProvider>().strings;
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  strings.stoppedPlayback,
-                                  style: locale.getTextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textBright,
-                                  ),
-                                ),
-                                backgroundColor: AppColors.bgCard,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                duration: const Duration(seconds: 4),
-                                action: SnackBarAction(
-                                  label: strings.undo,
-                                  textColor: AppColors.accent,
-                                  onPressed: () async {
-                                    await audio.playTrack(stoppedTrack);
-                                    await Future.delayed(const Duration(milliseconds: 500));
-                                    await audio.seek(savedPosition);
-                                    if (!wasPlaying) {
-                                      audio.togglePlay();
-                                    }
-                                  },
-                                ),
-                              ),
-                            );
+                            if (isListened) {
+                              library.unmarkTrack(track.id);
+                            } else {
+                              library.markTrack(track);
+                            }
                           },
-                          scaleDown: 0.85,
-                          child: const Center(
-                            child: Icon(Icons.close,
-                                size: 18, color: AppColors.textMuted),
+                          scaleDown: 0.8,
+                          child: OniMaskIcon(
+                            isActive: isListened,
+                            size: 20,
                           ),
                         ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Play / Pause
+                      TapScale(
+                        semanticLabel: audio.isPlaying ? locale.strings.a11yPause : locale.strings.a11yPlay,
+                        onTap: audio.isBuffering ? null : audio.togglePlay,
+                        scaleDown: 0.85,
+                        child: audio.isBuffering
+                            ? const SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.accent),
+                                ),
+                              )
+                            : Icon(
+                                audio.isPlaying
+                                    ? Icons.pause_circle_filled
+                                    : Icons.play_circle_filled,
+                                size: 32,
+                                color: AppColors.accent,
+                              ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Close / Stop
+                      TapScale(
+                        semanticLabel: locale.strings.a11yStop,
+                        onTap: () => audio.stop(),
+                        scaleDown: 0.85,
+                        child: const Icon(Icons.close,
+                            size: 20, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -411,16 +308,22 @@ class _MiniPlayerState extends State<MiniPlayer>
   }
 }
 
-/// _MiniEqualizer: 3 barritas danzantes en la esquina de la carátula
-class _MiniEqualizer extends StatefulWidget {
+class _BreathingCover extends StatefulWidget {
+  final String trackId;
+  final String coverUrl;
   final bool isPlaying;
-  const _MiniEqualizer({required this.isPlaying});
+
+  const _BreathingCover({
+    required this.trackId,
+    required this.coverUrl,
+    required this.isPlaying,
+  });
 
   @override
-  State<_MiniEqualizer> createState() => _MiniEqualizerState();
+  State<_BreathingCover> createState() => _BreathingCoverState();
 }
 
-class _MiniEqualizerState extends State<_MiniEqualizer>
+class _BreathingCoverState extends State<_BreathingCover>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -429,22 +332,18 @@ class _MiniEqualizerState extends State<_MiniEqualizer>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 2000),
     );
-    if (widget.isPlaying) {
-      _controller.repeat();
-    }
+    if (widget.isPlaying) _controller.repeat(reverse: true);
   }
 
   @override
-  void didUpdateWidget(_MiniEqualizer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying != oldWidget.isPlaying) {
-      if (widget.isPlaying) {
-        _controller.repeat();
-      } else {
-        _controller.stop();
-      }
+  void didUpdateWidget(_BreathingCover old) {
+    super.didUpdateWidget(old);
+    if (widget.isPlaying && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.isPlaying && _controller.isAnimating) {
+      _controller.stop();
     }
   }
 
@@ -458,39 +357,56 @@ class _MiniEqualizerState extends State<_MiniEqualizer>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, _) {
-        final t = _controller.value * 2 * pi;
-        return SizedBox(
-          height: 10,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _buildBar(widget.isPlaying ? 2.5 + 6.5 * (sin(t * 1.8).abs()) : 3.0),
-              const SizedBox(width: 1.5),
-              _buildBar(widget.isPlaying ? 2.5 + 7.5 * (sin(t * 2.4 + 1.2).abs()) : 7.0),
-              const SizedBox(width: 1.5),
-              _buildBar(widget.isPlaying ? 2.5 + 5.5 * (sin(t * 1.4 + 2.4).abs()) : 4.0),
-            ],
+      builder: (context, child) {
+        final t = widget.isPlaying ? _controller.value : 0.0;
+        final glowAlpha = 0.15 + 0.35 * t;
+        final borderAlpha = 0.3 + 0.7 * t;
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: borderAlpha),
+              width: 1.5,
+            ),
+            boxShadow: widget.isPlaying
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: glowAlpha),
+                      blurRadius: 8 + 4 * t,
+                    ),
+                  ]
+                : null,
           ),
+          child: child,
         );
       },
-    );
-  }
-
-  Widget _buildBar(double height) {
-    return Container(
-      width: 2.0,
-      height: height.clamp(2.0, 10.0),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(1),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.accentGlow,
-            blurRadius: 3,
+      child: Hero(
+        tag: 'player_art_${widget.trackId}',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3.5),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: widget.coverUrl.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: widget.coverUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        Container(color: AppColors.bgMid),
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppColors.bgMid,
+                      child: const Icon(Icons.music_note,
+                          color: AppColors.accent),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.bgMid,
+                    child: const Icon(Icons.music_note,
+                        color: AppColors.accent),
+                  ),
           ),
-        ],
+        ),
       ),
     );
   }

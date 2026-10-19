@@ -61,6 +61,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Wall-clock position tracking for Spotify (avoids timer drift)
   Duration _spotifySyncPosition = Duration.zero;
   DateTime _spotifySyncTime = DateTime(2000);
+  DateTime _lastPlayCommandTime = DateTime(2000);
 
   // Smart shuffle history — recent artistIds to avoid consecutive repeats
   final List<String> _shuffleArtistHistory = [];
@@ -340,6 +341,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
             _spotifyInterrupted = false;
             _spotify.resume();
             _isPlaying = true;
+            _lastPlayCommandTime = DateTime.now();
             _spotifySyncPosition = _position;
             _spotifySyncTime = DateTime.now();
             _startPositionTimer();
@@ -373,6 +375,20 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       try {
         final device = await _spotify.ensureActiveDevice();
         debugPrint('[AudioProvider] Spotify device pre-warm: ${device ?? "no device found"}');
+        if (device != null) return;
+
+        // No active device — wake Spotify via native SDK (invisible, no UI)
+        final token = _spotify.accessToken;
+        if (token == null) return;
+        debugPrint('[AudioProvider] No Spotify device found, waking via native SDK...');
+        final connected = await _nativePlayer.connect(accessToken: token);
+        if (connected) {
+          await Future.delayed(const Duration(milliseconds: 1500));
+          final wokenDevice = await _spotify.ensureActiveDevice();
+          debugPrint('[AudioProvider] Spotify native wake result: ${wokenDevice ?? "still no device"}');
+        } else {
+          debugPrint('[AudioProvider] Spotify native SDK connect failed during warm-up');
+        }
       } catch (e) {
         debugPrint('[AudioProvider] Spotify device pre-warm error: $e');
       }
@@ -402,8 +418,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyPositionTimer?.cancel();
     _spotifyPollTick = 0;
     _spotifyPositionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_isPlaying && _useSpotify && _spotifyActive && !_completionHandled) {
-        _spotifyPollTick++;
+      if (!_useSpotify || !_spotifyActive || _completionHandled) return;
+
+      _spotifyPollTick++;
+
+      if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         _position = _spotifySyncPosition + elapsed;
         if (_position >= _duration && _duration > Duration.zero) {
@@ -414,6 +433,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           if (_spotifyPollTick % 15 == 0) {
             _syncSpotifyPlaybackState();
           }
+        }
+      } else if (_currentTrack != null) {
+        // While paused, poll every 5s to recover from false pause or detect external resume
+        if (_spotifyPollTick % 5 == 0) {
+          _syncSpotifyPlaybackState();
         }
       }
     });
@@ -451,13 +475,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       if (!isPlaying && _isPlaying) {
+        // Grace period: ignore stale pause reports right after a play command
+        final sincePlayCommand = DateTime.now().difference(_lastPlayCommandTime);
+        if (sincePlayCommand.inSeconds < 5) {
+          debugPrint('[AudioProvider] Spotify sync: ignoring stale pause (${sincePlayCommand.inMilliseconds}ms since play command)');
+          return;
+        }
         if (durationMs > 0 && progressMs >= durationMs - 1000) {
           _stopPositionTimer();
           _handleTrackCompleted();
           return;
         }
         _isPlaying = false;
-        _stopPositionTimer();
         notifyListeners();
         return;
       }
@@ -790,6 +819,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _position = Duration.zero;
     _spotifySyncPosition = Duration.zero;
     _spotifySyncTime = DateTime.now();
+    _lastPlayCommandTime = DateTime.now();
     _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
@@ -870,6 +900,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       } else {
         await _spotify.resume();
         _isPlaying = true;
+        _lastPlayCommandTime = DateTime.now();
         _spotifySyncPosition = _position;
         _spotifySyncTime = DateTime.now();
         _startPositionTimer();
