@@ -303,7 +303,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
 
           // Right: Skip Button
-          Material(
+          Semantics(
+            button: true,
+            label: strings.onboardingSkip,
+          child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: _completeOnboarding,
@@ -345,6 +348,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),
@@ -1649,7 +1653,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
 
           // Action Button (Next or Start Experience)
-          Material(
+          Semantics(
+            button: true,
+            label: isLastPage ? strings.onboardingStart : strings.onboardingNext,
+          child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: _nextPage,
@@ -1707,6 +1714,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

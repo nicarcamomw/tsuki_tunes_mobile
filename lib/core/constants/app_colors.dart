@@ -26,7 +26,7 @@ class AppColors {
   // Typography
   static const Color textPrimary = Color(0xFFE5E5E5);
   static const Color textSecondary = Color(0xFF888888);
-  static const Color textMuted = Color(0xFF787E90);
+  static const Color textMuted = Color(0xFF7C8294);
   static const Color textBright = Color(0xFFFFFFFF);
 
   // Sakura accent (from web stat values)

@@ -185,7 +185,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Row(
                   children: List.generate(tabs.length, (index) {
                     final isSelected = _selectedTabIndex == index;
-                    return GestureDetector(
+                    return Semantics(
+                      button: true,
+                      label: tabs[index],
+                      child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         FocusScope.of(context).unfocus();
@@ -210,6 +213,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                       ),
+                    ),
                     );
                   }),
                 ),
@@ -291,7 +295,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   letterSpacing: 1.2,
                 ),
               ),
-              GestureDetector(
+              Semantics(
+                button: true,
+                label: strings.clearHistory,
+                child: GestureDetector(
                 onTap: () {
                   showDialog(
                     context: context,
@@ -340,6 +347,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     letterSpacing: 0.8,
                   ),
                 ),
+              ),
               ),
             ],
           ),
@@ -407,7 +415,10 @@ class _SearchScreenState extends State<SearchScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          GestureDetector(
+          Semantics(
+            button: true,
+            label: strings.retry,
+            child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               search.retryLastSearch();
@@ -429,6 +440,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

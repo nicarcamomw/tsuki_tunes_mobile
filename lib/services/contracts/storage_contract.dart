@@ -24,5 +24,7 @@ abstract class StorageContract {
   Future<void> saveSpotifyUriCache(Map<String, String> cache);
   Future<Map<String, dynamic>?> getPlaybackState();
   Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]);
+  Future<List<Map<String, dynamic>>> getCachedPlaylists(String uid);
+  Future<void> saveCachedPlaylists(String uid, List<Map<String, dynamic>> playlists);
 }
 

@@ -1205,7 +1205,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void addToQueue(Track track) {
+  void playNext(Track track) {
     if (_queue.any((t) => t.id == track.id)) return;
     final insertAt = _currentIndex + 1;
     final pos = insertAt < _queue.length ? insertAt : _queue.length;
@@ -1215,14 +1215,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void addToQueue(Track track) {
+    if (_queue.any((t) => t.id == track.id)) return;
+    _queue.add(track);
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
   void addAllToQueue(List<Track> tracks) {
     final existing = _queue.map((t) => t.id).toSet();
     final newTracks = tracks.where((t) => !existing.contains(t.id)).toList();
     if (newTracks.isEmpty) return;
-    final insertAt = _currentIndex + 1;
-    final pos = insertAt < _queue.length ? insertAt : _queue.length;
-    _queue.insertAll(pos, newTracks);
-    _shiftIndicesAfterInsert(pos, newTracks.length);
+    _queue.addAll(newTracks);
     _persistPlaybackState();
     notifyListeners();
   }

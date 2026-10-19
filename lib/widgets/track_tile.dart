@@ -15,6 +15,7 @@ import '../screens/artist_detail_screen.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
+import 'playlist_selector_sheet.dart';
 import 'tap_scale.dart';
 
 class TrackTile extends StatelessWidget {
@@ -112,7 +113,8 @@ class TrackTile extends StatelessWidget {
               const SizedBox(width: 8),
 
               // Album Cover Thumbnail
-              ClipRRect(
+              ExcludeSemantics(
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: SizedBox(
                   width: 46,
@@ -135,6 +137,7 @@ class TrackTile extends StatelessWidget {
                               color: AppColors.accent, size: 20),
                         ),
                 ),
+              ),
               ),
 
               const SizedBox(width: 14),
@@ -318,8 +321,9 @@ class TrackTile extends StatelessWidget {
                 ),
               ),
               onTap: () {
+                HapticFeedback.lightImpact();
                 Navigator.pop(ctx);
-                context.read<AudioProvider>().addToQueue(track);
+                context.read<AudioProvider>().playNext(track);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -345,6 +349,7 @@ class TrackTile extends StatelessWidget {
                 ),
               ),
               onTap: () {
+                HapticFeedback.lightImpact();
                 Navigator.pop(ctx);
                 context.read<AudioProvider>().addToQueue(track);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -362,6 +367,21 @@ class TrackTile extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.playlist_add, color: AppColors.accent),
+              title: Text(
+                strings.addToPlaylist,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  color: AppColors.textBright,
+                ),
+              ),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(ctx);
+                showPlaylistSelector(context, track);
+              },
+            ),
             if (track.artistId.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.person_outline, color: AppColors.accent),
@@ -373,6 +393,7 @@ class TrackTile extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(ctx);
                   appNavigatorKey.currentState?.push(
                     MaterialPageRoute(
@@ -400,6 +421,7 @@ class TrackTile extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(ctx);
                   appNavigatorKey.currentState?.push(
                     MaterialPageRoute(

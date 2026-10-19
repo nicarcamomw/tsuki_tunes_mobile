@@ -263,10 +263,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (widget.artist.pictureUrl.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: widget.artist.getBestImage(size: 'xl'),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
+                    ExcludeSemantics(
+                      child: CachedNetworkImage(
+                        imageUrl: widget.artist.getBestImage(size: 'xl'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
                     ),
                   Container(
                     decoration: const BoxDecoration(
@@ -331,12 +333,15 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         const SizedBox(width: 16),
                       ],
                       if (widget.artist.albumsCount > 0)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _showStats = !_showStats);
-                          },
-                          behavior: HitTestBehavior.opaque,
+                        Semantics(
+                          button: true,
+                          label: _showStats ? strings.a11yHideStats : strings.a11yShowStats,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showStats = !_showStats);
+                            },
+                            behavior: HitTestBehavior.opaque,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -369,6 +374,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                 ),
                               ),
                             ],
+                          ),
                           ),
                         ),
                     ],
@@ -513,7 +519,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
                       const SizedBox(height: 10),
                       Text(
-                        strings.searchError,
+                        strings.loadError,
                         style: locale.getTextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -595,12 +601,15 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 4),
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _showAllTracks = !_showAllTracks);
-                          },
-                          child: AnimatedContainer(
+                        child: Semantics(
+                          button: true,
+                          label: _showAllTracks ? strings.a11yShowLessTracks : strings.a11yShowAllTracks,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showAllTracks = !_showAllTracks);
+                            },
+                            child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
@@ -635,6 +644,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                 ),
                               ],
                             ),
+                          ),
                           ),
                         ),
                       ),
@@ -758,37 +768,41 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ],
               ),
               if (hasMore)
-                GestureDetector(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final updated =
-                        await appNavigatorKey.currentState?.push<List<Album>>(
-                      MaterialPageRoute(
-                        builder: (_) => ArtistDiscographyScreen(
-                          artistId: widget.artist.id,
-                          artistName: widget.artist.name,
-                          albums: _albums,
-                          totalAlbums: _totalAlbums,
-                          initialFilter: filterKey,
+                Semantics(
+                  button: true,
+                  label: strings.a11yViewDiscography,
+                  child: GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      final updated =
+                          await appNavigatorKey.currentState?.push<List<Album>>(
+                        MaterialPageRoute(
+                          builder: (_) => ArtistDiscographyScreen(
+                            artistId: widget.artist.id,
+                            artistName: widget.artist.name,
+                            albums: _albums,
+                            totalAlbums: _totalAlbums,
+                            initialFilter: filterKey,
+                          ),
                         ),
-                      ),
-                    );
-                    if (mounted) {
-                      if (updated != null && updated.length > _albums.length) {
-                        setState(() {
-                          _albums = updated;
-                        });
+                      );
+                      if (mounted) {
+                        if (updated != null && updated.length > _albums.length) {
+                          setState(() {
+                            _albums = updated;
+                          });
+                        }
+                        _enrichAlbumsWithSavedTracks(_albums);
+                        setState(() {});
                       }
-                      _enrichAlbumsWithSavedTracks(_albums);
-                      setState(() {});
-                    }
-                  },
-                  child: Text(
-                    strings.seeMore,
-                    style: locale.getTextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accent,
+                    },
+                    child: Text(
+                      strings.seeMore,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
                     ),
                   ),
                 ),
@@ -820,71 +834,77 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
-    return GestureDetector(
-      onTap: () async {
-        await appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => AlbumDetailScreen(album: album),
-          ),
-        );
-        if (mounted) {
-          _enrichAlbumsWithSavedTracks(_albums);
-          setState(() {});
-        }
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppColors.border, width: 1),
+    return Semantics(
+      button: true,
+      label: '${album.title}, ${album.artistName}',
+      child: GestureDetector(
+        onTap: () async {
+          await appNavigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => AlbumDetailScreen(album: album),
+            ),
+          );
+          if (mounted) {
+            _enrichAlbumsWithSavedTracks(_albums);
+            setState(() {});
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border, width: 1),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: _buildAlbumCover(album, isCompleted),
+                ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: _buildAlbumCover(album, isCompleted),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              album.title,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isCompleted ? AppColors.accent : AppColors.textPrimary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            album.title,
-            style: locale.getTextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isCompleted ? AppColors.accent : AppColors.textPrimary,
+            Text(
+              '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+              style: locale.getTextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
-            style: locale.getTextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAlbumCover(Album album, bool isCompleted) {
-    final image = album.coverUrl.isNotEmpty
-        ? CachedNetworkImage(
-            imageUrl: album.coverUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-          )
-        : Container(
-            color: AppColors.bgMid,
-            child: const Icon(Icons.album, color: AppColors.accent, size: 40),
-          );
+    final image = ExcludeSemantics(
+      child: album.coverUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: album.coverUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : Container(
+              color: AppColors.bgMid,
+              child: const Icon(Icons.album, color: AppColors.accent, size: 40),
+            ),
+    );
 
     if (isCompleted) return image;
 
@@ -958,31 +978,36 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             child: Column(
               children: [
                 // Header - tappable to expand
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() => _showStoredContent = !_showStoredContent);
-                  },
-                  behavior: HitTestBehavior.opaque,
+                Semantics(
+                  button: true,
+                  label: _showStoredContent ? strings.a11yCollapseStoredContent : strings.a11yExpandStoredContent,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _showStoredContent = !_showStoredContent);
+                    },
+                    behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
-                        SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(22),
-                            child: widget.artist.pictureUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: widget.artist.pictureUrl,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    color: AppColors.bgMid,
-                                    child: const Icon(Icons.person,
-                                        color: AppColors.textMuted, size: 20),
-                                  ),
+                        ExcludeSemantics(
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: widget.artist.pictureUrl.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: widget.artist.pictureUrl,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      color: AppColors.bgMid,
+                                      child: const Icon(Icons.person,
+                                          color: AppColors.textMuted, size: 20),
+                                    ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1021,6 +1046,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
 

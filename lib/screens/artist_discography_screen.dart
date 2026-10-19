@@ -404,27 +404,32 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
 
   Widget _buildChip(String value, String label, LocaleProvider locale) {
     final isSelected = _filter == value;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _setFilter(value);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.bgMid,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.border,
+    return Semantics(
+      button: true,
+      label: label,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _setFilter(value);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.accent : AppColors.bgMid,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isSelected ? AppColors.accent : AppColors.border,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: locale.getTextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: isSelected ? AppColors.textBright : AppColors.textSecondary,
+          child: Text(
+            label,
+            style: locale.getTextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? AppColors.textBright : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
@@ -436,17 +441,20 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
-    return GestureDetector(
-      onTap: () async {
-        await appNavigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
-        );
-        if (mounted) {
-          _enrichAlbumsWithSavedTracks();
-          setState(() {});
-        }
-      },
-      child: Column(
+    return Semantics(
+      button: true,
+      label: '${album.title}, ${strings.albumTypeLabel(album.recordType)}',
+      child: GestureDetector(
+        onTap: () async {
+          await appNavigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
+          );
+          if (mounted) {
+            _enrichAlbumsWithSavedTracks();
+            setState(() {});
+          }
+        },
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AspectRatio(
@@ -484,6 +492,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -500,16 +509,18 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             child: const Icon(Icons.album, color: AppColors.accent, size: 40),
           );
 
-    if (isCompleted) return image;
+    if (isCompleted) return ExcludeSemantics(child: image);
 
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix(<double>[
-        0.2126, 0.7152, 0.0722, 0, 0,
-        0.2126, 0.7152, 0.0722, 0, 0,
-        0.2126, 0.7152, 0.0722, 0, 0,
-        0,      0,      0,      1, 0,
-      ]),
-      child: image,
+    return ExcludeSemantics(
+      child: ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0,      0,      0,      1, 0,
+        ]),
+        child: image,
+      ),
     );
   }
 }

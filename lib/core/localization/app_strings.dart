@@ -1228,6 +1228,12 @@ class AppStrings {
         AppLanguage.ja => '検索に失敗しました。接続を確認してください。',
       };
 
+  String get loadError => switch (language) {
+        AppLanguage.es => 'No se pudieron cargar los datos. Revisa tu conexión.',
+        AppLanguage.en => 'Could not load data. Check your connection.',
+        AppLanguage.ja => 'データを読み込めませんでした。接続を確認してください。',
+      };
+
   String get retry => switch (language) {
         AppLanguage.es => 'REINTENTAR',
         AppLanguage.en => 'RETRY',
@@ -1415,5 +1421,228 @@ class AppStrings {
         AppLanguage.es => 'Desmarcar como escuchado',
         AppLanguage.en => 'Unmark track',
         AppLanguage.ja => '既聴マークを外す',
+      };
+
+  String get a11yShowStats => switch (language) {
+        AppLanguage.es => 'Mostrar estadísticas',
+        AppLanguage.en => 'Show statistics',
+        AppLanguage.ja => '統計を表示',
+      };
+
+  String get a11yHideStats => switch (language) {
+        AppLanguage.es => 'Ocultar estadísticas',
+        AppLanguage.en => 'Hide statistics',
+        AppLanguage.ja => '統計を非表示',
+      };
+
+  String get a11yShowAllTracks => switch (language) {
+        AppLanguage.es => 'Mostrar todas las canciones',
+        AppLanguage.en => 'Show all tracks',
+        AppLanguage.ja => 'すべての曲を表示',
+      };
+
+  String get a11yShowLessTracks => switch (language) {
+        AppLanguage.es => 'Mostrar menos canciones',
+        AppLanguage.en => 'Show fewer tracks',
+        AppLanguage.ja => '曲を少なく表示',
+      };
+
+  String get a11yViewDiscography => switch (language) {
+        AppLanguage.es => 'Ver discografía completa',
+        AppLanguage.en => 'View full discography',
+        AppLanguage.ja => 'ディスコグラフィーを見る',
+      };
+
+  String get a11yExpandStoredContent => switch (language) {
+        AppLanguage.es => 'Expandir contenido guardado',
+        AppLanguage.en => 'Expand stored content',
+        AppLanguage.ja => '保存したコンテンツを展開',
+      };
+
+  String get a11yCollapseStoredContent => switch (language) {
+        AppLanguage.es => 'Colapsar contenido guardado',
+        AppLanguage.en => 'Collapse stored content',
+        AppLanguage.ja => '保存したコンテンツを折りたたむ',
+      };
+
+  String get a11yLoginWithGoogle => switch (language) {
+        AppLanguage.es => 'Iniciar sesión con Google',
+        AppLanguage.en => 'Sign in with Google',
+        AppLanguage.ja => 'Googleでログイン',
+      };
+
+  String get a11yContinueAsGuest => switch (language) {
+        AppLanguage.es => 'Continuar como invitado',
+        AppLanguage.en => 'Continue as guest',
+        AppLanguage.ja => 'ゲストとして続ける',
+      };
+
+  String get a11ySelectLanguage => switch (language) {
+        AppLanguage.es => 'Seleccionar idioma',
+        AppLanguage.en => 'Select language',
+        AppLanguage.ja => '言語を選択',
+      };
+
+  String get a11yRetryLyrics => switch (language) {
+        AppLanguage.es => 'Reintentar carga de letra',
+        AppLanguage.en => 'Retry loading lyrics',
+        AppLanguage.ja => '歌詞の読み込みを再試行',
+      };
+
+  String get a11yGoToSearch => switch (language) {
+        AppLanguage.es => 'Ir a búsqueda',
+        AppLanguage.en => 'Go to search',
+        AppLanguage.ja => '検索へ',
+      };
+
+  // --- Playlists ---
+  String get playlistsTab => switch (language) {
+        AppLanguage.es => 'Playlists',
+        AppLanguage.en => 'Playlists',
+        AppLanguage.ja => 'プレイリスト',
+      };
+
+  String get albumsTab => switch (language) {
+        AppLanguage.es => 'Álbumes',
+        AppLanguage.en => 'Albums',
+        AppLanguage.ja => 'アルバム',
+      };
+
+  String get createPlaylist => switch (language) {
+        AppLanguage.es => 'CREAR PLAYLIST',
+        AppLanguage.en => 'CREATE PLAYLIST',
+        AppLanguage.ja => 'プレイリスト作成',
+      };
+
+  String get newPlaylist => switch (language) {
+        AppLanguage.es => 'Nueva Playlist',
+        AppLanguage.en => 'New Playlist',
+        AppLanguage.ja => '新規プレイリスト',
+      };
+
+  String get playlistName => switch (language) {
+        AppLanguage.es => 'Nombre de la playlist',
+        AppLanguage.en => 'Playlist name',
+        AppLanguage.ja => 'プレイリスト名',
+      };
+
+  String get playlistNameHint => switch (language) {
+        AppLanguage.es => 'Mi playlist...',
+        AppLanguage.en => 'My playlist...',
+        AppLanguage.ja => 'マイプレイリスト...',
+      };
+
+  String get create => switch (language) {
+        AppLanguage.es => 'CREAR',
+        AppLanguage.en => 'CREATE',
+        AppLanguage.ja => '作成',
+      };
+
+  String get renamePlaylist => switch (language) {
+        AppLanguage.es => 'Renombrar playlist',
+        AppLanguage.en => 'Rename playlist',
+        AppLanguage.ja => 'プレイリスト名を変更',
+      };
+
+  String get rename => switch (language) {
+        AppLanguage.es => 'RENOMBRAR',
+        AppLanguage.en => 'RENAME',
+        AppLanguage.ja => '変更',
+      };
+
+  String get deletePlaylist => switch (language) {
+        AppLanguage.es => 'Eliminar playlist',
+        AppLanguage.en => 'Delete playlist',
+        AppLanguage.ja => 'プレイリストを削除',
+      };
+
+  String deletePlaylistConfirm(String name) => switch (language) {
+        AppLanguage.es => '¿Eliminar "$name"? Esta acción no se puede deshacer.',
+        AppLanguage.en => 'Delete "$name"? This cannot be undone.',
+        AppLanguage.ja => '「$name」を削除しますか？この操作は取り消せません。',
+      };
+
+  String get delete => switch (language) {
+        AppLanguage.es => 'ELIMINAR',
+        AppLanguage.en => 'DELETE',
+        AppLanguage.ja => '削除',
+      };
+
+  String get addToPlaylist => switch (language) {
+        AppLanguage.es => 'Agregar a playlist',
+        AppLanguage.en => 'Add to playlist',
+        AppLanguage.ja => 'プレイリストに追加',
+      };
+
+  String addedToPlaylist(String name) => switch (language) {
+        AppLanguage.es => 'Agregado a "$name"',
+        AppLanguage.en => 'Added to "$name"',
+        AppLanguage.ja => '「$name」に追加しました',
+      };
+
+  String get trackAlreadyInPlaylist => switch (language) {
+        AppLanguage.es => 'Esta canción ya está en la playlist',
+        AppLanguage.en => 'This track is already in the playlist',
+        AppLanguage.ja => 'この曲は既にプレイリストに追加済みです',
+      };
+
+  String get removedFromPlaylist => switch (language) {
+        AppLanguage.es => 'Eliminado de la playlist',
+        AppLanguage.en => 'Removed from playlist',
+        AppLanguage.ja => 'プレイリストから削除しました',
+      };
+
+  String get emptyPlaylistTitle => switch (language) {
+        AppLanguage.es => 'PLAYLIST VACÍA',
+        AppLanguage.en => 'EMPTY PLAYLIST',
+        AppLanguage.ja => 'プレイリストは空です',
+      };
+
+  String get emptyPlaylistSubtitle => switch (language) {
+        AppLanguage.es => 'Agrega canciones desde el buscador o los álbumes',
+        AppLanguage.en => 'Add tracks from search or albums',
+        AppLanguage.ja => '検索やアルバムから楽曲を追加してください',
+      };
+
+  String get noPlaylistsTitle => switch (language) {
+        AppLanguage.es => 'AÚN NO TIENES PLAYLISTS',
+        AppLanguage.en => 'NO PLAYLISTS YET',
+        AppLanguage.ja => 'プレイリストがありません',
+      };
+
+  String get noPlaylistsSubtitle => switch (language) {
+        AppLanguage.es => 'Crea tu primera playlist y organiza tu música a tu manera',
+        AppLanguage.en => 'Create your first playlist and organize your music your way',
+        AppLanguage.ja => '最初のプレイリストを作成して、あなただけの音楽を整理しましょう',
+      };
+
+  String playlistMeta(int count, String duration) => switch (language) {
+        AppLanguage.es => '$count canciones  ·  $duration',
+        AppLanguage.en => '$count tracks  ·  $duration',
+        AppLanguage.ja => '$count曲  ·  $duration',
+      };
+
+  String get playlistRenamed => switch (language) {
+        AppLanguage.es => 'Playlist renombrada',
+        AppLanguage.en => 'Playlist renamed',
+        AppLanguage.ja => 'プレイリスト名を変更しました',
+      };
+
+  String get playlistDeleted => switch (language) {
+        AppLanguage.es => 'Playlist eliminada',
+        AppLanguage.en => 'Playlist deleted',
+        AppLanguage.ja => 'プレイリストを削除しました',
+      };
+
+  String get playlistCreated => switch (language) {
+        AppLanguage.es => 'Playlist creada',
+        AppLanguage.en => 'Playlist created',
+        AppLanguage.ja => 'プレイリストを作成しました',
+      };
+
+  String get selectPlaylist => switch (language) {
+        AppLanguage.es => 'SELECCIONAR PLAYLIST',
+        AppLanguage.en => 'SELECT PLAYLIST',
+        AppLanguage.ja => 'プレイリストを選択',
       };
 }
