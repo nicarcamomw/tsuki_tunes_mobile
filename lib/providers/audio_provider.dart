@@ -1181,11 +1181,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
       if (_isPlaying) {
-        await _spotify.pause();
+        if (_nativePlayer.isConnected) {
+          await _nativePlayer.pause();
+        } else {
+          await _spotify.pause();
+        }
         _isPlaying = false;
         _stopPositionTimer();
       } else {
-        await _spotify.resume();
+        if (_nativePlayer.isConnected) {
+          await _nativePlayer.resume();
+        } else {
+          await _spotify.resume();
+        }
         _isPlaying = true;
         _lastPlayCommandTime = DateTime.now();
         _spotifySyncPosition = _position;
@@ -1270,7 +1278,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _spotifySyncPosition = pos;
       _spotifySyncTime = DateTime.now();
       notifyListeners();
-      await _spotify.seekTo(pos.inMilliseconds);
+      if (_nativePlayer.isConnected) {
+        await _nativePlayer.seekTo(pos.inMilliseconds);
+      } else {
+        await _spotify.seekTo(pos.inMilliseconds);
+      }
     } else {
       notifyListeners();
       await _service.seek(pos);

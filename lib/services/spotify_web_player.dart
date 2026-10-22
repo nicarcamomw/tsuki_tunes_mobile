@@ -96,6 +96,24 @@ class SpotifyNativePlayer {
     }
   }
 
+  Future<void> resume() async {
+    if (!_isConnected) return;
+    try {
+      await SpotifySdk.resume();
+    } catch (e) {
+      debugPrint('SpotifyNative: resume error: $e');
+    }
+  }
+
+  Future<void> seekTo(int positionMs) async {
+    if (!_isConnected) return;
+    try {
+      await SpotifySdk.seekTo(positionedMilliseconds: positionMs);
+    } catch (e) {
+      debugPrint('SpotifyNative: seek error: $e');
+    }
+  }
+
   Future<void> disconnect() async {
     try {
       await _stateSub?.cancel();
