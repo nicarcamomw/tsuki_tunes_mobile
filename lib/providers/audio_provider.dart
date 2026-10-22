@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
@@ -12,7 +13,7 @@ import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/deezer_api_service.dart';
 import '../services/spotify_service.dart';
-import '../services/foreground_service.dart';
+import '../services/media_session_handler.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
 import 'connectivity_provider.dart';
@@ -21,7 +22,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service;
   final SpotifyService _spotify = SpotifyService();
   final SpotifyNativePlayer _nativePlayer = SpotifyNativePlayer();
-  final ForegroundService _foregroundService = ForegroundService();
+  TsukiAudioHandler? _mediaHandler;
   final StorageService _storage;
   ConnectivityProvider? _connectivityProvider;
   Timer? _persistTimer;
@@ -139,6 +140,84 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _storage.savePrecacheWifiOnly(enabled);
   }
 
+  void _attachMediaHandler(TsukiAudioHandler handler) {
+    _mediaHandler = handler;
+    handler.onPlay = () async {
+      if (!_isPlaying) await togglePlay();
+    };
+    handler.onPause = () async {
+      if (_isPlaying) await togglePlay();
+    };
+    handler.onStop = stop;
+    handler.onSkipToNext = next;
+    handler.onSkipToPrevious = previous;
+    handler.onSeek = (pos) => seek(pos);
+  }
+
+  // Last state pushed to the media session. Position is not part of the key:
+  // the system extrapolates it from updatePosition + updateTime, so pushing
+  // on every tick would only waste work.
+  String? _mediaItemKey;
+  String? _mediaStateKey;
+
+  @override
+  void notifyListeners() {
+    _syncMediaSession();
+    super.notifyListeners();
+  }
+
+  void _syncMediaSession({bool force = false}) {
+    final handler = _mediaHandler;
+    if (handler == null) return;
+    final track = _currentTrack;
+
+    final itemKey = track == null
+        ? null
+        : '${track.id}|${track.title}|${_duration.inSeconds}';
+    if (itemKey != _mediaItemKey) {
+      _mediaItemKey = itemKey;
+      handler.mediaItem.add(track == null
+          ? null
+          : MediaItem(
+              id: track.id,
+              title: track.title,
+              artist: track.fullArtistName,
+              album: track.albumTitle,
+              artUri: track.coverUrl.isNotEmpty
+                  ? Uri.tryParse(track.coverUrl)
+                  : null,
+              duration: _duration,
+            ));
+    }
+
+    final processing = track == null
+        ? AudioProcessingState.idle
+        : (_isBuffering
+            ? AudioProcessingState.buffering
+            : AudioProcessingState.ready);
+    final stateKey = '$processing|$_isPlaying|$itemKey';
+    if (!force && stateKey == _mediaStateKey) return;
+    _mediaStateKey = stateKey;
+    handler.playbackState.add(PlaybackState(
+      controls: [
+        MediaControl.skipToPrevious,
+        _isPlaying ? MediaControl.pause : MediaControl.play,
+        MediaControl.skipToNext,
+      ],
+      systemActions: const {
+        MediaAction.seek,
+        MediaAction.skipToPrevious,
+        MediaAction.skipToNext,
+      },
+      androidCompactActionIndices: const [0, 1, 2],
+      processingState: processing,
+      playing: _isPlaying,
+      updatePosition: _position,
+      bufferedPosition: _bufferedPosition,
+      speed: 1.0,
+    ));
+  }
+
   @visibleForTesting
   void checkListenedThresholdForTesting() => _checkListenedThreshold();
 
@@ -229,9 +308,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     AudioPlayerService? service,
     StorageService? storage,
     ConnectivityProvider? connectivityProvider,
+    TsukiAudioHandler? mediaHandler,
   })  : _service = service ?? AudioPlayerService(),
         _storage = storage ?? StorageService(),
         _connectivityProvider = connectivityProvider {
+    if (mediaHandler != null) _attachMediaHandler(mediaHandler);
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
     _initSubscriptions();
@@ -792,10 +873,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
-      _foregroundService.start(
-        title: track.title,
-        artist: track.artistName,
-      );
       _persistPlaybackState();
       _prefetchNextTrack();
     } catch (e) {
@@ -1287,7 +1364,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyActive = false;
     _spotifyFallbackActive = false;
     await _service.stop();
-    _foregroundService.stop();
     _currentTrack = null;
     _isPlaying = false;
     _isBuffering = false;
@@ -1298,6 +1374,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> seek(Duration pos) async {
     _position = pos;
     _crossfadeTriggered = false;
+    _syncMediaSession(force: true);
 
     if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
       _spotifySyncPosition = pos;

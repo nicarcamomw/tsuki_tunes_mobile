@@ -42,3 +42,6 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+
+# audio_service (media session / playback notification)
+-keep class com.ryanheise.audioservice.** { *; }

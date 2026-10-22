@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ import 'providers/connectivity_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/media_session_handler.dart';
 import 'services/storage_service.dart';
 
 void main() async {
@@ -28,11 +30,34 @@ void main() async {
     ),
   );
 
-  runApp(const TsukiTunesApp());
+  runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
+}
+
+/// Lock screen / notification / headset controls. If the platform side is
+/// misconfigured the app still runs, just without system media controls.
+Future<TsukiAudioHandler?> _initMediaSession() async {
+  try {
+    return await AudioService.init(
+      builder: () => TsukiAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.tsuki.tsuki_tunes_mobile.playback',
+        androidNotificationChannelName: 'Tsuki Tunes',
+        // Keeping the service in the foreground while paused avoids
+        // ForegroundServiceStartNotAllowedException when resuming from the
+        // background on Android 12+.
+        androidStopForegroundOnPause: false,
+      ),
+    );
+  } catch (e) {
+    debugPrint('[main] AudioService init failed, no system media controls: $e');
+    return null;
+  }
 }
 
 class TsukiTunesApp extends StatelessWidget {
-  const TsukiTunesApp({super.key});
+  final TsukiAudioHandler? mediaHandler;
+
+  const TsukiTunesApp({super.key, this.mediaHandler});
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +72,9 @@ class TsukiTunesApp extends StatelessWidget {
           create: (_) => LocaleProvider(storage: StorageService()),
         ),
         ChangeNotifierProxyProvider2<LibraryProvider, ConnectivityProvider, AudioProvider>(
-          create: (_) => AudioProvider(),
+          create: (_) => AudioProvider(mediaHandler: mediaHandler),
           update: (_, library, connectivity, audio) {
-            audio ??= AudioProvider();
+            audio ??= AudioProvider(mediaHandler: mediaHandler);
             audio.setConnectivityProvider(connectivity);
             audio.onTrackStarted = (track) {
               library.addRecentTrack(track);
