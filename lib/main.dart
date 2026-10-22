@@ -6,6 +6,7 @@ import 'core/theme/cyber_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/audio_provider.dart';
 import 'providers/library_provider.dart';
+import 'providers/playlist_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/connectivity_provider.dart';
@@ -40,6 +41,7 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
+        ChangeNotifierProvider(create: (_) => PlaylistProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(
           create: (_) => LocaleProvider(storage: StorageService()),
@@ -61,6 +63,17 @@ class TsukiTunesApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: CyberTheme.darkTheme,
         scrollBehavior: const _SmoothScrollBehavior(),
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final clampedScaler = mediaQuery.textScaler.clamp(
+            minScaleFactor: 0.8,
+            maxScaleFactor: 1.4,
+          );
+          return MediaQuery(
+            data: mediaQuery.copyWith(textScaler: clampedScaler),
+            child: child!,
+          );
+        },
         home: const _AuthGate(),
       ),
     );
@@ -100,11 +113,16 @@ class _AuthGateState extends State<_AuthGate> {
 
     if (auth.isLoggedIn) {
       final uid = auth.uid;
-      if (uid != null && !auth.isGuest && _connectedUid != uid) {
+      if (uid != null && _connectedUid != uid) {
         _connectedUid = uid;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            context.read<LibraryProvider>().connectToFirestore(uid);
+            if (!auth.isGuest) {
+              context.read<LibraryProvider>().connectToFirestore(uid);
+              context.read<PlaylistProvider>().connectToFirestore(uid);
+            } else {
+              context.read<PlaylistProvider>().initLocalOnly(uid);
+            }
           }
         });
       }
@@ -137,6 +155,7 @@ class _AuthGateState extends State<_AuthGate> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           context.read<LibraryProvider>().disconnectFirestore();
+          context.read<PlaylistProvider>().disconnectFirestore();
         }
       });
     }

@@ -231,25 +231,27 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: (albumData.coverXl ?? albumData.coverUrl)
-                                .isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl:
-                                    albumData.coverXl ?? albumData.coverUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) =>
-                                    Container(color: AppColors.bgMid),
-                                errorWidget: (_, __, ___) => Container(
+                        child: ExcludeSemantics(
+                          child: (albumData.coverXl ?? albumData.coverUrl)
+                                  .isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl:
+                                      albumData.coverXl ?? albumData.coverUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) =>
+                                      Container(color: AppColors.bgMid),
+                                  errorWidget: (_, __, ___) => Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.album,
+                                        size: 50, color: AppColors.accent),
+                                  ),
+                                )
+                              : Container(
                                   color: AppColors.bgMid,
                                   child: const Icon(Icons.album,
                                       size: 50, color: AppColors.accent),
                                 ),
-                              )
-                            : Container(
-                                color: AppColors.bgMid,
-                                child: const Icon(Icons.album,
-                                    size: 50, color: AppColors.accent),
-                              ),
+                        ),
                       ),
                     ),
                   ),
@@ -293,27 +295,32 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   const SizedBox(height: 4),
 
                   // Artist name (clickable)
-                  GestureDetector(
-                    onTap: () async {
-                      if (albumData.artistId.isNotEmpty) {
-                        final artist =
-                            await _api.getArtist(albumData.artistId);
-                        if (mounted && artist != null) {
-                          appNavigatorKey.currentState?.push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ArtistDetailScreen(artist: artist),
-                            ),
-                          );
+                  Semantics(
+                    button: true,
+                    label: strings.goToArtist,
+                    child: GestureDetector(
+                      onTap: () async {
+                        HapticFeedback.lightImpact();
+                        if (albumData.artistId.isNotEmpty) {
+                          final artist =
+                              await _api.getArtist(albumData.artistId);
+                          if (mounted && artist != null) {
+                            appNavigatorKey.currentState?.push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ArtistDetailScreen(artist: artist),
+                              ),
+                            );
+                          }
                         }
-                      }
-                    },
-                    child: Text(
-                      albumData.artistName,
-                      style: locale.getTextStyle(
-                        fontSize: 14,
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w600,
+                      },
+                      child: Text(
+                        albumData.artistName,
+                        style: locale.getTextStyle(
+                          fontSize: 14,
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -462,7 +469,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
                       const SizedBox(height: 10),
                       Text(
-                        strings.searchError,
+                        strings.loadError,
                         style: locale.getTextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -474,7 +481,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         button: true,
                         label: strings.retry,
                         child: GestureDetector(
-                        onTap: _loadAlbumDetails,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _loadAlbumDetails();
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(

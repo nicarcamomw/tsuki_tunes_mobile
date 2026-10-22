@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 
@@ -69,7 +70,10 @@ class _CyberButtonState extends State<CyberButton>
       onTapUp: (_) {
         setState(() => _isPressed = false);
         _scaleController.reverse();
-        if (!widget.isLoading) widget.onPressed();
+        if (!widget.isLoading) {
+          HapticFeedback.lightImpact();
+          widget.onPressed();
+        }
       },
       onTapCancel: () {
         setState(() => _isPressed = false);

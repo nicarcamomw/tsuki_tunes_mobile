@@ -325,7 +325,10 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 14),
 
                   // Guest Explore Button (secondary, visible)
-                  Material(
+                  Semantics(
+                    button: true,
+                    label: strings.a11yContinueAsGuest,
+                  child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _handleGuestExplore,
@@ -354,6 +357,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                     ),
+                  ),
                   ),
 
                   const Spacer(flex: 2),
@@ -803,7 +807,10 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
             ),
 
             // 5. Button Hit-Target & Interactive Typography
-            GestureDetector(
+            Semantics(
+              button: true,
+              label: widget.strings.a11yLoginWithGoogle,
+            child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTapDown: _handleTapDown,
               onTap: _handleTap,
@@ -898,6 +905,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                             ),
                 ),
               ),
+            ),
             ),
           ],
         ),

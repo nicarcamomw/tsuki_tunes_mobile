@@ -5,14 +5,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../providers/library_provider.dart';
+import '../providers/playlist_provider.dart';
 import '../providers/audio_provider.dart';
 import 'package:flutter/services.dart';
 import '../providers/locale_provider.dart';
 import '../models/track.dart';
 import '../models/album.dart';
+import '../models/playlist.dart';
 import '../models/artist.dart';
-import '../screens/album_detail_screen.dart';
 import '../widgets/artist_card.dart';
+import '../screens/album_detail_screen.dart';
+import '../screens/playlist_detail_screen.dart';
 import 'main_navigation_screen.dart';
 
 class _AlbumGroupData {
@@ -39,9 +42,11 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class _LibraryScreenState extends State<LibraryScreen>
+    with TickerProviderStateMixin {
   final ScrollController scrollController = ScrollController();
   final TextEditingController _filterController = TextEditingController();
+  late final TabController _tabController;
   String _sortBy = 'recent';
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
@@ -50,6 +55,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     NavigationEvents.onLibraryScrollToTop = scrollToTop;
     scrollController.addListener(_onScroll);
   }
@@ -68,6 +74,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (NavigationEvents.onLibraryScrollToTop == scrollToTop) {
       NavigationEvents.onLibraryScrollToTop = null;
     }
+    _tabController.dispose();
     scrollController.dispose();
     _filterController.dispose();
     super.dispose();
@@ -158,13 +165,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
 
-    final followedArtists = filterText.isEmpty
-        ? library.favoriteArtists
-        : library.favoriteArtists
-            .where((a) => a.name.toLowerCase().contains(filterText))
-            .toList();
-    final showFollowed = followedArtists.isNotEmpty;
-
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: Center(
@@ -225,277 +225,46 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
 
-            // Filter + Sort
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.bgMid,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: TextField(
-                      controller: _filterController,
-                      style: locale.getTextStyle(
-                          color: AppColors.textBright, fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: strings.filterHint,
-                        hintStyle: locale.getTextStyle(
-                            color: AppColors.textMuted, fontSize: 13),
-                        prefixIcon: const Icon(Icons.filter_list,
-                            color: AppColors.textSecondary, size: 18),
-                        suffixIcon: _filterController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear,
-                                    color: AppColors.textSecondary, size: 16),
-                                onPressed: () {
-                                  setState(() => _filterController.clear());
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildSortBtn('recent', strings.sortRecent, locale),
-                      const SizedBox(width: 8),
-                      _buildSortBtn('alpha', strings.sortAz, locale),
-                      const SizedBox(width: 8),
-                      _buildSortBtn('artist', strings.sortArtist, locale),
-                    ],
-                  ),
+            // Tab Bar
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.bgMid,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.accent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: AppColors.accent,
+                unselectedLabelColor: AppColors.textSecondary,
+                labelStyle: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                dividerHeight: 0,
+                tabs: [
+                  Tab(text: strings.albumsTab),
+                  Tab(text: strings.playlistsTab),
                 ],
               ),
             ),
 
-            // Play controls
-            if (totalTracks > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          final allTracks = _buildAllTracks(listenedTracks);
-                          if (allTracks.isNotEmpty) {
-                            final audio = context.read<AudioProvider>();
-                            audio.playTrack(allTracks.first, newQueue: allTracks);
-                          }
-                        },
-                        icon: const Icon(Icons.play_arrow, color: AppColors.accent, size: 18),
-                        label: Text(
-                          strings.playAll,
-                          style: locale.getTextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.accent),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          final allTracks = _buildAllTracks(listenedTracks);
-                          if (allTracks.isNotEmpty) {
-                            final shuffled = List<Track>.from(allTracks)..shuffle();
-                            final audio = context.read<AudioProvider>();
-                            audio.playTrack(shuffled.first, newQueue: shuffled);
-                          }
-                        },
-                        icon: const Icon(Icons.shuffle, color: AppColors.accent, size: 18),
-                        label: Text(
-                          strings.shuffle,
-                          style: locale.getTextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.accent),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Content
+            // Tab Content
             Expanded(
-              child: RefreshIndicator(
-                color: AppColors.accent,
-                backgroundColor: AppColors.bgCard,
-                onRefresh: _refreshData,
-                child: totalTracks == 0
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          if (showFollowed)
-                            _buildFollowedArtistsSection(
-                                followedArtists, locale),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.5,
-                            child: _hasError
-                                ? Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(24),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            strings.searchError,
-                                            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 14),
-                                          GestureDetector(
-                                            onTap: () {
-                                              HapticFeedback.lightImpact();
-                                              _refreshData();
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.accent.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                                              ),
-                                              child: Text(
-                                                strings.retry,
-                                                style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: 1.5),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 28),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.library_music_outlined,
-                                        size: 54, color: AppColors.borderGlow),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      strings.emptyLibraryTitle,
-                                      textAlign: TextAlign.center,
-                                      style: locale.getTextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textSecondary,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      strings.emptyLibrarySubtitle,
-                                      textAlign: TextAlign.center,
-                                      style: locale.getTextStyle(
-                                          fontSize: 12, color: AppColors.textMuted),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    GestureDetector(
-                                      onTap: () {
-                                        HapticFeedback.lightImpact();
-                                        NavigationEvents.switchTab?.call(1);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: AppColors.accent.withValues(alpha: 0.6),
-                                          ),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          strings.homeEmptyAction,
-                                          style: locale.getTextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.accent,
-                                            letterSpacing: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.only(bottom: 120),
-                        itemCount: (showFollowed ? 1 : 0) +
-                            (visible.length < albumGroups.length
-                                ? visible.length + 1
-                                : visible.length),
-                        itemBuilder: (context, index) {
-                          if (showFollowed) {
-                            if (index == 0) {
-                              return _buildFollowedArtistsSection(
-                                  followedArtists, locale);
-                            }
-                            index--;
-                          }
-                          if (index == visible.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.accent,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          return _AlbumGroupTile(
-                            group: visible[index],
-                            isExpanded:
-                                _expandedAlbums.contains(visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle),
-                            onToggle: () {
-                              setState(() {
-                                final key = visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle;
-                                if (_expandedAlbums.contains(key)) {
-                                  _expandedAlbums.remove(key);
-                                } else {
-                                  _expandedAlbums.add(key);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Albums tab
+                  _buildAlbumsTab(context, locale, strings, listenedTracks, albumGroups, visible, totalTracks),
+                  // Playlists tab
+                  _buildPlaylistsTab(context, locale, strings),
+                ],
               ),
             ),
           ],
@@ -504,6 +273,483 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       ),
     );
+  }
+
+  Widget _buildAlbumsTab(
+    BuildContext context,
+    LocaleProvider locale,
+    dynamic strings,
+    List<ListenedTrackData> listenedTracks,
+    List<_AlbumGroupData> albumGroups,
+    List<_AlbumGroupData> visible,
+    int totalTracks,
+  ) {
+    final filterText = _filterController.text.toLowerCase();
+    final allFollowed = context.watch<LibraryProvider>().followedArtists;
+    final followedArtists = filterText.isEmpty
+        ? allFollowed
+        : allFollowed
+            .where((a) => a.name.toLowerCase().contains(filterText))
+            .toList();
+    final showFollowed = followedArtists.isNotEmpty;
+
+    return Column(
+      children: [
+        // Filter + Sort
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.bgMid,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: TextField(
+                  controller: _filterController,
+                  style: locale.getTextStyle(
+                      color: AppColors.textBright, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: strings.filterHint,
+                    hintStyle: locale.getTextStyle(
+                        color: AppColors.textMuted, fontSize: 13),
+                    prefixIcon: const Icon(Icons.filter_list,
+                        color: AppColors.textSecondary, size: 18),
+                    suffixIcon: _filterController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear,
+                                color: AppColors.textSecondary, size: 16),
+                            onPressed: () {
+                              setState(() => _filterController.clear());
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildSortBtn('recent', strings.sortRecent, locale),
+                  const SizedBox(width: 8),
+                  _buildSortBtn('alpha', strings.sortAz, locale),
+                  const SizedBox(width: 8),
+                  _buildSortBtn('artist', strings.sortArtist, locale),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Play controls
+        if (totalTracks > 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final allTracks = _buildAllTracks(listenedTracks);
+                      if (allTracks.isNotEmpty) {
+                        final audio = context.read<AudioProvider>();
+                        audio.playTrack(allTracks.first, newQueue: allTracks);
+                      }
+                    },
+                    icon: const Icon(Icons.play_arrow, color: AppColors.accent, size: 18),
+                    label: Text(
+                      strings.playAll,
+                      style: locale.getTextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final allTracks = _buildAllTracks(listenedTracks);
+                      if (allTracks.isNotEmpty) {
+                        final shuffled = List<Track>.from(allTracks)..shuffle();
+                        final audio = context.read<AudioProvider>();
+                        audio.playTrack(shuffled.first, newQueue: shuffled);
+                      }
+                    },
+                    icon: const Icon(Icons.shuffle, color: AppColors.accent, size: 18),
+                    label: Text(
+                      strings.shuffle,
+                      style: locale.getTextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Content
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            backgroundColor: AppColors.bgCard,
+            onRefresh: _refreshData,
+            child: totalTracks == 0
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      if (showFollowed)
+                        _buildFollowedArtistsSection(followedArtists, locale),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.4,
+                        child: _hasError
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        strings.loadError,
+                                        style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Semantics(
+                                        button: true,
+                                        label: strings.retry,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            HapticFeedback.lightImpact();
+                                            _refreshData();
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.accent.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                                            ),
+                                            child: Text(
+                                              strings.retry,
+                                              style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: 1.5),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.library_music_outlined,
+                                    size: 54, color: AppColors.borderGlow),
+                                const SizedBox(height: 12),
+                                Text(
+                                  strings.emptyLibraryTitle,
+                                  textAlign: TextAlign.center,
+                                  style: locale.getTextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  strings.emptyLibrarySubtitle,
+                                  textAlign: TextAlign.center,
+                                  style: locale.getTextStyle(
+                                      fontSize: 12, color: AppColors.textMuted),
+                                ),
+                                const SizedBox(height: 16),
+                                Semantics(
+                                  button: true,
+                                  label: strings.a11yGoToSearch,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      NavigationEvents.switchTab?.call(1);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: AppColors.accent.withValues(alpha: 0.6),
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        strings.homeEmptyAction,
+                                        style: locale.getTextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.accent,
+                                          letterSpacing: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.only(bottom: 120),
+                    itemCount: (showFollowed ? 1 : 0) +
+                        (visible.length < albumGroups.length
+                            ? visible.length + 1
+                            : visible.length),
+                    itemBuilder: (context, index) {
+                      if (showFollowed) {
+                        if (index == 0) {
+                          return _buildFollowedArtistsSection(
+                              followedArtists, locale);
+                        }
+                        index--;
+                      }
+                      if (index == visible.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return _AlbumGroupTile(
+                        group: visible[index],
+                        isExpanded:
+                            _expandedAlbums.contains(visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle),
+                        onToggle: () {
+                          setState(() {
+                            final key = visible[index].albumId.isNotEmpty ? visible[index].albumId : visible[index].albumTitle;
+                            if (_expandedAlbums.contains(key)) {
+                              _expandedAlbums.remove(key);
+                            } else {
+                              _expandedAlbums.add(key);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlaylistsTab(
+    BuildContext context,
+    LocaleProvider locale,
+    dynamic strings,
+  ) {
+    final playlists = context.watch<PlaylistProvider>().playlists;
+
+    return Column(
+      children: [
+        // Create playlist button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showCreatePlaylistDialog(context),
+              icon: const Icon(Icons.add, color: AppColors.accent, size: 18),
+              label: Text(
+                strings.createPlaylist,
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.accent),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ),
+
+        // Playlist list or empty state
+        Expanded(
+          child: playlists.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.queue_music,
+                            size: 54, color: AppColors.borderGlow),
+                        const SizedBox(height: 12),
+                        Text(
+                          strings.noPlaylistsTitle,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          strings.noPlaylistsSubtitle,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                              fontSize: 12, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 120),
+                  itemCount: playlists.length,
+                  itemBuilder: (context, index) {
+                    final playlist = playlists[index];
+                    return _PlaylistListTile(playlist: playlist);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showCreatePlaylistDialog(BuildContext context) async {
+    final strings = context.read<LocaleProvider>().strings;
+    final locale = context.read<LocaleProvider>();
+    final controller = TextEditingController();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          strings.newPlaylist,
+          style: locale.getTextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textBright,
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: locale.getTextStyle(
+            fontSize: 14,
+            color: AppColors.textBright,
+          ),
+          decoration: InputDecoration(
+            hintText: strings.playlistNameHint,
+            hintStyle: locale.getTextStyle(
+              fontSize: 14,
+              color: AppColors.textMuted,
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppColors.accent),
+            ),
+          ),
+          onSubmitted: (value) => Navigator.pop(ctx, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              strings.cancel,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(
+              strings.create,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.accent,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (name != null && name.trim().isNotEmpty && context.mounted) {
+      final provider = context.read<PlaylistProvider>();
+      await provider.createPlaylist(name);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              strings.playlistCreated,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textBright,
+              ),
+            ),
+            backgroundColor: AppColors.bgCard,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   List<Track> _buildAllTracks(List<ListenedTrackData> listened) {
@@ -579,12 +825,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
     final isSelected = _sortBy == value;
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          setState(() => _sortBy = value);
-        },
-        child: Container(
+      child: Semantics(
+        button: true,
+        label: label,
+        selected: isSelected,
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() => _sortBy = value);
+          },
+          child: Container(
           padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.accent : AppColors.bgMid,
@@ -602,6 +852,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
             ),
           ),
+        ),
         ),
       ),
     );
@@ -891,6 +1142,98 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
       artistId: '',
       artistName: group.artistName,
       tracksCount: group.tracks.length,
+    );
+  }
+}
+
+class _PlaylistListTile extends StatelessWidget {
+  final Playlist playlist;
+
+  const _PlaylistListTile({required this.playlist});
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.watch<LocaleProvider>();
+    final strings = locale.strings;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+      ),
+      child: InkWell(
+        onTap: () {
+          appNavigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => PlaylistDetailScreen(playlistId: playlist.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: playlist.coverUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: playlist.coverUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) =>
+                              Container(color: AppColors.bgMid),
+                          errorWidget: (_, __, ___) => Container(
+                            color: AppColors.bgMid,
+                            child: const Icon(Icons.queue_music,
+                                color: AppColors.accent, size: 22),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.bgMid,
+                          child: const Icon(Icons.queue_music,
+                              color: AppColors.accent, size: 22),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      playlist.name,
+                      style: locale.getTextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textBright,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      strings.playlistMeta(
+                        playlist.trackCount,
+                        Formatters.formatSeconds(playlist.totalDurationSeconds),
+                      ),
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right,
+                  color: AppColors.textSecondary, size: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

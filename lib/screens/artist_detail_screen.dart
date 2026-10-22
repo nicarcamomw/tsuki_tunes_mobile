@@ -9,6 +9,7 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../models/album.dart';
 import '../services/deezer_api_service.dart';
+import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/connectivity_provider.dart';
@@ -40,6 +41,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   List<Album> _albums = [];
   int _totalAlbums = 0;
   List<String> _artistTags = [];
+  List<Artist> _relatedArtists = [];
   bool _isLoading = true;
   bool _hasError = false;
   bool _showStats = false;
@@ -100,6 +102,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
         LastFmService.getArtistTags(widget.artist.name),
         _api.getArtistCompilations(widget.artist.id),
+        _api.getRelatedArtists(widget.artist.id),
       ]);
       if (mounted) {
         final pagedAlbums = results[1] as ArtistAlbumsPage;
@@ -114,6 +117,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
           _hasMoreAlbums = pagedAlbums.hasMore;
           _artistTags = results[2] as List<String>;
+          _relatedArtists = results[4] as List<Artist>;
           _isLoading = false;
         });
         final library = context.read<LibraryProvider>();
@@ -215,6 +219,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         !_hasMoreAlbums &&
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
+    final isFollowed = library.isArtistFollowed(widget.artist.id);
+    final isGuest = context.watch<AuthProvider>().isGuest;
 
     final cats = _categorizedAlbums;
 
@@ -272,22 +278,28 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 child: Tooltip(
                   triggerMode: TooltipTriggerMode.tap,
                   message: isArtistComplete
-                      ? strings.artistDiscographyComplete
+                      ? strings.artistCompleteTooltip
                       : strings.artistDiscographyProgress(
                           completedReleases, releaseGroups.length),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 350),
+                  child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: isArtistComplete
-                          ? AppColors.accent
-                          : AppColors.bgDeep.withValues(alpha: 0.7),
+                      color: AppColors.bgDeep.withValues(alpha: 0.7),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.accent
-                            .withValues(alpha: isArtistComplete ? 1.0 : 0.4),
-                        width: 1,
+                        color: isArtistComplete
+                            ? AppColors.accent
+                            : AppColors.accent.withValues(alpha: 0.4),
+                        width: isArtistComplete ? 1.5 : 1,
                       ),
+                      boxShadow: isArtistComplete
+                          ? [
+                              BoxShadow(
+                                color: AppColors.accentGlow,
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
                     ),
                     child: OniMaskIcon(
                       isActive: isArtistComplete,
@@ -303,10 +315,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   if (widget.artist.pictureUrl.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: widget.artist.getBestImage(size: 'xl'),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
+                    ExcludeSemantics(
+                      child: CachedNetworkImage(
+                        imageUrl: widget.artist.getBestImage(size: 'xl'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
                     ),
                   Container(
                     decoration: const BoxDecoration(
@@ -346,41 +360,40 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Stats row + follow button
+                  // Stats row
                   Row(
                     children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 6,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                      if (widget.artist.fansCount > 0) ...[
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (widget.artist.fansCount > 0)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AppCustomIcons.persona(
-                                    size: 16,
-                                    color: AppColors.accent,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
-                                    style: locale.getTextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
+                            AppCustomIcons.persona(
+                              size: 16,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
+                              style: locale.getTextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
                           ],
                         ),
+                        const SizedBox(width: 16),
+                      ],
                       if (widget.artist.albumsCount > 0)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _showStats = !_showStats);
-                          },
-                          behavior: HitTestBehavior.opaque,
+                        Semantics(
+                          button: true,
+                          label: _showStats ? strings.a11yHideStats : strings.a11yShowStats,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showStats = !_showStats);
+                            },
+                            behavior: HitTestBehavior.opaque,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -414,14 +427,72 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               ),
                             ],
                           ),
+                          ),
                         ),
+                    ],
+                  ),
+
+                  // Follow button
+                  if (!isGuest) ...[
+                    const SizedBox(height: 14),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        if (isFollowed) {
+                          library.unfollowArtist(widget.artist.id);
+                        } else {
+                          library.followArtist(widget.artist);
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: isFollowed
+                              ? AppColors.accent.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isFollowed
+                                ? AppColors.accent
+                                : AppColors.accent.withValues(alpha: 0.5),
+                            width: 1.2,
+                          ),
+                          boxShadow: isFollowed
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.accentGlow.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isFollowed ? Icons.check : Icons.add,
+                              size: 14,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isFollowed
+                                  ? strings.unfollowArtist
+                                  : strings.followArtist,
+                              style: locale.getTextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.accent,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      _buildFollowButton(library, locale, strings),
-                    ],
-                  ),
+                    ),
+                  ],
 
                   // Animated Glass Capsule Breakdown
                   AnimatedCrossFade(
@@ -562,7 +633,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
                       const SizedBox(height: 10),
                       Text(
-                        strings.searchError,
+                        strings.loadError,
                         style: locale.getTextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -644,12 +715,15 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 4),
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _showAllTracks = !_showAllTracks);
-                          },
-                          child: AnimatedContainer(
+                        child: Semantics(
+                          button: true,
+                          label: _showAllTracks ? strings.a11yShowLessTracks : strings.a11yShowAllTracks,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _showAllTracks = !_showAllTracks);
+                            },
+                            child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
@@ -685,6 +759,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               ],
                             ),
                           ),
+                          ),
                         ),
                       ),
                     ),
@@ -700,6 +775,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               child: _buildStoredContentSection(library, locale, strings),
             ),
           ],
+
+          // Similar Artists
+          if (!_isLoading && _relatedArtists.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _buildRelatedArtistsSection(locale, strings),
+            ),
 
           if (!_isLoading && _albums.isNotEmpty) ...[
             SliverToBoxAdapter(
@@ -807,37 +888,41 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ],
               ),
               if (hasMore)
-                GestureDetector(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final updated =
-                        await appNavigatorKey.currentState?.push<List<Album>>(
-                      MaterialPageRoute(
-                        builder: (_) => ArtistDiscographyScreen(
-                          artistId: widget.artist.id,
-                          artistName: widget.artist.name,
-                          albums: _albums,
-                          totalAlbums: _totalAlbums,
-                          initialFilter: filterKey,
+                Semantics(
+                  button: true,
+                  label: strings.a11yViewDiscography,
+                  child: GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      final updated =
+                          await appNavigatorKey.currentState?.push<List<Album>>(
+                        MaterialPageRoute(
+                          builder: (_) => ArtistDiscographyScreen(
+                            artistId: widget.artist.id,
+                            artistName: widget.artist.name,
+                            albums: _albums,
+                            totalAlbums: _totalAlbums,
+                            initialFilter: filterKey,
+                          ),
                         ),
-                      ),
-                    );
-                    if (mounted) {
-                      if (updated != null && updated.length > _albums.length) {
-                        setState(() {
-                          _albums = updated;
-                          _hasMoreAlbums = updated.length < _totalAlbums;
-                        });
+                      );
+                      if (mounted) {
+                        if (updated != null && updated.length > _albums.length) {
+                          setState(() {
+                            _albums = updated;
+                            _hasMoreAlbums = updated.length < _totalAlbums;
+                          });
+                        }
+                        setState(() {});
                       }
-                      setState(() {});
-                    }
-                  },
-                  child: Text(
-                    strings.seeMore,
-                    style: locale.getTextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accent,
+                    },
+                    child: Text(
+                      strings.seeMore,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
                     ),
                   ),
                 ),
@@ -869,68 +954,74 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 
-    return GestureDetector(
-      onTap: () async {
-        await appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (_) => AlbumDetailScreen(album: album),
-          ),
-        );
-        if (mounted) setState(() {});
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppColors.border, width: 1),
+    return Semantics(
+      button: true,
+      label: '${album.title}, ${album.artistName}',
+      child: GestureDetector(
+        onTap: () async {
+          await appNavigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => AlbumDetailScreen(album: album),
+            ),
+          );
+          if (mounted) setState(() {});
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border, width: 1),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: _buildAlbumCover(album, isCompleted),
+                ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: _buildAlbumCover(album, isCompleted),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              album.title,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isCompleted ? AppColors.accent : AppColors.textPrimary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            album.title,
-            style: locale.getTextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isCompleted ? AppColors.accent : AppColors.textPrimary,
+            Text(
+              '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+              style: locale.getTextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
-            style: locale.getTextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAlbumCover(Album album, bool isCompleted) {
-    final image = album.coverUrl.isNotEmpty
-        ? CachedNetworkImage(
-            imageUrl: album.coverUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-          )
-        : Container(
-            color: AppColors.bgMid,
-            child: const Icon(Icons.album, color: AppColors.accent, size: 40),
-          );
+    final image = ExcludeSemantics(
+      child: album.coverUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: album.coverUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : Container(
+              color: AppColors.bgMid,
+              child: const Icon(Icons.album, color: AppColors.accent, size: 40),
+            ),
+    );
 
     if (isCompleted) return image;
 
@@ -945,12 +1036,120 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
+  Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Text(
+                strings.similarArtists,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textBright,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 170,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _relatedArtists.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final artist = _relatedArtists[index];
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    appNavigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => ArtistDetailScreen(artist: artist),
+                      ),
+                    );
+                  },
+                  child: SizedBox(
+                    width: 110,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: artist.pictureUrl.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: artist.getBestImage(size: 'medium'),
+                                    fit: BoxFit.cover,
+                                    width: 100,
+                                    height: 100,
+                                  )
+                                : Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.person,
+                                        color: AppColors.textMuted, size: 36),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          artist.name,
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                        if (artist.fansCount > 0)
+                          Text(
+                            strings.artistFansCompact(
+                                Formatters.formatNumber(artist.fansCount)),
+                            style: locale.getTextStyle(
+                              fontSize: 9,
+                              color: AppColors.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStoredContentSection(
       LibraryProvider library, LocaleProvider locale, AppStrings strings) {
     final artistName = widget.artist.name;
-    final artistTracks = library.listenedTracks
-        .where((t) => t.artistName.toLowerCase() == artistName.toLowerCase())
-        .toList();
+    final artistNameLower = artistName.toLowerCase().trim();
+    final albumIds = _albums.map((a) => a.id).toSet();
+
+    final artistTracks = library.listenedTracks.where((t) {
+      if (albumIds.contains(t.albumId)) return true;
+      final trackArtists = t.artistName.toLowerCase().split(',').map((s) => s.trim());
+      return trackArtists.any((a) => a == artistNameLower);
+    }).toList();
     final songCount = artistTracks.length;
 
     final albumCats = <String, List<Album>>{
@@ -1004,31 +1203,36 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             child: Column(
               children: [
                 // Header - tappable to expand
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() => _showStoredContent = !_showStoredContent);
-                  },
-                  behavior: HitTestBehavior.opaque,
+                Semantics(
+                  button: true,
+                  label: _showStoredContent ? strings.a11yCollapseStoredContent : strings.a11yExpandStoredContent,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _showStoredContent = !_showStoredContent);
+                    },
+                    behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
-                        SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(22),
-                            child: widget.artist.pictureUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: widget.artist.pictureUrl,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    color: AppColors.bgMid,
-                                    child: const Icon(Icons.person,
-                                        color: AppColors.textMuted, size: 20),
-                                  ),
+                        ExcludeSemantics(
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: widget.artist.pictureUrl.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: widget.artist.pictureUrl,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      color: AppColors.bgMid,
+                                      child: const Icon(Icons.person,
+                                          color: AppColors.textMuted, size: 20),
+                                    ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1067,6 +1271,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
 
@@ -1204,58 +1409,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFollowButton(
-      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
-    final isFollowing = library.isFavoriteArtist(widget.artist.id);
-    final label = isFollowing ? strings.followingArtist : strings.followArtist;
-    final fgColor = isFollowing ? AppColors.textBright : AppColors.accent;
-
-    return Semantics(
-      button: true,
-      toggled: isFollowing,
-      label: label,
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          library.toggleFavoriteArtist(widget.artist);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: isFollowing
-                ? AppColors.accent
-                : AppColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.accent, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isFollowing ? Icons.check_rounded : Icons.add_rounded,
-                size: 14,
-                color: fgColor,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: locale.getTextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: fgColor,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "695da39b182536b1",
+        "id": "c4ceff790500b905",
         "type": "tabs",
         "children": [
           {
-            "id": "223b185e9e4f080c",
+            "id": "8148dbb05501c76d",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -94,31 +94,12 @@
         "type": "tabs",
         "children": [
           {
-            "id": "f96ffb90526b8c3a",
-            "type": "leaf",
-            "state": {
-              "type": "backlink",
-              "state": {
-                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
-                "collapseAll": false,
-                "extraContext": false,
-                "sortOrder": "alphabetical",
-                "showSearch": false,
-                "searchQuery": "",
-                "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
-              },
-              "icon": "links-coming-in",
-              "title": "Enlaces entrantes"
-            }
-          },
-          {
             "id": "0e14f0ac593577b8",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Documentos/Documentacion de apartados de aplicacion movil Tsuki Tunes.md",
+                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -187,33 +168,34 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "223b185e9e4f080c",
+  "active": "0e14f0ac593577b8",
   "lastOpenFiles": [
-    "SPOTIFY_Y_MINIPLAYER_EXPLICACION.md",
-    "README.md",
+    "firebase-debug.log",
     "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
-    "Documentos/Sistema de Audio - Arquitectura Completa.md",
-    "Documentos/Sin título.md",
-    "build/app/intermediates/shrunk_resources_proto_format/release/minifyReleaseWithR8/shrunk-resources-proto-format-release.ap_",
-    "build/app/outputs/mapping/release/resources.txt",
-    "build/app/outputs/mapping/release/mapping.txt",
-    "build/app/intermediates/merged_java_res/release/minifyReleaseWithR8/base.jar",
-    "build/app/intermediates/r8_metadata/release/minifyReleaseWithR8/r8-metadata.dat",
-    "build/app/intermediates/dex/release/minifyReleaseWithR8/classes.dex",
-    "build/app/outputs/mapping/release/mapping.prt",
-    "build/app/outputs/mapping/release/usage.txt",
-    "build/app/outputs/mapping/release/seeds.txt",
-    "build/app/intermediates/stripped_native_libs/release/stripReleaseDebugSymbols/out/lib/arm64-v8a/libapp.so.temp-stream-097222",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86_64/generate_cxx_metadata_273_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_273_timing.txt",
+    "build/jni/intermediates/cxx/Debug/4u3f7229/logs/arm64-v8a/generate_cxx_metadata_280_timing.txt",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/tengu.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/persona.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/flechaabajo.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/optio_nyx.otf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/jamiroquai.ttf",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/oni.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/nota.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/libreria.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-512.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/fuego_pro.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hero.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/icon-192.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/hannya.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/images/grupo.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/trixie.ttf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/squealer.ttf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/sickness.ttf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/sf_hollywood_hills.ttf",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/fonts/scary_glyphs.ttf",
+    "SPOTIFY_Y_MINIPLAYER_EXPLICACION.md",
+    "README.md",
+    "Documentos/Sistema de Audio - Arquitectura Completa.md",
+    "Documentos/Sin título.md",
     "Documentos/v4.0 - Documentacion de apartados.md",
     "Documentos/v3.0 - Documentacion de apartados.md",
     "Documentos/v2.0 - Documentacion de apartados.md",

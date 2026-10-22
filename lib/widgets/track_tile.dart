@@ -15,7 +15,92 @@ import '../screens/artist_detail_screen.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
+import 'playlist_selector_sheet.dart';
 import 'tap_scale.dart';
+
+class _PlayingIndicator extends StatefulWidget {
+  final bool isPlaying;
+
+  const _PlayingIndicator({required this.isPlaying});
+
+  @override
+  State<_PlayingIndicator> createState() => _PlayingIndicatorState();
+}
+
+class _PlayingIndicatorState extends State<_PlayingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    if (widget.isPlaying) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_PlayingIndicator old) {
+    super.didUpdateWidget(old);
+    if (widget.isPlaying && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.isPlaying && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final t = widget.isPlaying ? _controller.value : 0.3;
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _bar(height: 4 + 8 * _wave(t, 0.0)),
+                const SizedBox(width: 2),
+                _bar(height: 4 + 8 * _wave(t, 0.33)),
+                const SizedBox(width: 2),
+                _bar(height: 4 + 8 * _wave(t, 0.66)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  double _wave(double t, double offset) {
+    final v = (t + offset) % 1.0;
+    return v < 0.5 ? v * 2 : 2 - v * 2;
+  }
+
+  Widget _bar({required double height}) {
+    return Container(
+      width: 3,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(1.5),
+      ),
+    );
+  }
+}
 
 class TrackTile extends StatelessWidget {
   final Track track;
@@ -70,41 +155,19 @@ class TrackTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Index or playing equalizer
               if (isCurrent)
-                SizedBox(
-                  width: 24,
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                      width: isPlaying ? 10 : 7,
-                      height: isPlaying ? 10 : 7,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.accent,
-                        boxShadow: isPlaying
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.accent.withValues(alpha: 0.7),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ]
-                            : null,
-                      ),
-                    ),
-                  ),
-                )
+                _PlayingIndicator(isPlaying: isPlaying)
               else if (index != null)
                 SizedBox(
                   width: 24,
-                  child: Text(
-                    (index! + 1).toString().padLeft(2, '0'),
-                    style: locale.getTextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w600,
+                  child: Center(
+                    child: Text(
+                      (index! + 1).toString().padLeft(2, '0'),
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -112,7 +175,8 @@ class TrackTile extends StatelessWidget {
               const SizedBox(width: 8),
 
               // Album Cover Thumbnail
-              ClipRRect(
+              ExcludeSemantics(
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: SizedBox(
                   width: 46,
@@ -135,6 +199,7 @@ class TrackTile extends StatelessWidget {
                               color: AppColors.accent, size: 20),
                         ),
                 ),
+              ),
               ),
 
               const SizedBox(width: 14),
@@ -318,8 +383,9 @@ class TrackTile extends StatelessWidget {
                 ),
               ),
               onTap: () {
+                HapticFeedback.lightImpact();
                 Navigator.pop(ctx);
-                context.read<AudioProvider>().addToQueue(track);
+                context.read<AudioProvider>().playNext(track);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -345,6 +411,7 @@ class TrackTile extends StatelessWidget {
                 ),
               ),
               onTap: () {
+                HapticFeedback.lightImpact();
                 Navigator.pop(ctx);
                 context.read<AudioProvider>().addToQueue(track);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -362,6 +429,21 @@ class TrackTile extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.playlist_add, color: AppColors.accent),
+              title: Text(
+                strings.addToPlaylist,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  color: AppColors.textBright,
+                ),
+              ),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(ctx);
+                showPlaylistSelector(context, track);
+              },
+            ),
             if (track.artistId.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.person_outline, color: AppColors.accent),
@@ -373,6 +455,7 @@ class TrackTile extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(ctx);
                   appNavigatorKey.currentState?.push(
                     MaterialPageRoute(
@@ -400,6 +483,7 @@ class TrackTile extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(ctx);
                   appNavigatorKey.currentState?.push(
                     MaterialPageRoute(

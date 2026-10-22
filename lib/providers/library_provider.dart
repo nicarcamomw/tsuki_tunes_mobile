@@ -144,6 +144,10 @@ class LibraryProvider extends ChangeNotifier {
   Map<String, int> _albumTrackCounts = {};
   bool _listenedTracksLoaded = false;
 
+  // Followed artists (Firestore-synced)
+  List<Artist> _followedArtists = [];
+  Set<String> _followedArtistIds = {};
+
   // Firestore subscriptions
   StreamSubscription? _tracksSubscription;
   StreamSubscription? _statsSubscription;
@@ -160,6 +164,9 @@ class LibraryProvider extends ChangeNotifier {
   int get totalTracksCount => _totalTracksCount;
   bool get syncing => _syncing;
   Map<String, int> get artistVisits => Map.unmodifiable(_artistVisits);
+  List<Artist> get followedArtists => List.unmodifiable(_followedArtists);
+  Set<String> get followedArtistIds => Set.unmodifiable(_followedArtistIds);
+  bool isArtistFollowed(String artistId) => _followedArtistIds.contains(artistId);
 
   int getAlbumTracksCount(String albumId) => _albumTrackCounts[albumId] ?? 0;
   bool get listenedTracksLoaded => _listenedTracksLoaded;
@@ -221,9 +228,7 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> _loadLocalData() async {
     _favoriteTracks = await _storage.getFavoriteTracks();
     _recentTracks = await _storage.getRecentTracks();
-    // Signed-in users get their followed artists from Firestore instead.
-    final localArtists = await _storage.getFavoriteArtists();
-    if (_currentUid == null) _favoriteArtists = localArtists;
+    _favoriteArtists = await _storage.getFavoriteArtists();
     _artistVisits = await _storage.getArtistVisits();
     _albumTrackCounts = await _storage.getAlbumTrackCounts();
     _isLoaded = true;
@@ -270,8 +275,7 @@ class LibraryProvider extends ChangeNotifier {
 
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
-
-    _connectFollowedArtists(uid);
+    _followedArtistsSubscription?.cancel();
 
     final db = _firebase.db;
     final userDoc = db.collection('users').doc(uid);
@@ -391,79 +395,67 @@ class LibraryProvider extends ChangeNotifier {
     }, onError: (e) {
       debugPrint('[LibraryProvider] Firestore stats sync error: $e');
     });
-  }
 
-  /// Followed artists live in users/{uid}/followedArtists/{artistId}.
-  /// Artists followed before signing in (stored locally) are uploaded once
-  /// and then removed from the local guest list.
-  Future<void> _connectFollowedArtists(String uid) async {
-    _followedArtistsSubscription?.cancel();
+    // 5. Followed artists — cache restore + full fetch + listener
+    try {
+      final cached = await _storage.getCachedFollowedArtists(uid);
+      if (cached.isNotEmpty && _currentUid == uid) {
+        _followedArtists = cached.map((e) => Artist.fromStorage(e)).toList();
+        _followedArtistIds = _followedArtists.map((a) => a.id).toSet();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[LibraryProvider] Error restoring cached followed artists: $e');
+    }
 
-    final cached = await _storage.getCachedFollowedArtists(uid);
-    if (_currentUid != uid) return;
-    _favoriteArtists = cached;
-    notifyListeners();
-
-    final col = _firebase.db
-        .collection('users')
-        .doc(uid)
-        .collection('followedArtists');
-
-    bool migrated = false;
-    _followedArtistsSubscription = col.snapshots().listen((snapshot) async {
+    final followedCol = userDoc.collection('followedArtists');
+    try {
+      final snapshot = await followedCol.get();
       if (_currentUid != uid) return;
-
-      final entries = snapshot.docs.map((doc) {
-        final data = doc.data();
-        final rawDate = data['followedAt'];
-        final followedAt = rawDate is Timestamp ? rawDate.toDate() : null;
-        final artist = Artist.fromStorage({...data, 'id': data['id'] ?? doc.id});
-        return (artist: artist, followedAt: followedAt);
-      }).toList();
-      // Pending server timestamps are null locally: treat them as newest.
-      entries.sort((a, b) {
-        final aTime = a.followedAt ?? DateTime(9999);
-        final bTime = b.followedAt ?? DateTime(9999);
-        return bTime.compareTo(aTime);
-      });
-      _favoriteArtists = entries.map((e) => e.artist).toList();
+      _followedArtists = snapshot.docs
+          .map((doc) => Artist.fromStorage(doc.data()))
+          .toList();
+      _followedArtistIds = _followedArtists.map((a) => a.id).toSet();
       notifyListeners();
-      _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
+      _storage.saveCachedFollowedArtists(
+        uid,
+        _followedArtists.map((a) => a.toJson()).toList(),
+      );
+    } catch (e) {
+      debugPrint('[LibraryProvider] Followed artists fetch error: $e');
+    }
 
-      if (!migrated) {
-        migrated = true;
-        await _migrateLocalFollowedArtists(uid, col);
+    _followedArtistsSubscription = followedCol.snapshots().listen((snapshot) {
+      if (_currentUid != uid) return;
+      bool changed = false;
+      for (final change in snapshot.docChanges) {
+        final docData = change.doc.data();
+        if (docData == null) continue;
+        final artist = Artist.fromStorage(docData);
+        if (change.type == DocumentChangeType.removed) {
+          if (_followedArtistIds.remove(artist.id)) {
+            _followedArtists.removeWhere((a) => a.id == artist.id);
+            changed = true;
+          }
+        } else {
+          if (!_followedArtistIds.contains(artist.id)) {
+            _followedArtists.add(artist);
+            _followedArtistIds.add(artist.id);
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        notifyListeners();
+        _storage.saveCachedFollowedArtists(
+          uid,
+          _followedArtists.map((a) => a.toJson()).toList(),
+        );
       }
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Firestore followed artists sync error: $e');
+      debugPrint('[LibraryProvider] Followed artists sync error: $e');
     });
   }
-
-  Future<void> _migrateLocalFollowedArtists(
-      String uid, CollectionReference<Map<String, dynamic>> col) async {
-    final local = await _storage.getFavoriteArtists();
-    if (local.isEmpty || _currentUid != uid) return;
-
-    final remoteIds = _favoriteArtists.map((a) => a.id).toSet();
-    final toUpload = local.where((a) => !remoteIds.contains(a.id)).toList();
-    try {
-      if (toUpload.isNotEmpty) {
-        final batch = _firebase.db.batch();
-        for (final artist in toUpload) {
-          batch.set(col.doc(artist.id), _followedArtistDoc(artist));
-        }
-        await batch.commit();
-      }
-      await _storage.saveFavoriteArtists([]);
-    } catch (e) {
-      debugPrint('[LibraryProvider] followed artists migration failed: $e');
-    }
-  }
-
-  Map<String, dynamic> _followedArtistDoc(Artist artist) => {
-        ...artist.toJson(),
-        'followedAt': FieldValue.serverTimestamp(),
-      };
 
   void _pruneAlbumTrackCounts({bool forceSave = false}) {
     if (!_listenedTracksLoaded || _albumTrackCounts.isEmpty) return;
@@ -505,17 +497,12 @@ class LibraryProvider extends ChangeNotifier {
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
     _followedArtistsSubscription?.cancel();
-    _followedArtistsSubscription = null;
-    _favoriteArtists = [];
-    _storage.getFavoriteArtists().then((local) {
-      if (_currentUid != null) return;
-      _favoriteArtists = local;
-      notifyListeners();
-    });
     _listenedTracks = [];
     _listenedTrackIds = {};
     _totalTracksCount = 0;
     _listenedTracksLoaded = false;
+    _followedArtists = [];
+    _followedArtistIds = {};
     notifyListeners();
   }
 
@@ -938,43 +925,91 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   Future<void> toggleFavoriteArtist(Artist artist) async {
-    final prevArtists = List<Artist>.from(_favoriteArtists);
     final index = _favoriteArtists.indexWhere((a) => a.id == artist.id);
-    final follow = index < 0;
-    if (follow) {
-      _favoriteArtists.insert(0, artist);
-    } else {
+    if (index >= 0) {
       _favoriteArtists.removeAt(index);
+    } else {
+      _favoriteArtists.insert(0, artist);
     }
     notifyListeners();
+    await _storage.saveFavoriteArtists(_favoriteArtists);
+  }
 
-    final uid = _currentUid;
-    if (uid == null || !_canSyncToFirestore(uid)) {
-      await _storage.saveFavoriteArtists(_favoriteArtists);
-      return;
-    }
+  // --- Followed artists (Firestore-synced) ---
 
-    _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
+  Future<void> followArtist(Artist artist) async {
+    final uid = _currentUid ?? _firebase.currentUser?.uid;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
+    if (_followedArtistIds.contains(artist.id)) return;
+
+    final prevArtists = List<Artist>.from(_followedArtists);
+    final prevIds = Set<String>.from(_followedArtistIds);
+
+    _followedArtists.add(artist);
+    _followedArtistIds.add(artist.id);
+    notifyListeners();
+
+    _storage.saveCachedFollowedArtists(
+      uid,
+      _followedArtists.map((a) => a.toJson()).toList(),
+    );
+
     _startSync();
     try {
-      final doc = _firebase.db
+      await _firebase.db
           .collection('users')
           .doc(uid)
           .collection('followedArtists')
-          .doc(artist.id);
-      if (follow) {
-        await doc.set(_followedArtistDoc(artist));
-      } else {
-        await doc.delete();
-      }
+          .doc(artist.id)
+          .set(artist.toJson());
     } catch (e) {
-      debugPrint(
-          '[LibraryProvider] toggleFavoriteArtist rollback — Firestore failed: $e');
-      if (_currentUid == uid) {
-        _favoriteArtists = prevArtists;
-        notifyListeners();
-        _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
-      }
+      debugPrint('[LibraryProvider] followArtist rollback: $e');
+      _followedArtists = prevArtists;
+      _followedArtistIds = prevIds;
+      notifyListeners();
+      _storage.saveCachedFollowedArtists(
+        uid,
+        _followedArtists.map((a) => a.toJson()).toList(),
+      );
+    } finally {
+      _endSync();
+    }
+  }
+
+  Future<void> unfollowArtist(String artistId) async {
+    final uid = _currentUid ?? _firebase.currentUser?.uid;
+    if (uid == null || !_canSyncToFirestore(uid)) return;
+    if (!_followedArtistIds.contains(artistId)) return;
+
+    final prevArtists = List<Artist>.from(_followedArtists);
+    final prevIds = Set<String>.from(_followedArtistIds);
+
+    _followedArtists.removeWhere((a) => a.id == artistId);
+    _followedArtistIds.remove(artistId);
+    notifyListeners();
+
+    _storage.saveCachedFollowedArtists(
+      uid,
+      _followedArtists.map((a) => a.toJson()).toList(),
+    );
+
+    _startSync();
+    try {
+      await _firebase.db
+          .collection('users')
+          .doc(uid)
+          .collection('followedArtists')
+          .doc(artistId)
+          .delete();
+    } catch (e) {
+      debugPrint('[LibraryProvider] unfollowArtist rollback: $e');
+      _followedArtists = prevArtists;
+      _followedArtistIds = prevIds;
+      notifyListeners();
+      _storage.saveCachedFollowedArtists(
+        uid,
+        _followedArtists.map((a) => a.toJson()).toList(),
+      );
     } finally {
       _endSync();
     }
