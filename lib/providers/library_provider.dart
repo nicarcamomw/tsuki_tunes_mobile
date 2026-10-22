@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/track.dart';
 import '../models/artist.dart';
+import '../models/album.dart';
 import '../services/storage_service.dart';
 import '../services/firebase_service.dart';
 
@@ -180,7 +181,7 @@ class LibraryProvider extends ChangeNotifier {
 
     // Only persist if this album has listened tracks associated with it.
     // If not listened yet, keep in memory for active view without bloating storage.
-    final hasListened = _listenedTracks.any((t) => t.albumId == albumId);
+    final hasListened = listenedCountForAlbum(albumId) > 0;
     if (hasListened) {
       _pruneAlbumTrackCounts(forceSave: true);
     } else if (_listenedTracksLoaded &&
@@ -192,10 +193,99 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Derived indexes over _listenedTracks, rebuilt lazily after any change.
+  // Every mutation ends in notifyListeners(), which marks them dirty.
+  bool _indexesDirty = true;
+  Map<String, int> _listenedCountByAlbum = {};
+  int _uniqueArtistsCount = 0;
+
+  @override
+  void notifyListeners() {
+    _indexesDirty = true;
+    super.notifyListeners();
+  }
+
+  void _ensureIndexes() {
+    if (!_indexesDirty) return;
+    final byAlbum = <String, int>{};
+    final artists = <String>{};
+    for (final t in _listenedTracks) {
+      if (t.albumId.isNotEmpty) {
+        byAlbum[t.albumId] = (byAlbum[t.albumId] ?? 0) + 1;
+      }
+      if (t.artistName.isNotEmpty) artists.add(t.artistName);
+    }
+    _listenedCountByAlbum = byAlbum;
+    _uniqueArtistsCount = artists.length;
+    _indexesDirty = false;
+  }
+
+  int listenedCountForAlbum(String albumId) {
+    _ensureIndexes();
+    return _listenedCountByAlbum[albumId] ?? 0;
+  }
+
+  /// Registers several album track counts with a single rebuild.
+  void registerAlbumTrackCounts(Map<String, int> counts) {
+    var changed = false;
+    var touchesListened = false;
+    for (final entry in counts.entries) {
+      if (entry.key.isEmpty || entry.value <= 0) continue;
+      if (_albumTrackCounts[entry.key] == entry.value) continue;
+      _albumTrackCounts[entry.key] = entry.value;
+      changed = true;
+      if (listenedCountForAlbum(entry.key) > 0) touchesListened = true;
+    }
+    if (!changed) return;
+    if (touchesListened) _pruneAlbumTrackCounts(forceSave: true);
+    notifyListeners();
+  }
+
+  // Albums whose real track count was already requested this session.
+  final Set<String> _trackCountRequests = {};
+
+  /// Deezer's artist/albums listing omits nb_tracks, so an album can only be
+  /// judged complete once its real track count is known. Requests that count
+  /// for every album with listened tracks and no known total, at most once
+  /// per album per session. Cheap enough to call from build, which also
+  /// covers listened tracks that arrive after a screen loaded.
+  void ensureAlbumTrackCounts(Iterable<Album> albums,
+      Future<Album?> Function(String albumId) fetchAlbum) {
+    if (!_listenedTracksLoaded) return;
+    final known = <String, int>{};
+    final toFetch = <String>[];
+    for (final a in albums) {
+      if (listenedCountForAlbum(a.id) == 0) continue;
+      if (getAlbumTracksCount(a.id) > 0) continue;
+      if (a.tracksCount > 0) {
+        known[a.id] = a.tracksCount;
+        continue;
+      }
+      if (_trackCountRequests.add(a.id)) toFetch.add(a.id);
+    }
+    if (known.isNotEmpty) {
+      // Called from build: defer the notification to after the frame.
+      Future.microtask(() => registerAlbumTrackCounts(known));
+    }
+    if (toFetch.isEmpty) return;
+
+    Future.wait(toFetch.map(fetchAlbum)).then((results) {
+      final counts = <String, int>{};
+      for (final res in results) {
+        if (res == null) continue;
+        final count =
+            res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
+        if (count > 0) counts[res.id] = count;
+      }
+      registerAlbumTrackCounts(counts);
+    }).catchError((Object e) {
+      debugPrint('[LibraryProvider] ensureAlbumTrackCounts error: $e');
+    });
+  }
+
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0}) {
     if (albumId.isEmpty) return false;
-    final listenedCount =
-        _listenedTracks.where((t) => t.albumId == albumId).length;
+    final listenedCount = listenedCountForAlbum(albumId);
     if (listenedCount == 0) return false;
 
     final registered = _albumTrackCounts[albumId] ?? 0;
@@ -206,19 +296,13 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   int get uniqueArtistsCount {
-    final artists = <String>{};
-    for (final t in _listenedTracks) {
-      if (t.artistName.isNotEmpty) artists.add(t.artistName);
-    }
-    return artists.length;
+    _ensureIndexes();
+    return _uniqueArtistsCount;
   }
 
   int get uniqueAlbumsCount {
-    final albums = <String>{};
-    for (final t in _listenedTracks) {
-      if (t.albumId.isNotEmpty) albums.add(t.albumId);
-    }
-    return albums.length;
+    _ensureIndexes();
+    return _listenedCountByAlbum.length;
   }
 
   LibraryProvider() {
@@ -487,6 +571,7 @@ class LibraryProvider extends ChangeNotifier {
   @visibleForTesting
   void setListenedTracksForTesting(List<ListenedTrackData> tracks) {
     _listenedTracks = List.from(tracks);
+    _indexesDirty = true;
     _listenedTrackIds = tracks.map((t) => t.trackId).toSet();
     _totalTracksCount = tracks.length;
     _listenedTracksLoaded = true;
@@ -499,6 +584,7 @@ class LibraryProvider extends ChangeNotifier {
     _followedArtistsSubscription?.cancel();
     _listenedTracks = [];
     _listenedTrackIds = {};
+    _trackCountRequests.clear();
     _totalTracksCount = 0;
     _listenedTracksLoaded = false;
     _followedArtists = [];

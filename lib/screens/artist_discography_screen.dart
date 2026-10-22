@@ -54,7 +54,6 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     _scrollController = ScrollController()..addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _enrichAlbumsWithSavedTracks();
       _checkAutoFill();
     });
   }
@@ -129,10 +128,6 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
         _isLoadingMore = false;
       });
 
-      if (newItems.isNotEmpty) {
-        _enrichAlbumsWithSavedTracks(newItems);
-      }
-
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkAutoFill());
     } catch (e) {
       debugPrint('[ArtistDiscography] _loadMoreAlbums error: $e');
@@ -142,35 +137,6 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           _loadMoreError = true;
         });
       }
-    }
-  }
-
-  Future<void> _enrichAlbumsWithSavedTracks([List<Album>? albumsToCheck]) async {
-    if (!mounted) return;
-    final targetAlbums = albumsToCheck ?? _allAlbums;
-    final library = context.read<LibraryProvider>();
-    final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
-    final toFetch = targetAlbums.where((a) {
-      if (!savedAlbumIds.contains(a.id)) return false;
-      return library.getAlbumTracksCount(a.id) <= 0 && a.tracksCount <= 0;
-    }).toList();
-
-    if (toFetch.isEmpty) return;
-
-    try {
-      final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
-      for (final res in results) {
-        if (res != null) {
-          final count =
-              res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
-          if (count > 0) {
-            library.registerAlbumTrackCount(res.id, count);
-          }
-        }
-      }
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint('[ArtistDiscography] _enrichAlbumsWithSavedTracks error: $e');
     }
   }
 
@@ -203,6 +169,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
+    library.ensureAlbumTrackCounts(_allAlbums, _api.getAlbum);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final cats = _categories;
@@ -449,10 +416,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           await appNavigatorKey.currentState?.push(
             MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
           );
-          if (mounted) {
-            _enrichAlbumsWithSavedTracks();
-            setState(() {});
-          }
+          if (mounted) setState(() {});
         },
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants/app_colors.dart';
+import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -123,19 +124,21 @@ class _MiniPlayerState extends State<MiniPlayer>
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
-    final track = audio.currentTrack;
+    // Select individual fields: the provider notifies on every position
+    // tick, and only the progress bar needs that.
+    final audio = context.read<AudioProvider>();
+    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
+    final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
+    final isBuffering =
+        context.select<AudioProvider, bool>((a) => a.isBuffering);
+    final spotifyFallbackActive =
+        context.select<AudioProvider, bool>((a) => a.spotifyFallbackActive);
 
     if (track == null) return const SizedBox.shrink();
 
     final library = context.watch<LibraryProvider>();
     final locale = context.read<LocaleProvider>();
     final isListened = library.isTrackListened(track.id);
-
-    final double progress = audio.duration.inMilliseconds > 0
-        ? (audio.position.inMilliseconds / audio.duration.inMilliseconds)
-            .clamp(0.0, 1.0)
-        : 0.0;
 
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
@@ -173,13 +176,7 @@ class _MiniPlayerState extends State<MiniPlayer>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 2.5,
-                    backgroundColor: AppColors.border,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                ),
+                const _MiniProgressBar(),
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -199,7 +196,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                   _BreathingCover(
                                     trackId: track.id,
                                     coverUrl: track.coverUrl,
-                                    isPlaying: audio.isPlaying,
+                                    isPlaying: isPlaying,
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -218,12 +215,12 @@ class _MiniPlayerState extends State<MiniPlayer>
                                         ),
                                         const SizedBox(height: 2),
                                         _MarqueeText(
-                                          text: audio.spotifyFallbackActive
+                                          text: spotifyFallbackActive
                                               ? '${track.fullArtistName}  ·  Preview'
                                               : track.fullArtistName,
                                           style: locale.getTextStyle(
                                             fontSize: 11,
-                                            color: audio.spotifyFallbackActive
+                                            color: spotifyFallbackActive
                                                 ? AppColors.accent.withValues(alpha: 0.7)
                                                 : AppColors.textSecondary,
                                           ),
@@ -263,10 +260,10 @@ class _MiniPlayerState extends State<MiniPlayer>
                       const SizedBox(width: 10),
                       // Play / Pause
                       TapScale(
-                        semanticLabel: audio.isPlaying ? locale.strings.a11yPause : locale.strings.a11yPlay,
-                        onTap: audio.isBuffering ? null : audio.togglePlay,
+                        semanticLabel: isPlaying ? locale.strings.a11yPause : locale.strings.a11yPlay,
+                        onTap: isBuffering ? null : audio.togglePlay,
                         scaleDown: 0.85,
-                        child: audio.isBuffering
+                        child: isBuffering
                             ? const SizedBox(
                                 width: 32,
                                 height: 32,
@@ -277,7 +274,7 @@ class _MiniPlayerState extends State<MiniPlayer>
                                 ),
                               )
                             : Icon(
-                                audio.isPlaying
+                                isPlaying
                                     ? Icons.pause_circle_filled
                                     : Icons.play_circle_filled,
                                 size: 32,
@@ -510,6 +507,25 @@ class _MarqueeTextState extends State<_MarqueeText> {
         style: widget.style,
         maxLines: 1,
       ),
+    );
+  }
+}
+
+class _MiniProgressBar extends StatelessWidget {
+  const _MiniProgressBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = context.select<AudioProvider, double>((a) {
+      final total = a.duration.inMilliseconds;
+      if (total <= 0) return 0.0;
+      return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
+    });
+    return LinearProgressIndicator(
+      value: progress,
+      minHeight: 2.5,
+      backgroundColor: AppColors.border,
+      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
     );
   }
 }

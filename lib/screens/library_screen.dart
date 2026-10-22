@@ -882,7 +882,9 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
+    final audio = context.read<AudioProvider>();
+    final currentTrackId =
+        context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
     final library = context.watch<LibraryProvider>();
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
@@ -1018,8 +1020,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                         color: AppColors.border.withValues(alpha: 0.5),
                       ),
                       ...group.tracks.map((trackData) {
-              final isCurrentTrack =
-                  audio.currentTrack?.id == trackData.trackId;
+              final isCurrentTrack = currentTrackId == trackData.trackId;
               return InkWell(
                 onTap: () {
                   final queue = group.tracks

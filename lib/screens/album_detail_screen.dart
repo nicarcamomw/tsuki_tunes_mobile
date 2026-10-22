@@ -133,7 +133,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     final strings = locale.strings;
     final albumData = _fullAlbum ?? widget.album;
     final tracks = albumData.tracks;
-    final audio = context.watch<AudioProvider>();
+    // Select only what the screen shows: watching the whole provider would
+    // rebuild the album on every playback position tick.
+    final audio = context.read<AudioProvider>();
+    final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
     final library = context.watch<LibraryProvider>();
 
     final trackIds = tracks.map((t) => t.id).toList();
@@ -173,9 +176,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             ),
             centerTitle: true,
             actions: [
-              if (albumData.link != null || audio.useSpotify)
+              if (albumData.link != null || useSpotify)
                 IconButton(
-                  tooltip: audio.useSpotify ? 'Spotify' : 'Deezer',
+                  tooltip: useSpotify ? 'Spotify' : 'Deezer',
                   icon: const Icon(Icons.open_in_new,
                       color: AppColors.accent, size: 20),
                   onPressed: () async {

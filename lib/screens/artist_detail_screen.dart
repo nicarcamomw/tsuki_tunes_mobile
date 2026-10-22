@@ -49,8 +49,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   bool _showTitleInAppBar = false;
   bool _showStoredContent = false;
   bool _hasMoreAlbums = false;
-  // Albums whose real track count has already been requested from Deezer.
-  final Set<String> _trackCountRequests = {};
 
   @override
   void initState() {
@@ -85,7 +83,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
-    _trackCountRequests.clear();
     final isOnline = context.read<ConnectivityProvider>().isOnline;
     if (!isOnline) {
       if (mounted) {
@@ -120,12 +117,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           _relatedArtists = results[4] as List<Artist>;
           _isLoading = false;
         });
-        final library = context.read<LibraryProvider>();
-        for (final a in allAlbums) {
-          if (a.tracksCount > 0 && library.getAlbumTracksCount(a.id) <= 0) {
-            library.registerAlbumTrackCount(a.id, a.tracksCount);
-          }
-        }
       }
     } catch (e) {
       debugPrint('[ArtistDetail] loadArtistData error: $e');
@@ -136,36 +127,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         });
       }
     }
-  }
-
-  /// Deezer's artist/albums listing omits nb_tracks, so an album can only be
-  /// judged complete once its real track count is known. Requests that count
-  /// for every release with listened tracks and no known total. Runs from
-  /// build so it also covers listened tracks that arrive after the screen
-  /// loaded (Firestore sync, marking from the player or album screen).
-  void _fetchMissingTrackCounts(LibraryProvider library) {
-    if (_albums.isEmpty || !library.listenedTracksLoaded) return;
-    final listenedAlbumIds =
-        library.listenedTracks.map((t) => t.albumId).toSet();
-    final toFetch = <Album>[];
-    for (final a in _albums) {
-      if (!listenedAlbumIds.contains(a.id)) continue;
-      if (a.tracksCount > 0 || library.getAlbumTracksCount(a.id) > 0) continue;
-      if (_trackCountRequests.add(a.id)) toFetch.add(a);
-    }
-    if (toFetch.isEmpty) return;
-
-    Future.wait(toFetch.map((a) => _api.getAlbum(a.id))).then((results) {
-      if (!mounted) return;
-      for (final res in results) {
-        if (res == null) continue;
-        final count =
-            res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
-        if (count > 0) library.registerAlbumTrackCount(res.id, count);
-      }
-    }).catchError((Object e) {
-      debugPrint('[ArtistDetail] _fetchMissingTrackCounts error: $e');
-    });
   }
 
   /// Own releases (albums, EPs, singles) grouped by type + title, so that
@@ -206,7 +167,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
 
-    _fetchMissingTrackCounts(library);
+    library.ensureAlbumTrackCounts(_albums, _api.getAlbum);
 
     // The mask lights up when every own release has all its tracks listened.
     final releaseGroups = _ownReleaseGroups;

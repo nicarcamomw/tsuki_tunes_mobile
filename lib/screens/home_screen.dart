@@ -298,9 +298,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Row(
                         children: [
-                          Consumer<AudioProvider>(
-                            builder: (context, audio, _) {
-                              final isSpotify = audio.useSpotify || audio.spotify.isConnected;
+                          Selector<AudioProvider, bool>(
+                            selector: (_, audio) =>
+                                audio.useSpotify || audio.spotify.isConnected,
+                            builder: (context, isSpotify, _) {
                               final badgeColor = AppColors.accent;
                               final badgeBg = AppColors.accentDim;
                               final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
