@@ -3,28 +3,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Size limits only: the web app writes the same documents, so shapes are
+    // not enforced field by field. Limits stop a buggy or abusive client from
+    // writing documents near Firestore's 1 MiB cap.
+    function validPlaylist(d) {
+      return (!('name' in d) || (d.name is string && d.name.size() <= 100))
+          && (!('tracks' in d) || (d.tracks is list && d.tracks.size() <= 1000));
+    }
+
     // Users can only read/write their own document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
 
       // Listened tracks subcollection — same per-user isolation
       match /listenedTracks/{trackId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
-      // Playlists subcollection — same per-user isolation
+      // Playlists subcollection — per-user isolation + size limits
       match /playlists/{playlistId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+            && validPlaylist(request.resource.data);
       }
 
       // Unmark log so other devices can apply deletions incrementally
       match /listenedDeletions/{trackId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
       // Followed artists subcollection — same per-user isolation
       match /followedArtists/{artistId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
 

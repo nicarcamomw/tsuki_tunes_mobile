@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
+import '../providers/playlist_provider.dart';
 import '../providers/locale_provider.dart';
 import '../core/localization/app_strings.dart';
 import '../services/storage_service.dart';
@@ -68,7 +69,15 @@ class _LoginScreenState extends State<LoginScreen>
       if (status == AnimationStatus.completed && mounted) {
         final auth = context.read<AuthProvider>();
         if (auth.uid != null && !auth.isGuest) {
-          context.read<LibraryProvider>().connectToFirestore(auth.uid!);
+          final uid = auth.uid!;
+          context.read<LibraryProvider>().connectToFirestore(uid);
+          // This screen can be pushed outside the auth gate (guest → sign
+          // in), so connect playlists and import guest ones here too.
+          final playlists = context.read<PlaylistProvider>();
+          final guestUid = auth.takeGuestUidToMigrate();
+          playlists.connectToFirestore(uid).then((_) {
+            if (guestUid != null) playlists.importGuestPlaylists(guestUid);
+          });
         }
         _navigateAfterLogin();
       }

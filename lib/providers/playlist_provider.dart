@@ -127,6 +127,34 @@ class PlaylistProvider extends ChangeNotifier {
     });
   }
 
+  /// Uploads the playlists a guest created on this device into the account
+  /// that just signed in, then clears the guest copy.
+  Future<void> importGuestPlaylists(String guestUid) async {
+    final uid = _currentUid;
+    if (uid == null || _isGuest || !_canSyncToFirestore(uid)) return;
+    try {
+      final cached = await _storage.getCachedPlaylists(guestUid);
+      final guestPlaylists = cached
+          .map((e) => Playlist.fromJson(e))
+          .where((p) => p.tracks.isNotEmpty || p.name.isNotEmpty)
+          .toList();
+      if (guestPlaylists.isEmpty) return;
+
+      final col =
+          _firebase.db.collection('users').doc(uid).collection('playlists');
+      final batch = _firebase.db.batch();
+      for (final p in guestPlaylists) {
+        final docRef = col.doc();
+        batch.set(docRef, p.copyWith(id: docRef.id).toFirestore());
+      }
+      await batch.commit();
+      await _storage.saveCachedPlaylists(guestUid, []);
+      debugPrint('[PlaylistProvider] Imported ${guestPlaylists.length} guest playlists');
+    } catch (e) {
+      debugPrint('[PlaylistProvider] Guest playlist import failed: $e');
+    }
+  }
+
   void disconnectFirestore() {
     _currentUid = null;
     _isGuest = false;

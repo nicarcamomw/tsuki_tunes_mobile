@@ -119,7 +119,11 @@ class _AuthGateState extends State<_AuthGate> {
           if (mounted) {
             if (!auth.isGuest) {
               context.read<LibraryProvider>().connectToFirestore(uid);
-              context.read<PlaylistProvider>().connectToFirestore(uid);
+              final playlists = context.read<PlaylistProvider>();
+              final guestUid = auth.takeGuestUidToMigrate();
+              playlists.connectToFirestore(uid).then((_) {
+                if (guestUid != null) playlists.importGuestPlaylists(guestUid);
+              });
             } else {
               context.read<PlaylistProvider>().initLocalOnly(uid);
             }

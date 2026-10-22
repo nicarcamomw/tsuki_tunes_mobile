@@ -7,6 +7,7 @@ import '../services/firebase_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
+  static const _guestModeKey = 'guest_mode_active';
   final FirebaseService _firebase = FirebaseService();
 
   User? _user;
@@ -16,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   bool _wasCancelled = false;
   String? _guestUid;
   StreamSubscription<User?>? _authSub;
+  String? _guestUidToMigrate;
 
   User? get user => _user;
   bool get loading => _loading;
@@ -28,7 +30,25 @@ class AuthProvider extends ChangeNotifier {
   Future<void> loginAsGuest() async {
     _isGuest = true;
     await _ensureGuestUid();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_guestModeKey, true);
     notifyListeners();
+  }
+
+  /// Guest uid whose local data (playlists) should be moved into the account
+  /// that just signed in. Returns it once and forgets it.
+  String? takeGuestUidToMigrate() {
+    final uid = _guestUidToMigrate;
+    _guestUidToMigrate = null;
+    return uid;
+  }
+
+  Future<void> _leaveGuestMode() async {
+    if (!_isGuest) return;
+    _guestUidToMigrate = _guestUid;
+    _isGuest = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_guestModeKey);
   }
 
   Future<void> _ensureGuestUid() async {
@@ -52,10 +72,22 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _init() async {
+    // Restore guest mode so guests don't land on the login screen each launch.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_guestModeKey) == true) {
+        _guestUid = prefs.getString(_guestUidKey);
+        _isGuest = _guestUid != null;
+      }
+    } catch (e) {
+      debugPrint('Guest restore error: $e');
+    }
     try {
       await _firebase.initialize();
-      _authSub = _firebase.auth.authStateChanges().listen((user) {
+      _authSub = _firebase.auth.authStateChanges().listen((user) async {
         _user = user;
+        // A signed-in account always wins over a leftover guest session.
+        if (user != null && _isGuest) await _leaveGuestMode();
         _loading = false;
         notifyListeners();
       });
@@ -79,6 +111,8 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
+      await _leaveGuestMode();
+      notifyListeners();
       return true;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
@@ -94,6 +128,7 @@ class AuthProvider extends ChangeNotifier {
     // Remove orphaned guest UID from persistent storage
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_guestUidKey);
+    await prefs.remove(_guestModeKey);
     await _firebase.signOut();
     notifyListeners();
   }
