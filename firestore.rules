@@ -19,9 +19,10 @@ service cloud.firestore {
     // the parent user doc's lastSubWrite timestamp. This function rejects
     // writes that arrive less than 1 second after the previous one.
     function notRateLimited(userId) {
-      let userData = get(/databases/$(database)/documents/users/$(userId)).data;
-      return !('lastSubWrite' in userData)
-          || request.time > userData.lastSubWrite + duration.value(1, 's');
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      return !exists(userPath)
+          || !('lastSubWrite' in get(userPath).data)
+          || request.time > get(userPath).data.lastSubWrite + duration.value(1, 's');
     }
 
     // Users can only read/write their own document
