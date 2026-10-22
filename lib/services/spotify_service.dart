@@ -378,7 +378,20 @@ class SpotifyService {
 
   // --- Playback ---
 
-  Future<String?> searchTrack(String title, String artist, {String? trackId}) async {
+  /// Resolves the Spotify URI for a Deezer track.
+  ///
+  /// Matching order: local cache → ISRC (exact recording) → title + artist
+  /// search. A result is only accepted when both the normalized title and one
+  /// of the artists match, so a different song by the same artist is never
+  /// played. [isrcResolver] is only called on a cache miss, so callers can
+  /// fetch the ISRC lazily (Deezer only returns it from /track/{id}).
+  Future<String?> searchTrack(
+    String title,
+    String artist, {
+    String? trackId,
+    String? isrc,
+    Future<String?> Function()? isrcResolver,
+  }) async {
     await _ensureUriCacheLoaded();
 
     final cachedUri = _getFromCache(trackId, title, artist);
@@ -391,89 +404,118 @@ class SpotifyService {
     if (_accessToken == null) return null;
 
     try {
+      var resolvedIsrc = isrc;
+      if ((resolvedIsrc == null || resolvedIsrc.isEmpty) &&
+          isrcResolver != null) {
+        resolvedIsrc = await isrcResolver();
+      }
+
+      if (resolvedIsrc != null && resolvedIsrc.isNotEmpty) {
+        final items = await _searchItems('isrc:$resolvedIsrc', limit: 5);
+        if (items != null && items.isNotEmpty) {
+          final resolvedUri = items.first['uri'] as String;
+          debugPrint('Spotify: ISRC match "${items.first['name']}" ($resolvedIsrc)');
+          _saveToCache(trackId, title, artist, resolvedUri);
+          return resolvedUri;
+        }
+      }
+
       // Try structured query first, then simple query as fallback
       final queries = [
-        Uri.encodeComponent('track:$title artist:$artist'),
-        Uri.encodeComponent('$title $artist'),
+        'track:$title artist:$artist',
+        '$title $artist',
       ];
 
-      for (int q = 0; q < queries.length; q++) {
-        final response = await http.get(
-          Uri.parse(
-              'https://api.spotify.com/v1/search?q=${queries[q]}&type=track&limit=10'),
-          headers: {'Authorization': 'Bearer $_accessToken'},
-        );
+      final wantedTitle = normalizeTitle(title);
+      final wantedArtists = artist
+          .split(',')
+          .map(_normalize)
+          .where((a) => a.isNotEmpty)
+          .toList();
 
-        if (response.statusCode == 401) {
-          await _ensureValidToken();
-          if (_accessToken == null) return null;
-          continue;
-        }
+      for (final query in queries) {
+        final items = await _searchItems(query, limit: 10);
+        if (items == null || items.isEmpty) continue;
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final items = data['tracks']?['items'] as List?;
-          if (items == null || items.isEmpty) {
-            if (q == 0) {
-              debugPrint('Spotify: structured query returned no results, trying simple query');
-              continue;
-            }
-            break;
-          }
-
-          final normalizedArtist = artist.toLowerCase().trim();
-          final normalizedTitle = title.toLowerCase().trim();
-
-          // Find best match: exact artist + title match first
-          for (final item in items) {
-            final artists = (item['artists'] as List?) ?? [];
-            final trackName = (item['name'] as String? ?? '').toLowerCase().trim();
-            for (final a in artists) {
-              final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
-              if (spotifyArtist == normalizedArtist && trackName == normalizedTitle) {
-                final resolvedUri = item['uri'] as String;
-                debugPrint('Spotify: exact match "${item['name']}" by "${a['name']}"');
-                _saveToCache(trackId, title, artist, resolvedUri);
-                return resolvedUri;
-              }
-            }
-          }
-
-          // Fallback: artist name contains match
-          for (final item in items) {
-            final artists = (item['artists'] as List?) ?? [];
-            for (final a in artists) {
-              final spotifyArtist = (a['name'] as String? ?? '').toLowerCase().trim();
-              if (spotifyArtist.contains(normalizedArtist) || normalizedArtist.contains(spotifyArtist)) {
-                final resolvedUri = item['uri'] as String;
-                debugPrint('Spotify: partial match "${item['name']}" by "${a['name']}"');
-                _saveToCache(trackId, title, artist, resolvedUri);
-                return resolvedUri;
-              }
-            }
-          }
-
-          // Last resort: first result with matching title
-          for (final item in items) {
-            final trackName = (item['name'] as String? ?? '').toLowerCase().trim();
-            if (trackName == normalizedTitle) {
-              final resolvedUri = item['uri'] as String;
-              debugPrint('Spotify: title-only match "${item['name']}"');
-              _saveToCache(trackId, title, artist, resolvedUri);
-              return resolvedUri;
-            }
-          }
-
-          if (q == 0) {
-            debugPrint('Spotify: no title match in structured query, trying simple query');
-            continue;
+        for (final item in items) {
+          final trackName = normalizeTitle(item['name'] as String? ?? '');
+          if (trackName != wantedTitle) continue;
+          final artists = (item['artists'] as List?) ?? [];
+          final artistMatches = artists.any((a) {
+            final spotifyArtist = _normalize(a['name'] as String? ?? '');
+            return wantedArtists.any((w) =>
+                spotifyArtist == w ||
+                spotifyArtist.contains(w) ||
+                w.contains(spotifyArtist));
+          });
+          if (artistMatches) {
+            final resolvedUri = item['uri'] as String;
+            debugPrint('Spotify: title+artist match "${item['name']}"');
+            _saveToCache(trackId, title, artist, resolvedUri);
+            return resolvedUri;
           }
         }
       }
     } catch (e) {
       debugPrint('Spotify search error: $e');
     }
+    debugPrint('Spotify: no reliable match for "$title" by "$artist"');
     return null;
+  }
+
+  Future<List<dynamic>?> _searchItems(String query, {required int limit}) async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final response = await http.get(
+        Uri.parse('https://api.spotify.com/v1/search'
+            '?q=${Uri.encodeComponent(query)}&type=track&limit=$limit'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 401 && attempt == 0) {
+        _tokenExpiry = DateTime.fromMillisecondsSinceEpoch(0);
+        await _ensureValidToken();
+        if (_accessToken == null) return null;
+        continue;
+      }
+      if (response.statusCode != 200) return null;
+      final data = json.decode(response.body);
+      return data['tracks']?['items'] as List?;
+    }
+    return null;
+  }
+
+  static String _normalize(String s) {
+    const accents = {
+      'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a', 'ã': 'a',
+      'é': 'e', 'è': 'e', 'ë': 'e', 'ê': 'e',
+      'í': 'i', 'ì': 'i', 'ï': 'i', 'î': 'i',
+      'ó': 'o', 'ò': 'o', 'ö': 'o', 'ô': 'o', 'õ': 'o',
+      'ú': 'u', 'ù': 'u', 'ü': 'u', 'û': 'u',
+      'ñ': 'n', 'ç': 'c',
+    };
+    final buffer = StringBuffer();
+    for (final ch in s.toLowerCase().split('')) {
+      buffer.write(accents[ch] ?? ch);
+    }
+    return buffer
+        .toString()
+        .replaceAll('&', 'and')
+        .replaceAll(RegExp(r"[^\p{L}\p{N} ]", unicode: true), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  /// Strips version decorations so "Song - Remastered 2011" and
+  /// "Song (feat. X)" compare equal to "Song".
+  @visibleForTesting
+  static String normalizeTitle(String title) {
+    var t = title.toLowerCase();
+    t = t.replaceAll(RegExp(r'\([^)]*\)|\[[^\]]*\]'), ' ');
+    t = t.replaceAll(
+        RegExp(r'\s-\s.*(remaster|version|live|edit|mix|mono|stereo|acoustic|demo|deluxe|bonus).*$'),
+        '');
+    t = t.replaceAll(RegExp(r'\s(feat\.?|ft\.?|featuring)\s.*$'), '');
+    return _normalize(t);
   }
 
   Future<String?> getActiveDeviceId() async {

@@ -30,6 +30,9 @@ class Track {
   final bool isExplicit;
   final List<Contributor> contributors;
   final String? link;
+  // International Standard Recording Code. Deezer only returns it from
+  // /track/{id}, not from search or album listings.
+  final String? isrc;
 
   Track({
     required this.id,
@@ -45,6 +48,7 @@ class Track {
     this.isExplicit = false,
     this.contributors = const [],
     this.link,
+    this.isrc,
   });
 
   String get fullArtistName {
@@ -96,6 +100,9 @@ class Track {
       isExplicit: json['explicit_lyrics'] == true,
       contributors: contribs,
       link: json['link'],
+      isrc: json['isrc']?.toString().isNotEmpty == true
+          ? json['isrc'].toString()
+          : null,
     );
   }
 
@@ -114,6 +121,7 @@ class Track {
       'isExplicit': isExplicit,
       'contributors': contributors.map((c) => c.toJson()).toList(),
       'link': link,
+      'isrc': isrc,
     };
   }
 
@@ -139,6 +147,7 @@ class Track {
       isExplicit: map['isExplicit'] == true,
       contributors: contribs,
       link: map['link'],
+      isrc: map['isrc']?.toString(),
     );
   }
 
@@ -156,6 +165,7 @@ class Track {
     bool? isExplicit,
     List<Contributor>? contributors,
     String? link,
+    String? isrc,
   }) {
     return Track(
       id: id ?? this.id,
@@ -171,6 +181,7 @@ class Track {
       isExplicit: isExplicit ?? this.isExplicit,
       contributors: contributors ?? this.contributors,
       link: link ?? this.link,
+      isrc: isrc ?? this.isrc,
     );
   }
 }

@@ -4,11 +4,13 @@ import 'dart:math';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
+import '../core/utils/deezer_preview.dart';
 import '../models/track.dart';
 import '../models/repeat_mode.dart';
 export '../models/repeat_mode.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
+import '../services/deezer_api_service.dart';
 import '../services/spotify_service.dart';
 import '../services/foreground_service.dart';
 import '../services/spotify_web_player.dart';
@@ -62,6 +64,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Duration _spotifySyncPosition = Duration.zero;
   DateTime _spotifySyncTime = DateTime(2000);
   DateTime _lastPlayCommandTime = DateTime(2000);
+  // URI last sent to Spotify, to detect playback taken over elsewhere.
+  String? _currentSpotifyUri;
 
   // Smart shuffle history — recent artistIds to avoid consecutive repeats
   final List<String> _shuffleArtistHistory = [];
@@ -175,7 +179,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (idx != _currentIndex) {
         final track = _queue[idx];
         onPrecacheTrackForTesting?.call(track);
-        AudioPrecacheService().precacheTrack(track);
+        _precache(track);
       }
     }
   }
@@ -200,6 +204,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _persistPlaybackState();
+    }
     if (state == AppLifecycleState.resumed) {
       checkSleepTimer();
       _checkBackgroundCompletion();
@@ -228,6 +236,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _handleTrackCompleted();
       }
     }
+  }
+
+  DateTime _lastPositionPersist = DateTime(2000);
+
+  /// Saves the position every ~10 s so a killed app resumes close to where
+  /// it stopped instead of at the start of the track.
+  void _maybePersistPosition() {
+    final now = DateTime.now();
+    if (now.difference(_lastPositionPersist).inSeconds < 10) return;
+    _lastPositionPersist = now;
+    _persistPlaybackState();
   }
 
   void _persistPlaybackState() {
@@ -429,6 +448,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _stopPositionTimer();
           _handleTrackCompleted();
         } else {
+          _maybePersistPosition();
           notifyListeners();
           if (_spotifyPollTick % 15 == 0) {
             _syncSpotifyPlaybackState();
@@ -454,11 +474,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final durationMs = item?['duration_ms'] as int? ?? 0;
 
       // Detect playback transferred to another device
-      if (item != null && _currentTrack != null) {
-        final spotifyTrackName = (item['name'] as String? ?? '').toLowerCase().trim();
-        final ourTrackName = _currentTrack!.title.toLowerCase().trim();
-        if (spotifyTrackName.isNotEmpty && !spotifyTrackName.contains(ourTrackName) && !ourTrackName.contains(spotifyTrackName)) {
-          debugPrint('[AudioProvider] Spotify playing different track ("$spotifyTrackName" vs "$ourTrackName"), pausing');
+      if (item != null && _currentTrack != null && _currentSpotifyUri != null) {
+        final playingUri = item['uri'] as String?;
+        // Spotify may relink the track to another market's version.
+        final linkedUri = (item['linked_from'] as Map?)?['uri'] as String?;
+        if (playingUri != null &&
+            playingUri != _currentSpotifyUri &&
+            linkedUri != _currentSpotifyUri) {
+          debugPrint('[AudioProvider] Spotify playing different track ($playingUri vs $_currentSpotifyUri), pausing');
           _isPlaying = false;
           _stopPositionTimer();
           notifyListeners();
@@ -512,6 +535,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (!_spotifyActive) {
         _position = pos;
         _checkCrossfade(pos);
+        if (_isPlaying) _maybePersistPosition();
         notifyListeners();
       }
     }, onError: (e) {
@@ -696,6 +720,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       _lastPlaybackError = null;
 
+      track = await _withFreshPreview(track);
+      if (gen != _playGeneration) return;
+
       if (!_canPlayOffline(track)) {
         _isBuffering = false;
         _lastPlaybackError = 'network_error';
@@ -706,7 +733,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (_useSpotify) {
         await _playViaSpotify(track);
       } else {
-        await _service.playTrack(track);
+        try {
+          await _service.playTrack(track);
+        } catch (e) {
+          // A stored preview URL may have been revoked before its expiry:
+          // fetch a fresh one and try once more.
+          if (gen != _playGeneration) return;
+          final refreshed = await _withFreshPreview(track, force: true);
+          if (gen != _playGeneration) return;
+          if (identical(refreshed, track)) rethrow;
+          track = refreshed;
+          await _service.playTrack(track);
+        }
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
@@ -746,7 +784,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       debugPrint('Spotify: using prefetched URI for "${track.title}"');
     } else {
       debugPrint('Spotify: searching "${track.title}" by "${track.artistName}"');
-      uri = await _spotify.searchTrack(track.title, track.artistName, trackId: track.id);
+      uri = await _resolveSpotifyUri(track);
       if (gen != _playGeneration) return;
     }
 
@@ -763,6 +801,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     debugPrint('Spotify: found URI=$uri, playing via Web API...');
+    _currentSpotifyUri = uri;
     var played = await _spotify.play(trackUri: uri);
     if (gen != _playGeneration) return;
     debugPrint('Spotify: Web API play result=$played');
@@ -825,6 +864,49 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchNextTrack();
   }
 
+  void _precache(Track track) {
+    _withFreshPreview(track).then(AudioPrecacheService().precacheTrack);
+  }
+
+  /// Returns [track] with a playable previewUrl, re-fetching it from Deezer
+  /// when the signed URL has expired (or always when [force] is set, after a
+  /// playback failure). The refreshed track replaces the stale one in the
+  /// queue so later plays and precaching reuse the fresh URL.
+  Future<Track> _withFreshPreview(Track track, {bool force = false}) async {
+    final url = track.previewUrl;
+    if (url.isEmpty || !DeezerPreview.isDeezerUrl(url)) return track;
+    if (AudioPrecacheService().getCachedFilePath(track.id) != null) {
+      return track;
+    }
+    if (!force && !DeezerPreview.isExpired(url)) return track;
+
+    final fresh = await DeezerApiService().getTrack(track.id, forceRefresh: true);
+    if (fresh == null || fresh.previewUrl.isEmpty || fresh.previewUrl == url) {
+      return track;
+    }
+    debugPrint('[AudioProvider] Refreshed expired preview for "${track.title}"');
+    final updated = track.copyWith(
+      previewUrl: fresh.previewUrl,
+      isrc: track.isrc ?? fresh.isrc,
+    );
+    for (var i = 0; i < _queue.length; i++) {
+      if (_queue[i].id == track.id) _queue[i] = updated;
+    }
+    if (_currentTrack?.id == track.id) _currentTrack = updated;
+    return updated;
+  }
+
+  Future<String?> _resolveSpotifyUri(Track track) {
+    return _spotify.searchTrack(
+      track.title,
+      track.artistName,
+      trackId: track.id,
+      isrc: track.isrc,
+      isrcResolver: () async =>
+          (await DeezerApiService().getTrack(track.id))?.isrc,
+    );
+  }
+
   /// Returns the upcoming track index without advancing the queue pointer.
   /// When shuffle is active, pre-determines and memoizes the next track index
   /// so background prefetching (Deezer audio precache & Spotify URI search)
@@ -863,7 +945,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final nextTrack = _queue[nextIdx];
 
     // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
-    AudioPrecacheService().precacheTrack(nextTrack);
+    _precache(nextTrack);
 
     // 2. Predictive URI resolution for Spotify (Zero-latency track start)
     if (_useSpotify) {
@@ -872,7 +954,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _prefetchedUri = null;
       _prefetchedForTrackId = null;
       final gen = ++_prefetchGeneration;
-      _spotify.searchTrack(nextTrack.title, nextTrack.artistName, trackId: nextTrack.id).then((uri) {
+      _resolveSpotifyUri(nextTrack).then((uri) {
         if (gen != _prefetchGeneration) return;
         _prefetchedUri = uri;
         _prefetchedForTrackId = nextTrack.id;
@@ -923,6 +1005,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       }
     }
+    if (!_isPlaying) _persistPlaybackState();
   }
 
   /// Picks the next track index using weighted scoring to avoid
@@ -1126,6 +1209,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       } else {
         if (_currentIndex <= 0) {
+          if (_repeatMode == PlaybackRepeatMode.off) {
+            await seek(Duration.zero);
+            return;
+          }
           _currentIndex = _queue.length - 1;
         } else {
           _currentIndex = _currentIndex - 1;
@@ -1439,7 +1526,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchNextTrack();
 
     try {
-      await _service.crossfadeTo(nextTrack, _crossfadeSeconds);
+      final freshNext = await _withFreshPreview(nextTrack);
+      if (gen != _playGeneration) return;
+      await _service.crossfadeTo(freshNext, _crossfadeSeconds);
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
     } catch (e) {

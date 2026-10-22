@@ -10,7 +10,9 @@ class StorageService implements StorageContract {
   static const String _favArtistsKey = 'tsuki_favorite_artists';
   static const String _artistVisitsKey = 'tsuki_artist_visits';
   static const String _albumTrackCountsKey = 'tsuki_album_track_counts';
-  static const String _spotifyUriCacheKey = 'tsuki_spotify_uri_cache';
+  // v2: v1 entries could hold wrong-song matches (artist-only fallback).
+  static const String _spotifyUriCacheKey = 'tsuki_spotify_uri_cache_v2';
+  static const String _legacySpotifyUriCacheKey = 'tsuki_spotify_uri_cache';
 
   @override
   Future<List<Track>> getFavoriteTracks() async {
@@ -130,6 +132,9 @@ class StorageService implements StorageContract {
   @override
   Future<Map<String, String>> getSpotifyUriCache() async {
     final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey(_legacySpotifyUriCacheKey)) {
+      await prefs.remove(_legacySpotifyUriCacheKey);
+    }
     final String? raw = prefs.getString(_spotifyUriCacheKey);
     if (raw == null || raw.isEmpty) return {};
 

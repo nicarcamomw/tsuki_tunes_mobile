@@ -474,9 +474,9 @@ class DeezerApiService implements MusicApiContract {
   }
 
   @override
-  Future<Track?> getTrack(String trackId) async {
+  Future<Track?> getTrack(String trackId, {bool forceRefresh = false}) async {
     final cacheKey = 'track_$trackId';
-    final cached = _getCached<Track>(cacheKey);
+    final cached = forceRefresh ? null : _getCached<Track>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
