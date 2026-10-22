@@ -5,9 +5,11 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import '../core/utils/deezer_preview.dart';
+import '../models/playback_error.dart';
 import '../models/track.dart';
 import '../models/repeat_mode.dart';
 export '../models/repeat_mode.dart';
+export '../models/playback_error.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/deezer_api_service.dart';
@@ -42,8 +44,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _useSpotify = false;
   bool _spotifyActive = false;
   bool _spotifyFallbackActive = false;
-  String? _lastSpotifyError;
-  String? _lastPlaybackError;
+  SpotifyFallbackReason? _lastSpotifyError;
+  PlaybackError? _lastPlaybackError;
 
   // Prefetch next track URI
   String? _prefetchedUri;
@@ -108,8 +110,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get useSpotify => _useSpotify;
   bool get spotifyFallbackActive => _spotifyFallbackActive;
   SpotifyService get spotify => _spotify;
-  String? get lastSpotifyError => _lastSpotifyError;
-  String? get lastPlaybackError => _lastPlaybackError;
+  SpotifyFallbackReason? get lastSpotifyError => _lastSpotifyError;
+  PlaybackError? get lastPlaybackError => _lastPlaybackError;
   int get crossfadeSeconds => _crossfadeSeconds;
   bool get autoMarkListened => _autoMarkListened;
   bool get precacheWifiOnly => _precacheWifiOnly;
@@ -685,17 +687,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     });
   }
 
-  String _classifyPlaybackError(Object error, [Track? track]) {
+  PlaybackError _classifyPlaybackError(Object error, [Track? track]) {
     final errStr = error.toString().toLowerCase();
 
     // 1. No preview available
     if (track != null && track.previewUrl.trim().isEmpty) {
-      return 'no_preview_available';
+      return PlaybackError.noPreview;
     }
     if (errStr.contains('preview is unavailable') ||
         errStr.contains('no preview') ||
         errStr.contains('preview_unavailable')) {
-      return 'no_preview_available';
+      return PlaybackError.noPreview;
     }
 
     // 2. Network error
@@ -708,7 +710,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         errStr.contains('failed host lookup') ||
         errStr.contains('unreachable') ||
         errStr.contains('timed out')) {
-      return 'network_error';
+      return PlaybackError.network;
     }
 
     // 3. Format unsupported
@@ -718,14 +720,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         errStr.contains('decode') ||
         errStr.contains('demux') ||
         errStr.contains('extractor')) {
-      return 'format_unsupported';
+      return PlaybackError.formatUnsupported;
     }
 
-    return 'playback_error';
+    return PlaybackError.generic;
   }
 
   @visibleForTesting
-  String classifyPlaybackError(Object error, [Track? track]) =>
+  PlaybackError classifyPlaybackError(Object error, [Track? track]) =>
       _classifyPlaybackError(error, track);
 
   void _handlePlaybackError(Object error) {
@@ -734,7 +736,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     final classified = _classifyPlaybackError(error, _currentTrack);
     // Non-transient errors: abort immediate retry and report specific error
-    if (classified == 'no_preview_available' || classified == 'format_unsupported') {
+    if (classified == PlaybackError.noPreview || classified == PlaybackError.formatUnsupported) {
       _retryTimer?.cancel();
       _retryCount = 0;
       _isBuffering = false;
@@ -811,7 +813,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       if (!_canPlayOffline(track)) {
         _isBuffering = false;
-        _lastPlaybackError = 'network_error';
+        _lastPlaybackError = PlaybackError.network;
         notifyListeners();
         return;
       }
@@ -872,7 +874,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}", falling back to preview');
-      _lastSpotifyError = 'spotify_track_unavailable';
+      _lastSpotifyError = SpotifyFallbackReason.trackUnavailable;
       _spotifyActive = false;
       _spotifyFallbackActive = true;
       await _service.playTrack(track);
@@ -922,7 +924,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (!played) {
       debugPrint('Spotify: all play attempts failed, falling back to preview');
-      _lastSpotifyError = 'spotify_open_app';
+      _lastSpotifyError = SpotifyFallbackReason.openApp;
       _spotifyActive = false;
       _spotifyFallbackActive = true;
       try { await _nativePlayer.disconnect(); } catch (_) {}
@@ -1075,7 +1077,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         await seek(Duration.zero);
       case QueueStepKind.unavailable:
         if (_q.isEmpty) return;
-        _lastPlaybackError = 'network_error';
+        _lastPlaybackError = PlaybackError.network;
         notifyListeners();
     }
   }

@@ -129,7 +129,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
     final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
-    final playbackError = context.select<AudioProvider, String?>((a) => a.lastPlaybackError);
+    final playbackError =
+        context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
 
     if (track == null) {
       return PopScope(
@@ -422,7 +423,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         const Icon(Icons.error_outline, color: AppColors.error, size: 14),
                         const SizedBox(width: 6),
                         Text(
-                          _sanitizePlaybackError(playbackError, strings),
+                          playbackError.message(strings),
                           style: locale.getTextStyle(
                             fontSize: 11,
                             color: AppColors.error,
@@ -611,19 +612,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     ),
   );
 }
-
-  String _sanitizePlaybackError(String error, dynamic strings) {
-    switch (error) {
-      case 'no_preview_available':
-        return strings.playbackNoPreview;
-      case 'network_error':
-        return strings.playbackNetworkError;
-      case 'format_unsupported':
-        return strings.playbackFormatUnsupported;
-      default:
-        return strings.playbackError;
-    }
-  }
 
   Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
     final strings = locale.strings;

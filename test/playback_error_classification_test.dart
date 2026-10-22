@@ -54,7 +54,7 @@ void main() {
         Exception('Generic error'),
         track,
       );
-      expect(result, equals('no_preview_available'));
+      expect(result, equals(PlaybackError.noPreview));
     });
 
     test('classifies track with whitespace previewUrl as no_preview_available', () {
@@ -63,7 +63,7 @@ void main() {
         Exception('Generic error'),
         track,
       );
-      expect(result, equals('no_preview_available'));
+      expect(result, equals(PlaybackError.noPreview));
     });
 
     test('classifies error containing preview unavailable text as no_preview_available', () {
@@ -72,7 +72,7 @@ void main() {
         Exception('Audio preview is unavailable for this track'),
         track,
       );
-      expect(result, equals('no_preview_available'));
+      expect(result, equals(PlaybackError.noPreview));
     });
 
     test('classifies SocketException as network_error', () {
@@ -81,7 +81,7 @@ void main() {
         const SocketException('Failed host lookup: cdn.example.com'),
         track,
       );
-      expect(result, equals('network_error'));
+      expect(result, equals(PlaybackError.network));
     });
 
     test('classifies TimeoutException as network_error', () {
@@ -90,7 +90,7 @@ void main() {
         TimeoutException('Connection timed out'),
         track,
       );
-      expect(result, equals('network_error'));
+      expect(result, equals(PlaybackError.network));
     });
 
     test('classifies message with network/connection error string as network_error', () {
@@ -99,7 +99,7 @@ void main() {
         Exception('HttpException: Connection reset by peer'),
         track,
       );
-      expect(result, equals('network_error'));
+      expect(result, equals(PlaybackError.network));
     });
 
     test('classifies format/codec/demux errors as format_unsupported', () {
@@ -110,7 +110,7 @@ void main() {
           Exception('MediaCodecVideoRenderer / audio codec unsupported'),
           track,
         ),
-        equals('format_unsupported'),
+        equals(PlaybackError.formatUnsupported),
       );
 
       expect(
@@ -118,7 +118,7 @@ void main() {
           Exception('UnrecognizedInputFormatException: None of the available extractors could read the stream'),
           track,
         ),
-        equals('format_unsupported'),
+        equals(PlaybackError.formatUnsupported),
       );
     });
 
@@ -128,7 +128,7 @@ void main() {
         Exception('Unexpected state encountered'),
         track,
       );
-      expect(result, equals('playback_error'));
+      expect(result, equals(PlaybackError.generic));
     });
   });
 

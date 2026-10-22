@@ -12,7 +12,6 @@ import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/guest_library_gate.dart';
-import '../core/localization/app_strings.dart';
 import '../providers/locale_provider.dart';
 import '../providers/connectivity_provider.dart';
 import 'home_screen.dart';
@@ -42,8 +41,8 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
-  String? _lastShownError;
-  String? _lastShownPlaybackError;
+  SpotifyFallbackReason? _lastShownError;
+  PlaybackError? _lastShownPlaybackError;
 
   // Timestamps para detección de Double-Tap a 0 ms de latencia
   DateTime? _lastTapTime;
@@ -105,48 +104,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     super.dispose();
   }
 
-  String _sanitizeSpotifyError(String raw, dynamic strings) {
-    final lower = raw.toLowerCase();
-    if (lower.contains('invalid_grant') || lower.contains('refresh') || lower.contains('token')) {
-      return strings.spotifyTokenExpired;
-    }
-    if (lower.contains('premium')) {
-      return strings.spotifyPremiumRequired;
-    }
-    if (lower.contains('no active device') || lower.contains('device not found')) {
-      return strings.spotifyNoActiveDevice;
-    }
-    if (lower.contains('socket') || lower.contains('network') || lower.contains('connection')) {
-      return strings.spotifyNoConnection;
-    }
-    if (lower.contains('track_unavailable') || lower.contains('pista no disponible')) {
-      return strings.spotifyTrackUnavailablePreview;
-    }
-    if (lower.contains('open_app') || lower.contains('abre la app')) {
-      return strings.spotifyOpenAppPrompt;
-    }
-    return strings.playbackError;
-  }
-
-  String _sanitizePlaybackError(String error, AppStrings strings, {bool isOnline = true}) {
-    switch (error) {
-      case 'no_preview_available':
-        return strings.playbackNoPreview;
-      case 'network_error':
-        return !isOnline ? strings.offlineNoCache : strings.playbackNetworkError;
-      case 'format_unsupported':
-        return strings.playbackFormatUnsupported;
-      case 'playback_error':
-      default:
-        return strings.playbackError;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasTrack = context.select<AudioProvider, bool>((a) => a.currentTrack != null);
-    final spotifyError = context.select<AudioProvider, String?>((a) => a.lastSpotifyError);
-    final playbackError = context.select<AudioProvider, String?>((a) => a.lastPlaybackError);
+    final spotifyError =
+        context.select<AudioProvider, SpotifyFallbackReason?>((a) => a.lastSpotifyError);
+    final playbackError =
+        context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
     final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
@@ -169,7 +133,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _sanitizeSpotifyError(spotifyError, strings),
+                      spotifyError.message(strings),
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -207,9 +171,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               content: Row(
                 children: [
                   Icon(
-                    playbackError == 'network_error'
+                    playbackError == PlaybackError.network
                         ? Icons.wifi_off_rounded
-                        : (playbackError == 'no_preview_available'
+                        : (playbackError == PlaybackError.noPreview
                             ? Icons.music_off_rounded
                             : Icons.error_outline),
                     color: AppColors.error,
@@ -218,7 +182,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _sanitizePlaybackError(playbackError, strings, isOnline: isOnline),
+                      playbackError.message(strings, isOnline: isOnline),
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

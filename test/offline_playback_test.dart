@@ -141,7 +141,7 @@ void main() {
 
       await audioProvider.playTrack(track);
 
-      expect(audioProvider.lastPlaybackError, equals('network_error'));
+      expect(audioProvider.lastPlaybackError, equals(PlaybackError.network));
       expect(audioProvider.isBuffering, isFalse);
       expect(fakePlayer.playCallCount, equals(0)); // Never attempted playback
     });
@@ -193,13 +193,13 @@ void main() {
       final t1 = createTestTrack('t1_uncached');
 
       await audioProvider.playTrack(t0, newQueue: [t0, t1]);
-      expect(audioProvider.lastPlaybackError, equals('network_error'));
+      expect(audioProvider.lastPlaybackError, equals(PlaybackError.network));
       expect(fakePlayer.playCallCount, equals(0));
 
       // Calling next() when no tracks have cache should not advance and keep network_error
       await audioProvider.next();
       expect(audioProvider.currentIndex, equals(0));
-      expect(audioProvider.lastPlaybackError, equals('network_error'));
+      expect(audioProvider.lastPlaybackError, equals(PlaybackError.network));
       expect(fakePlayer.playCallCount, equals(0));
     });
 
