@@ -568,7 +568,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _syncSpotifyPlaybackState() async {
     try {
       final state = await _spotify.getPlaybackState();
-      if (state == null || !_spotifyActive || _completionHandled) return;
+      if (!_spotifyActive || _completionHandled) return;
+      if (state == null) {
+        // No Spotify session at all (app closed or frozen): stop pretending
+        // to play, outside the grace period after a play command.
+        final sincePlay = DateTime.now().difference(_lastPlayCommandTime);
+        if (_isPlaying && sincePlay.inSeconds >= 10) {
+          debugPrint('[AudioProvider] Spotify session gone, marking paused');
+          _isPlaying = false;
+          notifyListeners();
+        }
+        return;
+      }
 
       final progressMs = state['progress_ms'] as int? ?? 0;
       final isPlaying = state['is_playing'] as bool? ?? false;
@@ -949,31 +960,78 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
-    unawaited(_logSpotifyPlaybackCheck(gen));
+    unawaited(_verifySpotifyPlayback(gen, uri, track));
   }
 
-  /// Diagnostics for "Spotify says it's playing but there's no sound":
-  /// a few seconds after starting, logs what Spotify reports for the
-  /// playback and the target device (volume 0, wrong device, not advancing).
-  Future<void> _logSpotifyPlaybackCheck(int gen) async {
-    await Future.delayed(const Duration(seconds: 4));
+  /// The Web API can accept a play command (204) for a Spotify device whose
+  /// app the system has frozen in the background (common on Honor/Huawei):
+  /// nothing plays and /me/player stays empty. Confirm playback a few seconds
+  /// in; if it didn't start, wake Spotify through App Remote and play there,
+  /// and if that fails too, fall back to the Deezer preview.
+  Future<void> _verifySpotifyPlayback(int gen, String uri, Track track) async {
+    if (await _spotifyConfirmsPlaying(gen, uri)) return;
+
+    debugPrint('[SpotifyCheck] Not playing, waking Spotify via App Remote');
+    final token = _spotify.accessToken;
+    if (token != null) {
+      final connected = _nativePlayer.isConnected ||
+          await _nativePlayer.connect(accessToken: token);
+      if (gen != _playGeneration) return;
+      if (connected && await _nativePlayer.playUri(uri)) {
+        final now = DateTime.now();
+        _position = Duration.zero;
+        _spotifySyncPosition = Duration.zero;
+        _spotifySyncTime = now;
+        _lastPlayCommandTime = now;
+        if (await _spotifyConfirmsPlaying(gen, uri)) return;
+      }
+    }
     if (gen != _playGeneration || !_spotifyActive) return;
+
+    debugPrint('[SpotifyCheck] Spotify did not start, falling back to preview');
+    _lastSpotifyError = SpotifyFallbackReason.openApp;
+    _spotifyActive = false;
+    _spotifyFallbackActive = true;
+    _stopPositionTimer();
+    _position = Duration.zero;
+    _isBuffering = true;
+    notifyListeners();
+    try {
+      await _service.playTrack(await _withFreshPreview(track));
+    } catch (e) {
+      if (gen != _playGeneration) return;
+      _lastPlaybackError = _classifyPlaybackError(e, track);
+    }
+    if (gen != _playGeneration) return;
+    _isBuffering = false;
+    notifyListeners();
+  }
+
+  /// Waits a moment and asks Spotify whether [uri] is really playing.
+  /// Returns true too when there is nothing left to check (track changed,
+  /// Spotify no longer in use, or the user paused meanwhile).
+  Future<bool> _spotifyConfirmsPlaying(int gen, String uri) async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
     final state = await _spotify.getPlaybackState();
+    if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
     if (state == null) {
-      debugPrint('[SpotifyCheck] No playback state (204/empty): Spotify has no active session');
-      return;
+      debugPrint('[SpotifyCheck] No active Spotify session');
+      return false;
     }
     final device = state['device'] as Map<String, dynamic>?;
     final item = state['item'] as Map<String, dynamic>?;
+    final linked = item?['linked_from'] as Map<String, dynamic>?;
     debugPrint('[SpotifyCheck] is_playing=${state['is_playing']} '
-        'progress_ms=${state['progress_ms']} '
-        'item=${item?['uri']} expected=$_currentSpotifyUri '
-        'device=${device?['name']} type=${device?['type']} '
-        'active=${device?['is_active']} volume=${device?['volume_percent']}');
+        'progress_ms=${state['progress_ms']} item=${item?['uri']} '
+        'device=${device?['name']} volume=${device?['volume_percent']}');
     if (device?['volume_percent'] == 0) {
       debugPrint('[SpotifyCheck] Spotify device volume is 0%: playback is silent');
     }
+    return state['is_playing'] == true &&
+        (item?['uri'] == uri || linked?['uri'] == uri);
   }
+
 
   void _precache(Track track) {
     if (_precacheWifiOnly && (_connectivityProvider?.isMetered ?? false)) {

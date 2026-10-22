@@ -56,6 +56,20 @@ class SpotifyNativePlayer {
     );
   }
 
+  /// Plays [uri] through App Remote. Unlike the Web API this talks to the
+  /// Spotify app process directly, which also wakes it if the system froze
+  /// it in the background.
+  Future<bool> playUri(String uri) async {
+    if (!_isConnected) return false;
+    try {
+      await SpotifySdk.play(spotifyUri: uri);
+      return true;
+    } catch (e) {
+      debugPrint('SpotifyNative: play error: $e');
+      return false;
+    }
+  }
+
   Future<void> disconnect() async {
     unawaited(_stateSub?.cancel());
     _stateSub = null;
