@@ -1,7 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 
@@ -223,7 +224,7 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 50));
       await provider.setCrossfadeSeconds(5);
       final tracks = [createTestTrack('t1'), createTestTrack('t2')];
-      provider.playTrack(tracks[0], newQueue: tracks);
+      unawaited(provider.playTrack(tracks[0], newQueue: tracks));
     });
 
     test('Repeat-one blocks crossfade trigger completely', () {

@@ -1,8 +1,10 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../providers/auth_provider.dart';
@@ -139,8 +141,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       body: Stack(
         children: [
           // 1. Cyber Matrix Grid Background (static, zero CPU)
-          Positioned.fill(
-            child: CustomPaint(painter: const _CyberGridPainter()),
+          const Positioned.fill(
+            child: CustomPaint(painter: _CyberGridPainter()),
           ),
 
           // 2. Continuous Drifting Cyber Audio Particles (isolated repaint)

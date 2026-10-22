@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
-import '../widgets/mini_player.dart';
-import '../widgets/tap_scale.dart';
+import '../providers/locale_provider.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/guest_library_gate.dart';
-import '../providers/locale_provider.dart';
-import '../providers/connectivity_provider.dart';
+import '../widgets/mini_player.dart';
+import '../widgets/tap_scale.dart';
 import 'home_screen.dart';
-import 'search_screen.dart';
 import 'library_screen.dart';
+import 'search_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -394,12 +395,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         final hasNewLibraryTracks = selectedIndex != 2 && currentLibraryCount > _lastSeenLibraryCount!;
 
         return Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.bgDeep,
-            border: const Border(
+            border: Border(
               top: BorderSide(color: AppColors.border, width: 1.2),
             ),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
                 color: Colors.black54,
                 blurRadius: 10,

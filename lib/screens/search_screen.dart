@@ -1,15 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
-import '../providers/search_provider.dart';
 import '../providers/locale_provider.dart';
-import '../widgets/track_tile.dart';
-import '../widgets/artist_card.dart';
+import '../providers/search_provider.dart';
 import '../widgets/album_card.dart';
+import '../widgets/artist_card.dart';
+import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 
 class SearchScreen extends StatefulWidget {

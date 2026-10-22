@@ -1,18 +1,19 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
-import '../models/artist.dart';
 import '../models/album.dart';
+import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../screens/artist_detail_screen.dart';
 import '../screens/album_detail_screen.dart';
+import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';

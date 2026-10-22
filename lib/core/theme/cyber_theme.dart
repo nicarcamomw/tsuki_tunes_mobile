@@ -103,12 +103,12 @@ class CyberTheme {
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
       ),
-      sliderTheme: SliderThemeData(
+      sliderTheme: const SliderThemeData(
         activeTrackColor: AppColors.accent,
         inactiveTrackColor: AppColors.border,
         thumbColor: AppColors.accent,
         overlayColor: AppColors.accentGlow,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
         trackHeight: 3,
       ),
     );

@@ -1,21 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../core/constants/app_colors.dart';
-import '../core/utils/formatters.dart';
-import '../providers/library_provider.dart';
-import '../providers/playlist_provider.dart';
-import '../providers/audio_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../providers/locale_provider.dart';
-import '../models/track.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
+import '../core/utils/formatters.dart';
 import '../models/album.dart';
-import '../models/playlist.dart';
 import '../models/artist.dart';
-import '../widgets/artist_card.dart';
+import '../models/playlist.dart';
+import '../models/track.dart';
+import '../providers/audio_provider.dart';
+import '../providers/library_provider.dart';
+import '../providers/locale_provider.dart';
+import '../providers/playlist_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/playlist_detail_screen.dart';
+import '../widgets/artist_card.dart';
 import 'main_navigation_screen.dart';
 
 class _AlbumGroupData {
@@ -278,7 +280,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   Widget _buildAlbumsTab(
     BuildContext context,
     LocaleProvider locale,
-    dynamic strings,
+    AppStrings strings,
     List<ListenedTrackData> listenedTracks,
     List<_AlbumGroupData> albumGroups,
     List<_AlbumGroupData> visible,
@@ -582,7 +584,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   Widget _buildPlaylistsTab(
     BuildContext context,
     LocaleProvider locale,
-    dynamic strings,
+    AppStrings strings,
   ) {
     final playlists = context.watch<PlaylistProvider>().playlists;
 
@@ -691,10 +693,10 @@ class _LibraryScreenState extends State<LibraryScreen>
               fontSize: 14,
               color: AppColors.textMuted,
             ),
-            enabledBorder: UnderlineInputBorder(
+            enabledBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.border),
             ),
-            focusedBorder: UnderlineInputBorder(
+            focusedBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.accent),
             ),
           ),

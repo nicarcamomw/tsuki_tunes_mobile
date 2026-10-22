@@ -1,24 +1,27 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
+
 import '../core/utils/deezer_preview.dart';
 import '../models/playback_error.dart';
-import '../models/track.dart';
 import '../models/repeat_mode.dart';
-export '../models/repeat_mode.dart';
-export '../models/playback_error.dart';
+import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/deezer_api_service.dart';
-import '../services/spotify_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
+import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
 import 'connectivity_provider.dart';
+
+export '../models/playback_error.dart';
+export '../models/repeat_mode.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service;
@@ -1091,7 +1094,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       ));
   Future<void> stop() async {
     _persistTimer?.cancel();
-    _storage.savePlaybackState(null);
+    unawaited(_storage.savePlaybackState(null));
     _stopPositionTimer();
     _retryTimer?.cancel();
     _retryCount = 0;

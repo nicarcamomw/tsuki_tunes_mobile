@@ -1,5 +1,5 @@
-import '../../models/track.dart';
 import '../../models/artist.dart';
+import '../../models/track.dart';
 
 abstract class StorageContract {
   Future<List<Track>> getFavoriteTracks();

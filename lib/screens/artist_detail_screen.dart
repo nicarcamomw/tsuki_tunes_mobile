@@ -1,29 +1,32 @@
+import 'dart:async';
 import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../core/utils/formatters.dart';
-import '../models/artist.dart';
-import '../models/track.dart';
 import '../models/album.dart';
-import '../services/deezer_api_service.dart';
+import '../models/artist.dart';
+import '../models/artist_albums_page.dart';
+import '../models/track.dart';
 import '../providers/auth_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/connectivity_provider.dart';
-import '../core/localization/app_strings.dart';
-import '../widgets/track_tile.dart';
-import '../widgets/oni_mask_icon.dart';
-import '../widgets/distorted_artist_name.dart';
-import '../widgets/app_custom_icons.dart';
+import '../services/deezer_api_service.dart';
 import '../services/lastfm_service.dart';
-import '../models/artist_albums_page.dart';
+import '../widgets/app_custom_icons.dart';
+import '../widgets/distorted_artist_name.dart';
+import '../widgets/oni_mask_icon.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
-import '../widgets/skeleton_loader.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -255,7 +258,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       ),
                       boxShadow: isArtistComplete
                           ? [
-                              BoxShadow(
+                              const BoxShadow(
                                 color: AppColors.accentGlow,
                                 blurRadius: 8,
                               ),
@@ -854,7 +857,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   label: strings.a11yViewDiscography,
                   child: GestureDetector(
                     onTap: () async {
-                      HapticFeedback.lightImpact();
+                      unawaited(HapticFeedback.lightImpact());
                       final updated =
                           await appNavigatorKey.currentState?.push<List<Album>>(
                         MaterialPageRoute(
@@ -1005,7 +1008,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent),
+              const Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 8),
               Text(
                 strings.similarArtists,
@@ -1135,7 +1138,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.accent),
+                const Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.accent),
                 const SizedBox(width: 8),
                 Text(
                   strings.storedContentTitle,

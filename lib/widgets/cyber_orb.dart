@@ -118,9 +118,9 @@ class _CyberOrbState extends State<CyberOrb>
                           ),
                           if (widget.centerChild != null)
                             Center(child: widget.centerChild!),
-                          Positioned.fill(
+                          const Positioned.fill(
                             child: CustomPaint(
-                              painter: const _OrbGlassReflectionPainter(),
+                              painter: _OrbGlassReflectionPainter(),
                             ),
                           ),
                         ],
@@ -276,15 +276,15 @@ class _CrimsonOrbFluidPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    _basePaint.shader = RadialGradient(
-      center: const Alignment(-0.25, -0.30),
+    _basePaint.shader = const RadialGradient(
+      center: Alignment(-0.25, -0.30),
       radius: 1.15,
-      colors: const [
+      colors: [
         Color(0xFF380710),
         Color(0xFF180509),
         Color(0xFF080204),
       ],
-      stops: const [0.0, 0.45, 1.0],
+      stops: [0.0, 0.45, 1.0],
     ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, _basePaint);
 

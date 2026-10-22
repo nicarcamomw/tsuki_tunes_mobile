@@ -1,23 +1,26 @@
+import 'dart:async';
 import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
-import '../models/artist.dart';
 import '../models/album.dart';
-import '../services/deezer_api_service.dart';
-import '../providers/library_provider.dart';
-import '../providers/auth_provider.dart';
+import '../models/artist.dart';
 import '../providers/audio_provider.dart';
-import '../widgets/artist_card.dart';
-import '../widgets/album_card.dart';
-import '../widgets/profile_bottom_sheet.dart';
-import '../screens/artist_detail_screen.dart';
-import 'main_navigation_screen.dart';
+import '../providers/auth_provider.dart';
+import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../screens/artist_detail_screen.dart';
+import '../services/deezer_api_service.dart';
+import '../widgets/album_card.dart';
+import '../widgets/artist_card.dart';
+import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
+import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -134,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (mounted) {
       setState(() => _topArtistsDisplay = display);
-      _loadLatestFromTopArtists(display);
+      unawaited(_loadLatestFromTopArtists(display));
     }
   }
 

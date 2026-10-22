@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -78,7 +79,7 @@ class LyricsService {
     } catch (e) {
       debugPrint('[LyricsService] Error fetching lyrics for "$title": $e');
     } finally {
-      _inFlight.remove(cacheKey);
+      unawaited(_inFlight.remove(cacheKey));
     }
     return null;
   }

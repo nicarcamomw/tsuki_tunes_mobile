@@ -172,7 +172,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
         style: baseStyle.copyWith(
           color: baseStyle.color ?? AppColors.accent,
           shadows: [
-            Shadow(
+            const Shadow(
               color: AppColors.accentGlow,
               blurRadius: 10,
             ),
@@ -217,7 +217,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
             style: baseStyle.copyWith(
               color: _whiteFlash ? Colors.white : (baseStyle.color ?? AppColors.accent),
               shadows: [
-                Shadow(
+                const Shadow(
                   color: AppColors.accentGlow,
                   blurRadius: 12,
                 ),
@@ -244,7 +244,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
                 style: baseStyle.copyWith(
                   color: Colors.white,
                   shadows: [
-                    Shadow(color: AppColors.accent, blurRadius: 6),
+                    const Shadow(color: AppColors.accent, blurRadius: 6),
                   ],
                 ),
               ),
@@ -264,7 +264,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
                 style: baseStyle.copyWith(
                   color: Colors.white,
                   shadows: [
-                    Shadow(color: AppColors.accent, blurRadius: 6),
+                    const Shadow(color: AppColors.accent, blurRadius: 6),
                   ],
                 ),
               ),

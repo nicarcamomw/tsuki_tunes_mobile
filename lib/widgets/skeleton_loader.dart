@@ -216,10 +216,10 @@ class _TrackRowSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       child: Row(
-        children: const [
+        children: [
           SkeletonLoader(width: 24, height: 12),
           SizedBox(width: 8),
           SkeletonLoader(width: 46, height: 46),

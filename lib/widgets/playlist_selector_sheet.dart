@@ -1,11 +1,13 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
-import '../providers/playlist_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/playlist_provider.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
   return showModalBottomSheet(
@@ -42,7 +44,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  Icon(Icons.playlist_add, color: AppColors.accent, size: 20),
+                  const Icon(Icons.playlist_add, color: AppColors.accent, size: 20),
                   const SizedBox(width: 10),
                   Text(
                     strings.selectPlaylist,
@@ -68,7 +70,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                 ),
               ),
               onTap: () async {
-                HapticFeedback.lightImpact();
+                unawaited(HapticFeedback.lightImpact());
                 final name = await _showCreateDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
                   final provider = context.read<PlaylistProvider>();
@@ -155,7 +157,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                         ),
                       ),
                       trailing: alreadyAdded
-                          ? Icon(Icons.check,
+                          ? const Icon(Icons.check,
                               color: AppColors.accent, size: 18)
                           : null,
                       onTap: alreadyAdded
@@ -181,7 +183,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                               );
                             }
                           : () async {
-                              HapticFeedback.lightImpact();
+                              unawaited(HapticFeedback.lightImpact());
                               final provider =
                                   context.read<PlaylistProvider>();
                               final added = await provider
@@ -254,10 +256,10 @@ class _PlaylistSelectorContent extends StatelessWidget {
               fontSize: 14,
               color: AppColors.textMuted,
             ),
-            enabledBorder: UnderlineInputBorder(
+            enabledBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.border),
             ),
-            focusedBorder: UnderlineInputBorder(
+            focusedBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.accent),
             ),
           ),

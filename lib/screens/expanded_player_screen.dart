@@ -1,22 +1,24 @@
 import 'dart:async';
+
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../core/constants/app_colors.dart';
+import '../models/album.dart';
+import '../models/artist.dart';
+import '../models/synced_lyrics.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../widgets/rinnegan_visualizer.dart';
-import '../widgets/oni_mask_icon.dart';
-import '../widgets/tap_scale.dart';
 import '../services/lyrics_service.dart';
-import '../models/synced_lyrics.dart';
-import '../models/album.dart';
-import '../models/artist.dart';
+import '../widgets/oni_mask_icon.dart';
+import '../widgets/rinnegan_visualizer.dart';
+import '../widgets/tap_scale.dart';
 import 'album_detail_screen.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
@@ -494,10 +496,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         child: Container(
                           width: 68,
                           height: 68,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.accent,
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
                                 color: AppColors.accentGlow,
                                 blurRadius: 18,

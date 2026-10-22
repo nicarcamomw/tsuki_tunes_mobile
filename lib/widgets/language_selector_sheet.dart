@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../providers/locale_provider.dart';
@@ -116,7 +118,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: TapScale(
                   onTap: () async {
-                    HapticFeedback.selectionClick();
+                    unawaited(HapticFeedback.selectionClick());
                     if (!isSelected) {
                       await context.read<LocaleProvider>().setLanguage(
                             lang,

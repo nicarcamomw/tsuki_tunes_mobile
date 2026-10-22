@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   final Connectivity _connectivity = Connectivity();

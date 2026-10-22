@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/track.dart';
+
 import '../models/artist.dart';
+import '../models/track.dart';
 import 'contracts/storage_contract.dart';
 
 class StorageService implements StorageContract {

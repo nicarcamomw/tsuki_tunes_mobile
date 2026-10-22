@@ -1,10 +1,12 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
 import '../models/playlist.dart';
 import '../models/track.dart';
-import '../services/storage_service.dart';
 import '../services/firebase_service.dart';
+import '../services/storage_service.dart';
 
 class PlaylistProvider extends ChangeNotifier {
   final StorageService _storage = StorageService();
@@ -53,7 +55,7 @@ class PlaylistProvider extends ChangeNotifier {
     _currentUid = uid;
     _isGuest = false;
 
-    _playlistsSubscription?.cancel();
+    unawaited(_playlistsSubscription?.cancel());
 
     final db = _firebase.db;
     final playlistsCol =

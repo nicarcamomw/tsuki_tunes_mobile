@@ -57,7 +57,7 @@ class SpotifyNativePlayer {
   }
 
   Future<void> disconnect() async {
-    _stateSub?.cancel();
+    unawaited(_stateSub?.cancel());
     _stateSub = null;
     try {
       await SpotifySdk.disconnect();

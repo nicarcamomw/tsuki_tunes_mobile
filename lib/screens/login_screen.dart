@@ -1,24 +1,26 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/playlist_provider.dart';
 import '../providers/locale_provider.dart';
-import '../core/localization/app_strings.dart';
+import '../providers/playlist_provider.dart';
 import '../services/storage_service.dart';
-import '../widgets/cyber_orb.dart';
 import '../widgets/cyber_glitch_text.dart';
+import '../widgets/cyber_orb.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
-import 'onboarding_screen.dart';
 import 'main_navigation_screen.dart';
+import 'onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -237,8 +239,8 @@ class _LoginScreenState extends State<LoginScreen>
       body: Stack(
         children: [
           // 1. Cyber Grid Matrix Background (Static, zero CPU overhead)
-          Positioned.fill(
-            child: CustomPaint(painter: const _CyberGridPainter()),
+          const Positioned.fill(
+            child: CustomPaint(painter: _CyberGridPainter()),
           ),
 
           // 2. Continuous Drifting Cyber Audio Particles (Isolated RepaintBoundary)
@@ -1043,14 +1045,14 @@ class _RadialSoundWavePainter extends CustomPainter {
 
       _corePaint
         ..strokeWidth = barThickness
-        ..shader = LinearGradient(
-          colors: const [
+        ..shader = const LinearGradient(
+          colors: [
             Color(0xFF55000A),
             AppColors.accent,
             Color(0xFFFF2B40),
             Color(0xFFFF485B),
           ],
-          stops: const [0.0, 0.35, 0.70, 1.0],
+          stops: [0.0, 0.35, 0.70, 1.0],
         ).createShader(Rect.fromPoints(pStart, pEnd));
       canvas.drawLine(pStart, pEnd, _corePaint);
 

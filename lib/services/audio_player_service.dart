@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+
 import '../models/track.dart';
-import 'contracts/audio_player_contract.dart';
 import 'audio_precache_service.dart';
+import 'contracts/audio_player_contract.dart';
 
 class AudioPlayerService implements AudioPlayerContract {
   final AudioPlayer _playerA = AudioPlayer();
@@ -91,7 +93,7 @@ class AudioPlayerService implements AudioPlayerContract {
     for (var attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await _activePlayer.stop();
-        _activePlayer.setVolume(1.0);
+        unawaited(_activePlayer.setVolume(1.0));
         if (localPath != null && !kIsWeb) {
           debugPrint('[AudioPlayerService] Zero-latency play from pre-cached file: $localPath');
           await _activePlayer.setFilePath(localPath);
@@ -127,7 +129,7 @@ class AudioPlayerService implements AudioPlayerContract {
     final localPath = AudioPrecacheService().getCachedFilePath(nextTrack.id);
 
     try {
-      _standbyPlayer.setVolume(0.0);
+      unawaited(_standbyPlayer.setVolume(0.0));
       if (localPath != null && !kIsWeb) {
         debugPrint('[AudioPlayerService] Crossfade loading pre-cached file: $localPath');
         await _standbyPlayer.setFilePath(localPath);
@@ -219,12 +221,12 @@ class AudioPlayerService implements AudioPlayerContract {
   @override
   Future<void> dispose() async {
     _cancelCrossfade();
-    _posSub?.cancel();
-    _durSub?.cancel();
-    _bufSub?.cancel();
-    _stateSub?.cancel();
-    _playingSub?.cancel();
-    _eventSub?.cancel();
+    unawaited(_posSub?.cancel());
+    unawaited(_durSub?.cancel());
+    unawaited(_bufSub?.cancel());
+    unawaited(_stateSub?.cancel());
+    unawaited(_playingSub?.cancel());
+    unawaited(_eventSub?.cancel());
 
     await _positionCtrl.close();
     await _durationCtrl.close();

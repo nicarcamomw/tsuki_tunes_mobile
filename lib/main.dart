@@ -1,21 +1,23 @@
 import 'dart:ui';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
-import 'providers/auth_provider.dart';
 import 'providers/audio_provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'providers/library_provider.dart';
+import 'providers/locale_provider.dart';
 import 'providers/playlist_provider.dart';
 import 'providers/search_provider.dart';
-import 'providers/locale_provider.dart';
-import 'providers/connectivity_provider.dart';
-import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/firebase_service.dart';
 import 'services/media_session_handler.dart';

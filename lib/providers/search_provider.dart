@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/track.dart';
-import '../models/artist.dart';
+
 import '../models/album.dart';
+import '../models/artist.dart';
+import '../models/track.dart';
 import '../services/deezer_api_service.dart';
 
 class SearchProvider extends ChangeNotifier {
@@ -90,7 +92,7 @@ class SearchProvider extends ChangeNotifier {
       _tracks = results['tracks'] ?? [];
       _artists = results['artists'] ?? [];
       _albums = results['albums'] ?? [];
-      _saveToHistory(cleanQuery);
+      unawaited(_saveToHistory(cleanQuery));
     } catch (e) {
       if (generation != _searchGeneration) return;
       debugPrint('Search error: $e');

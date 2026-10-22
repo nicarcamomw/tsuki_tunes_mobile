@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../core/constants/api_endpoints.dart';
-import '../models/track.dart';
-import '../models/artist.dart';
 import '../models/album.dart';
+import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
+import '../models/track.dart';
 import 'contracts/music_api_contract.dart';
 
 class _CacheEntry {
@@ -150,7 +153,7 @@ class DeezerApiService implements MusicApiContract {
     try {
       return await future;
     } finally {
-      _inFlight.remove(key);
+      unawaited(_inFlight.remove(key));
     }
   }
 

@@ -1,12 +1,14 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/playlist.dart';
-import '../providers/playlist_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/playlist_provider.dart';
 import '../widgets/track_tile.dart';
 
 class PlaylistDetailScreen extends StatelessWidget {
@@ -386,10 +388,10 @@ class PlaylistDetailScreen extends StatelessWidget {
               fontSize: 14,
               color: AppColors.textMuted,
             ),
-            enabledBorder: UnderlineInputBorder(
+            enabledBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.border),
             ),
-            focusedBorder: UnderlineInputBorder(
+            focusedBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: AppColors.accent),
             ),
           ),
@@ -423,7 +425,7 @@ class PlaylistDetailScreen extends StatelessWidget {
     );
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
-      context.read<PlaylistProvider>().renamePlaylist(playlistId, name);
+      unawaited(context.read<PlaylistProvider>().renamePlaylist(playlistId, name));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -498,7 +500,7 @@ class PlaylistDetailScreen extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      context.read<PlaylistProvider>().deletePlaylist(playlistId);
+      unawaited(context.read<PlaylistProvider>().deletePlaylist(playlistId));
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,14 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class ArtistDiscographyScreen extends StatefulWidget {
   final String? artistId;
@@ -404,7 +406,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   }
 
   Widget _buildItem(BuildContext context, Album album, LibraryProvider library,
-      LocaleProvider locale, dynamic strings) {
+      LocaleProvider locale, AppStrings strings) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
 

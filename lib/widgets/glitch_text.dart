@@ -31,7 +31,7 @@ class GlitchText extends StatelessWidget {
         letterSpacing: letterSpacing,
         shadows: hasGlow
             ? [
-                BoxShadow(
+                const BoxShadow(
                   color: AppColors.accentGlow,
                   blurRadius: 10,
                   spreadRadius: 2,

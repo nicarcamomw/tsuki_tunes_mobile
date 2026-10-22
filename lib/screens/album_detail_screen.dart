@@ -1,23 +1,24 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/album.dart';
-import '../services/deezer_api_service.dart';
 import '../providers/audio_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/connectivity_provider.dart';
-import '../widgets/track_tile.dart';
-import '../widgets/album_progress_bar.dart';
-import '../widgets/spectrum_wave_visualizer.dart';
-
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
+import '../services/deezer_api_service.dart';
+import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/spectrum_wave_visualizer.dart';
+import '../widgets/track_tile.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;
@@ -71,7 +72,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           _fullAlbum = res;
           _isLoading = false;
         });
-        _enrichTracks(res);
+        unawaited(_enrichTracks(res));
       } else if (mounted) {
         setState(() {
           _fullAlbum = widget.album;
@@ -303,7 +304,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     label: strings.goToArtist,
                     child: GestureDetector(
                       onTap: () async {
-                        HapticFeedback.lightImpact();
+                        unawaited(HapticFeedback.lightImpact());
                         if (albumData.artistId.isNotEmpty) {
                           final artist =
                               await _api.getArtist(albumData.artistId);
@@ -455,7 +456,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
           ),
 
           // Spectrum wave visualizer separator
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: SpectrumWaveVisualizer(height: 36),
           ),
 

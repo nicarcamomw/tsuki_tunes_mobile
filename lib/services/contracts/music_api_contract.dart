@@ -1,7 +1,7 @@
-import '../../models/track.dart';
-import '../../models/artist.dart';
 import '../../models/album.dart';
+import '../../models/artist.dart';
 import '../../models/artist_albums_page.dart';
+import '../../models/track.dart';
 
 abstract class MusicApiContract {
   Future<List<Artist>> searchArtists(String query, {int limit = 25});

@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/track.dart';
-import '../models/artist.dart';
+import 'package:flutter/foundation.dart';
+
 import '../models/album.dart';
-import '../services/storage_service.dart';
+import '../models/artist.dart';
+import '../models/track.dart';
 import '../services/firebase_service.dart';
+import '../services/storage_service.dart';
 
 class ListenedTrackData {
   final String trackId;
@@ -357,9 +359,9 @@ class LibraryProvider extends ChangeNotifier {
     if (_currentUid == uid && _tracksSubscription != null) return;
     _currentUid = uid;
 
-    _tracksSubscription?.cancel();
-    _deletionsSubscription?.cancel();
-    _followedArtistsSubscription?.cancel();
+    unawaited(_tracksSubscription?.cancel());
+    unawaited(_deletionsSubscription?.cancel());
+    unawaited(_followedArtistsSubscription?.cancel());
 
     final db = _firebase.db;
     final userDoc = db.collection('users').doc(uid);
@@ -411,11 +413,11 @@ class LibraryProvider extends ChangeNotifier {
         _listenedTracksLoaded = true;
         notifyListeners();
 
-        _storage.saveCachedListenedTracks(
+        unawaited(_storage.saveCachedListenedTracks(
           uid,
           _listenedTracks.map((t) => t.toJson()).toList(),
-        );
-        _storage.saveLastListenedFullSync(uid, fetchStartedAt);
+        ));
+        unawaited(_storage.saveLastListenedFullSync(uid, fetchStartedAt));
         deletionsSince = fetchStartedAt.subtract(const Duration(minutes: 5));
         _pruneAlbumTrackCounts();
         _reconcileServerStats(userDoc, _listenedTracks.length);
@@ -526,10 +528,10 @@ class LibraryProvider extends ChangeNotifier {
           .toList();
       _followedArtistIds = _followedArtists.map((a) => a.id).toSet();
       notifyListeners();
-      _storage.saveCachedFollowedArtists(
+      unawaited(_storage.saveCachedFollowedArtists(
         uid,
         _followedArtists.map((a) => a.toJson()).toList(),
-      );
+      ));
     } catch (e) {
       debugPrint('[LibraryProvider] Followed artists fetch error: $e');
     }
@@ -712,10 +714,10 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Cache locally immediately
-    _storage.saveCachedListenedTracks(
+    unawaited(_storage.saveCachedListenedTracks(
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     try {
@@ -743,10 +745,10 @@ class LibraryProvider extends ChangeNotifier {
       _listenedTrackIds = prevIds;
       _totalTracksCount = prevCount;
       notifyListeners();
-      _storage.saveCachedListenedTracks(
+      unawaited(_storage.saveCachedListenedTracks(
         uid,
         _listenedTracks.map((t) => t.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
@@ -770,10 +772,10 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Cache locally immediately
-    _storage.saveCachedListenedTracks(
+    unawaited(_storage.saveCachedListenedTracks(
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     try {
@@ -800,10 +802,10 @@ class LibraryProvider extends ChangeNotifier {
       _listenedTrackIds = prevIds;
       _totalTracksCount = prevCount;
       notifyListeners();
-      _storage.saveCachedListenedTracks(
+      unawaited(_storage.saveCachedListenedTracks(
         uid,
         _listenedTracks.map((t) => t.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
@@ -855,10 +857,10 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Cache locally immediately
-    _storage.saveCachedListenedTracks(
+    unawaited(_storage.saveCachedListenedTracks(
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     final committedData = <ListenedTrackData>[];
@@ -916,10 +918,10 @@ class LibraryProvider extends ChangeNotifier {
       }
       _pruneAlbumTrackCounts(forceSave: true);
       notifyListeners();
-      _storage.saveCachedListenedTracks(
+      unawaited(_storage.saveCachedListenedTracks(
         uid,
         _listenedTracks.map((t) => t.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
@@ -946,10 +948,10 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Cache locally immediately
-    _storage.saveCachedListenedTracks(
+    unawaited(_storage.saveCachedListenedTracks(
       uid,
       _listenedTracks.map((t) => t.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     final committedUnmarkedIds = <String>[];
@@ -1009,10 +1011,10 @@ class LibraryProvider extends ChangeNotifier {
       }
       _pruneAlbumTrackCounts(forceSave: true);
       notifyListeners();
-      _storage.saveCachedListenedTracks(
+      unawaited(_storage.saveCachedListenedTracks(
         uid,
         _listenedTracks.map((t) => t.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
@@ -1127,10 +1129,10 @@ class LibraryProvider extends ChangeNotifier {
     _followedArtistIds.add(artist.id);
     notifyListeners();
 
-    _storage.saveCachedFollowedArtists(
+    unawaited(_storage.saveCachedFollowedArtists(
       uid,
       _followedArtists.map((a) => a.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     try {
@@ -1145,10 +1147,10 @@ class LibraryProvider extends ChangeNotifier {
       _followedArtists = prevArtists;
       _followedArtistIds = prevIds;
       notifyListeners();
-      _storage.saveCachedFollowedArtists(
+      unawaited(_storage.saveCachedFollowedArtists(
         uid,
         _followedArtists.map((a) => a.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
@@ -1166,10 +1168,10 @@ class LibraryProvider extends ChangeNotifier {
     _followedArtistIds.remove(artistId);
     notifyListeners();
 
-    _storage.saveCachedFollowedArtists(
+    unawaited(_storage.saveCachedFollowedArtists(
       uid,
       _followedArtists.map((a) => a.toJson()).toList(),
-    );
+    ));
 
     _startSync();
     try {
@@ -1184,10 +1186,10 @@ class LibraryProvider extends ChangeNotifier {
       _followedArtists = prevArtists;
       _followedArtistIds = prevIds;
       notifyListeners();
-      _storage.saveCachedFollowedArtists(
+      unawaited(_storage.saveCachedFollowedArtists(
         uid,
         _followedArtists.map((a) => a.toJson()).toList(),
-      );
+      ));
     } finally {
       _endSync();
     }
