@@ -9,8 +9,12 @@ import '../services/firebase_service.dart';
 import '../services/storage_service.dart';
 
 class PlaylistProvider extends ChangeNotifier {
-  final StorageService _storage = StorageService();
-  final FirebaseService _firebase = FirebaseService();
+  final StorageService _storage;
+  final FirebaseService _firebase;
+
+  PlaylistProvider({FirebaseService? firebase, StorageService? storage})
+      : _firebase = firebase ?? FirebaseService(),
+        _storage = storage ?? StorageService();
 
   List<Playlist> _playlists = [];
   bool _syncing = false;
@@ -31,7 +35,7 @@ class PlaylistProvider extends ChangeNotifier {
 
   bool _canSyncToFirestore(String uid) {
     if (uid.isEmpty || uid.startsWith('guest_')) return false;
-    if (_firebase.currentUser == null) return false;
+    if (!_firebase.isSignedIn) return false;
     return true;
   }
 

@@ -31,6 +31,7 @@ class FirebaseService {
     return _googleSignIn!;
   }
   User? get currentUser => _auth?.currentUser;
+  bool get isSignedIn => currentUser != null;
 
   Future<void> initialize() async {
     if (_initialized) return;

@@ -124,8 +124,8 @@ class TopArtistEntry {
 }
 
 class LibraryProvider extends ChangeNotifier {
-  final StorageService _storage = StorageService();
-  final FirebaseService _firebase = FirebaseService();
+  final StorageService _storage;
+  final FirebaseService _firebase;
 
   // Local data
   List<Track> _favoriteTracks = [];
@@ -307,7 +307,9 @@ class LibraryProvider extends ChangeNotifier {
     return _listenedCountByAlbum.length;
   }
 
-  LibraryProvider() {
+  LibraryProvider({FirebaseService? firebase, StorageService? storage})
+      : _firebase = firebase ?? FirebaseService(),
+        _storage = storage ?? StorageService() {
     _loadLocalData();
   }
 
@@ -350,7 +352,7 @@ class LibraryProvider extends ChangeNotifier {
   bool _canSyncToFirestore(String uid) {
     if (uid.isEmpty || uid.startsWith('guest_')) return false;
     if (bypassAuthForTesting) return true;
-    if (_firebase.currentUser == null) return false;
+    if (!_firebase.isSignedIn) return false;
     return true;
   }
 
