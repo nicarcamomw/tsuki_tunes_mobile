@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-class ConnectivityProvider extends ChangeNotifier {
+class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   final Connectivity _connectivity = Connectivity();
   bool _isOnline = true;
   StreamSubscription<List<ConnectivityResult>>? _sub;
@@ -14,7 +15,35 @@ class ConnectivityProvider extends ChangeNotifier {
   bool get isOnline => _isOnline;
 
   ConnectivityProvider() {
+    WidgetsBinding.instance.addObserver(this);
     _init();
+  }
+
+  // Background: no UI depends on the status, so skip probes entirely.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_disposed) return;
+    if (state == AppLifecycleState.resumed) {
+      checkReachability();
+      _schedulePeriodicCheck();
+    } else if (state == AppLifecycleState.paused) {
+      _periodicTimer?.cancel();
+      _periodicTimer = null;
+    }
+  }
+
+  /// Probes for "Wi-Fi without internet": every 15 s while offline (to
+  /// recover quickly), every 60 s while online.
+  void _schedulePeriodicCheck() {
+    _periodicTimer?.cancel();
+    _periodicTimer = Timer(
+      Duration(seconds: _isOnline ? 60 : 15),
+      () async {
+        if (_disposed) return;
+        await checkReachability();
+        if (!_disposed && _periodicTimer != null) _schedulePeriodicCheck();
+      },
+    );
   }
 
   Future<void> _init() async {
@@ -28,12 +57,7 @@ class ConnectivityProvider extends ChangeNotifier {
       _updateStatus(results);
     });
 
-    // Verificación periódica cada 30 segundos para detectar caídas de internet
-    // sin desconexión del router WiFi (WiFi sin internet).
-    _periodicTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (_disposed) return;
-      checkReachability();
-    });
+    _schedulePeriodicCheck();
   }
 
   /// Verifica manualmente la conectividad y reachability real a internet.
@@ -64,6 +88,7 @@ class ConnectivityProvider extends ChangeNotifier {
     if (_isOnline != online) {
       _isOnline = online;
       notifyListeners();
+      if (_periodicTimer != null) _schedulePeriodicCheck();
     }
   }
 
@@ -129,6 +154,7 @@ class ConnectivityProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
     _periodicTimer?.cancel();
     super.dispose();
