@@ -184,7 +184,9 @@ class _LoginScreenState extends State<LoginScreen>
         if (!auth.wasCancelled) {
           final locale = context.read<LocaleProvider>();
           final strings = locale.strings;
-          final msg = strings.loginGoogleError;
+          final msg = auth.authError == 'login_throttled'
+              ? strings.loginThrottled
+              : strings.loginGoogleError;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(

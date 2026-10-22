@@ -13,11 +13,13 @@ class FirebaseService {
   FirebaseService._internal();
 
   bool _initialized = false;
+  bool _appCheckActive = false;
   FirebaseAuth? _auth;
   FirebaseFirestore? _db;
   GoogleSignIn? _googleSignIn;
 
   bool get isInitialized => _initialized;
+  bool get appCheckActive => _appCheckActive;
   FirebaseAuth get auth {
     if (_auth == null) throw StateError('FirebaseService not initialized');
     return _auth!;
@@ -65,7 +67,9 @@ class FirebaseService {
         appleProvider:
             kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
       );
+      _appCheckActive = true;
     } catch (e) {
+      _appCheckActive = false;
       debugPrint('App Check activation failed (non-fatal): $e');
     }
   }

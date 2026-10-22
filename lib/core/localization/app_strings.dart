@@ -1257,6 +1257,12 @@ class AppStrings {
         AppLanguage.ja => 'Googleとの接続に失敗しました。通信環境を確認して再試行してください。',
       };
 
+  String get loginThrottled => switch (language) {
+        AppLanguage.es => 'Demasiados intentos. Espera unos segundos antes de intentar de nuevo.',
+        AppLanguage.en => 'Too many attempts. Wait a few seconds before trying again.',
+        AppLanguage.ja => '試行回数が多すぎます。しばらく待ってから再試行してください。',
+      };
+
   // --- Loading / Startup Screen ---
   String get loadingStatus => switch (language) {
         AppLanguage.es => 'MOTOR DE AUDIO // INICIALIZANDO...',

@@ -10,6 +10,8 @@ import '../services/firebase_service.dart';
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
   static const _guestModeKey = 'guest_mode_active';
+  static const _maxLoginAttempts = 5;
+  static const _loginCooldownBase = Duration(seconds: 5);
   final FirebaseService _firebase = FirebaseService();
 
   User? _user;
@@ -20,6 +22,8 @@ class AuthProvider extends ChangeNotifier {
   String? _guestUid;
   StreamSubscription<User?>? _authSub;
   String? _guestUidToMigrate;
+  int _loginAttempts = 0;
+  DateTime? _lastLoginAttemptTime;
 
   User? get user => _user;
   bool get loading => _loading;
@@ -29,7 +33,16 @@ class AuthProvider extends ChangeNotifier {
   String? get authError => _authError;
   bool get wasCancelled => _wasCancelled;
 
+  bool get isLoginThrottled {
+    if (_loginAttempts < _maxLoginAttempts) return false;
+    if (_lastLoginAttemptTime == null) return false;
+    final multiplier = (_loginAttempts - _maxLoginAttempts).clamp(0, 4);
+    final cooldown = _loginCooldownBase * (1 << multiplier);
+    return DateTime.now().difference(_lastLoginAttemptTime!) < cooldown;
+  }
+
   Future<void> loginAsGuest() async {
+    if (_isGuest) return;
     _isGuest = true;
     await _ensureGuestUid();
     final prefs = await SharedPreferences.getInstance();
@@ -101,8 +114,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> loginWithGoogle() async {
+    if (isLoginThrottled) {
+      _authError = 'login_throttled';
+      notifyListeners();
+      return false;
+    }
     _authError = null;
     _wasCancelled = false;
+    _lastLoginAttemptTime = DateTime.now();
     try {
       if (!_firebase.isInitialized) {
         await _firebase.initialize();
@@ -113,12 +132,14 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return false;
       }
+      _loginAttempts = 0;
       await _leaveGuestMode();
       notifyListeners();
       return true;
     } catch (e) {
+      _loginAttempts++;
       debugPrint('Google sign-in error: $e');
-      _authError = e.toString();
+      _authError = 'login_failed';
       notifyListeners();
       return false;
     }

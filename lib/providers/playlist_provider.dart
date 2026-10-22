@@ -21,6 +21,8 @@ class PlaylistProvider extends ChangeNotifier {
   int _syncCount = 0;
   String? _currentUid;
   bool _isGuest = false;
+  final List<DateTime> _writeTimestamps = [];
+  static const _maxWritesPerMinute = 30;
 
   StreamSubscription? _playlistsSubscription;
 
@@ -31,6 +33,14 @@ class PlaylistProvider extends ChangeNotifier {
   Playlist? getPlaylist(String id) {
     final idx = _playlists.indexWhere((p) => p.id == id);
     return idx != -1 ? _playlists[idx] : null;
+  }
+
+  bool _isWriteThrottled() {
+    final now = DateTime.now();
+    _writeTimestamps.removeWhere((t) => now.difference(t).inSeconds > 60);
+    if (_writeTimestamps.length >= _maxWritesPerMinute) return true;
+    _writeTimestamps.add(now);
+    return false;
   }
 
   bool _canSyncToFirestore(String uid) {
@@ -195,7 +205,7 @@ class PlaylistProvider extends ChangeNotifier {
 
   Future<Playlist?> createPlaylist(String name) async {
     final uid = _currentUid;
-    if (uid == null || name.trim().isEmpty) return null;
+    if (uid == null || name.trim().isEmpty || _isWriteThrottled()) return null;
 
     final now = DateTime.now();
     final tempId = 'local_${now.millisecondsSinceEpoch}';
@@ -244,7 +254,7 @@ class PlaylistProvider extends ChangeNotifier {
 
   Future<void> renamePlaylist(String playlistId, String newName) async {
     final uid = _currentUid;
-    if (uid == null || newName.trim().isEmpty) return;
+    if (uid == null || newName.trim().isEmpty || _isWriteThrottled()) return;
 
     final idx = _playlists.indexWhere((p) => p.id == playlistId);
     if (idx == -1) return;
@@ -287,7 +297,7 @@ class PlaylistProvider extends ChangeNotifier {
 
   Future<void> deletePlaylist(String playlistId) async {
     final uid = _currentUid;
-    if (uid == null) return;
+    if (uid == null || _isWriteThrottled()) return;
 
     final idx = _playlists.indexWhere((p) => p.id == playlistId);
     if (idx == -1) return;
@@ -322,7 +332,7 @@ class PlaylistProvider extends ChangeNotifier {
 
   Future<bool> addTrackToPlaylist(String playlistId, Track track) async {
     final uid = _currentUid;
-    if (uid == null) return false;
+    if (uid == null || _isWriteThrottled()) return false;
 
     final idx = _playlists.indexWhere((p) => p.id == playlistId);
     if (idx == -1) return false;
@@ -365,7 +375,7 @@ class PlaylistProvider extends ChangeNotifier {
   Future<void> removeTrackFromPlaylist(
       String playlistId, String trackId) async {
     final uid = _currentUid;
-    if (uid == null) return;
+    if (uid == null || _isWriteThrottled()) return;
 
     final idx = _playlists.indexWhere((p) => p.id == playlistId);
     if (idx == -1) return;
@@ -403,7 +413,7 @@ class PlaylistProvider extends ChangeNotifier {
   Future<void> reorderTrack(
       String playlistId, int oldIndex, int newIndex) async {
     final uid = _currentUid;
-    if (uid == null) return;
+    if (uid == null || _isWriteThrottled()) return;
 
     final idx = _playlists.indexWhere((p) => p.id == playlistId);
     if (idx == -1) return;
