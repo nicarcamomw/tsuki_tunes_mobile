@@ -949,6 +949,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
+    unawaited(_logSpotifyPlaybackCheck(gen));
+  }
+
+  /// Diagnostics for "Spotify says it's playing but there's no sound":
+  /// a few seconds after starting, logs what Spotify reports for the
+  /// playback and the target device (volume 0, wrong device, not advancing).
+  Future<void> _logSpotifyPlaybackCheck(int gen) async {
+    await Future.delayed(const Duration(seconds: 4));
+    if (gen != _playGeneration || !_spotifyActive) return;
+    final state = await _spotify.getPlaybackState();
+    if (state == null) {
+      debugPrint('[SpotifyCheck] No playback state (204/empty): Spotify has no active session');
+      return;
+    }
+    final device = state['device'] as Map<String, dynamic>?;
+    final item = state['item'] as Map<String, dynamic>?;
+    debugPrint('[SpotifyCheck] is_playing=${state['is_playing']} '
+        'progress_ms=${state['progress_ms']} '
+        'item=${item?['uri']} expected=$_currentSpotifyUri '
+        'device=${device?['name']} type=${device?['type']} '
+        'active=${device?['is_active']} volume=${device?['volume_percent']}');
+    if (device?['volume_percent'] == 0) {
+      debugPrint('[SpotifyCheck] Spotify device volume is 0%: playback is silent');
+    }
   }
 
   void _precache(Track track) {
