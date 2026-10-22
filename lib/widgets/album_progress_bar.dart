@@ -21,7 +21,10 @@ class AlbumProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = context.watch<LocaleProvider>();
 
-    return Column(
+    return Semantics(
+      label: '${locale.strings.albumProgressListened(listened, total)}, $percentage%',
+      value: '$percentage%',
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header row
@@ -90,6 +93,7 @@ class AlbumProgressBar extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }

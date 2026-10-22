@@ -31,6 +31,7 @@ class _PlayingIndicator extends StatefulWidget {
 class _PlayingIndicatorState extends State<_PlayingIndicator>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -43,9 +44,16 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion && _controller.isAnimating) _controller.stop();
+  }
+
+  @override
   void didUpdateWidget(_PlayingIndicator old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating) {
+    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
       _controller.repeat(reverse: true);
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();
@@ -375,7 +383,7 @@ class TrackTile extends StatelessWidget {
             ),
             const Divider(color: AppColors.border, height: 1),
             ListTile(
-              leading: const Icon(Icons.playlist_play, color: AppColors.accent),
+              leading: Icon(Icons.playlist_play, color: AppColors.accent, semanticLabel: strings.a11yPlayNext),
               title: Text(
                 strings.playNext,
                 style: locale.getTextStyle(
@@ -403,7 +411,7 @@ class TrackTile extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.queue_music, color: AppColors.accent),
+              leading: Icon(Icons.queue_music, color: AppColors.accent, semanticLabel: strings.a11yAddToQueue),
               title: Text(
                 strings.addToQueue,
                 style: locale.getTextStyle(
@@ -431,7 +439,7 @@ class TrackTile extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.playlist_add, color: AppColors.accent),
+              leading: Icon(Icons.playlist_add, color: AppColors.accent, semanticLabel: strings.a11yAddToPlaylist),
               title: Text(
                 strings.addToPlaylist,
                 style: locale.getTextStyle(
@@ -447,7 +455,7 @@ class TrackTile extends StatelessWidget {
             ),
             if (track.artistId.isNotEmpty)
               ListTile(
-                leading: const Icon(Icons.person_outline, color: AppColors.accent),
+                leading: Icon(Icons.person_outline, color: AppColors.accent, semanticLabel: strings.a11yGoToArtist),
                 title: Text(
                   strings.goToArtist,
                   style: locale.getTextStyle(
@@ -475,7 +483,7 @@ class TrackTile extends StatelessWidget {
               ),
             if (track.albumId.isNotEmpty)
               ListTile(
-                leading: const Icon(Icons.album_outlined, color: AppColors.accent),
+                leading: Icon(Icons.album_outlined, color: AppColors.accent, semanticLabel: strings.a11yGoToAlbum),
                 title: Text(
                   strings.goToAlbum,
                   style: locale.getTextStyle(

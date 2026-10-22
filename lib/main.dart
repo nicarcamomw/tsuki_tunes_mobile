@@ -120,7 +120,7 @@ class TsukiTunesApp extends StatelessWidget {
           final mediaQuery = MediaQuery.of(context);
           final clampedScaler = mediaQuery.textScaler.clamp(
             minScaleFactor: 0.8,
-            maxScaleFactor: 1.4,
+            maxScaleFactor: 2.0,
           );
           return MediaQuery(
             data: mediaQuery.copyWith(textScaler: clampedScaler),

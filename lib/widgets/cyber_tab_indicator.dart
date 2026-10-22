@@ -55,6 +55,14 @@ class _CyberTabIndicatorState extends State<CyberTabIndicator>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _sparkController.duration = Duration.zero;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant CyberTabIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isSelected && !oldWidget.isSelected) {

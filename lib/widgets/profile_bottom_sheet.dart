@@ -101,8 +101,8 @@ class ProfileBottomSheet {
                           color: AppColors.accent,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.music_note,
-                            color: Colors.white, size: 20),
+                        child: Icon(Icons.music_note,
+                            color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -142,7 +142,7 @@ class ProfileBottomSheet {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.launch_rounded, size: 16, color: AppColors.accent),
+                              icon: Icon(Icons.launch_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yOpenExternal),
                               tooltip: strings.openSpotifyTooltip,
                               onPressed: () => spotify.openSpotifyApp(),
                             ),
@@ -230,7 +230,7 @@ class ProfileBottomSheet {
                                   SnackBar(
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                                        Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yPlaybackError),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -504,8 +504,8 @@ class ProfileBottomSheet {
                             SnackBar(content: Text(strings.audioCacheCleared)),
                           );
                         },
-                        icon: const Icon(Icons.delete_sweep_rounded,
-                            color: AppColors.textSecondary, size: 16),
+                        icon: Icon(Icons.delete_sweep_rounded,
+                            color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearCache),
                         label: Text(
                           strings.clearAudioCache,
                           style: locale.getTextStyle(
@@ -638,7 +638,7 @@ class ProfileBottomSheet {
                       Navigator.pop(ctx);
                       await _confirmLogout(context, auth);
                     },
-                    icon: const Icon(Icons.logout, color: AppColors.accent),
+                    icon: Icon(Icons.logout, color: AppColors.accent, semanticLabel: strings.a11yLogout),
                     label: Text(
                       strings.logoutOption,
                       style: locale.getTextStyle(

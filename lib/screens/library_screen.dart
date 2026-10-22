@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -316,12 +319,13 @@ class _LibraryScreenState extends State<LibraryScreen>
                     hintText: strings.filterHint,
                     hintStyle: locale.getTextStyle(
                         color: AppColors.textMuted, fontSize: 13),
-                    prefixIcon: const Icon(Icons.filter_list,
-                        color: AppColors.textSecondary, size: 18),
+                    prefixIcon: Icon(Icons.filter_list,
+                        color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
                     suffixIcon: _filterController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear,
-                                color: AppColors.textSecondary, size: 16),
+                            icon: Icon(Icons.clear,
+                                color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
+                            tooltip: strings.a11yClearFilter,
                             onPressed: () {
                               setState(() => _filterController.clear());
                             },
@@ -363,7 +367,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                         audio.playTrack(allTracks.first, newQueue: allTracks);
                       }
                     },
-                    icon: const Icon(Icons.play_arrow, color: AppColors.accent, size: 18),
+                    icon: Icon(Icons.play_arrow, color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
                     label: Text(
                       strings.playAll,
                       style: locale.getTextStyle(
@@ -390,7 +394,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                         audio.playTrack(shuffled.first, newQueue: shuffled);
                       }
                     },
-                    icon: const Icon(Icons.shuffle, color: AppColors.accent, size: 18),
+                    icon: Icon(Icons.shuffle, color: AppColors.accent, size: 18, semanticLabel: strings.a11yShuffleAll),
                     label: Text(
                       strings.shuffle,
                       style: locale.getTextStyle(
@@ -431,7 +435,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+                                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
                                       const SizedBox(height: 10),
                                       Text(
                                         strings.loadError,
@@ -471,8 +475,8 @@ class _LibraryScreenState extends State<LibraryScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.library_music_outlined,
-                                    size: 54, color: AppColors.borderGlow),
+                                Icon(Icons.library_music_outlined,
+                                    size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyLibrary),
                                 const SizedBox(height: 12),
                                 Text(
                                   strings.emptyLibraryTitle,
@@ -597,7 +601,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _showCreatePlaylistDialog(context),
-              icon: const Icon(Icons.add, color: AppColors.accent, size: 18),
+              icon: Icon(Icons.add, color: AppColors.accent, size: 18, semanticLabel: strings.a11yCreatePlaylist),
               label: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
@@ -625,8 +629,8 @@ class _LibraryScreenState extends State<LibraryScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.queue_music,
-                            size: 54, color: AppColors.borderGlow),
+                        Icon(Icons.queue_music,
+                            size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyPlaylist),
                         const SizedBox(height: 12),
                         Text(
                           strings.noPlaylistsTitle,
@@ -733,6 +737,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       final provider = context.read<PlaylistProvider>();
       await provider.createPlaylist(name);
       if (context.mounted) {
+        unawaited(SemanticsService.sendAnnouncement(View.of(context), strings.playlistCreated, TextDirection.ltr));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -781,8 +786,8 @@ class _LibraryScreenState extends State<LibraryScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Icon(Icons.person_add_alt_1_rounded,
-                    size: 16, color: AppColors.accent),
+                Icon(Icons.person_add_alt_1_rounded,
+                    size: 16, color: AppColors.accent, semanticLabel: locale.strings.a11yFollowArtist),
                 const SizedBox(width: 8),
                 Text(
                   locale.strings.followedArtistsTitle,
@@ -999,10 +1004,12 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       ),
                     ),
 
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: AppColors.textSecondary,
-                    size: 20,
+                  ExcludeSemantics(
+                    child: Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -1117,9 +1124,10 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       IconButton(
                         iconSize: 18,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.remove_circle_outline,
-                            color: AppColors.textSecondary, size: 18),
+                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                        tooltip: strings.a11yRemoveFromPlaylist,
+                        icon: Icon(Icons.remove_circle_outline,
+                            color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
                         onPressed: () =>
                             library.unmarkTrack(trackData.trackId),
                       ),
@@ -1191,14 +1199,14 @@ class _PlaylistListTile extends StatelessWidget {
                               Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.queue_music,
-                                color: AppColors.accent, size: 22),
+                            child: Icon(Icons.queue_music,
+                                color: AppColors.accent, size: 22, semanticLabel: strings.a11yPlaylistCover),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: const Icon(Icons.queue_music,
-                              color: AppColors.accent, size: 22),
+                          child: Icon(Icons.queue_music,
+                              color: AppColors.accent, size: 22, semanticLabel: strings.a11yPlaylistCover),
                         ),
                 ),
               ),
@@ -1231,8 +1239,8 @@ class _PlaylistListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right,
-                  color: AppColors.textSecondary, size: 20),
+              Icon(Icons.chevron_right,
+                  color: AppColors.textSecondary, size: 20, semanticLabel: strings.a11yOpenPlaylist),
             ],
           ),
         ),

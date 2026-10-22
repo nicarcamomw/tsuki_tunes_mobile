@@ -63,12 +63,12 @@ class ArtistCard extends StatelessWidget {
                           placeholder: (_, __) => Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.person, color: AppColors.accent),
+                            child: Icon(Icons.person, color: AppColors.accent, semanticLabel: locale.strings.a11yArtistAvatar),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: const Icon(Icons.person, color: AppColors.accent),
+                          child: Icon(Icons.person, color: AppColors.accent, semanticLabel: locale.strings.a11yArtistAvatar),
                         ),
                 ),
               ),

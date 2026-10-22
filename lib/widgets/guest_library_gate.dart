@@ -20,6 +20,7 @@ class GuestLibraryGate extends StatelessWidget {
           children: [
             Icon(
               Icons.lock_outline_rounded,
+              semanticLabel: strings.a11yLoginRequired,
               size: 48,
               color: AppColors.accent.withValues(alpha: 0.6),
             ),

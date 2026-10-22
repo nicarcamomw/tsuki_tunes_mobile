@@ -394,10 +394,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppColors.accent.withValues(alpha: 0.3),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.wifi_off_rounded,
                             color: AppColors.accent,
                             size: 28,
+                            semanticLabel: strings.a11yOffline,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -471,10 +472,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: AppColors.accent.withValues(alpha: 0.3),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.headphones_rounded,
                               color: AppColors.accent,
                               size: 28,
+                              semanticLabel: strings.homeEmptyTitle,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -565,13 +567,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-                    child: Text(
-                      strings.topArtistsTitle,
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        strings.topArtistsTitle,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textBright,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
@@ -590,13 +595,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-                    child: Text(
-                      strings.topArtistsTitle,
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        strings.topArtistsTitle,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textBright,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
@@ -615,13 +623,16 @@ class _HomeScreenState extends State<HomeScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-                  child: Text(
-                    strings.latestReleasesTitle,
-                    style: locale.getTextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textBright,
-                      letterSpacing: 1.2,
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      strings.latestReleasesTitle,
+                      style: locale.getTextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
                 ),
@@ -679,13 +690,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-                    child: Text(
-                      strings.recommendedTitle,
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        strings.recommendedTitle,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textBright,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
@@ -821,8 +835,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     : Container(
                         color: AppColors.bgCard,
-                        child: const Icon(Icons.person,
-                            color: AppColors.accent, size: 20),
+                        child: Icon(Icons.person,
+                            color: AppColors.accent, size: 20, semanticLabel: locale.strings.a11yArtistAvatar),
                       ),
               ),
             ),
@@ -851,8 +865,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 14, color: AppColors.textMuted),
+            Icon(Icons.arrow_forward_ios,
+                size: 14, color: AppColors.textMuted, semanticLabel: locale.strings.a11ySeeAll),
           ],
         ),
       ),
@@ -932,8 +946,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 14, color: AppColors.textMuted),
+            Icon(Icons.arrow_forward_ios,
+                size: 14, color: AppColors.textMuted, semanticLabel: locale.strings.a11ySeeAll),
           ],
         ),
       ),
@@ -960,6 +974,7 @@ class _GearProfileButton extends StatefulWidget {
 class _GearProfileButtonState extends State<_GearProfileButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -971,13 +986,20 @@ class _GearProfileButtonState extends State<_GearProfileButton>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion) _controller.stop();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _onTap() {
-    _controller.forward(from: 0.0);
+    if (!_reduceMotion) _controller.forward(from: 0.0);
     ProfileBottomSheet.show(context, widget.auth);
   }
 
@@ -1010,8 +1032,8 @@ class _GearProfileButtonState extends State<_GearProfileButton>
                     ? NetworkImage(widget.auth.user!.photoURL!)
                     : null,
                 child: widget.auth.user?.photoURL == null
-                    ? const Icon(Icons.person,
-                        size: 14, color: AppColors.accent)
+                    ? Icon(Icons.person,
+                        size: 14, color: AppColors.accent, semanticLabel: widget.label)
                     : null,
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -898,6 +899,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _completionHandled = false;
     _crossfadeTriggered = false;
     _lastPlayStart = DateTime.now();
+    final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+    if (view != null) {
+      unawaited(SemanticsService.sendAnnouncement(view, '${track.title}, ${track.fullArtistName}', TextDirection.ltr));
+    }
     final gen = ++_playGeneration;
     _duration = Duration(
         seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
@@ -1121,6 +1126,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyActive = false;
     _spotifyFallbackActive = true;
     _stopPositionTimer();
+    final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+    if (view != null) {
+      unawaited(SemanticsService.sendAnnouncement(view, 'Spotify Premium not available, switching to preview', TextDirection.ltr));
+    }
     await _nativePlayer.pause();
     await _nativePlayer.disconnect();
 

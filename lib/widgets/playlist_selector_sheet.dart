@@ -44,7 +44,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  const Icon(Icons.playlist_add, color: AppColors.accent, size: 20),
+                  Icon(Icons.playlist_add, color: AppColors.accent, size: 20, semanticLabel: strings.a11yAddToPlaylist),
                   const SizedBox(width: 10),
                   Text(
                     strings.selectPlaylist,
@@ -60,7 +60,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
             const Divider(color: AppColors.border, height: 1),
             ListTile(
               leading:
-                  const Icon(Icons.add_circle_outline, color: AppColors.accent),
+                  Icon(Icons.add_circle_outline, color: AppColors.accent, semanticLabel: strings.a11yCreatePlaylist),
               title: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
@@ -157,8 +157,8 @@ class _PlaylistSelectorContent extends StatelessWidget {
                         ),
                       ),
                       trailing: alreadyAdded
-                          ? const Icon(Icons.check,
-                              color: AppColors.accent, size: 18)
+                          ? Icon(Icons.check,
+                              color: AppColors.accent, size: 18, semanticLabel: strings.a11ySelected)
                           : null,
                       onTap: alreadyAdded
                           ? () {

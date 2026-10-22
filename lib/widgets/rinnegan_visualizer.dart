@@ -24,6 +24,7 @@ class RinneganVisualizer extends StatefulWidget {
 class _RinneganVisualizerState extends State<RinneganVisualizer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -39,12 +40,21 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
   void didUpdateWidget(RinneganVisualizer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isPlaying != oldWidget.isPlaying) {
-      if (widget.isPlaying) {
+      if (widget.isPlaying && !_reduceMotion) {
         _controller.repeat();
-      } else {
+      } else if (!widget.isPlaying) {
         _controller.stop();
       }
     }

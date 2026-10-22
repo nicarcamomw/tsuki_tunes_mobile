@@ -64,12 +64,12 @@ class AlbumCard extends StatelessWidget {
                           placeholder: (_, __) => Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.album, color: AppColors.accent),
+                            child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: const Icon(Icons.album, color: AppColors.accent),
+                          child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
                         ),
                 ),
               ),

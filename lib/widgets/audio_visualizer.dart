@@ -25,6 +25,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
   late AnimationController _controller;
   final Random _random = Random();
   late List<double> _targetHeights;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -41,12 +42,24 @@ class _AudioVisualizerState extends State<AudioVisualizer>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion && _controller.isAnimating) {
+      _controller.stop();
+      setState(() {
+        _targetHeights = List.generate(widget.barCount, (_) => 0.5);
+      });
+    }
+  }
+
+  @override
   void didUpdateWidget(AudioVisualizer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isPlaying != oldWidget.isPlaying) {
-      if (widget.isPlaying) {
+      if (widget.isPlaying && !_reduceMotion) {
         _controller.repeat(reverse: true);
-      } else {
+      } else if (!widget.isPlaying) {
         _controller.stop();
         setState(() {
           _targetHeights = List.generate(widget.barCount, (_) => 0.15);

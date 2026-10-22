@@ -1544,6 +1544,396 @@ class AppStrings {
         AppLanguage.ja => '検索へ',
       };
 
+  String get a11yCollapsePlayer => switch (language) {
+        AppLanguage.es => 'Minimizar reproductor',
+        AppLanguage.en => 'Minimize player',
+        AppLanguage.ja => 'プレーヤーを最小化',
+      };
+
+  String get a11yOpenInSpotify => switch (language) {
+        AppLanguage.es => 'Abrir en Spotify',
+        AppLanguage.en => 'Open in Spotify',
+        AppLanguage.ja => 'Spotifyで開く',
+      };
+
+  String get a11yPlaybackError => switch (language) {
+        AppLanguage.es => 'Error de reproducción',
+        AppLanguage.en => 'Playback error',
+        AppLanguage.ja => '再生エラー',
+      };
+
+  String get a11ySleepTimer => switch (language) {
+        AppLanguage.es => 'Temporizador de sueño',
+        AppLanguage.en => 'Sleep timer',
+        AppLanguage.ja => 'スリープタイマー',
+      };
+
+  String get a11yQueue => switch (language) {
+        AppLanguage.es => 'Cola de reproducción',
+        AppLanguage.en => 'Playback queue',
+        AppLanguage.ja => '再生キュー',
+      };
+
+  String get a11yClearQueue => switch (language) {
+        AppLanguage.es => 'Limpiar cola',
+        AppLanguage.en => 'Clear queue',
+        AppLanguage.ja => 'キューをクリア',
+      };
+
+  String get a11yRemoveFromQueue => switch (language) {
+        AppLanguage.es => 'Eliminar de la cola',
+        AppLanguage.en => 'Remove from queue',
+        AppLanguage.ja => 'キューから削除',
+      };
+
+  String get a11yNowPlaying => switch (language) {
+        AppLanguage.es => 'Reproduciendo ahora',
+        AppLanguage.en => 'Now playing',
+        AppLanguage.ja => '再生中',
+      };
+
+  String get a11yAlbumCover => switch (language) {
+        AppLanguage.es => 'Portada del álbum',
+        AppLanguage.en => 'Album cover',
+        AppLanguage.ja => 'アルバムカバー',
+      };
+
+  String get a11yReorder => switch (language) {
+        AppLanguage.es => 'Reordenar',
+        AppLanguage.en => 'Reorder',
+        AppLanguage.ja => '並べ替え',
+      };
+
+  String get a11yLyrics => switch (language) {
+        AppLanguage.es => 'Letras',
+        AppLanguage.en => 'Lyrics',
+        AppLanguage.ja => '歌詞',
+      };
+
+  String get a11yNoLyrics => switch (language) {
+        AppLanguage.es => 'Sin letras disponibles',
+        AppLanguage.en => 'No lyrics available',
+        AppLanguage.ja => '歌詞がありません',
+      };
+
+  String get a11yVisualizer => switch (language) {
+        AppLanguage.es => 'Visualizador de audio',
+        AppLanguage.en => 'Audio visualizer',
+        AppLanguage.ja => 'オーディオビジュアライザー',
+      };
+
+  String get a11ySyncingLyrics => switch (language) {
+        AppLanguage.es => 'Sincronizando letras',
+        AppLanguage.en => 'Syncing lyrics',
+        AppLanguage.ja => '歌詞を同期中',
+      };
+
+  String get a11yPlayTrack => switch (language) {
+        AppLanguage.es => 'Reproducir pista',
+        AppLanguage.en => 'Play track',
+        AppLanguage.ja => 'トラックを再生',
+      };
+
+  String get a11yArtistAvatar => switch (language) {
+        AppLanguage.es => 'Foto del artista',
+        AppLanguage.en => 'Artist photo',
+        AppLanguage.ja => 'アーティストの写真',
+      };
+
+  String get a11ySeeAll => switch (language) {
+        AppLanguage.es => 'Ver todo',
+        AppLanguage.en => 'See all',
+        AppLanguage.ja => 'すべて表示',
+      };
+
+  String get a11yFilter => switch (language) {
+        AppLanguage.es => 'Filtrar',
+        AppLanguage.en => 'Filter',
+        AppLanguage.ja => 'フィルター',
+      };
+
+  String get a11yClearFilter => switch (language) {
+        AppLanguage.es => 'Limpiar filtro',
+        AppLanguage.en => 'Clear filter',
+        AppLanguage.ja => 'フィルターをクリア',
+      };
+
+  String get a11yPlayAll => switch (language) {
+        AppLanguage.es => 'Reproducir todo',
+        AppLanguage.en => 'Play all',
+        AppLanguage.ja => 'すべて再生',
+      };
+
+  String get a11yShuffleAll => switch (language) {
+        AppLanguage.es => 'Mezclar todo',
+        AppLanguage.en => 'Shuffle all',
+        AppLanguage.ja => 'すべてシャッフル',
+      };
+
+  String get a11yOffline => switch (language) {
+        AppLanguage.es => 'Sin conexión',
+        AppLanguage.en => 'Offline',
+        AppLanguage.ja => 'オフライン',
+      };
+
+  String get a11yEmptyLibrary => switch (language) {
+        AppLanguage.es => 'Biblioteca vacía',
+        AppLanguage.en => 'Empty library',
+        AppLanguage.ja => 'ライブラリが空です',
+      };
+
+  String get a11yCreatePlaylist => switch (language) {
+        AppLanguage.es => 'Crear playlist',
+        AppLanguage.en => 'Create playlist',
+        AppLanguage.ja => 'プレイリストを作成',
+      };
+
+  String get a11yRemoveFromPlaylist => switch (language) {
+        AppLanguage.es => 'Eliminar de playlist',
+        AppLanguage.en => 'Remove from playlist',
+        AppLanguage.ja => 'プレイリストから削除',
+      };
+
+  String get a11yPlaylistCover => switch (language) {
+        AppLanguage.es => 'Portada de playlist',
+        AppLanguage.en => 'Playlist cover',
+        AppLanguage.ja => 'プレイリストカバー',
+      };
+
+  String get a11yOpenPlaylist => switch (language) {
+        AppLanguage.es => 'Abrir playlist',
+        AppLanguage.en => 'Open playlist',
+        AppLanguage.ja => 'プレイリストを開く',
+      };
+
+  String get a11yClearSearch => switch (language) {
+        AppLanguage.es => 'Limpiar búsqueda',
+        AppLanguage.en => 'Clear search',
+        AppLanguage.ja => '検索をクリア',
+      };
+
+  String get a11ySearchEmpty => switch (language) {
+        AppLanguage.es => 'Sin resultados',
+        AppLanguage.en => 'No results',
+        AppLanguage.ja => '結果なし',
+      };
+
+  String get a11yClearHistory => switch (language) {
+        AppLanguage.es => 'Borrar historial',
+        AppLanguage.en => 'Clear history',
+        AppLanguage.ja => '履歴を削除',
+      };
+
+  String get a11ySearchHistory => switch (language) {
+        AppLanguage.es => 'Historial de búsqueda',
+        AppLanguage.en => 'Search history',
+        AppLanguage.ja => '検索履歴',
+      };
+
+  String get a11yFillSearch => switch (language) {
+        AppLanguage.es => 'Rellenar búsqueda',
+        AppLanguage.en => 'Fill search',
+        AppLanguage.ja => '検索を入力',
+      };
+
+  String get a11yBack => switch (language) {
+        AppLanguage.es => 'Volver',
+        AppLanguage.en => 'Go back',
+        AppLanguage.ja => '戻る',
+      };
+
+  String get a11yMoreOptions => switch (language) {
+        AppLanguage.es => 'Más opciones',
+        AppLanguage.en => 'More options',
+        AppLanguage.ja => 'その他のオプション',
+      };
+
+  String get a11yEditPlaylist => switch (language) {
+        AppLanguage.es => 'Editar playlist',
+        AppLanguage.en => 'Edit playlist',
+        AppLanguage.ja => 'プレイリストを編集',
+      };
+
+  String get a11yDeletePlaylist => switch (language) {
+        AppLanguage.es => 'Eliminar playlist',
+        AppLanguage.en => 'Delete playlist',
+        AppLanguage.ja => 'プレイリストを削除',
+      };
+
+  String get a11yEmptyPlaylist => switch (language) {
+        AppLanguage.es => 'Playlist vacía',
+        AppLanguage.en => 'Empty playlist',
+        AppLanguage.ja => 'プレイリストが空です',
+      };
+
+  String get a11yRetry => switch (language) {
+        AppLanguage.es => 'Reintentar',
+        AppLanguage.en => 'Retry',
+        AppLanguage.ja => '再試行',
+      };
+
+  String get a11yLoginError => switch (language) {
+        AppLanguage.es => 'Error de inicio de sesión',
+        AppLanguage.en => 'Login error',
+        AppLanguage.ja => 'ログインエラー',
+      };
+
+  String get a11ySelected => switch (language) {
+        AppLanguage.es => 'Seleccionado',
+        AppLanguage.en => 'Selected',
+        AppLanguage.ja => '選択済み',
+      };
+
+  String get a11yDeselect => switch (language) {
+        AppLanguage.es => 'Deseleccionar',
+        AppLanguage.en => 'Deselect',
+        AppLanguage.ja => '選択解除',
+      };
+
+  String get a11yUpdateInfo => switch (language) {
+        AppLanguage.es => 'Información de actualización',
+        AppLanguage.en => 'Update information',
+        AppLanguage.ja => 'アップデート情報',
+      };
+
+  String get a11yLoginRequired => switch (language) {
+        AppLanguage.es => 'Inicio de sesión requerido',
+        AppLanguage.en => 'Login required',
+        AppLanguage.ja => 'ログインが必要です',
+      };
+
+  String get a11yRelatedArtists => switch (language) {
+        AppLanguage.es => 'Artistas similares',
+        AppLanguage.en => 'Related artists',
+        AppLanguage.ja => '関連アーティスト',
+      };
+
+  String get a11yStoredContent => switch (language) {
+        AppLanguage.es => 'Contenido almacenado',
+        AppLanguage.en => 'Stored content',
+        AppLanguage.ja => '保存済みコンテンツ',
+      };
+
+  String get a11yPlayNext => switch (language) {
+        AppLanguage.es => 'Siguiente en cola',
+        AppLanguage.en => 'Play next',
+        AppLanguage.ja => '次に再生',
+      };
+
+  String get a11yAddToQueue => switch (language) {
+        AppLanguage.es => 'Agregar a la cola',
+        AppLanguage.en => 'Add to queue',
+        AppLanguage.ja => 'キューに追加',
+      };
+
+  String get a11yAddToPlaylist => switch (language) {
+        AppLanguage.es => 'Agregar a playlist',
+        AppLanguage.en => 'Add to playlist',
+        AppLanguage.ja => 'プレイリストに追加',
+      };
+
+  String get a11yGoToArtist => switch (language) {
+        AppLanguage.es => 'Ir al artista',
+        AppLanguage.en => 'Go to artist',
+        AppLanguage.ja => 'アーティストへ',
+      };
+
+  String get a11yGoToAlbum => switch (language) {
+        AppLanguage.es => 'Ir al álbum',
+        AppLanguage.en => 'Go to album',
+        AppLanguage.ja => 'アルバムへ',
+      };
+
+  String get a11yOpenExternal => switch (language) {
+        AppLanguage.es => 'Abrir enlace externo',
+        AppLanguage.en => 'Open external link',
+        AppLanguage.ja => '外部リンクを開く',
+      };
+
+  String get a11yCloudStatus => switch (language) {
+        AppLanguage.es => 'Estado de sincronización',
+        AppLanguage.en => 'Sync status',
+        AppLanguage.ja => '同期ステータス',
+      };
+
+  String get a11yClearCache => switch (language) {
+        AppLanguage.es => 'Limpiar caché',
+        AppLanguage.en => 'Clear cache',
+        AppLanguage.ja => 'キャッシュをクリア',
+      };
+
+  String get a11yAbout => switch (language) {
+        AppLanguage.es => 'Acerca de',
+        AppLanguage.en => 'About',
+        AppLanguage.ja => '情報',
+      };
+
+  String get a11yDebugInfo => switch (language) {
+        AppLanguage.es => 'Información de depuración',
+        AppLanguage.en => 'Debug info',
+        AppLanguage.ja => 'デバッグ情報',
+      };
+
+  String get a11yLogout => switch (language) {
+        AppLanguage.es => 'Cerrar sesión',
+        AppLanguage.en => 'Sign out',
+        AppLanguage.ja => 'ログアウト',
+      };
+
+  String get a11yDeleteAccount => switch (language) {
+        AppLanguage.es => 'Eliminar cuenta',
+        AppLanguage.en => 'Delete account',
+        AppLanguage.ja => 'アカウントを削除',
+      };
+
+  String get a11yClose => switch (language) {
+        AppLanguage.es => 'Cerrar',
+        AppLanguage.en => 'Close',
+        AppLanguage.ja => '閉じる',
+      };
+
+  String get a11yRepeatOff => switch (language) {
+        AppLanguage.es => 'Repetir desactivado',
+        AppLanguage.en => 'Repeat off',
+        AppLanguage.ja => 'リピートオフ',
+      };
+
+  String get a11yRepeatAll => switch (language) {
+        AppLanguage.es => 'Repetir todo',
+        AppLanguage.en => 'Repeat all',
+        AppLanguage.ja => '全曲リピート',
+      };
+
+  String get a11yRepeatOne => switch (language) {
+        AppLanguage.es => 'Repetir una',
+        AppLanguage.en => 'Repeat one',
+        AppLanguage.ja => '一曲リピート',
+      };
+
+  String get a11yEmptyQueue => switch (language) {
+        AppLanguage.es => 'Cola vacía',
+        AppLanguage.en => 'Queue empty',
+        AppLanguage.ja => 'キューが空です',
+      };
+
+  String get a11yFollowArtist => switch (language) {
+        AppLanguage.es => 'Seguir artista',
+        AppLanguage.en => 'Follow artist',
+        AppLanguage.ja => 'アーティストをフォロー',
+      };
+
+  String get a11yUnfollowArtist => switch (language) {
+        AppLanguage.es => 'Dejar de seguir artista',
+        AppLanguage.en => 'Unfollow artist',
+        AppLanguage.ja => 'アーティストのフォローを解除',
+      };
+
+  String get a11yMusicNote => switch (language) {
+        AppLanguage.es => 'Nota musical',
+        AppLanguage.en => 'Music note',
+        AppLanguage.ja => '音符',
+      };
+
   // --- Playlists ---
   String get playlistsTab => switch (language) {
         AppLanguage.es => 'Playlists',

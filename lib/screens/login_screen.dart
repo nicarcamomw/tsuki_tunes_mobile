@@ -91,7 +91,21 @@ class _LoginScreenState extends State<LoginScreen>
         _timeNotifier.value = elapsed.inMicroseconds / 1000000.0;
       }
     });
-    _ticker.start();
+  }
+
+  bool _reduceMotion = false;
+  bool _tickerConfigured = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_tickerConfigured) {
+      _reduceMotion = MediaQuery.of(context).disableAnimations;
+      if (!_reduceMotion) {
+        _ticker.start();
+      }
+      _tickerConfigured = true;
+    }
   }
 
   Future<void> _navigateAfterLogin() async {
@@ -175,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen>
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                  Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yLoginError),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

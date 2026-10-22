@@ -30,6 +30,7 @@ class CyberButton extends StatefulWidget {
 class _CyberButtonState extends State<CyberButton>
     with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  bool _reduceMotion = false;
   late final AnimationController _scaleController;
   late final Animation<double> _scaleAnimation;
 
@@ -51,6 +52,12 @@ class _CyberButtonState extends State<CyberButton>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+  }
+
+  @override
   void dispose() {
     _scaleController.dispose();
     super.dispose();
@@ -62,14 +69,17 @@ class _CyberButtonState extends State<CyberButton>
     final borderColor = widget.isPrimary ? AppColors.accent : AppColors.border;
     final textColor = widget.isPrimary ? AppColors.textBright : AppColors.textPrimary;
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: widget.text,
+      child: GestureDetector(
       onTapDown: (_) {
         setState(() => _isPressed = true);
-        _scaleController.forward();
+        if (!_reduceMotion) _scaleController.forward();
       },
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        _scaleController.reverse();
+        if (!_reduceMotion) _scaleController.reverse();
         if (!widget.isLoading) {
           HapticFeedback.lightImpact();
           widget.onPressed();
@@ -77,7 +87,7 @@ class _CyberButtonState extends State<CyberButton>
       },
       onTapCancel: () {
         setState(() => _isPressed = false);
-        _scaleController.reverse();
+        if (!_reduceMotion) _scaleController.reverse();
       },
       child: ScaleTransition(
         scale: _scaleAnimation,
@@ -134,6 +144,7 @@ class _CyberButtonState extends State<CyberButton>
         ),
       ),
       ),
+    ),
     );
   }
 }

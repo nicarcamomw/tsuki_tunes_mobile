@@ -130,7 +130,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 18),
+                  Icon(Icons.info_outline, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yPlaybackError),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -179,6 +179,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             : Icons.error_outline),
                     color: AppColors.error,
                     size: 18,
+                    semanticLabel: strings.a11yPlaybackError,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -308,7 +309,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.wifi_off, size: 14, color: Colors.white),
+                              Icon(Icons.wifi_off, size: 14, color: Colors.white, semanticLabel: strings.a11yOffline),
                               const SizedBox(width: 6),
                               Text(
                                 strings.offline,

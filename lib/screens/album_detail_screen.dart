@@ -164,7 +164,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             pinned: true,
             backgroundColor: AppColors.bgDeep,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textBright),
+              icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
@@ -180,8 +180,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               if (albumData.link != null || useSpotify)
                 IconButton(
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
-                  icon: const Icon(Icons.open_in_new,
-                      color: AppColors.accent, size: 20),
+                  icon: Icon(Icons.open_in_new,
+                      color: AppColors.accent, size: 20, semanticLabel: strings.a11yOpenExternal),
                   onPressed: () async {
                     try {
                       if (audio.useSpotify) {
@@ -429,8 +429,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           onPressed: () {
                             audio.playTrack(tracks.first, newQueue: tracks);
                           },
-                          icon: const Icon(Icons.play_arrow,
-                              color: AppColors.accent, size: 18),
+                          icon: Icon(Icons.play_arrow,
+                              color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
                           label: Text(
                             strings.play,
                             style: locale.getTextStyle(
@@ -470,7 +470,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
                       const SizedBox(height: 10),
                       Text(
                         strings.loadError,

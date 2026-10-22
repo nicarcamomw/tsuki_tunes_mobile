@@ -29,7 +29,8 @@ class PlaylistDetailScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textBright),
+            icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
+            tooltip: strings.a11yBack,
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -55,13 +56,14 @@ class PlaylistDetailScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: AppColors.bgDeep,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textBright),
+              icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
+              tooltip: strings.a11yBack,
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
               PopupMenuButton<String>(
                 icon:
-                    const Icon(Icons.more_vert, color: AppColors.textBright),
+                    Icon(Icons.more_vert, color: AppColors.textBright, semanticLabel: strings.a11yMoreOptions),
                 color: AppColors.bgCard,
                 onSelected: (value) {
                   switch (value) {
@@ -78,7 +80,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                     value: 'rename',
                     child: Row(
                       children: [
-                        const Icon(Icons.edit, color: AppColors.accent, size: 18),
+                        Icon(Icons.edit, color: AppColors.accent, size: 18, semanticLabel: strings.a11yEditPlaylist),
                         const SizedBox(width: 10),
                         Text(
                           strings.renamePlaylist,
@@ -94,8 +96,8 @@ class PlaylistDetailScreen extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        const Icon(Icons.delete_outline,
-                            color: Colors.redAccent, size: 18),
+                        Icon(Icons.delete_outline,
+                            color: Colors.redAccent, size: 18, semanticLabel: strings.a11yDeletePlaylist),
                         const SizedBox(width: 10),
                         Text(
                           strings.deletePlaylist,
@@ -259,8 +261,8 @@ class PlaylistDetailScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.queue_music,
-                          size: 54, color: AppColors.borderGlow),
+                      Icon(Icons.queue_music,
+                          size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyPlaylist),
                       const SizedBox(height: 12),
                       Text(
                         strings.emptyPlaylistTitle,
@@ -306,8 +308,8 @@ class PlaylistDetailScreen extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 20),
                       color: Colors.redAccent.withValues(alpha: 0.2),
-                      child: const Icon(Icons.delete_outline,
-                          color: Colors.redAccent),
+                      child: Icon(Icons.delete_outline,
+                          color: Colors.redAccent, semanticLabel: strings.a11yRemoveFromPlaylist),
                     ),
                     onDismissed: (_) {
                       context

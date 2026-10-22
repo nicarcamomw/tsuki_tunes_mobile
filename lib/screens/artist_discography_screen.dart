@@ -196,6 +196,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           ),
           centerTitle: true,
           leading: IconButton(
+            tooltip: strings.a11yBack,
             icon: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
@@ -206,8 +207,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                   width: 1,
                 ),
               ),
-              child: const Icon(Icons.chevron_left,
-                  color: AppColors.accent, size: 24),
+              child: Icon(Icons.chevron_left,
+                  color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
             ),
             onPressed: () => Navigator.of(context).pop(_allAlbums),
           ),
@@ -311,7 +312,10 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Center(
-                        child: InkWell(
+                        child: Semantics(
+                          button: true,
+                          label: strings.retryLoading,
+                          child: InkWell(
                           borderRadius: BorderRadius.circular(4),
                           onTap: _loadMoreAlbums,
                           child: Container(
@@ -327,8 +331,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.refresh,
-                                    size: 14, color: AppColors.accent),
+                                Icon(Icons.refresh,
+                                    size: 14, color: AppColors.accent, semanticLabel: strings.a11yRetry),
                                 const SizedBox(width: 8),
                                 Text(
                                   strings.retryLoading,
@@ -341,6 +345,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                               ],
                             ),
                           ),
+                        ),
                         ),
                       ),
                     ),
@@ -432,7 +437,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
-                child: _buildCover(album, isCompleted),
+                child: _buildCover(album, isCompleted, strings),
               ),
             ),
           ),
@@ -462,7 +467,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     );
   }
 
-  Widget _buildCover(Album album, bool isCompleted) {
+  Widget _buildCover(Album album, bool isCompleted, AppStrings strings) {
     final image = album.coverUrl.isNotEmpty
         ? CachedNetworkImage(
             imageUrl: album.coverUrl,
@@ -472,7 +477,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
           )
         : Container(
             color: AppColors.bgMid,
-            child: const Icon(Icons.album, color: AppColors.accent, size: 40),
+            child: Icon(Icons.album, color: AppColors.accent, size: 40, semanticLabel: strings.a11yAlbumCover),
           );
 
     if (isCompleted) return ExcludeSemantics(child: image);

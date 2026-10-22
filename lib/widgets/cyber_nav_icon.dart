@@ -46,6 +46,15 @@ class _CyberNavIconState extends State<CyberNavIcon>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+      _controller.reverseDuration = Duration.zero;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant CyberNavIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isSelected != oldWidget.isSelected) {

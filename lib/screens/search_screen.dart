@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final FocusNode focusNode = FocusNode();
   Timer? _debounce;
   int _selectedTabIndex = 0;
+  String _lastAnnouncedQuery = '';
 
   @override
   void initState() {
@@ -71,6 +73,18 @@ class _SearchScreenState extends State<SearchScreen> {
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final hasResults = search.artists.isNotEmpty || search.albums.isNotEmpty || search.tracks.isNotEmpty;
+    if (!search.isLoading && search.query.isNotEmpty && !search.hasError && _lastAnnouncedQuery != search.query) {
+      _lastAnnouncedQuery = search.query;
+      final total = search.artists.length + search.albums.length + search.tracks.length;
+      final view = View.of(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (total > 0) {
+          SemanticsService.sendAnnouncement(view, '$total ${strings.tabAll}', TextDirection.ltr);
+        } else {
+          SemanticsService.sendAnnouncement(view, strings.noResults, TextDirection.ltr);
+        }
+      });
+    }
     final tabs = [
       strings.tabAll,
       hasResults ? '${strings.tabArtists} (${search.artists.length})' : strings.tabArtists,
@@ -158,13 +172,14 @@ class _SearchScreenState extends State<SearchScreen> {
                       counterText: '',
                       hintText: strings.searchHint,
                       hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                      prefixIcon: const ExcludeSemantics(child: Icon(Icons.search, color: AppColors.textSecondary, size: 20)),
                       suffixIcon: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _controller,
                         builder: (context, value, _) {
                           if (value.text.isEmpty) return const SizedBox.shrink();
                           return IconButton(
-                            icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                            icon: Icon(Icons.clear, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
+                            tooltip: strings.a11yClearSearch,
                             onPressed: () {
                               _controller.clear();
                               search.clear();
@@ -256,7 +271,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.search, size: 54, color: AppColors.borderGlow),
+              Icon(Icons.search, size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11ySearchEmpty),
               const SizedBox(height: 12),
               Text(
                 strings.emptyStateTitle,
@@ -360,8 +375,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
-                  child: const Icon(Icons.delete_outline,
-                      color: AppColors.accent, size: 18),
+                  child: Icon(Icons.delete_outline,
+                      color: AppColors.accent, size: 18, semanticLabel: strings.a11yClearHistory),
                 ),
                 onDismissed: (_) => search.removeFromHistory(q),
                 child: InkWell(
@@ -374,8 +389,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.history,
-                            size: 18, color: AppColors.textMuted),
+                        Icon(Icons.history,
+                            size: 18, color: AppColors.textMuted, semanticLabel: strings.a11ySearchHistory),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -388,8 +403,14 @@ class _SearchScreenState extends State<SearchScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Icon(Icons.north_west,
-                            size: 14, color: AppColors.textMuted),
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: Icon(Icons.north_west,
+                                size: 14, color: AppColors.textMuted, semanticLabel: strings.a11yFillSearch),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -405,7 +426,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+          Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
           const SizedBox(height: 12),
           Text(
             strings.searchError,
@@ -498,13 +519,16 @@ class _SearchScreenState extends State<SearchScreen> {
         if (showArtists && hasArtists) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Text(
-              strings.tabArtists.toUpperCase(),
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accent,
-                letterSpacing: 1.2,
+            child: Semantics(
+              header: true,
+              child: Text(
+                strings.tabArtists.toUpperCase(),
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ),
@@ -524,13 +548,16 @@ class _SearchScreenState extends State<SearchScreen> {
         if (showAlbums && hasAlbums) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              strings.tabAlbums.toUpperCase(),
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accent,
-                letterSpacing: 1.2,
+            child: Semantics(
+              header: true,
+              child: Text(
+                strings.tabAlbums.toUpperCase(),
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ),
@@ -550,13 +577,16 @@ class _SearchScreenState extends State<SearchScreen> {
         if (showTracks && hasTracks) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              strings.tabTracks.toUpperCase(),
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accent,
-                letterSpacing: 1.2,
+            child: Semantics(
+              header: true,
+              child: Text(
+                strings.tabTracks.toUpperCase(),
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ),

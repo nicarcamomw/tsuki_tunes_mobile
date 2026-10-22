@@ -324,6 +324,7 @@ class _BreathingCover extends StatefulWidget {
 class _BreathingCoverState extends State<_BreathingCover>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -336,9 +337,16 @@ class _BreathingCoverState extends State<_BreathingCover>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion && _controller.isAnimating) _controller.stop();
+  }
+
+  @override
   void didUpdateWidget(_BreathingCover old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating) {
+    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
       _controller.repeat(reverse: true);
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();

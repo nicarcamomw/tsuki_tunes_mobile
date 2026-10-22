@@ -35,6 +35,14 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+    }
+  }
+
+  @override
   void didUpdateWidget(FadeIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.index != _targetIndex) {

@@ -35,6 +35,15 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.stop();
+      _controller.value = 0.5;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

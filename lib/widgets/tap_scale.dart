@@ -26,6 +26,7 @@ class _TapScaleState extends State<TapScale>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scale;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -45,27 +46,33 @@ class _TapScaleState extends State<TapScale>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _onTapDown(TapDownDetails _) {
-    _controller.forward();
+    if (!_reduceMotion) _controller.forward();
   }
 
   void _onTapUp(TapUpDetails _) async {
-    if (_controller.isAnimating) {
+    if (!_reduceMotion && _controller.isAnimating) {
       await _controller.forward();
     }
     if (!mounted) return;
-    _controller.reverse();
+    if (!_reduceMotion) _controller.reverse();
     unawaited(HapticFeedback.lightImpact());
     widget.onTap?.call();
   }
 
   void _onTapCancel() {
-    _controller.reverse();
+    if (!_reduceMotion) _controller.reverse();
   }
 
   @override

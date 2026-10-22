@@ -102,7 +102,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary),
+                  icon: Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary, semanticLabel: strings.a11yClose),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -116,7 +116,9 @@ class LanguageSelectorSheet extends StatelessWidget {
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: TapScale(
+                child: Semantics(
+                  selected: isSelected,
+                  child: TapScale(
                   onTap: () async {
                     unawaited(HapticFeedback.selectionClick());
                     if (!isSelected) {
@@ -284,6 +286,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
                 ),
               );
             }),

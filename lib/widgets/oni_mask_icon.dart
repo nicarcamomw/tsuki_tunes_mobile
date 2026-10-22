@@ -41,6 +41,15 @@ class _OniMaskIconState extends State<OniMaskIcon>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+      _controller.reverseDuration = Duration.zero;
+    }
+  }
+
+  @override
   void didUpdateWidget(OniMaskIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isActive != widget.isActive) {

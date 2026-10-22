@@ -52,6 +52,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   bool _showTitleInAppBar = false;
   bool _showStoredContent = false;
   bool _hasMoreAlbums = false;
+  bool _reduceMotion = false;
 
   @override
   void initState() {
@@ -59,6 +60,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     _scrollController.addListener(_onScroll);
     _loadArtistData();
     _trackVisit();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
   }
 
   void _onScroll() {
@@ -207,7 +214,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             backgroundColor: AppColors.bgDeep,
             title: AnimatedOpacity(
               opacity: _showTitleInAppBar ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
+              duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
               child: Text(
                 widget.artist.name,
                 style: locale.getTextStyle(
@@ -221,6 +228,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             ),
             centerTitle: true,
             leading: IconButton(
+              tooltip: strings.a11yBack,
               icon: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -231,8 +239,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     width: 1,
                   ),
                 ),
-                child: const Icon(Icons.chevron_left,
-                    color: AppColors.accent, size: 24),
+                child: Icon(Icons.chevron_left,
+                    color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -399,7 +407,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   // Follow button
                   if (!isGuest) ...[
                     const SizedBox(height: 14),
-                    GestureDetector(
+                    Semantics(
+                      button: true,
+                      label: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
+                      child: GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         if (isFollowed) {
@@ -409,7 +420,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         }
                       },
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
+                        duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
                         decoration: BoxDecoration(
@@ -439,6 +450,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               isFollowed ? Icons.check : Icons.add,
                               size: 14,
                               color: AppColors.accent,
+                              semanticLabel: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -455,6 +467,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           ],
                         ),
                       ),
+                    ),
                     ),
                   ],
 
@@ -594,7 +607,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
                       const SizedBox(height: 10),
                       Text(
                         strings.loadError,
@@ -688,7 +701,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               setState(() => _showAllTracks = !_showAllTracks);
                             },
                             child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
+                            duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                             decoration: BoxDecoration(
@@ -827,7 +840,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               Row(
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 16, color: AppColors.accent),
+                    Icon(icon, size: 16, color: AppColors.accent, semanticLabel: title),
                     const SizedBox(width: 8),
                   ] else ...[
                     Container(
@@ -942,7 +955,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(3),
-                  child: _buildAlbumCover(album, isCompleted),
+                  child: _buildAlbumCover(album, isCompleted, strings),
                 ),
               ),
             ),
@@ -972,7 +985,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
-  Widget _buildAlbumCover(Album album, bool isCompleted) {
+  Widget _buildAlbumCover(Album album, bool isCompleted, AppStrings strings) {
     final image = ExcludeSemantics(
       child: album.coverUrl.isNotEmpty
           ? CachedNetworkImage(
@@ -983,7 +996,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             )
           : Container(
               color: AppColors.bgMid,
-              child: const Icon(Icons.album, color: AppColors.accent, size: 40),
+              child: Icon(Icons.album, color: AppColors.accent, size: 40, semanticLabel: strings.a11yAlbumCover),
             ),
     );
 
@@ -1008,7 +1021,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent),
+              Icon(Icons.people_alt_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yRelatedArtists),
               const SizedBox(width: 8),
               Text(
                 strings.similarArtists,
@@ -1030,7 +1043,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final artist = _relatedArtists[index];
-                return GestureDetector(
+                return Semantics(
+                  button: true,
+                  label: artist.name,
+                  child: GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
                     appNavigatorKey.currentState?.push(
@@ -1063,8 +1079,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                   )
                                 : Container(
                                     color: AppColors.bgMid,
-                                    child: const Icon(Icons.person,
-                                        color: AppColors.textMuted, size: 36),
+                                    child: Icon(Icons.person,
+                                        color: AppColors.textMuted, size: 36, semanticLabel: strings.a11yArtistAvatar),
                                   ),
                           ),
                         ),
@@ -1093,6 +1109,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           ),
                       ],
                     ),
+                  ),
                   ),
                 );
               },
@@ -1138,7 +1155,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                const Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.accent),
+                Icon(Icons.inventory_2_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yStoredContent),
                 const SizedBox(width: 8),
                 Text(
                   strings.storedContentTitle,
@@ -1193,8 +1210,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                     )
                                   : Container(
                                       color: AppColors.bgMid,
-                                      child: const Icon(Icons.person,
-                                          color: AppColors.textMuted, size: 20),
+                                      child: Icon(Icons.person,
+                                          color: AppColors.textMuted, size: 20, semanticLabel: strings.a11yArtistAvatar),
                                     ),
                             ),
                           ),
@@ -1312,8 +1329,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     String label,
     List<Album> albums,
     LibraryProvider library,
-    LocaleProvider locale,
-  ) {
+    LocaleProvider locale, {
+    String? semanticLabel,
+  }) {
     final completed =
         albums.where((a) => library.isAlbumCompleted(a.id, albumTracksCount: a.tracksCount)).length;
     final total = albums.length;
@@ -1336,7 +1354,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           children: [
             Row(
               children: [
-                Icon(icon, size: 14, color: AppColors.accent),
+                Icon(icon, size: 14, color: AppColors.accent, semanticLabel: semanticLabel ?? label),
                 const SizedBox(width: 6),
                 Text(
                   label.toUpperCase(),

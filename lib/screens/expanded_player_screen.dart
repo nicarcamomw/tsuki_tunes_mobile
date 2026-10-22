@@ -35,6 +35,7 @@ class ExpandedPlayerScreen extends StatefulWidget {
 class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     with SingleTickerProviderStateMixin {
   double _dragDy = 0;
+  bool _reduceMotion = false;
   _CenterViewMode _viewMode = _CenterViewMode.artwork;
   SyncedLyrics? _lyrics;
   bool _isLoadingLyrics = false;
@@ -61,6 +62,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+  }
+
+  @override
   void dispose() {
     _snapBack.dispose();
     _lyricsScrollController.dispose();
@@ -80,11 +87,15 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       NavigationEvents.isPlayerExpanded.value = false;
       Navigator.of(context).pop();
     } else {
-      final startValue = _dragDy;
-      _snapAnimation = Tween<double>(begin: startValue, end: 0).animate(
-        CurvedAnimation(parent: _snapBack, curve: Curves.easeOutCubic),
-      );
-      _snapBack.forward(from: 0);
+      if (_reduceMotion) {
+        setState(() => _dragDy = 0);
+      } else {
+        final startValue = _dragDy;
+        _snapAnimation = Tween<double>(begin: startValue, end: 0).animate(
+          CurvedAnimation(parent: _snapBack, curve: Curves.easeOutCubic),
+        );
+        _snapBack.forward(from: 0);
+      }
     }
   }
 
@@ -144,6 +155,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
           backgroundColor: AppColors.bgDeep,
           appBar: AppBar(
             leading: IconButton(
+              tooltip: strings.a11yCollapsePlayer,
               icon: const Icon(Icons.keyboard_arrow_down, size: 28),
               onPressed: () {
                 NavigationEvents.isPlayerExpanded.value = false;
@@ -187,6 +199,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
+                          tooltip: strings.a11yCollapsePlayer,
                           icon: const Icon(Icons.keyboard_arrow_down,
                               size: 30, color: AppColors.textPrimary),
                           onPressed: () {
@@ -218,10 +231,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.chevron_right,
-                                        size: 11,
-                                        color: AppColors.textMuted,
+                                      const ExcludeSemantics(
+                                        child: Icon(
+                                          Icons.chevron_right,
+                                          size: 11,
+                                          color: AppColors.textMuted,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -249,6 +264,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              tooltip: strings.a11yLyrics,
                               icon: Icon(
                                 Icons.lyrics_outlined,
                                 color: _viewMode == _CenterViewMode.lyrics
@@ -271,6 +287,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               },
                             ),
                             IconButton(
+                              tooltip: strings.a11yQueue,
                               icon: Icon(
                                 Icons.queue_music,
                                 color: _viewMode == _CenterViewMode.queue
@@ -422,7 +439,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error, size: 14),
+                        Icon(Icons.error_outline, color: AppColors.error, size: 14, semanticLabel: strings.a11yPlaybackError),
                         const SizedBox(width: 6),
                         Text(
                           playbackError.message(strings),
@@ -645,6 +662,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               Icons.bedtime_outlined,
               size: 16,
               color: isActive ? AppColors.accent : AppColors.textMuted,
+              semanticLabel: strings.a11ySleepTimer,
             ),
             if (label.isNotEmpty) ...[
               const SizedBox(width: 4),
@@ -701,7 +719,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.bedtime_outlined, color: AppColors.accent, size: 18),
+                    Icon(Icons.bedtime_outlined, color: AppColors.accent, size: 18, semanticLabel: strings.a11ySleepTimer),
                     const SizedBox(width: 8),
                     Text(
                       strings.sleepTimer,
@@ -719,37 +737,37 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   strings.sleepTimerOff,
                   !audio.isSleepTimerActive,
                   locale,
-                  () { audio.setSleepTimer(null); Navigator.pop(context); },
+                  () { audio.setSleepTimer(null); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerOff, TextDirection.ltr); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerEndOfTrack,
                   audio.isSleepTimerActive && audio.sleepTimerRemaining == null,
                   locale,
-                  () { audio.setSleepTimer(Duration.zero); Navigator.pop(context); },
+                  () { audio.setSleepTimer(Duration.zero); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerEndOfTrack, TextDirection.ltr); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(15),
                   audio.sleepTimerOriginalMinutes == 15,
                   locale,
-                  () { audio.setSleepTimer(const Duration(minutes: 15)); Navigator.pop(context); },
+                  () { audio.setSleepTimer(const Duration(minutes: 15)); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerMinutes(15), TextDirection.ltr); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(30),
                   audio.sleepTimerOriginalMinutes == 30,
                   locale,
-                  () { audio.setSleepTimer(const Duration(minutes: 30)); Navigator.pop(context); },
+                  () { audio.setSleepTimer(const Duration(minutes: 30)); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerMinutes(30), TextDirection.ltr); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(45),
                   audio.sleepTimerOriginalMinutes == 45,
                   locale,
-                  () { audio.setSleepTimer(const Duration(minutes: 45)); Navigator.pop(context); },
+                  () { audio.setSleepTimer(const Duration(minutes: 45)); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerMinutes(45), TextDirection.ltr); Navigator.pop(context); },
                 ),
                 _sleepTimerOption(
                   strings.sleepTimerMinutes(60),
                   audio.sleepTimerOriginalMinutes == 60,
                   locale,
-                  () { audio.setSleepTimer(const Duration(minutes: 60)); Navigator.pop(context); },
+                  () { audio.setSleepTimer(const Duration(minutes: 60)); SemanticsService.sendAnnouncement(View.of(context),strings.sleepTimerMinutes(60), TextDirection.ltr); Navigator.pop(context); },
                 ),
               ],
             ),
@@ -760,7 +778,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   }
 
   Widget _sleepTimerOption(String label, bool isSelected, LocaleProvider locale, VoidCallback onTap) {
-    return InkWell(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
@@ -785,10 +807,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: AppColors.accent, size: 18),
+              Icon(Icons.check_circle, color: AppColors.accent, size: 18, semanticLabel: locale.strings.a11ySelected),
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -825,8 +848,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.queue_music,
-                            color: AppColors.accent, size: 16),
+                        Icon(Icons.queue_music,
+                            color: AppColors.accent, size: 16, semanticLabel: strings.a11yQueue),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -874,6 +897,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           HapticFeedback.mediumImpact();
                           final savedQueue = List<Track>.from(queue);
                           audio.clearQueue();
+                          SemanticsService.sendAnnouncement(View.of(context),strings.queueClearLabel, TextDirection.ltr);
                           ScaffoldMessenger.of(context).clearSnackBars();
                           final navBarPadding = MediaQuery.of(context).padding.bottom;
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -914,8 +938,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.delete_sweep_outlined,
-                                  size: 13, color: AppColors.textMuted),
+                              Icon(Icons.delete_sweep_outlined,
+                                  size: 13, color: AppColors.textMuted, semanticLabel: strings.a11yClearQueue),
                               const SizedBox(width: 4),
                               Text(
                                 strings.queueClear,
@@ -954,7 +978,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         children: [
                           Icon(Icons.queue_music_rounded,
                               size: 44,
-                              color: AppColors.textMuted.withValues(alpha: 0.4)),
+                              color: AppColors.textMuted.withValues(alpha: 0.4),
+                              semanticLabel: strings.a11yEmptyQueue),
                           const SizedBox(height: 10),
                           Text(
                             strings.queueEmpty,
@@ -998,11 +1023,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               color: AppColors.accent.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.delete_outline, color: AppColors.accent, size: 20),
+                            child: Icon(Icons.delete_outline, color: AppColors.accent, size: 20, semanticLabel: strings.a11yRemoveFromQueue),
                           ),
                           onDismissed: (_) {
                             audio.removeFromQueue(i);
                             HapticFeedback.lightImpact();
+                            SemanticsService.sendAnnouncement(View.of(context),strings.removedFromQueue, TextDirection.ltr);
                             final navPad = MediaQuery.of(context).padding.bottom;
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1033,7 +1059,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               width: isCur ? 1.2 : 0.8,
                             ),
                           ),
-                          child: InkWell(
+                          child: Semantics(
+                            label: '${t.title}, ${t.fullArtistName}',
+                            child: InkWell(
                             borderRadius: BorderRadius.circular(10),
                             onTap: () {
                               audio.playTrack(t);
@@ -1048,8 +1076,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                   SizedBox(
                                     width: 24,
                                     child: isCur
-                                        ? const Icon(Icons.equalizer,
-                                            color: AppColors.accent, size: 16)
+                                        ? Icon(Icons.equalizer,
+                                            color: AppColors.accent, size: 16, semanticLabel: strings.a11yNowPlaying)
                                         : Text(
                                             (i + 1).toString().padLeft(2, '0'),
                                             style: locale.getTextStyle(
@@ -1072,26 +1100,29 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                               fit: BoxFit.cover,
                                               placeholder: (_, __) => Container(
                                                 color: AppColors.bgHover,
-                                                child: const Icon(
+                                                child: Icon(
                                                     Icons.music_note,
                                                     size: 16,
-                                                    color: AppColors.textMuted),
+                                                    color: AppColors.textMuted,
+                                                    semanticLabel: strings.a11yAlbumCover),
                                               ),
                                               errorWidget: (_, __, ___) =>
                                                   Container(
                                                 color: AppColors.bgHover,
-                                                child: const Icon(
+                                                child: Icon(
                                                     Icons.music_note,
                                                     size: 16,
-                                                    color: AppColors.textMuted),
+                                                    color: AppColors.textMuted,
+                                                    semanticLabel: strings.a11yAlbumCover),
                                               ),
                                             )
                                           : Container(
                                               color: AppColors.bgHover,
-                                              child: const Icon(
+                                              child: Icon(
                                                   Icons.music_note,
                                                   size: 16,
-                                                  color: AppColors.textMuted),
+                                                  color: AppColors.textMuted,
+                                                  semanticLabel: strings.a11yAlbumCover),
                                             ),
                                     ),
                                   ),
@@ -1136,6 +1167,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       onTap: () {
                                         audio.removeFromQueue(i);
                                         HapticFeedback.lightImpact();
+                                        SemanticsService.sendAnnouncement(View.of(context),strings.removedFromQueue, TextDirection.ltr);
                                         final navPad = MediaQuery.of(context).padding.bottom;
                                         ScaffoldMessenger.of(context).clearSnackBars();
                                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1153,25 +1185,27 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         );
                                       },
                                       behavior: HitTestBehavior.opaque,
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(6),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
                                         child: Icon(
                                           Icons.close,
                                           color: AppColors.textMuted,
                                           size: 16,
+                                          semanticLabel: strings.a11yRemoveFromQueue,
                                         ),
                                       ),
                                     ),
                                   ),
                                   ReorderableDragStartListener(
                                     index: i,
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
                                           horizontal: 4, vertical: 6),
                                       child: Icon(
                                         Icons.drag_indicator_rounded,
                                         color: AppColors.textMuted,
                                         size: 20,
+                                        semanticLabel: strings.a11yReorder,
                                       ),
                                     ),
                                   ),
@@ -1179,6 +1213,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               ),
                             ),
                           ),
+                        ),
                         ),
                         );
                       },
@@ -1260,8 +1295,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.lyrics,
-                            color: AppColors.accent, size: 16),
+                        Icon(Icons.lyrics,
+                            color: AppColors.accent, size: 16, semanticLabel: locale.strings.a11yLyrics),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -1352,8 +1387,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.subtitles_off_outlined,
-                color: AppColors.textMuted, size: 36),
+            Icon(Icons.subtitles_off_outlined,
+                color: AppColors.textMuted, size: 36, semanticLabel: strings.a11yNoLyrics),
             const SizedBox(height: 10),
             Text(
               locale.strings.noLyricsFound,
@@ -1384,7 +1419,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.refresh, size: 14, color: AppColors.accent),
+                    Icon(Icons.refresh, size: 14, color: AppColors.accent, semanticLabel: strings.a11yRetryLyrics),
                     const SizedBox(width: 6),
                     Text(
                       strings.lyricsRetry,
@@ -1409,7 +1444,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.graphic_eq, color: AppColors.accent, size: 40),
+            Icon(Icons.graphic_eq, color: AppColors.accent, size: 40, semanticLabel: strings.a11yVisualizer),
             const SizedBox(height: 12),
             Text(
               locale.strings.instrumentalTrack,
@@ -1550,8 +1585,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.sync,
-                            size: 13, color: AppColors.accent),
+                        Icon(Icons.sync,
+                            size: 13, color: AppColors.accent, semanticLabel: strings.a11ySyncingLyrics),
                         const SizedBox(width: 6),
                         Text(
                           strings.lyricsFollowing,
