@@ -573,7 +573,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         // No Spotify session at all (app closed or frozen): stop pretending
         // to play, outside the grace period after a play command.
         final sincePlay = DateTime.now().difference(_lastPlayCommandTime);
-        if (_isPlaying && sincePlay.inSeconds >= 10) {
+        final nativePlaying = _currentSpotifyUri != null &&
+            _nativePlayer.isPlayingUri(_currentSpotifyUri!);
+        if (_isPlaying && !nativePlaying && sincePlay.inSeconds >= 10) {
           debugPrint('[AudioProvider] Spotify session gone, marking paused');
           _isPlaying = false;
           notifyListeners();
@@ -914,25 +916,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (!played) {
-      debugPrint('Spotify: Web API exhausted, trying native SDK device registration...');
+      // No usable Web API device (Spotify app closed or frozen). App Remote
+      // launches the Spotify app and plays in it directly.
+      debugPrint('Spotify: Web API exhausted, playing through App Remote...');
       try {
         final token = _spotify.accessToken;
         if (token != null) {
           final connected = await _nativePlayer.connect(accessToken: token);
           if (gen != _playGeneration) return;
           if (connected) {
-            debugPrint('Spotify: native SDK connected, waiting for device...');
-            await Future.delayed(const Duration(milliseconds: 1500));
+            played = await _nativePlayer.playUri(uri);
             if (gen != _playGeneration) return;
-            await _spotify.ensureActiveDevice();
-            if (gen != _playGeneration) return;
-            played = await _spotify.play(trackUri: uri);
-            if (gen != _playGeneration) return;
-            debugPrint('Spotify: post-native-connect play result=$played');
+            debugPrint('Spotify: App Remote play result=$played');
           }
         }
       } catch (e) {
-        debugPrint('Spotify: native SDK fallback error: $e');
+        debugPrint('Spotify: App Remote error: $e');
       }
     }
 
@@ -941,8 +940,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _lastSpotifyError = SpotifyFallbackReason.openApp;
       _spotifyActive = false;
       _spotifyFallbackActive = true;
-      try { await _nativePlayer.disconnect(); } catch (_) {}
-      await _service.playTrack(track);
+      await _playPreviewInsteadOfSpotify(track);
       if (gen != _playGeneration) return;
       _isBuffering = false;
       notifyListeners();
@@ -974,8 +972,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[SpotifyCheck] Not playing, waking Spotify via App Remote');
     final token = _spotify.accessToken;
     if (token != null) {
-      final connected = _nativePlayer.isConnected ||
-          await _nativePlayer.connect(accessToken: token);
+      final connected = await _nativePlayer.connect(accessToken: token);
       if (gen != _playGeneration) return;
       if (connected && await _nativePlayer.playUri(uri)) {
         final now = DateTime.now();
@@ -997,7 +994,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _isBuffering = true;
     notifyListeners();
     try {
-      await _service.playTrack(await _withFreshPreview(track));
+      await _playPreviewInsteadOfSpotify(await _withFreshPreview(track));
     } catch (e) {
       if (gen != _playGeneration) return;
       _lastPlaybackError = _classifyPlaybackError(e, track);
@@ -1007,12 +1004,24 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// Plays the preview after Spotify failed. A Spotify app we just woke can
+  /// take audio focus and immediately pause the preview, so stop it first.
+  Future<void> _playPreviewInsteadOfSpotify(Track track) async {
+    await _nativePlayer.pause();
+    await _nativePlayer.disconnect();
+    await _service.playTrack(track);
+  }
+
   /// Waits a moment and asks Spotify whether [uri] is really playing.
   /// Returns true too when there is nothing left to check (track changed,
   /// Spotify no longer in use, or the user paused meanwhile).
   Future<bool> _spotifyConfirmsPlaying(int gen, String uri) async {
     await Future.delayed(const Duration(seconds: 3));
     if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
+    if (_nativePlayer.isPlayingUri(uri)) {
+      debugPrint('[SpotifyCheck] Playing (App Remote)');
+      return true;
+    }
     final state = await _spotify.getPlaybackState();
     if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
     if (state == null) {
