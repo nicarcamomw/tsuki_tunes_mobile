@@ -228,7 +228,12 @@ class PlaylistProvider extends ChangeNotifier {
         final db = _firebase.db;
         final docRef =
             db.collection('users').doc(uid).collection('playlists').doc();
-        await docRef.set(playlist.copyWith(id: docRef.id).toFirestore());
+        final batch = db.batch();
+        batch.set(docRef, playlist.copyWith(id: docRef.id).toFirestore());
+        batch.set(db.collection('users').doc(uid),
+            {'lastSubWrite': FieldValue.serverTimestamp()},
+            SetOptions(merge: true));
+        await batch.commit();
 
         final idx = _playlists.indexWhere((p) => p.id == tempId);
         if (idx != -1) {
@@ -272,15 +277,14 @@ class PlaylistProvider extends ChangeNotifier {
       _startSync();
       try {
         final db = _firebase.db;
-        await db
-            .collection('users')
-            .doc(uid)
-            .collection('playlists')
-            .doc(playlistId)
-            .update({
-          'name': newName.trim(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        final batch = db.batch();
+        batch.update(
+            db.collection('users').doc(uid).collection('playlists').doc(playlistId),
+            {'name': newName.trim(), 'updatedAt': FieldValue.serverTimestamp()});
+        batch.set(db.collection('users').doc(uid),
+            {'lastSubWrite': FieldValue.serverTimestamp()},
+            SetOptions(merge: true));
+        await batch.commit();
       } catch (e) {
         debugPrint('[PlaylistProvider] renamePlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
@@ -313,12 +317,13 @@ class PlaylistProvider extends ChangeNotifier {
       _startSync();
       try {
         final db = _firebase.db;
-        await db
-            .collection('users')
-            .doc(uid)
-            .collection('playlists')
-            .doc(playlistId)
-            .delete();
+        final batch = db.batch();
+        batch.delete(
+            db.collection('users').doc(uid).collection('playlists').doc(playlistId));
+        batch.set(db.collection('users').doc(uid),
+            {'lastSubWrite': FieldValue.serverTimestamp()},
+            SetOptions(merge: true));
+        await batch.commit();
       } catch (e) {
         debugPrint('[PlaylistProvider] deletePlaylist rollback: $e');
         _playlists.insert(idx.clamp(0, _playlists.length), prev);
@@ -486,12 +491,25 @@ class PlaylistProvider extends ChangeNotifier {
           'tracks': apply(server),
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        tx.set(db.collection('users').doc(uid),
+            {'lastSubWrite': FieldValue.serverTimestamp()},
+            SetOptions(merge: true));
       }).timeout(const Duration(seconds: 10));
     } on FirebaseException catch (e) {
       if (e.code != 'unavailable') rethrow;
-      await docRef.update(local.toFirestore());
+      final batch = db.batch();
+      batch.update(docRef, local.toFirestore());
+      batch.set(db.collection('users').doc(uid),
+          {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
+      await batch.commit();
     } on TimeoutException {
-      await docRef.update(local.toFirestore());
+      final batch = db.batch();
+      batch.update(docRef, local.toFirestore());
+      batch.set(db.collection('users').doc(uid),
+          {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
+      await batch.commit();
     }
   }
 

@@ -16,7 +16,7 @@ class SpotifyService {
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
   static const _redirectUri = 'com.tsuki.tsukitunesmobile://spotify-callback';
   static const _scopes =
-      'streaming user-read-private user-read-email '
+      'streaming user-read-private '
       'user-read-playback-state user-modify-playback-state '
       'user-read-currently-playing user-library-read user-top-read';
 

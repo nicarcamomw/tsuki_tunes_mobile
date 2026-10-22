@@ -15,30 +15,44 @@ service cloud.firestore {
           && (!('tracks' in d) || (d.tracks is list && d.tracks.size() <= 1000));
     }
 
+    // Server-side write rate limiting: subcollection writes must batch-update
+    // the parent user doc's lastSubWrite timestamp. This function rejects
+    // writes that arrive less than 1 second after the previous one.
+    function notRateLimited(userId) {
+      let userData = get(/databases/$(database)/documents/users/$(userId)).data;
+      return !('lastSubWrite' in userData)
+          || request.time > userData.lastSubWrite + duration.value(1, 's');
+    }
+
     // Users can only read/write their own document
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
-      // Listened tracks subcollection — same per-user isolation
+      // Listened tracks subcollection — per-user isolation + rate limit
       match /listenedTracks/{trackId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && notRateLimited(userId);
       }
 
-      // Playlists subcollection — per-user isolation + size limits
+      // Playlists subcollection — per-user isolation + size limits + rate limit
       match /playlists/{playlistId} {
-        allow read, delete: if isOwner(userId);
+        allow read: if isOwner(userId);
         allow create, update: if isOwner(userId)
-            && validPlaylist(request.resource.data);
+            && validPlaylist(request.resource.data)
+            && notRateLimited(userId);
+        allow delete: if isOwner(userId) && notRateLimited(userId);
       }
 
       // Unmark log so other devices can apply deletions incrementally
       match /listenedDeletions/{trackId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && notRateLimited(userId);
       }
 
-      // Followed artists subcollection — same per-user isolation
+      // Followed artists subcollection — per-user isolation + rate limit
       match /followedArtists/{artistId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId) && notRateLimited(userId);
       }
     }
 

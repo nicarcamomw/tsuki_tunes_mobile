@@ -734,9 +734,8 @@ class LibraryProvider extends ChangeNotifier {
       batch.set(
         userDoc,
         {
-          'stats': {
-            'totalTracks': FieldValue.increment(1),
-          },
+          'stats': {'totalTracks': FieldValue.increment(1)},
+          'lastSubWrite': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
@@ -791,9 +790,8 @@ class LibraryProvider extends ChangeNotifier {
       batch.set(
         userDoc,
         {
-          'stats': {
-            'totalTracks': FieldValue.increment(-1),
-          },
+          'stats': {'totalTracks': FieldValue.increment(-1)},
+          'lastSubWrite': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
@@ -873,6 +871,7 @@ class LibraryProvider extends ChangeNotifier {
       const batchLimit = 450;
 
       for (var i = 0; i < newData.length; i += batchLimit) {
+        if (i > 0) await Future.delayed(const Duration(milliseconds: 1100));
         final chunk = newData.sublist(
             i, i + batchLimit > newData.length ? newData.length : i + batchLimit);
 
@@ -890,9 +889,8 @@ class LibraryProvider extends ChangeNotifier {
           batch.set(
             userDoc,
             {
-              'stats': {
-                'totalTracks': FieldValue.increment(chunk.length),
-              },
+              'stats': {'totalTracks': FieldValue.increment(chunk.length)},
+              'lastSubWrite': FieldValue.serverTimestamp(),
             },
             SetOptions(merge: true),
           );
@@ -965,6 +963,7 @@ class LibraryProvider extends ChangeNotifier {
       const batchLimit = 240;
 
       for (var i = 0; i < toUnmark.length; i += batchLimit) {
+        if (i > 0) await Future.delayed(const Duration(milliseconds: 1100));
         final chunk = toUnmark.sublist(
             i, i + batchLimit > toUnmark.length ? toUnmark.length : i + batchLimit);
 
@@ -981,9 +980,8 @@ class LibraryProvider extends ChangeNotifier {
           batch.set(
             userDoc,
             {
-              'stats': {
-                'totalTracks': FieldValue.increment(-chunk.length),
-              },
+              'stats': {'totalTracks': FieldValue.increment(-chunk.length)},
+              'lastSubWrite': FieldValue.serverTimestamp(),
             },
             SetOptions(merge: true),
           );
@@ -1138,12 +1136,16 @@ class LibraryProvider extends ChangeNotifier {
 
     _startSync();
     try {
-      await _firebase.db
-          .collection('users')
-          .doc(uid)
-          .collection('followedArtists')
-          .doc(artist.id)
-          .set(artist.toJson());
+      final db = _firebase.db;
+      final batch = db.batch();
+      batch.set(
+        db.collection('users').doc(uid).collection('followedArtists').doc(artist.id),
+        artist.toJson(),
+      );
+      batch.set(db.collection('users').doc(uid),
+          {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
+      await batch.commit();
     } catch (e) {
       debugPrint('[LibraryProvider] followArtist rollback: $e');
       _followedArtists = prevArtists;
@@ -1177,12 +1179,15 @@ class LibraryProvider extends ChangeNotifier {
 
     _startSync();
     try {
-      await _firebase.db
-          .collection('users')
-          .doc(uid)
-          .collection('followedArtists')
-          .doc(artistId)
-          .delete();
+      final db = _firebase.db;
+      final batch = db.batch();
+      batch.delete(
+        db.collection('users').doc(uid).collection('followedArtists').doc(artistId),
+      );
+      batch.set(db.collection('users').doc(uid),
+          {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
+      await batch.commit();
     } catch (e) {
       debugPrint('[LibraryProvider] unfollowArtist rollback: $e');
       _followedArtists = prevArtists;
