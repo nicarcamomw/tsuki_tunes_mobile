@@ -915,8 +915,32 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    debugPrint('Spotify: found URI=$uri, playing via Web API...');
+    debugPrint('Spotify: found URI=$uri');
     _currentSpotifyUri = uri;
+
+    // Fast path: App Remote is already connected (warm-up or previous play),
+    // skip the Web API round-trips that fail on phones where the Spotify app
+    // is frozen/backgrounded.
+    if (_nativePlayer.isConnected) {
+      debugPrint('Spotify: App Remote connected, playing directly...');
+      final ok = await _nativePlayer.playUri(uri);
+      if (gen != _playGeneration) return;
+      if (ok) {
+        debugPrint('Spotify: App Remote fast-path succeeded');
+        _spotifyActive = true;
+        _spotifyFallbackActive = false;
+        _isPlaying = false;
+        _isBuffering = true;
+        _position = Duration.zero;
+        _lastPlayCommandTime = DateTime.now();
+        notifyListeners();
+        _prefetchNextTrack();
+        unawaited(_verifySpotifyPlayback(gen, uri, track));
+        return;
+      }
+      debugPrint('Spotify: App Remote fast-path failed, falling through to Web API');
+    }
+
     var played = await _spotify.play(trackUri: uri);
     if (gen != _playGeneration) return;
     debugPrint('Spotify: Web API play result=$played');
