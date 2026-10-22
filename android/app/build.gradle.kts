@@ -51,8 +51,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Using debug signing key for testing on device so Google Sign-In SHA-1 matches google-services.json
-            signingConfig = signingConfigs.getByName("debug")
+            // Release key when android/key.properties exists (see README);
+            // debug key otherwise so local release builds keep working.
+            // Remember to add the release key's SHA-1/SHA-256 in Firebase,
+            // or Google Sign-In fails with the release build.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

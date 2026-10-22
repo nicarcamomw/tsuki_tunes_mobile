@@ -1,17 +1,65 @@
-# tsuki_tunes_mobile
+# Tsuki Tunes Mobile
 
-A new Flutter project.
+Reproductor de música con estética Cyberpunk & folklore japonés. Catálogo y previews de **Deezer**, reproducción completa con **Spotify Premium**, biblioteca sincronizada en **Firebase**, tags y metadatos de **Last.fm** y letras de **LRCLIB**.
 
-## Getting Started
+## Requisitos
 
-This project is a starting point for a Flutter application.
+- Flutter estable (Dart ≥ 3.0)
+- Proyecto de Firebase con Auth (Google) y Firestore. `lib/firebase_options.dart` y `android/app/google-services.json` deben apuntar a él.
+- (Opcional) API key de Last.fm.
 
-A few resources to get you started if this is your first Flutter project:
+## Ejecutar
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run --dart-define=LASTFM_API_KEY=tu_api_key
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tests y análisis
+
+```bash
+flutter analyze
+flutter test
+```
+
+El CI (`.github/workflows/ci.yml`) corre ambos en cada PR y en cada push a `main`.
+
+## Reglas de Firestore
+
+Las reglas viven en `firestore.rules`. El proyecto de Firebase se comparte con la versión web, así que un deploy reemplaza **todas** las reglas: mantener un solo archivo como fuente de verdad antes de desplegar.
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+## Firma de release (Android)
+
+Sin `android/key.properties`, el build de release se firma con la clave debug. Para firmar con tu propia clave:
+
+1. Crear el keystore:
+   ```bash
+   keytool -genkey -v -keystore ~/tsuki-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias tsuki
+   ```
+2. Crear `android/key.properties` (está en `.gitignore`, no se sube):
+   ```properties
+   storePassword=...
+   keyPassword=...
+   keyAlias=tsuki
+   storeFile=/ruta/absoluta/tsuki-release.jks
+   ```
+3. Agregar el SHA-1 y SHA-256 de esa clave en Firebase (Configuración del proyecto → tu app Android). Si no, Google Sign-In falla en release:
+   ```bash
+   keytool -list -v -keystore ~/tsuki-release.jks -alias tsuki
+   ```
+4. `flutter build appbundle`
+
+## Arquitectura
+
+| Capa | Dónde | Qué hace |
+|---|---|---|
+| Providers | `lib/providers/` | Estado con `provider`: audio y cola (`AudioProvider`), biblioteca y sincronización (`LibraryProvider`), playlists, búsqueda, auth, idioma, conectividad |
+| Servicios | `lib/services/` | Deezer API (con caché y deduplicación), Spotify (PKCE + Web API + SDK nativo), Firebase, Last.fm, letras, precarga de previews |
+| Modelos | `lib/models/` | `Track`, `Album`, `Artist`, `Playlist` |
+| Pantallas | `lib/screens/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido |
+
+Documentación detallada por versión en `Documentos/`.
