@@ -309,13 +309,8 @@ class PlaylistProvider extends ChangeNotifier {
     if (!_isGuest && _canSyncToFirestore(uid)) {
       _startSync();
       try {
-        final db = _firebase.db;
-        await db
-            .collection('users')
-            .doc(uid)
-            .collection('playlists')
-            .doc(playlistId)
-            .update(updated.toFirestore());
+        await _commitTracks(uid, updated,
+            (server) => mergePlaylistTracks(server, add: track.toJson()));
       } catch (e) {
         debugPrint('[PlaylistProvider] addTrackToPlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
@@ -355,13 +350,8 @@ class PlaylistProvider extends ChangeNotifier {
     if (!_isGuest && _canSyncToFirestore(uid)) {
       _startSync();
       try {
-        final db = _firebase.db;
-        await db
-            .collection('users')
-            .doc(uid)
-            .collection('playlists')
-            .doc(playlistId)
-            .update(updated.toFirestore());
+        await _commitTracks(uid, updated,
+            (server) => mergePlaylistTracks(server, removeId: trackId));
       } catch (e) {
         debugPrint('[PlaylistProvider] removeTrackFromPlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
@@ -407,13 +397,9 @@ class PlaylistProvider extends ChangeNotifier {
     if (!_isGuest && _canSyncToFirestore(uid)) {
       _startSync();
       try {
-        final db = _firebase.db;
-        await db
-            .collection('users')
-            .doc(uid)
-            .collection('playlists')
-            .doc(playlistId)
-            .update(updated.toFirestore());
+        final order = updated.tracks.map((t) => t.id).toList();
+        await _commitTracks(uid, updated,
+            (server) => mergePlaylistTracks(server, order: order));
       } catch (e) {
         debugPrint('[PlaylistProvider] reorderTrack rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
@@ -426,6 +412,78 @@ class PlaylistProvider extends ChangeNotifier {
         _endSync();
       }
     }
+  }
+
+  /// Applies a track-list change on top of the *server* copy inside a
+  /// transaction, so edits made concurrently on another device are kept
+  /// instead of overwritten by this device's full list. Transactions need the
+  /// server, so offline it falls back to writing the local list (queued by
+  /// Firestore until reconnect), which is the previous behaviour.
+  Future<void> _commitTracks(
+    String uid,
+    Playlist local,
+    List<Map<String, dynamic>> Function(List<Map<String, dynamic>> server)
+        apply,
+  ) async {
+    final db = _firebase.db;
+    final docRef = db
+        .collection('users')
+        .doc(uid)
+        .collection('playlists')
+        .doc(local.id);
+    try {
+      await db.runTransaction((tx) async {
+        final snap = await tx.get(docRef);
+        final raw = snap.data()?['tracks'];
+        final server = raw is List
+            ? raw.map((t) => Map<String, dynamic>.from(t as Map)).toList()
+            : <Map<String, dynamic>>[];
+        tx.update(docRef, {
+          'tracks': apply(server),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }).timeout(const Duration(seconds: 10));
+    } on FirebaseException catch (e) {
+      if (e.code != 'unavailable') rethrow;
+      await docRef.update(local.toFirestore());
+    } on TimeoutException {
+      await docRef.update(local.toFirestore());
+    }
+  }
+
+  /// Merges one change into the server's track list (maps keyed by 'id').
+  /// - [add]: appended unless a track with the same id is already there.
+  /// - [removeId]: every entry with that id is dropped.
+  /// - [order]: ids in the desired order; server tracks missing from it
+  ///   (added elsewhere meanwhile) keep their relative order at the end.
+  @visibleForTesting
+  static List<Map<String, dynamic>> mergePlaylistTracks(
+    List<Map<String, dynamic>> server, {
+    Map<String, dynamic>? add,
+    String? removeId,
+    List<String>? order,
+  }) {
+    var result = List<Map<String, dynamic>>.from(server);
+    if (removeId != null) {
+      result = result.where((t) => t['id']?.toString() != removeId).toList();
+    }
+    if (add != null &&
+        !result.any((t) => t['id']?.toString() == add['id']?.toString())) {
+      result.add(add);
+    }
+    if (order != null) {
+      final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
+      final known = result
+          .where((t) => rank.containsKey(t['id']?.toString()))
+          .toList()
+        ..sort((a, b) =>
+            rank[a['id']?.toString()]!.compareTo(rank[b['id']?.toString()]!));
+      final extra = result
+          .where((t) => !rank.containsKey(t['id']?.toString()))
+          .toList();
+      result = [...known, ...extra];
+    }
+    return result;
   }
 
   @override

@@ -141,7 +141,7 @@ void main() {
       expect(library.listenedTracks.length, equals(900));
 
       final chunkCalls = <List<String>>[];
-      // Chunk 1 deletes 450 successfully, Chunk 2 throws
+      // Chunk 1 deletes 240 successfully (2 writes per track), chunk 2 throws
       library.unmarkAlbumChunkHandlerForTesting = (chunkIds, uid) async {
         chunkCalls.add(chunkIds);
         if (chunkCalls.length == 2) {
@@ -153,29 +153,29 @@ void main() {
       await library.unmarkAlbumTracks(allIds);
 
       expect(chunkCalls.length, equals(2));
-      expect(chunkCalls[0].length, equals(450));
-      expect(chunkCalls[1].length, equals(450));
+      expect(chunkCalls[0].length, equals(240));
+      expect(chunkCalls[1].length, equals(240));
 
       // Local state:
       // Chunk 0 was successfully deleted in Firestore -> remains deleted locally
       // Chunk 1 failed to delete in Firestore -> restored locally
-      expect(library.listenedTracks.length, equals(450));
-      expect(library.listenedTrackIds.length, equals(450));
-      expect(library.totalTracksCount, equals(450));
+      expect(library.listenedTracks.length, equals(660));
+      expect(library.listenedTrackIds.length, equals(660));
+      expect(library.totalTracksCount, equals(660));
 
       // Chunk 0 tracks should NOT be listened
-      for (var i = 0; i < 450; i++) {
+      for (var i = 0; i < 240; i++) {
         expect(library.isTrackListened('track_album_unmark_test_$i'), isFalse);
       }
 
       // Chunk 1 tracks SHOULD still be listened
-      for (var i = 450; i < 900; i++) {
+      for (var i = 240; i < 900; i++) {
         expect(library.isTrackListened('track_album_unmark_test_$i'), isTrue);
       }
 
       final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.length, equals(450));
-      expect(cached.first['trackId'], equals('track_album_unmark_test_450'));
+      expect(cached.length, equals(660));
+      expect(cached.first['trackId'], equals('track_album_unmark_test_240'));
     });
 
     test('unmarkAlbumTracks: immediate failure on chunk 1 restores all 900 tracks', () async {

@@ -151,7 +151,7 @@ class LibraryProvider extends ChangeNotifier {
 
   // Firestore subscriptions
   StreamSubscription? _tracksSubscription;
-  StreamSubscription? _statsSubscription;
+  StreamSubscription? _deletionsSubscription;
   StreamSubscription? _followedArtistsSubscription;
 
   // Public getters
@@ -358,7 +358,7 @@ class LibraryProvider extends ChangeNotifier {
     _currentUid = uid;
 
     _tracksSubscription?.cancel();
-    _statsSubscription?.cancel();
+    _deletionsSubscription?.cancel();
     _followedArtistsSubscription?.cancel();
 
     final db = _firebase.db;
@@ -381,42 +381,63 @@ class LibraryProvider extends ChangeNotifier {
       debugPrint('[LibraryProvider] Error restoring cached tracks: $e');
     }
 
-    // 2. One-time full fetch — same read cost as a listener's first snapshot,
-    //    but avoids re-reading the entire collection on every reconnection.
-    DateTime? deltaBoundary;
-    try {
-      final snapshot =
-          await tracksCol.orderBy('listenedAt', descending: true).get();
-      if (_currentUid != uid) return;
+    // 2. Full fetch only when there is no cache or the last full sync is
+    //    older than a day. Otherwise the cache plus the delta listeners below
+    //    are enough, so a cold start costs a handful of reads instead of one
+    //    per listened track. The daily full fetch also picks up deletions
+    //    made by clients that don't write the deletion log (the web app).
+    final lastFullSync = await _storage.getLastListenedFullSync(uid);
+    if (_currentUid != uid) return;
+    final now = DateTime.now();
+    final needsFullSync = _listenedTracks.isEmpty ||
+        lastFullSync == null ||
+        now.difference(lastFullSync) > _fullSyncInterval;
+    DateTime deletionsSince =
+        (lastFullSync ?? now).subtract(const Duration(minutes: 5));
 
-      _listenedTracks = snapshot.docs
-          .map((doc) =>
-              ListenedTrackData.fromFirestore(doc.data(), docId: doc.id))
-          .toList();
-      _listenedTrackIds = _listenedTracks.map((t) => t.trackId).toSet();
-      _totalTracksCount = _listenedTracks.length;
-      _listenedTracksLoaded = true;
-      notifyListeners();
+    if (needsFullSync) {
+      try {
+        final fetchStartedAt = DateTime.now();
+        final snapshot =
+            await tracksCol.orderBy('listenedAt', descending: true).get();
+        if (_currentUid != uid) return;
 
-      _storage.saveCachedListenedTracks(
-        uid,
-        _listenedTracks.map((t) => t.toJson()).toList(),
-      );
+        _listenedTracks = snapshot.docs
+            .map((doc) =>
+                ListenedTrackData.fromFirestore(doc.data(), docId: doc.id))
+            .toList();
+        _listenedTrackIds = _listenedTracks.map((t) => t.trackId).toSet();
+        _totalTracksCount = _listenedTracks.length;
+        _listenedTracksLoaded = true;
+        notifyListeners();
 
-      for (final t in _listenedTracks) {
-        if (t.listenedAt != null &&
-            (deltaBoundary == null || t.listenedAt!.isAfter(deltaBoundary))) {
-          deltaBoundary = t.listenedAt;
-        }
+        _storage.saveCachedListenedTracks(
+          uid,
+          _listenedTracks.map((t) => t.toJson()).toList(),
+        );
+        _storage.saveLastListenedFullSync(uid, fetchStartedAt);
+        deletionsSince = fetchStartedAt.subtract(const Duration(minutes: 5));
+        _pruneAlbumTrackCounts();
+        _reconcileServerStats(userDoc, _listenedTracks.length);
+        _pruneDeletionLog(userDoc);
+      } catch (e) {
+        debugPrint('[LibraryProvider] Initial Firestore fetch error: $e');
       }
-      _pruneAlbumTrackCounts();
-    } catch (e) {
-      debugPrint('[LibraryProvider] Initial Firestore fetch error: $e');
     }
 
     // 3. Delta listener — only docs newer than the latest known timestamp.
-    //    Reconnections after 30+ min re-read only THIS query's result set
-    //    (typically 0-few docs) instead of the entire 2000+ collection.
+    //    The margin absorbs device clock skew in optimistic local entries.
+    DateTime? deltaBoundary;
+    for (final t in _listenedTracks) {
+      if (t.listenedAt != null &&
+          (deltaBoundary == null || t.listenedAt!.isAfter(deltaBoundary))) {
+        deltaBoundary = t.listenedAt;
+      }
+    }
+    if (deltaBoundary != null) {
+      if (deltaBoundary.isAfter(now)) deltaBoundary = now;
+      deltaBoundary = deltaBoundary.subtract(const Duration(minutes: 10));
+    }
     final deltaQuery = deltaBoundary != null
         ? tracksCol
             .where('listenedAt',
@@ -453,31 +474,35 @@ class LibraryProvider extends ChangeNotifier {
         }
       }
 
-      if (changed) {
-        _totalTracksCount = _listenedTracks.length;
-        _pruneAlbumTrackCounts();
-        notifyListeners();
-        _storage.saveCachedListenedTracks(
-          uid,
-          _listenedTracks.map((t) => t.toJson()).toList(),
-        );
-      }
+      if (changed) _onListenedTracksChanged(uid);
     }, onError: (e) {
       debugPrint('[LibraryProvider] Firestore delta sync error: $e');
     });
 
-    // 4. Stats doc listener
-    _statsSubscription = userDoc.snapshots().listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        final stats = data?['stats'];
-        if (stats is Map) {
-          _totalTracksCount = stats['totalTracks'] ?? _listenedTracks.length;
+    // 4. Deletion log — unmarks of tracks older than the delta boundary never
+    //    show up as "removed" in the delta query, so unmarks also write
+    //    listenedDeletions/{trackId} and other devices apply them from here.
+    _deletionsSubscription = userDoc
+        .collection('listenedDeletions')
+        .where('deletedAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(deletionsSince))
+        .snapshots()
+        .listen((snapshot) {
+      if (_currentUid != uid) return;
+      bool changed = false;
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.removed) continue;
+        final data = change.doc.data();
+        final rawDeletedAt = data?['deletedAt'];
+        // Pending local write (this device's own unmark): already applied.
+        if (rawDeletedAt is! Timestamp) continue;
+        if (applyRemoteDeletion(change.doc.id, rawDeletedAt.toDate())) {
+          changed = true;
         }
       }
-      notifyListeners();
+      if (changed) _onListenedTracksChanged(uid);
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Firestore stats sync error: $e');
+      debugPrint('[LibraryProvider] Firestore deletions sync error: $e');
     });
 
     // 5. Followed artists — cache restore + full fetch + listener
@@ -541,6 +566,65 @@ class LibraryProvider extends ChangeNotifier {
     });
   }
 
+  static const Duration _fullSyncInterval = Duration(hours: 24);
+  static const Duration _deletionLogRetention = Duration(days: 7);
+
+  void _onListenedTracksChanged(String uid) {
+    _totalTracksCount = _listenedTracks.length;
+    _pruneAlbumTrackCounts();
+    notifyListeners();
+    _storage.saveCachedListenedTracks(
+      uid,
+      _listenedTracks.map((t) => t.toJson()).toList(),
+    );
+  }
+
+  /// Applies an unmark made on another device. A track re-marked after the
+  /// deletion (newer listenedAt) is kept. Returns whether anything changed.
+  @visibleForTesting
+  bool applyRemoteDeletion(String trackId, DateTime deletedAt) {
+    final idx = _listenedTracks.indexWhere((t) => t.trackId == trackId);
+    if (idx == -1) return false;
+    final listenedAt = _listenedTracks[idx].listenedAt;
+    if (listenedAt != null && listenedAt.isAfter(deletedAt)) return false;
+    _listenedTracks.removeAt(idx);
+    _listenedTrackIds.remove(trackId);
+    return true;
+  }
+
+  /// stats.totalTracks is kept with client-side increments (the web app
+  /// reads it), which drift when two devices mark the same track. The full
+  /// sync knows the real count, so it rewrites it.
+  void _reconcileServerStats(
+      DocumentReference<Map<String, dynamic>> userDoc, int count) {
+    userDoc.set({
+      'stats': {'totalTracks': count},
+    }, SetOptions(merge: true)).catchError((Object e) {
+      debugPrint('[LibraryProvider] stats reconcile failed: $e');
+    });
+  }
+
+  /// Keeps the deletion log short: entries only matter until every device
+  /// has done a full sync, which happens at least daily while in use.
+  void _pruneDeletionLog(DocumentReference<Map<String, dynamic>> userDoc) {
+    final cutoff = DateTime.now().subtract(_deletionLogRetention);
+    userDoc
+        .collection('listenedDeletions')
+        .where('deletedAt', isLessThan: Timestamp.fromDate(cutoff))
+        .limit(400)
+        .get()
+        .then((snap) async {
+      if (snap.docs.isEmpty) return;
+      final batch = _firebase.db.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }).catchError((Object e) {
+      debugPrint('[LibraryProvider] deletion log prune failed: $e');
+    });
+  }
+
   void _pruneAlbumTrackCounts({bool forceSave = false}) {
     if (!_listenedTracksLoaded || _albumTrackCounts.isEmpty) return;
     final activeAlbumIds = <String>{};
@@ -580,8 +664,9 @@ class LibraryProvider extends ChangeNotifier {
   void disconnectFirestore() {
     _currentUid = null;
     _tracksSubscription?.cancel();
-    _statsSubscription?.cancel();
+    _deletionsSubscription?.cancel();
     _followedArtistsSubscription?.cancel();
+    _tracksSubscription = null;
     _listenedTracks = [];
     _listenedTrackIds = {};
     _trackCountRequests.clear();
@@ -696,6 +781,9 @@ class LibraryProvider extends ChangeNotifier {
       final userDoc = db.collection('users').doc(uid);
       final batch = db.batch();
       batch.delete(userDoc.collection('listenedTracks').doc(trackId));
+      batch.set(userDoc.collection('listenedDeletions').doc(trackId), {
+        'deletedAt': FieldValue.serverTimestamp(),
+      });
       batch.set(
         userDoc,
         {
@@ -869,7 +957,8 @@ class LibraryProvider extends ChangeNotifier {
       final customHandler = unmarkAlbumChunkHandlerForTesting;
       final db = customHandler == null ? _firebase.db : null;
       final userDoc = db?.collection('users').doc(uid);
-      const batchLimit = 450;
+      // Two writes per track (delete + deletion log) + stats, under the 500 cap.
+      const batchLimit = 240;
 
       for (var i = 0; i < toUnmark.length; i += batchLimit) {
         final chunk = toUnmark.sublist(
@@ -881,6 +970,9 @@ class LibraryProvider extends ChangeNotifier {
           final batch = db.batch();
           for (final id in chunk) {
             batch.delete(userDoc.collection('listenedTracks').doc(id));
+            batch.set(userDoc.collection('listenedDeletions').doc(id), {
+              'deletedAt': FieldValue.serverTimestamp(),
+            });
           }
           batch.set(
             userDoc,
@@ -1104,7 +1196,7 @@ class LibraryProvider extends ChangeNotifier {
   @override
   void dispose() {
     _tracksSubscription?.cancel();
-    _statsSubscription?.cancel();
+    _deletionsSubscription?.cancel();
     _followedArtistsSubscription?.cancel();
     super.dispose();
   }

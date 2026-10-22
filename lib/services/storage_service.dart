@@ -155,6 +155,22 @@ class StorageService implements StorageContract {
   // --- User Cached Listened Tracks (Instant Cold Start & Offline Reliability) ---
 
   static String _cachedTracksKey(String uid) => 'tsuki_cached_tracks_$uid';
+  static String _lastFullSyncKey(String uid) => 'tsuki_listened_full_sync_$uid';
+
+  @override
+  Future<DateTime?> getLastListenedFullSync(String uid) async {
+    if (uid.isEmpty) return null;
+    final prefs = await SharedPreferences.getInstance();
+    final ms = prefs.getInt(_lastFullSyncKey(uid));
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  @override
+  Future<void> saveLastListenedFullSync(String uid, DateTime time) async {
+    if (uid.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_lastFullSyncKey(uid), time.millisecondsSinceEpoch);
+  }
 
   @override
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid) async {
