@@ -5,14 +5,13 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../widgets/auth_guard.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
-import '../widgets/guest_library_gate.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/tap_scale.dart';
 import 'home_screen.dart';
@@ -272,9 +271,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           ),
                           RepaintBoundary(
                             child: _loadedTabs.contains(2)
-                                ? (context.watch<AuthProvider>().isGuest
-                                    ? const GuestLibraryGate()
-                                    : const LibraryScreen())
+                                ? const AuthGuard(child: LibraryScreen())
                                 : const SizedBox.shrink(),
                           ),
                         ],

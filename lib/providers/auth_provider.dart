@@ -32,6 +32,7 @@ class AuthProvider extends ChangeNotifier {
   String? get uid => _user?.uid ?? (_isGuest ? _guestUid : null);
   String? get authError => _authError;
   bool get wasCancelled => _wasCancelled;
+  bool get isAuthenticated => _user != null && !_isGuest;
 
   bool get isLoginThrottled {
     if (_loginAttempts < _maxLoginAttempts) return false;
