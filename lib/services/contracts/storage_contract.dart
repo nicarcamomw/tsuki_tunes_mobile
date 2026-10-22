@@ -14,6 +14,8 @@ abstract class StorageContract {
   Future<void> saveAlbumTrackCounts(Map<String, int> counts);
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid);
   Future<void> saveCachedListenedTracks(String uid, List<Map<String, dynamic>> tracks);
+  Future<List<Artist>> getCachedFollowedArtists(String uid);
+  Future<void> saveCachedFollowedArtists(String uid, List<Artist> artists);
   Future<bool> hasCompletedOnboarding();
   Future<void> setCompletedOnboarding(bool completed);
   Future<String> getAppLanguage();

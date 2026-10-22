@@ -10,7 +10,9 @@ import 'package:flutter/services.dart';
 import '../providers/locale_provider.dart';
 import '../models/track.dart';
 import '../models/album.dart';
+import '../models/artist.dart';
 import '../screens/album_detail_screen.dart';
+import '../widgets/artist_card.dart';
 import 'main_navigation_screen.dart';
 
 class _AlbumGroupData {
@@ -155,6 +157,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
+
+    final followedArtists = filterText.isEmpty
+        ? library.favoriteArtists
+        : library.favoriteArtists
+            .where((a) => a.name.toLowerCase().contains(filterText))
+            .toList();
+    final showFollowed = followedArtists.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -339,6 +348,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
+                          if (showFollowed)
+                            _buildFollowedArtistsSection(
+                                followedArtists, locale),
                           SizedBox(
                             height: MediaQuery.of(context).size.height * 0.5,
                             child: _hasError
@@ -440,10 +452,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     : ListView.builder(
                         controller: scrollController,
                         padding: const EdgeInsets.only(bottom: 120),
-                        itemCount: visible.length < albumGroups.length
-                            ? visible.length + 1
-                            : visible.length,
+                        itemCount: (showFollowed ? 1 : 0) +
+                            (visible.length < albumGroups.length
+                                ? visible.length + 1
+                                : visible.length),
                         itemBuilder: (context, index) {
+                          if (showFollowed) {
+                            if (index == 0) {
+                              return _buildFollowedArtistsSection(
+                                  followedArtists, locale);
+                            }
+                            index--;
+                          }
                           if (index == visible.length) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
@@ -500,6 +520,60 @@ class _LibraryScreenState extends State<LibraryScreen> {
               durationSeconds: td.duration,
             ))
         .toList();
+  }
+
+  Widget _buildFollowedArtistsSection(
+      List<Artist> artists, LocaleProvider locale) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.person_add_alt_1_rounded,
+                    size: 16, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text(
+                  locale.strings.followedArtistsTitle,
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textBright,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${artists.length}',
+                  style: locale.getTextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 130,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: artists.length,
+              itemBuilder: (context, index) => ArtistCard(
+                key: ValueKey(artists[index].id),
+                artist: artists[index],
+                size: 84,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {

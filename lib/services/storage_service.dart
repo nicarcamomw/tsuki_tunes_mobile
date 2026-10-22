@@ -174,6 +174,35 @@ class StorageService implements StorageContract {
     await prefs.setString(_cachedTracksKey(uid), json.encode(tracks));
   }
 
+  static String _cachedFollowedArtistsKey(String uid) =>
+      'tsuki_cached_followed_artists_$uid';
+
+  @override
+  Future<List<Artist>> getCachedFollowedArtists(String uid) async {
+    if (uid.isEmpty) return [];
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(_cachedFollowedArtistsKey(uid));
+    if (raw == null || raw.isEmpty) return [];
+
+    try {
+      final List decoded = json.decode(raw);
+      return decoded
+          .map((item) => Artist.fromStorage(Map<String, dynamic>.from(item)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> saveCachedFollowedArtists(
+      String uid, List<Artist> artists) async {
+    if (uid.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final list = artists.map((a) => a.toJson()).toList();
+    await prefs.setString(_cachedFollowedArtistsKey(uid), json.encode(list));
+  }
+
   // --- Onboarding Persistence ---
   static const String _onboardingKey = 'tsuki_has_completed_onboarding';
 

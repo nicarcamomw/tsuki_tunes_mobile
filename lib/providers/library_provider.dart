@@ -147,6 +147,7 @@ class LibraryProvider extends ChangeNotifier {
   // Firestore subscriptions
   StreamSubscription? _tracksSubscription;
   StreamSubscription? _statsSubscription;
+  StreamSubscription? _followedArtistsSubscription;
 
   // Public getters
   List<Track> get favoriteTracks => _favoriteTracks;
@@ -220,7 +221,9 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> _loadLocalData() async {
     _favoriteTracks = await _storage.getFavoriteTracks();
     _recentTracks = await _storage.getRecentTracks();
-    _favoriteArtists = await _storage.getFavoriteArtists();
+    // Signed-in users get their followed artists from Firestore instead.
+    final localArtists = await _storage.getFavoriteArtists();
+    if (_currentUid == null) _favoriteArtists = localArtists;
     _artistVisits = await _storage.getArtistVisits();
     _albumTrackCounts = await _storage.getAlbumTrackCounts();
     _isLoaded = true;
@@ -267,6 +270,8 @@ class LibraryProvider extends ChangeNotifier {
 
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
+
+    _connectFollowedArtists(uid);
 
     final db = _firebase.db;
     final userDoc = db.collection('users').doc(uid);
@@ -388,6 +393,78 @@ class LibraryProvider extends ChangeNotifier {
     });
   }
 
+  /// Followed artists live in users/{uid}/followedArtists/{artistId}.
+  /// Artists followed before signing in (stored locally) are uploaded once
+  /// and then removed from the local guest list.
+  Future<void> _connectFollowedArtists(String uid) async {
+    _followedArtistsSubscription?.cancel();
+
+    final cached = await _storage.getCachedFollowedArtists(uid);
+    if (_currentUid != uid) return;
+    _favoriteArtists = cached;
+    notifyListeners();
+
+    final col = _firebase.db
+        .collection('users')
+        .doc(uid)
+        .collection('followedArtists');
+
+    bool migrated = false;
+    _followedArtistsSubscription = col.snapshots().listen((snapshot) async {
+      if (_currentUid != uid) return;
+
+      final entries = snapshot.docs.map((doc) {
+        final data = doc.data();
+        final rawDate = data['followedAt'];
+        final followedAt = rawDate is Timestamp ? rawDate.toDate() : null;
+        final artist = Artist.fromStorage({...data, 'id': data['id'] ?? doc.id});
+        return (artist: artist, followedAt: followedAt);
+      }).toList();
+      // Pending server timestamps are null locally: treat them as newest.
+      entries.sort((a, b) {
+        final aTime = a.followedAt ?? DateTime(9999);
+        final bTime = b.followedAt ?? DateTime(9999);
+        return bTime.compareTo(aTime);
+      });
+      _favoriteArtists = entries.map((e) => e.artist).toList();
+      notifyListeners();
+      _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
+
+      if (!migrated) {
+        migrated = true;
+        await _migrateLocalFollowedArtists(uid, col);
+      }
+    }, onError: (e) {
+      debugPrint('[LibraryProvider] Firestore followed artists sync error: $e');
+    });
+  }
+
+  Future<void> _migrateLocalFollowedArtists(
+      String uid, CollectionReference<Map<String, dynamic>> col) async {
+    final local = await _storage.getFavoriteArtists();
+    if (local.isEmpty || _currentUid != uid) return;
+
+    final remoteIds = _favoriteArtists.map((a) => a.id).toSet();
+    final toUpload = local.where((a) => !remoteIds.contains(a.id)).toList();
+    try {
+      if (toUpload.isNotEmpty) {
+        final batch = _firebase.db.batch();
+        for (final artist in toUpload) {
+          batch.set(col.doc(artist.id), _followedArtistDoc(artist));
+        }
+        await batch.commit();
+      }
+      await _storage.saveFavoriteArtists([]);
+    } catch (e) {
+      debugPrint('[LibraryProvider] followed artists migration failed: $e');
+    }
+  }
+
+  Map<String, dynamic> _followedArtistDoc(Artist artist) => {
+        ...artist.toJson(),
+        'followedAt': FieldValue.serverTimestamp(),
+      };
+
   void _pruneAlbumTrackCounts({bool forceSave = false}) {
     if (!_listenedTracksLoaded || _albumTrackCounts.isEmpty) return;
     final activeAlbumIds = <String>{};
@@ -427,6 +504,14 @@ class LibraryProvider extends ChangeNotifier {
     _currentUid = null;
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
+    _followedArtistsSubscription?.cancel();
+    _followedArtistsSubscription = null;
+    _favoriteArtists = [];
+    _storage.getFavoriteArtists().then((local) {
+      if (_currentUid != null) return;
+      _favoriteArtists = local;
+      notifyListeners();
+    });
     _listenedTracks = [];
     _listenedTrackIds = {};
     _totalTracksCount = 0;
@@ -853,20 +938,53 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   Future<void> toggleFavoriteArtist(Artist artist) async {
+    final prevArtists = List<Artist>.from(_favoriteArtists);
     final index = _favoriteArtists.indexWhere((a) => a.id == artist.id);
-    if (index >= 0) {
-      _favoriteArtists.removeAt(index);
-    } else {
+    final follow = index < 0;
+    if (follow) {
       _favoriteArtists.insert(0, artist);
+    } else {
+      _favoriteArtists.removeAt(index);
     }
     notifyListeners();
-    await _storage.saveFavoriteArtists(_favoriteArtists);
+
+    final uid = _currentUid;
+    if (uid == null || !_canSyncToFirestore(uid)) {
+      await _storage.saveFavoriteArtists(_favoriteArtists);
+      return;
+    }
+
+    _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
+    _startSync();
+    try {
+      final doc = _firebase.db
+          .collection('users')
+          .doc(uid)
+          .collection('followedArtists')
+          .doc(artist.id);
+      if (follow) {
+        await doc.set(_followedArtistDoc(artist));
+      } else {
+        await doc.delete();
+      }
+    } catch (e) {
+      debugPrint(
+          '[LibraryProvider] toggleFavoriteArtist rollback — Firestore failed: $e');
+      if (_currentUid == uid) {
+        _favoriteArtists = prevArtists;
+        notifyListeners();
+        _storage.saveCachedFollowedArtists(uid, _favoriteArtists);
+      }
+    } finally {
+      _endSync();
+    }
   }
 
   @override
   void dispose() {
     _tracksSubscription?.cancel();
     _statsSubscription?.cancel();
+    _followedArtistsSubscription?.cancel();
     super.dispose();
   }
 }

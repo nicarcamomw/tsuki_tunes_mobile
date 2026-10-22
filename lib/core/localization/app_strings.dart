@@ -247,6 +247,12 @@ class AppStrings {
         AppLanguage.ja => 'アルバム',
       };
 
+  String get followedArtistsTitle => switch (language) {
+        AppLanguage.es => 'ARTISTAS SEGUIDOS',
+        AppLanguage.en => 'FOLLOWED ARTISTS',
+        AppLanguage.ja => 'フォロー中のアーティスト',
+      };
+
   String get emptyLibraryTitle => switch (language) {
         AppLanguage.es => 'AÚN NO TIENES CANCIONES MARCADAS',
         AppLanguage.en => 'NO TRACKS MARKED YET',
