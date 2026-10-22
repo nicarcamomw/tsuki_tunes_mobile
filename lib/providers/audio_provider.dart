@@ -496,6 +496,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _lastPlayCommandTime = DateTime.now();
         _startPositionTimer();
       }
+      if (!_isBuffering && paused == _isPlaying) {
+        _isPlaying = !paused;
+        if (_isPlaying) {
+          _startPositionTimer();
+        } else {
+          _stopPositionTimer();
+        }
+      }
       notifyListeners();
     };
 
