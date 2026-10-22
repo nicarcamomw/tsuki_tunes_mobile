@@ -483,6 +483,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _initSpotify() async {
+    _nativePlayer.onStateChanged = (pos, dur, paused) {
+      if (!_spotifyActive) return;
+      _spotifySyncPosition = Duration(milliseconds: pos);
+      _spotifySyncTime = DateTime.now();
+      _position = _spotifySyncPosition;
+      if (dur > 0) _duration = Duration(milliseconds: dur);
+      if (_isBuffering && !paused) {
+        _isBuffering = false;
+        _isPlaying = true;
+        _lastPlayCommandTime = DateTime.now();
+        _startPositionTimer();
+      }
+      notifyListeners();
+    };
+
     await _spotify.loadSavedState();
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
     if (_useSpotify) {
@@ -949,13 +964,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _spotifyActive = true;
     _spotifyFallbackActive = false;
-    _isPlaying = true;
-    _isBuffering = false;
+    _isPlaying = false;
+    _isBuffering = true;
     _position = Duration.zero;
-    _spotifySyncPosition = Duration.zero;
-    _spotifySyncTime = DateTime.now();
     _lastPlayCommandTime = DateTime.now();
-    _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
     unawaited(_verifySpotifyPlayback(gen, uri, track));
@@ -1017,13 +1029,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Spotify no longer in use, or the user paused meanwhile).
   Future<bool> _spotifyConfirmsPlaying(int gen, String uri) async {
     await Future.delayed(const Duration(seconds: 3));
-    if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
+    if (gen != _playGeneration || !_spotifyActive) return true;
     if (_nativePlayer.isPlayingUri(uri)) {
       debugPrint('[SpotifyCheck] Playing (App Remote)');
+      _onSpotifyConfirmed(0);
       return true;
     }
     final state = await _spotify.getPlaybackState();
-    if (gen != _playGeneration || !_spotifyActive || !_isPlaying) return true;
+    if (gen != _playGeneration || !_spotifyActive) return true;
     if (state == null) {
       debugPrint('[SpotifyCheck] No active Spotify session');
       return false;
@@ -1031,14 +1044,31 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final device = state['device'] as Map<String, dynamic>?;
     final item = state['item'] as Map<String, dynamic>?;
     final linked = item?['linked_from'] as Map<String, dynamic>?;
+    final progressMs = state['progress_ms'] as int? ?? 0;
     debugPrint('[SpotifyCheck] is_playing=${state['is_playing']} '
-        'progress_ms=${state['progress_ms']} item=${item?['uri']} '
+        'progress_ms=$progressMs item=${item?['uri']} '
         'device=${device?['name']} volume=${device?['volume_percent']}');
     if (device?['volume_percent'] == 0) {
       debugPrint('[SpotifyCheck] Spotify device volume is 0%: playback is silent');
     }
-    return state['is_playing'] == true &&
+    final confirmed = state['is_playing'] == true &&
         (item?['uri'] == uri || linked?['uri'] == uri);
+    if (confirmed) {
+      final durationMs = item?['duration_ms'] as int? ?? 0;
+      if (durationMs > 0) _duration = Duration(milliseconds: durationMs);
+      _onSpotifyConfirmed(progressMs);
+    }
+    return confirmed;
+  }
+
+  void _onSpotifyConfirmed(int progressMs) {
+    _isBuffering = false;
+    _isPlaying = true;
+    _spotifySyncPosition = Duration(milliseconds: progressMs);
+    _spotifySyncTime = DateTime.now();
+    _lastPlayCommandTime = DateTime.now();
+    _startPositionTimer();
+    notifyListeners();
   }
 
 
