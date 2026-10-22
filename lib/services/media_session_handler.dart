@@ -30,6 +30,12 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> seek(Duration position) async => onSeek?.call(position);
 
+  /// The user swiped the app away from recents: stop like Spotify does.
+  @override
+  Future<void> onTaskRemoved() async {
+    await onStop?.call();
+  }
+
   /// Headset single-click toggles play/pause; double/triple click skip.
   @override
   Future<void> click([MediaButton button = MediaButton.media]) async {

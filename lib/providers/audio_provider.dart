@@ -1249,6 +1249,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     if (_useSpotify && _spotifyActive) {
       try { await _spotify.pause(); } catch (_) {}
+      await _nativePlayer.pause();
     }
     _spotifyActive = false;
     _spotifyFallbackActive = false;
