@@ -11,10 +11,14 @@
             "id": "8148dbb05501c76d",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Nueva pestaña"
+              "title": "Apartados a revisar en un proyecto informático (TSUKI TUNES)"
             }
           }
         ]
@@ -90,30 +94,12 @@
         "type": "tabs",
         "children": [
           {
-            "id": "f96ffb90526b8c3a",
-            "type": "leaf",
-            "state": {
-              "type": "backlink",
-              "state": {
-                "collapseAll": false,
-                "extraContext": false,
-                "sortOrder": "alphabetical",
-                "showSearch": false,
-                "searchQuery": "",
-                "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
-              },
-              "icon": "links-coming-in",
-              "title": "Enlaces entrantes"
-            }
-          },
-          {
             "id": "0e14f0ac593577b8",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Documentos/Documentacion de apartados de aplicacion movil Tsuki Tunes.md",
+                "file": "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -182,8 +168,9 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "8148dbb05501c76d",
+  "active": "0e14f0ac593577b8",
   "lastOpenFiles": [
+    "firebase-debug.log",
     "Documentos/Apartados a revisar en un proyecto informático (TSUKI TUNES).md",
     "build/jni/intermediates/cxx/Debug/4u3f7229/logs/x86_64/generate_cxx_metadata_273_timing.txt",
     "build/jni/intermediates/cxx/Debug/4u3f7229/logs/armeabi-v7a/generate_cxx_metadata_273_timing.txt",
