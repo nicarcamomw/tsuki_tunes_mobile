@@ -607,6 +607,31 @@ class AppStrings {
         AppLanguage.ja => '$count 人のファン',
       };
 
+  String get followArtist => switch (language) {
+        AppLanguage.es => 'SEGUIR',
+        AppLanguage.en => 'FOLLOW',
+        AppLanguage.ja => 'フォロー',
+      };
+
+  String get followingArtist => switch (language) {
+        AppLanguage.es => 'SIGUIENDO',
+        AppLanguage.en => 'FOLLOWING',
+        AppLanguage.ja => 'フォロー中',
+      };
+
+  String get artistDiscographyComplete => switch (language) {
+        AppLanguage.es => 'Discografía completa escuchada',
+        AppLanguage.en => 'Full discography listened',
+        AppLanguage.ja => '全ディスコグラフィー視聴済み',
+      };
+
+  String artistDiscographyProgress(int completed, int total) =>
+      switch (language) {
+        AppLanguage.es => '$completed/$total lanzamientos completos',
+        AppLanguage.en => '$completed/$total releases completed',
+        AppLanguage.ja => '$completed/$total 作品を完了',
+      };
+
   String artistReleases(int count) => switch (language) {
         AppLanguage.es => '$count lanzamientos',
         AppLanguage.en => '$count releases',

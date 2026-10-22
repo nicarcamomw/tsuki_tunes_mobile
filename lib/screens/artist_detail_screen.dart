@@ -46,6 +46,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   bool _showAllTracks = false;
   bool _showTitleInAppBar = false;
   bool _showStoredContent = false;
+  bool _hasMoreAlbums = false;
+  // Albums whose real track count has already been requested from Deezer.
+  final Set<String> _trackCountRequests = {};
 
   @override
   void initState() {
@@ -80,6 +83,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
+    _trackCountRequests.clear();
     final isOnline = context.read<ConnectivityProvider>().isOnline;
     if (!isOnline) {
       if (mounted) {
@@ -108,10 +112,16 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           _topTracks = results[0] as List<Track>;
           _albums = allAlbums;
           _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
+          _hasMoreAlbums = pagedAlbums.hasMore;
           _artistTags = results[2] as List<String>;
           _isLoading = false;
         });
-        _enrichAlbumsWithSavedTracks(_albums);
+        final library = context.read<LibraryProvider>();
+        for (final a in allAlbums) {
+          if (a.tracksCount > 0 && library.getAlbumTracksCount(a.id) <= 0) {
+            library.registerAlbumTrackCount(a.id, a.tracksCount);
+          }
+        }
       }
     } catch (e) {
       debugPrint('[ArtistDetail] loadArtistData error: $e');
@@ -124,38 +134,48 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
   }
 
-  Future<void> _enrichAlbumsWithSavedTracks(List<Album> albums) async {
-    if (!mounted) return;
-    final library = context.read<LibraryProvider>();
-
-    for (final a in albums) {
-      if (a.tracksCount > 0 && library.getAlbumTracksCount(a.id) <= 0) {
-        library.registerAlbumTrackCount(a.id, a.tracksCount);
-      }
+  /// Deezer's artist/albums listing omits nb_tracks, so an album can only be
+  /// judged complete once its real track count is known. Requests that count
+  /// for every release with listened tracks and no known total. Runs from
+  /// build so it also covers listened tracks that arrive after the screen
+  /// loaded (Firestore sync, marking from the player or album screen).
+  void _fetchMissingTrackCounts(LibraryProvider library) {
+    if (_albums.isEmpty || !library.listenedTracksLoaded) return;
+    final listenedAlbumIds =
+        library.listenedTracks.map((t) => t.albumId).toSet();
+    final toFetch = <Album>[];
+    for (final a in _albums) {
+      if (!listenedAlbumIds.contains(a.id)) continue;
+      if (a.tracksCount > 0 || library.getAlbumTracksCount(a.id) > 0) continue;
+      if (_trackCountRequests.add(a.id)) toFetch.add(a);
     }
-
-    final savedAlbumIds = library.listenedTracks.map((t) => t.albumId).toSet();
-    final toFetch = albums.where((a) {
-      if (!savedAlbumIds.contains(a.id)) return false;
-      return library.getAlbumTracksCount(a.id) <= 0 && a.tracksCount <= 0;
-    }).toList();
-
     if (toFetch.isEmpty) return;
 
-    try {
-      final results = await Future.wait(toFetch.map((a) => _api.getAlbum(a.id)));
+    Future.wait(toFetch.map((a) => _api.getAlbum(a.id))).then((results) {
+      if (!mounted) return;
       for (final res in results) {
-        if (res != null) {
-          final count = res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
-          if (count > 0) {
-            library.registerAlbumTrackCount(res.id, count);
-          }
-        }
+        if (res == null) continue;
+        final count =
+            res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
+        if (count > 0) library.registerAlbumTrackCount(res.id, count);
       }
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint('[ArtistDetail] _enrichAlbumsWithSavedTracks error: $e');
+    }).catchError((Object e) {
+      debugPrint('[ArtistDetail] _fetchMissingTrackCounts error: $e');
+    });
+  }
+
+  /// Own releases (albums, EPs, singles) grouped by type + title, so that
+  /// duplicate editions (explicit/clean, re-uploads) count as one release.
+  /// "Appears on" compilations are excluded: they are mostly other artists'
+  /// tracks and would make the discography impossible to complete.
+  List<List<Album>> get _ownReleaseGroups {
+    final groups = <String, List<Album>>{};
+    for (final a in _albums) {
+      if (a.recordType == 'compile') continue;
+      final key = '${a.recordType}|${a.title.trim().toLowerCase()}';
+      groups.putIfAbsent(key, () => []).add(a);
     }
+    return groups.values.toList();
   }
 
   Map<String, List<Album>> get _categorizedAlbums {
@@ -182,10 +202,19 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
 
-    // Check if ALL albums have ALL tracks listened
-    final bool isArtistComplete = _albums.isNotEmpty &&
-        _albums.every((album) =>
-            library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount));
+    _fetchMissingTrackCounts(library);
+
+    // The mask lights up when every own release has all its tracks listened.
+    final releaseGroups = _ownReleaseGroups;
+    final completedReleases = releaseGroups
+        .where((group) => group.any((album) => library.isAlbumCompleted(
+            album.id,
+            albumTracksCount: album.tracksCount)))
+        .length;
+    final bool isArtistComplete = !_isLoading &&
+        !_hasMoreAlbums &&
+        releaseGroups.isNotEmpty &&
+        completedReleases == releaseGroups.length;
 
     final cats = _categorizedAlbums;
 
@@ -240,20 +269,31 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 12),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgDeep.withValues(alpha: 0.7),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.4),
-                      width: 1,
+                child: Tooltip(
+                  triggerMode: TooltipTriggerMode.tap,
+                  message: isArtistComplete
+                      ? strings.artistDiscographyComplete
+                      : strings.artistDiscographyProgress(
+                          completedReleases, releaseGroups.length),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 350),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isArtistComplete
+                          ? AppColors.accent
+                          : AppColors.bgDeep.withValues(alpha: 0.7),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.accent
+                            .withValues(alpha: isArtistComplete ? 1.0 : 0.4),
+                        width: 1,
+                      ),
                     ),
-                  ),
-                  child: OniMaskIcon(
-                    isActive: isArtistComplete,
-                    size: 22,
-                    showContainer: false,
+                    child: OniMaskIcon(
+                      isActive: isArtistComplete,
+                      size: 22,
+                      showContainer: false,
+                    ),
                   ),
                 ),
               ),
@@ -306,30 +346,34 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Stats row
+                  // Stats row + follow button
                   Row(
                     children: [
-                      if (widget.artist.fansCount > 0) ...[
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                      Expanded(
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            AppCustomIcons.persona(
-                              size: 16,
-                              color: AppColors.accent,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
-                              style: locale.getTextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
+                            if (widget.artist.fansCount > 0)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AppCustomIcons.persona(
+                                    size: 16,
+                                    color: AppColors.accent,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
+                                    style: locale.getTextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                           ],
                         ),
-                        const SizedBox(width: 16),
-                      ],
                       if (widget.artist.albumsCount > 0)
                         GestureDetector(
                           onTap: () {
@@ -371,6 +415,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             ],
                           ),
                         ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildFollowButton(library, locale, strings),
                     ],
                   ),
 
@@ -777,9 +826,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       if (updated != null && updated.length > _albums.length) {
                         setState(() {
                           _albums = updated;
+                          _hasMoreAlbums = updated.length < _totalAlbums;
                         });
                       }
-                      _enrichAlbumsWithSavedTracks(_albums);
                       setState(() {});
                     }
                   },
@@ -827,10 +876,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             builder: (_) => AlbumDetailScreen(album: album),
           ),
         );
-        if (mounted) {
-          _enrichAlbumsWithSavedTracks(_albums);
-          setState(() {});
-        }
+        if (mounted) setState(() {});
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1158,6 +1204,58 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFollowButton(
+      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+    final isFollowing = library.isFavoriteArtist(widget.artist.id);
+    final label = isFollowing ? strings.followingArtist : strings.followArtist;
+    final fgColor = isFollowing ? AppColors.textBright : AppColors.accent;
+
+    return Semantics(
+      button: true,
+      toggled: isFollowing,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          library.toggleFavoriteArtist(widget.artist);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isFollowing
+                ? AppColors.accent
+                : AppColors.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.accent, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isFollowing ? Icons.check_rounded : Icons.add_rounded,
+                size: 14,
+                color: fgColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: fgColor,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
