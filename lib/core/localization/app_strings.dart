@@ -315,6 +315,42 @@ class AppStrings {
         AppLanguage.ja => '最大',
       };
 
+  String get autoMarkTitle => switch (language) {
+        AppLanguage.es => 'Marcar al escuchar',
+        AppLanguage.en => 'Mark when listened',
+        AppLanguage.ja => '再生で既聴にする',
+      };
+
+  String get autoMarkSubtitle => switch (language) {
+        AppLanguage.es => 'Marca la canción al llegar al 80%',
+        AppLanguage.en => 'Marks the track at 80% played',
+        AppLanguage.ja => '80%再生で既聴マーク',
+      };
+
+  String get precacheWifiTitle => switch (language) {
+        AppLanguage.es => 'Precarga solo con Wi-Fi',
+        AppLanguage.en => 'Preload on Wi-Fi only',
+        AppLanguage.ja => 'Wi-Fi時のみ先読み',
+      };
+
+  String get precacheWifiSubtitle => switch (language) {
+        AppLanguage.es => 'Ahorra datos móviles',
+        AppLanguage.en => 'Saves mobile data',
+        AppLanguage.ja => 'モバイルデータを節約',
+      };
+
+  String get clearAudioCache => switch (language) {
+        AppLanguage.es => 'BORRAR CACHÉ DE AUDIO',
+        AppLanguage.en => 'CLEAR AUDIO CACHE',
+        AppLanguage.ja => '音声キャッシュを削除',
+      };
+
+  String get audioCacheCleared => switch (language) {
+        AppLanguage.es => 'Caché de audio borrada',
+        AppLanguage.en => 'Audio cache cleared',
+        AppLanguage.ja => '音声キャッシュを削除しました',
+      };
+
   String crossfadeSecondsLabel(int seconds) => switch (language) {
         AppLanguage.es => '$seconds seg',
         AppLanguage.en => '${seconds}s',

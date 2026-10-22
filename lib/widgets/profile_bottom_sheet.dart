@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
@@ -7,6 +8,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../services/audio_precache_service.dart';
 import 'language_selector_sheet.dart';
 
 class ProfileBottomSheet {
@@ -455,6 +457,69 @@ class ProfileBottomSheet {
                   ),
                 ),
 
+                const SizedBox(height: 10),
+
+                // Playback settings
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMid,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      _settingSwitch(
+                        locale: locale,
+                        icon: Icons.task_alt_rounded,
+                        title: strings.autoMarkTitle,
+                        subtitle: strings.autoMarkSubtitle,
+                        value: audioProvider.autoMarkListened,
+                        onChanged: (v) {
+                          HapticFeedback.selectionClick();
+                          audioProvider.setAutoMarkListened(v);
+                          setModalState(() {});
+                        },
+                      ),
+                      Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                      _settingSwitch(
+                        locale: locale,
+                        icon: Icons.wifi_rounded,
+                        title: strings.precacheWifiTitle,
+                        subtitle: strings.precacheWifiSubtitle,
+                        value: audioProvider.precacheWifiOnly,
+                        onChanged: (v) {
+                          HapticFeedback.selectionClick();
+                          audioProvider.setPrecacheWifiOnly(v);
+                          setModalState(() {});
+                        },
+                      ),
+                      Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                      TextButton.icon(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          AudioPrecacheService().clearCache();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(strings.audioCacheCleared)),
+                          );
+                        },
+                        icon: const Icon(Icons.delete_sweep_rounded,
+                            color: AppColors.textSecondary, size: 16),
+                        label: Text(
+                          strings.clearAudioCache,
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 14),
 
                 // Language Selector Button
@@ -599,6 +664,37 @@ class ProfileBottomSheet {
     ).whenComplete(() {
       FocusManager.instance.primaryFocus?.unfocus();
     });
+  }
+
+  static Widget _settingSwitch({
+    required LocaleProvider locale,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      value: value,
+      onChanged: onChanged,
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      activeThumbColor: AppColors.accent,
+      secondary: Icon(icon,
+          size: 18, color: value ? AppColors.accent : AppColors.textMuted),
+      title: Text(
+        title,
+        style: locale.getTextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textBright,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+      ),
+    );
   }
 
   static Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {

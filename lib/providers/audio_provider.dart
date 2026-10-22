@@ -57,6 +57,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _completionHandled = false;
   bool _crossfadeTriggered = false;
   int _crossfadeSeconds = 3;
+  bool _autoMarkListened = false;
+  bool _precacheWifiOnly = false;
+  // Play generation for which the "listened" threshold already fired.
+  int _autoMarkedGeneration = -1;
+  static const double _autoMarkThreshold = 0.8;
   DateTime _lastPlayStart = DateTime(2000);
   int _playGeneration = 0;
 
@@ -96,6 +101,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   Function(Track)? onTrackStarted;
 
+  /// Called once per play when [autoMarkListened] is on and playback passes
+  /// 80% of the track.
+  Function(Track)? onListenedThreshold;
+
   Track? get currentTrack => _currentTrack;
   List<Track> get queue => _queue;
   int get currentIndex => _currentIndex;
@@ -115,6 +124,35 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? get lastSpotifyError => _lastSpotifyError;
   String? get lastPlaybackError => _lastPlaybackError;
   int get crossfadeSeconds => _crossfadeSeconds;
+  bool get autoMarkListened => _autoMarkListened;
+  bool get precacheWifiOnly => _precacheWifiOnly;
+
+  Future<void> setAutoMarkListened(bool enabled) async {
+    _autoMarkListened = enabled;
+    notifyListeners();
+    await _storage.saveAutoMarkListened(enabled);
+  }
+
+  Future<void> setPrecacheWifiOnly(bool enabled) async {
+    _precacheWifiOnly = enabled;
+    notifyListeners();
+    await _storage.savePrecacheWifiOnly(enabled);
+  }
+
+  @visibleForTesting
+  void checkListenedThresholdForTesting() => _checkListenedThreshold();
+
+  void _checkListenedThreshold() {
+    if (!_autoMarkListened || _autoMarkedGeneration == _playGeneration) return;
+    final track = _currentTrack;
+    if (track == null || _duration <= Duration.zero) return;
+    if (_position.inMilliseconds <
+        _duration.inMilliseconds * _autoMarkThreshold) {
+      return;
+    }
+    _autoMarkedGeneration = _playGeneration;
+    onListenedThreshold?.call(track);
+  }
   Duration? get sleepTimerRemaining {
     if (_sleepTimerDeadline != null) {
       final diff = _sleepTimerDeadline!.difference(DateTime.now());
@@ -333,6 +371,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _initCrossfade() async {
     try {
       _crossfadeSeconds = await _storage.getCrossfadeSeconds();
+      _autoMarkListened = await _storage.getAutoMarkListened();
+      _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
@@ -449,6 +489,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _handleTrackCompleted();
         } else {
           _maybePersistPosition();
+          _checkListenedThreshold();
           notifyListeners();
           if (_spotifyPollTick % 15 == 0) {
             _syncSpotifyPlaybackState();
@@ -535,7 +576,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (!_spotifyActive) {
         _position = pos;
         _checkCrossfade(pos);
-        if (_isPlaying) _maybePersistPosition();
+        if (_isPlaying) {
+          _maybePersistPosition();
+          _checkListenedThreshold();
+        }
         notifyListeners();
       }
     }, onError: (e) {
@@ -865,6 +909,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _precache(Track track) {
+    if (_precacheWifiOnly && (_connectivityProvider?.isMetered ?? false)) {
+      return;
+    }
     _withFreshPreview(track).then(AudioPrecacheService().precacheTrack);
   }
 

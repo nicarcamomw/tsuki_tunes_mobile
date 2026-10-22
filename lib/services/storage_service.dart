@@ -245,6 +245,34 @@ class StorageService implements StorageContract {
     await prefs.setInt(_crossfadeKey, seconds);
   }
 
+  // --- Playback settings ---
+  static const String _autoMarkKey = 'tsuki_auto_mark_listened';
+  static const String _precacheWifiOnlyKey = 'tsuki_precache_wifi_only';
+
+  @override
+  Future<bool> getAutoMarkListened() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_autoMarkKey) ?? false;
+  }
+
+  @override
+  Future<void> saveAutoMarkListened(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_autoMarkKey, enabled);
+  }
+
+  @override
+  Future<bool> getPrecacheWifiOnly() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_precacheWifiOnlyKey) ?? false;
+  }
+
+  @override
+  Future<void> savePrecacheWifiOnly(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_precacheWifiOnlyKey, enabled);
+  }
+
   // --- Cached Playlists (per-user) ---
 
   static String _cachedPlaylistsKey(String uid) => 'tsuki_cached_playlists_$uid';

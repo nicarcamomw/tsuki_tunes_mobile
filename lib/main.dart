@@ -54,6 +54,9 @@ class TsukiTunesApp extends StatelessWidget {
             audio.onTrackStarted = (track) {
               library.addRecentTrack(track);
             };
+            audio.onListenedThreshold = (track) {
+              if (!library.isTrackListened(track.id)) library.markTrack(track);
+            };
             return audio;
           },
         ),

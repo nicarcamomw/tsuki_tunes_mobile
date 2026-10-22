@@ -7,12 +7,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
   final Connectivity _connectivity = Connectivity();
   bool _isOnline = true;
+  bool _isMetered = false;
   StreamSubscription<List<ConnectivityResult>>? _sub;
   Timer? _periodicTimer;
   int _checkCounter = 0;
   bool _disposed = false;
 
   bool get isOnline => _isOnline;
+
+  /// True on mobile data without Wi-Fi/Ethernet.
+  bool get isMetered => _isMetered;
 
   ConnectivityProvider() {
     WidgetsBinding.instance.addObserver(this);
@@ -70,6 +74,9 @@ class ConnectivityProvider extends ChangeNotifier with WidgetsBindingObserver {
     final currentToken = ++_checkCounter;
     final hasInterface =
         results.isNotEmpty && !results.contains(ConnectivityResult.none);
+    _isMetered = results.contains(ConnectivityResult.mobile) &&
+        !results.contains(ConnectivityResult.wifi) &&
+        !results.contains(ConnectivityResult.ethernet);
 
     if (!hasInterface) {
       _setOnline(false);
