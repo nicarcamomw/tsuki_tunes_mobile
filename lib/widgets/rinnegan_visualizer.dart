@@ -107,7 +107,7 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
             ),
 
             // Inner Album Cover / Artwork
-            ClipOval(
+            ExcludeSemantics(child: ClipOval(
               child: SizedBox(
                 width: widget.size * 0.58,
                 height: widget.size * 0.58,
@@ -129,7 +129,7 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
                         child: const Icon(Icons.music_note, size: 40, color: AppColors.accent),
                       ),
               ),
-            ),
+            )),
 
             // Center Pin
             Container(

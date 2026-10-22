@@ -130,7 +130,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         // Cover
-                        ClipRRect(
+                        ExcludeSemantics(child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: SizedBox(
                             width: 140,
@@ -144,22 +144,25 @@ class PlaylistDetailScreen extends StatelessWidget {
                                   )
                                 : _buildPlaceholderCover(),
                           ),
-                        ),
+                        )),
                         const SizedBox(height: 12),
                         // Name
                         Padding(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                            playlist.name,
-                            style: locale.getTextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textBright,
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              playlist.name,
+                              style: locale.getTextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textBright,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 4),

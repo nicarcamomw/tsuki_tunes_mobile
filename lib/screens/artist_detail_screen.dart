@@ -314,10 +314,13 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     left: 16,
                     right: 16,
                     bottom: 22,
-                    child: DistortedArtistName(
-                      name: widget.artist.name,
-                      artistId: widget.artist.id,
-                      fontSize: 30,
+                    child: Semantics(
+                      header: true,
+                      child: DistortedArtistName(
+                        name: widget.artist.name,
+                        artistId: widget.artist.id,
+                        fontSize: 30,
+                      ),
                     ),
                   ),
                 ],
@@ -1069,7 +1072,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               width: 1.5,
                             ),
                           ),
-                          child: ClipOval(
+                          child: ExcludeSemantics(child: ClipOval(
                             child: artist.pictureUrl.isNotEmpty
                                 ? CachedNetworkImage(
                                     imageUrl: artist.getBestImage(size: 'medium'),
@@ -1079,10 +1082,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                   )
                                 : Container(
                                     color: AppColors.bgMid,
-                                    child: Icon(Icons.person,
-                                        color: AppColors.textMuted, size: 36, semanticLabel: strings.a11yArtistAvatar),
+                                    child: const Icon(Icons.person,
+                                        color: AppColors.textMuted, size: 36),
                                   ),
-                          ),
+                          )),
                         ),
                         const SizedBox(height: 8),
                         Text(

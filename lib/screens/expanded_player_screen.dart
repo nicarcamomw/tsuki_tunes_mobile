@@ -341,13 +341,16 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _TitleMarquee(
-                              text: track.title,
-                              style: locale.getTextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textBright,
-                                letterSpacing: 0.5,
+                            Semantics(
+                              header: true,
+                              child: _TitleMarquee(
+                                text: track.title,
+                                style: locale.getTextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textBright,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -1089,7 +1092,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                           ),
                                   ),
                                   const SizedBox(width: 8),
-                                  ClipRRect(
+                                  ExcludeSemantics(child: ClipRRect(
                                     borderRadius: BorderRadius.circular(6),
                                     child: SizedBox(
                                       width: 36,
@@ -1100,32 +1103,17 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                               fit: BoxFit.cover,
                                               placeholder: (_, __) => Container(
                                                 color: AppColors.bgHover,
-                                                child: Icon(
-                                                    Icons.music_note,
-                                                    size: 16,
-                                                    color: AppColors.textMuted,
-                                                    semanticLabel: strings.a11yAlbumCover),
                                               ),
                                               errorWidget: (_, __, ___) =>
                                                   Container(
                                                 color: AppColors.bgHover,
-                                                child: Icon(
-                                                    Icons.music_note,
-                                                    size: 16,
-                                                    color: AppColors.textMuted,
-                                                    semanticLabel: strings.a11yAlbumCover),
                                               ),
                                             )
                                           : Container(
                                               color: AppColors.bgHover,
-                                              child: Icon(
-                                                  Icons.music_note,
-                                                  size: 16,
-                                                  color: AppColors.textMuted,
-                                                  semanticLabel: strings.a11yAlbumCover),
                                             ),
                                     ),
-                                  ),
+                                  )),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
@@ -1185,13 +1173,16 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         );
                                       },
                                       behavior: HitTestBehavior.opaque,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(6),
-                                        child: Icon(
-                                          Icons.close,
-                                          color: AppColors.textMuted,
-                                          size: 16,
-                                          semanticLabel: strings.a11yRemoveFromQueue,
+                                      child: SizedBox(
+                                        width: 48,
+                                        height: 48,
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.close,
+                                            color: AppColors.textMuted,
+                                            size: 16,
+                                            semanticLabel: strings.a11yRemoveFromQueue,
+                                          ),
                                         ),
                                       ),
                                     ),

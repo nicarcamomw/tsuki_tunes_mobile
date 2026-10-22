@@ -102,6 +102,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  tooltip: strings.a11yClose,
                   icon: Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary, semanticLabel: strings.a11yClose),
                   onPressed: () => Navigator.pop(context),
                 ),

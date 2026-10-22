@@ -111,26 +111,29 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          strings.searchTitle.toUpperCase(),
-                          style: locale.getTextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textBright,
-                            letterSpacing: 2,
+                    Semantics(
+                      header: true,
+                      child: Row(
+                        children: [
+                          Text(
+                            strings.searchTitle.toUpperCase(),
+                            style: locale.getTextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textBright,
+                              letterSpacing: 2,
+                            ),
                           ),
-                        ),
-                        Text(
-                          ' // 02',
-                          style: locale.getTextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.accent,
+                          Text(
+                            ' // 02',
+                            style: locale.getTextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(

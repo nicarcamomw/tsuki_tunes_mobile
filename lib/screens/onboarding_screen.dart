@@ -341,10 +341,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
-                      Icons.fast_forward_rounded,
-                      size: 11,
-                      color: AppColors.textMuted,
+                    const ExcludeSemantics(
+                      child: Icon(
+                        Icons.fast_forward_rounded,
+                        size: 11,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -367,7 +369,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           const SizedBox(height: 12),
 
           // Visual Centerpiece: Music Vault Album Sleeve + Spinning Vinyl + Favorite Heart
-          _buildMusicVaultGraphic(size, t, locale, strings),
+          ExcludeSemantics(child: _buildMusicVaultGraphic(size, t, locale, strings)),
 
           const SizedBox(height: 10),
 
@@ -921,7 +923,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           const SizedBox(height: 12),
 
           // Visual Centerpiece: Animated Search Bar with Cycling Queries & Floating Result Cards
-          _buildSearchCatalogGraphic(size, t),
+          ExcludeSemantics(child: _buildSearchCatalogGraphic(size, t)),
 
           const SizedBox(height: 10),
 
@@ -1272,7 +1274,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           const SizedBox(height: 12),
 
           // Visual Centerpiece: Immersive Player Frame with Dancing Equalizer & Scrubbing Progress
-          _buildPlayerMockupGraphic(size, t),
+          ExcludeSemantics(child: _buildPlayerMockupGraphic(size, t)),
 
           const SizedBox(height: 10),
 
@@ -1591,7 +1593,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           if (customIcon != null)
             customIcon
           else if (icon != null)
-            Icon(icon, size: 12, color: AppColors.accent),
+            ExcludeSemantics(child: Icon(icon, size: 12, color: AppColors.accent)),
           const SizedBox(width: 5),
           Text(
             text,
@@ -1705,12 +1707,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(
-                      isLastPage
-                          ? Icons.play_arrow_rounded
-                          : Icons.arrow_forward_rounded,
-                      size: 16,
-                      color: isLastPage ? Colors.white : AppColors.accent,
+                    ExcludeSemantics(
+                      child: Icon(
+                        isLastPage
+                            ? Icons.play_arrow_rounded
+                            : Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: isLastPage ? Colors.white : AppColors.accent,
+                      ),
                     ),
                   ],
                 ),

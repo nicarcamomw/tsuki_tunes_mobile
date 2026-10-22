@@ -266,26 +266,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                strings.homeHeader.replaceAll(' // 01', ''),
-                                style: locale.getTextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textBright,
-                                  letterSpacing: 2,
+                          Semantics(
+                            header: true,
+                            child: Row(
+                              children: [
+                                Text(
+                                  strings.homeHeader.replaceAll(' // 01', ''),
+                                  style: locale.getTextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textBright,
+                                    letterSpacing: 2,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                ' // 01',
-                                style: locale.getTextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.accent,
+                                Text(
+                                  ' // 01',
+                                  style: locale.getTextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.accent,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -824,7 +827,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            ClipOval(
+            ExcludeSemantics(child: ClipOval(
               child: SizedBox(
                 width: 40,
                 height: 40,
@@ -839,7 +842,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.accent, size: 20, semanticLabel: locale.strings.a11yArtistAvatar),
                       ),
               ),
-            ),
+            )),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -909,7 +912,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            ClipOval(
+            ExcludeSemantics(child: ClipOval(
               child: SizedBox(
                 width: 40,
                 height: 40,
@@ -920,7 +923,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     : Container(color: AppColors.bgCard),
               ),
-            ),
+            )),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

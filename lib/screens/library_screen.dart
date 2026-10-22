@@ -186,26 +186,29 @@ class _LibraryScreenState extends State<LibraryScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        strings.libraryTitle.toUpperCase(),
-                        style: locale.getTextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textBright,
-                          letterSpacing: 2,
+                  Semantics(
+                    header: true,
+                    child: Row(
+                      children: [
+                        Text(
+                          strings.libraryTitle.toUpperCase(),
+                          style: locale.getTextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textBright,
+                            letterSpacing: 2,
+                          ),
                         ),
-                      ),
-                      Text(
-                        ' // 03',
-                        style: locale.getTextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
+                        Text(
+                          ' // 03',
+                          style: locale.getTextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.accent,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -916,7 +919,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
               child: Row(
                 children: [
                   // Cover
-                  ClipRRect(
+                  ExcludeSemantics(child: ClipRRect(
                     borderRadius: BorderRadius.circular(3),
                     child: SizedBox(
                       width: 44,
@@ -932,7 +935,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                             )
                           : Container(color: AppColors.bgMid),
                     ),
-                  ),
+                  )),
                   const SizedBox(width: 12),
 
                   // Info
@@ -1186,7 +1189,7 @@ class _PlaylistListTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              ClipRRect(
+              ExcludeSemantics(child: ClipRRect(
                 borderRadius: BorderRadius.circular(3),
                 child: SizedBox(
                   width: 48,
@@ -1199,17 +1202,13 @@ class _PlaylistListTile extends StatelessWidget {
                               Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: Icon(Icons.queue_music,
-                                color: AppColors.accent, size: 22, semanticLabel: strings.a11yPlaylistCover),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: Icon(Icons.queue_music,
-                              color: AppColors.accent, size: 22, semanticLabel: strings.a11yPlaylistCover),
                         ),
                 ),
-              ),
+              )),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

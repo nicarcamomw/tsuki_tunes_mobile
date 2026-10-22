@@ -259,7 +259,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     builder: (context, activeIndex, _) {
                       _loadedTabs.add(activeIndex);
 
-                      return FadeIndexedStack(
+                      return FocusTraversalGroup(
+                        child: FadeIndexedStack(
                         index: activeIndex,
                         duration: const Duration(milliseconds: 150),
                         children: [
@@ -277,6 +278,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                                 : const SizedBox.shrink(),
                           ),
                         ],
+                      ),
                       );
                     },
                   ),
@@ -549,7 +551,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }) {
     final isSelected = selectedIndex == index;
 
-    return TapScale(
+    return Semantics(
+      selected: isSelected,
+      child: TapScale(
       semanticLabel: label,
       onTap: () => _onNavItemTap(index),
       onLongPress: () => _onNavItemLongPress(index),
@@ -622,6 +626,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

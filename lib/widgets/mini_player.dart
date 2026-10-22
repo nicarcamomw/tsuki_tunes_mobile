@@ -389,7 +389,7 @@ class _BreathingCoverState extends State<_BreathingCover>
       },
       child: Hero(
         tag: 'player_art_${widget.trackId}',
-        child: ClipRRect(
+        child: ExcludeSemantics(child: ClipRRect(
           borderRadius: BorderRadius.circular(3.5),
           child: SizedBox(
             width: 44,
@@ -412,7 +412,7 @@ class _BreathingCoverState extends State<_BreathingCover>
                         color: AppColors.accent),
                   ),
           ),
-        ),
+        )),
       ),
     );
   }

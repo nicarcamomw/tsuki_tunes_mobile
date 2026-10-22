@@ -164,6 +164,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             pinned: true,
             backgroundColor: AppColors.bgDeep,
             leading: IconButton(
+              tooltip: strings.a11yBack,
               icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -286,14 +287,17 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   const SizedBox(height: 10),
 
                   // Title
-                  Text(
-                    albumData.title,
-                    style: locale.getTextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textBright,
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      albumData.title,
+                      style: locale.getTextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
 
                   const SizedBox(height: 4),

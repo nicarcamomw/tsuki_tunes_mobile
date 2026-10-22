@@ -114,8 +114,10 @@ class _PlaylistSelectorContent extends StatelessWidget {
                     final playlist = playlists[i];
                     final alreadyAdded =
                         playlist.tracks.any((t) => t.id == track.id);
-                    return ListTile(
-                      leading: ClipRRect(
+                    return Semantics(
+                      selected: alreadyAdded,
+                      child: ListTile(
+                      leading: ExcludeSemantics(child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: SizedBox(
                           width: 40,
@@ -136,7 +138,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                                       color: AppColors.accent, size: 18),
                                 ),
                         ),
-                      ),
+                      )),
                       title: Text(
                         playlist.name,
                         style: locale.getTextStyle(
@@ -213,6 +215,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                                 );
                               }
                             },
+                    ),
                     );
                   },
                 ),
