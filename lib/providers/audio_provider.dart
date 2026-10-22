@@ -25,8 +25,8 @@ export '../models/repeat_mode.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service;
-  final SpotifyService _spotify = SpotifyService();
-  final SpotifyNativePlayer _nativePlayer = SpotifyNativePlayer();
+  final SpotifyService _spotify;
+  final SpotifyNativePlayer _nativePlayer;
   TsukiAudioHandler? _mediaHandler;
   final StorageService _storage;
   ConnectivityProvider? _connectivityProvider;
@@ -290,8 +290,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     StorageService? storage,
     ConnectivityProvider? connectivityProvider,
     TsukiAudioHandler? mediaHandler,
+    SpotifyService? spotifyService,
+    SpotifyNativePlayer? nativePlayer,
   })  : _service = service ?? AudioPlayerService(),
         _storage = storage ?? StorageService(),
+        _spotify = spotifyService ?? SpotifyService(),
+        _nativePlayer = nativePlayer ?? SpotifyNativePlayer(),
         _connectivityProvider = connectivityProvider {
     if (mediaHandler != null) _attachMediaHandler(mediaHandler);
     WidgetsBinding.instance.addObserver(this);
@@ -450,7 +454,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (!_spotifyActive) return;
         if (event.begin) {
           if (_isPlaying) {
-            _spotify.pause();
+            if (_nativePlayer.isConnected) {
+              _nativePlayer.pause();
+            } else {
+              _spotify.pause();
+            }
             _isPlaying = false;
             _stopPositionTimer();
             _spotifyInterrupted = true;
@@ -459,7 +467,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         } else {
           if (_spotifyInterrupted) {
             _spotifyInterrupted = false;
-            _spotify.resume();
+            if (_nativePlayer.isConnected) {
+              _nativePlayer.resume();
+            } else {
+              _spotify.resume();
+            }
             _isPlaying = true;
             _lastPlayCommandTime = DateTime.now();
             _spotifySyncPosition = _position;
@@ -471,7 +483,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       });
       session.becomingNoisyEventStream.listen((_) {
         if (_spotifyActive && _isPlaying) {
-          _spotify.pause();
+          if (_nativePlayer.isConnected) {
+            _nativePlayer.pause();
+          } else {
+            _spotify.pause();
+          }
           _isPlaying = false;
           _stopPositionTimer();
           notifyListeners();
@@ -566,6 +582,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _spotifyPollTick++;
 
+      final hasRealTimeState = _nativePlayer.isConnected;
+      final pollInterval = hasRealTimeState ? 60 : 15;
+      final pausePollInterval = hasRealTimeState ? 30 : 5;
+
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         _position = _spotifySyncPosition + elapsed;
@@ -576,13 +596,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _maybePersistPosition();
           _checkListenedThreshold();
           notifyListeners();
-          if (_spotifyPollTick % 15 == 0) {
+          if (_spotifyPollTick % pollInterval == 0) {
             _syncSpotifyPlaybackState();
           }
         }
       } else if (_currentTrack != null) {
-        // While paused, poll every 5s to recover from false pause or detect external resume
-        if (_spotifyPollTick % 5 == 0) {
+        if (_spotifyPollTick % pausePollInterval == 0) {
           _syncSpotifyPlaybackState();
         }
       }
@@ -591,6 +610,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _syncSpotifyPlaybackState() async {
     try {
+      if (_spotifyPollTick % 300 == 0 && _spotifyPollTick > 0) {
+        await _spotify.refreshProfile();
+        if (!_spotify.isPremium) {
+          debugPrint('[AudioProvider] Spotify Premium lost, falling back to preview');
+          await _fallbackFromSpotify();
+          return;
+        }
+      }
+
       final state = await _spotify.getPlaybackState();
       if (!_spotifyActive || _completionHandled) return;
       if (state == null) {
@@ -1055,6 +1083,31 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _nativePlayer.pause();
     await _nativePlayer.disconnect();
     await _service.playTrack(track);
+  }
+
+  Future<void> _fallbackFromSpotify() async {
+    _useSpotify = false;
+    _spotifyActive = false;
+    _spotifyFallbackActive = true;
+    _stopPositionTimer();
+    await _nativePlayer.pause();
+    await _nativePlayer.disconnect();
+
+    final track = _currentTrack;
+    if (track != null && _isPlaying) {
+      _isBuffering = true;
+      notifyListeners();
+      try {
+        final fresh = await _withFreshPreview(track);
+        await _service.playTrack(fresh);
+        _isBuffering = false;
+      } catch (e) {
+        _isBuffering = false;
+        _isPlaying = false;
+        _lastPlaybackError = _classifyPlaybackError(e, track);
+      }
+    }
+    notifyListeners();
   }
 
   /// Waits a moment and asks Spotify whether [uri] is really playing.

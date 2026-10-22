@@ -347,6 +347,8 @@ class SpotifyService {
     }
   }
 
+  Future<void> refreshProfile() => _fetchProfile();
+
   Future<void> _fetchProfile() async {
     if (_accessToken == null) return;
 
