@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
@@ -14,6 +13,7 @@ import '../services/audio_precache_service.dart';
 import '../services/deezer_api_service.dart';
 import '../services/spotify_service.dart';
 import '../services/media_session_handler.dart';
+import '../services/playback_queue.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
 import 'connectivity_provider.dart';
@@ -31,13 +31,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Function(Track track)? onPrecacheTrackForTesting;
 
   Track? _currentTrack;
-  List<Track> _queue = [];
-  int _currentIndex = -1;
+  final PlaybackQueue _q = PlaybackQueue();
 
   bool _isPlaying = false;
   bool _isBuffering = false;
-  bool _isShuffle = false;
-  PlaybackRepeatMode _repeatMode = PlaybackRepeatMode.off;
   Duration _position = Duration.zero;
   Duration _duration = const Duration(seconds: 30);
   Duration _bufferedPosition = Duration.zero;
@@ -53,7 +50,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _prefetchedForTrackId;
   String? _prefetchedTargetTrackId;
   int _prefetchGeneration = 0;
-  int? _nextShuffleIndex;
 
   bool _completionHandled = false;
   bool _crossfadeTriggered = false;
@@ -72,16 +68,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   DateTime _lastPlayCommandTime = DateTime(2000);
   // URI last sent to Spotify, to detect playback taken over elsewhere.
   String? _currentSpotifyUri;
-
-  // Smart shuffle history — recent artistIds to avoid consecutive repeats
-  final List<String> _shuffleArtistHistory = [];
-  final List<String> _shuffleAlbumHistory = [];
-  static const int _shuffleHistorySize = 5;
-  final Random _shuffleRng = Random();
-
-  // Playback history for shuffle previous navigation (up to 50 entries)
-  final List<int> _playHistory = [];
-  static const int _maxPlayHistory = 50;
 
   // Sleep timer
   Timer? _sleepTimer;
@@ -107,15 +93,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Function(Track)? onListenedThreshold;
 
   Track? get currentTrack => _currentTrack;
-  List<Track> get queue => _queue;
-  int get currentIndex => _currentIndex;
+  List<Track> get queue => _q.tracks;
+  int get currentIndex => _q.currentIndex;
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
-  bool get isShuffle => _isShuffle;
-  PlaybackRepeatMode get repeatMode => _repeatMode;
-  bool get isLoop => _repeatMode != PlaybackRepeatMode.off;
-  bool get isRepeatAll => _repeatMode == PlaybackRepeatMode.all;
-  bool get isRepeatOne => _repeatMode == PlaybackRepeatMode.one;
+  bool get isShuffle => _q.isShuffle;
+  PlaybackRepeatMode get repeatMode => _q.repeatMode;
+  bool get isLoop => _q.repeatMode != PlaybackRepeatMode.off;
+  bool get isRepeatAll => _q.repeatMode == PlaybackRepeatMode.all;
+  bool get isRepeatOne => _q.repeatMode == PlaybackRepeatMode.one;
   Duration get position => _position;
   Duration get duration => _duration;
   Duration get bufferedPosition => _bufferedPosition;
@@ -242,19 +228,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isSleepTimerActive =>
       _sleepTimerDeadline != null || _sleepTimerRemaining != null || _stopAfterCurrentTrack;
   int? get sleepTimerOriginalMinutes => _sleepTimerOriginalMinutes;
-  int? get nextShuffleIndex => _nextShuffleIndex;
+  int? get nextShuffleIndex => _q.nextShuffleIndex;
 
   @visibleForTesting
-  List<int> get playHistory => List.unmodifiable(_playHistory);
-
-  void _addToPlayHistory(int index) {
-    if (index >= 0 && index < _queue.length) {
-      _playHistory.add(index);
-      if (_playHistory.length > _maxPlayHistory) {
-        _playHistory.removeAt(0);
-      }
-    }
-  }
+  List<int> get playHistory => _q.history;
 
   @visibleForTesting
   DateTime? get sleepTimerDeadline => _sleepTimerDeadline;
@@ -290,17 +267,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool canPlayOfflineForTesting(Track track) => _canPlayOffline(track);
 
   void _prefetchUpcoming([int count = 3]) {
-    if (_queue.isEmpty) return;
+    if (_q.isEmpty) return;
     for (var i = 1; i <= count; i++) {
-      final idx = (_currentIndex + i) % _queue.length;
-      if (idx != _currentIndex) {
-        final track = _queue[idx];
+      final idx = (_q.currentIndex + i) % _q.length;
+      if (idx != _q.currentIndex) {
+        final track = _q.tracks[idx];
         onPrecacheTrackForTesting?.call(track);
         _precache(track);
       }
     }
   }
-
   @visibleForTesting
   void prefetchUpcomingForTesting([int count = 3]) => _prefetchUpcoming(count);
 
@@ -371,13 +347,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _persistPlaybackState() {
     _persistTimer?.cancel();
     _persistTimer = Timer(const Duration(milliseconds: 500), () async {
-      if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+      if (_q.current == null) {
         await _storage.savePlaybackState(null);
         return;
       }
       await _storage.savePlaybackState(
-        _queue,
-        _currentIndex,
+        _q.tracks,
+        _q.currentIndex,
         _position.inMilliseconds,
       );
     });
@@ -386,13 +362,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   void persistPlaybackStateNowForTesting() {
     _persistTimer?.cancel();
-    if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+    if (_q.current == null) {
       _storage.savePlaybackState(null);
       return;
     }
     _storage.savePlaybackState(
-      _queue,
-      _currentIndex,
+      _q.tracks,
+      _q.currentIndex,
       _position.inMilliseconds,
     );
   }
@@ -402,7 +378,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final state = await _storage.getPlaybackState();
       if (state == null) return;
 
-      if (_currentTrack != null || _queue.isNotEmpty || _isPlaying) return;
+      if (_currentTrack != null || !_q.isEmpty || _isPlaying) return;
 
       final rawQueue = state['queue'];
       final rawIndex = state['currentIndex'];
@@ -427,8 +403,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final restoredTrack = restoredQueue[restoredIndex];
       final posMs = (rawPosMs is num) ? rawPosMs.toInt() : 0;
 
-      _queue = restoredQueue;
-      _currentIndex = restoredIndex;
+      _q.restore(restoredQueue, restoredIndex);
       _currentTrack = restoredTrack;
       _position = Duration(milliseconds: posMs);
       _duration = Duration(
@@ -440,7 +415,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _prefetchNextTrack();
       notifyListeners();
-      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_queue.length} tracks in queue)');
+      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue)');
     } catch (e) {
       debugPrint('[AudioProvider] Error restoring playback state: $e');
     }
@@ -812,26 +787,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> playTrack(Track track, {List<Track>? newQueue}) async {
-    if (newQueue != null && newQueue.isNotEmpty) {
-      _queue = List.from(newQueue);
-      _currentIndex = _queue.indexWhere((t) => t.id == track.id);
-      if (_currentIndex == -1) {
-        _queue.insert(0, track);
-        _currentIndex = 0;
-      }
-      _playHistory.clear();
-      _prefetchUpcoming();
-    } else if (!_queue.any((t) => t.id == track.id)) {
-      _queue.add(track);
-      _currentIndex = _queue.length - 1;
-    } else {
-      _currentIndex = _queue.indexWhere((t) => t.id == track.id);
-    }
+    _q.select(track, newQueue: newQueue);
+    if (newQueue != null && newQueue.isNotEmpty) _prefetchUpcoming();
 
     _retryTimer?.cancel();
     _retryCount = 0;
     _currentTrack = track;
-    _nextShuffleIndex = null;
     _position = Duration.zero;
     _completionHandled = false;
     _crossfadeTriggered = false;
@@ -1013,9 +974,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       previewUrl: fresh.previewUrl,
       isrc: track.isrc ?? fresh.isrc,
     );
-    for (var i = 0; i < _queue.length; i++) {
-      if (_queue[i].id == track.id) _queue[i] = updated;
-    }
+    _q.replaceTrack(updated);
     if (_currentTrack?.id == track.id) _currentTrack = updated;
     return updated;
   }
@@ -1031,42 +990,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
-  /// Returns the upcoming track index without advancing the queue pointer.
-  /// When shuffle is active, pre-determines and memoizes the next track index
-  /// so background prefetching (Deezer audio precache & Spotify URI search)
-  /// and actual playback (next, crossfade, track completion) target the exact same track.
-  int? _peekNextIndex() {
-    if (_queue.isEmpty || _currentIndex < 0) return null;
-
-    if (_isShuffle && _queue.length > 1) {
-      if (_nextShuffleIndex == null ||
-          _nextShuffleIndex! < 0 ||
-          _nextShuffleIndex! >= _queue.length ||
-          _nextShuffleIndex == _currentIndex) {
-        _nextShuffleIndex = _pickSmartNext();
-      }
-      return _nextShuffleIndex;
-    }
-
-    if (_currentIndex + 1 < _queue.length) {
-      return _currentIndex + 1;
-    } else if (_repeatMode == PlaybackRepeatMode.all && _queue.isNotEmpty) {
-      return 0;
-    } else if (_repeatMode == PlaybackRepeatMode.one) {
-      return _currentIndex;
-    }
-
-    return null;
-  }
-
   @visibleForTesting
-  int? peekNextIndex() => _peekNextIndex();
+  int? peekNextIndex() => _q.peekNext();
 
   void _prefetchNextTrack() {
-    final nextIdx = _peekNextIndex();
-    if (nextIdx == null || nextIdx < 0 || nextIdx >= _queue.length) return;
+    final nextIdx = _q.peekNext();
+    if (nextIdx == null || nextIdx < 0 || nextIdx >= _q.length) return;
 
-    final nextTrack = _queue[nextIdx];
+    final nextTrack = _q.tracks[nextIdx];
 
     // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
     _precache(nextTrack);
@@ -1093,8 +1024,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> togglePlay() async {
-    if (_currentTrack == null && _queue.isNotEmpty) {
-      await playTrack(_queue.first);
+    if (_currentTrack == null && !_q.isEmpty) {
+      await playTrack(_q.tracks.first);
       return;
     }
 
@@ -1132,232 +1063,40 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (!_isPlaying) _persistPlaybackState();
   }
 
-  /// Picks the next track index using weighted scoring to avoid
-  /// consecutive same-artist/album repeats. Heavier penalty for
-  /// artists/albums heard most recently.
-  int _pickSmartNext() {
-    final candidates = <int>[];
-    for (int i = 0; i < _queue.length; i++) {
-      if (i != _currentIndex) candidates.add(i);
-    }
-    if (candidates.isEmpty) return _currentIndex;
-    if (candidates.length == 1) return candidates.first;
+  bool get _online => _connectivityProvider?.isOnline ?? true;
 
-    // Score each candidate — higher is better
-    double bestScore = double.negativeInfinity;
-    final scores = <double>[];
-
-    for (final idx in candidates) {
-      final track = _queue[idx];
-      double score = _shuffleRng.nextDouble(); // base randomness [0, 1)
-
-      // Penalize if artist was played recently (heavier for more recent)
-      final artistPos = _shuffleArtistHistory.lastIndexOf(track.artistId);
-      if (artistPos != -1) {
-        final recency = _shuffleArtistHistory.length - artistPos;
-        score -= 3.0 / recency; // -3.0 if last, -1.5 if second-to-last, etc.
-      }
-
-      // Penalize if album was played recently
-      final albumPos = _shuffleAlbumHistory.lastIndexOf(track.albumId);
-      if (albumPos != -1) {
-        final recency = _shuffleAlbumHistory.length - albumPos;
-        score -= 1.5 / recency;
-      }
-
-      scores.add(score);
-      if (score > bestScore) bestScore = score;
-    }
-
-    // Collect all candidates within 0.3 of the best score for a tie-break
-    final topTier = <int>[];
-    for (int i = 0; i < candidates.length; i++) {
-      if (scores[i] >= bestScore - 0.3) topTier.add(candidates[i]);
-    }
-
-    return topTier[_shuffleRng.nextInt(topTier.length)];
-  }
-
-  void _recordShuffleHistory(Track track) {
-    _shuffleArtistHistory.add(track.artistId);
-    if (_shuffleArtistHistory.length > _shuffleHistorySize) {
-      _shuffleArtistHistory.removeAt(0);
-    }
-    _shuffleAlbumHistory.add(track.albumId);
-    if (_shuffleAlbumHistory.length > _shuffleHistorySize) {
-      _shuffleAlbumHistory.removeAt(0);
-    }
-  }
-
-  Future<void> next() async {
-    if (_queue.isEmpty) return;
-
-    final isOnline = _connectivityProvider?.isOnline ?? true;
-    if (!isOnline && !_queue.any((t) => _canPlayOffline(t))) {
-      _lastPlaybackError = 'network_error';
-      notifyListeners();
-      return;
-    }
-
-    if (_isShuffle && _queue.length > 1) {
-      if (!isOnline) {
-        if (_nextShuffleIndex != null &&
-            _nextShuffleIndex! >= 0 &&
-            _nextShuffleIndex! < _queue.length &&
-            _nextShuffleIndex != _currentIndex &&
-            _canPlayOffline(_queue[_nextShuffleIndex!])) {
-          _addToPlayHistory(_currentIndex);
-          _currentIndex = _nextShuffleIndex!;
-        } else {
-          final cachedCandidates = [
-            for (int i = 0; i < _queue.length; i++)
-              if (i != _currentIndex && _canPlayOffline(_queue[i])) i
-          ];
-          if (cachedCandidates.isNotEmpty) {
-            _addToPlayHistory(_currentIndex);
-            _currentIndex = cachedCandidates[_shuffleRng.nextInt(cachedCandidates.length)];
-          } else {
-            _lastPlaybackError = 'network_error';
-            notifyListeners();
-            return;
-          }
-        }
-      } else {
-        _addToPlayHistory(_currentIndex);
-        if (_nextShuffleIndex != null &&
-            _nextShuffleIndex! >= 0 &&
-            _nextShuffleIndex! < _queue.length &&
-            _nextShuffleIndex != _currentIndex) {
-          _currentIndex = _nextShuffleIndex!;
-        } else {
-          _currentIndex = _pickSmartNext();
-        }
-      }
-      _nextShuffleIndex = null;
-    } else {
-      if (!isOnline) {
-        int targetIndex = -1;
-        for (int step = 1; step < _queue.length; step++) {
-          final idx = (_currentIndex + step) % _queue.length;
-          if (_canPlayOffline(_queue[idx])) {
-            targetIndex = idx;
-            break;
-          }
-        }
-        if (targetIndex != -1) {
-          _addToPlayHistory(_currentIndex);
-          _currentIndex = targetIndex;
-        } else if (_queue.length == 1 && _canPlayOffline(_queue[0])) {
-          _currentIndex = 0;
-        } else {
-          _lastPlaybackError = 'network_error';
-          notifyListeners();
-          return;
-        }
-      } else {
-        _addToPlayHistory(_currentIndex);
-        _currentIndex = (_currentIndex + 1) % _queue.length;
-      }
-    }
-
-    final nextTrack = _queue[_currentIndex];
-    if (_isShuffle) _recordShuffleHistory(nextTrack);
-    await playTrack(nextTrack);
-    _persistPlaybackState();
-  }
-
-  Future<void> previous() async {
-    if (_queue.isEmpty) return;
-
-    if (_position.inSeconds > 3) {
-      await seek(Duration.zero);
-      return;
-    }
-
-    final isOnline = _connectivityProvider?.isOnline ?? true;
-    if (!isOnline && !_queue.any((t) => _canPlayOffline(t))) {
-      _lastPlaybackError = 'network_error';
-      notifyListeners();
-      return;
-    }
-
-    if (_isShuffle) {
-      if (_playHistory.isEmpty) {
+  /// Plays the result of a queue move, or reports why nothing can play.
+  Future<void> _applyStep(QueueStep step) async {
+    switch (step.kind) {
+      case QueueStepKind.play:
+        await playTrack(_q.tracks[step.index]);
+        _persistPlaybackState();
+      case QueueStepKind.seekToStart:
         await seek(Duration.zero);
-        return;
-      }
-      if (!isOnline) {
-        int? targetIdx;
-        while (_playHistory.isNotEmpty) {
-          final prevIndex = _playHistory.removeLast();
-          if (prevIndex >= 0 &&
-              prevIndex < _queue.length &&
-              _canPlayOffline(_queue[prevIndex])) {
-            targetIdx = prevIndex;
-            break;
-          }
-        }
-        if (targetIdx != null) {
-          _currentIndex = targetIdx;
-        } else {
-          await seek(Duration.zero);
-          return;
-        }
-      } else {
-        final prevIndex = _playHistory.removeLast();
-        if (prevIndex >= 0 && prevIndex < _queue.length) {
-          _currentIndex = prevIndex;
-        } else {
-          await seek(Duration.zero);
-          return;
-        }
-      }
-    } else {
-      if (!isOnline) {
-        int targetIndex = -1;
-        for (int step = 1; step < _queue.length; step++) {
-          final idx = (_currentIndex - step + _queue.length) % _queue.length;
-          if (_canPlayOffline(_queue[idx])) {
-            targetIndex = idx;
-            break;
-          }
-        }
-        if (targetIndex != -1) {
-          _currentIndex = targetIndex;
-        } else if (_queue.length == 1 && _canPlayOffline(_queue[0])) {
-          _currentIndex = 0;
-        } else {
-          _lastPlaybackError = 'network_error';
-          notifyListeners();
-          return;
-        }
-      } else {
-        if (_currentIndex <= 0) {
-          if (_repeatMode == PlaybackRepeatMode.off) {
-            await seek(Duration.zero);
-            return;
-          }
-          _currentIndex = _queue.length - 1;
-        } else {
-          _currentIndex = _currentIndex - 1;
-        }
-      }
+      case QueueStepKind.unavailable:
+        if (_q.isEmpty) return;
+        _lastPlaybackError = 'network_error';
+        notifyListeners();
     }
-    await playTrack(_queue[_currentIndex]);
-    _persistPlaybackState();
   }
 
+  Future<void> next() =>
+      _applyStep(_q.next(online: _online, canPlay: _canPlayOffline));
+  Future<void> previous() => _applyStep(_q.previous(
+        position: _position,
+        online: _online,
+        canPlay: _canPlayOffline,
+      ));
   Future<void> stop() async {
     _persistTimer?.cancel();
     _storage.savePlaybackState(null);
     _stopPositionTimer();
     _retryTimer?.cancel();
     _retryCount = 0;
-    _nextShuffleIndex = null;
+    _q.resetNavigation();
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
-    _playHistory.clear();
     if (_useSpotify && _spotifyActive) {
       try { await _spotify.pause(); } catch (_) {}
     }
@@ -1388,8 +1127,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void toggleShuffle() {
-    _isShuffle = !_isShuffle;
-    _nextShuffleIndex = null;
+    _q.toggleShuffle();
     _prefetchedTargetTrackId = null;
     if (_currentTrack != null) {
       _prefetchNextTrack();
@@ -1398,152 +1136,65 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void toggleRepeat() {
-    switch (_repeatMode) {
-      case PlaybackRepeatMode.off:
-        _repeatMode = PlaybackRepeatMode.all;
-        break;
-      case PlaybackRepeatMode.all:
-        _repeatMode = PlaybackRepeatMode.one;
-        break;
-      case PlaybackRepeatMode.one:
-        _repeatMode = PlaybackRepeatMode.off;
-        break;
-    }
-    _nextShuffleIndex = null;
-    if (_currentIndex == _queue.length - 1) {
-      _prefetchNextTrack();
-    }
+    _q.cycleRepeatMode();
+    if (_q.isAtEnd) _prefetchNextTrack();
     notifyListeners();
   }
-
   void toggleLoop() => toggleRepeat();
 
   void setRepeatMode(PlaybackRepeatMode mode) {
-    if (_repeatMode == mode) return;
-    _repeatMode = mode;
-    _nextShuffleIndex = null;
-    if (_currentIndex == _queue.length - 1) {
-      _prefetchNextTrack();
-    }
+    if (_q.repeatMode == mode) return;
+    _q.setRepeatMode(mode);
+    if (_q.isAtEnd) _prefetchNextTrack();
     notifyListeners();
   }
-
   /// Reorders the playback queue from [oldIndex] to [newIndex].
   void reorderQueue(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= _queue.length) return;
-    if (newIndex < 0 || newIndex >= _queue.length) return;
-
-    final track = _queue.removeAt(oldIndex);
-    _queue.insert(newIndex, track);
-
-    // Keep currentIndex pointer in sync with current track
-    if (_currentTrack != null) {
-      _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
-    }
-    _nextShuffleIndex = null;
-    _playHistory.clear();
+    if (oldIndex < 0 || oldIndex >= _q.length) return;
+    if (newIndex < 0 || newIndex >= _q.length) return;
+    _q.reorder(oldIndex, newIndex);
     _prefetchNextTrack();
     _persistPlaybackState();
     notifyListeners();
   }
-
   void playNext(Track track) {
-    if (_queue.any((t) => t.id == track.id)) return;
-    final insertAt = _currentIndex + 1;
-    final pos = insertAt < _queue.length ? insertAt : _queue.length;
-    _queue.insert(pos, track);
-    _shiftIndicesAfterInsert(pos, 1);
+    if (!_q.insertNext(track)) return;
     _persistPlaybackState();
     notifyListeners();
   }
-
-  void addToQueue(Track track) {
-    if (_queue.any((t) => t.id == track.id)) return;
-    _queue.add(track);
-    _persistPlaybackState();
-    notifyListeners();
-  }
-
+  void addToQueue(Track track) => addAllToQueue([track]);
   void addAllToQueue(List<Track> tracks) {
-    final existing = _queue.map((t) => t.id).toSet();
-    final newTracks = tracks.where((t) => !existing.contains(t.id)).toList();
-    if (newTracks.isEmpty) return;
-    _queue.addAll(newTracks);
+    if (_q.append(tracks) == 0) return;
     _persistPlaybackState();
     notifyListeners();
   }
-
-  void _shiftIndicesAfterInsert(int insertPos, int count) {
-    if (_nextShuffleIndex != null && _nextShuffleIndex! >= insertPos) {
-      _nextShuffleIndex = _nextShuffleIndex! + count;
-    }
-    for (int i = 0; i < _playHistory.length; i++) {
-      if (_playHistory[i] >= insertPos) {
-        _playHistory[i] += count;
-      }
-    }
-  }
-
   /// Removes the track at [index] from the playback queue.
   void removeFromQueue(int index) {
-    if (index < 0 || index >= _queue.length) return;
+    if (index < 0 || index >= _q.length) return;
+    final wasCurrent = _q.removeAt(index);
 
-    final wasCurrent = index == _currentIndex;
-    _queue.removeAt(index);
-
-    // Adjust or invalidate shuffle index
-    if (_nextShuffleIndex != null) {
-      if (_nextShuffleIndex == index) {
-        _nextShuffleIndex = null;
-      } else if (_nextShuffleIndex! > index) {
-        _nextShuffleIndex = _nextShuffleIndex! - 1;
-      }
-    }
-
-    // Adjust play history indices
-    _playHistory.removeWhere((i) => i == index);
-    for (int i = 0; i < _playHistory.length; i++) {
-      if (_playHistory[i] > index) {
-        _playHistory[i] -= 1;
-      }
-    }
-
-    if (_queue.isEmpty) {
+    if (_q.isEmpty) {
       stop();
       return;
     }
 
     if (wasCurrent) {
-      final nextIndex = index >= _queue.length ? 0 : index;
-      playTrack(_queue[nextIndex]);
+      playTrack(_q.tracks[_q.currentIndex]);
     } else {
-      if (_currentTrack != null) {
-        _currentIndex = _queue.indexWhere((t) => t.id == _currentTrack!.id);
-      }
       _prefetchNextTrack();
       notifyListeners();
     }
     _persistPlaybackState();
   }
-
   /// Clears the entire queue except for the currently playing track.
   void clearQueue() {
-    _nextShuffleIndex = null;
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
-    _playHistory.clear();
-    if (_currentTrack != null) {
-      _queue = [_currentTrack!];
-      _currentIndex = 0;
-    } else {
-      _queue = [];
-      _currentIndex = -1;
-    }
+    _q.clear(keep: _currentTrack);
     _persistPlaybackState();
     notifyListeners();
   }
-
   @visibleForTesting
   Future<void> handleTrackCompletedForTesting() async {
     _completionHandled = false;
@@ -1566,31 +1217,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (_repeatMode == PlaybackRepeatMode.one && _currentTrack != null) {
+    if (_q.repeatMode == PlaybackRepeatMode.one && _currentTrack != null) {
       playTrack(_currentTrack!);
-    } else if (_repeatMode == PlaybackRepeatMode.all) {
+    } else if (_q.repeatMode == PlaybackRepeatMode.all) {
       next();
+    } else if (_q.shouldStopAtEnd()) {
+      stop();
     } else {
-      // PlaybackRepeatMode.off
-      if (_isShuffle) {
-        if (_playHistory.toSet().length >= _queue.length - 1 &&
-            !_playHistory.contains(_currentIndex)) {
-          stop();
-        } else {
-          next();
-        }
-      } else {
-        if (_currentIndex + 1 < _queue.length) {
-          next();
-        } else {
-          stop();
-        }
-      }
+      next();
     }
   }
 
   void _checkCrossfade(Duration pos) {
-    if (_repeatMode == PlaybackRepeatMode.one) return;
+    if (_q.repeatMode == PlaybackRepeatMode.one) return;
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered) return;
     if (_useSpotify && !_spotifyFallbackActive) return;
     if (_stopAfterCurrentTrack) return;
@@ -1610,32 +1249,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void checkCrossfade(Duration pos) => _checkCrossfade(pos);
 
   Future<void> _triggerCrossfade() async {
-    if (_queue.isEmpty || _crossfadeTriggered) return;
+    if (_q.isEmpty || _crossfadeTriggered) return;
 
-    int nextIdx;
-    if (_isShuffle && _queue.length > 1) {
-      if (_nextShuffleIndex != null &&
-          _nextShuffleIndex! >= 0 &&
-          _nextShuffleIndex! < _queue.length &&
-          _nextShuffleIndex != _currentIndex) {
-        nextIdx = _nextShuffleIndex!;
-      } else {
-        nextIdx = _pickSmartNext();
-      }
-      _nextShuffleIndex = null;
-    } else if (_currentIndex + 1 < _queue.length) {
-      nextIdx = _currentIndex + 1;
-    } else if (_repeatMode == PlaybackRepeatMode.all && _queue.isNotEmpty) {
-      nextIdx = 0;
-    } else {
-      return;
-    }
+    final nextIdx = _q.advanceForCrossfade();
+    if (nextIdx == null) return;
 
-    _addToPlayHistory(_currentIndex);
     _crossfadeTriggered = true;
-    final nextTrack = _queue[nextIdx];
-    if (_isShuffle) _recordShuffleHistory(nextTrack);
-    _currentIndex = nextIdx;
+    final nextTrack = _q.tracks[nextIdx];
     _currentTrack = nextTrack;
     _position = Duration.zero;
     _duration = Duration(
