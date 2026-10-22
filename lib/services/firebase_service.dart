@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,6 +36,7 @@ class FirebaseService {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await _activateAppCheck();
     _auth = FirebaseAuth.instance;
     _db = FirebaseFirestore.instance;
     _db!.settings = const Settings(
@@ -46,6 +48,24 @@ class FirebaseService {
       scopes: ['email'],
     );
     _initialized = true;
+  }
+
+  /// Attaches App Check tokens to Firebase requests. This alone blocks
+  /// nothing: enforcement is switched on per service in the Firebase console.
+  /// Debug builds use the debug provider; its token is printed in logcat
+  /// ("Enter this debug secret into the allow list…") and must be added in
+  /// the console before enforcing, or debug builds lose Firestore access.
+  Future<void> _activateAppCheck() async {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+      );
+    } catch (e) {
+      debugPrint('App Check activation failed (non-fatal): $e');
+    }
   }
 
   Future<UserCredential?> signInWithGoogle() async {

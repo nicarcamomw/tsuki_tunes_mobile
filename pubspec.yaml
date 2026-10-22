@@ -43,6 +43,8 @@ dependencies:
   spotify_sdk: ^4.0.0
   audio_session: ^0.1.25
   audio_service: ^0.18.19
+  firebase_crashlytics: ^4.3.10
+  firebase_app_check: ^0.3.2+10
 dev_dependencies:
   flutter_test:
     sdk: flutter

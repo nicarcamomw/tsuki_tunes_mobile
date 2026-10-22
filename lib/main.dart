@@ -1,4 +1,7 @@
+import 'dart:ui';
 import 'package:audio_service/audio_service.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +17,7 @@ import 'providers/connectivity_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/firebase_service.dart';
 import 'services/media_session_handler.dart';
 import 'services/storage_service.dart';
 
@@ -30,7 +34,26 @@ void main() async {
     ),
   );
 
+  await _initCrashReporting();
   runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
+}
+
+/// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
+/// in debug builds so development crashes don't pollute the dashboard.
+Future<void> _initCrashReporting() async {
+  if (kIsWeb) return;
+  try {
+    await FirebaseService().initialize();
+    final crashlytics = FirebaseCrashlytics.instance;
+    await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
+    FlutterError.onError = crashlytics.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      crashlytics.recordError(error, stack, fatal: true);
+      return true;
+    };
+  } catch (e) {
+    debugPrint('[main] Crashlytics init failed: $e');
+  }
 }
 
 /// Lock screen / notification / headset controls. If the platform side is
