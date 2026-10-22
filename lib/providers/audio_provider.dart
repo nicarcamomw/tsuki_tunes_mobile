@@ -1087,6 +1087,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _onSpotifyConfirmed(int progressMs) {
+    if (_isPlaying && !_isBuffering) return;
     _isBuffering = false;
     _isPlaying = true;
     _spotifySyncPosition = Duration(milliseconds: progressMs);
@@ -1257,8 +1258,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
     if (_useSpotify && _spotifyActive) {
-      try { await _spotify.pause(); } catch (_) {}
       await _nativePlayer.pause();
+      try { await _spotify.pause(); } catch (_) {}
     }
     _spotifyActive = false;
     _spotifyFallbackActive = false;
