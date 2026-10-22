@@ -485,6 +485,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
       if (!_spotifyActive) return;
+      if (_nativePlayer.lastTrackUri != _currentSpotifyUri) return;
       _spotifySyncPosition = Duration(milliseconds: pos);
       _spotifySyncTime = DateTime.now();
       _position = _spotifySyncPosition;

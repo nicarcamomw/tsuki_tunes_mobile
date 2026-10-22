@@ -20,6 +20,7 @@ class SpotifyNativePlayer {
 
   bool get isConnected => _isConnected;
   String? get deviceId => _deviceId;
+  String? get lastTrackUri => _lastTrackUri;
 
   /// Whether the Spotify app reports [uri] as the current, unpaused track.
   bool isPlayingUri(String uri) =>
