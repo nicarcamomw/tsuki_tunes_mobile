@@ -26,6 +26,7 @@ class _MiniPlayerState extends State<MiniPlayer>
   double _swipeDx = 0;
   bool _swipeLocked = false;
   bool _hapticFired = false;
+  int _skipDirection = 1;
   late final AnimationController _springCtrl;
 
   static const _spring = SpringDescription(
@@ -77,6 +78,7 @@ class _MiniPlayerState extends State<MiniPlayer>
 
     if (triggered) {
       final goNext = fastSwipe ? velocity < 0 : _swipeDx < 0;
+      _skipDirection = goNext ? 1 : -1;
       _swipeLocked = true;
       HapticFeedback.mediumImpact();
       if (goNext) {
@@ -189,6 +191,24 @@ class _MiniPlayerState extends State<MiniPlayer>
                                 ),
                                 child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 300),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, animation) {
+                                    final entering =
+                                        child.key == ValueKey(track.id);
+                                    final dx = _skipDirection *
+                                        (entering ? 0.15 : -0.15);
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: Tween(
+                                          begin: Offset(dx, 0),
+                                          end: Offset.zero,
+                                        ).animate(animation),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
                                   child: Row(
                                     key: ValueKey(track.id),
                                     children: [
@@ -268,10 +288,10 @@ class _MiniPlayerState extends State<MiniPlayer>
                             scaleDown: 0.85,
                             child: isBuffering
                                 ? const SizedBox(
-                                    width: 32,
-                                    height: 32,
+                                    width: 24,
+                                    height: 24,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                      strokeWidth: 1.8,
                                       valueColor:
                                           AlwaysStoppedAnimation<Color>(
                                         AppColors.accent,
