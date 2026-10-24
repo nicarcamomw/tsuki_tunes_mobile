@@ -52,6 +52,14 @@ jobs:
             echo "storeFile=release.jks"
           } > android/key.properties
 
+      # The project pins a preview NDK whose license Gradle can't accept by itself.
+      - name: Install Android NDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          NDK_VERSION=$(grep -oP 'ndkVersion\s*=\s*"\K[^"]+' android/app/build.gradle.kts)
+          "$SDKMANAGER" "ndk;$NDK_VERSION"
+
       - name: Install dependencies
         run: flutter pub get
 
