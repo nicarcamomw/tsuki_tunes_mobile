@@ -636,19 +636,11 @@ class SpotifyService {
       return phoneId;
     }
 
-    // No smartphone found — fallback to active device or first available
-    final active = devices.where((d) => d['is_active'] == true).toList();
-    if (active.isNotEmpty) {
-      return active.first['id'] as String?;
-    }
-
-    final targetId = devices.first['id'] as String?;
-    if (targetId != null) {
-      debugPrint('Spotify: transferring to fallback ${devices.first['name']}');
-      await _transferPlayback(targetId);
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
-    return targetId;
+    // No smartphone found — do NOT fall back to other device types (TV,
+    // speaker, etc.).  Returning null lets the caller use App Remote which
+    // plays on the local phone only.
+    debugPrint('Spotify: no Smartphone device found, skipping non-phone devices');
+    return null;
   }
 
   Future<bool> play({String? trackUri, List<String>? trackUris, String? deviceId}) async {
@@ -656,8 +648,13 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      // Ensure we have an active device
+      // Ensure we have an active smartphone device — never play on a
+      // non-phone (TV, speaker, etc.).
       final targetDevice = deviceId ?? await ensureActiveDevice();
+      if (targetDevice == null) {
+        debugPrint('Spotify play: no smartphone device available');
+        return false;
+      }
 
       final body = <String, dynamic>{};
       if (trackUris != null && trackUris.isNotEmpty) {
@@ -666,9 +663,8 @@ class SpotifyService {
         body['uris'] = [trackUri];
       }
 
-      final url = targetDevice != null
-          ? 'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'
-          : 'https://api.spotify.com/v1/me/player/play';
+      final url =
+          'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice';
       final response = await http.put(
         Uri.parse(url),
         headers: {
@@ -747,9 +743,12 @@ class SpotifyService {
 
     try {
       final deviceId = await ensureActiveDevice();
-      final url = deviceId != null
-          ? 'https://api.spotify.com/v1/me/player/play?device_id=$deviceId'
-          : 'https://api.spotify.com/v1/me/player/play';
+      if (deviceId == null) {
+        debugPrint('Spotify resume: no smartphone device, skipping Web API');
+        return false;
+      }
+      final url =
+          'https://api.spotify.com/v1/me/player/play?device_id=$deviceId';
       final response = await http.put(
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $_accessToken'},
