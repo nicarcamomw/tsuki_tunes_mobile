@@ -153,6 +153,9 @@ class _MiniPlayerState extends State<MiniPlayer>
             _openExpandedPlayer(context);
           }
         },
+        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+        onHorizontalDragEnd: (details) =>
+            _onHorizontalDragEnd(details, audio),
         child: Container(
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           decoration: BoxDecoration(
@@ -170,11 +173,7 @@ class _MiniPlayerState extends State<MiniPlayer>
             borderRadius: BorderRadius.circular(8.8),
             child: Container(
               color: AppColors.bgCard,
-          child: GestureDetector(
-            onHorizontalDragUpdate: _onHorizontalDragUpdate,
-            onHorizontalDragEnd: (details) =>
-                _onHorizontalDragEnd(details, audio),
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const _MiniProgressBar(),
@@ -296,7 +295,6 @@ class _MiniPlayerState extends State<MiniPlayer>
                 ),
               ],
             ),
-          ),
             ),
           ),
         ),
