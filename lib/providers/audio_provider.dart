@@ -367,6 +367,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _q.tracks,
         _q.currentIndex,
         _position.inMilliseconds,
+        _isPlaying,
       );
     });
   }
@@ -382,6 +383,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _q.tracks,
       _q.currentIndex,
       _position.inMilliseconds,
+      _isPlaying,
     );
   }
 
@@ -414,6 +416,38 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       final restoredTrack = restoredQueue[restoredIndex];
       final posMs = (rawPosMs is num) ? rawPosMs.toInt() : 0;
+      final wasPlaying = state['wasPlaying'] as bool? ?? false;
+      final savedAtMs = state['savedAt'] as int?;
+
+      // Detect stale track completion after process death: if the track was
+      // playing when persisted and enough wall-clock time has passed for it to
+      // have ended, advance to the next track instead of restoring the old one.
+      if (wasPlaying && savedAtMs != null && restoredQueue.length > 1) {
+        final savedAt = DateTime.fromMillisecondsSinceEpoch(savedAtMs);
+        final elapsed = DateTime.now().difference(savedAt);
+        final trackDur = Duration(
+            seconds: restoredTrack.durationSeconds > 0
+                ? restoredTrack.durationSeconds
+                : 30);
+        final estimatedPos = Duration(milliseconds: posMs) + elapsed;
+        if (estimatedPos >= trackDur) {
+          final nextIndex = (restoredIndex + 1) % restoredQueue.length;
+          final nextTrack = restoredQueue[nextIndex];
+          _q.restore(restoredQueue, nextIndex);
+          _currentTrack = nextTrack;
+          _position = Duration.zero;
+          _duration = Duration(
+              seconds: nextTrack.durationSeconds > 0
+                  ? nextTrack.durationSeconds
+                  : 30);
+          _isPlaying = false;
+          _isBuffering = false;
+          _prefetchNextTrack();
+          notifyListeners();
+          debugPrint('[AudioProvider] Track "${restoredTrack.title}" would have ended during background; advanced to "${nextTrack.title}"');
+          return;
+        }
+      }
 
       _q.restore(restoredQueue, restoredIndex);
       _currentTrack = restoredTrack;
@@ -631,15 +665,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final state = await _spotify.getPlaybackState();
       if (!_spotifyActive || _completionHandled) return;
       if (state == null) {
-        // No Spotify session at all (app closed or frozen): stop pretending
-        // to play, outside the grace period after a play command.
+        // No Spotify session at all (app closed or frozen).
         final sincePlay = DateTime.now().difference(_lastPlayCommandTime);
         final nativePlaying = _currentSpotifyUri != null &&
             _nativePlayer.isPlayingUri(_currentSpotifyUri!);
-        if (_isPlaying && !nativePlaying && sincePlay.inSeconds >= 10) {
-          debugPrint('[AudioProvider] Spotify session gone, marking paused');
-          _isPlaying = false;
-          notifyListeners();
+
+        // Check if the track should have ended while Spotify was gone.
+        if (!nativePlaying && sincePlay.inSeconds >= 10) {
+          final elapsed = DateTime.now().difference(_spotifySyncTime);
+          final estimatedPos = _spotifySyncPosition + elapsed;
+          if (_isPlaying &&
+              estimatedPos >= _duration &&
+              _duration > Duration.zero) {
+            debugPrint('[AudioProvider] Spotify session gone, track would have ended; advancing');
+            _stopPositionTimer();
+            _completionHandled = false;
+            _crossfadeTriggered = false;
+            _handleTrackCompleted();
+            return;
+          }
+          if (_isPlaying) {
+            debugPrint('[AudioProvider] Spotify session gone, marking paused');
+            _isPlaying = false;
+            notifyListeners();
+          }
         }
         return;
       }
@@ -649,7 +698,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final item = state['item'] as Map<String, dynamic>?;
       final durationMs = item?['duration_ms'] as int? ?? 0;
 
-      // Detect playback transferred to another device
+      // Detect playback transferred to another device or Spotify auto-advanced
       if (item != null && _currentTrack != null && _currentSpotifyUri != null) {
         final playingUri = item['uri'] as String?;
         // Spotify may relink the track to another market's version.
@@ -657,6 +706,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (playingUri != null &&
             playingUri != _currentSpotifyUri &&
             linkedUri != _currentSpotifyUri) {
+          // If the estimated position is past the track's duration, Spotify
+          // auto-advanced because our track ended — advance our queue too.
+          final elapsed = DateTime.now().difference(_spotifySyncTime);
+          final estimatedPos = _spotifySyncPosition + elapsed;
+          if (estimatedPos >= _duration && _duration > Duration.zero) {
+            debugPrint('[AudioProvider] Spotify auto-advanced ($playingUri vs $_currentSpotifyUri), advancing queue');
+            _stopPositionTimer();
+            _completionHandled = false;
+            _crossfadeTriggered = false;
+            _handleTrackCompleted();
+            return;
+          }
           debugPrint('[AudioProvider] Spotify playing different track ($playingUri vs $_currentSpotifyUri), pausing');
           _isPlaying = false;
           _stopPositionTimer();

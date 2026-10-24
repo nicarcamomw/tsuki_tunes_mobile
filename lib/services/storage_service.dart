@@ -350,7 +350,7 @@ class StorageService implements StorageContract {
   }
 
   @override
-  Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]) async {
+  Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs, bool? wasPlaying]) async {
     final prefs = await SharedPreferences.getInstance();
     if (queue == null || queue.isEmpty) {
       await prefs.remove(_playbackStateKey);
@@ -359,6 +359,8 @@ class StorageService implements StorageContract {
         'queue': queue.map((t) => t.toJson()).toList(),
         'currentIndex': currentIndex ?? 0,
         'position': positionMs ?? 0,
+        'wasPlaying': wasPlaying ?? false,
+        'savedAt': DateTime.now().millisecondsSinceEpoch,
       };
       await prefs.setString(_playbackStateKey, json.encode(state));
     }
