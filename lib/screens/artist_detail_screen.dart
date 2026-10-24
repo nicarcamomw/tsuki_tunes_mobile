@@ -155,14 +155,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
   }
 
+  bool _isOwnRelease(Album a) {
+    if (a.recordType == 'compile') return false;
+    if (a.artistId.isNotEmpty) return a.artistId == _artist.id;
+    return a.artistName.toLowerCase().trim() ==
+        _artist.name.toLowerCase().trim();
+  }
+
   /// Own releases (albums, EPs, singles) grouped by type + title, so that
   /// duplicate editions (explicit/clean, re-uploads) count as one release.
-  /// "Appears on" compilations are excluded: they are mostly other artists'
-  /// tracks and would make the discography impossible to complete.
+  /// Features and compilations are excluded.
   List<List<Album>> get _ownReleaseGroups {
     final groups = <String, List<Album>>{};
     for (final a in _albums) {
-      if (a.recordType == 'compile') continue;
+      if (!_isOwnRelease(a)) continue;
       final key = '${a.recordType}|${a.title.trim().toLowerCase()}';
       groups.putIfAbsent(key, () => []).add(a);
     }
@@ -172,16 +178,21 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   Map<String, List<Album>> get _categorizedAlbums {
     final Map<String, List<Album>> cats = {
       'album': [],
-      'single_ep': [],
-      'compile': [],
+      'ep': [],
+      'single': [],
+      'appears_on': [],
     };
     for (final a in _albums) {
-      if (a.recordType == 'album') {
+      if (!_isOwnRelease(a)) {
+        cats['appears_on']!.add(a);
+      } else if (a.recordType == 'album') {
         cats['album']!.add(a);
-      } else if (a.recordType == 'single' || a.recordType == 'ep') {
-        cats['single_ep']!.add(a);
-      } else if (a.recordType == 'compile') {
-        cats['compile']!.add(a);
+      } else if (a.recordType == 'ep') {
+        cats['ep']!.add(a);
+      } else if (a.recordType == 'single') {
+        cats['single']!.add(a);
+      } else {
+        cats['album']!.add(a);
       }
     }
     return cats;
@@ -526,29 +537,25 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               strings.albumCountLabel(cats['album']!.length),
                               locale,
                             ),
-                          if (_albums
-                              .where((a) => a.recordType == 'ep')
-                              .isNotEmpty)
+                          if (cats['ep']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.ep(
                                   size: 15, color: AppColors.accent),
-                              strings.epCountLabel(_albums.where((a) => a.recordType == 'ep').length),
+                              strings.epCountLabel(cats['ep']!.length),
                               locale,
                             ),
-                          if (_albums
-                              .where((a) => a.recordType == 'single')
-                              .isNotEmpty)
+                          if (cats['single']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.nota(
                                   size: 15, color: AppColors.accent),
-                              strings.singleCountLabel(_albums.where((a) => a.recordType == 'single').length),
+                              strings.singleCountLabel(cats['single']!.length),
                               locale,
                             ),
-                          if (cats['compile']!.isNotEmpty)
+                          if (cats['appears_on']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.grupo(
                                   size: 15, color: AppColors.accent),
-                              strings.appearsOnCountLabel(cats['compile']!.length),
+                              strings.appearsOnCountLabel(cats['appears_on']!.length),
                               locale,
                             ),
                         ],
@@ -810,28 +817,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             ),
             if (cats['album']!.isNotEmpty)
               ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings, icon: Icons.album_rounded),
-            if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
-              ..._buildCategorySection(
-                strings.tabEps,
-                _albums.where((a) => a.recordType == 'ep').toList(),
-                'ep',
-                library,
-                locale,
-                strings,
-                icon: Icons.album_outlined,
-              ),
-            if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
-              ..._buildCategorySection(
-                strings.tabSingles,
-                _albums.where((a) => a.recordType == 'single').toList(),
-                'single',
-                library,
-                locale,
-                strings,
-                icon: Icons.music_note_rounded,
-              ),
-            if (cats['compile']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAppearsOn, cats['compile']!, 'compile', library, locale, strings, icon: Icons.groups_rounded),
+            if (cats['ep']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabEps, cats['ep']!, 'ep', library, locale, strings, icon: Icons.album_outlined),
+            if (cats['single']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabSingles, cats['single']!, 'single', library, locale, strings, icon: Icons.music_note_rounded),
+            if (cats['appears_on']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -1156,13 +1147,18 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       'album': [],
       'ep': [],
       'single': [],
-      'compile': [],
+      'appears_on': [],
     };
     for (final album in _albums) {
-      final key = albumCats.containsKey(album.recordType)
-          ? album.recordType
-          : 'album';
-      albumCats[key]!.add(album);
+      if (!_isOwnRelease(album)) {
+        albumCats['appears_on']!.add(album);
+      } else if (album.recordType == 'ep') {
+        albumCats['ep']!.add(album);
+      } else if (album.recordType == 'single') {
+        albumCats['single']!.add(album);
+      } else {
+        albumCats['album']!.add(album);
+      }
     }
 
     return Padding(
@@ -1322,7 +1318,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                   _buildStoredStat(
                                     Icons.people_rounded,
                                     strings.tabAppearsOn,
-                                    albumCats['compile']!,
+                                    albumCats['appears_on']!,
                                     library,
                                     locale,
                                   ),

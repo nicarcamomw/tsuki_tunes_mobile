@@ -142,27 +142,44 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     }
   }
 
+  bool _isOwnRelease(Album a) {
+    if (a.recordType == 'compile') return false;
+    final id = widget.artistId;
+    if (id != null && a.artistId.isNotEmpty) return a.artistId == id;
+    return a.artistName.toLowerCase().trim() ==
+        widget.artistName.toLowerCase().trim();
+  }
+
   List<Album> get _filtered {
     if (_filter == 'all') return _allAlbums;
+    if (_filter == 'appears_on') {
+      return _allAlbums.where((a) => !_isOwnRelease(a)).toList();
+    }
     if (_filter == 'single_ep') {
       return _allAlbums
-          .where((a) => a.recordType == 'single' || a.recordType == 'ep')
+          .where((a) =>
+              _isOwnRelease(a) &&
+              (a.recordType == 'single' || a.recordType == 'ep'))
           .toList();
     }
-    return _allAlbums.where((a) => a.recordType == _filter).toList();
+    return _allAlbums
+        .where((a) => _isOwnRelease(a) && a.recordType == _filter)
+        .toList();
   }
 
   Map<String, List<Album>> get _categories {
     final Map<String, List<Album>> cats = {};
     for (final a in _allAlbums) {
-      if (a.recordType == 'album') {
+      if (!_isOwnRelease(a)) {
+        cats.putIfAbsent('appears_on', () => []).add(a);
+      } else if (a.recordType == 'album') {
         cats.putIfAbsent('album', () => []).add(a);
       } else if (a.recordType == 'single') {
         cats.putIfAbsent('single', () => []).add(a);
       } else if (a.recordType == 'ep') {
         cats.putIfAbsent('ep', () => []).add(a);
-      } else if (a.recordType == 'compile') {
-        cats.putIfAbsent('compile', () => []).add(a);
+      } else {
+        cats.putIfAbsent('album', () => []).add(a);
       }
     }
     return cats;
@@ -233,8 +250,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                             _buildChip('single', strings.tabSingles, locale),
                           if (cats.containsKey('ep'))
                             _buildChip('ep', strings.tabEps, locale),
-                          if (cats.containsKey('compile'))
-                            _buildChip('compile', strings.tabAppearsOn, locale),
+                          if (cats.containsKey('appears_on'))
+                            _buildChip('appears_on', strings.tabAppearsOn, locale),
                         ],
                       ),
                     ),
