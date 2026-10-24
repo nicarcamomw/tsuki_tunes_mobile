@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -25,26 +26,30 @@ class _MiniPlayerState extends State<MiniPlayer>
   double _swipeDx = 0;
   bool _swipeLocked = false;
   bool _hapticFired = false;
-  late final AnimationController _resetController;
-  late Animation<double> _resetAnimation;
+  late final AnimationController _springCtrl;
+
+  static const _spring = SpringDescription(
+    mass: 1,
+    stiffness: 500,
+    damping: 28,
+  );
 
   @override
   void initState() {
     super.initState();
-    _resetController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-    _resetAnimation = const AlwaysStoppedAnimation(0.0);
-    _resetController.addListener(() {
-      setState(() => _swipeDx = _resetAnimation.value);
-    });
+    _springCtrl = AnimationController.unbounded(vsync: this, value: 0)
+      ..addListener(() => setState(() => _swipeDx = _springCtrl.value));
   }
 
   @override
   void dispose() {
-    _resetController.dispose();
+    _springCtrl.dispose();
     super.dispose();
+  }
+
+  double get _swipeThreshold {
+    final w = MediaQuery.sizeOf(context).width;
+    return (w * 0.2).clamp(70.0, 120.0);
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
@@ -60,11 +65,6 @@ class _MiniPlayerState extends State<MiniPlayer>
     });
   }
 
-  double get _swipeThreshold {
-    final w = MediaQuery.sizeOf(context).width;
-    return (w * 0.2).clamp(70.0, 120.0);
-  }
-
   void _onHorizontalDragEnd(DragEndDetails details, AudioProvider audio) {
     if (_swipeLocked) return;
 
@@ -72,13 +72,13 @@ class _MiniPlayerState extends State<MiniPlayer>
     final hasQueue = audio.queue.length > 1;
     final fastSwipe = velocity.abs() > 700;
     final farSwipe = _swipeDx.abs() > _swipeThreshold;
-    final triggered = hasQueue && !audio.isBuffering && (fastSwipe || farSwipe);
+    final triggered =
+        hasQueue && !audio.isBuffering && (fastSwipe || farSwipe);
 
     if (triggered) {
       final goNext = fastSwipe ? velocity < 0 : _swipeDx < 0;
       _swipeLocked = true;
       HapticFeedback.mediumImpact();
-
       if (goNext) {
         audio.next();
       } else {
@@ -87,46 +87,40 @@ class _MiniPlayerState extends State<MiniPlayer>
     }
 
     _hapticFired = false;
-    _resetAnimation = Tween<double>(begin: _swipeDx, end: 0.0).animate(
-      CurvedAnimation(parent: _resetController, curve: Curves.easeOutCubic),
-    );
-    _resetController.forward(from: 0).whenComplete(() {
-      _swipeLocked = false;
-    });
+    _springCtrl
+        .animateWith(SpringSimulation(_spring, _swipeDx, 0, velocity))
+        .whenComplete(() => _swipeLocked = false);
   }
 
   void _openExpandedPlayer(BuildContext context) {
     NavigationEvents.isPlayerExpanded.value = true;
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 320),
-        reverseTransitionDuration: const Duration(milliseconds: 280),
-        pageBuilder: (context, anim, secondaryAnim) =>
-            const ExpandedPlayerScreen(),
-        transitionsBuilder: (context, anim, secondaryAnim, child) {
-          final curved = CurvedAnimation(
-            parent: anim,
-            curve: Curves.easeOutCubic,
-            reverseCurve: Curves.easeInCubic,
-          );
-          return SlideTransition(
-            position: Tween(
-              begin: const Offset(0.0, 1.0),
-              end: Offset.zero,
-            ).animate(curved),
-            child: child,
-          );
-        },
-      ),
-    ).whenComplete(() {
-      NavigationEvents.isPlayerExpanded.value = false;
-    });
+    Navigator.of(context)
+        .push(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 320),
+            reverseTransitionDuration: const Duration(milliseconds: 280),
+            pageBuilder: (_, __, ___) => const ExpandedPlayerScreen(),
+            transitionsBuilder: (_, anim, __, child) {
+              final curved = CurvedAnimation(
+                parent: anim,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              );
+              return SlideTransition(
+                position: Tween(
+                  begin: const Offset(0.0, 1.0),
+                  end: Offset.zero,
+                ).animate(curved),
+                child: child,
+              );
+            },
+          ),
+        )
+        .whenComplete(() => NavigationEvents.isPlayerExpanded.value = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Select individual fields: the provider notifies on every position
-    // tick, and only the progress bar needs that.
     final audio = context.read<AudioProvider>();
     final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
     final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
@@ -140,169 +134,187 @@ class _MiniPlayerState extends State<MiniPlayer>
     final library = context.watch<LibraryProvider>();
     final locale = context.read<LocaleProvider>();
     final isListened = library.isTrackListened(track.id);
-
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
     return Semantics(
       label: '${track.title}, ${track.fullArtistName}',
       child: RepaintBoundary(
-      child: GestureDetector(
-        onTap: () => _openExpandedPlayer(context),
-        onVerticalDragEnd: (details) {
-          if ((details.primaryVelocity ?? 0) < -300) {
-            _openExpandedPlayer(context);
-          }
-        },
-        onHorizontalDragUpdate: _onHorizontalDragUpdate,
-        onHorizontalDragEnd: (details) =>
-            _onHorizontalDragEnd(details, audio),
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.accent, width: 1.2),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.accentGlow,
-                blurRadius: 12,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.8),
-            child: Container(
-              color: AppColors.bgCard,
-          child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const _MiniProgressBar(),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Transform.translate(
-                            offset: Offset(_swipeDx * 0.3, 0),
-                            child: ColorFiltered(
-                              colorFilter: ColorFilter.mode(
-                                Colors.black.withValues(
-                                    alpha: (1.0 - swipeOpacity) * 0.7),
-                                BlendMode.srcATop,
-                              ),
-                              child: Row(
-                                children: [
-                                  _BreathingCover(
-                                    trackId: track.id,
-                                    coverUrl: track.coverUrl,
-                                    isPlaying: isPlaying,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _MarqueeText(
-                                          text: track.title,
-                                          style: locale.getTextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.textBright,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        _MarqueeText(
-                                          text: spotifyFallbackActive
-                                              ? '${track.fullArtistName}  ·  Preview'
-                                              : track.fullArtistName,
-                                          style: locale.getTextStyle(
-                                            fontSize: 11,
-                                            color: spotifyFallbackActive
-                                                ? AppColors.accent.withValues(alpha: 0.7)
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(width: 10),
-                      // Oni mask (listened toggle)
-                      Tooltip(
-                        message: isListened
-                            ? locale.strings.unmarkAsListened
-                            : locale.strings.markAsListened,
-                        child: TapScale(
-                          semanticLabel: isListened
-                              ? locale.strings.unmarkAsListened
-                              : locale.strings.markAsListened,
-                          onTap: () {
-                            if (isListened) {
-                              library.unmarkTrack(track.id);
-                            } else {
-                              library.markTrack(track);
-                            }
-                          },
-                          scaleDown: 0.8,
-                          child: OniMaskIcon(
-                            isActive: isListened,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Play / Pause
-                      TapScale(
-                        semanticLabel: isPlaying ? locale.strings.a11yPause : locale.strings.a11yPlay,
-                        onTap: isBuffering ? null : audio.togglePlay,
-                        scaleDown: 0.85,
-                        child: isBuffering
-                            ? const SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.accent),
-                                ),
-                              )
-                            : Icon(
-                                isPlaying
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_filled,
-                                size: 32,
-                                color: AppColors.accent,
-                              ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Close / Stop
-                      TapScale(
-                        semanticLabel: locale.strings.a11yStop,
-                        onTap: () => audio.stop(),
-                        scaleDown: 0.85,
-                        child: const Icon(Icons.close,
-                            size: 20, color: AppColors.textMuted),
-                      ),
-                    ],
-                  ),
+        child: GestureDetector(
+          onTap: () => _openExpandedPlayer(context),
+          onVerticalDragEnd: (details) {
+            if ((details.primaryVelocity ?? 0) < -300) {
+              _openExpandedPlayer(context);
+            }
+          },
+          onHorizontalDragUpdate: _onHorizontalDragUpdate,
+          onHorizontalDragEnd: (d) => _onHorizontalDragEnd(d, audio),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.accent, width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.accentGlow,
+                  blurRadius: 12,
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.8),
+              child: Container(
+                color: AppColors.bgCard,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _MiniProgressBar(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          // --- Track info (swipeable) ---
+                          Expanded(
+                            child: Transform.translate(
+                              offset: Offset(_swipeDx * 0.3, 0),
+                              child: ColorFiltered(
+                                colorFilter: ColorFilter.mode(
+                                  Colors.black.withValues(
+                                    alpha: (1.0 - swipeOpacity) * 0.7,
+                                  ),
+                                  BlendMode.srcATop,
+                                ),
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Row(
+                                    key: ValueKey(track.id),
+                                    children: [
+                                      _BreathingCover(
+                                        trackId: track.id,
+                                        coverUrl: track.coverUrl,
+                                        isPlaying: isPlaying,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _MarqueeText(
+                                              text: track.title,
+                                              style: locale.getTextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.textBright,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            _MarqueeText(
+                                              text: spotifyFallbackActive
+                                                  ? '${track.fullArtistName}  ·  Preview'
+                                                  : track.fullArtistName,
+                                              style: locale.getTextStyle(
+                                                fontSize: 11,
+                                                color: spotifyFallbackActive
+                                                    ? AppColors.accent
+                                                        .withValues(alpha: 0.7)
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // --- Oni mask (listened toggle) ---
+                          Tooltip(
+                            message: isListened
+                                ? locale.strings.unmarkAsListened
+                                : locale.strings.markAsListened,
+                            child: TapScale(
+                              semanticLabel: isListened
+                                  ? locale.strings.unmarkAsListened
+                                  : locale.strings.markAsListened,
+                              onTap: () {
+                                if (isListened) {
+                                  library.unmarkTrack(track.id);
+                                } else {
+                                  library.markTrack(track);
+                                }
+                              },
+                              scaleDown: 0.8,
+                              child: OniMaskIcon(
+                                isActive: isListened,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // --- Play / Pause ---
+                          TapScale(
+                            semanticLabel: isPlaying
+                                ? locale.strings.a11yPause
+                                : locale.strings.a11yPlay,
+                            onTap: isBuffering ? null : audio.togglePlay,
+                            scaleDown: 0.85,
+                            child: isBuffering
+                                ? const SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                        AppColors.accent,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    isPlaying
+                                        ? Icons.pause_circle_filled
+                                        : Icons.play_circle_filled,
+                                    size: 32,
+                                    color: AppColors.accent,
+                                  ),
+                          ),
+                          const SizedBox(width: 8),
+                          // --- Close / Stop ---
+                          TapScale(
+                            semanticLabel: locale.strings.a11yStop,
+                            onTap: () => audio.stop(),
+                            scaleDown: 0.85,
+                            child: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Breathing cover art
+// ---------------------------------------------------------------------------
 
 class _BreathingCover extends StatefulWidget {
   final String trackId;
@@ -387,136 +399,157 @@ class _BreathingCoverState extends State<_BreathingCover>
       },
       child: Hero(
         tag: 'player_art_${widget.trackId}',
-        child: ExcludeSemantics(child: ClipRRect(
-          borderRadius: BorderRadius.circular(3.5),
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: widget.coverUrl.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: widget.coverUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(color: AppColors.bgMid),
-                    errorWidget: (_, __, ___) => Container(
+        child: ExcludeSemantics(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3.5),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: widget.coverUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: widget.coverUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) =>
+                          Container(color: AppColors.bgMid),
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppColors.bgMid,
+                        child: const Icon(
+                          Icons.music_note,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    )
+                  : Container(
                       color: AppColors.bgMid,
-                      child: const Icon(Icons.music_note,
-                          color: AppColors.accent),
+                      child: const Icon(
+                        Icons.music_note,
+                        color: AppColors.accent,
+                      ),
                     ),
-                  )
-                : Container(
-                    color: AppColors.bgMid,
-                    child: const Icon(Icons.music_note,
-                        color: AppColors.accent),
-                  ),
+            ),
           ),
-        )),
+        ),
       ),
     );
   }
 }
 
-/// _MarqueeText: Desplaza suavemente títulos o artistas largos en lugar de recortarlos
+// ---------------------------------------------------------------------------
+// Marquee text — AnimationController-driven (no async while-loop)
+// ---------------------------------------------------------------------------
+
 class _MarqueeText extends StatefulWidget {
   final String text;
   final TextStyle style;
 
-  const _MarqueeText({
-    required this.text,
-    required this.style,
-  });
+  const _MarqueeText({required this.text, required this.style});
 
   @override
   State<_MarqueeText> createState() => _MarqueeTextState();
 }
 
-class _MarqueeTextState extends State<_MarqueeText> {
-  late final ScrollController _scrollController;
-  bool _isScrolling = false;
+class _MarqueeTextState extends State<_MarqueeText>
+    with SingleTickerProviderStateMixin {
+  late final ScrollController _scroll;
+  late final AnimationController _anim;
+  double _maxScroll = 0;
+  bool _reduceMotion = false;
+
+  static const int _pauseMs = 1800;
+  static const int _returnMs = 700;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startMarqueeLoop());
+    _scroll = ScrollController();
+    _anim = AnimationController(vsync: this)
+      ..addListener(_onTick)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) _restart();
+      });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
   }
 
   @override
-  void didUpdateWidget(_MarqueeText oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.text != oldWidget.text) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) => _startMarqueeLoop());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (_reduceMotion && _anim.isAnimating) _anim.stop();
+  }
+
+  @override
+  void didUpdateWidget(_MarqueeText old) {
+    super.didUpdateWidget(old);
+    if (widget.text != old.text) {
+      _anim.stop();
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
     }
   }
 
   @override
   void dispose() {
-    _isScrolling = false;
-    _scrollController.dispose();
+    _anim.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
-  Future<void> _startMarqueeLoop() async {
-    if (!mounted || _isScrolling) return;
-    _isScrolling = true;
+  void _measure() {
+    if (!mounted || !_scroll.hasClients || _reduceMotion) return;
+    _maxScroll = _scroll.position.maxScrollExtent;
+    if (_maxScroll <= 0) return;
+    _start();
+  }
 
-    while (mounted && _isScrolling) {
-      if (!_scrollController.hasClients) {
-        await Future.delayed(const Duration(milliseconds: 300));
-        continue;
-      }
+  void _start() {
+    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0).toInt();
+    _anim.duration =
+        Duration(milliseconds: _pauseMs + scrollMs + _pauseMs + _returnMs);
+    _anim.forward(from: 0);
+  }
 
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      if (maxScroll <= 0) {
-        // El texto cabe perfectamente; no requiere scroll
-        await Future.delayed(const Duration(seconds: 1));
-        continue;
-      }
+  void _restart() {
+    if (!mounted || _reduceMotion) return;
+    _measure();
+  }
 
-      // Pausa inicial antes de comenzar a desplazarse
-      await Future.delayed(const Duration(milliseconds: 1800));
-      if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
+  void _onTick() {
+    if (!_scroll.hasClients || _maxScroll <= 0) return;
 
-      // Desplazamiento suave hacia el final (~24 px/segundo)
-      final duration = Duration(
-        milliseconds: (maxScroll * 40).clamp(1200, 6000).toInt(),
-      );
-      await _scrollController.animateTo(
-        maxScroll,
-        duration: duration,
-        curve: Curves.linear,
-      );
+    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0);
+    final totalMs = _pauseMs + scrollMs + _pauseMs + _returnMs;
+    final elapsed = _anim.value * totalMs;
 
-      // Pausa para leer el final
-      await Future.delayed(const Duration(milliseconds: 1800));
-      if (!mounted || !_isScrolling || !_scrollController.hasClients) break;
-
-      // Retorno suave al inicio
-      await _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.easeOutCubic,
-      );
+    double pos;
+    if (elapsed < _pauseMs) {
+      pos = 0;
+    } else if (elapsed < _pauseMs + scrollMs) {
+      pos = _maxScroll * ((elapsed - _pauseMs) / scrollMs);
+    } else if (elapsed < _pauseMs + scrollMs + _pauseMs) {
+      pos = _maxScroll;
+    } else {
+      final t =
+          ((elapsed - _pauseMs - scrollMs - _pauseMs) / _returnMs).clamp(0, 1);
+      pos = _maxScroll * (1 - Curves.easeOutCubic.transform(t.toDouble()));
     }
+
+    _scroll.jumpTo(pos.clamp(0, _maxScroll));
   }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      controller: _scrollController,
+      controller: _scroll,
       scrollDirection: Axis.horizontal,
       physics: const NeverScrollableScrollPhysics(),
-      child: Text(
-        widget.text,
-        style: widget.style,
-        maxLines: 1,
-      ),
+      child: Text(widget.text, style: widget.style, maxLines: 1),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Progress bar
+// ---------------------------------------------------------------------------
 
 class _MiniProgressBar extends StatelessWidget {
   const _MiniProgressBar();
