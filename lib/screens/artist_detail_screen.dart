@@ -156,7 +156,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   bool _isOwnRelease(Album a) {
-    if (a.recordType == 'compile') return false;
     if (a.artistId.isNotEmpty) return a.artistId == _artist.id;
     return a.artistName.toLowerCase().trim() ==
         _artist.name.toLowerCase().trim();
@@ -187,7 +186,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         cats['appears_on']!.add(a);
       } else if (a.recordType == 'album') {
         cats['album']!.add(a);
-      } else if (a.recordType == 'ep') {
+      } else if (a.recordType == 'ep' || a.recordType == 'compile') {
         cats['ep']!.add(a);
       } else if (a.recordType == 'single') {
         cats['single']!.add(a);
@@ -1152,7 +1151,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     for (final album in _albums) {
       if (!_isOwnRelease(album)) {
         albumCats['appears_on']!.add(album);
-      } else if (album.recordType == 'ep') {
+      } else if (album.recordType == 'ep' || album.recordType == 'compile') {
         albumCats['ep']!.add(album);
       } else if (album.recordType == 'single') {
         albumCats['single']!.add(album);

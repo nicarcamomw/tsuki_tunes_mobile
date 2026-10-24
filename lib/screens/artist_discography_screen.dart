@@ -143,7 +143,6 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   }
 
   bool _isOwnRelease(Album a) {
-    if (a.recordType == 'compile') return false;
     final id = widget.artistId;
     if (id != null && a.artistId.isNotEmpty) return a.artistId == id;
     return a.artistName.toLowerCase().trim() ==
@@ -176,7 +175,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
         cats.putIfAbsent('album', () => []).add(a);
       } else if (a.recordType == 'single') {
         cats.putIfAbsent('single', () => []).add(a);
-      } else if (a.recordType == 'ep') {
+      } else if (a.recordType == 'ep' || a.recordType == 'compile') {
         cats.putIfAbsent('ep', () => []).add(a);
       } else {
         cats.putIfAbsent('album', () => []).add(a);
