@@ -40,6 +40,9 @@ class ArtistDetailScreen extends StatefulWidget {
 class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   final ScrollController _scrollController = ScrollController();
+  // Entry points like the track menu only know the artist's id and name, so
+  // the full profile (photos, fans, release count) is fetched on open.
+  late Artist _artist = widget.artist;
   List<Track> _topTracks = [];
   List<Album> _albums = [];
   int _totalAlbums = 0;
@@ -58,6 +61,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadArtistInfo();
     _loadArtistData();
     _trackVisit();
   }
@@ -84,8 +88,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   void _trackVisit() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LibraryProvider>().trackArtistVisit(widget.artist.name);
+      context.read<LibraryProvider>().trackArtistVisit(_artist.name);
     });
+  }
+
+  bool get _needsArtistInfo =>
+      _artist.pictureUrl.isEmpty ||
+      (_artist.fansCount == 0 && _artist.albumsCount == 0);
+
+  Future<void> _loadArtistInfo() async {
+    if (!_needsArtistInfo) return;
+    final full = await _api.getArtist(widget.artist.id);
+    if (mounted && full != null) {
+      setState(() => _artist = full);
+    }
   }
 
   Future<void> _loadArtistData() async {
@@ -105,11 +121,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
     try {
       final results = await Future.wait([
-        _api.getArtistTopTracks(widget.artist.id, limit: 10),
-        _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
-        LastFmService.getArtistTags(widget.artist.name),
-        _api.getArtistCompilations(widget.artist.id),
-        _api.getRelatedArtists(widget.artist.id),
+        _api.getArtistTopTracks(_artist.id, limit: 10),
+        _api.getArtistAlbumsPage(_artist.id, limit: 250, index: 0),
+        LastFmService.getArtistTags(_artist.name),
+        _api.getArtistCompilations(_artist.id),
+        _api.getRelatedArtists(_artist.id),
       ]);
       if (mounted) {
         final pagedAlbums = results[1] as ArtistAlbumsPage;
@@ -190,7 +206,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         !_hasMoreAlbums &&
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
-    final isFollowed = library.isArtistFollowed(widget.artist.id);
+    final isFollowed = library.isArtistFollowed(_artist.id);
     final isGuest = context.watch<AuthProvider>().isGuest;
 
     final cats = _categorizedAlbums;
@@ -203,7 +219,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
-        onRefresh: _loadArtistData,
+        onRefresh: () => Future.wait([_loadArtistInfo(), _loadArtistData()]),
         child: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -216,7 +232,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               opacity: _showTitleInAppBar ? 1.0 : 0.0,
               duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
               child: Text(
-                widget.artist.name,
+                _artist.name,
                 style: locale.getTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -286,10 +302,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (widget.artist.pictureUrl.isNotEmpty)
+                  if (_artist.pictureUrl.isNotEmpty)
                     ExcludeSemantics(
                       child: CachedNetworkImage(
-                        imageUrl: widget.artist.getBestImage(size: 'xl'),
+                        imageUrl: _artist.getBestImage(size: 'xl'),
                         fit: BoxFit.cover,
                         alignment: Alignment.topCenter,
                       ),
@@ -317,8 +333,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     child: Semantics(
                       header: true,
                       child: DistortedArtistName(
-                        name: widget.artist.name,
-                        artistId: widget.artist.id,
+                        name: _artist.name,
+                        artistId: _artist.id,
                         fontSize: 30,
                       ),
                     ),
@@ -338,7 +354,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   // Stats row
                   Row(
                     children: [
-                      if (widget.artist.fansCount > 0) ...[
+                      if (_artist.fansCount > 0) ...[
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -348,7 +364,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
+                              strings.artistFans(Formatters.formatNumber(_artist.fansCount)),
                               style: locale.getTextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -359,7 +375,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                         const SizedBox(width: 16),
                       ],
-                      if (widget.artist.albumsCount > 0)
+                      if (_artist.albumsCount > 0)
                         Semantics(
                           button: true,
                           label: _showStats ? strings.a11yHideStats : strings.a11yShowStats,
@@ -378,7 +394,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                strings.artistReleases(widget.artist.albumsCount),
+                                strings.artistReleases(_artist.albumsCount),
                                 style: locale.getTextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -417,9 +433,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       onTap: () {
                         HapticFeedback.lightImpact();
                         if (isFollowed) {
-                          library.unfollowArtist(widget.artist.id);
+                          library.unfollowArtist(_artist.id);
                         } else {
-                          library.followArtist(widget.artist);
+                          library.followArtist(_artist);
                         }
                       },
                       child: AnimatedContainer(
@@ -878,8 +894,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           await appNavigatorKey.currentState?.push<List<Album>>(
                         MaterialPageRoute(
                           builder: (_) => ArtistDiscographyScreen(
-                            artistId: widget.artist.id,
-                            artistName: widget.artist.name,
+                            artistId: _artist.id,
+                            artistName: _artist.name,
                             albums: _albums,
                             totalAlbums: _totalAlbums,
                             initialFilter: filterKey,
@@ -1125,7 +1141,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   Widget _buildStoredContentSection(
       LibraryProvider library, LocaleProvider locale, AppStrings strings) {
-    final artistName = widget.artist.name;
+    final artistName = _artist.name;
     final artistNameLower = artistName.toLowerCase().trim();
     final albumIds = _albums.map((a) => a.id).toSet();
 
@@ -1206,9 +1222,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             height: 44,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(22),
-                              child: widget.artist.pictureUrl.isNotEmpty
+                              child: _artist.pictureUrl.isNotEmpty
                                   ? CachedNetworkImage(
-                                      imageUrl: widget.artist.pictureUrl,
+                                      imageUrl: _artist.pictureUrl,
                                       fit: BoxFit.cover,
                                     )
                                   : Container(
