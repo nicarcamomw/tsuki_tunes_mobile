@@ -241,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final statsLoaded = context.select<LibraryProvider, bool>((l) => l.listenedTracksLoaded);
     final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedTracks.length);
     final artistsCount = context.select<LibraryProvider, int>((l) => l.uniqueArtistsCount);
     final albumsCount = context.select<LibraryProvider, int>((l) => l.uniqueAlbumsCount);
@@ -467,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else ...[
-              if (auth.isLoggedIn && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
+              if (auth.isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
                 SliverFillRemaining(
                   child: Center(
                     child: Padding(
@@ -552,26 +553,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildStatCard(
-                              strings.statsTracks, '$listenedCount', strings.statsListened,
-                              locale: locale),
-                          _buildStatCard(
-                              strings.statsArtists, '$artistsCount', strings.statsInSystem,
-                              locale: locale),
-                          _buildStatCard(
-                              strings.statsAlbums, '$albumsCount', strings.statsInSystem,
-                              locale: locale),
-                          _buildStatCard(
-                            strings.statsTopArtist,
-                            topArtistName,
-                            strings.statsAffinity(topArtistScore),
-                            isTextValue: true,
-                            locale: locale,
-                          ),
-                        ],
-                      ),
+                      physics: statsLoaded ? null : const NeverScrollableScrollPhysics(),
+                      child: statsLoaded
+                          ? Row(
+                              children: [
+                                _buildStatCard(
+                                    strings.statsTracks, '$listenedCount', strings.statsListened,
+                                    locale: locale),
+                                _buildStatCard(
+                                    strings.statsArtists, '$artistsCount', strings.statsInSystem,
+                                    locale: locale),
+                                _buildStatCard(
+                                    strings.statsAlbums, '$albumsCount', strings.statsInSystem,
+                                    locale: locale),
+                                _buildStatCard(
+                                  strings.statsTopArtist,
+                                  topArtistName,
+                                  strings.statsAffinity(topArtistScore),
+                                  isTextValue: true,
+                                  locale: locale,
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: List.generate(4, (_) => const Padding(
+                                padding: EdgeInsets.only(right: 10),
+                                child: SkeletonLoader(width: 140, height: 76),
+                              )),
+                            ),
                     ),
                   ),
                 ),
