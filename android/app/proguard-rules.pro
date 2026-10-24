@@ -45,3 +45,12 @@
 
 # audio_service (media session / playback notification)
 -keep class com.ryanheise.audioservice.** { *; }
+
+# Spotify App Remote SDK (spotify_sdk): its protocol messages are (de)serialized
+# by reflection, so R8 must not strip or rename them.
+-keep class com.spotify.** { *; }
+-keep interface com.spotify.** { *; }
+-dontwarn com.spotify.**
+-keep class de.minimalme.spotify_sdk.** { *; }
+-keep class com.google.gson.** { *; }
+-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod

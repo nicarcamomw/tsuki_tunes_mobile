@@ -320,6 +320,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _startPositionTimer();
         _syncSpotifyPlaybackState();
       }
+      // The system may have killed Spotify while we were in the background.
+      if (_useSpotify) _warmUpSpotifyDevice();
     }
   }
 
@@ -523,17 +525,28 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  bool _warmingUpSpotify = false;
+
+  /// Makes sure the Spotify app on this phone is running so playback works
+  /// without the user opening Spotify by hand. Another device (PC, speaker)
+  /// being listed doesn't count: only an active Smartphone does.
   void _warmUpSpotifyDevice() {
+    if (_warmingUpSpotify || _nativePlayer.isConnected) return;
+    _warmingUpSpotify = true;
     Future.microtask(() async {
       try {
-        final device = await _spotify.ensureActiveDevice();
-        debugPrint('[AudioProvider] Spotify device pre-warm: ${device ?? "no device found"}');
-        if (device != null) return;
+        final devices = await _spotify.getDevices();
+        final phoneActive = devices.any(
+            (d) => d['type'] == 'Smartphone' && d['is_active'] == true);
+        if (phoneActive) {
+          debugPrint('[AudioProvider] Spotify pre-warm: phone already active');
+          return;
+        }
 
-        // No active device — wake Spotify via native SDK (invisible, no UI)
+        // Connecting App Remote launches Spotify in the background (no UI).
         final token = _spotify.accessToken;
         if (token == null) return;
-        debugPrint('[AudioProvider] No Spotify device found, waking via native SDK...');
+        debugPrint('[AudioProvider] Spotify not active on this phone, waking via App Remote...');
         final connected = await _nativePlayer.connect(accessToken: token);
         if (connected) {
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -544,6 +557,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       } catch (e) {
         debugPrint('[AudioProvider] Spotify device pre-warm error: $e');
+      } finally {
+        _warmingUpSpotify = false;
       }
     });
   }

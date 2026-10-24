@@ -9,6 +9,11 @@
     <!-- Android 13+: needed to show the playback notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Android 11+: lets the Spotify App Remote SDK find and wake the Spotify app -->
+    <queries>
+        <package android:name="com.spotify.music"/>
+    </queries>
+
     <application
         android:label="Tsuki Tunes"
         android:name="${applicationName}"

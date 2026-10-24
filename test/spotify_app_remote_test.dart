@@ -98,6 +98,16 @@ class FakeSpotifyService extends SpotifyService {
   Future<String?> ensureActiveDevice() async => 'fake-device';
 
   @override
+  Future<List<Map<String, dynamic>>> getDevices() async => [
+        {
+          'id': 'fake-device',
+          'name': 'Fake Phone',
+          'type': 'Smartphone',
+          'is_active': true,
+        },
+      ];
+
+  @override
   Future<Map<String, dynamic>?> getPlaybackState() async {
     if (_playbackUri == null) return null;
     return {
