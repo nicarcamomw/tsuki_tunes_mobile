@@ -1568,6 +1568,18 @@ class AppStrings {
         AppLanguage.ja => '再生エラー',
       };
 
+  String get syncError => switch (language) {
+        AppLanguage.es => 'No se pudo guardar. Intenta de nuevo.',
+        AppLanguage.en => 'Could not save. Try again.',
+        AppLanguage.ja => '保存できませんでした。もう一度お試しください。',
+      };
+
+  String get a11ySyncError => switch (language) {
+        AppLanguage.es => 'Error de sincronización',
+        AppLanguage.en => 'Sync error',
+        AppLanguage.ja => '同期エラー',
+      };
+
   String get a11ySleepTimer => switch (language) {
         AppLanguage.es => 'Temporizador de sueño',
         AppLanguage.en => 'Sleep timer',

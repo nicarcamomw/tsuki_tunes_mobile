@@ -140,6 +140,16 @@ class LibraryProvider extends ChangeNotifier {
   bool _syncing = false;
   int _syncCount = 0;
 
+  /// Last error from a mark/unmark Firestore write, cleared on success.
+  /// The UI can watch this to show a snackbar when a save fails.
+  String? _lastSyncError;
+  String? get lastSyncError => _lastSyncError;
+
+  /// True when in-memory state has changes not yet confirmed by Firestore.
+  /// The delta listener clears this and saves the cache once the server
+  /// confirms (hasPendingWrites == false).
+  bool _cacheDirty = false;
+
   // Artist visits
   Map<String, int> _artistVisits = {};
 
@@ -478,7 +488,25 @@ class LibraryProvider extends ChangeNotifier {
         }
       }
 
-      if (changed) _onListenedTracksChanged(uid);
+      if (changed) {
+        _totalTracksCount = _listenedTracks.length;
+        _pruneAlbumTrackCounts();
+        notifyListeners();
+        _cacheDirty = true;
+      }
+
+      // Only persist to SharedPreferences cache once the server has
+      // confirmed all pending writes. This prevents phantom tracks from
+      // being cached before they actually reach Firestore. When
+      // hasPendingWrites transitions from true to false the listener
+      // fires again, so the save is never lost.
+      if (!snapshot.metadata.hasPendingWrites && _cacheDirty) {
+        _cacheDirty = false;
+        _storage.saveCachedListenedTracks(
+          uid,
+          _listenedTracks.map((t) => t.toJson()).toList(),
+        );
+      }
     }, onError: (e) {
       debugPrint('[LibraryProvider] Firestore delta sync error: $e');
     });
@@ -570,9 +598,13 @@ class LibraryProvider extends ChangeNotifier {
     });
   }
 
-  static const Duration _fullSyncInterval = Duration(hours: 24);
+  static const Duration _fullSyncInterval = Duration(hours: 4);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
+  /// Updates derived state and persists cache. Called after a confirmed
+  /// change to _listenedTracks (from the deletion log listener or
+  /// from a rollback). The delta listener handles its own cache saves
+  /// gated on hasPendingWrites, so it calls the inline equivalent.
   void _onListenedTracksChanged(String uid) {
     _totalTracksCount = _listenedTracks.length;
     _pruneAlbumTrackCounts();
@@ -676,6 +708,8 @@ class LibraryProvider extends ChangeNotifier {
     _trackCountRequests.clear();
     _totalTracksCount = 0;
     _listenedTracksLoaded = false;
+    _cacheDirty = false;
+    _lastSyncError = null;
     _followedArtists = [];
     _followedArtistIds = {};
     notifyListeners();
@@ -695,7 +729,7 @@ class LibraryProvider extends ChangeNotifier {
     final prevIds = Set<String>.from(_listenedTrackIds);
     final prevCount = _totalTracksCount;
 
-    // Optimistic update
+    // Optimistic update — UI reflects the mark immediately.
     final data = ListenedTrackData(
       trackId: track.id,
       title: track.title,
@@ -713,46 +747,60 @@ class LibraryProvider extends ChangeNotifier {
     if (track.albumId.isNotEmpty && _albumTrackCounts.containsKey(track.albumId)) {
       _pruneAlbumTrackCounts(forceSave: true);
     }
+    _lastSyncError = null;
     notifyListeners();
 
-    // Cache locally immediately
-    unawaited(_storage.saveCachedListenedTracks(
-      uid,
-      _listenedTracks.map((t) => t.toJson()).toList(),
-    ));
+    // NOTE: cache is NOT saved here — it is saved by the delta listener
+    // only after Firestore confirms the write, preventing phantom tracks
+    // that disappear on the next full sync.
 
     _startSync();
     try {
-      final db = _firebase.db;
-      final userDoc = db.collection('users').doc(uid);
-      final batch = db.batch();
-      batch.set(
-        userDoc.collection('listenedTracks').doc(track.id),
-        data.toFirestore(),
-        SetOptions(merge: true),
-      );
-      batch.set(
-        userDoc,
-        {
-          'stats': {'totalTracks': FieldValue.increment(1)},
-          'lastSubWrite': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      await batch.commit();
+      await _commitMarkBatch(uid, track.id, data);
     } catch (e) {
-      debugPrint('[LibraryProvider] markTrack rollback — Firestore failed: $e');
-      _listenedTracks = prevTracks;
-      _listenedTrackIds = prevIds;
-      _totalTracksCount = prevCount;
-      notifyListeners();
-      unawaited(_storage.saveCachedListenedTracks(
-        uid,
-        _listenedTracks.map((t) => t.toJson()).toList(),
-      ));
+      // Retry once after a short delay (handles rate-limit / transient errors)
+      try {
+        await Future.delayed(const Duration(milliseconds: 1500));
+        await _commitMarkBatch(uid, track.id, data);
+      } catch (retryError) {
+        debugPrint('[LibraryProvider] markTrack rollback — Firestore failed after retry: $retryError');
+        _listenedTracks = prevTracks;
+        _listenedTrackIds = prevIds;
+        _totalTracksCount = prevCount;
+        _lastSyncError = 'mark_failed';
+        notifyListeners();
+        // Save the rolled-back (correct) state to cache.
+        unawaited(_storage.saveCachedListenedTracks(
+          uid,
+          _listenedTracks.map((t) => t.toJson()).toList(),
+        ));
+      }
     } finally {
       _endSync();
     }
+  }
+
+  /// Writes one listened track + stats update to Firestore in a single batch.
+  Future<void> _commitMarkBatch(
+      String uid, String trackId, ListenedTrackData data) async {
+    final db = _firebase.db;
+    final userDoc = db.collection('users').doc(uid);
+    final batch = db.batch();
+    batch.set(
+      userDoc.collection('listenedTracks').doc(trackId),
+      data.toFirestore(),
+      SetOptions(merge: true),
+    );
+    batch.set(
+      userDoc,
+      {
+        'stats': {'totalTracks': FieldValue.increment(1)},
+        'lastSubWrite': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+    await batch.commit();
+    _lastSyncError = null;
   }
 
   Future<void> unmarkTrack(String trackId) async {
@@ -770,45 +818,55 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTrackIds.remove(trackId);
     _totalTracksCount = _listenedTracks.length;
     _pruneAlbumTrackCounts();
+    _lastSyncError = null;
     notifyListeners();
 
-    // Cache locally immediately
-    unawaited(_storage.saveCachedListenedTracks(
-      uid,
-      _listenedTracks.map((t) => t.toJson()).toList(),
-    ));
+    // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
     _startSync();
     try {
-      final db = _firebase.db;
-      final userDoc = db.collection('users').doc(uid);
-      final batch = db.batch();
-      batch.delete(userDoc.collection('listenedTracks').doc(trackId));
-      batch.set(userDoc.collection('listenedDeletions').doc(trackId), {
-        'deletedAt': FieldValue.serverTimestamp(),
-      });
-      batch.set(
-        userDoc,
-        {
-          'stats': {'totalTracks': FieldValue.increment(-1)},
-          'lastSubWrite': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      await batch.commit();
+      await _commitUnmarkBatch(uid, trackId);
     } catch (e) {
-      debugPrint('[LibraryProvider] unmarkTrack rollback — Firestore failed: $e');
-      _listenedTracks = prevTracks;
-      _listenedTrackIds = prevIds;
-      _totalTracksCount = prevCount;
-      notifyListeners();
-      unawaited(_storage.saveCachedListenedTracks(
-        uid,
-        _listenedTracks.map((t) => t.toJson()).toList(),
-      ));
+      // Retry once after a short delay
+      try {
+        await Future.delayed(const Duration(milliseconds: 1500));
+        await _commitUnmarkBatch(uid, trackId);
+      } catch (retryError) {
+        debugPrint('[LibraryProvider] unmarkTrack rollback — Firestore failed after retry: $retryError');
+        _listenedTracks = prevTracks;
+        _listenedTrackIds = prevIds;
+        _totalTracksCount = prevCount;
+        _lastSyncError = 'unmark_failed';
+        notifyListeners();
+        unawaited(_storage.saveCachedListenedTracks(
+          uid,
+          _listenedTracks.map((t) => t.toJson()).toList(),
+        ));
+      }
     } finally {
       _endSync();
     }
+  }
+
+  /// Deletes one listened track + writes deletion log + stats in a single batch.
+  Future<void> _commitUnmarkBatch(String uid, String trackId) async {
+    final db = _firebase.db;
+    final userDoc = db.collection('users').doc(uid);
+    final batch = db.batch();
+    batch.delete(userDoc.collection('listenedTracks').doc(trackId));
+    batch.set(userDoc.collection('listenedDeletions').doc(trackId), {
+      'deletedAt': FieldValue.serverTimestamp(),
+    });
+    batch.set(
+      userDoc,
+      {
+        'stats': {'totalTracks': FieldValue.increment(-1)},
+        'lastSubWrite': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+    await batch.commit();
+    _lastSyncError = null;
   }
 
   Future<void> markAlbumTracks(List<Track> tracks,
@@ -854,13 +912,10 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTrackIds.addAll(toMark.map((t) => t.id));
     _totalTracksCount = _listenedTracks.length;
     _pruneAlbumTrackCounts(forceSave: true);
+    _lastSyncError = null;
     notifyListeners();
 
-    // Cache locally immediately
-    unawaited(_storage.saveCachedListenedTracks(
-      uid,
-      _listenedTracks.map((t) => t.toJson()).toList(),
-    ));
+    // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
     _startSync();
     final committedData = <ListenedTrackData>[];
@@ -900,6 +955,7 @@ class LibraryProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('[LibraryProvider] markAlbumTracks rollback — Firestore failed: $e');
+      _lastSyncError = 'mark_album_failed';
       if (committedData.isEmpty) {
         _listenedTracks = prevTracks;
         _listenedTrackIds = prevIds;
@@ -945,13 +1001,10 @@ class LibraryProvider extends ChangeNotifier {
     _listenedTrackIds.removeAll(toUnmark);
     _totalTracksCount = _listenedTracks.length;
     _pruneAlbumTrackCounts();
+    _lastSyncError = null;
     notifyListeners();
 
-    // Cache locally immediately
-    unawaited(_storage.saveCachedListenedTracks(
-      uid,
-      _listenedTracks.map((t) => t.toJson()).toList(),
-    ));
+    // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
     _startSync();
     final committedUnmarkedIds = <String>[];
@@ -991,6 +1044,7 @@ class LibraryProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('[LibraryProvider] unmarkAlbumTracks rollback — Firestore failed: $e');
+      _lastSyncError = 'unmark_album_failed';
       if (committedUnmarkedIds.isEmpty) {
         _listenedTracks = prevTracks;
         _listenedTrackIds = prevIds;
