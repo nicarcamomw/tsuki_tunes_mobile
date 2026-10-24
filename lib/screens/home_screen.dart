@@ -150,8 +150,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final artistAlbums = await _api.getArtistAlbums(top.artist!.id);
         if (artistAlbums.isEmpty) return <Album>[];
         return artistAlbums.map((a) {
-          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
-            return a.copyWith(artistName: top.entry.name);
+          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
+          final needsId = a.artistId.isEmpty;
+          if (needsName || needsId) {
+            return a.copyWith(
+              artistName: needsName ? top.entry.name : null,
+              artistId: needsId ? top.artist!.id : null,
+            );
           }
           return a;
         }).toList();
@@ -194,8 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final artistAlbums = await _api.getArtistAlbums(artist.id);
         if (artistAlbums.isEmpty) return <Album>[];
         return artistAlbums.map((a) {
-          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
-            return a.copyWith(artistName: artist.name);
+          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
+          final needsId = a.artistId.isEmpty;
+          if (needsName || needsId) {
+            return a.copyWith(
+              artistName: needsName ? artist.name : null,
+              artistId: needsId ? artist.id : null,
+            );
           }
           return a;
         }).toList();
@@ -796,13 +806,34 @@ class _HomeScreenState extends State<HomeScreen> {
       button: true,
       label: '${locale.strings.tabArtists} $rank, ${entry.name}',
       child: InkWell(
-      onTap: () {
+      onTap: () async {
         if (artist != null) {
           appNavigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ArtistDetailScreen(artist: artist),
             ),
           );
+        } else {
+          try {
+            final results = await _api.searchArtists(entry.name, limit: 3);
+            Artist? matched;
+            for (final a in results) {
+              if (a.name.toLowerCase() == entry.name.toLowerCase()) {
+                matched = a;
+                break;
+              }
+            }
+            matched ??= results.isNotEmpty ? results.first : null;
+            if (mounted && matched != null) {
+              appNavigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  builder: (_) => ArtistDetailScreen(artist: matched!),
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('[HomeScreen] retry artist search for ${entry.name}: $e');
+          }
         }
       },
       child: Container(
