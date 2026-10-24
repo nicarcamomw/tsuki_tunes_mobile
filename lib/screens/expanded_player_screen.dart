@@ -1009,7 +1009,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 8),
                       itemCount: queue.length,
-                      onReorderItem: (oldIndex, newIndex) {
+                      onReorder: (oldIndex, newIndex) {
+                        if (newIndex > oldIndex) newIndex--;
                         audio.reorderQueue(oldIndex, newIndex);
                       },
                       itemBuilder: (context, i) {
