@@ -381,7 +381,13 @@ class DeezerApiService implements MusicApiContract {
             ApiEndpoints.artistAlbums(artistId, limit: limit, index: index));
         if (data is Map<String, dynamic>) {
           final List list = data['data'] ?? [];
-          final items = list.map((item) => Album.fromJson(item)).toList();
+          final items = list.map((item) {
+            final album = Album.fromJson(item);
+            if (album.artistId.isEmpty) {
+              return album.copyWith(artistId: artistId);
+            }
+            return album;
+          }).toList();
           final int total =
               (data['total'] is int) ? data['total'] : items.length;
           final bool hasMore =
