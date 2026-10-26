@@ -468,6 +468,19 @@ class ProfileBottomSheet {
                             setModalState(() {});
                           },
                         ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.equalizer_rounded,
+                          title: strings.normalizeTitle,
+                          subtitle: strings.normalizeSubtitle,
+                          value: audioProvider.normalizeVolume,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setNormalizeVolume(v);
+                            setModalState(() {});
+                          },
+                        ),
                       ],
                     ),
                   ),

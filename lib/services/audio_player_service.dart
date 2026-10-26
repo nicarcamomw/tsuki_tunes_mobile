@@ -16,6 +16,12 @@ class AudioPlayerService implements AudioPlayerContract {
   Timer? _fadeTimer;
   bool _isCrossfading = false;
 
+  /// Volume factor for loudness normalization of a track (1.0 = untouched).
+  /// Every volume this service sets is scaled by the active track's factor.
+  double Function(Track track)? loudnessFor;
+  double _loudness = 1.0;
+  Timer? _loudnessRamp;
+
   final StreamController<Duration> _positionCtrl = StreamController<Duration>.broadcast();
   final StreamController<Duration?> _durationCtrl = StreamController<Duration?>.broadcast();
   final StreamController<Duration> _bufferedCtrl = StreamController<Duration>.broadcast();
@@ -93,7 +99,9 @@ class AudioPlayerService implements AudioPlayerContract {
     for (var attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await _activePlayer.stop();
-        unawaited(_activePlayer.setVolume(1.0));
+        _loudnessRamp?.cancel();
+        _loudness = loudnessFor?.call(track) ?? 1.0;
+        unawaited(_activePlayer.setVolume(_loudness));
         if (localPath != null && !kIsWeb) {
           debugPrint('[AudioPlayerService] Zero-latency play from pre-cached file: $localPath');
           await _activePlayer.setFilePath(localPath);
@@ -148,13 +156,16 @@ class AudioPlayerService implements AudioPlayerContract {
 
       final outgoingPlayer = _activePlayer;
       final incomingPlayer = _standbyPlayer;
+      _loudnessRamp?.cancel();
+      final outLevel = _loudness;
+      final inLevel = loudnessFor?.call(nextTrack) ?? 1.0;
 
       _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
         currentStep++;
         final progress = (currentStep / totalSteps).clamp(0.0, 1.0);
 
-        outgoingPlayer.setVolume((1.0 - progress).clamp(0.0, 1.0));
-        incomingPlayer.setVolume(progress.clamp(0.0, 1.0));
+        outgoingPlayer.setVolume(((1.0 - progress) * outLevel).clamp(0.0, 1.0));
+        incomingPlayer.setVolume((progress * inLevel).clamp(0.0, 1.0));
 
         if (currentStep >= totalSteps) {
           timer.cancel();
@@ -164,6 +175,7 @@ class AudioPlayerService implements AudioPlayerContract {
 
           _activePlayer = incomingPlayer;
           _standbyPlayer = outgoingPlayer;
+          _loudness = inLevel;
           _isCrossfading = false;
           debugPrint('[AudioPlayerService] Crossfade complete! Swapped active deck.');
         }
@@ -181,7 +193,7 @@ class AudioPlayerService implements AudioPlayerContract {
     if (_isCrossfading) {
       _standbyPlayer.stop();
       _standbyPlayer.setVolume(1.0);
-      _activePlayer.setVolume(1.0);
+      _activePlayer.setVolume(_loudness);
       _isCrossfading = false;
     }
   }
@@ -216,10 +228,30 @@ class AudioPlayerService implements AudioPlayerContract {
   }
 
   @override
-  Future<void> setVolume(double volume) async => await _activePlayer.setVolume(volume);
+  Future<void> setVolume(double volume) async =>
+      await _activePlayer.setVolume((volume * _loudness).clamp(0.0, 1.0));
+
+  /// Re-reads [track]'s loudness (it may have arrived after playback began)
+  /// and glides the volume there, so the change is not heard as a jump.
+  void refreshLoudness(Track track) {
+    if (_isCrossfading) return;
+    final target = loudnessFor?.call(track) ?? 1.0;
+    final from = _loudness;
+    if ((target - from).abs() < 0.01) return;
+    _loudnessRamp?.cancel();
+    const steps = 12;
+    var i = 0;
+    _loudnessRamp = Timer.periodic(const Duration(milliseconds: 50), (t) {
+      i++;
+      _loudness = from + (target - from) * (i / steps);
+      _activePlayer.setVolume(_loudness.clamp(0.0, 1.0));
+      if (i >= steps) t.cancel();
+    });
+  }
 
   @override
   Future<void> dispose() async {
+    _loudnessRamp?.cancel();
     _cancelCrossfade();
     unawaited(_posSub?.cancel());
     unawaited(_durSub?.cancel());

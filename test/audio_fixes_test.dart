@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
 
 Track createTestTrack(String id) {
   return Track(
@@ -250,6 +251,29 @@ void main() {
       provider.checkSleepTimer();
 
       expect(fired, 0);
+    });
+  });
+
+  group('Preview loudness normalization', () {
+    test('the player scales previews by loudness and the switch turns it off', () async {
+      final service = AudioPlayerService();
+      final provider = AudioProvider(service: service);
+      await Future.delayed(const Duration(milliseconds: 20));
+      final track = createTestTrack('n1');
+
+      expect(provider.normalizeVolume, isTrue);
+      expect(service.loudnessFor, isNotNull);
+      // Unknown loudness: untouched.
+      expect(service.loudnessFor!(track), 1.0);
+
+      await provider.setNormalizeVolume(false);
+      expect(service.loudnessFor!(track), 1.0);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('normalize_preview_volume'), isFalse);
+
+      final reloaded = AudioProvider();
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect(reloaded.normalizeVolume, isFalse);
     });
   });
 

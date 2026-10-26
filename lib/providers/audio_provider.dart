@@ -6,6 +6,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/utils/deezer_preview.dart';
 import '../models/playback_error.dart';
@@ -13,6 +14,7 @@ import '../models/repeat_mode.dart';
 import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
+import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
@@ -376,6 +378,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _nativePlayer = nativePlayer ?? SpotifyNativePlayer(),
         _connectivityProvider = connectivityProvider {
     if (mediaHandler != null) _attachMediaHandler(mediaHandler);
+    _service.loudnessFor = _loudnessFor;
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
     _initSubscriptions();
@@ -552,9 +555,49 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _crossfadeSeconds = await _storage.getCrossfadeSeconds();
       _autoMarkListened = await _storage.getAutoMarkListened();
       _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
+      final prefs = await SharedPreferences.getInstance();
+      _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+    }
+  }
+
+  // ── Loudness normalization (Deezer previews only) ──
+
+  static const _normalizeKey = 'normalize_preview_volume';
+  bool _normalizeVolume = true;
+  bool get normalizeVolume => _normalizeVolume;
+
+  double _loudnessFor(Track track) => _normalizeVolume
+      ? Loudness.factorFor(BpmService.shared.cachedGain(track.id))
+      : 1.0;
+
+  Future<void> setNormalizeVolume(bool enabled) async {
+    _normalizeVolume = enabled;
+    notifyListeners();
+    final track = _currentTrack;
+    if (track != null) {
+      _service.refreshLoudness(track);
+      if (enabled) unawaited(_ensureLoudness(track));
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_normalizeKey, enabled);
+    } catch (_) {}
+  }
+
+  /// Fetches the loudness of [track] if unknown (then glides to it) and of
+  /// the next few, so they start at the right volume. Spotify normalizes on
+  /// its own, so its playback is left alone.
+  Future<void> _ensureLoudness(Track track) async {
+    if (!_normalizeVolume || (_useSpotify && !_spotifyFallbackActive)) return;
+    if (BpmService.shared.cachedGain(track.id) == null) {
+      await BpmService.shared.gainFor(track.id);
+      if (_currentTrack?.id == track.id) _service.refreshLoudness(track);
+    }
+    for (final next in upcomingTracks.take(3)) {
+      await BpmService.shared.gainFor(next.id);
     }
   }
 
@@ -1093,6 +1136,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
+      unawaited(_ensureLoudness(track));
       _persistPlaybackState();
       _prefetchNextTrack();
     } catch (e) {
@@ -1718,6 +1762,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     notifyListeners();
     onTrackStarted?.call(nextTrack);
+    unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
 
     try {
@@ -1758,6 +1803,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[AudioProvider] Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
     notifyListeners();
     onTrackStarted?.call(nextTrack);
+    unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
 
     try {

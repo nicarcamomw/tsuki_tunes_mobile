@@ -307,6 +307,18 @@ class AppStrings {
         AppLanguage.ja => '一般',
       };
 
+  String get normalizeTitle => switch (language) {
+        AppLanguage.es => 'Normalizar volumen',
+        AppLanguage.en => 'Normalize volume',
+        AppLanguage.ja => '音量を均一化',
+      };
+
+  String get normalizeSubtitle => switch (language) {
+        AppLanguage.es => 'Iguala el volumen de las previews de Deezer. Spotify ya lo hace solo.',
+        AppLanguage.en => 'Evens out Deezer preview volume. Spotify already does this itself.',
+        AppLanguage.ja => 'Deezerプレビューの音量を揃えます。Spotifyは自動で調整済み。',
+      };
+
   // --- Flow (queue by tempo) ---
   String get flowButton => 'FLOW';
 

@@ -7,6 +7,7 @@ import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
+import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
 import 'package:tsuki_tunes_mobile/services/playback_queue.dart';
 import 'package:tsuki_tunes_mobile/widgets/flow_sheet.dart';
 
@@ -100,9 +101,9 @@ void main() {
   group('BpmService', () {
     test('asks Deezer once per track and remembers, unknown included', () async {
       final calls = <String>[];
-      Future<double?> fetch(String id) async {
+      Future<TrackAudioInfo?> fetch(String id) async {
         calls.add(id);
-        return id == 'x' ? 0 : 120;
+        return TrackAudioInfo(bpm: id == 'x' ? 0 : 120);
       }
 
       final s = BpmService(fetch: fetch, gap: Duration.zero);
@@ -118,7 +119,7 @@ void main() {
     test('failed requests are counted and retried next time', () async {
       var online = false;
       final s = BpmService(
-        fetch: (_) async => online ? 100 : null,
+        fetch: (_) async => online ? const TrackAudioInfo(bpm: 100) : null,
         gap: Duration.zero,
       );
       expect(await s.lookup([_t('a')]), isEmpty);
@@ -129,10 +130,49 @@ void main() {
     });
 
     test('requests are paced under the Deezer rate limit', () async {
-      final s = BpmService(fetch: (_) async => 100, gap: const Duration(milliseconds: 20));
+      final s = BpmService(
+          fetch: (_) async => const TrackAudioInfo(bpm: 100),
+          gap: const Duration(milliseconds: 20));
       final sw = Stopwatch()..start();
       await s.lookup([for (var i = 0; i < 10; i++) _t('$i')], concurrency: 4);
       expect(sw.elapsedMilliseconds, greaterThanOrEqualTo(150));
+    });
+  });
+
+  group('loudness', () {
+    test('only louder-than-target tracks are turned down, within a limit', () {
+      expect(Loudness.factorFor(null), 1.0);
+      expect(Loudness.factorFor(-15), 1.0, reason: 'quiet tracks are never boosted');
+      expect(Loudness.factorFor(Loudness.targetGain), 1.0);
+      // 6 dB louder than the target: half the amplitude.
+      expect(Loudness.factorFor(Loudness.targetGain + 6), closeTo(0.501, 0.001));
+      // Capped at maxCutDb.
+      expect(Loudness.factorFor(10), closeTo(0.355, 0.001));
+    });
+
+    test('a louder track always ends up at or below a quieter one', () {
+      var prev = 1.0;
+      for (var g = -20.0; g <= 0; g += 0.5) {
+        final f = Loudness.factorFor(g);
+        expect(f, lessThanOrEqualTo(prev));
+        prev = f;
+      }
+    });
+
+    test('gain is fetched once and remembered with the tempo', () async {
+      var calls = 0;
+      final s = BpmService(
+        fetch: (_) async {
+          calls++;
+          return const TrackAudioInfo(bpm: 0, gain: -8.5);
+        },
+        gap: Duration.zero,
+      );
+      expect(await s.gainFor('a'), -8.5);
+      expect(await s.gainFor('a'), -8.5);
+      expect(calls, 1);
+      expect(await s.lookup([_t('a')]), isEmpty, reason: 'bpm unknown, not refetched');
+      expect(calls, 1);
     });
   });
 
@@ -156,7 +196,8 @@ void main() {
     final audio = AudioProvider();
     final queue = [for (final id in 'pabcde'.split('')) _t(id)];
     const tempos = {'a': 128.0, 'b': 90.0, 'c': 0.0, 'd': 110.0, 'e': 100.0};
-    final service = BpmService(fetch: (id) async => tempos[id], gap: Duration.zero);
+    final service = BpmService(
+        fetch: (id) async => TrackAudioInfo(bpm: tempos[id] ?? 0), gap: Duration.zero);
 
     await tester.runAsync(() async {
       try {

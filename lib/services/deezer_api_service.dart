@@ -18,6 +18,14 @@ class _CacheEntry {
   bool get isExpired => DateTime.now().isAfter(expiry);
 }
 
+class TrackAudioInfo {
+  final double bpm;
+  /// Deezer's loudness measure in dB: higher (less negative) is louder.
+  final double? gain;
+
+  const TrackAudioInfo({required this.bpm, this.gain});
+}
+
 class DeezerApiService implements MusicApiContract {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
@@ -278,17 +286,22 @@ class DeezerApiService implements MusicApiContract {
     return [];
   }
 
-  /// Tempo of a track in BPM, only returned by /track/{id}. 0 means Deezer
-  /// doesn't know it; null means the request failed (worth retrying later).
-  Future<double?> getTrackBpm(String trackId) async {
+  /// Tempo and loudness of a track, only returned by /track/{id}. A bpm of 0
+  /// means Deezer doesn't know it; null means the request failed (worth
+  /// retrying later).
+  Future<TrackAudioInfo?> getTrackAudioInfo(String trackId) async {
     try {
       final data = await _fetchJson(ApiEndpoints.track(trackId));
       if (data is Map<String, dynamic> && data['error'] == null && data['id'] != null) {
         final bpm = data['bpm'];
-        return bpm is num ? bpm.toDouble() : 0;
+        final gain = data['gain'];
+        return TrackAudioInfo(
+          bpm: bpm is num ? bpm.toDouble() : 0,
+          gain: gain is num && gain != 0 ? gain.toDouble() : null,
+        );
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getTrackBpm($trackId) error: $e');
+      debugPrint('[DeezerAPI] getTrackAudioInfo($trackId) error: $e');
     }
     return null;
   }

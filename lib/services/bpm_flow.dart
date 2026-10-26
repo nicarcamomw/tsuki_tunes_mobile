@@ -111,36 +111,58 @@ class BpmFlow {
   }
 }
 
-/// Looks up and remembers track tempos. Deezer only returns BPM from the
-/// per-track endpoint, so each track costs one request, once.
+/// Turns Deezer's loudness into a playback volume for previews.
+///
+/// Deezer's `gain` is a loudness in dB where higher is louder; tools that
+/// convert it to ReplayGain use `-(gain + 18.4)`. The player can only lower
+/// the volume, so songs louder than [targetGain] are brought down to it
+/// (never more than [maxCutDb]) and quieter ones play at full volume.
+class Loudness {
+  /// About ReplayGain -6.4 dB: typical modern masters get a light trim,
+  /// very loud ones a clear one, quiet recordings none.
+  static const double targetGain = -12.0;
+  static const double maxCutDb = 9.0;
+
+  static double factorFor(double? gain) {
+    if (gain == null) return 1.0;
+    final cut = (gain - targetGain).clamp(0.0, maxCutDb);
+    return pow(10, -cut / 20).toDouble();
+  }
+}
+
+/// Looks up and remembers each track's tempo and loudness. Deezer only
+/// returns them from the per-track endpoint, so each track costs one
+/// request, once.
 class BpmService {
   static final BpmService shared = BpmService();
   static const _cacheKey = 'bpm_cache_v1';
   /// Deezer allows 50 requests per 5 s; stay well under it.
   static const Duration minRequestGap = Duration(milliseconds: 130);
-  /// Unknown tempos are asked again after this, in case Deezer adds them.
+  /// Unknown values are asked again after this, in case Deezer adds them.
   static const Duration unknownRetryAfter = Duration(days: 30);
 
-  final Future<double?> Function(String trackId) _fetch;
+  final Future<TrackAudioInfo?> Function(String trackId) _fetch;
   final Duration _gap;
   final Map<String, double> _bpm = {};
+  final Map<String, double> _gain = {};
   final Map<String, int> _unknownSince = {};
-  bool _loaded = false;
+  Future<void>? _loading;
   DateTime _nextSlot = DateTime.fromMillisecondsSinceEpoch(0);
 
-  BpmService({Future<double?> Function(String trackId)? fetch, Duration? gap})
-      : _fetch = fetch ?? DeezerApiService().getTrackBpm,
+  BpmService({Future<TrackAudioInfo?> Function(String trackId)? fetch, Duration? gap})
+      : _fetch = fetch ?? DeezerApiService().getTrackAudioInfo,
         _gap = gap ?? minRequestGap;
 
-  Future<void> _load() async {
-    if (_loaded) return;
-    _loaded = true;
+  Future<void> _load() => _loading ??= _doLoad();
+
+  Future<void> _doLoad() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_cacheKey);
       if (raw == null) return;
       final m = jsonDecode(raw) as Map<String, dynamic>;
       (m['bpm'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _bpm[k] = (v as num).toDouble());
+      (m['gain'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _gain[k] = (v as num).toDouble());
       (m['unknown'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _unknownSince[k] = v as int);
     } catch (e) {
       debugPrint('[BPM] cache load error: $e');
@@ -150,15 +172,17 @@ class BpmService {
   Future<void> _save() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_cacheKey, jsonEncode({'bpm': _bpm, 'unknown': _unknownSince}));
+      await prefs.setString(
+          _cacheKey, jsonEncode({'bpm': _bpm, 'gain': _gain, 'unknown': _unknownSince}));
     } catch (_) {}
   }
 
-  bool _needsLookup(String id) {
-    if (_bpm.containsKey(id)) return false;
+  /// Fetched before (known or recently unknown) and not worth asking again.
+  bool _settled(String id) {
+    if (_bpm.containsKey(id) || _gain.containsKey(id)) return true;
     final since = _unknownSince[id];
-    if (since == null) return true;
-    return DateTime.now().millisecondsSinceEpoch - since > unknownRetryAfter.inMilliseconds;
+    if (since == null) return false;
+    return DateTime.now().millisecondsSinceEpoch - since <= unknownRetryAfter.inMilliseconds;
   }
 
   Future<void> _paced() async {
@@ -167,6 +191,21 @@ class BpmService {
     _nextSlot = start.add(_gap);
     final wait = start.difference(now);
     if (wait > Duration.zero) await Future<void>.delayed(wait);
+  }
+
+  /// Fetches one track. Returns false when the request failed.
+  Future<bool> _fetchOne(String id) async {
+    await _paced();
+    final info = await _fetch(id);
+    if (info == null) return false;
+    if (info.bpm > 0) _bpm[id] = info.bpm;
+    if (info.gain != null) _gain[id] = info.gain!;
+    if (info.bpm > 0 || info.gain != null) {
+      _unknownSince.remove(id);
+    } else {
+      _unknownSince[id] = DateTime.now().millisecondsSinceEpoch;
+    }
+    return true;
   }
 
   /// Known tempos for [tracks] (unknown ones are left out). [onProgress]
@@ -178,7 +217,7 @@ class BpmService {
   }) async {
     await _load();
     final missing = tracks.map((t) => t.id).where((id) => id.isNotEmpty).toSet()
-      ..removeWhere((id) => !_needsLookup(id));
+      ..removeWhere(_settled);
     final queue = missing.toList();
     var done = 0;
     lastFailures = 0;
@@ -187,17 +226,7 @@ class BpmService {
     Future<void> worker() async {
       while (queue.isNotEmpty) {
         final id = queue.removeLast();
-        await _paced();
-        final bpm = await _fetch(id);
-        if (bpm == null) lastFailures++;
-        if (bpm != null) {
-          if (bpm > 0) {
-            _bpm[id] = bpm;
-            _unknownSince.remove(id);
-          } else {
-            _unknownSince[id] = DateTime.now().millisecondsSinceEpoch;
-          }
-        }
+        if (!await _fetchOne(id)) lastFailures++;
         done++;
         onProgress?.call(done, missing.length);
       }
@@ -213,8 +242,17 @@ class BpmService {
     };
   }
 
-  double? cached(String trackId) => _bpm[trackId];
+  /// Loudness of [trackId], fetching it if this device never has.
+  Future<double?> gainFor(String trackId) async {
+    await _load();
+    if (trackId.isEmpty) return null;
+    if (!_settled(trackId) && await _fetchOne(trackId)) await _save();
+    return _gain[trackId];
+  }
 
-  /// Requests that failed in the last [lookup] (network), not unknown tempos.
+  double? cached(String trackId) => _bpm[trackId];
+  double? cachedGain(String trackId) => _gain[trackId];
+
+  /// Requests that failed in the last [lookup] (network), not unknown values.
   int lastFailures = 0;
 }
