@@ -90,6 +90,126 @@ class SongRadio {
   RadioReason? reasonFor(String trackId) => _reasons[trackId];
   bool isBanned(Track t) => _banned.contains(artistKeyOf(t));
 
+  /// Tracks already in the queue (e.g. restored ones) must never come back.
+  void markQueued(Iterable<Track> tracks) => tracks.forEach(_markUsed);
+
+  // ---------------------------------------------------------------------------
+  // Persistence: the radio survives app restarts with what it learned
+  // ---------------------------------------------------------------------------
+
+  static const int _persistVersion = 1;
+
+  /// [keepReasonsFor] limits saved "why" labels to tracks still queued.
+  Map<String, dynamic> toJson({Iterable<String>? keepReasonsFor}) {
+    final keep = keepReasonsFor?.toSet();
+    List<String> lastN(Iterable<String> items, int n) {
+      final list = items.toList();
+      return list.length <= n ? list : list.sublist(list.length - n);
+    }
+
+    return {
+      'v': _persistVersion,
+      'seed': seed.toJson(),
+      'mode': _mode.index,
+      'reasons': {
+        for (final e in _reasons.entries)
+          if (keep == null || keep.contains(e.key))
+            e.key: {
+              's': e.value.source.index,
+              't': e.value.seedTitle,
+              'a': e.value.seedArtist,
+            },
+      },
+      'affinity': _affinity,
+      'skips': _skips,
+      'banned': _banned.toList(),
+      'bannedNames': _bannedNames.toList(),
+      'liked': [for (final t in _liked) t.toJson()],
+      'seedUses': _seedUses,
+      'recent': _recentArtists,
+      // Insertion-ordered sets: keep the most recent entries.
+      'heard': lastN(_heardArtists, 300),
+      'usedIds': lastN(_usedIds, 500),
+      'usedKeys': lastN(_usedKeys, 500),
+    };
+  }
+
+  /// Restores a radio saved with [toJson]; null if the data is unusable.
+  static SongRadio? fromJson(
+    Map<String, dynamic> json, {
+    SimilarTracksFetcher? similar,
+    ArtistRadioFetcher? artistRadio,
+    TrackSearcher? search,
+    bool? useLastFm,
+    Random? random,
+  }) {
+    try {
+      final seedRaw = json['seed'];
+      if (seedRaw is! Map || json['v'] != _persistVersion) return null;
+      final modeIndex = json['mode'];
+      final radio = SongRadio(
+        seed: Track.fromStorage(Map<String, dynamic>.from(seedRaw)),
+        mode: modeIndex is int && modeIndex >= 0 && modeIndex < RadioMode.values.length
+            ? RadioMode.values[modeIndex]
+            : RadioMode.balanced,
+        similar: similar,
+        artistRadio: artistRadio,
+        search: search,
+        useLastFm: useLastFm,
+        random: random,
+      );
+
+      final reasons = json['reasons'];
+      if (reasons is Map) {
+        for (final e in reasons.entries) {
+          final v = e.value;
+          final s = v is Map ? v['s'] : null;
+          if (s is int && s >= 0 && s < RadioSource.values.length) {
+            radio._reasons[e.key.toString()] = RadioReason(
+                RadioSource.values[s], '${v['t'] ?? ''}', '${v['a'] ?? ''}');
+          }
+        }
+      }
+      final liked = json['liked'];
+      if (liked is List) {
+        for (final l in liked) {
+          if (l is Map) {
+            radio._liked.add(Track.fromStorage(Map<String, dynamic>.from(l)));
+          }
+        }
+      }
+      radio._affinity.addAll(_doubleMap(json['affinity']));
+      radio._skips.addAll(_intMap(json['skips']));
+      radio._seedUses.addAll(_intMap(json['seedUses']));
+      radio._banned.addAll(_strings(json['banned']));
+      radio._bannedNames.addAll(_strings(json['bannedNames']));
+      radio._recentArtists.addAll(_strings(json['recent']));
+      radio._heardArtists.addAll(_strings(json['heard']));
+      radio._usedIds.addAll(_strings(json['usedIds']));
+      radio._usedKeys.addAll(_strings(json['usedKeys']));
+      return radio;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Map<String, double> _doubleMap(Object? raw) => raw is Map
+      ? {
+          for (final e in raw.entries)
+            if (e.value is num) e.key.toString(): (e.value as num).toDouble(),
+        }
+      : {};
+
+  static Map<String, int> _intMap(Object? raw) => raw is Map
+      ? {
+          for (final e in raw.entries)
+            if (e.value is num) e.key.toString(): (e.value as num).toInt(),
+        }
+      : {};
+
+  static Iterable<String> _strings(Object? raw) =>
+      raw is List ? raw.map((e) => e.toString()) : const [];
+
   // ---------------------------------------------------------------------------
   // Steering
   // ---------------------------------------------------------------------------
@@ -254,7 +374,8 @@ class SongRadio {
     final (start, end) = switch (_mode) {
       RadioMode.familiar => (0, 20),
       RadioMode.balanced => (0, 40),
-      RadioMode.adventurous => (min(5, list.length - 1), 60),
+      // Skipping the obvious picks only makes sense with a long list.
+      RadioMode.adventurous => (list.length > 15 ? 5 : 0, 60),
     };
     final window = list.sublist(start, min(end, list.length));
     final picks = <LastFmSimilarTrack>[];

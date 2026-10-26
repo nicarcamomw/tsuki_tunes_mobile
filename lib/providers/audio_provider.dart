@@ -386,9 +386,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _q.tracks,
         _q.currentIndex,
         _position.inMilliseconds,
+        _radioSnapshot(),
       );
     });
   }
+
+  Map<String, dynamic>? _radioSnapshot() =>
+      _radio?.toJson(keepReasonsFor: _q.tracks.map((t) => t.id));
 
   @visibleForTesting
   void persistPlaybackStateNowForTesting() {
@@ -401,6 +405,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _q.tracks,
       _q.currentIndex,
       _position.inMilliseconds,
+      _radioSnapshot(),
     );
   }
 
@@ -444,9 +449,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _isPlaying = false;
       _isBuffering = false;
 
+      final rawRadio = state['radio'];
+      if (rawRadio is Map) {
+        final radio = SongRadio.fromJson(Map<String, dynamic>.from(rawRadio));
+        if (radio != null) {
+          radio.markQueued(restoredQueue);
+          _radio = radio;
+          _radioModePref = radio.mode;
+          _radioStatus = RadioStatus.ready;
+        }
+      }
+
       _prefetchNextTrack();
       notifyListeners();
-      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue)');
+      // Make sure the restored radio has songs lined up before they're due.
+      if (_radio != null) unawaited(_radioTopUp());
+      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue${_radio != null ? ', radio on' : ''})');
     } catch (e) {
       debugPrint('[AudioProvider] Error restoring playback state: $e');
     }
@@ -1563,6 +1581,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final added = await _radioTopUp(force: true, count: 10);
     if (!added && identical(_radio, radio)) {
       _radio = null;
+      _persistPlaybackState();
       notifyListeners();
     }
     return added;
@@ -1571,6 +1590,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void stopRadio() {
     if (_radio == null) return;
     _radio = null;
+    _persistPlaybackState();
     notifyListeners();
   }
 
@@ -1585,6 +1605,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     radio.setMode(mode);
+    _persistPlaybackState();
     await _radioReplaceUpcoming(keep: 1);
   }
 

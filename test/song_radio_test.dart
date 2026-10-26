@@ -140,6 +140,41 @@ void main() {
         isTrue);
   });
 
+  test('survives a save/restore round trip with what it learned', () async {
+    final radio = _radio(mode: RadioMode.adventurous);
+    final first = await radio.nextBatch(count: 4);
+    final skipped = _t('x1', 'Song 1-9', 'art1', 'Artist 1');
+    radio.registerPlayed(skipped, 0.1);
+    radio.registerPlayed(skipped, 0.1);
+
+    final saved = radio.toJson(keepReasonsFor: first.map((t) => t.id));
+    final restored = SongRadio.fromJson(
+      saved,
+      similar: _similar,
+      artistRadio: _deezerRadio,
+      search: _search,
+      useLastFm: true,
+      random: Random(7),
+    )!;
+
+    expect(restored.seed.id, _seed.id);
+    expect(restored.mode, RadioMode.adventurous);
+    expect(restored.isBanned(skipped), isTrue);
+    expect(restored.reasonFor(first.first.id)?.source,
+        radio.reasonFor(first.first.id)?.source);
+
+    final next = await restored.nextBatch(count: 10);
+    final firstIds = first.map((t) => t.id).toSet();
+    expect(next.where((t) => firstIds.contains(t.id)), isEmpty,
+        reason: 'songs heard before the restart must not repeat');
+    expect(next.where((t) => t.artistId == 'art1'), isEmpty);
+  });
+
+  test('unreadable saved radio data restores nothing', () {
+    expect(SongRadio.fromJson({'v': 1}), isNull);
+    expect(SongRadio.fromJson({'v': 999, 'seed': _seed.toJson()}), isNull);
+  });
+
   test('norm collapses versions, accents and featured artists', () {
     expect(SongRadio.norm('Toxicity (Remastered)'), 'toxicity');
     expect(SongRadio.norm('Canción - Live at Rock in Rio'), 'cancion');
