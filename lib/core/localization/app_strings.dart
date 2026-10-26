@@ -1,6 +1,7 @@
 import '../../models/oni_mask.dart';
 import '../../services/ambient_sound_generator.dart';
 import '../../services/bpm_flow.dart';
+import '../../services/cadence_detector.dart';
 import '../../services/moon_calculator.dart';
 import 'app_language.dart';
 
@@ -416,6 +417,194 @@ class AppStrings {
         AppLanguage.es => 'Las canciones a mitad o al doble de tempo (70 y 140 BPM) se tratan como el mismo ritmo, igual que hacen los DJs.',
         AppLanguage.en => 'Songs at half or double tempo (70 and 140 BPM) count as the same pace, like DJs pair them.',
         AppLanguage.ja => '半分や倍のテンポ（70と140 BPM）は同じリズムとして扱います。DJと同じ考え方です。',
+      };
+
+  // --- Running mode ---
+  String get runTitle => switch (language) {
+        AppLanguage.es => 'MODO RUN',
+        AppLanguage.en => 'RUN MODE',
+        AppLanguage.ja => 'ランモード',
+      };
+
+  String get runCardSubtitle => switch (language) {
+        AppLanguage.es => 'La música sigue tu paso',
+        AppLanguage.en => 'Music follows your steps',
+        AppLanguage.ja => '音楽が歩調に合わせる',
+      };
+
+  String runCardActive(int? spm) => switch (language) {
+        AppLanguage.es => spm == null ? 'Activo · leyendo tu ritmo' : 'Activo · $spm pasos/min',
+        AppLanguage.en => spm == null ? 'On · reading your pace' : 'On · $spm steps/min',
+        AppLanguage.ja => spm == null ? '作動中 · 歩調を計測中' : '作動中 · 毎分$spm歩',
+      };
+
+  String get runIntro => switch (language) {
+        AppLanguage.es => 'Mide tus pasos por minuto con el acelerómetro y pone canciones a ese BPM. Si aceleras, la música acelera contigo.',
+        AppLanguage.en => 'Measures your steps per minute with the accelerometer and plays songs at that BPM. Speed up and the music speeds up with you.',
+        AppLanguage.ja => '加速度センサーで毎分の歩数を測り、そのBPMの曲を流します。ペースを上げれば音楽も一緒に上がります。',
+      };
+
+  String get runStart => switch (language) {
+        AppLanguage.es => 'INICIAR',
+        AppLanguage.en => 'START',
+        AppLanguage.ja => 'スタート',
+      };
+
+  String get runStop => switch (language) {
+        AppLanguage.es => 'TERMINAR',
+        AppLanguage.en => 'FINISH',
+        AppLanguage.ja => '終了',
+      };
+
+  String get runSpmUnit => switch (language) {
+        AppLanguage.es => 'PASOS/MIN',
+        AppLanguage.en => 'STEPS/MIN',
+        AppLanguage.ja => '歩/分',
+      };
+
+  String runState(MotionState state) => switch (language) {
+        AppLanguage.es => switch (state) {
+            MotionState.still => 'SIN RITMO',
+            MotionState.walking => 'CAMINANDO',
+            MotionState.running => 'CORRIENDO',
+          },
+        AppLanguage.en => switch (state) {
+            MotionState.still => 'NO RHYTHM',
+            MotionState.walking => 'WALKING',
+            MotionState.running => 'RUNNING',
+          },
+        AppLanguage.ja => switch (state) {
+            MotionState.still => 'リズムなし',
+            MotionState.walking => 'ウォーキング',
+            MotionState.running => 'ランニング',
+          },
+      };
+
+  String get runWaiting => switch (language) {
+        AppLanguage.es => 'Empieza a caminar o trotar. En unos segundos detecto tu ritmo.',
+        AppLanguage.en => 'Start walking or jogging. Your pace shows up in a few seconds.',
+        AppLanguage.ja => '歩くか走り始めてください。数秒で歩調を検出します。',
+      };
+
+  String get runSearching => switch (language) {
+        AppLanguage.es => 'Buscando canciones a tu ritmo…',
+        AppLanguage.en => 'Finding songs at your pace…',
+        AppLanguage.ja => 'あなたのペースの曲を探しています…',
+      };
+
+  String get runNoMatches => switch (language) {
+        AppLanguage.es => 'Aún no encuentro canciones a este ritmo. Vuelvo a buscar en cuanto cambies de paso.',
+        AppLanguage.en => 'No songs at this pace yet. I\'ll search again as soon as your pace changes.',
+        AppLanguage.ja => 'このペースの曲がまだ見つかりません。ペースが変わったら再検索します。',
+      };
+
+  String runMusicAt(int bpm) => switch (language) {
+        AppLanguage.es => 'Música a $bpm BPM',
+        AppLanguage.en => 'Music at $bpm BPM',
+        AppLanguage.ja => '$bpm BPMの音楽',
+      };
+
+  String get runLock => switch (language) {
+        AppLanguage.es => 'Fijar ritmo',
+        AppLanguage.en => 'Lock pace',
+        AppLanguage.ja => 'ペースを固定',
+      };
+
+  String get runUnlock => switch (language) {
+        AppLanguage.es => 'Seguir mis pasos',
+        AppLanguage.en => 'Follow my steps',
+        AppLanguage.ja => '歩調に合わせる',
+      };
+
+  String get runLockedHint => switch (language) {
+        AppLanguage.es => 'Ritmo fijo: la música no cambia aunque cambies de paso.',
+        AppLanguage.en => 'Pace locked: the music holds even if your steps change.',
+        AppLanguage.ja => 'ペース固定中：歩調が変わっても音楽は変わりません。',
+      };
+
+  String get runSyncTitle => switch (language) {
+        AppLanguage.es => 'Sincronizar tempo',
+        AppLanguage.en => 'Sync tempo',
+        AppLanguage.ja => 'テンポを同期',
+      };
+
+  String get runSyncSubtitle => switch (language) {
+        AppLanguage.es => 'Ajusta la velocidad de la canción hasta ±8% para que el beat vaya con tus pasos. La voz no cambia de tono.',
+        AppLanguage.en => 'Adjusts song speed by up to ±8% so the beat matches your steps. Voices keep their pitch.',
+        AppLanguage.ja => '曲の速度を最大±8%調整してビートを歩調に合わせます。声の高さは変わりません。',
+      };
+
+  String get runSyncSpotify => switch (language) {
+        AppLanguage.es => 'Spotify no permite cambiar la velocidad: elijo canciones a tu ritmo, pero suenan a su tempo original.',
+        AppLanguage.en => 'Spotify doesn\'t allow changing speed: songs are picked for your pace but play at their own tempo.',
+        AppLanguage.ja => 'Spotifyは速度を変更できません。ペースに合う曲を選びますが、元のテンポで再生されます。',
+      };
+
+  String runSongTempo(int bpm, double rate) {
+    final pct = ((rate - 1) * 100).round();
+    final adj = pct == 0 ? '' : ' · ${pct > 0 ? '+' : ''}$pct%';
+    return '$bpm BPM$adj';
+  }
+
+  String get runUnknownTempo => switch (language) {
+        AppLanguage.es => 'BPM desconocido',
+        AppLanguage.en => 'BPM unknown',
+        AppLanguage.ja => 'BPM不明',
+      };
+
+  String get runStatTime => switch (language) {
+        AppLanguage.es => 'TIEMPO',
+        AppLanguage.en => 'TIME',
+        AppLanguage.ja => '時間',
+      };
+
+  String get runStatSteps => switch (language) {
+        AppLanguage.es => 'PASOS',
+        AppLanguage.en => 'STEPS',
+        AppLanguage.ja => '歩数',
+      };
+
+  String get runStatAverage => switch (language) {
+        AppLanguage.es => 'PROMEDIO',
+        AppLanguage.en => 'AVERAGE',
+        AppLanguage.ja => '平均',
+      };
+
+  String get runStatSongs => switch (language) {
+        AppLanguage.es => 'CANCIONES',
+        AppLanguage.en => 'SONGS',
+        AppLanguage.ja => '曲',
+      };
+
+  String get runNoSensor => switch (language) {
+        AppLanguage.es => 'No pude leer el acelerómetro de este teléfono. Elige el ritmo a mano con − y +.',
+        AppLanguage.en => 'Couldn\'t read this phone\'s accelerometer. Set the pace by hand with − and +.',
+        AppLanguage.ja => 'この端末の加速度センサーを読み取れません。− と + でペースを設定してください。',
+      };
+
+  String get runBackgroundHint => switch (language) {
+        AppLanguage.es => 'Puedes bloquear la pantalla: mientras suene la música sigo leyendo tus pasos. Si tu teléfono cierra apps en segundo plano, pon la batería de Tsuki en "Sin restricciones".',
+        AppLanguage.en => 'You can lock the screen: while music plays I keep reading your steps. If your phone kills background apps, set Tsuki\'s battery to "Unrestricted".',
+        AppLanguage.ja => '画面をロックしても大丈夫です。音楽が流れている間は歩数を読み続けます。バックグラウンドでアプリが終了する場合は、Tsukiのバッテリー設定を「制限なし」にしてください。',
+      };
+
+  String get runHalfTimeNote => switch (language) {
+        AppLanguage.es => 'Corriendo también valen canciones a medio tempo: 85 BPM = un beat cada 2 pasos a 170.',
+        AppLanguage.en => 'When running, half-tempo songs count too: 85 BPM = one beat every 2 steps at 170.',
+        AppLanguage.ja => 'ランニング中は半分のテンポの曲も対象です：170歩なら85 BPM（2歩で1拍）。',
+      };
+
+  // --- Shake to skip ---
+  String get shakeSkipTitle => switch (language) {
+        AppLanguage.es => 'Agitar para saltar',
+        AppLanguage.en => 'Shake to skip',
+        AppLanguage.ja => '振ってスキップ',
+      };
+
+  String get shakeSkipSubtitle => switch (language) {
+        AppLanguage.es => 'Agita el teléfono con firmeza para pasar a la siguiente canción. Funciona con la app abierta y se pausa en Modo Run.',
+        AppLanguage.en => 'Shake the phone firmly to skip to the next song. Works with the app open and pauses in Run mode.',
+        AppLanguage.ja => '端末をしっかり振ると次の曲へ。アプリ表示中に動作し、ランモード中は停止します。',
       };
 
   // --- Oni masks ---

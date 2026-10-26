@@ -16,6 +16,7 @@ import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/run_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../services/deezer_api_service.dart';
 import '../widgets/album_card.dart';
@@ -26,6 +27,7 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
+import 'run_mode_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -789,37 +791,56 @@ class _HomeScreenState extends State<HomeScreen> {
     final strings = locale.strings;
     final ambientCount = context.select<AmbientProvider, int>(
         (a) => a.isPlaying ? a.activeSounds.length : 0);
+    final run = context.select<RunProvider, (bool, int?)>(
+        (r) => (r.active, r.active ? r.reading.spm?.round() : null));
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: _featureCard(
-              locale: locale,
-              icon: Icons.music_note_rounded,
-              color: AppColors.accent,
-              title: strings.guessTitle,
-              subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
-              highlight: !_dailyDone,
-              onTap: _openGuessGame,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _featureCard(
+                  locale: locale,
+                  icon: Icons.music_note_rounded,
+                  color: AppColors.accent,
+                  title: strings.guessTitle,
+                  subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
+                  highlight: !_dailyDone,
+                  onTap: _openGuessGame,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _featureCard(
+                  locale: locale,
+                  icon: Icons.water_drop_rounded,
+                  color: AppColors.neonCyan,
+                  title: strings.ambientTitle,
+                  subtitle: ambientCount > 0
+                      ? strings.ambientPlayingCount(ambientCount)
+                      : strings.homeAmbientCardSubtitle,
+                  highlight: ambientCount > 0,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    AmbientMixerSheet.show(context);
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _featureCard(
-              locale: locale,
-              icon: Icons.water_drop_rounded,
-              color: AppColors.neonCyan,
-              title: strings.ambientTitle,
-              subtitle: ambientCount > 0
-                  ? strings.ambientPlayingCount(ambientCount)
-                  : strings.homeAmbientCardSubtitle,
-              highlight: ambientCount > 0,
-              onTap: () {
-                HapticFeedback.lightImpact();
-                AmbientMixerSheet.show(context);
-              },
-            ),
+          const SizedBox(height: 10),
+          _featureCard(
+            locale: locale,
+            icon: Icons.directions_run_rounded,
+            color: AppColors.neonGreen,
+            title: strings.runTitle,
+            subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
+            highlight: run.$1,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              RunModeScreen.open(context);
+            },
           ),
         ],
       ),

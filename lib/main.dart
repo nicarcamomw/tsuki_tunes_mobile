@@ -18,7 +18,9 @@ import 'providers/locale_provider.dart';
 import 'providers/mask_provider.dart';
 import 'providers/moon_provider.dart';
 import 'providers/playlist_provider.dart';
+import 'providers/run_provider.dart';
 import 'providers/search_provider.dart';
+import 'providers/shake_skip_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
@@ -155,6 +157,16 @@ class TsukiTunesApp extends StatelessWidget {
             };
             return player;
           },
+        ),
+        ChangeNotifierProxyProvider2<AudioProvider, LibraryProvider, RunProvider>(
+          create: (_) => RunProvider(),
+          update: (_, audio, library, run) => run!..attach(audio, library),
+        ),
+        ChangeNotifierProxyProvider2<AudioProvider, RunProvider, ShakeSkipProvider>(
+          // Not lazy: it has to listen from launch once switched on.
+          lazy: false,
+          create: (_) => ShakeSkipProvider(),
+          update: (_, audio, run, shake) => shake!..attach(audio, run),
         ),
       ],
       child: MaterialApp(

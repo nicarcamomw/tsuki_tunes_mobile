@@ -1624,6 +1624,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _persistPlaybackState();
     notifyListeners();
   }
+  /// Spotify plays full songs on its own player, whose speed can't be set.
+  bool get canChangeTempo => !_useSpotify || _spotifyFallbackActive;
+
+  /// Playback speed per track (running mode locks songs onto the steps).
+  /// Null plays everything at normal speed.
+  set tempoFor(double Function(Track track)? fn) {
+    _service.speedFor = fn == null ? null : (t) => canChangeTempo ? fn(t) : 1.0;
+    refreshTempo();
+  }
+
+  /// Applies the current [tempoFor] to the playing track, gliding there.
+  void refreshTempo() {
+    final track = _currentTrack;
+    if (track != null) _service.refreshSpeed(track);
+  }
+
   /// The tracks after the current one, in play order.
   List<Track> get upcomingTracks =>
       _q.isEmpty ? const [] : _q.tracks.sublist(_q.currentIndex + 1);
