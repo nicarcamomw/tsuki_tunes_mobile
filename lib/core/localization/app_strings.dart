@@ -2490,10 +2490,64 @@ class AppStrings {
         AppLanguage.ja => 'タップして展開',
       };
 
-  String get rabbitHoleExpanded => switch (language) {
-        AppLanguage.es => 'EXPANDIDO ◈ DOBLE TAP PARA VER',
-        AppLanguage.en => 'EXPANDED ◈ DOUBLE TAP TO VIEW',
-        AppLanguage.ja => '展開済み ◈ ダブルタップで表示',
+  String rabbitHoleConnections(int count) => switch (language) {
+        AppLanguage.es => '$count CONEXIONES',
+        AppLanguage.en => '$count CONNECTIONS',
+        AppLanguage.ja => '$count 件の接続',
+      };
+
+  String get rabbitHoleDeadEnd => switch (language) {
+        AppLanguage.es => 'CALLEJÓN SIN SALIDA · TOCA PARA REINTENTAR',
+        AppLanguage.en => 'DEAD END · TAP TO RETRY',
+        AppLanguage.ja => '行き止まり · タップで再試行',
+      };
+
+  String get rabbitHoleMaxReached => switch (language) {
+        AppLanguage.es =>
+          'La red llegó a su límite. Reinicia desde este artista para seguir bajando.',
+        AppLanguage.en =>
+          'The web is full. Restart from this artist to keep digging.',
+        AppLanguage.ja => 'ネットワークが上限に達しました。このアーティストから再開して探索を続けましょう。',
+      };
+
+  String get rabbitHoleRestartHere => switch (language) {
+        AppLanguage.es => 'REINICIAR AQUÍ',
+        AppLanguage.en => 'RESTART HERE',
+        AppLanguage.ja => 'ここから再開',
+      };
+
+  String get rabbitHoleOpenArtist => switch (language) {
+        AppLanguage.es => 'VER ARTISTA',
+        AppLanguage.en => 'VIEW ARTIST',
+        AppLanguage.ja => 'アーティスト',
+      };
+
+  String get rabbitHoleFitAll => switch (language) {
+        AppLanguage.es => 'Ver toda la red',
+        AppLanguage.en => 'Fit whole web',
+        AppLanguage.ja => '全体を表示',
+      };
+
+  String get rabbitHoleHint => switch (language) {
+        AppLanguage.es =>
+          'Toca un nodo para expandir · Mantén y arrastra para moverlo · Pellizca para hacer zoom',
+        AppLanguage.en =>
+          'Tap a node to expand · Hold and drag to move it · Pinch to zoom',
+        AppLanguage.ja => 'ノードをタップで展開 · 長押しでドラッグ · ピンチでズーム',
+      };
+
+  String get rabbitHoleEmpty => switch (language) {
+        AppLanguage.es => 'SIN CONEXIONES',
+        AppLanguage.en => 'NO CONNECTIONS',
+        AppLanguage.ja => '接続なし',
+      };
+
+  String get rabbitHoleEmptySubtitle => switch (language) {
+        AppLanguage.es =>
+          'No encontramos artistas relacionados. Revisa tu conexión e inténtalo de nuevo.',
+        AppLanguage.en =>
+          "We couldn't find related artists. Check your connection and try again.",
+        AppLanguage.ja => '関連アーティストが見つかりませんでした。接続を確認して再試行してください。',
       };
 
   String get rabbitHoleRecenter => switch (language) {
@@ -2509,9 +2563,9 @@ class AppStrings {
       };
 
   String rabbitHoleDepth(int count) => switch (language) {
-        AppLanguage.es => '$count EXPANSIONES',
-        AppLanguage.en => '$count EXPANSIONS',
-        AppLanguage.ja => '$count 展開',
+        AppLanguage.es => 'PROFUNDIDAD $count',
+        AppLanguage.en => 'DEPTH $count',
+        AppLanguage.ja => '深さ $count',
       };
 
   String get rabbitHoleViewGraph => switch (language) {
