@@ -81,6 +81,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Duration? _sleepTimerRemaining;
   bool _stopAfterCurrentTrack = false;
   int? _sleepTimerOriginalMinutes;
+  bool _sleepFadeApplied = false;
+  static const int _sleepFadeSeconds = 20;
+
+  /// Fired when the sleep timer stops the music, so ambient sounds can decide
+  /// whether to keep going.
+  VoidCallback? onSleepTimerFinished;
+
+  // Ambient-only media session state, shown when no track is loaded.
+  String? _ambientTitle;
+  bool _ambientPlaying = false;
+  Future<void> Function()? onAmbientPlay;
+  Future<void> Function()? onAmbientPause;
+  Future<void> Function()? onAmbientStop;
 
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -135,12 +148,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _attachMediaHandler(TsukiAudioHandler handler) {
     _mediaHandler = handler;
     handler.onPlay = () async {
+      if (_showsAmbient) return onAmbientPlay?.call();
       if (!_isPlaying) await togglePlay();
     };
     handler.onPause = () async {
+      if (_showsAmbient) return onAmbientPause?.call();
       if (_isPlaying) await togglePlay();
     };
-    handler.onStop = stop;
+    handler.onStop = () async {
+      await stop();
+      await onAmbientStop?.call();
+    };
     handler.onSkipToNext = next;
     handler.onSkipToPrevious = previous;
     handler.onSeek = (pos) => seek(pos);
@@ -158,9 +176,45 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     super.notifyListeners();
   }
 
+  bool get _showsAmbient => _currentTrack == null && _ambientTitle != null;
+
+  void setAmbientMediaState({required String? title, required bool playing}) {
+    _ambientTitle = title;
+    _ambientPlaying = playing;
+    _syncMediaSession();
+  }
+
+  void _syncAmbientMediaSession(TsukiAudioHandler handler, bool force) {
+    final itemKey = 'ambient|$_ambientTitle';
+    if (itemKey != _mediaItemKey) {
+      _mediaItemKey = itemKey;
+      handler.mediaItem.add(MediaItem(
+        id: 'tsuki_ambient',
+        title: _ambientTitle!,
+        artist: 'Tsuki Tunes',
+      ));
+    }
+    final stateKey = 'ambient|$_ambientPlaying|$itemKey';
+    if (!force && stateKey == _mediaStateKey) return;
+    _mediaStateKey = stateKey;
+    handler.playbackState.add(PlaybackState(
+      controls: [
+        _ambientPlaying ? MediaControl.pause : MediaControl.play,
+        MediaControl.stop,
+      ],
+      androidCompactActionIndices: const [0, 1],
+      processingState: AudioProcessingState.ready,
+      playing: _ambientPlaying,
+    ));
+  }
+
   void _syncMediaSession({bool force = false}) {
     final handler = _mediaHandler;
     if (handler == null) return;
+    if (_showsAmbient) {
+      _syncAmbientMediaSession(handler, force);
+      return;
+    }
     final track = _currentTrack;
 
     final itemKey = track == null
@@ -1560,6 +1614,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       stop();
+      onSleepTimerFinished?.call();
       return;
     }
 
@@ -1680,6 +1735,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void setSleepTimer(Duration? duration) {
     _sleepTimer?.cancel();
     _sleepTimer = null;
+    _restoreSleepFade();
 
     if (duration == null) {
       _sleepTimerDeadline = null;
@@ -1724,11 +1780,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerRemaining = null;
       _stopAfterCurrentTrack = false;
       _sleepTimerOriginalMinutes = null;
+      _sleepFadeApplied = false;
       stop();
+      onSleepTimerFinished?.call();
     } else {
       _sleepTimerRemaining = remaining;
+      _applySleepFade(remaining);
       notifyListeners();
     }
+  }
+
+  /// Lowers the preview volume over the last seconds so the music doesn't
+  /// cut off abruptly. Spotify volume can't be controlled from here.
+  void _applySleepFade(Duration remaining) {
+    if (_spotifyActive && !_spotifyFallbackActive) return;
+    if (remaining.inSeconds > _sleepFadeSeconds) return;
+    _sleepFadeApplied = true;
+    final level = remaining.inMilliseconds / (_sleepFadeSeconds * 1000);
+    unawaited(_service.setVolume(level.clamp(0.0, 1.0)));
+  }
+
+  void _restoreSleepFade() {
+    if (!_sleepFadeApplied) return;
+    _sleepFadeApplied = false;
+    unawaited(_service.setVolume(1.0));
   }
 
   @override

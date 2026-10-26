@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
+import '../providers/ambient_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
@@ -17,9 +18,11 @@ import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../services/deezer_api_service.dart';
 import '../widgets/album_card.dart';
+import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
+import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   bool _releasesLoading = false;
+  bool _dailyDone = false;
 
   @override
   void initState() {
@@ -46,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     NavigationEvents.onHomeOpenProfile = openProfile;
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
+    _refreshDailyDone();
   }
 
   @override
@@ -585,6 +590,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
+              SliverToBoxAdapter(child: _buildFeatureCards(locale)),
+
               if (_topArtistsDisplay.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
@@ -748,6 +755,125 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       ),
+      ),
+    );
+  }
+
+  Future<void> _refreshDailyDone() async {
+    final done = await GuessSongScreen.isDailyDone();
+    if (mounted && done != _dailyDone) setState(() => _dailyDone = done);
+  }
+
+  Future<void> _openGuessGame() async {
+    unawaited(HapticFeedback.lightImpact());
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(builder: (_) => const GuessSongScreen()),
+    );
+    await _refreshDailyDone();
+  }
+
+  Widget _buildFeatureCards(LocaleProvider locale) {
+    final strings = locale.strings;
+    final ambientCount = context.select<AmbientProvider, int>(
+        (a) => a.isPlaying ? a.activeSounds.length : 0);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _featureCard(
+              locale: locale,
+              icon: Icons.music_note_rounded,
+              color: AppColors.accent,
+              title: strings.guessTitle,
+              subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
+              highlight: !_dailyDone,
+              onTap: _openGuessGame,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _featureCard(
+              locale: locale,
+              icon: Icons.water_drop_rounded,
+              color: AppColors.neonCyan,
+              title: strings.ambientTitle,
+              subtitle: ambientCount > 0
+                  ? strings.ambientPlayingCount(ambientCount)
+                  : strings.homeAmbientCardSubtitle,
+              highlight: ambientCount > 0,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                AmbientMixerSheet.show(context);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _featureCard({
+    required LocaleProvider locale,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required bool highlight,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withValues(alpha: highlight ? 0.18 : 0.08),
+                AppColors.bgCard,
+              ],
+            ),
+            border: Border.all(color: color.withValues(alpha: highlight ? 0.6 : 0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(fontSize: 10, color: color),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

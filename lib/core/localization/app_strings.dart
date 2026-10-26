@@ -1,3 +1,4 @@
+import '../../services/ambient_sound_generator.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -301,6 +302,296 @@ class AppStrings {
         AppLanguage.es => 'GENERAL',
         AppLanguage.en => 'GENERAL',
         AppLanguage.ja => '一般',
+      };
+
+  // --- Ambient mixer ---
+  String get ambientTitle => switch (language) {
+        AppLanguage.es => 'AMBIENTE',
+        AppLanguage.en => 'AMBIENT',
+        AppLanguage.ja => 'アンビエント',
+      };
+
+  String get ambientSubtitle => switch (language) {
+        AppLanguage.es => 'Suena encima de tu música, también de Spotify',
+        AppLanguage.en => 'Plays on top of your music, Spotify included',
+        AppLanguage.ja => '音楽の上に重ねて再生（Spotifyも対応）',
+      };
+
+  String ambientName(AmbientSound sound) => switch (language) {
+        AppLanguage.es => switch (sound) {
+            AmbientSound.rain => 'Lluvia',
+            AmbientSound.storm => 'Tormenta',
+            AmbientSound.waves => 'Olas',
+            AmbientSound.fire => 'Fogata',
+            AmbientSound.wind => 'Viento',
+            AmbientSound.night => 'Noche',
+            AmbientSound.brownNoise => 'Ruido marrón',
+          },
+        AppLanguage.en => switch (sound) {
+            AmbientSound.rain => 'Rain',
+            AmbientSound.storm => 'Storm',
+            AmbientSound.waves => 'Waves',
+            AmbientSound.fire => 'Campfire',
+            AmbientSound.wind => 'Wind',
+            AmbientSound.night => 'Night',
+            AmbientSound.brownNoise => 'Brown noise',
+          },
+        AppLanguage.ja => switch (sound) {
+            AmbientSound.rain => '雨',
+            AmbientSound.storm => '嵐',
+            AmbientSound.waves => '波',
+            AmbientSound.fire => '焚き火',
+            AmbientSound.wind => '風',
+            AmbientSound.night => '夜',
+            AmbientSound.brownNoise => 'ブラウンノイズ',
+          },
+      };
+
+  String get ambientAfterTimerTitle => switch (language) {
+        AppLanguage.es => 'Cuando termine el temporizador',
+        AppLanguage.en => 'When the sleep timer ends',
+        AppLanguage.ja => 'スリープタイマー終了後',
+      };
+
+  String ambientAfterTimerOption(int minutes) => switch (language) {
+        AppLanguage.es => minutes == 0
+            ? 'Apagar con la música'
+            : minutes < 0
+                ? 'No apagar'
+                : 'Seguir $minutes min',
+        AppLanguage.en => minutes == 0
+            ? 'Stop with the music'
+            : minutes < 0
+                ? 'Keep playing'
+                : 'Keep $minutes min',
+        AppLanguage.ja => minutes == 0
+            ? '音楽と一緒に停止'
+            : minutes < 0
+                ? '止めない'
+                : 'あと$minutes分',
+      };
+
+  String ambientStopsIn(String time) => switch (language) {
+        AppLanguage.es => 'Se apaga en $time',
+        AppLanguage.en => 'Stops in $time',
+        AppLanguage.ja => '$time 後に停止',
+      };
+
+  String get ambientStopAll => switch (language) {
+        AppLanguage.es => 'APAGAR TODO',
+        AppLanguage.en => 'STOP ALL',
+        AppLanguage.ja => 'すべて停止',
+      };
+
+  String get ambientPause => switch (language) {
+        AppLanguage.es => 'PAUSAR',
+        AppLanguage.en => 'PAUSE',
+        AppLanguage.ja => '一時停止',
+      };
+
+  String get ambientResume => switch (language) {
+        AppLanguage.es => 'REANUDAR',
+        AppLanguage.en => 'RESUME',
+        AppLanguage.ja => '再開',
+      };
+
+  String get ambientHint => switch (language) {
+        AppLanguage.es => 'Combínalo con el temporizador para dormir: la música se apaga suave y la lluvia sigue.',
+        AppLanguage.en => 'Pair it with the sleep timer: the music fades out and the rain keeps going.',
+        AppLanguage.ja => 'スリープタイマーと組み合わせると、音楽はフェードアウトし雨音は続きます。',
+      };
+
+  String get homeAmbientCardSubtitle => switch (language) {
+        AppLanguage.es => 'Lluvia, olas, fogata…',
+        AppLanguage.en => 'Rain, waves, campfire…',
+        AppLanguage.ja => '雨・波・焚き火…',
+      };
+
+  String ambientPlayingCount(int count) => switch (language) {
+        AppLanguage.es => '$count sonando',
+        AppLanguage.en => '$count playing',
+        AppLanguage.ja => '$count 再生中',
+      };
+
+  // --- Guess the song ---
+  String get guessTitle => switch (language) {
+        AppLanguage.es => 'ADIVINA LA CANCIÓN',
+        AppLanguage.en => 'GUESS THE SONG',
+        AppLanguage.ja => '曲当てクイズ',
+      };
+
+  String get guessModeDaily => switch (language) {
+        AppLanguage.es => 'Reto diario',
+        AppLanguage.en => 'Daily',
+        AppLanguage.ja => 'デイリー',
+      };
+
+  String get guessModeLibrary => switch (language) {
+        AppLanguage.es => 'Mis canciones',
+        AppLanguage.en => 'My songs',
+        AppLanguage.ja => 'マイソング',
+      };
+
+  String get guessModeChart => switch (language) {
+        AppLanguage.es => 'Top mundial',
+        AppLanguage.en => 'Global top',
+        AppLanguage.ja => 'グローバルTOP',
+      };
+
+  String get guessHowTo => switch (language) {
+        AppLanguage.es => 'Escucha el fragmento y adivina la canción. Cada fallo o salto desbloquea más segundos.',
+        AppLanguage.en => 'Listen to the clip and guess the song. Every miss or skip unlocks more seconds.',
+        AppLanguage.ja => 'クリップを聴いて曲を当てよう。外すかスキップすると再生時間が延びます。',
+      };
+
+  String get guessSearchHint => switch (language) {
+        AppLanguage.es => 'Escribe tu respuesta…',
+        AppLanguage.en => 'Type your guess…',
+        AppLanguage.ja => '曲名を入力…',
+      };
+
+  String guessSkip(int seconds) => switch (language) {
+        AppLanguage.es => 'SALTAR (+${seconds}s)',
+        AppLanguage.en => 'SKIP (+${seconds}s)',
+        AppLanguage.ja => 'スキップ（+$seconds秒）',
+      };
+
+  String get guessGiveUp => switch (language) {
+        AppLanguage.es => 'RENDIRSE',
+        AppLanguage.en => 'GIVE UP',
+        AppLanguage.ja => 'ギブアップ',
+      };
+
+  String get guessTapToPlay => switch (language) {
+        AppLanguage.es => 'Reproducir fragmento',
+        AppLanguage.en => 'Play clip',
+        AppLanguage.ja => 'クリップを再生',
+      };
+
+  String get guessAttemptSkipped => switch (language) {
+        AppLanguage.es => 'Saltado',
+        AppLanguage.en => 'Skipped',
+        AppLanguage.ja => 'スキップ',
+      };
+
+  String get guessRightArtist => switch (language) {
+        AppLanguage.es => 'artista correcto',
+        AppLanguage.en => 'right artist',
+        AppLanguage.ja => 'アーティストは正解',
+      };
+
+  String guessWonIn(int attempts) => switch (language) {
+        AppLanguage.es => attempts == 1 ? '¡Al primer segundo! 🤯' : '¡Lo adivinaste en $attempts intentos!',
+        AppLanguage.en => attempts == 1 ? 'First second! 🤯' : 'Got it in $attempts tries!',
+        AppLanguage.ja => attempts == 1 ? '1秒で正解！🤯' : '$attempts回目で正解！',
+      };
+
+  String get guessLost => switch (language) {
+        AppLanguage.es => 'Era esta canción',
+        AppLanguage.en => 'It was this song',
+        AppLanguage.ja => '正解はこの曲',
+      };
+
+  String get guessListenFull => switch (language) {
+        AppLanguage.es => 'ESCUCHAR',
+        AppLanguage.en => 'PLAY',
+        AppLanguage.ja => '再生',
+      };
+
+  String get guessShare => switch (language) {
+        AppLanguage.es => 'COPIAR RESULTADO',
+        AppLanguage.en => 'COPY RESULT',
+        AppLanguage.ja => '結果をコピー',
+      };
+
+  String get guessCopied => switch (language) {
+        AppLanguage.es => 'Resultado copiado, ¡pégalo donde quieras!',
+        AppLanguage.en => 'Result copied, paste it anywhere!',
+        AppLanguage.ja => '結果をコピーしました！',
+      };
+
+  String get guessNext => switch (language) {
+        AppLanguage.es => 'SIGUIENTE',
+        AppLanguage.en => 'NEXT',
+        AppLanguage.ja => '次へ',
+      };
+
+  String guessNextDailyIn(String time) => switch (language) {
+        AppLanguage.es => 'Próximo reto en $time',
+        AppLanguage.en => 'Next challenge in $time',
+        AppLanguage.ja => '次のチャレンジまで $time',
+      };
+
+  String get guessStatsTitle => switch (language) {
+        AppLanguage.es => 'ESTADÍSTICAS',
+        AppLanguage.en => 'STATS',
+        AppLanguage.ja => '統計',
+      };
+
+  String get guessStatsPlayed => switch (language) {
+        AppLanguage.es => 'Jugados',
+        AppLanguage.en => 'Played',
+        AppLanguage.ja => 'プレイ',
+      };
+
+  String get guessStatsWinRate => switch (language) {
+        AppLanguage.es => '% Victorias',
+        AppLanguage.en => 'Win %',
+        AppLanguage.ja => '勝率',
+      };
+
+  String get guessStatsStreak => switch (language) {
+        AppLanguage.es => 'Racha',
+        AppLanguage.en => 'Streak',
+        AppLanguage.ja => '連続',
+      };
+
+  String get guessStatsMaxStreak => switch (language) {
+        AppLanguage.es => 'Mejor racha',
+        AppLanguage.en => 'Best streak',
+        AppLanguage.ja => '最高連続',
+      };
+
+  String get guessStatsDistribution => switch (language) {
+        AppLanguage.es => 'INTENTOS PARA ADIVINAR',
+        AppLanguage.en => 'GUESS DISTRIBUTION',
+        AppLanguage.ja => '正解までの回数',
+      };
+
+  String guessSessionStreak(int n, int best) => switch (language) {
+        AppLanguage.es => 'Racha $n · Récord $best',
+        AppLanguage.en => 'Streak $n · Best $best',
+        AppLanguage.ja => '連続 $n · 最高 $best',
+      };
+
+  String get guessLibraryTooSmall => switch (language) {
+        AppLanguage.es => 'Guarda o escucha más canciones para jugar con tu biblioteca. Por ahora juegas con el top mundial.',
+        AppLanguage.en => 'Save or play more songs to use your library. For now you play with the global top.',
+        AppLanguage.ja => 'ライブラリで遊ぶには曲をもっと保存・再生してください。今はグローバルTOPで遊べます。',
+      };
+
+  String get guessLoadError => switch (language) {
+        AppLanguage.es => 'No se pudo cargar la canción',
+        AppLanguage.en => "Couldn't load the song",
+        AppLanguage.ja => '曲を読み込めませんでした',
+      };
+
+  String get guessNoResults => switch (language) {
+        AppLanguage.es => 'Sin resultados',
+        AppLanguage.en => 'No results',
+        AppLanguage.ja => '結果なし',
+      };
+
+  String guessShareHeader(int day) => switch (language) {
+        AppLanguage.es => 'Tsuki Tunes 🌙 Reto #$day',
+        AppLanguage.en => 'Tsuki Tunes 🌙 Challenge #$day',
+        AppLanguage.ja => 'Tsuki Tunes 🌙 チャレンジ #$day',
+      };
+
+  String get guessDailyDone => switch (language) {
+        AppLanguage.es => 'Reto de hoy completado ✓',
+        AppLanguage.en => "Today's challenge done ✓",
+        AppLanguage.ja => '本日のチャレンジ完了 ✓',
       };
 
   String get crossfadeTitle => switch (language) {

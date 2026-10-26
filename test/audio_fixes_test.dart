@@ -214,6 +214,29 @@ void main() {
       expect(provider.isSleepTimerActive, isTrue);
       expect(provider.sleepTimerRemaining!.inMinutes, inInclusiveRange(4, 5));
     });
+
+    test('expired sleep timer notifies onSleepTimerFinished once', () {
+      var fired = 0;
+      provider.onSleepTimerFinished = () => fired++;
+      provider.setSleepTimer(const Duration(minutes: 5));
+      provider.setSleepTimerDeadlineForTesting(
+          DateTime.now().subtract(const Duration(seconds: 1)));
+
+      provider.checkSleepTimer();
+      provider.checkSleepTimer();
+
+      expect(fired, 1);
+    });
+
+    test('cancelling the sleep timer does not notify onSleepTimerFinished', () {
+      var fired = 0;
+      provider.onSleepTimerFinished = () => fired++;
+      provider.setSleepTimer(const Duration(minutes: 5));
+      provider.setSleepTimer(null);
+      provider.checkSleepTimer();
+
+      expect(fired, 0);
+    });
   });
 
   group('Fix 3: Loop + Crossfade Inconsistency Tests', () {

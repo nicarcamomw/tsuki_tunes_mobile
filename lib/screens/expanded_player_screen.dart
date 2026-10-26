@@ -12,10 +12,12 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/synced_lyrics.dart';
 import '../models/track.dart';
+import '../providers/ambient_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
+import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/tap_scale.dart';
@@ -611,7 +613,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SizedBox(width: 40),
+                      _buildAmbientButton(context, locale),
                       Text(
                         useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                         style: locale.getTextStyle(
@@ -634,6 +636,46 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     ),
   );
 }
+
+  Widget _buildAmbientButton(BuildContext context, LocaleProvider locale) {
+    final count = context.select<AmbientProvider, int>(
+        (a) => a.isPlaying ? a.activeSounds.length : 0);
+    final active = count > 0;
+    return TapScale(
+      semanticLabel: locale.strings.ambientTitle,
+      onTap: () => AmbientMixerSheet.show(context),
+      scaleDown: 0.85,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? AppColors.neonCyan.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: active ? Border.all(color: AppColors.neonCyan.withValues(alpha: 0.4)) : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.water_drop_outlined,
+              size: 16,
+              color: active ? AppColors.neonCyan : AppColors.textMuted,
+            ),
+            if (active) ...[
+              const SizedBox(width: 4),
+              Text(
+                '$count',
+                style: locale.getTextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.neonCyan,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
     final strings = locale.strings;

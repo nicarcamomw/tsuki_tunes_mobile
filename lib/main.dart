@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
+import 'providers/ambient_provider.dart';
 import 'providers/audio_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/connectivity_provider.dart';
@@ -96,11 +97,21 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => LocaleProvider(storage: StorageService()),
         ),
-        ChangeNotifierProxyProvider2<LibraryProvider, ConnectivityProvider, AudioProvider>(
+        ChangeNotifierProvider(
+          create: (ctx) => AmbientProvider(
+            labelFor: (sound) => ctx.read<LocaleProvider>().strings.ambientName(sound),
+          ),
+        ),
+        ChangeNotifierProxyProvider3<LibraryProvider, ConnectivityProvider, AmbientProvider, AudioProvider>(
           create: (_) => AudioProvider(mediaHandler: mediaHandler),
-          update: (_, library, connectivity, audio) {
+          update: (_, library, connectivity, ambient, audio) {
             audio ??= AudioProvider(mediaHandler: mediaHandler);
             audio.setConnectivityProvider(connectivity);
+            audio.onSleepTimerFinished = ambient.onSleepTimerFinished;
+            audio.onAmbientPlay = ambient.resumeAll;
+            audio.onAmbientPause = ambient.pauseAll;
+            audio.onAmbientStop = ambient.stopAll;
+            ambient.onMediaStateChanged = audio.setAmbientMediaState;
             audio.onTrackStarted = (track) {
               library.addRecentTrack(track);
             };

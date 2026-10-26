@@ -278,6 +278,27 @@ class DeezerApiService implements MusicApiContract {
     return [];
   }
 
+  /// Top 100 global tracks; the guess-the-song game needs a bigger pool than
+  /// the home chart.
+  Future<List<Track>> getLargeChartTracks() async {
+    const cacheKey = 'chart_tracks_large';
+    final cached = _getCached<List<Track>>(cacheKey);
+    if (cached != null) return cached;
+
+    try {
+      final data = await _fetchJson(ApiEndpoints.chartTracksLarge);
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        final tracks = list.map((item) => Track.fromJson(item)).toList();
+        _setCache(cacheKey, tracks);
+        return tracks;
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] getLargeChartTracks error: $e');
+    }
+    return [];
+  }
+
   @override
   Future<List<Artist>> getChartArtists() async {
     const cacheKey = 'chart_artists';
