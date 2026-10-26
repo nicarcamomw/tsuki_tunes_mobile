@@ -791,8 +791,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final strings = locale.strings;
     final ambientCount = context.select<AmbientProvider, int>(
         (a) => a.isPlaying ? a.activeSounds.length : 0);
-    final run = context.select<RunProvider, (bool, int?)>(
-        (r) => (r.active, r.active ? r.reading.spm?.round() : null));
+    final run = context.select<RunProvider, (bool, int?, bool)>(
+        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled));
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
@@ -829,19 +829,21 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          _featureCard(
-            locale: locale,
-            icon: Icons.directions_run_rounded,
-            color: AppColors.neonGreen,
-            title: strings.runTitle,
-            subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
-            highlight: run.$1,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              RunModeScreen.open(context);
-            },
-          ),
+          if (run.$3) ...[
+            const SizedBox(height: 10),
+            _featureCard(
+              locale: locale,
+              icon: Icons.directions_run_rounded,
+              color: AppColors.neonGreen,
+              title: strings.runTitle,
+              subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
+              highlight: run.$1,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                RunModeScreen.open(context);
+              },
+            ),
+          ],
         ],
       ),
     );

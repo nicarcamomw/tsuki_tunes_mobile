@@ -30,6 +30,7 @@ enum RunPhase {
 /// so the beat lines up with the steps.
 class RunProvider extends ChangeNotifier {
   static const _syncKey = 'run_sync_tempo';
+  static const _enabledKey = 'run_mode_enabled';
   static const Duration tick = Duration(milliseconds: 500);
   /// The target follows the cadence only once it moves this much, so small
   /// wobbles don't churn the queue.
@@ -61,6 +62,7 @@ class RunProvider extends ChangeNotifier {
   }
 
   // --- State ---
+  bool _enabled = true;
   bool _active = false;
   RunPhase _phase = RunPhase.waiting;
   bool _sensorAvailable = true;
@@ -79,6 +81,7 @@ class RunProvider extends ChangeNotifier {
   int _historyN = 0;
   int _songs = 0;
 
+  bool get enabled => _enabled;
   bool get active => _active;
   RunPhase get phase => _phase;
   bool get sensorAvailable => _sensorAvailable;
@@ -122,7 +125,20 @@ class RunProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       _syncTempo = prefs.getBool(_syncKey) ?? true;
+      _enabled = prefs.getBool(_enabledKey) ?? true;
       notifyListeners();
+    } catch (_) {}
+  }
+
+  /// Whether the mode is offered at all (its card on the home screen).
+  /// Turning it off ends a running session.
+  Future<void> setEnabled(bool value) async {
+    _enabled = value;
+    if (!value) await stop();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_enabledKey, value);
     } catch (_) {}
   }
 
@@ -149,7 +165,7 @@ class RunProvider extends ChangeNotifier {
   bool _refill = false;
 
   Future<void> start() async {
-    if (_active) return;
+    if (_active || !_enabled) return;
     final audio = _audio;
     if (audio == null) return;
     _active = true;

@@ -594,6 +594,18 @@ class AppStrings {
         AppLanguage.ja => 'ランニング中は半分のテンポの曲も対象です：170歩なら85 BPM（2歩で1拍）。',
       };
 
+  String get runSettingTitle => switch (language) {
+        AppLanguage.es => 'Modo Run',
+        AppLanguage.en => 'Run mode',
+        AppLanguage.ja => 'ランモード',
+      };
+
+  String get runSettingSubtitle => switch (language) {
+        AppLanguage.es => 'Muestra la tarjeta en el inicio. Apagado, se oculta y no usa el sensor.',
+        AppLanguage.en => 'Shows its card on the home screen. Off, it is hidden and the sensor is never used.',
+        AppLanguage.ja => 'ホームにカードを表示します。オフにすると非表示になり、センサーも使いません。',
+      };
+
   // --- Shake to skip ---
   String get shakeSkipTitle => switch (language) {
         AppLanguage.es => 'Agitar para saltar',

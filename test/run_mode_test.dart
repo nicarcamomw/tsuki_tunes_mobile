@@ -329,6 +329,24 @@ void main() {
       expect(run.active, isFalse);
     });
 
+    test('the mode can be switched off, which ends a session', () async {
+      expect(run.enabled, isTrue);
+      await run.start();
+      await walk(120, 8);
+      await run.setEnabled(false);
+      expect(run.active, isFalse);
+      expect(service.speedFor, isNull);
+
+      await run.start();
+      expect(run.active, isFalse, reason: 'off: does not start');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('run_mode_enabled'), isFalse);
+
+      await run.setEnabled(true);
+      await run.start();
+      expect(run.active, isTrue);
+    });
+
     test('turning sync off plays songs at their own speed', () async {
       await run.start();
       await walk(126, 8);

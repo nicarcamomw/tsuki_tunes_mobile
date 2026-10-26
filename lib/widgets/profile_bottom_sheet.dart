@@ -8,6 +8,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/mask_provider.dart';
 import '../providers/moon_provider.dart';
+import '../providers/run_provider.dart';
 import '../providers/shake_skip_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/mask_collection_screen.dart';
@@ -492,6 +493,19 @@ class ProfileBottomSheet {
                           onChanged: (v) {
                             HapticFeedback.selectionClick();
                             context.read<ShakeSkipProvider>().setEnabled(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.directions_run_rounded,
+                          title: strings.runSettingTitle,
+                          subtitle: strings.runSettingSubtitle,
+                          value: context.read<RunProvider>().enabled,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            context.read<RunProvider>().setEnabled(v);
                             setModalState(() {});
                           },
                         ),
