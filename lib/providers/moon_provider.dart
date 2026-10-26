@@ -56,11 +56,15 @@ class MoonProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   DateTime get now => _clock();
 
+  /// Fired whenever blood-moon mode is shown (real eclipse or preview).
+  VoidCallback? onEclipseSeen;
+
   void _compute() {
     final t = _clock();
     _snapshot = MoonCalculator.snapshot(t);
     _eclipseNow = MoonCalculator.eclipseInProgress(t);
     _nextEclipse = MoonCalculator.nextEclipse(t);
+    if (_eclipseNow != null) onEclipseSeen?.call();
   }
 
   void refresh() {
@@ -92,6 +96,7 @@ class MoonProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Easter egg: long-press the moon to see what an eclipse looks like.
   void previewEclipse() {
+    onEclipseSeen?.call();
     _previewUntil = _clock().add(eclipsePreviewLength);
     _previewTimer?.cancel();
     _previewTimer = Timer(eclipsePreviewLength, () {

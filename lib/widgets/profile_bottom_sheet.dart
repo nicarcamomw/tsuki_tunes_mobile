@@ -6,11 +6,14 @@ import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/mask_provider.dart';
 import '../providers/moon_provider.dart';
 import '../screens/login_screen.dart';
+import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
 import 'language_selector_sheet.dart';
+import 'oni_mask_art.dart';
 
 class ProfileBottomSheet {
   static void show(BuildContext context, AuthProvider auth) {
@@ -28,6 +31,7 @@ class ProfileBottomSheet {
       builder: (ctx) {
         final audioProvider = context.read<AudioProvider>();
         final moon = context.read<MoonProvider>();
+        final masks = context.read<MaskProvider>();
         final spotify = audioProvider.spotify;
         final locale = context.read<LocaleProvider>();
         final strings = locale.strings;
@@ -61,11 +65,31 @@ class ProfileBottomSheet {
                   ),
 
                   // Profile header
-                  if (auth.user?.photoURL != null)
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundImage: NetworkImage(auth.user!.photoURL!),
-                    ),
+                  Builder(builder: (_) {
+                    final equipped = masks.equipped;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        if (auth.user?.photoURL != null)
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(auth.user!.photoURL!),
+                          )
+                        else
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: AppColors.bgMid,
+                            child: Icon(Icons.person_rounded, color: AppColors.textMuted),
+                          ),
+                        if (equipped != null)
+                          Positioned(
+                            right: -14,
+                            bottom: -10,
+                            child: OniMaskArt(mask: equipped, size: 36, unlocked: true),
+                          ),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 12),
                   Text(
                     auth.user?.displayName ?? '',
@@ -80,6 +104,40 @@ class ProfileBottomSheet {
                     style: locale.getTextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await Future.delayed(const Duration(milliseconds: 120));
+                      if (context.mounted) await MaskCollectionScreen.open(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentDim,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.theater_comedy_rounded, size: 15, color: AppColors.accent),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${strings.masksProfileRow} · ${strings.masksCount(masks.unlockedCount, masks.totalCount)}',
+                            style: locale.getTextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textBright,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

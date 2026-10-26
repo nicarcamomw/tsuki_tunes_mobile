@@ -1,3 +1,4 @@
+import '../../models/oni_mask.dart';
 import '../../services/ambient_sound_generator.dart';
 import '../../services/moon_calculator.dart';
 import 'app_language.dart';
@@ -303,6 +304,93 @@ class AppStrings {
         AppLanguage.es => 'GENERAL',
         AppLanguage.en => 'GENERAL',
         AppLanguage.ja => '一般',
+      };
+
+  // --- Oni masks ---
+  String get masksTitle => switch (language) {
+        AppLanguage.es => 'MÁSCARAS ONI',
+        AppLanguage.en => 'ONI MASKS',
+        AppLanguage.ja => '鬼の面',
+      };
+
+  String masksCount(int unlocked, int total) => '$unlocked / $total';
+
+  String get masksNoneYet => switch (language) {
+        AppLanguage.es => 'Aún sin máscara',
+        AppLanguage.en => 'No mask yet',
+        AppLanguage.ja => 'まだ面がありません',
+      };
+
+  String get masksEquippedHint => switch (language) {
+        AppLanguage.es => 'Tu máscara equipada marca tus canciones escuchadas y aparece en tu perfil.',
+        AppLanguage.en => 'Your equipped mask marks your listened songs and shows on your profile.',
+        AppLanguage.ja => '装備中の面は聴いた曲の印になり、プロフィールにも表示されます。',
+      };
+
+  String get maskSecretName => switch (language) {
+        AppLanguage.es => '???',
+        AppLanguage.en => '???',
+        AppLanguage.ja => '？？？',
+      };
+
+  String get maskSecretHint => switch (language) {
+        AppLanguage.es => 'Máscara secreta. Nadie sabe cómo conseguirla… todavía.',
+        AppLanguage.en => 'Secret mask. Nobody knows how to get it… yet.',
+        AppLanguage.ja => '秘密の面。手に入れ方は誰も知らない…まだ。',
+      };
+
+  String get maskEquip => switch (language) {
+        AppLanguage.es => 'EQUIPAR',
+        AppLanguage.en => 'EQUIP',
+        AppLanguage.ja => '装備する',
+      };
+
+  String get maskEquipped => switch (language) {
+        AppLanguage.es => 'EQUIPADA',
+        AppLanguage.en => 'EQUIPPED',
+        AppLanguage.ja => '装備中',
+      };
+
+  String maskUnlockedOn(String date) => switch (language) {
+        AppLanguage.es => 'Desbloqueada el $date',
+        AppLanguage.en => 'Unlocked on $date',
+        AppLanguage.ja => '$date に解放',
+      };
+
+  String get maskUnlockedTitle => switch (language) {
+        AppLanguage.es => 'MÁSCARA DESBLOQUEADA',
+        AppLanguage.en => 'MASK UNLOCKED',
+        AppLanguage.ja => '面を解放',
+      };
+
+  String maskRarity(MaskRarity r) => switch (language) {
+        AppLanguage.es => switch (r) {
+            MaskRarity.common => 'COMÚN',
+            MaskRarity.rare => 'RARA',
+            MaskRarity.epic => 'ÉPICA',
+            MaskRarity.secret => 'SECRETA',
+            MaskRarity.legendary => 'LEGENDARIA',
+          },
+        AppLanguage.en => switch (r) {
+            MaskRarity.common => 'COMMON',
+            MaskRarity.rare => 'RARE',
+            MaskRarity.epic => 'EPIC',
+            MaskRarity.secret => 'SECRET',
+            MaskRarity.legendary => 'LEGENDARY',
+          },
+        AppLanguage.ja => switch (r) {
+            MaskRarity.common => '並',
+            MaskRarity.rare => '希少',
+            MaskRarity.epic => '極',
+            MaskRarity.secret => '秘',
+            MaskRarity.legendary => '伝説',
+          },
+      };
+
+  String get masksProfileRow => switch (language) {
+        AppLanguage.es => 'Colección de máscaras',
+        AppLanguage.en => 'Mask collection',
+        AppLanguage.ja => '面のコレクション',
       };
 
   // --- Moon ---
@@ -653,6 +741,42 @@ class AppStrings {
         AppLanguage.es => 'Mis canciones',
         AppLanguage.en => 'My songs',
         AppLanguage.ja => 'マイソング',
+      };
+
+  String get guessModeArtist => switch (language) {
+        AppLanguage.es => 'Artista',
+        AppLanguage.en => 'Artist',
+        AppLanguage.ja => 'アーティスト',
+      };
+
+  String get guessPickArtist => switch (language) {
+        AppLanguage.es => 'Elige un artista y adivina su discografía',
+        AppLanguage.en => 'Pick an artist and guess their discography',
+        AppLanguage.ja => 'アーティストを選んで曲を当てよう',
+      };
+
+  String get guessArtistSearchHint => switch (language) {
+        AppLanguage.es => 'Busca un artista…',
+        AppLanguage.en => 'Search an artist…',
+        AppLanguage.ja => 'アーティストを検索…',
+      };
+
+  String get guessYourArtists => switch (language) {
+        AppLanguage.es => 'TUS ARTISTAS',
+        AppLanguage.en => 'YOUR ARTISTS',
+        AppLanguage.ja => 'あなたのアーティスト',
+      };
+
+  String get guessArtistChange => switch (language) {
+        AppLanguage.es => 'CAMBIAR',
+        AppLanguage.en => 'CHANGE',
+        AppLanguage.ja => '変更',
+      };
+
+  String get guessArtistTooFew => switch (language) {
+        AppLanguage.es => 'Este artista no tiene suficientes canciones para jugar. Prueba con otro.',
+        AppLanguage.en => "This artist doesn't have enough songs to play. Try another one.",
+        AppLanguage.ja => 'このアーティストは曲が足りません。別のアーティストを試してください。',
       };
 
   String get guessModeChart => switch (language) {

@@ -272,6 +272,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Function(Track)? onPlayCounted;
   int _countedGeneration = -1;
 
+  /// The track reached its end (or crossfaded into the next): not skipped.
+  Function(Track)? onTrackCompleted;
+
   void _checkPlayCounted() {
     if (_countedGeneration == _playGeneration) return;
     final track = _currentTrack;
@@ -1628,6 +1631,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_completionHandled || _crossfadeTriggered) return;
     if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
     _completionHandled = true;
+    final finished = _currentTrack;
+    if (finished != null) onTrackCompleted?.call(finished);
 
     if (_stopAfterCurrentTrack) {
       _stopAfterCurrentTrack = false;
@@ -1685,6 +1690,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
     debugPrint('[AudioProvider] Spotify crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s before end)');
+    final outgoing = _currentTrack;
+    if (outgoing != null) onTrackCompleted?.call(outgoing);
 
     _currentTrack = nextTrack;
     _position = Duration.zero;
@@ -1723,6 +1730,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
+    final outgoing = _currentTrack;
+    if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = nextTrack;
     _position = Duration.zero;
     _duration = Duration(

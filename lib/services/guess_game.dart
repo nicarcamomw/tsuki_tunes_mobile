@@ -3,7 +3,7 @@ import 'dart:math';
 
 import '../models/track.dart';
 
-enum GuessMode { daily, library, chart }
+enum GuessMode { daily, library, artist, chart }
 
 enum GuessOutcome { skipped, wrong, rightArtist, correct }
 

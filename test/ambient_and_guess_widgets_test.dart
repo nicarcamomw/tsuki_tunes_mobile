@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
 import 'package:tsuki_tunes_mobile/widgets/ambient_mixer_sheet.dart';
@@ -69,12 +70,43 @@ void main() {
 
     expect(find.text('Reto diario'), findsOneWidget);
     expect(find.text('Mis canciones'), findsOneWidget);
-    expect(find.text('Top mundial'), findsOneWidget);
+    // The mode chips scroll sideways; the last ones start off screen.
+    expect(find.text('Artista', skipOffstage: false), findsOneWidget);
+    expect(find.text('Top mundial', skipOffstage: false), findsOneWidget);
     expect(find.text('No se pudo cargar la canción'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byIcon(Icons.bar_chart_rounded));
     await tester.pumpAndSettle();
     expect(find.text('INTENTOS PARA ADIVINAR'), findsOneWidget);
+  });
+
+  testWidgets('artist mode asks for an artist first', (tester) async {
+    tester.view.physicalSize = const Size(360 * 3, 740 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => AmbientProvider()),
+        ChangeNotifierProvider(create: (_) => AudioProvider()),
+        ChangeNotifierProvider(create: (_) => LibraryProvider()),
+      ],
+      child: const MaterialApp(home: GuessSongScreen()),
+    ));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    await tester.ensureVisible(find.text('Artista', skipOffstage: false));
+    await tester.pump();
+    await tester.tap(find.text('Artista'));
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(find.text('Elige un artista y adivina su discografía'), findsOneWidget);
+    expect(find.text('Busca un artista…'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

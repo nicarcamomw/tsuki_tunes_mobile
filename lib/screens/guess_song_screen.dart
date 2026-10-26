@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,10 +10,12 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
+import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/mask_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/guess_game.dart';
 
@@ -41,6 +44,8 @@ class GuessSongScreen extends StatefulWidget {
 class _GuessSongScreenState extends State<GuessSongScreen> {
   static const _statsKey = 'guess_daily_stats';
   static const _bestStreakKey = 'guess_free_best_streak';
+  static const _lastArtistKey = 'guess_last_artist';
+  static const _minArtistPool = 6;
   static const _minLibrarySize = 5;
   static const _revealSeconds = 30;
 
@@ -75,6 +80,15 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   int _bestStreak = 0;
   final Set<String> _playedIds = {};
 
+  // Artist mode.
+  Artist? _artist;
+  List<Track> _artistPool = [];
+  bool _artistTooFew = false;
+  final _artistSearchCtrl = TextEditingController();
+  List<Artist> _artistResults = [];
+  bool _artistSearching = false;
+  int _artistSearchGen = 0;
+
   int get _today => GuessGame.dayNumber(DateTime.now());
   bool get _finished => GuessGame.isFinished(_outcomes);
   bool get _won => GuessGame.isWon(_outcomes);
@@ -107,6 +121,10 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _prefs = await SharedPreferences.getInstance();
       _stats = GuessStats.decode(_prefs!.getString(_statsKey));
       _bestStreak = _prefs!.getInt(_bestStreakKey) ?? 0;
+      final rawArtist = _prefs!.getString(_lastArtistKey);
+      if (rawArtist != null) {
+        _artist = Artist.fromJson(jsonDecode(rawArtist) as Map<String, dynamic>);
+      }
     } catch (_) {}
     await _startRound();
   }
@@ -121,6 +139,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     _player.dispose();
     _searchCtrl.dispose();
     _searchFocus.dispose();
+    _artistSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -153,6 +172,11 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _searchCtrl.clear();
     });
 
+    if (_mode == GuessMode.artist && _artist == null) {
+      setState(() => _loading = false);
+      return;
+    }
+
     try {
       Track? target;
       var outcomes = <GuessOutcome>[];
@@ -177,7 +201,19 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           );
         }
       } else {
-        var pool = _mode == GuessMode.library ? _libraryPool() : <Track>[];
+        var pool = switch (_mode) {
+          GuessMode.library => _libraryPool(),
+          GuessMode.artist => await _loadArtistPool(),
+          _ => <Track>[],
+        };
+        if (_mode == GuessMode.artist && pool.length < _minArtistPool) {
+          if (!mounted || gen != _roundGen) return;
+          setState(() {
+            _artistTooFew = true;
+            _loading = false;
+          });
+          return;
+        }
         if (_mode == GuessMode.library && pool.length < _minLibrarySize) {
           fallback = true;
           pool = [];
@@ -220,6 +256,85 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
         _error = true;
       });
     }
+  }
+
+  Future<List<Track>> _loadArtistPool() async {
+    final artist = _artist!;
+    if (_artistPool.isEmpty || _artistPool.first.artistId != artist.id) {
+      final top = await _api.getArtistTopTracks(artist.id, limit: 50);
+      final seen = <String>{};
+      // Keep one version per title so live/remaster duplicates don't repeat.
+      _artistPool = top
+          .where((t) => t.previewUrl.isNotEmpty && seen.add(GuessGame.normalize(t.title)))
+          .toList();
+    }
+    return _artistPool;
+  }
+
+  Future<void> _pickArtist(Artist artist) async {
+    unawaited(HapticFeedback.selectionClick());
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _artist = artist;
+      _artistPool = [];
+      _artistTooFew = false;
+      _artistResults = [];
+      _artistSearchCtrl.clear();
+      _playedIds.clear();
+      _sessionStreak = 0;
+    });
+    unawaited(_prefs?.setString(
+      _lastArtistKey,
+      jsonEncode({
+        'id': artist.id,
+        'name': artist.name,
+        'picture_medium': artist.pictureMedium ?? artist.pictureUrl,
+      }),
+    ));
+    await _startRound();
+  }
+
+  void _changeArtist() {
+    _stopClip();
+    setState(() {
+      _artist = null;
+      _artistTooFew = false;
+      _target = null;
+      _outcomes = [];
+    });
+  }
+
+  void _onArtistSearch(String q) {
+    _debounce?.cancel();
+    if (q.trim().length < 2) {
+      setState(() {
+        _artistResults = [];
+        _artistSearching = false;
+      });
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final gen = ++_artistSearchGen;
+      setState(() => _artistSearching = true);
+      List<Artist> results;
+      try {
+        results = await _api.searchArtists(q.trim(), limit: 8);
+      } catch (_) {
+        results = [];
+      }
+      if (!mounted || gen != _artistSearchGen) return;
+      setState(() {
+        _artistResults = results;
+        _artistSearching = false;
+      });
+    });
+  }
+
+  Future<void> _pickArtistByName(String name) async {
+    try {
+      final found = await _api.searchArtists(name, limit: 1);
+      if (found.isNotEmpty && mounted) await _pickArtist(found.first);
+    } catch (_) {}
   }
 
   void _setMode(GuessMode mode) {
@@ -284,6 +399,18 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       });
       return;
     }
+    if (_mode == GuessMode.artist) {
+      // Only this artist's songs are valid answers: filter locally, instantly.
+      final needle = GuessGame.normalize(q);
+      setState(() {
+        _suggestions = _artistPool
+            .where((t) => GuessGame.normalize(t.title).contains(needle))
+            .take(8)
+            .toList();
+        _searching = false;
+      });
+      return;
+    }
     _debounce = Timer(const Duration(milliseconds: 350), () async {
       final gen = ++_searchGen;
       setState(() => _searching = true);
@@ -304,7 +431,13 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   void _submit(Track guess) {
     final target = _target;
     if (target == null || _finished) return;
-    _record(GuessGame.judge(target, guess), '${guess.title} — ${guess.artistName}');
+    var outcome = GuessGame.judge(target, guess);
+    // Every answer in artist mode is by the same artist, so "right artist"
+    // tells nothing.
+    if (_mode == GuessMode.artist && outcome == GuessOutcome.rightArtist) {
+      outcome = GuessOutcome.wrong;
+    }
+    _record(outcome, _mode == GuessMode.artist ? guess.title : '${guess.title} — ${guess.artistName}');
   }
 
   void _skip() {
@@ -343,6 +476,11 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     if (_mode == GuessMode.daily) {
       _stats.record(_today, _outcomes);
       _prefs?.setString(_statsKey, _stats.encode());
+      context.read<MaskProvider>().onDailyGuessFinished(
+            won: _won,
+            attempts: _outcomes.length,
+            streak: _stats.currentStreak(_today),
+          );
       _startCountdown();
     } else {
       _sessionStreak = _won ? _sessionStreak + 1 : 0;
@@ -360,6 +498,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     return switch (mode) {
       GuessMode.daily => strings.guessModeDaily,
       GuessMode.library => strings.guessModeLibrary,
+      GuessMode.artist => strings.guessModeArtist,
       GuessMode.chart => strings.guessModeChart,
     };
   }
@@ -368,7 +507,9 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     final strings = context.read<LocaleProvider>().strings;
     final header = _mode == GuessMode.daily
         ? strings.guessShareHeader(_today)
-        : 'Tsuki Tunes 🌙 ${_modeLabel(_mode)}';
+        : _mode == GuessMode.artist
+            ? 'Tsuki Tunes 🌙 · ${_artist?.name ?? ''}'
+            : 'Tsuki Tunes 🌙 ${_modeLabel(_mode)}';
     Clipboard.setData(ClipboardData(
       text: GuessGame.shareText(header: header, outcomes: _outcomes),
     ));
@@ -428,7 +569,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           children: [
             _modeChips(locale),
             Expanded(child: _body(locale)),
-            if (!_loading && !_error && !_finished) _inputPanel(locale),
+            if (!_loading && !_error && !_finished && _target != null) _inputPanel(locale),
           ],
         ),
       ),
@@ -436,39 +577,226 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   }
 
   Widget _modeChips(LocaleProvider locale) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        itemCount: GuessMode.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final mode = GuessMode.values[i];
+          final selected = _mode == mode;
+          return ChoiceChip(
+            label: Text(_modeLabel(mode)),
+            selected: selected,
+            onSelected: (_) => _setMode(mode),
+            showCheckmark: false,
+            labelStyle: locale.getTextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: selected ? Colors.white : AppColors.textSecondary,
+            ),
+            selectedColor: AppColors.accent,
+            backgroundColor: AppColors.bgCard,
+            side: BorderSide(color: selected ? AppColors.accent : AppColors.border),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _artistAvatar(Artist a, double size) {
+    final url = a.pictureMedium ?? a.pictureUrl;
+    return ClipOval(
+      child: url.isEmpty
+          ? Container(
+              width: size,
+              height: size,
+              color: AppColors.bgMid,
+              child: Icon(Icons.person_rounded, size: size * 0.55, color: AppColors.textMuted),
+            )
+          : CachedNetworkImage(
+              imageUrl: url,
+              width: size,
+              height: size,
+              memCacheWidth: (size * 3).round(),
+              fit: BoxFit.cover,
+            ),
+    );
+  }
+
+  Widget _artistHeader(LocaleProvider locale) {
+    final a = _artist!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: AppColors.bgCard,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Row(
         children: [
-          for (final mode in GuessMode.values) ...[
-            Expanded(
-              child: ChoiceChip(
-                label: SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    _modeLabel(mode),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                selected: _mode == mode,
-                onSelected: (_) => _setMode(mode),
-                showCheckmark: false,
-                labelStyle: locale.getTextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _mode == mode ? Colors.white : AppColors.textSecondary,
-                ),
-                selectedColor: AppColors.accent,
-                backgroundColor: AppColors.bgCard,
-                side: BorderSide(color: _mode == mode ? AppColors.accent : AppColors.border),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          _artistAvatar(a, 32),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              a.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: locale.getTextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textBright,
               ),
             ),
-            if (mode != GuessMode.values.last) const SizedBox(width: 8),
-          ],
+          ),
+          TextButton(
+            onPressed: _changeArtist,
+            child: Text(
+              locale.strings.guessArtistChange,
+              style: locale.getTextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _artistPicker(LocaleProvider locale) {
+    final strings = locale.strings;
+    final library = context.read<LibraryProvider>();
+    final favorites = library.favoriteArtists;
+    final favoriteNames = favorites.map((a) => a.name.toLowerCase()).toSet();
+    final topNames = library
+        .getTopArtists(limit: 8)
+        .map((e) => e.name)
+        .where((n) => n.isNotEmpty && n != '---' && !favoriteNames.contains(n.toLowerCase()))
+        .toList();
+
+    Widget artistRow(Artist a) => InkWell(
+          onTap: () => _pickArtist(a),
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Row(
+              children: [
+                _artistAvatar(a, 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    a.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textBright,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              ],
+            ),
+          ),
+        );
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        Text(
+          strings.guessPickArtist,
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 12),
+        if (_artistTooFew) _banner(locale, Icons.info_outline_rounded, strings.guessArtistTooFew),
+        TextField(
+          controller: _artistSearchCtrl,
+          onChanged: _onArtistSearch,
+          textInputAction: TextInputAction.search,
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+          cursorColor: AppColors.accent,
+          decoration: InputDecoration(
+            hintText: strings.guessArtistSearchHint,
+            hintStyle: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.bgCard,
+            prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.textMuted),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.accent),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (_artistSearching)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+              ),
+            ),
+          )
+        else if (_artistResults.isNotEmpty)
+          ..._artistResults.map(artistRow)
+        else if (favorites.isNotEmpty || topNames.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            strings.guessYourArtists,
+            style: locale.getTextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textMuted,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          ...favorites.take(12).map(artistRow),
+          if (topNames.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final name in topNames)
+                    ActionChip(
+                      label: Text(name),
+                      onPressed: () => _pickArtistByName(name),
+                      labelStyle: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textBright,
+                      ),
+                      backgroundColor: AppColors.bgCard,
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ],
     );
   }
 
@@ -505,9 +833,14 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       );
     }
 
+    if (_mode == GuessMode.artist && (_artist == null || _artistTooFew)) {
+      return _artistPicker(locale);
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       children: [
+        if (_mode == GuessMode.artist && _artist != null) _artistHeader(locale),
         if (_mode == GuessMode.library && _libraryFallback)
           _banner(locale, Icons.info_outline_rounded, strings.guessLibraryTooSmall),
         if (_mode != GuessMode.daily)
