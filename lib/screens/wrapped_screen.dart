@@ -246,6 +246,8 @@ class _WrappedScreenState extends State<WrappedScreen>
               _onTapRight();
             }
           },
+          onLongPressStart: (_) => _progressController.stop(),
+          onLongPressEnd: (_) => _progressController.forward(),
           child: PageView.builder(
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),

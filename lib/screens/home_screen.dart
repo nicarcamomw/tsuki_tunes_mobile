@@ -568,14 +568,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              if (auth.isLoggedIn && listenedCount > 0) ...[
+              if (auth.isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
-                  child: _WrappedEntryCard(locale: locale, strings: strings),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: _WrappedEntryCard(
+                                locale: locale, strings: strings)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: _ListeningClockEntryCard(
+                                locale: locale, strings: strings)),
+                      ],
+                    ),
+                  ),
                 ),
-                SliverToBoxAdapter(
-                  child: _ListeningClockEntryCard(locale: locale, strings: strings),
-                ),
-              ],
 
               if (_topArtistsDisplay.isNotEmpty) ...[
                 SliverToBoxAdapter(
@@ -1145,8 +1155,7 @@ class _WrappedEntryCard extends StatelessWidget {
           );
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF1A0808), Color(0xFF0A0A1A)],
@@ -1156,11 +1165,11 @@ class _WrappedEntryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
           ),
-          child: Row(
+          child: Column(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -1170,42 +1179,35 @@ class _WrappedEntryCard extends StatelessWidget {
                   child: Text(
                     '月',
                     style: GoogleFonts.notoSansJp(
-                      fontSize: 20,
+                      fontSize: 17,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '◈ TSUKI WRAPPED $year',
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      strings.wrappedViewYourWrapped,
-                      style: locale.getTextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 10),
+              Text(
+                'WRAPPED $year',
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textBright,
+                  letterSpacing: 1.2,
                 ),
+                textAlign: TextAlign.center,
               ),
-              Icon(Icons.chevron_right,
-                  color: AppColors.accent.withValues(alpha: 0.7), size: 22),
+              const SizedBox(height: 4),
+              Text(
+                strings.wrappedViewYourWrapped,
+                style: locale.getTextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                  letterSpacing: 0.8,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -1232,8 +1234,7 @@ class _ListeningClockEntryCard extends StatelessWidget {
           );
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF08101A), Color(0xFF0A0A14)],
@@ -1244,48 +1245,43 @@ class _ListeningClockEntryCard extends StatelessWidget {
             border: Border.all(
                 color: AppColors.neonCyan.withValues(alpha: 0.3)),
           ),
-          child: Row(
+          child: Column(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
                       color: AppColors.neonCyan.withValues(alpha: 0.5)),
                 ),
                 child: const Icon(Icons.radar,
-                    color: AppColors.neonCyan, size: 22),
+                    color: AppColors.neonCyan, size: 20),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '◈ ${strings.clockTitle}',
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      strings.clockViewClock,
-                      style: locale.getTextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.neonCyan,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 10),
+              Text(
+                strings.clockTitle,
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textBright,
+                  letterSpacing: 1.2,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              Icon(Icons.chevron_right,
-                  color: AppColors.neonCyan.withValues(alpha: 0.7), size: 22),
+              const SizedBox(height: 4),
+              Text(
+                strings.clockViewClock,
+                style: locale.getTextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.neonCyan,
+                  letterSpacing: 0.8,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),

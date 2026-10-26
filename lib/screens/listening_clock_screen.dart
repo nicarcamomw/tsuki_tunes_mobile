@@ -23,6 +23,8 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
   int _peakHour = 0;
   int _peakDayCount = 0;
   int _year = DateTime.now().year;
+  int _todayDoy = 0;
+  int? _selectedHour;
 
   @override
   void initState() {
@@ -62,6 +64,9 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
       if (v > peakDay) peakDay = v;
     }
 
+    final now = DateTime.now();
+    final todayDoy = now.difference(jan1).inDays + 1;
+
     setState(() {
       _hourCounts = hourCounts;
       _dayCounts = dayCounts;
@@ -69,6 +74,7 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
       _peakHour = peakHour;
       _peakDayCount = peakDay;
       _year = year;
+      _todayDoy = todayDoy;
     });
   }
 
@@ -191,41 +197,79 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
           ).animate().fadeIn(duration: 500.ms),
           const SizedBox(height: 16),
 
-          // Sharingan Radar
+          // Sharingan Radar (interactive)
           Center(
-            child: SizedBox(
-              width: 320,
-              height: 320,
-              child: CustomPaint(
-                painter: _SharinganRadarPainter(hourCounts: _hourCounts),
-                size: const Size(320, 320),
+            child: GestureDetector(
+              onTapDown: (details) {
+                final box = context.findRenderObject() as RenderBox?;
+                if (box == null) return;
+                final radarCenter = Offset(160, 160);
+                final local = details.localPosition;
+                final dx = local.dx - radarCenter.dx;
+                final dy = local.dy - radarCenter.dy;
+                final dist = sqrt(dx * dx + dy * dy);
+                if (dist < 40 || dist > 140) {
+                  setState(() => _selectedHour = null);
+                  return;
+                }
+                var angle = atan2(dy, dx) + pi / 2;
+                if (angle < 0) angle += 2 * pi;
+                final hour = ((angle / (2 * pi)) * 24).round() % 24;
+                setState(() => _selectedHour = hour);
+              },
+              child: SizedBox(
+                width: 320,
+                height: 320,
+                child: CustomPaint(
+                  painter: _SharinganRadarPainter(
+                    hourCounts: _hourCounts,
+                    selectedHour: _selectedHour,
+                  ),
+                  size: const Size(320, 320),
+                ),
               ),
             ),
           )
               .animate()
               .fadeIn(duration: 800.ms, delay: 200.ms)
               .scaleXY(begin: 0.85, end: 1, curve: Curves.easeOutBack),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Peak hour badge
+          // Hour detail badge (selected or peak)
           Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                strings.clockPeakHour(
-                  strings.wrappedHourLabel(_peakHour),
-                  _hourCounts[_peakHour] ?? 0,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                key: ValueKey(_selectedHour ?? -1),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: (_selectedHour != null
+                          ? AppColors.textBright
+                          : AppColors.accent)
+                      .withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: (_selectedHour != null
+                            ? AppColors.textBright
+                            : AppColors.accent)
+                        .withValues(alpha: 0.2),
+                  ),
                 ),
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textBright,
+                child: Text(
+                  _selectedHour != null
+                      ? strings.clockPeakHour(
+                          strings.wrappedHourLabel(_selectedHour!),
+                          _hourCounts[_selectedHour!] ?? 0,
+                        )
+                      : strings.clockPeakHour(
+                          strings.wrappedHourLabel(_peakHour),
+                          _hourCounts[_peakHour] ?? 0,
+                        ),
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textBright,
+                  ),
                 ),
               ),
             ),
@@ -245,6 +289,7 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
             year: _year,
             dayCounts: _dayCounts,
             peakCount: _peakDayCount,
+            todayDoy: _todayDoy,
             locale: locale,
           ).animate().fadeIn(duration: 800.ms, delay: 800.ms),
           const SizedBox(height: 8),
@@ -297,8 +342,9 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
 
 class _SharinganRadarPainter extends CustomPainter {
   final Map<int, int> hourCounts;
+  final int? selectedHour;
 
-  _SharinganRadarPainter({required this.hourCounts});
+  _SharinganRadarPainter({required this.hourCounts, this.selectedHour});
 
   static const _pi2 = 2 * pi;
 
@@ -399,11 +445,14 @@ class _SharinganRadarPainter extends CustomPainter {
       final centerAngle = (hour / 24) * _pi2 - pi / 2;
       final startAngle = centerAngle - barAngle / 2;
 
-      final color = Color.lerp(
-        AppColors.accent.withValues(alpha: 0.35),
-        AppColors.accent,
-        ratio,
-      )!;
+      final isSelected = hour == selectedHour;
+      final color = isSelected
+          ? AppColors.textBright
+          : Color.lerp(
+              AppColors.accent.withValues(alpha: 0.35),
+              AppColors.accent,
+              ratio,
+            )!;
 
       final path = Path();
       path.arcTo(
@@ -422,12 +471,13 @@ class _SharinganRadarPainter extends CustomPainter {
 
       canvas.drawPath(path, Paint()..color = color);
 
-      // Glow on peak bars
-      if (ratio > 0.9) {
+      // Glow on peak or selected bars
+      if (ratio > 0.9 || isSelected) {
         canvas.drawPath(
           path,
           Paint()
-            ..color = AppColors.accent.withValues(alpha: 0.2)
+            ..color = (isSelected ? AppColors.textBright : AppColors.accent)
+                .withValues(alpha: 0.25)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
         );
       }
@@ -555,7 +605,7 @@ class _SharinganRadarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SharinganRadarPainter old) =>
-      old.hourCounts != hourCounts;
+      old.hourCounts != hourCounts || old.selectedHour != selectedHour;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -566,12 +616,14 @@ class _DailyActivityBars extends StatelessWidget {
   final int year;
   final Map<int, int> dayCounts;
   final int peakCount;
+  final int todayDoy;
   final LocaleProvider locale;
 
   const _DailyActivityBars({
     required this.year,
     required this.dayCounts,
     required this.peakCount,
+    required this.todayDoy,
     required this.locale,
   });
 
@@ -583,23 +635,28 @@ class _DailyActivityBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxCount = peakCount > 0 ? peakCount : 1;
+    final now = DateTime.now();
+    final currentMonth = year == now.year ? now.month : 12;
 
     return SizedBox(
-      height: 140,
+      height: 150,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        reverse: true,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(12, (m) {
+          children: List.generate(currentMonth, (m) {
             final month = m + 1;
-            final daysInMonth = DateUtils.getDaysInMonth(year, month);
+            final daysInMonth = (month == currentMonth && year == now.year)
+                ? now.day
+                : DateUtils.getDaysInMonth(year, month);
             final firstOfMonth = DateTime(year, month, 1);
             final startDoy =
                 firstOfMonth.difference(DateTime(year, 1, 1)).inDays + 1;
 
             return Padding(
-              padding: EdgeInsets.only(right: m < 11 ? _monthGap : 0),
+              padding: EdgeInsets.only(right: m < currentMonth - 1 ? _monthGap : 0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -611,6 +668,7 @@ class _DailyActivityBars extends StatelessWidget {
                       final ratio = count / maxCount;
                       final barHeight =
                           count == 0 ? 2.0 : 4.0 + ratio * _maxBarHeight;
+                      final isToday = doy == todayDoy;
 
                       final color = count == 0
                           ? AppColors.bgCard.withValues(alpha: 0.3)
@@ -622,25 +680,54 @@ class _DailyActivityBars extends StatelessWidget {
 
                       return Padding(
                         padding: const EdgeInsets.only(right: _barGap),
-                        child: Container(
-                          width: _barWidth,
-                          height: barHeight,
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(1.5)),
-                          ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              width: _barWidth,
+                              height: barHeight,
+                              decoration: BoxDecoration(
+                                color: isToday
+                                    ? AppColors.textBright
+                                    : color,
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(1.5)),
+                                boxShadow: isToday
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.textBright
+                                              .withValues(alpha: 0.4),
+                                          blurRadius: 4,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                            ),
+                            if (isToday) ...[
+                              const SizedBox(height: 2),
+                              Container(
+                                width: 3,
+                                height: 3,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.textBright,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       );
                     }),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${month.toString().padLeft(2, '0')}',
+                    month.toString().padLeft(2, '0'),
                     style: locale.getTextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textMuted,
+                      color: month == currentMonth && year == now.year
+                          ? AppColors.neonCyan
+                          : AppColors.textMuted,
                       letterSpacing: 1,
                     ),
                   ),
