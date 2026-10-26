@@ -2410,6 +2410,61 @@ class AppStrings {
         AppLanguage.ja => '前のスライド',
       };
 
+  // --- Listening Clock ---
+  String get clockTitle => switch (language) {
+        AppLanguage.es => 'RELOJ DE ESCUCHA',
+        AppLanguage.en => 'LISTENING CLOCK',
+        AppLanguage.ja => 'リスニングクロック',
+      };
+
+  String get clockRadar => switch (language) {
+        AppLanguage.es => 'RADAR DE ACTIVIDAD',
+        AppLanguage.en => 'ACTIVITY RADAR',
+        AppLanguage.ja => 'アクティビティレーダー',
+      };
+
+  String get clockDailyActivity => switch (language) {
+        AppLanguage.es => 'ACTIVIDAD DIARIA',
+        AppLanguage.en => 'DAILY ACTIVITY',
+        AppLanguage.ja => 'デイリーアクティビティ',
+      };
+
+  String clockPeakHour(String hour, int count) => switch (language) {
+        AppLanguage.es => 'Hora pico: $hour — $count reproducciones',
+        AppLanguage.en => 'Peak hour: $hour — $count plays',
+        AppLanguage.ja => 'ピークアワー: $hour — $count回再生',
+      };
+
+  String clockTotalYear(int count) => switch (language) {
+        AppLanguage.es => '◈ $count REPRODUCCIONES ESTE AÑO // CLOCK.SYS',
+        AppLanguage.en => '◈ $count PLAYS THIS YEAR // CLOCK.SYS',
+        AppLanguage.ja => '◈ 今年$count回再生 // CLOCK.SYS',
+      };
+
+  String get clockNoData => switch (language) {
+        AppLanguage.es => 'Sin datos de escucha',
+        AppLanguage.en => 'No listening data',
+        AppLanguage.ja => 'リスニングデータなし',
+      };
+
+  String get clockNoDataSubtitle => switch (language) {
+        AppLanguage.es => 'Escucha música para activar el radar',
+        AppLanguage.en => 'Listen to music to activate the radar',
+        AppLanguage.ja => '音楽を聴いてレーダーを起動しよう',
+      };
+
+  String get clockViewClock => switch (language) {
+        AppLanguage.es => 'VER RADAR',
+        AppLanguage.en => 'VIEW RADAR',
+        AppLanguage.ja => 'レーダーを見る',
+      };
+
+  String get a11yClock => switch (language) {
+        AppLanguage.es => 'Reloj de escucha y radar de actividad',
+        AppLanguage.en => 'Listening clock and activity radar',
+        AppLanguage.ja => 'リスニングクロックとアクティビティレーダー',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',
