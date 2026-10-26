@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../providers/mask_provider.dart';
 import 'oni_mask_art.dart';
 
@@ -74,9 +75,12 @@ class _OniMaskIconState extends State<OniMaskIcon>
   /// The equipped collectible mask in full color when active, its muted
   /// silhouette when not. Without an equipped mask: the classic tengu.
   Widget _maskImage(OniMask? equipped, double t, Color mutedColor) {
+    // Decode at display size: these sit in every track row.
+    final cacheWidth = imageCacheSize(context, widget.size);
     if (equipped == null || t < 0.5) {
       return Image.asset(
         equipped?.asset() ?? 'assets/images/tengu.png',
+        cacheWidth: cacheWidth,
         fit: BoxFit.contain,
         color: mutedColor,
         colorBlendMode: BlendMode.srcIn,
@@ -84,7 +88,7 @@ class _OniMaskIconState extends State<OniMaskIcon>
     }
     return Opacity(
       opacity: ((t - 0.5) * 2).clamp(0.0, 1.0),
-      child: OniMaskArt.image(equipped, widget.size),
+      child: OniMaskArt.image(equipped, widget.size, cacheWidth: cacheWidth),
     );
   }
 

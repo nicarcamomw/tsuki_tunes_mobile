@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,19 +28,75 @@ class MoonAtmosphere extends StatelessWidget {
         child,
         if (moon.atmosphereEnabled && !eclipse)
           IgnorePointer(
-            child: RepaintBoundary(
-              child: CustomPaint(
-                painter: MoonlightPainter(illumination: moon.snapshot.illumination),
-              ),
+            child: MoonLightLayer(
+              painter: MoonlightPainter(illumination: moon.snapshot.illumination),
+              bakeKey: (moon.snapshot.illumination * 200).round(),
             ),
           ),
         if (eclipse) ...[
           const IgnorePointer(
-            child: RepaintBoundary(child: CustomPaint(painter: BloodMoonLightPainter())),
+            child: MoonLightLayer(painter: BloodMoonLightPainter(), bakeKey: 'blood'),
           ),
           if (!reduceMotion) const IgnorePointer(child: _GlitchBursts()),
         ],
       ],
+    );
+  }
+}
+
+/// Paints [painter] once into an image and shows that image. The light
+/// layers are several full-screen gradients that only change a few times a
+/// night; redrawing them every frame at 120 Hz cost real GPU time. Gradients
+/// are smooth, so a logical-resolution image scaled up looks the same.
+class MoonLightLayer extends StatefulWidget {
+  final CustomPainter painter;
+  /// Changes when the painter's output changes.
+  final Object bakeKey;
+
+  const MoonLightLayer({super.key, required this.painter, required this.bakeKey});
+
+  @override
+  State<MoonLightLayer> createState() => _MoonLightLayerState();
+}
+
+class _MoonLightLayerState extends State<MoonLightLayer> {
+  ui.Image? _image;
+  Size? _bakedSize;
+  Object? _bakedKey;
+
+  ui.Image? _bake(Size size) {
+    if (size.isEmpty || !size.isFinite) return null;
+    if (_image != null && size == _bakedSize && widget.bakeKey == _bakedKey) return _image;
+    final recorder = ui.PictureRecorder();
+    widget.painter.paint(Canvas(recorder), size);
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(size.width.ceil(), size.height.ceil());
+    picture.dispose();
+    _image?.dispose();
+    _image = image;
+    _bakedSize = size;
+    _bakedKey = widget.bakeKey;
+    return image;
+  }
+
+  @override
+  void dispose() {
+    _image?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => RepaintBoundary(
+        child: RawImage(
+          image: _bake(constraints.biggest),
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
+        ),
+      ),
     );
   }
 }

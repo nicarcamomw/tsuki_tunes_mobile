@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/playlist.dart';
@@ -926,6 +927,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       height: 44,
                       child: group.coverUrl.isNotEmpty
                           ? CachedNetworkImage(
+                            memCacheWidth: imageCacheSize(context, (44).toDouble()),
                               imageUrl: group.coverUrl,
                               fit: BoxFit.cover,
                               placeholder: (_, __) =>
@@ -1196,6 +1198,7 @@ class _PlaylistListTile extends StatelessWidget {
                   height: 48,
                   child: playlist.coverUrl.isNotEmpty
                       ? CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, (48).toDouble()),
                           imageUrl: playlist.coverUrl,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>

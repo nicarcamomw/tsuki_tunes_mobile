@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
@@ -192,6 +193,7 @@ class TrackTile extends StatelessWidget {
                   height: 46,
                   child: track.coverUrl.isNotEmpty
                       ? CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, (46).toDouble()),
                           imageUrl: track.coverUrl,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
@@ -403,6 +405,7 @@ class TrackTile extends StatelessWidget {
                         height: 56,
                         child: track.coverUrl.isNotEmpty
                             ? CachedNetworkImage(
+                              memCacheWidth: imageCacheSize(context, (56).toDouble()),
                                 imageUrl: track.coverUrl,
                                 fit: BoxFit.cover,
                                 placeholder: (_, __) => Container(color: AppColors.bgMid),

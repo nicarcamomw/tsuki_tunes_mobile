@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/synced_lyrics.dart';
@@ -146,6 +147,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
     final playbackError =
         context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
+    // Only this track's listened flag: watching the whole library would rebuild
+    // the player on every sync and history update.
+    final isListened = context.select<LibraryProvider, bool>(
+        (l) => track != null && l.isTrackListened(track.id));
 
     if (track == null) {
       return PopScope(
@@ -175,8 +180,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       );
     }
 
-    final library = context.watch<LibraryProvider>();
-    final isListened = library.isTrackListened(track.id);
+    final library = context.read<LibraryProvider>();
 
     return PopScope(
       canPop: true,
@@ -613,7 +617,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildAmbientButton(context, locale),
+                      Builder(builder: (c) => _buildAmbientButton(c, locale)),
                       Text(
                         useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                         style: locale.getTextStyle(
@@ -622,7 +626,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           letterSpacing: 2,
                         ),
                       ),
-                      _buildSleepTimerButton(context, audio, locale),
+                      Builder(builder: (c) => _buildSleepTimerButton(c, audio, locale)),
                     ],
                   ),
                 ),
@@ -680,7 +684,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
     final strings = locale.strings;
     final isActive = context.select<AudioProvider, bool>((a) => a.isSleepTimerActive);
-    final remaining = context.select<AudioProvider, Duration?>((a) => a.sleepTimerRemaining);
+    // Whole seconds: the label shows nothing finer, so no rebuild per tick.
+    final remainingSeconds =
+        context.select<AudioProvider, int?>((a) => a.sleepTimerRemaining?.inSeconds);
+    final remaining = remainingSeconds == null ? null : Duration(seconds: remainingSeconds);
 
     String label = '';
     if (remaining != null) {
@@ -1142,6 +1149,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       height: 36,
                                       child: t.coverUrl.isNotEmpty
                                           ? CachedNetworkImage(
+                                            memCacheWidth: imageCacheSize(context, (36).toDouble()),
                                               imageUrl: t.coverUrl,
                                               fit: BoxFit.cover,
                                               placeholder: (_, __) => Container(
@@ -1374,10 +1382,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             ),
             const Divider(color: AppColors.border, height: 1),
             Expanded(
-              child: Consumer<AudioProvider>(
-                builder: (context, liveAudio, _) {
-                  return _buildLyricsContent(liveAudio, locale, track);
-                },
+              // Rebuild when the active line changes, not on every position tick.
+              child: Selector<AudioProvider, int>(
+                selector: (_, a) => _lyrics?.activeIndexAt(a.position) ?? -1,
+                builder: (context, _, __) =>
+                    _buildLyricsContent(context.read<AudioProvider>(), locale, track),
               ),
             ),
           ],

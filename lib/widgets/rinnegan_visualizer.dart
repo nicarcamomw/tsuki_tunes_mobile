@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 
 class RinneganVisualizer extends StatefulWidget {
   final bool isPlaying;
@@ -68,28 +69,16 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
 
   @override
   Widget build(BuildContext context) {
+    // The glow is a circle, so it stays outside the rotation and the spinning
+    // disc is recorded once in its own layer: each frame only changes the
+    // rotation instead of redrawing a blurred shadow and the cover.
     return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _controller.value * 2 * pi,
-            child: child,
-          );
-        },
-        child: Container(
-        width: widget.size,
-        height: widget.size,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.bgDeep,
-          border: Border.all(
-            color: widget.isPlaying ? AppColors.accent : AppColors.border,
-            width: 2,
-          ),
           boxShadow: widget.isPlaying
-              ? [
-                  const BoxShadow(
+              ? const [
+                  BoxShadow(
                     color: AppColors.accentGlow,
                     blurRadius: 24,
                     spreadRadius: 4,
@@ -97,53 +86,82 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
                 ]
               : null,
         ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Concentric Rinnegan/Disc circles
-            CustomPaint(
-              size: Size(widget.size, widget.size),
-              painter: _RinneganDiscPainter(isPlaying: widget.isPlaying),
-            ),
-
-            // Inner Album Cover / Artwork
-            ExcludeSemantics(child: ClipOval(
-              child: SizedBox(
-                width: widget.size * 0.58,
-                height: widget.size * 0.58,
-                child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: widget.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          color: AppColors.bgMid,
-                          child: const Icon(Icons.music_note, color: AppColors.accent),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: AppColors.bgMid,
-                          child: const Icon(Icons.music_note, color: AppColors.accent),
-                        ),
-                      )
-                    : Container(
-                        color: AppColors.bgMid,
-                        child: const Icon(Icons.music_note, size: 40, color: AppColors.accent),
-                      ),
-              ),
-            )),
-
-            // Center Pin
-            Container(
-              width: 16,
-              height: 16,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _controller.value * 2 * pi,
+              child: child,
+            );
+          },
+          child: RepaintBoundary(
+            child: Container(
+              width: widget.size,
+              height: widget.size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.bgDeep,
-                border: Border.all(color: AppColors.accent, width: 2),
+                border: Border.all(
+                  color: widget.isPlaying ? AppColors.accent : AppColors.border,
+                  width: 2,
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Concentric Rinnegan/Disc circles
+                  CustomPaint(
+                    size: Size(widget.size, widget.size),
+                    painter: _RinneganDiscPainter(isPlaying: widget.isPlaying),
+                  ),
+
+                  // Inner Album Cover / Artwork
+                  ExcludeSemantics(
+                      child: ClipOval(
+                    child: SizedBox(
+                      width: widget.size * 0.58,
+                      height: widget.size * 0.58,
+                      child:
+                          widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                              ? CachedNetworkImage(
+                                  memCacheWidth: imageCacheSize(
+                                      context, (widget.size * 0.58).toDouble()),
+                                  imageUrl: widget.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) => Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.music_note,
+                                        color: AppColors.accent),
+                                  ),
+                                  errorWidget: (_, __, ___) => Container(
+                                    color: AppColors.bgMid,
+                                    child: const Icon(Icons.music_note,
+                                        color: AppColors.accent),
+                                  ),
+                                )
+                              : Container(
+                                  color: AppColors.bgMid,
+                                  child: const Icon(Icons.music_note,
+                                      size: 40, color: AppColors.accent),
+                                ),
+                    ),
+                  )),
+
+                  // Center Pin
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.bgDeep,
+                      border: Border.all(color: AppColors.accent, width: 2),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -159,7 +177,8 @@ class _RinneganDiscPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = isPlaying ? AppColors.accent.withValues(alpha: 0.3) : AppColors.border
+      ..color =
+          isPlaying ? AppColors.accent.withValues(alpha: 0.3) : AppColors.border
       ..strokeWidth = 1.0;
 
     // Draw concentric groove rings

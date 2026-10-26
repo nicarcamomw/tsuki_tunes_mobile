@@ -116,7 +116,7 @@ void main() {
     expect(find.text('1'), findsOneWidget);
 
     final bloodLight = find.byWidgetPredicate(
-        (w) => w is CustomPaint && w.painter is BloodMoonLightPainter);
+        (w) => w is MoonLightLayer && w.painter is BloodMoonLightPainter);
 
     moon.previewEclipse();
     await tester.pump();

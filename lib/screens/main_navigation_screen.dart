@@ -425,10 +425,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return ValueListenableBuilder<int>(
       valueListenable: _tabNotifier,
       builder: (context, selectedIndex, _) {
-        final library = context.watch<LibraryProvider>();
+        final currentLibraryCount =
+            context.select<LibraryProvider, int>((l) => l.listenedCount);
         final locale = context.watch<LocaleProvider>();
         final strings = locale.strings;
-        final currentLibraryCount = library.listenedTrackIds.length;
         _lastSeenLibraryCount ??= currentLibraryCount;
 
         // Si el usuario entra o está en la pestaña LIBRARY (2), sincronizamos inmediatamente
@@ -513,7 +513,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       _tabNotifier.value = index;
       if (index == 2) {
         final lib = context.read<LibraryProvider>();
-        _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        _lastSeenLibraryCount = lib.listenedCount;
       }
     } else {
       // Tap adicional en la pestaña ya activa: Acción inteligente instantánea
@@ -523,8 +523,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         NavigationEvents.onSearchFocus?.call();
       } else if (index == 2) {
         final lib = context.read<LibraryProvider>();
-        if (_lastSeenLibraryCount != lib.listenedTrackIds.length) {
-          _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        if (_lastSeenLibraryCount != lib.listenedCount) {
+          _lastSeenLibraryCount = lib.listenedCount;
         }
         NavigationEvents.onLibraryScrollToTop?.call();
       }
@@ -574,7 +574,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _loadedTabs.add(2);
         _tabNotifier.value = 2;
         final lib = context.read<LibraryProvider>();
-        _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        _lastSeenLibraryCount = lib.listenedCount;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           NavigationEvents.onLibraryScrollToTop?.call();
         });

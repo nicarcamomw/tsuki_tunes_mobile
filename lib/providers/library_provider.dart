@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -172,13 +173,16 @@ class LibraryProvider extends ChangeNotifier {
   List<Artist> get favoriteArtists => _favoriteArtists;
   bool get isLoaded => _isLoaded;
 
-  List<ListenedTrackData> get listenedTracks => List.unmodifiable(_listenedTracks);
-  Set<String> get listenedTrackIds => Set.unmodifiable(_listenedTrackIds);
+  // Read-only views, not copies: these are read on every rebuild and can hold
+  // thousands of tracks.
+  List<ListenedTrackData> get listenedTracks => UnmodifiableListView(_listenedTracks);
+  Set<String> get listenedTrackIds => UnmodifiableSetView(_listenedTrackIds);
+  int get listenedCount => _listenedTrackIds.length;
   int get totalTracksCount => _totalTracksCount;
   bool get syncing => _syncing;
-  Map<String, int> get artistVisits => Map.unmodifiable(_artistVisits);
-  List<Artist> get followedArtists => List.unmodifiable(_followedArtists);
-  Set<String> get followedArtistIds => Set.unmodifiable(_followedArtistIds);
+  Map<String, int> get artistVisits => UnmodifiableMapView(_artistVisits);
+  List<Artist> get followedArtists => UnmodifiableListView(_followedArtists);
+  Set<String> get followedArtistIds => UnmodifiableSetView(_followedArtistIds);
   bool isArtistFollowed(String artistId) => _followedArtistIds.contains(artistId);
 
   int getAlbumTracksCount(String albumId) => _albumTrackCounts[albumId] ?? 0;

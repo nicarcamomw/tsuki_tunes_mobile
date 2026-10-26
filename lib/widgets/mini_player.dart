@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
@@ -131,11 +132,15 @@ class _MiniPlayerState extends State<MiniPlayer>
     final spotifyFallbackActive =
         context.select<AudioProvider, bool>((a) => a.spotifyFallbackActive);
 
+    // Only this track's flag: the mini player is always on screen, and the
+    // library notifies on every sync and history change.
+    final isListened = context.select<LibraryProvider, bool>(
+        (l) => track != null && l.isTrackListened(track.id));
+
     if (track == null) return const SizedBox.shrink();
 
-    final library = context.watch<LibraryProvider>();
+    final library = context.read<LibraryProvider>();
     final locale = context.read<LocaleProvider>();
-    final isListened = library.isTrackListened(track.id);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
     return Semantics(
@@ -182,13 +187,10 @@ class _MiniPlayerState extends State<MiniPlayer>
                           Expanded(
                             child: Transform.translate(
                               offset: Offset(_swipeDx * 0.3, 0),
-                              child: ColorFiltered(
-                                colorFilter: ColorFilter.mode(
-                                  Colors.black.withValues(
-                                    alpha: (1.0 - swipeOpacity) * 0.7,
-                                  ),
-                                  BlendMode.srcATop,
-                                ),
+                              // Opacity at 1.0 adds no layer; the old color
+                              // filter forced an offscreen pass every frame.
+                              child: Opacity(
+                                opacity: 1.0 - (1.0 - swipeOpacity) * 0.7,
                                 child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 300),
                                   switchInCurve: Curves.easeOutCubic,
@@ -427,6 +429,7 @@ class _BreathingCoverState extends State<_BreathingCover>
               height: 44,
               child: widget.coverUrl.isNotEmpty
                   ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, (44).toDouble()),
                       imageUrl: widget.coverUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>

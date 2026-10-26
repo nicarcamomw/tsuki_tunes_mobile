@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/oni_mask.dart';
 
 /// Renders a collectible mask: dyed art inside a rarity frame, or its
@@ -30,11 +31,13 @@ class OniMaskArt extends StatelessWidget {
   ];
 
   /// Just the illustration, dyed. Used anywhere a bare mask is needed.
-  static Widget image(OniMask mask, double size, {List<double>? overrideFilter}) {
+  static Widget image(OniMask mask, double size,
+      {List<double>? overrideFilter, int? cacheWidth}) {
     Widget img = Image.asset(
       mask.asset(),
       width: size,
       height: size,
+      cacheWidth: cacheWidth,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.medium,
     );
@@ -50,9 +53,10 @@ class OniMaskArt extends StatelessWidget {
     final artSize = frame ? size * 0.78 : size;
     Widget art;
     if (unlocked) {
-      art = image(mask, artSize);
+      art = image(mask, artSize, cacheWidth: imageCacheSize(context, artSize));
     } else {
-      art = image(mask, artSize, overrideFilter: _silhouette);
+      art = image(mask, artSize,
+          overrideFilter: _silhouette, cacheWidth: imageCacheSize(context, artSize));
       if (mask.secret) {
         art = ImageFiltered(
           imageFilter: ImageFilter.blur(sigmaX: size * 0.05, sigmaY: size * 0.05),

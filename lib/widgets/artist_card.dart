@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
 import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
@@ -58,6 +59,7 @@ class ArtistCard extends StatelessWidget {
                 child: ExcludeSemantics(
                   child: artist.pictureUrl.isNotEmpty
                       ? CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, (size).toDouble()),
                           imageUrl: artist.pictureUrl,
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(color: AppColors.bgMid),

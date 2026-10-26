@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -486,6 +487,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   Widget _buildCover(Album album, bool isCompleted, AppStrings strings) {
     final image = album.coverUrl.isNotEmpty
         ? CachedNetworkImage(
+          memCacheWidth: imageCacheSize(context, (200).toDouble()),
             imageUrl: album.coverUrl,
             fit: BoxFit.cover,
             width: double.infinity,

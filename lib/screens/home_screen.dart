@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../providers/ambient_provider.dart';
@@ -248,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final statsLoaded = context.select<LibraryProvider, bool>((l) => l.listenedTracksLoaded);
-    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedTracks.length);
+    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedCount);
     final artistsCount = context.select<LibraryProvider, int>((l) => l.uniqueArtistsCount);
     final albumsCount = context.select<LibraryProvider, int>((l) => l.uniqueAlbumsCount);
     final (topArtistName, topArtistScore) = context.select<LibraryProvider, (String, String)>((l) {
@@ -1011,6 +1012,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 40,
                 child: artist != null && artist.pictureUrl.isNotEmpty
                     ? CachedNetworkImage(
+                      memCacheWidth: imageCacheSize(context, (40).toDouble()),
                         imageUrl: artist.pictureUrl,
                         fit: BoxFit.cover,
                       )
@@ -1096,6 +1098,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 40,
                 child: artist.pictureUrl.isNotEmpty
                     ? CachedNetworkImage(
+                      memCacheWidth: imageCacheSize(context, (40).toDouble()),
                         imageUrl: artist.pictureUrl,
                         fit: BoxFit.cover,
                       )

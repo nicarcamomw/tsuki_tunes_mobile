@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
@@ -315,6 +315,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   if (_artist.pictureUrl.isNotEmpty)
                     ExcludeSemantics(
                       child: CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, (420).toDouble()),
                         imageUrl: _artist.getBestImage(size: 'xl'),
                         fit: BoxFit.cover,
                         alignment: Alignment.topCenter,
@@ -998,6 +999,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final image = ExcludeSemantics(
       child: album.coverUrl.isNotEmpty
           ? CachedNetworkImage(
+            memCacheWidth: imageCacheSize(context, (200).toDouble()),
               imageUrl: album.coverUrl,
               fit: BoxFit.cover,
               width: double.infinity,
@@ -1081,6 +1083,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           child: ExcludeSemantics(child: ClipOval(
                             child: artist.pictureUrl.isNotEmpty
                                 ? CachedNetworkImage(
+                                  memCacheWidth: imageCacheSize(context, (100).toDouble()),
                                     imageUrl: artist.getBestImage(size: 'medium'),
                                     fit: BoxFit.cover,
                                     width: 100,
@@ -1185,8 +1188,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
           ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        // An opaque plate looks the same as the old backdrop blur over this
+        // dark page, without blurring the screen on every scroll frame.
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: AppColors.bgDeep),
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.bgCard.withValues(alpha: 0.6),
@@ -1219,6 +1224,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               borderRadius: BorderRadius.circular(22),
                               child: _artist.pictureUrl.isNotEmpty
                                   ? CachedNetworkImage(
+                                    memCacheWidth: imageCacheSize(context, (44).toDouble()),
                                       imageUrl: _artist.pictureUrl,
                                       fit: BoxFit.cover,
                                     )
