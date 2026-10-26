@@ -72,15 +72,22 @@ jobs:
         run: flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --split-per-abi
 
-      - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk "tsuki-tunes-${{ github.run_number }}.apk"
+      # Most phones need the arm64 build; the others cover old 32-bit and x86 devices.
+      - name: Rename APKs
+        run: |
+          OUT=build/app/outputs/flutter-apk
+          N=${{ github.run_number }}
+          mv "$OUT/app-arm64-v8a-release.apk" "tsuki-tunes-$N.apk"
+          mv "$OUT/app-armeabi-v7a-release.apk" "tsuki-tunes-$N-armeabi-v7a.apk"
+          mv "$OUT/app-x86_64-release.apk" "tsuki-tunes-$N-x86_64.apk"
+          ls -lh tsuki-tunes-*.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: tsuki-tunes-apk
-          path: tsuki-tunes-${{ github.run_number }}.apk
+          path: tsuki-tunes-*.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -89,6 +96,9 @@ jobs:
           name: Tsuki Tunes APK ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           prerelease: true
-          files: tsuki-tunes-${{ github.run_number }}.apk
+          files: tsuki-tunes-*.apk
           body: |
             Built from `${{ github.ref_name }}` @ ${{ github.sha }}.
+
+            Download `tsuki-tunes-${{ github.run_number }}.apk` (arm64) for almost any modern phone.
+            The `armeabi-v7a` build is for old 32-bit phones; `x86_64` is for emulators.
