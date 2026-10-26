@@ -45,3 +45,12 @@
 
 # audio_service (media session / playback notification)
 -keep class com.ryanheise.audioservice.** { *; }
+
+# flutter_local_notifications (Gson-serialized notification details)
+-keep class com.dexterous.** { *; }
+-keep class com.google.gson.reflect.TypeToken
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep public class * implements java.lang.reflect.Type
+
+# workmanager (background release radar)
+-keep class dev.fluttercommunity.workmanager.** { *; }

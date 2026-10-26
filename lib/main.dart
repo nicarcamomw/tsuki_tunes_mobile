@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:audio_service/audio_service.dart';
@@ -21,6 +22,7 @@ import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/firebase_service.dart';
 import 'services/media_session_handler.dart';
+import 'services/release_radar_service.dart';
 import 'services/storage_service.dart';
 
 void main() async {
@@ -38,6 +40,8 @@ void main() async {
 
   await _initCrashReporting();
   runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
+  // After runApp so scheduling and permission plumbing never delay first frame.
+  unawaited(ReleaseRadarService().initForeground());
 }
 
 /// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
@@ -90,7 +94,15 @@ class TsukiTunesApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LibraryProvider()),
+        ChangeNotifierProvider(create: (_) {
+          final library = LibraryProvider();
+          // Mirrors followed artists into the radar's own store so the
+          // background job can read them without Firebase.
+          library.addListener(() {
+            ReleaseRadarService().watchArtists(library.followedArtists);
+          });
+          return library;
+        }),
         ChangeNotifierProvider(create: (_) => PlaylistProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(

@@ -22,7 +22,10 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
+import '../models/radar_release.dart';
+import '../services/release_radar_service.dart';
 import 'rabbit_hole_screen.dart';
+import 'release_radar_screen.dart';
 import 'wrapped_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -49,10 +52,21 @@ class _HomeScreenState extends State<HomeScreen> {
     NavigationEvents.onHomeOpenProfile = openProfile;
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
+    ReleaseRadarService().openRequests.addListener(_openRadarIfRequested);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _openRadarIfRequested());
+  }
+
+  void _openRadarIfRequested() {
+    if (!mounted || !ReleaseRadarService().consumePendingOpen()) return;
+    appNavigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => const ReleaseRadarScreen()),
+    );
   }
 
   @override
   void dispose() {
+    ReleaseRadarService().openRequests.removeListener(_openRadarIfRequested);
     if (NavigationEvents.onHomeScrollToTop == scrollToTop) {
       NavigationEvents.onHomeScrollToTop = null;
     }
@@ -586,6 +600,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
+                ),
+
+              if (auth.isLoggedIn && ReleaseRadarService.isSupported)
+                SliverToBoxAdapter(
+                  child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
                 ),
 
               // Rabbit Hole entry
@@ -1402,6 +1421,140 @@ class _RabbitHoleEntryCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReleaseRadarEntryCard extends StatelessWidget {
+  final LocaleProvider locale;
+  final dynamic strings;
+  const _ReleaseRadarEntryCard({required this.locale, required this.strings});
+
+  @override
+  Widget build(BuildContext context) {
+    final radar = ReleaseRadarService();
+    return ValueListenableBuilder<List<RadarRelease>>(
+      valueListenable: radar.releases,
+      builder: (context, releases, _) {
+        final unread = releases.where((r) => r.isUnread).length;
+        return ValueListenableBuilder<int>(
+          valueListenable: radar.watchedCount,
+          builder: (context, watched, _) {
+            final hasNews = unread > 0;
+            final accent = hasNews ? AppColors.accent : AppColors.neonCyan;
+            return Semantics(
+              button: true,
+              label: hasNews
+                  ? '${strings.a11yRadar}. ${strings.radarNewCount(unread)}'
+                  : strings.a11yRadar,
+              excludeSemantics: true,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  appNavigatorKey.currentState?.push(
+                    MaterialPageRoute(
+                        builder: (_) => const ReleaseRadarScreen()),
+                  );
+                },
+                child: Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: hasNews
+                          ? const [Color(0xFF1A0A0A), Color(0xFF0A0A14)]
+                          : const [Color(0xFF0A1418), Color(0xFF0A0A14)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: accent.withValues(alpha: hasNews ? 0.55 : 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: accent.withValues(alpha: 0.5)),
+                            ),
+                            child: Icon(Icons.radar, color: accent, size: 20),
+                          ),
+                          if (hasNews)
+                            Positioned(
+                              right: -4,
+                              top: -4,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                    minWidth: 18, minHeight: 18),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent,
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(
+                                      color: AppColors.bgDeep, width: 2),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  unread > 9 ? '9+' : '$unread',
+                                  style: locale.getTextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textBright,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              strings.radarTitle,
+                              style: locale.getTextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textBright,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              hasNews
+                                  ? strings.radarNewCount(unread)
+                                  : strings.radarWatching(watched),
+                              style: locale.getTextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: accent.withValues(alpha: 0.85),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right,
+                          color: accent.withValues(alpha: 0.7), size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

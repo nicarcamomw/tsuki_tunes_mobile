@@ -19,6 +19,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/lastfm_service.dart';
+import '../services/release_radar_service.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -421,6 +422,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           library.unfollowArtist(widget.artist.id);
                         } else {
                           library.followArtist(widget.artist);
+                          _announceRadar(strings);
                         }
                       },
                       child: AnimatedContainer(
@@ -1015,6 +1017,34 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       ]),
       child: image,
     );
+  }
+
+  /// Following is the moment the user wants alerts, so that's when we ask.
+  Future<void> _announceRadar(AppStrings strings) async {
+    final radar = ReleaseRadarService();
+    if (!ReleaseRadarService.isSupported) return;
+    await radar.askPermissionOnceForFollow();
+    if (!mounted || !radar.notifyEnabled.value) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.bgCard,
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            const Icon(Icons.radar, size: 16, color: AppColors.neonCyan),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                strings.radarFollowSnack(widget.artist.name),
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ));
   }
 
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {

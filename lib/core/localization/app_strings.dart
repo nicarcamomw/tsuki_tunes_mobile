@@ -2582,6 +2582,255 @@ class AppStrings {
         AppLanguage.ja => 'ラビットホール：関連アーティストのインタラクティブグラフ',
       };
 
+  // --- Release Radar ---
+  String get radarTitle => switch (language) {
+        AppLanguage.es => 'RADAR DE LANZAMIENTOS',
+        AppLanguage.en => 'RELEASE RADAR',
+        AppLanguage.ja => 'リリースレーダー',
+      };
+
+  String radarWatching(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 artista vigilado' : '$count artistas vigilados',
+        AppLanguage.en => count == 1 ? '1 artist watched' : '$count artists watched',
+        AppLanguage.ja => '$count 組のアーティストを監視中',
+      };
+
+  String radarNewCount(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 LANZAMIENTO NUEVO' : '$count LANZAMIENTOS NUEVOS',
+        AppLanguage.en => count == 1 ? '1 NEW RELEASE' : '$count NEW RELEASES',
+        AppLanguage.ja => '新着 $count 件',
+      };
+
+  String get radarSectionNew => switch (language) {
+        AppLanguage.es => 'NUEVO PARA TI',
+        AppLanguage.en => 'NEW FOR YOU',
+        AppLanguage.ja => 'あなたへの新着',
+      };
+
+  String get radarSectionRecent => switch (language) {
+        AppLanguage.es => 'ÚLTIMOS 60 DÍAS',
+        AppLanguage.en => 'LAST 60 DAYS',
+        AppLanguage.ja => '過去60日間',
+      };
+
+  String get radarNotifyToggle => switch (language) {
+        AppLanguage.es => 'Avisarme de lanzamientos',
+        AppLanguage.en => 'Notify me about releases',
+        AppLanguage.ja => 'リリースを通知する',
+      };
+
+  String get radarNotifyToggleSubtitle => switch (language) {
+        AppLanguage.es => 'Una revisión al día en segundo plano',
+        AppLanguage.en => 'One background check per day',
+        AppLanguage.ja => '1日1回バックグラウンドで確認',
+      };
+
+  String get radarPermissionDenied => switch (language) {
+        AppLanguage.es => 'Las notificaciones están desactivadas para Tsuki Tunes.',
+        AppLanguage.en => 'Notifications are turned off for Tsuki Tunes.',
+        AppLanguage.ja => 'Tsuki Tunesの通知がオフになっています。',
+      };
+
+  String get radarPermissionAction => switch (language) {
+        AppLanguage.es => 'ACTIVAR',
+        AppLanguage.en => 'TURN ON',
+        AppLanguage.ja => 'オンにする',
+      };
+
+  String get radarPermissionSettingsHint => switch (language) {
+        AppLanguage.es =>
+          'Actívalas en Ajustes › Aplicaciones › Tsuki Tunes › Notificaciones.',
+        AppLanguage.en =>
+          'Turn them on in Settings › Apps › Tsuki Tunes › Notifications.',
+        AppLanguage.ja => '設定 › アプリ › Tsuki Tunes › 通知 でオンにしてください。',
+      };
+
+  String get radarCheckNow => switch (language) {
+        AppLanguage.es => 'Revisar ahora',
+        AppLanguage.en => 'Check now',
+        AppLanguage.ja => '今すぐ確認',
+      };
+
+  String get radarChecking => switch (language) {
+        AppLanguage.es => 'ESCANEANDO...',
+        AppLanguage.en => 'SCANNING...',
+        AppLanguage.ja => 'スキャン中...',
+      };
+
+  String radarLastCheck(Duration? ago) {
+    if (ago == null) {
+      return switch (language) {
+        AppLanguage.es => 'Aún sin revisar',
+        AppLanguage.en => 'Not checked yet',
+        AppLanguage.ja => '未確認',
+      };
+    }
+    final String span;
+    if (ago.inMinutes < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'justo ahora',
+        AppLanguage.en => 'just now',
+        AppLanguage.ja => 'たった今',
+      };
+      return switch (language) {
+        AppLanguage.es => 'Última revisión: $span',
+        AppLanguage.en => 'Last checked $span',
+        AppLanguage.ja => '最終確認：$span',
+      };
+    } else if (ago.inHours < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'hace ${ago.inMinutes} min',
+        AppLanguage.en => '${ago.inMinutes} min ago',
+        AppLanguage.ja => '${ago.inMinutes}分前',
+      };
+    } else if (ago.inDays < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'hace ${ago.inHours} h',
+        AppLanguage.en => '${ago.inHours} h ago',
+        AppLanguage.ja => '${ago.inHours}時間前',
+      };
+    } else {
+      span = switch (language) {
+        AppLanguage.es => ago.inDays == 1 ? 'hace 1 día' : 'hace ${ago.inDays} días',
+        AppLanguage.en => ago.inDays == 1 ? '1 day ago' : '${ago.inDays} days ago',
+        AppLanguage.ja => '${ago.inDays}日前',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => 'Última revisión: $span',
+      AppLanguage.en => 'Last checked $span',
+      AppLanguage.ja => '最終確認：$span',
+    };
+  }
+
+  String get radarEmptyNoArtistsTitle => switch (language) {
+        AppLanguage.es => 'SIGUE ARTISTAS',
+        AppLanguage.en => 'FOLLOW SOME ARTISTS',
+        AppLanguage.ja => 'アーティストをフォロー',
+      };
+
+  String get radarEmptyNoArtists => switch (language) {
+        AppLanguage.es =>
+          'El radar vigila a los artistas que sigues y te avisa cuando sacan algo nuevo. Toca SEGUIR en el perfil de un artista.',
+        AppLanguage.en =>
+          'The radar watches the artists you follow and tells you when they drop something new. Tap FOLLOW on an artist page.',
+        AppLanguage.ja => 'レーダーはフォロー中のアーティストを監視し、新作が出たらお知らせします。アーティストページで「フォロー」をタップしてください。',
+      };
+
+  String get radarEmptyNoReleasesTitle => switch (language) {
+        AppLanguage.es => 'SIN LANZAMIENTOS RECIENTES',
+        AppLanguage.en => 'NO RECENT RELEASES',
+        AppLanguage.ja => '最近のリリースなし',
+      };
+
+  String get radarEmptyNoReleases => switch (language) {
+        AppLanguage.es =>
+          'Tus artistas no sacaron nada en los últimos 60 días. Te avisaremos en cuanto lo hagan.',
+        AppLanguage.en =>
+          "Your artists haven't released anything in the last 60 days. We'll let you know as soon as they do.",
+        AppLanguage.ja => '過去60日間に新しいリリースはありません。リリースされたらすぐにお知らせします。',
+      };
+
+  String get radarIosNote => switch (language) {
+        AppLanguage.es =>
+          'En iPhone, iOS decide cuándo ejecutar la revisión en segundo plano. Abrir la app también busca lanzamientos.',
+        AppLanguage.en =>
+          'On iPhone, iOS decides when the background check runs. Opening the app also looks for releases.',
+        AppLanguage.ja => 'iPhoneでは、バックグラウンド確認のタイミングはiOSが決定します。アプリを開いたときにも確認します。',
+      };
+
+  String radarType(String recordType) => switch (recordType) {
+        'single' => 'SINGLE',
+        'ep' => 'EP',
+        _ => switch (language) {
+            AppLanguage.es => 'ÁLBUM',
+            AppLanguage.en => 'ALBUM',
+            AppLanguage.ja => 'アルバム',
+          },
+      };
+
+  String radarReleasedAgo(int days) {
+    if (days < 0) {
+      return switch (language) {
+        AppLanguage.es => 'PRÓXIMAMENTE',
+        AppLanguage.en => 'UPCOMING',
+        AppLanguage.ja => '近日公開',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => days == 0 ? 'HOY' : days == 1 ? 'AYER' : 'HACE $days DÍAS',
+      AppLanguage.en => days == 0 ? 'TODAY' : days == 1 ? 'YESTERDAY' : '$days DAYS AGO',
+      AppLanguage.ja => days == 0 ? '今日' : days == 1 ? '昨日' : '$days日前',
+    };
+  }
+
+  String radarNotifSingle(String artist, String recordType) => switch (language) {
+        AppLanguage.es => switch (recordType) {
+            'single' => '🔥 $artist sacó un single nuevo',
+            'ep' => '🔥 $artist sacó un EP nuevo',
+            _ => '🔥 $artist sacó un álbum nuevo',
+          },
+        AppLanguage.en => switch (recordType) {
+            'single' => '🔥 $artist dropped a new single',
+            'ep' => '🔥 $artist dropped a new EP',
+            _ => '🔥 $artist dropped a new album',
+          },
+        AppLanguage.ja => switch (recordType) {
+            'single' => '🔥 $artistが新しいシングルをリリース',
+            'ep' => '🔥 $artistが新しいEPをリリース',
+            _ => '🔥 $artistが新しいアルバムをリリース',
+          },
+      };
+
+  String radarNotifMany(int count) => switch (language) {
+        AppLanguage.es => '🔥 $count lanzamientos nuevos',
+        AppLanguage.en => '🔥 $count new releases',
+        AppLanguage.ja => '🔥 新着リリース $count 件',
+      };
+
+  String radarNotifManyBody(List<String> artists) {
+    final shown = artists.take(2).toList();
+    final rest = artists.length - shown.length;
+    final names = shown.join(', ');
+    if (rest <= 0) {
+      if (shown.length < 2) return names;
+      return switch (language) {
+        AppLanguage.es => '${shown[0]} y ${shown[1]}',
+        AppLanguage.en => '${shown[0]} and ${shown[1]}',
+        AppLanguage.ja => '${shown[0]}、${shown[1]}',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => '$names y $rest más',
+      AppLanguage.en => '$names and $rest more',
+      AppLanguage.ja => '$names 他$rest組',
+    };
+  }
+
+  String get radarChannelName => switch (language) {
+        AppLanguage.es => 'Radar de lanzamientos',
+        AppLanguage.en => 'Release radar',
+        AppLanguage.ja => 'リリースレーダー',
+      };
+
+  String get radarChannelDescription => switch (language) {
+        AppLanguage.es => 'Avisos cuando los artistas que sigues sacan música nueva',
+        AppLanguage.en => 'Alerts when artists you follow release new music',
+        AppLanguage.ja => 'フォロー中のアーティストの新曲をお知らせ',
+      };
+
+  String radarFollowSnack(String artist) => switch (language) {
+        AppLanguage.es => 'Te avisaremos cuando $artist saque algo nuevo',
+        AppLanguage.en => "We'll let you know when $artist releases something new",
+        AppLanguage.ja => '$artistの新作が出たらお知らせします',
+      };
+
+  String get a11yRadar => switch (language) {
+        AppLanguage.es => 'Radar de lanzamientos de los artistas que sigues',
+        AppLanguage.en => 'Release radar for the artists you follow',
+        AppLanguage.ja => 'フォロー中のアーティストのリリースレーダー',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',
