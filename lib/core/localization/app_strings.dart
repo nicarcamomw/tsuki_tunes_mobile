@@ -285,34 +285,34 @@ class AppStrings {
         AppLanguage.ja => 'プロフィール // 設定',
       };
 
+  String get settingsPlaybackSection => switch (language) {
+        AppLanguage.es => 'REPRODUCCIÓN',
+        AppLanguage.en => 'PLAYBACK',
+        AppLanguage.ja => '再生',
+      };
+
+  String get settingsStorageSection => switch (language) {
+        AppLanguage.es => 'ALMACENAMIENTO',
+        AppLanguage.en => 'STORAGE',
+        AppLanguage.ja => 'ストレージ',
+      };
+
+  String get settingsGeneralSection => switch (language) {
+        AppLanguage.es => 'GENERAL',
+        AppLanguage.en => 'GENERAL',
+        AppLanguage.ja => '一般',
+      };
+
   String get crossfadeTitle => switch (language) {
-        AppLanguage.es => 'CROSSFADE PROGRESIVO',
-        AppLanguage.en => 'SMOOTH CROSSFADE',
+        AppLanguage.es => 'Crossfade',
+        AppLanguage.en => 'Crossfade',
         AppLanguage.ja => 'クロスフェード',
       };
 
   String get crossfadeSubtitle => switch (language) {
-        AppLanguage.es => 'Transición suave de DJ entre canciones sin silencios',
-        AppLanguage.en => 'Smooth DJ mix transitions between songs without gaps',
-        AppLanguage.ja => '曲間の無音をなくしDJのようにスムーズにつなぐ',
-      };
-
-  String get crossfadeOff => switch (language) {
-        AppLanguage.es => 'Desactivado',
-        AppLanguage.en => 'Disabled',
-        AppLanguage.ja => 'オフ',
-      };
-
-  String get crossfadeDJ => switch (language) {
-        AppLanguage.es => 'DJ',
-        AppLanguage.en => 'DJ',
-        AppLanguage.ja => 'DJ',
-      };
-
-  String get crossfadeMax => switch (language) {
-        AppLanguage.es => 'Máx',
-        AppLanguage.en => 'Max',
-        AppLanguage.ja => '最大',
+        AppLanguage.es => 'Transición suave entre canciones',
+        AppLanguage.en => 'Smooth transition between songs',
+        AppLanguage.ja => '曲間をスムーズにつなぐ',
       };
 
   String get autoMarkTitle => switch (language) {
@@ -340,8 +340,8 @@ class AppStrings {
       };
 
   String get clearAudioCache => switch (language) {
-        AppLanguage.es => 'BORRAR CACHÉ DE AUDIO',
-        AppLanguage.en => 'CLEAR AUDIO CACHE',
+        AppLanguage.es => 'Borrar caché de audio',
+        AppLanguage.en => 'Clear audio cache',
         AppLanguage.ja => '音声キャッシュを削除',
       };
 
