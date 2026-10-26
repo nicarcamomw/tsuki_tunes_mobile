@@ -21,6 +21,7 @@ import 'providers/playlist_provider.dart';
 import 'providers/run_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/shake_skip_provider.dart';
+import 'providers/weather_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
@@ -122,6 +123,7 @@ class TsukiTunesApp extends StatelessWidget {
             ..onEclipseSeen = () => ctx.read<MaskProvider>().onEclipseSeen(),
         ),
         ChangeNotifierProvider(create: (_) => PlayHistory()..load()),
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
             PlayHistory, MaskProvider, AudioProvider>(
           create: (_) => AudioProvider(mediaHandler: mediaHandler),

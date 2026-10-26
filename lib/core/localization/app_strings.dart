@@ -5,6 +5,7 @@ import '../../services/ambient_sound_generator.dart';
 import '../../services/bpm_flow.dart';
 import '../../services/cadence_detector.dart';
 import '../../services/moon_calculator.dart';
+import '../../services/weather_service.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -635,6 +636,268 @@ class AppStrings {
         AppLanguage.es => 'SIN BPM · TOCA 4 VECES',
         AppLanguage.en => 'NO BPM · TAP 4 TIMES',
         AppLanguage.ja => 'BPMなし · 4回タップ',
+      };
+
+  // --- Weather ---
+  String dayPartName(DayPart part) => switch (language) {
+        AppLanguage.es => switch (part) {
+            DayPart.lateNight => 'Madrugada',
+            DayPart.morning => 'Mañana',
+            DayPart.afternoon => 'Tarde',
+            DayPart.night => 'Noche',
+          },
+        AppLanguage.en => switch (part) {
+            DayPart.lateNight => 'Late night',
+            DayPart.morning => 'Morning',
+            DayPart.afternoon => 'Afternoon',
+            DayPart.night => 'Night',
+          },
+        AppLanguage.ja => switch (part) {
+            DayPart.lateNight => '深夜',
+            DayPart.morning => '朝',
+            DayPart.afternoon => '午後',
+            DayPart.night => '夜',
+          },
+      };
+
+  /// "Tarde lluviosa", "Clear night", "雨の夜".
+  String skyPhrase(DayPart part, Sky sky, {required bool isDay}) {
+    final dark = part == DayPart.night || part == DayPart.lateNight;
+    switch (language) {
+      case AppLanguage.es:
+        final noun = dayPartName(part);
+        final adj = switch (sky) {
+          Sky.clear => isDay && !dark ? 'soleada' : 'despejada',
+          Sky.fewClouds => 'con algunas nubes',
+          Sky.cloudy => 'nublada',
+          Sky.overcast => 'gris',
+          Sky.fog => 'con niebla',
+          Sky.drizzle => 'con llovizna',
+          Sky.rain => 'lluviosa',
+          Sky.snow => 'con nieve',
+          Sky.storm => 'de tormenta',
+        };
+        return '$noun $adj';
+      case AppLanguage.en:
+        final noun = dark ? 'night' : dayPartName(part).toLowerCase();
+        final adj = switch (sky) {
+          Sky.clear => isDay && !dark ? 'Sunny' : 'Clear',
+          Sky.fewClouds => 'Partly cloudy',
+          Sky.cloudy => 'Cloudy',
+          Sky.overcast => 'Grey',
+          Sky.fog => 'Foggy',
+          Sky.drizzle => 'Drizzly',
+          Sky.rain => 'Rainy',
+          Sky.snow => 'Snowy',
+          Sky.storm => 'Stormy',
+        };
+        return '$adj $noun';
+      case AppLanguage.ja:
+        final adj = switch (sky) {
+          Sky.clear => '晴れた',
+          Sky.fewClouds => '薄曇りの',
+          Sky.cloudy => '曇りの',
+          Sky.overcast => 'どんよりした',
+          Sky.fog => '霧の',
+          Sky.drizzle => '小雨の',
+          Sky.rain => '雨の',
+          Sky.snow => '雪の',
+          Sky.storm => '嵐の',
+        };
+        return '$adj${dayPartName(part)}';
+    }
+  }
+
+  String skyName(Sky sky) => switch (language) {
+        AppLanguage.es => switch (sky) {
+            Sky.clear => 'Despejado',
+            Sky.fewClouds => 'Algunas nubes',
+            Sky.cloudy => 'Nublado',
+            Sky.overcast => 'Cubierto',
+            Sky.fog => 'Niebla',
+            Sky.drizzle => 'Llovizna',
+            Sky.rain => 'Lluvia',
+            Sky.snow => 'Nieve',
+            Sky.storm => 'Tormenta',
+          },
+        AppLanguage.en => switch (sky) {
+            Sky.clear => 'Clear',
+            Sky.fewClouds => 'Few clouds',
+            Sky.cloudy => 'Cloudy',
+            Sky.overcast => 'Overcast',
+            Sky.fog => 'Fog',
+            Sky.drizzle => 'Drizzle',
+            Sky.rain => 'Rain',
+            Sky.snow => 'Snow',
+            Sky.storm => 'Storm',
+          },
+        AppLanguage.ja => switch (sky) {
+            Sky.clear => '晴れ',
+            Sky.fewClouds => '晴れ時々曇り',
+            Sky.cloudy => '曇り',
+            Sky.overcast => '本曇り',
+            Sky.fog => '霧',
+            Sky.drizzle => '霧雨',
+            Sky.rain => '雨',
+            Sky.snow => '雪',
+            Sky.storm => '雷雨',
+          },
+      };
+
+  String get weatherTitle => switch (language) {
+        AppLanguage.es => 'CLIMA',
+        AppLanguage.en => 'WEATHER',
+        AppLanguage.ja => '天気',
+      };
+
+  String get weatherSettingTitle => switch (language) {
+        AppLanguage.es => 'Clima en el inicio',
+        AppLanguage.en => 'Weather on home',
+        AppLanguage.ja => 'ホームに天気を表示',
+      };
+
+  String get weatherSettingSubtitle => switch (language) {
+        AppLanguage.es => 'El inicio cambia con el clima, la hora y la luna. Si llueve, te propone música para la lluvia.',
+        AppLanguage.en => 'Home changes with the weather, time and moon. When it rains, it offers music for the rain.',
+        AppLanguage.ja => '天気・時間・月に合わせてホームが変化。雨の日は雨に合う音楽を提案します。',
+      };
+
+  String get weatherEnable => switch (language) {
+        AppLanguage.es => 'Activar clima',
+        AppLanguage.en => 'Turn on weather',
+        AppLanguage.ja => '天気をオンにする',
+      };
+
+  String get weatherUseLocation => switch (language) {
+        AppLanguage.es => 'Usar mi ubicación aproximada',
+        AppLanguage.en => 'Use my approximate location',
+        AppLanguage.ja => 'おおよその現在地を使う',
+      };
+
+  String get weatherOrCity => switch (language) {
+        AppLanguage.es => 'O elige una ciudad',
+        AppLanguage.en => 'Or pick a city',
+        AppLanguage.ja => 'または都市を選択',
+      };
+
+  String get weatherSearchHint => switch (language) {
+        AppLanguage.es => 'Buscar ciudad…',
+        AppLanguage.en => 'Search city…',
+        AppLanguage.ja => '都市を検索…',
+      };
+
+  String get weatherPrivacy => switch (language) {
+        AppLanguage.es => 'Tsuki usa tu ubicación aproximada (unos 2 km) solo para el clima. Se envía redondeada a Open-Meteo, un servicio sin cuenta ni registro, y nunca en segundo plano.',
+        AppLanguage.en => 'Tsuki uses your approximate location (about 2 km) only for the weather. It is sent rounded to Open-Meteo, a service with no account or sign-up, and never in the background.',
+        AppLanguage.ja => 'おおよその位置（約2km）は天気のためだけに使います。丸めた座標をアカウント不要のOpen-Meteoに送信し、バックグラウンドでは使いません。',
+      };
+
+  String get weatherHere => switch (language) {
+        AppLanguage.es => 'Tu ubicación',
+        AppLanguage.en => 'Your location',
+        AppLanguage.ja => '現在地',
+      };
+
+  String weatherUpdated(int minutes) => switch (language) {
+        AppLanguage.es => minutes < 1 ? 'Actualizado ahora' : 'Actualizado hace $minutes min',
+        AppLanguage.en => minutes < 1 ? 'Updated just now' : 'Updated $minutes min ago',
+        AppLanguage.ja => minutes < 1 ? 'たった今更新' : '$minutes分前に更新',
+      };
+
+  String get weatherDenied => switch (language) {
+        AppLanguage.es => 'Sin permiso de ubicación. Puedes elegir tu ciudad abajo.',
+        AppLanguage.en => 'No location permission. You can pick your city below.',
+        AppLanguage.ja => '位置情報の許可がありません。下で都市を選べます。',
+      };
+
+  String get weatherDeniedForever => switch (language) {
+        AppLanguage.es => 'El permiso está bloqueado. Actívalo en los ajustes de Android o elige tu ciudad.',
+        AppLanguage.en => 'The permission is blocked. Allow it in Android settings or pick your city.',
+        AppLanguage.ja => '許可がブロックされています。Androidの設定で許可するか、都市を選んでください。',
+      };
+
+  String get weatherServiceOff => switch (language) {
+        AppLanguage.es => 'La ubicación del teléfono está apagada.',
+        AppLanguage.en => "The phone's location is off.",
+        AppLanguage.ja => '端末の位置情報がオフです。',
+      };
+
+  String get weatherLocationFailed => switch (language) {
+        AppLanguage.es => 'No pude obtener tu ubicación. Prueba de nuevo o elige tu ciudad.',
+        AppLanguage.en => "Couldn't get your location. Try again or pick your city.",
+        AppLanguage.ja => '位置を取得できませんでした。もう一度試すか、都市を選んでください。',
+      };
+
+  String get weatherOpenSettings => switch (language) {
+        AppLanguage.es => 'Abrir ajustes',
+        AppLanguage.en => 'Open settings',
+        AppLanguage.ja => '設定を開く',
+      };
+
+  String get weatherOffline => switch (language) {
+        AppLanguage.es => 'Sin conexión con el servicio del clima.',
+        AppLanguage.en => "Can't reach the weather service.",
+        AppLanguage.ja => '天気サービスに接続できません。',
+      };
+
+  String get weatherNoResults => switch (language) {
+        AppLanguage.es => 'No encontré esa ciudad.',
+        AppLanguage.en => "Couldn't find that city.",
+        AppLanguage.ja => '都市が見つかりません。',
+      };
+
+  String get weatherTurnOff => switch (language) {
+        AppLanguage.es => 'Apagar clima',
+        AppLanguage.en => 'Turn off weather',
+        AppLanguage.ja => '天気をオフにする',
+      };
+
+  String rainOfferTitle(String? place) => switch (language) {
+        AppLanguage.es => place == null ? 'Está lloviendo donde estás' : 'Está lloviendo en $place',
+        AppLanguage.en => place == null ? "It's raining where you are" : "It's raining in $place",
+        AppLanguage.ja => place == null ? '今いる場所で雨が降っています' : '$placeで雨が降っています',
+      };
+
+  String get rainOfferQuestion => switch (language) {
+        AppLanguage.es => '¿Pongo algo para la lluvia?',
+        AppLanguage.en => 'Shall I play something for the rain?',
+        AppLanguage.ja => '雨に合う曲をかけましょうか？',
+      };
+
+  String get rainOfferYes => switch (language) {
+        AppLanguage.es => 'Sí, ponlo',
+        AppLanguage.en => 'Yes, play it',
+        AppLanguage.ja => 'かける',
+      };
+
+  String get rainOfferNo => switch (language) {
+        AppLanguage.es => 'Ahora no',
+        AppLanguage.en => 'Not now',
+        AppLanguage.ja => '今はいい',
+      };
+
+  String get rainOfferAddRain => switch (language) {
+        AppLanguage.es => 'Sumar lluvia de fondo',
+        AppLanguage.en => 'Add rain in the background',
+        AppLanguage.ja => '雨音も重ねる',
+      };
+
+  String get rainOfferPreparing => switch (language) {
+        AppLanguage.es => 'Buscando tus canciones tranquilas…',
+        AppLanguage.en => 'Finding your calm songs…',
+        AppLanguage.ja => '落ち着いた曲を探しています…',
+      };
+
+  String get rainOfferEmpty => switch (language) {
+        AppLanguage.es => 'Todavía no encuentro canciones tranquilas tuyas. Guarda algunas favoritas y lo intento otra vez.',
+        AppLanguage.en => "I can't find calm songs of yours yet. Save a few favourites and I'll try again.",
+        AppLanguage.ja => 'まだ落ち着いた曲が見つかりません。お気に入りを追加してから再度お試しください。',
+      };
+
+  String rainOfferPlaying(int count) => switch (language) {
+        AppLanguage.es => 'Sonando: $count canciones para la lluvia',
+        AppLanguage.en => 'Playing $count songs for the rain',
+        AppLanguage.ja => '雨の曲を$count曲再生中',
       };
 
   // --- Shake to skip ---

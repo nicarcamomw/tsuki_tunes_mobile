@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -10,12 +12,14 @@ import '../providers/mask_provider.dart';
 import '../providers/moon_provider.dart';
 import '../providers/run_provider.dart';
 import '../providers/shake_skip_provider.dart';
+import '../providers/weather_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
+import 'weather_sheet.dart';
 
 class ProfileBottomSheet {
   static void show(BuildContext context, AuthProvider auth) {
@@ -599,6 +603,27 @@ class ProfileBottomSheet {
                             HapticFeedback.selectionClick();
                             moon.setAtmosphereEnabled(v);
                             setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.cloud_rounded,
+                          title: strings.weatherSettingTitle,
+                          subtitle: strings.weatherSettingSubtitle,
+                          value: context.read<WeatherProvider>().enabled,
+                          onChanged: (v) async {
+                            unawaited(HapticFeedback.selectionClick());
+                            final weather = context.read<WeatherProvider>();
+                            if (!v) {
+                              await weather.disable();
+                              setModalState(() {});
+                              return;
+                            }
+                            // Turning it on starts with choosing where.
+                            Navigator.pop(ctx);
+                            await Future.delayed(const Duration(milliseconds: 120));
+                            if (context.mounted) await WeatherSheet.show(context);
                           },
                         ),
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),

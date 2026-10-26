@@ -25,6 +25,7 @@ import '../widgets/artist_card.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/sky_line.dart';
 import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
 import 'run_mode_screen.dart';
@@ -276,137 +277,149 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: scrollController,
           slivers: [
             SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Semantics(
-                            header: true,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Row(
+              child: SkyBackdrop(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  strings.homeHeader.replaceAll(' // 01', ''),
-                                  style: locale.getTextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textBright,
-                                    letterSpacing: 2,
+                                Semantics(
+                                  header: true,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                    children: [
+                                      Text(
+                                        strings.homeHeader.replaceAll(' // 01', ''),
+                                        style: locale.getTextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.textBright,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' // 01',
+                                        style: locale.getTextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   ),
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
-                                  ' // 01',
-                                  style: locale.getTextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.accent,
+                                  strings.homeTelemetry,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.notoSansJp(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accent.withValues(alpha: 0.8),
+                                    letterSpacing: 1.2,
                                   ),
                                 ),
                               ],
                             ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            strings.homeTelemetry,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.notoSansJp(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent.withValues(alpha: 0.8),
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                      ),
-                      const SizedBox(width: 8),
-                      Row(
-                        children: [
-                          const MoonButton(),
-                          const SizedBox(width: 4),
-                          Selector<AudioProvider, bool>(
-                            selector: (_, audio) =>
-                                audio.useSpotify || audio.spotify.isConnected,
-                            builder: (context, isSpotify, _) {
-                              final badgeColor = AppColors.accent;
-                              final badgeBg = AppColors.accentDim;
-                              final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
+                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                const MoonButton(),
+                                const SizedBox(width: 4),
+                                Selector<AudioProvider, bool>(
+                                  selector: (_, audio) =>
+                                      audio.useSpotify || audio.spotify.isConnected,
+                                  builder: (context, isSpotify, _) {
+                                    final badgeColor = AppColors.accent;
+                                    final badgeBg = AppColors.accentDim;
+                                    final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
 
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: badgeBg,
-                                  borderRadius: BorderRadius.circular(2),
-                                  border: Border.all(
-                                    color: badgeColor.withValues(alpha: 0.5),
-                                    width: 0.8,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: badgeColor.withValues(alpha: 0.2),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: badgeColor,
+                                        color: badgeBg,
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(
+                                          color: badgeColor.withValues(alpha: 0.5),
+                                          width: 0.8,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: badgeColor.withValues(alpha: 0.7),
-                                            blurRadius: 4,
-                                            spreadRadius: 0.5,
+                                            color: badgeColor.withValues(alpha: 0.2),
+                                            blurRadius: 6,
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      badgeText,
-                                      style: locale.getTextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        color: badgeColor,
-                                        letterSpacing: 1.5,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: badgeColor,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: badgeColor.withValues(alpha: 0.7),
+                                                  blurRadius: 4,
+                                                  spreadRadius: 0.5,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            badgeText,
+                                            style: locale.getTextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: badgeColor,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                          if (auth.isLoggedIn) ...[
-                            const SizedBox(width: 8),
-                            _GearProfileButton(
-                              auth: auth,
-                              label: strings.profileTitle,
+                                if (auth.isLoggedIn) ...[
+                                  const SizedBox(width: 8),
+                                  _GearProfileButton(
+                                    auth: auth,
+                                    label: strings.profileTitle,
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+                      child: SkyLine(),
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SliverToBoxAdapter(child: RainOfferCard()),
 
             if (_isLoading)
               const HomeSkeletonLoader()
