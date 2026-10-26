@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../models/lyrics_search_result.dart';
 import '../models/synced_lyrics.dart';
 
 class LyricsService {
@@ -82,6 +83,29 @@ class LyricsService {
       unawaited(_inFlight.remove(cacheKey));
     }
     return null;
+  }
+
+  Future<List<LyricsSearchResult>> searchByLyrics(String query) async {
+    try {
+      final uri = Uri.parse(
+          'https://lrclib.net/api/search?q=${Uri.encodeComponent(query)}');
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List) {
+          return data
+              .whereType<Map<String, dynamic>>()
+              .map((e) => LyricsSearchResult.fromJson(e))
+              .where((r) => !r.instrumental && r.trackName.isNotEmpty)
+              .toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('[LyricsService] Lyrics search error: $e');
+      rethrow;
+    }
+    return [];
   }
 
   void clearCache() {

@@ -2164,6 +2164,55 @@ class AppStrings {
         AppLanguage.ja => '翻訳を非表示',
       };
 
+  // --- Lyrics Search ---
+  String get tabByLyrics => switch (language) {
+        AppLanguage.es => 'Por Letra',
+        AppLanguage.en => 'By Lyrics',
+        AppLanguage.ja => '歌詞検索',
+      };
+
+  String get lyricsSearchHint => switch (language) {
+        AppLanguage.es => 'Escribe un fragmento de letra...',
+        AppLanguage.en => 'Type a lyrics fragment...',
+        AppLanguage.ja => '歌詞の一部を入力...',
+      };
+
+  String get lyricsSearchEmpty => switch (language) {
+        AppLanguage.es => 'BUSCA POR FRAGMENTO DE LETRA',
+        AppLanguage.en => 'SEARCH BY LYRICS FRAGMENT',
+        AppLanguage.ja => '歌詞の一部で検索',
+      };
+
+  String get lyricsSearchEmptySubtitle => switch (language) {
+        AppLanguage.es => '"No me acuerdo del nombre pero dice..."',
+        AppLanguage.en => '"I don\'t remember the name but it goes..."',
+        AppLanguage.ja => '「曲名は忘れたけど歌詞は...」',
+      };
+
+  String lyricsSearchResults(int count) => switch (language) {
+        AppLanguage.es => '$count resultados por letra',
+        AppLanguage.en => '$count lyrics results',
+        AppLanguage.ja => '歌詞検索 $count 件',
+      };
+
+  String get lyricsSearchError => switch (language) {
+        AppLanguage.es => 'Error al buscar por letra. Revisa tu conexión.',
+        AppLanguage.en => 'Lyrics search failed. Check your connection.',
+        AppLanguage.ja => '歌詞検索に失敗しました。接続を確認してください。',
+      };
+
+  String get lyricsSearchNoResults => switch (language) {
+        AppLanguage.es => 'No se encontraron canciones con esa letra',
+        AppLanguage.en => 'No songs found with those lyrics',
+        AppLanguage.ja => 'その歌詞に一致する曲が見つかりません',
+      };
+
+  String get a11yLyricsSearch => switch (language) {
+        AppLanguage.es => 'Buscar por letra',
+        AppLanguage.en => 'Search by lyrics',
+        AppLanguage.ja => '歌詞で検索',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',
