@@ -1,5 +1,6 @@
 import '../../models/oni_mask.dart';
 import '../../services/ambient_sound_generator.dart';
+import '../../services/bpm_flow.dart';
 import '../../services/moon_calculator.dart';
 import 'app_language.dart';
 
@@ -304,6 +305,105 @@ class AppStrings {
         AppLanguage.es => 'GENERAL',
         AppLanguage.en => 'GENERAL',
         AppLanguage.ja => '一般',
+      };
+
+  // --- Flow (queue by tempo) ---
+  String get flowButton => 'FLOW';
+
+  String get flowTitle => switch (language) {
+        AppLanguage.es => 'FLOW · ORDENAR POR TEMPO',
+        AppLanguage.en => 'FLOW · ORDER BY TEMPO',
+        AppLanguage.ja => 'FLOW · テンポで並べ替え',
+      };
+
+  String get flowSubtitle => switch (language) {
+        AppLanguage.es => 'Reordena lo que viene en tu cola según el BPM de cada canción.',
+        AppLanguage.en => 'Reorders what is coming up in your queue by each song\'s BPM.',
+        AppLanguage.ja => '各曲のBPMに合わせてキューの次の曲を並べ替えます。',
+      };
+
+  String flowAnalyzing(int done, int total) => switch (language) {
+        AppLanguage.es => 'Analizando el tempo… $done de $total',
+        AppLanguage.en => 'Reading tempos… $done of $total',
+        AppLanguage.ja => 'テンポを解析中… $done / $total',
+      };
+
+  String flowCoverage(int known, int total) => switch (language) {
+        AppLanguage.es => 'BPM conocido en $known de $total canciones',
+        AppLanguage.en => 'BPM known for $known of $total songs',
+        AppLanguage.ja => '$total曲中$known曲のBPMが判明',
+      };
+
+  String get flowLowCoverage => switch (language) {
+        AppLanguage.es => 'Deezer no tiene el BPM de muchas de estas canciones. El orden será parcial: las que no lo tienen se quedan donde están.',
+        AppLanguage.en => 'Deezer lacks the BPM of many of these songs. The order will be partial: those without it stay where they are.',
+        AppLanguage.ja => '多くの曲のBPMがDeezerにありません。並べ替えは部分的になり、BPMのない曲はそのままの位置に残ります。',
+      };
+
+  String get flowNotEnough => switch (language) {
+        AppLanguage.es => 'Muy pocas canciones de tu cola tienen BPM en Deezer, así que no se puede ordenar.',
+        AppLanguage.en => 'Too few songs in your queue have a BPM on Deezer to reorder it.',
+        AppLanguage.ja => 'BPMが分かる曲が少なすぎて並べ替えできません。',
+      };
+
+  String get flowError => switch (language) {
+        AppLanguage.es => 'No se pudo consultar el tempo. Revisa tu conexión.',
+        AppLanguage.en => "Couldn't read the tempos. Check your connection.",
+        AppLanguage.ja => 'テンポを取得できませんでした。接続を確認してください。',
+      };
+
+  String flowModeName(FlowMode mode) => switch (language) {
+        AppLanguage.es => switch (mode) {
+            FlowMode.rise => 'Subir energía',
+            FlowMode.calm => 'Calmar',
+            FlowMode.wave => 'Ola DJ',
+          },
+        AppLanguage.en => switch (mode) {
+            FlowMode.rise => 'Build energy',
+            FlowMode.calm => 'Wind down',
+            FlowMode.wave => 'DJ wave',
+          },
+        AppLanguage.ja => switch (mode) {
+            FlowMode.rise => '盛り上げる',
+            FlowMode.calm => '落ち着く',
+            FlowMode.wave => 'DJウェーブ',
+          },
+      };
+
+  String flowModeDescription(FlowMode mode) => switch (language) {
+        AppLanguage.es => switch (mode) {
+            FlowMode.rise => 'El tempo sube poco a poco. Para entrenar o prender la fiesta.',
+            FlowMode.calm => 'El tempo baja poco a poco. Para relajarte, estudiar o dormir.',
+            FlowMode.wave => 'Sube hasta un clímax y luego baja, como un set de DJ.',
+          },
+        AppLanguage.en => switch (mode) {
+            FlowMode.rise => 'Tempo climbs gradually. For workouts or getting the party going.',
+            FlowMode.calm => 'Tempo slows down gradually. For relaxing, studying or sleep.',
+            FlowMode.wave => 'Builds to a climax, then comes down, like a DJ set.',
+          },
+        AppLanguage.ja => switch (mode) {
+            FlowMode.rise => 'テンポが徐々に上がる。運動やパーティーに。',
+            FlowMode.calm => 'テンポが徐々に下がる。リラックス、勉強、睡眠に。',
+            FlowMode.wave => 'クライマックスまで上がって下がる。DJセットのように。',
+          },
+      };
+
+  String flowApplied(int from, int to) => switch (language) {
+        AppLanguage.es => 'Cola ordenada · $from → $to BPM',
+        AppLanguage.en => 'Queue ordered · $from → $to BPM',
+        AppLanguage.ja => 'キューを並べ替えました · $from → $to BPM',
+      };
+
+  String flowAppliedWave(int from, int peak, int to) => switch (language) {
+        AppLanguage.es => 'Cola ordenada · $from → $peak → $to BPM',
+        AppLanguage.en => 'Queue ordered · $from → $peak → $to BPM',
+        AppLanguage.ja => 'キューを並べ替えました · $from → $peak → $to BPM',
+      };
+
+  String get flowHalfTimeNote => switch (language) {
+        AppLanguage.es => 'Las canciones a mitad o al doble de tempo (70 y 140 BPM) se tratan como el mismo ritmo, igual que hacen los DJs.',
+        AppLanguage.en => 'Songs at half or double tempo (70 and 140 BPM) count as the same pace, like DJs pair them.',
+        AppLanguage.ja => '半分や倍のテンポ（70と140 BPM）は同じリズムとして扱います。DJと同じ考え方です。',
       };
 
   // --- Oni masks ---

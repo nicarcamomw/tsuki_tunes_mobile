@@ -345,6 +345,19 @@ class PlaybackQueue {
     _history.clear();
   }
 
+  /// Replaces everything after the current track with [upcoming], which must
+  /// be a reordering of those same tracks. Already-played tracks stay put.
+  void replaceUpcoming(List<Track> upcoming) {
+    final head = _tracks.sublist(0, _currentIndex + 1);
+    final tail = _tracks.sublist(_currentIndex + 1);
+    final ids = tail.map((t) => t.id).toList()..sort();
+    final newIds = upcoming.map((t) => t.id).toList()..sort();
+    if (ids.length != newIds.length || ids.join('|') != newIds.join('|')) return;
+    _tracks = [...head, ...upcoming];
+    _nextShuffleIndex = null;
+    _history.clear();
+  }
+
   /// Inserts right after the current track. Returns false if already queued.
   bool insertNext(Track track) {
     if (_tracks.any((t) => t.id == track.id)) return false;

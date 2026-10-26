@@ -17,8 +17,10 @@ import '../providers/ambient_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../services/bpm_flow.dart';
 import '../services/lyrics_service.dart';
 import '../widgets/ambient_mixer_sheet.dart';
+import '../widgets/flow_sheet.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/tap_scale.dart';
@@ -318,7 +320,13 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                   // Art, Lyrics or Queue
                   if (_viewMode == _CenterViewMode.queue)
-                    _buildQueueView(audio, locale)
+                    // Rebuild when the order or the playing track changes,
+                    // not on every position tick.
+                    Selector<AudioProvider, (int, int)>(
+                      selector: (_, a) =>
+                          (Object.hashAll(a.queue.map((t) => t.id)), a.currentIndex),
+                      builder: (context, _, __) => _buildQueueView(audio, locale),
+                    )
                   else if (_viewMode == _CenterViewMode.lyrics)
                     _buildLyricsView(audio, locale, track)
                   else ...[
@@ -940,6 +948,43 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (audio.upcomingTracks.length >= 3) ...[
+                    Semantics(
+                      button: true,
+                      label: strings.flowTitle,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          FlowSheet.show(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.neonCyan.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.show_chart_rounded, size: 13, color: AppColors.neonCyan),
+                              const SizedBox(width: 4),
+                              Text(
+                                strings.flowButton,
+                                style: locale.getTextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.neonCyan,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   if (queue.length > 1)
                     Semantics(
                       button: true,
@@ -1199,6 +1244,18 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       ],
                                     ),
                                   ),
+                                  if (BpmService.shared.cached(t.id) case final bpm?)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Text(
+                                        '${bpm.round()}',
+                                        style: locale.getTextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.neonCyan.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ),
                                   Semantics(
                                     button: true,
                                     label: strings.queueRemoveLabel,

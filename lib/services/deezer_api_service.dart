@@ -278,6 +278,21 @@ class DeezerApiService implements MusicApiContract {
     return [];
   }
 
+  /// Tempo of a track in BPM, only returned by /track/{id}. 0 means Deezer
+  /// doesn't know it; null means the request failed (worth retrying later).
+  Future<double?> getTrackBpm(String trackId) async {
+    try {
+      final data = await _fetchJson(ApiEndpoints.track(trackId));
+      if (data is Map<String, dynamic> && data['error'] == null && data['id'] != null) {
+        final bpm = data['bpm'];
+        return bpm is num ? bpm.toDouble() : 0;
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] getTrackBpm($trackId) error: $e');
+    }
+    return null;
+  }
+
   /// Top 100 global tracks; the guess-the-song game needs a bigger pool than
   /// the home chart.
   Future<List<Track>> getLargeChartTracks() async {

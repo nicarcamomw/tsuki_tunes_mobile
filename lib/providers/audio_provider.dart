@@ -1580,6 +1580,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _persistPlaybackState();
     notifyListeners();
   }
+  /// The tracks after the current one, in play order.
+  List<Track> get upcomingTracks =>
+      _q.isEmpty ? const [] : _q.tracks.sublist(_q.currentIndex + 1);
+
+  /// Applies a new order to the upcoming tracks (e.g. the BPM flow). Shuffle
+  /// is turned off, otherwise it would ignore the order.
+  void setUpcomingOrder(List<Track> upcoming) {
+    if (_q.isShuffle) _q.toggleShuffle();
+    _q.replaceUpcoming(upcoming);
+    _prefetchedTargetTrackId = null;
+    _prefetchNextTrack();
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
   void playNext(Track track) {
     if (!_q.insertNext(track)) return;
     _persistPlaybackState();
