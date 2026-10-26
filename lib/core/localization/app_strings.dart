@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../models/oni_mask.dart';
 import '../../services/ambient_sound_generator.dart';
 import '../../services/bpm_flow.dart';
@@ -604,6 +606,35 @@ class AppStrings {
         AppLanguage.es => 'Muestra la tarjeta en el inicio. Apagado, se oculta y no usa el sensor.',
         AppLanguage.en => 'Shows its card on the home screen. Off, it is hidden and the sensor is never used.',
         AppLanguage.ja => 'ホームにカードを表示します。オフにすると非表示になり、センサーも使いません。',
+      };
+
+  // --- Beat sync (Rinnegan) ---
+  String get beatSyncHint => switch (language) {
+        AppLanguage.es => 'TOCA AL RITMO PARA SINCRONIZAR',
+        AppLanguage.en => 'TAP TO THE BEAT TO SYNC',
+        AppLanguage.ja => 'リズムに合わせてタップで同期',
+      };
+
+  String beatSyncTapping(int count) {
+    final n = count.clamp(0, 4);
+    final dots = '●' * n + '○' * max(0, 3 - n);
+    return 'SYNC $dots';
+  }
+
+  String beatSyncLocked(int bpm) => 'SYNC · $bpm BPM';
+
+  String beatSyncTempo(int bpm) => switch (language) {
+        AppLanguage.es => 'TEMPO TUYO · $bpm BPM',
+        AppLanguage.en => 'YOUR TEMPO · $bpm BPM',
+        AppLanguage.ja => 'タップのテンポ · $bpm BPM',
+      };
+
+  String beatSyncAuto(int bpm) => 'AUTO · $bpm BPM';
+
+  String get beatSyncNoTempo => switch (language) {
+        AppLanguage.es => 'SIN BPM · TOCA 4 VECES',
+        AppLanguage.en => 'NO BPM · TAP 4 TIMES',
+        AppLanguage.ja => 'BPMなし · 4回タップ',
       };
 
   // --- Shake to skip ---

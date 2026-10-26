@@ -1634,6 +1634,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     refreshTempo();
   }
 
+  /// Speed the current track actually plays at.
+  double get playbackSpeed => canChangeTempo ? _service.speed : 1.0;
+
   /// Applies the current [tempoFor] to the playing track, gliding there.
   void refreshTempo() {
     final track = _currentTrack;
