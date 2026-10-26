@@ -15,6 +15,7 @@ import 'providers/auth_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/library_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/moon_provider.dart';
 import 'providers/playlist_provider.dart';
 import 'providers/search_provider.dart';
 import 'screens/login_screen.dart';
@@ -22,7 +23,9 @@ import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/firebase_service.dart';
 import 'services/media_session_handler.dart';
+import 'services/play_history.dart';
 import 'services/storage_service.dart';
+import 'widgets/moon_atmosphere.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,11 +105,15 @@ class TsukiTunesApp extends StatelessWidget {
             labelFor: (sound) => ctx.read<LocaleProvider>().strings.ambientName(sound),
           ),
         ),
-        ChangeNotifierProxyProvider3<LibraryProvider, ConnectivityProvider, AmbientProvider, AudioProvider>(
+        ChangeNotifierProvider(create: (_) => MoonProvider()),
+        ChangeNotifierProvider(create: (_) => PlayHistory()..load()),
+        ChangeNotifierProxyProvider4<LibraryProvider, ConnectivityProvider, AmbientProvider,
+            PlayHistory, AudioProvider>(
           create: (_) => AudioProvider(mediaHandler: mediaHandler),
-          update: (_, library, connectivity, ambient, audio) {
+          update: (_, library, connectivity, ambient, history, audio) {
             audio ??= AudioProvider(mediaHandler: mediaHandler);
             audio.setConnectivityProvider(connectivity);
+            audio.onPlayCounted = (track) => history.record(track);
             audio.onSleepTimerFinished = ambient.onSleepTimerFinished;
             audio.onAmbientPlay = ambient.resumeAll;
             audio.onAmbientPause = ambient.pauseAll;
@@ -135,7 +142,7 @@ class TsukiTunesApp extends StatelessWidget {
           );
           return MediaQuery(
             data: mediaQuery.copyWith(textScaler: clampedScaler),
-            child: child!,
+            child: MoonAtmosphere(child: child!),
           );
         },
         home: const _AuthGate(),

@@ -267,7 +267,27 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   void checkListenedThresholdForTesting() => _checkListenedThreshold();
 
+  /// Fired once per play when it has really been listened to: 30 seconds or
+  /// half the track, whichever comes first (the usual "counts as a play" rule).
+  Function(Track)? onPlayCounted;
+  int _countedGeneration = -1;
+
+  void _checkPlayCounted() {
+    if (_countedGeneration == _playGeneration) return;
+    final track = _currentTrack;
+    if (track == null || _duration <= Duration.zero) return;
+    final half = Duration(milliseconds: _duration.inMilliseconds ~/ 2);
+    final needed = half < const Duration(seconds: 30) ? half : const Duration(seconds: 30);
+    if (_position < needed) return;
+    _countedGeneration = _playGeneration;
+    onPlayCounted?.call(track);
+  }
+
+  @visibleForTesting
+  void checkPlayCountedForTesting() => _checkPlayCounted();
+
   void _checkListenedThreshold() {
+    _checkPlayCounted();
     if (!_autoMarkListened || _autoMarkedGeneration == _playGeneration) return;
     final track = _currentTrack;
     if (track == null || _duration <= Duration.zero) return;

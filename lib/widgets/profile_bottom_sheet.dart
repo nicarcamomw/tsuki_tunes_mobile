@@ -6,6 +6,7 @@ import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/moon_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
@@ -26,6 +27,7 @@ class ProfileBottomSheet {
       ),
       builder: (ctx) {
         final audioProvider = context.read<AudioProvider>();
+        final moon = context.read<MoonProvider>();
         final spotify = audioProvider.spotify;
         final locale = context.read<LocaleProvider>();
         final strings = locale.strings;
@@ -488,9 +490,21 @@ class ProfileBottomSheet {
                     ),
                     child: Column(
                       children: [
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.nightlight_round,
+                          title: strings.moonAtmosphereTitle,
+                          subtitle: strings.moonAtmosphereSubtitle,
+                          value: moon.atmosphereEnabled,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            moon.setAtmosphereEnabled(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
                         // Language
                         InkWell(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                           onTap: () async {
                             Navigator.pop(ctx);
                             await Future.delayed(const Duration(milliseconds: 120));

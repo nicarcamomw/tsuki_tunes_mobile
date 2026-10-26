@@ -228,6 +228,20 @@ void main() {
       expect(fired, 1);
     });
 
+    test('a play counts once after 30 seconds', () {
+      final counted = <String>[];
+      provider.onPlayCounted = (t) => counted.add(t.id);
+
+      provider.setPositionForTesting(const Duration(seconds: 10));
+      provider.checkPlayCountedForTesting();
+      expect(counted, isEmpty);
+
+      provider.setPositionForTesting(const Duration(seconds: 31));
+      provider.checkPlayCountedForTesting();
+      provider.checkPlayCountedForTesting();
+      expect(counted, ['1']);
+    });
+
     test('cancelling the sleep timer does not notify onSleepTimerFinished', () {
       var fired = 0;
       provider.onSleepTimerFinished = () => fired++;

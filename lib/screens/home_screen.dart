@@ -20,6 +20,7 @@ import '../services/deezer_api_service.dart';
 import '../widgets/album_card.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'guess_song_screen.dart';
@@ -279,12 +280,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      Flexible(
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Semantics(
                             header: true,
-                            child: Row(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Row(
                               children: [
                                 Text(
                                   strings.homeHeader.replaceAll(' // 01', ''),
@@ -305,10 +310,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ],
                             ),
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             strings.homeTelemetry,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.notoSansJp(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
@@ -318,8 +326,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
+                      ),
+                      const SizedBox(width: 8),
                       Row(
                         children: [
+                          const MoonButton(),
+                          const SizedBox(width: 4),
                           Selector<AudioProvider, bool>(
                             selector: (_, audio) =>
                                 audio.useSpotify || audio.spotify.isConnected,

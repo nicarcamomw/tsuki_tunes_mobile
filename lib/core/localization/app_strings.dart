@@ -1,4 +1,5 @@
 import '../../services/ambient_sound_generator.dart';
+import '../../services/moon_calculator.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -302,6 +303,216 @@ class AppStrings {
         AppLanguage.es => 'GENERAL',
         AppLanguage.en => 'GENERAL',
         AppLanguage.ja => '一般',
+      };
+
+  // --- Moon ---
+  String moonPhaseName(MoonPhaseName name) => switch (language) {
+        AppLanguage.es => switch (name) {
+            MoonPhaseName.newMoon => 'Luna nueva',
+            MoonPhaseName.waxingCrescent => 'Luna creciente',
+            MoonPhaseName.firstQuarter => 'Cuarto creciente',
+            MoonPhaseName.waxingGibbous => 'Gibosa creciente',
+            MoonPhaseName.fullMoon => 'Luna llena',
+            MoonPhaseName.waningGibbous => 'Gibosa menguante',
+            MoonPhaseName.lastQuarter => 'Cuarto menguante',
+            MoonPhaseName.waningCrescent => 'Luna menguante',
+          },
+        AppLanguage.en => switch (name) {
+            MoonPhaseName.newMoon => 'New moon',
+            MoonPhaseName.waxingCrescent => 'Waxing crescent',
+            MoonPhaseName.firstQuarter => 'First quarter',
+            MoonPhaseName.waxingGibbous => 'Waxing gibbous',
+            MoonPhaseName.fullMoon => 'Full moon',
+            MoonPhaseName.waningGibbous => 'Waning gibbous',
+            MoonPhaseName.lastQuarter => 'Last quarter',
+            MoonPhaseName.waningCrescent => 'Waning crescent',
+          },
+        AppLanguage.ja => switch (name) {
+            MoonPhaseName.newMoon => '新月',
+            MoonPhaseName.waxingCrescent => '三日月',
+            MoonPhaseName.firstQuarter => '上弦の月',
+            MoonPhaseName.waxingGibbous => '十三夜月',
+            MoonPhaseName.fullMoon => '満月',
+            MoonPhaseName.waningGibbous => '寝待月',
+            MoonPhaseName.lastQuarter => '下弦の月',
+            MoonPhaseName.waningCrescent => '有明月',
+          },
+      };
+
+  String moonEventName(MoonPhaseKind kind) => moonPhaseName(switch (kind) {
+        MoonPhaseKind.newMoon => MoonPhaseName.newMoon,
+        MoonPhaseKind.firstQuarter => MoonPhaseName.firstQuarter,
+        MoonPhaseKind.fullMoon => MoonPhaseName.fullMoon,
+        MoonPhaseKind.lastQuarter => MoonPhaseName.lastQuarter,
+      });
+
+  String get moonTonightTitle => switch (language) {
+        AppLanguage.es => 'LA LUNA DE ESTA NOCHE',
+        AppLanguage.en => "TONIGHT'S MOON",
+        AppLanguage.ja => '今夜の月',
+      };
+
+  String moonIlluminated(int percent) => switch (language) {
+        AppLanguage.es => '$percent% iluminada',
+        AppLanguage.en => '$percent% illuminated',
+        AppLanguage.ja => '輝面比 $percent%',
+      };
+
+  String moonAge(int day) => switch (language) {
+        AppLanguage.es => 'Día $day del ciclo lunar',
+        AppLanguage.en => 'Day $day of the lunar cycle',
+        AppLanguage.ja => '月齢 $day',
+      };
+
+  String get moonFullTonight => switch (language) {
+        AppLanguage.es => 'Luna llena esta noche 🌕',
+        AppLanguage.en => 'Full moon tonight 🌕',
+        AppLanguage.ja => '今夜は満月 🌕',
+      };
+
+  /// Countdown phrase: [days] when ≥ 1, otherwise [hours].
+  String moonUntilFull({int? days, int? hours}) => switch (language) {
+        AppLanguage.es => days != null
+            ? (days == 1 ? 'Falta 1 día para luna llena 🌕' : 'Faltan $days días para luna llena 🌕')
+            : (hours == 1 ? 'Falta 1 hora para luna llena 🌕' : 'Faltan $hours horas para luna llena 🌕'),
+        AppLanguage.en => days != null
+            ? (days == 1 ? '1 day until full moon 🌕' : '$days days until full moon 🌕')
+            : (hours == 1 ? '1 hour until full moon 🌕' : '$hours hours until full moon 🌕'),
+        AppLanguage.ja => days != null ? '満月まであと$days日 🌕' : '満月まであと$hours時間 🌕',
+      };
+
+  String get moonUpcomingTitle => switch (language) {
+        AppLanguage.es => 'PRÓXIMAS FASES',
+        AppLanguage.en => 'UPCOMING PHASES',
+        AppLanguage.ja => '次の月相',
+      };
+
+  String get moonMixTitle => switch (language) {
+        AppLanguage.es => 'MIX DE LUNA LLENA',
+        AppLanguage.en => 'FULL MOON MIX',
+        AppLanguage.ja => '満月ミックス',
+      };
+
+  String moonMixUnlocked(int count) => switch (language) {
+        AppLanguage.es => 'Tus $count canciones más escuchadas de este ciclo lunar',
+        AppLanguage.en => 'Your $count most played songs of this lunar cycle',
+        AppLanguage.ja => 'この月の周期で最も聴いた$count曲',
+      };
+
+  String moonMixLocked(String when) => switch (language) {
+        AppLanguage.es => 'Se desbloquea con la luna llena · $when',
+        AppLanguage.en => 'Unlocks at the full moon · $when',
+        AppLanguage.ja => '満月で解放 · $when',
+      };
+
+  String moonMixProgress(int count) => switch (language) {
+        AppLanguage.es => count == 0
+            ? 'Escucha música este ciclo para llenarlo'
+            : 'Ya llevas $count ${count == 1 ? 'canción' : 'canciones'} en este ciclo',
+        AppLanguage.en => count == 0
+            ? 'Listen to music this cycle to fill it'
+            : '$count ${count == 1 ? 'song' : 'songs'} so far this cycle',
+        AppLanguage.ja => count == 0 ? 'この周期に音楽を聴いて満たそう' : 'この周期で$count曲',
+      };
+
+  String get moonMixEmpty => switch (language) {
+        AppLanguage.es => 'Este ciclo no escuchaste música todavía. ¡El próximo mix te espera!',
+        AppLanguage.en => "You haven't listened to anything this cycle yet. Next mix awaits!",
+        AppLanguage.ja => 'この周期はまだ何も聴いていません。次のミックスをお楽しみに！',
+      };
+
+  String get moonMixPlay => switch (language) {
+        AppLanguage.es => 'REPRODUCIR',
+        AppLanguage.en => 'PLAY',
+        AppLanguage.ja => '再生',
+      };
+
+  String get moonMixSave => switch (language) {
+        AppLanguage.es => 'GUARDAR PLAYLIST',
+        AppLanguage.en => 'SAVE PLAYLIST',
+        AppLanguage.ja => 'プレイリストに保存',
+      };
+
+  String moonMixPlaylistName(String date) => switch (language) {
+        AppLanguage.es => '🌕 Luna llena · $date',
+        AppLanguage.en => '🌕 Full moon · $date',
+        AppLanguage.ja => '🌕 満月 · $date',
+      };
+
+  String get moonMixSaved => switch (language) {
+        AppLanguage.es => 'Mix guardado en tus playlists 🌕',
+        AppLanguage.en => 'Mix saved to your playlists 🌕',
+        AppLanguage.ja => 'ミックスをプレイリストに保存しました 🌕',
+      };
+
+  String get moonMixSaveFailed => switch (language) {
+        AppLanguage.es => 'No se pudo guardar. Inicia sesión e inténtalo de nuevo.',
+        AppLanguage.en => "Couldn't save. Sign in and try again.",
+        AppLanguage.ja => '保存できませんでした。ログインして再試行してください。',
+      };
+
+  String get moonEclipseNow => switch (language) {
+        AppLanguage.es => 'ECLIPSE LUNAR EN CURSO',
+        AppLanguage.en => 'LUNAR ECLIPSE IN PROGRESS',
+        AppLanguage.ja => '月食進行中',
+      };
+
+  String moonEclipseKind(LunarEclipseKind kind) => switch (language) {
+        AppLanguage.es => switch (kind) {
+            LunarEclipseKind.total => 'total',
+            LunarEclipseKind.partial => 'parcial',
+            LunarEclipseKind.penumbral => 'penumbral',
+          },
+        AppLanguage.en => switch (kind) {
+            LunarEclipseKind.total => 'total',
+            LunarEclipseKind.partial => 'partial',
+            LunarEclipseKind.penumbral => 'penumbral',
+          },
+        AppLanguage.ja => switch (kind) {
+            LunarEclipseKind.total => '皆既',
+            LunarEclipseKind.partial => '部分',
+            LunarEclipseKind.penumbral => '半影',
+          },
+      };
+
+  String moonNextEclipse(String date, LunarEclipseKind kind) => switch (language) {
+        AppLanguage.es => 'Próximo eclipse lunar: $date · ${moonEclipseKind(kind)}',
+        AppLanguage.en => 'Next lunar eclipse: $date · ${moonEclipseKind(kind)}',
+        AppLanguage.ja => '次の月食：$date · ${moonEclipseKind(kind)}月食',
+      };
+
+  String get moonAtmosphereTitle => switch (language) {
+        AppLanguage.es => 'Atmósfera lunar',
+        AppLanguage.en => 'Lunar atmosphere',
+        AppLanguage.ja => '月のアトモスフィア',
+      };
+
+  String get moonAtmosphereSubtitle => switch (language) {
+        AppLanguage.es => 'La app cambia de luz con la luna real de cada noche',
+        AppLanguage.en => 'The app follows the real Moon each night',
+        AppLanguage.ja => '毎晩の実際の月に合わせて光が変わる',
+      };
+
+  String get a11yMoon => switch (language) {
+        AppLanguage.es => 'Fase lunar',
+        AppLanguage.en => 'Moon phase',
+        AppLanguage.ja => '月相',
+      };
+
+  String shortDate(DateTime d) {
+    const es = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const en = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return switch (language) {
+      AppLanguage.es => '${d.day} ${es[d.month - 1]}',
+      AppLanguage.en => '${en[d.month - 1]} ${d.day}',
+      AppLanguage.ja => '${d.month}月${d.day}日',
+    };
+  }
+
+  String longDate(DateTime d) => switch (language) {
+        AppLanguage.ja => '${d.year}年${shortDate(d)}',
+        AppLanguage.en => '${shortDate(d)}, ${d.year}',
+        AppLanguage.es => '${shortDate(d)} ${d.year}',
       };
 
   // --- Ambient mixer ---
