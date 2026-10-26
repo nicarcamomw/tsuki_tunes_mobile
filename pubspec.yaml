@@ -39,6 +39,9 @@ dependencies:
   flutter_web_auth_2: ^5.1.0
   crypto: ^3.0.7
 
+  # Offline Translation (Google ML Kit)
+  google_mlkit_translation: ^0.13.0
+
   # Spotify Native Playback
   spotify_sdk: ^4.0.0
   audio_session: ^0.1.25

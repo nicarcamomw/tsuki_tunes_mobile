@@ -2091,6 +2091,79 @@ class AppStrings {
         AppLanguage.ja => 'プレイリストを選択',
       };
 
+  // --- Lyrics Translation ---
+  String get translateButton => switch (language) {
+        AppLanguage.es => '訳',
+        AppLanguage.en => '訳',
+        AppLanguage.ja => '訳',
+      };
+
+  String get translateTooltip => switch (language) {
+        AppLanguage.es => 'Traducir letras',
+        AppLanguage.en => 'Translate lyrics',
+        AppLanguage.ja => '歌詞を翻訳',
+      };
+
+  String get translationHide => switch (language) {
+        AppLanguage.es => 'Ocultar traducción',
+        AppLanguage.en => 'Hide translation',
+        AppLanguage.ja => '翻訳を非表示',
+      };
+
+  String get translating => switch (language) {
+        AppLanguage.es => '// TRADUCIENDO...',
+        AppLanguage.en => '// TRANSLATING...',
+        AppLanguage.ja => '// 翻訳中...',
+      };
+
+  String get translationError => switch (language) {
+        AppLanguage.es => 'Error al traducir. Reintenta.',
+        AppLanguage.en => 'Translation failed. Retry.',
+        AppLanguage.ja => '翻訳に失敗しました。再試行してください。',
+      };
+
+  String get downloadingModel => switch (language) {
+        AppLanguage.es => '// DESCARGANDO MODELO DE IDIOMA...',
+        AppLanguage.en => '// DOWNLOADING LANGUAGE MODEL...',
+        AppLanguage.ja => '// 言語モデルをダウンロード中...',
+      };
+
+  String get downloadModelTitle => switch (language) {
+        AppLanguage.es => 'Descargar modelo de idioma',
+        AppLanguage.en => 'Download language model',
+        AppLanguage.ja => '言語モデルをダウンロード',
+      };
+
+  String downloadModelDesc(String size) => switch (language) {
+        AppLanguage.es => 'Se necesita descargar ~$size MB de datos. Solo se hace una vez y después funciona sin internet.',
+        AppLanguage.en => 'Need to download ~$size MB of data. This only happens once, then works offline.',
+        AppLanguage.ja => '約${size}MBのデータダウンロードが必要です。一度だけで、以降はオフラインで動作します。',
+      };
+
+  String get downloadModelConfirm => switch (language) {
+        AppLanguage.es => 'DESCARGAR',
+        AppLanguage.en => 'DOWNLOAD',
+        AppLanguage.ja => 'ダウンロード',
+      };
+
+  String get translatedTag => switch (language) {
+        AppLanguage.es => 'TRADUCIDO OFFLINE',
+        AppLanguage.en => 'TRANSLATED OFFLINE',
+        AppLanguage.ja => 'オフライン翻訳済み',
+      };
+
+  String get a11yTranslate => switch (language) {
+        AppLanguage.es => 'Traducir letras',
+        AppLanguage.en => 'Translate lyrics',
+        AppLanguage.ja => '歌詞を翻訳',
+      };
+
+  String get a11yHideTranslation => switch (language) {
+        AppLanguage.es => 'Ocultar traducción',
+        AppLanguage.en => 'Hide translation',
+        AppLanguage.ja => '翻訳を非表示',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',

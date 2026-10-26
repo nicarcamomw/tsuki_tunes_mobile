@@ -16,6 +16,7 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
+import '../services/translation_service.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/tap_scale.dart';
@@ -47,6 +48,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   final Map<int, GlobalKey> _lineKeys = {};
   late final AnimationController _snapBack;
   late Animation<double> _snapAnimation;
+
+  bool _showTranslation = false;
+  bool _isTranslating = false;
+  bool _isDownloadingModel = false;
+  List<String>? _translatedLines;
+  String? _lastTranslatedTrackId;
 
   @override
   void initState() {
@@ -1227,6 +1234,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     setState(() {
       _isLoadingLyrics = true;
       _lyrics = null;
+      _showTranslation = false;
+      _translatedLines = null;
+      _isTranslating = false;
+      _isDownloadingModel = false;
     });
 
     try {
@@ -1305,31 +1316,55 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       ],
                     ),
                   ),
-                  if (_lyrics?.isSynced == true)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_lyrics?.isSynced == true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            locale.strings.syncedTapToSeek,
+                            style: locale.getTextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.accent,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        locale.strings.syncedTapToSeek,
-                        style: locale.getTextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
+                      if (_lyrics != null && !_lyrics!.isInstrumental && _lyrics!.plainLyrics.isNotEmpty)
+                        _buildTranslateButton(locale, track),
+                    ],
+                  ),
                 ],
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            if (_showTranslation && _translatedLines != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                color: AppColors.accent.withValues(alpha: 0.08),
+                child: Text(
+                  locale.strings.translatedTag,
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent.withValues(alpha: 0.7),
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
             Expanded(
               child: Consumer<AudioProvider>(
                 builder: (context, liveAudio, _) {
@@ -1341,6 +1376,191 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildTranslateButton(LocaleProvider locale, Track track) {
+    final strings = locale.strings;
+    final isActive = _showTranslation && _translatedLines != null;
+    final isLoading = _isTranslating || _isDownloadingModel;
+
+    return TapScale(
+      semanticLabel: isActive ? strings.a11yHideTranslation : strings.a11yTranslate,
+      onTap: isLoading ? null : () => _onTranslateTap(locale, track),
+      scaleDown: 0.85,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.accent.withValues(alpha: 0.2)
+              : AppColors.bgHover,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive
+                ? AppColors.accent.withValues(alpha: 0.6)
+                : AppColors.border,
+          ),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: AppColors.accent,
+                ),
+              )
+            : Text(
+                strings.translateButton,
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isActive ? AppColors.accent : AppColors.textPrimary,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _onTranslateTap(LocaleProvider locale, Track track) async {
+    if (_showTranslation && _translatedLines != null) {
+      setState(() => _showTranslation = false);
+      return;
+    }
+
+    if (_lastTranslatedTrackId == track.id && _translatedLines != null) {
+      setState(() => _showTranslation = true);
+      return;
+    }
+
+    final service = TranslationService();
+    final targetLang = locale.currentLanguage;
+
+    final needed = await service.requiredModels(targetLang: targetLang);
+    if (needed.isNotEmpty && mounted) {
+      final confirmed = await _showDownloadDialog(locale, needed.length);
+      if (!confirmed || !mounted) return;
+
+      setState(() => _isDownloadingModel = true);
+      try {
+        await service.downloadRequiredModels(targetLang: targetLang);
+      } catch (e) {
+        debugPrint('[Translation] Model download failed: $e');
+        if (mounted) {
+          setState(() => _isDownloadingModel = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(locale.strings.translationError),
+              backgroundColor: AppColors.bgCard,
+            ),
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _isDownloadingModel = false);
+    }
+
+    setState(() => _isTranslating = true);
+
+    try {
+      final lines = _lyrics!.isSynced
+          ? _lyrics!.lines.map((l) => l.text).toList()
+          : _lyrics!.plainLyrics.split('\n');
+
+      final translated = await service.translateLines(
+        lines: lines,
+        trackId: track.id,
+        targetLang: targetLang,
+      );
+
+      if (mounted && _lastLoadedTrackId == track.id) {
+        setState(() {
+          _translatedLines = translated;
+          _lastTranslatedTrackId = track.id;
+          _showTranslation = true;
+          _isTranslating = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Translation] Error: $e');
+      if (mounted) {
+        setState(() => _isTranslating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(locale.strings.translationError),
+            backgroundColor: AppColors.bgCard,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showDownloadDialog(LocaleProvider locale, int modelCount) async {
+    final strings = locale.strings;
+    final size = (modelCount * 30).toString();
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.bgMid,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.borderGlow.withValues(alpha: 0.5)),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.download_rounded, color: AppColors.accent, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    strings.downloadModelTitle,
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              strings.downloadModelDesc(size),
+              style: locale.getTextStyle(
+                fontSize: 12,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  strings.cancel,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  strings.downloadModelConfirm,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   Widget _buildLyricsContent(AudioProvider audio, LocaleProvider locale, Track track) {
@@ -1519,26 +1739,49 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             : Colors.transparent,
                       ),
                     ),
-                    child: Text(
-                      line.text,
-                      textAlign: TextAlign.center,
-                      style: locale.getTextStyle(
-                        fontSize: isActive ? 17 : 13,
-                        fontWeight:
-                            isActive ? FontWeight.w800 : FontWeight.w500,
-                        color: isActive
-                            ? AppColors.accent
-                            : AppColors.textPrimary.withValues(alpha: 0.4),
-                        shadows: isActive
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.accent
-                                      .withValues(alpha: 0.7),
-                                  blurRadius: 12,
-                                ),
-                              ]
-                            : null,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          line.text,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: isActive ? 17 : 13,
+                            fontWeight:
+                                isActive ? FontWeight.w800 : FontWeight.w500,
+                            color: isActive
+                                ? AppColors.accent
+                                : AppColors.textPrimary.withValues(alpha: 0.4),
+                            shadows: isActive
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.accent
+                                          .withValues(alpha: 0.7),
+                                      blurRadius: 12,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                        if (_showTranslation &&
+                            _translatedLines != null &&
+                            i < _translatedLines!.length &&
+                            _translatedLines![i].isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              _translatedLines![i],
+                              textAlign: TextAlign.center,
+                              style: locale.getTextStyle(
+                                fontSize: isActive ? 13 : 11,
+                                fontWeight: FontWeight.w400,
+                                color: isActive
+                                    ? AppColors.textPrimary.withValues(alpha: 0.7)
+                                    : AppColors.textMuted.withValues(alpha: 0.5),
+                              ).copyWith(fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -1595,6 +1838,43 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
         ],
+      );
+    }
+
+    if (_showTranslation && _translatedLines != null) {
+      final plainLines = _lyrics!.plainLyrics.split('\n');
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          children: [
+            for (int i = 0; i < plainLines.length; i++) ...[
+              Text(
+                plainLines[i],
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  height: 1.6,
+                  color: AppColors.textPrimary.withValues(alpha: 0.8),
+                ),
+              ),
+              if (i < _translatedLines!.length && _translatedLines![i].isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _translatedLines![i],
+                    textAlign: TextAlign.center,
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      color: AppColors.textMuted.withValues(alpha: 0.6),
+                    ).copyWith(fontStyle: FontStyle.italic),
+                  ),
+                )
+              else
+                const SizedBox(height: 8),
+            ],
+          ],
+        ),
       );
     }
 
