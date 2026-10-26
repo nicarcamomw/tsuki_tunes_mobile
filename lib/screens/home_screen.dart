@@ -22,6 +22,7 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
+import 'rabbit_hole_screen.dart';
 import 'wrapped_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -584,6 +585,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 locale: locale, strings: strings)),
                       ],
                     ),
+                  ),
+                ),
+
+              // Rabbit Hole entry
+              if (_topArtistsDisplay.isNotEmpty ||
+                  _featuredArtists.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _RabbitHoleEntryCard(
+                    locale: locale,
+                    strings: strings,
+                    seedArtist: _topArtistsDisplay.isNotEmpty &&
+                            _topArtistsDisplay.first.artist != null
+                        ? _topArtistsDisplay.first.artist!
+                        : _featuredArtists.isNotEmpty
+                            ? _featuredArtists.first
+                            : null,
                   ),
                 ),
 
@@ -1282,6 +1299,105 @@ class _ListeningClockEntryCard extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RabbitHoleEntryCard extends StatelessWidget {
+  final LocaleProvider locale;
+  final dynamic strings;
+  final Artist? seedArtist;
+  const _RabbitHoleEntryCard({
+    required this.locale,
+    required this.strings,
+    this.seedArtist,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (seedArtist == null) return const SizedBox.shrink();
+
+    return Semantics(
+      button: true,
+      label: strings.a11yRabbitHole,
+      child: GestureDetector(
+        onTap: () {
+          appNavigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => RabbitHoleScreen(seedArtist: seedArtist!),
+            ),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF100A1A), Color(0xFF0A0814)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(6),
+            border:
+                Border.all(color: AppColors.neonPurple.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.neonPurple.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: const Icon(Icons.hub,
+                    color: AppColors.neonPurple, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      strings.rabbitHoleTitle,
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      strings.rabbitHoleSubtitle,
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.neonPurple.withValues(alpha: 0.8),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (seedArtist != null)
+                ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: seedArtist!.getBestImage(size: 'small'),
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right,
+                  color: AppColors.neonPurple.withValues(alpha: 0.7), size: 20),
             ],
           ),
         ),

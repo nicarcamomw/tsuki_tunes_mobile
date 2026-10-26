@@ -27,6 +27,7 @@ import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
+import 'rabbit_hole_screen.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -1033,6 +1034,45 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  appNavigatorKey.currentState?.push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          RabbitHoleScreen(seedArtist: widget.artist),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: AppColors.neonPurple.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.hub, size: 12,
+                          color: AppColors.neonPurple.withValues(alpha: 0.9)),
+                      const SizedBox(width: 4),
+                      Text(
+                        strings.rabbitHoleViewGraph,
+                        style: locale.getTextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neonPurple,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

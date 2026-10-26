@@ -2465,6 +2465,69 @@ class AppStrings {
         AppLanguage.ja => 'リスニングクロックとアクティビティレーダー',
       };
 
+  // --- Rabbit Hole (Artist Graph) ---
+  String get rabbitHoleTitle => switch (language) {
+        AppLanguage.es => 'MADRIGUERA',
+        AppLanguage.en => 'RABBIT HOLE',
+        AppLanguage.ja => 'ラビットホール',
+      };
+
+  String get rabbitHoleSubtitle => switch (language) {
+        AppLanguage.es => 'Explora artistas relacionados',
+        AppLanguage.en => 'Explore related artists',
+        AppLanguage.ja => '関連アーティストを探索',
+      };
+
+  String get rabbitHoleLoading => switch (language) {
+        AppLanguage.es => 'TEJIENDO LA RED...',
+        AppLanguage.en => 'WEAVING THE WEB...',
+        AppLanguage.ja => 'ウェブを構築中...',
+      };
+
+  String get rabbitHoleTapToExpand => switch (language) {
+        AppLanguage.es => 'TOCA PARA EXPANDIR',
+        AppLanguage.en => 'TAP TO EXPAND',
+        AppLanguage.ja => 'タップして展開',
+      };
+
+  String get rabbitHoleExpanded => switch (language) {
+        AppLanguage.es => 'EXPANDIDO ◈ DOBLE TAP PARA VER',
+        AppLanguage.en => 'EXPANDED ◈ DOUBLE TAP TO VIEW',
+        AppLanguage.ja => '展開済み ◈ ダブルタップで表示',
+      };
+
+  String get rabbitHoleRecenter => switch (language) {
+        AppLanguage.es => 'Recentrar',
+        AppLanguage.en => 'Recenter',
+        AppLanguage.ja => '中心に戻す',
+      };
+
+  String rabbitHoleNodes(int count) => switch (language) {
+        AppLanguage.es => '$count NODOS',
+        AppLanguage.en => '$count NODES',
+        AppLanguage.ja => '$count ノード',
+      };
+
+  String rabbitHoleDepth(int count) => switch (language) {
+        AppLanguage.es => '$count EXPANSIONES',
+        AppLanguage.en => '$count EXPANSIONS',
+        AppLanguage.ja => '$count 展開',
+      };
+
+  String get rabbitHoleViewGraph => switch (language) {
+        AppLanguage.es => 'EXPLORAR',
+        AppLanguage.en => 'EXPLORE',
+        AppLanguage.ja => '探索する',
+      };
+
+  String get a11yRabbitHole => switch (language) {
+        AppLanguage.es =>
+          'Madriguera de conejo: grafo interactivo de artistas relacionados',
+        AppLanguage.en =>
+          'Rabbit hole: interactive graph of related artists',
+        AppLanguage.ja => 'ラビットホール：関連アーティストのインタラクティブグラフ',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',
