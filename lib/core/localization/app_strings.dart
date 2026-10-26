@@ -2213,6 +2213,203 @@ class AppStrings {
         AppLanguage.ja => '歌詞で検索',
       };
 
+  // --- Tsuki Wrapped ---
+  String get wrappedTitle => switch (language) {
+        AppLanguage.es => 'TSUKI WRAPPED',
+        AppLanguage.en => 'TSUKI WRAPPED',
+        AppLanguage.ja => 'TSUKI WRAPPED',
+      };
+
+  String wrappedYear(int year) => switch (language) {
+        AppLanguage.es => 'TU AÑO $year EN MÚSICA',
+        AppLanguage.en => 'YOUR $year IN MUSIC',
+        AppLanguage.ja => '${year}年の音楽まとめ',
+      };
+
+  String get wrappedIntroSlide => switch (language) {
+        AppLanguage.es => '¿Preparado para revivir tu año?',
+        AppLanguage.en => 'Ready to relive your year?',
+        AppLanguage.ja => '今年を振り返る準備はいい？',
+      };
+
+  String get wrappedTopTracks => switch (language) {
+        AppLanguage.es => 'TUS CANCIONES FAVORITAS',
+        AppLanguage.en => 'YOUR TOP TRACKS',
+        AppLanguage.ja => 'あなたのトップ楽曲',
+      };
+
+  String get wrappedTopArtists => switch (language) {
+        AppLanguage.es => 'TUS ARTISTAS FAVORITOS',
+        AppLanguage.en => 'YOUR TOP ARTISTS',
+        AppLanguage.ja => 'あなたのトップアーティスト',
+      };
+
+  String get wrappedListeningTime => switch (language) {
+        AppLanguage.es => 'TIEMPO DE ESCUCHA',
+        AppLanguage.en => 'LISTENING TIME',
+        AppLanguage.ja => '再生時間',
+      };
+
+  String wrappedMinutes(int minutes) => switch (language) {
+        AppLanguage.es => '$minutes minutos',
+        AppLanguage.en => '$minutes minutes',
+        AppLanguage.ja => '$minutes 分',
+      };
+
+  String wrappedHours(int hours) => switch (language) {
+        AppLanguage.es => '$hours horas',
+        AppLanguage.en => '$hours hours',
+        AppLanguage.ja => '$hours 時間',
+      };
+
+  String wrappedTotalTracks(int count) => switch (language) {
+        AppLanguage.es => '$count reproducciones',
+        AppLanguage.en => '$count plays',
+        AppLanguage.ja => '$count 回再生',
+      };
+
+  String wrappedUniqueCount(int tracks, int artists) => switch (language) {
+        AppLanguage.es => '$tracks canciones únicas · $artists artistas',
+        AppLanguage.en => '$tracks unique tracks · $artists artists',
+        AppLanguage.ja => '$tracks 曲 · $artists アーティスト',
+      };
+
+  String get wrappedFavoriteHour => switch (language) {
+        AppLanguage.es => 'TU HORA FAVORITA',
+        AppLanguage.en => 'YOUR FAVORITE HOUR',
+        AppLanguage.ja => 'お気に入りの時間帯',
+      };
+
+  String wrappedHourLabel(int hour) {
+    final amPm = hour >= 12 ? 'PM' : 'AM';
+    final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return switch (language) {
+      AppLanguage.es => '${h12}:00 $amPm',
+      AppLanguage.en => '${h12}:00 $amPm',
+      AppLanguage.ja => '$hour:00',
+    };
+  }
+
+  String get wrappedFunFacts => switch (language) {
+        AppLanguage.es => 'DATOS CURIOSOS',
+        AppLanguage.en => 'FUN FACTS',
+        AppLanguage.ja => 'おもしろデータ',
+      };
+
+  String wrappedFactLateNight(String title, String artist) => switch (language) {
+        AppLanguage.es => 'Tu canción del 3 AM fue "$title" de $artist 🌙',
+        AppLanguage.en => 'Your 3 AM song was "$title" by $artist 🌙',
+        AppLanguage.ja => '深夜3時の曲は $artist の「$title」🌙',
+      };
+
+  String wrappedFactMarathon(String date, int count) => switch (language) {
+        AppLanguage.es => 'Tu día maratón: $count canciones el $date 🔥',
+        AppLanguage.en => 'Your marathon day: $count tracks on $date 🔥',
+        AppLanguage.ja => 'マラソンデー: ${date}に$count曲再生 🔥',
+      };
+
+  String wrappedFactLoyal(String artist, int count) => switch (language) {
+        AppLanguage.es => 'Fan incondicional de $artist con $count reproducciones 💎',
+        AppLanguage.en => 'Devoted fan of $artist with $count plays 💎',
+        AppLanguage.ja => '$artist の熱狂的ファン — $count回再生 💎',
+      };
+
+  String wrappedFactDawn(int count) => switch (language) {
+        AppLanguage.es => 'Escuchaste $count canciones al amanecer (5-7 AM) 🌅',
+        AppLanguage.en => 'You listened to $count tracks at dawn (5-7 AM) 🌅',
+        AppLanguage.ja => '夜明け(5〜7時)に$count曲再生 🌅',
+      };
+
+  String wrappedFactOneHit(String title, String artist, int count) => switch (language) {
+        AppLanguage.es => '"$title" de $artist en repeat: $count veces 🔄',
+        AppLanguage.en => '"$title" by $artist on repeat: $count times 🔄',
+        AppLanguage.ja => '$artist の「$title」を$count回リピート 🔄',
+      };
+
+  String wrappedFactNightOwl(int pct) => switch (language) {
+        AppLanguage.es => 'El $pct% de tu música fue de noche. ¿Dormiste bien? 😴',
+        AppLanguage.en => '$pct% of your music was at night. Did you sleep well? 😴',
+        AppLanguage.ja => '音楽の$pct%が夜間再生。ちゃんと寝てる？ 😴',
+      };
+
+  String wrappedFactEarlyBird(int pct) => switch (language) {
+        AppLanguage.es => 'El $pct% de tu música fue tempranito. ¡Madrugador! 🐦',
+        AppLanguage.en => '$pct% of your music was early morning. Early bird! 🐦',
+        AppLanguage.ja => '音楽の$pct%が早朝再生。早起きさん！ 🐦',
+      };
+
+  String wrappedFactWeekend(int weekendAvg, int weekdayAvg) => switch (language) {
+        AppLanguage.es => 'Fin de semana pro: ~$weekendAvg canciones/día vs ~$weekdayAvg entre semana 🎉',
+        AppLanguage.en => 'Weekend warrior: ~$weekendAvg tracks/day vs ~$weekdayAvg on weekdays 🎉',
+        AppLanguage.ja => '週末の音楽好き: 1日平均$weekendAvg曲 vs 平日$weekdayAvg曲 🎉',
+      };
+
+  String wrappedPlays(int count) => switch (language) {
+        AppLanguage.es => '$count reproducciones',
+        AppLanguage.en => '$count plays',
+        AppLanguage.ja => '$count 回再生',
+      };
+
+  String get wrappedOutro => switch (language) {
+        AppLanguage.es => 'NOS VEMOS EL PRÓXIMO AÑO',
+        AppLanguage.en => 'SEE YOU NEXT YEAR',
+        AppLanguage.ja => 'また来年',
+      };
+
+  String get wrappedOutroSubtitle => switch (language) {
+        AppLanguage.es => 'Sigue escuchando. El sistema recuerda todo.',
+        AppLanguage.en => 'Keep listening. The system remembers everything.',
+        AppLanguage.ja => '聴き続けよう。システムはすべて記録している。',
+      };
+
+  String get wrappedShare => switch (language) {
+        AppLanguage.es => 'COMPARTIR',
+        AppLanguage.en => 'SHARE',
+        AppLanguage.ja => 'シェア',
+      };
+
+  String get wrappedNoData => switch (language) {
+        AppLanguage.es => 'No hay datos suficientes para este año',
+        AppLanguage.en => 'Not enough data for this year',
+        AppLanguage.ja => 'この年のデータが不十分です',
+      };
+
+  String get wrappedNoDataSubtitle => switch (language) {
+        AppLanguage.es => 'Escucha más canciones para desbloquear tu Wrapped',
+        AppLanguage.en => 'Listen to more tracks to unlock your Wrapped',
+        AppLanguage.ja => 'もっと曲を聴いて Wrapped をアンロックしよう',
+      };
+
+  String get wrappedViewYourWrapped => switch (language) {
+        AppLanguage.es => 'VER TU WRAPPED',
+        AppLanguage.en => 'VIEW YOUR WRAPPED',
+        AppLanguage.ja => 'WRAPPED を見る',
+      };
+
+  String get a11yWrapped => switch (language) {
+        AppLanguage.es => 'Tsuki Wrapped resumen anual',
+        AppLanguage.en => 'Tsuki Wrapped annual summary',
+        AppLanguage.ja => 'Tsuki Wrapped 年間まとめ',
+      };
+
+  String get a11yShareSlide => switch (language) {
+        AppLanguage.es => 'Compartir esta diapositiva',
+        AppLanguage.en => 'Share this slide',
+        AppLanguage.ja => 'このスライドをシェア',
+      };
+
+  String get a11yNextSlide => switch (language) {
+        AppLanguage.es => 'Siguiente diapositiva',
+        AppLanguage.en => 'Next slide',
+        AppLanguage.ja => '次のスライド',
+      };
+
+  String get a11yPreviousSlide => switch (language) {
+        AppLanguage.es => 'Diapositiva anterior',
+        AppLanguage.en => 'Previous slide',
+        AppLanguage.ja => '前のスライド',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',

@@ -21,6 +21,7 @@ import '../widgets/artist_card.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import 'main_navigation_screen.dart';
+import 'wrapped_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -564,6 +565,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+                ),
+
+              if (auth.isLoggedIn && listenedCount > 0)
+                SliverToBoxAdapter(
+                  child: _WrappedEntryCard(locale: locale, strings: strings),
                 ),
 
               if (_topArtistsDisplay.isNotEmpty) ...[
@@ -1114,4 +1120,91 @@ class _GearBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _GearBorderPainter old) =>
       old.color != color || old.rotation != rotation;
+}
+
+class _WrappedEntryCard extends StatelessWidget {
+  final LocaleProvider locale;
+  final dynamic strings;
+  const _WrappedEntryCard({required this.locale, required this.strings});
+
+  @override
+  Widget build(BuildContext context) {
+    final year = DateTime.now().year;
+    return Semantics(
+      button: true,
+      label: strings.a11yWrapped,
+      child: GestureDetector(
+        onTap: () {
+          appNavigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (_) => WrappedScreen(year: year)),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1A0808), Color(0xFF0A0A1A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.6)),
+                ),
+                child: Center(
+                  child: Text(
+                    '月',
+                    style: GoogleFonts.notoSansJp(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '◈ TSUKI WRAPPED $year',
+                      style: locale.getTextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      strings.wrappedViewYourWrapped,
+                      style: locale.getTextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right,
+                  color: AppColors.accent.withValues(alpha: 0.7), size: 22),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
