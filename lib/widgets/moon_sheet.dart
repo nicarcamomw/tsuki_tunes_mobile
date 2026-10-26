@@ -114,12 +114,15 @@ class MoonSheet extends StatelessWidget {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(28),
-                    child: MoonGlyph(
-                      size: 132,
-                      illumination: s.illumination,
-                      waxing: s.waxing,
-                      southernHemisphere: moon.southernHemisphere,
-                      eclipse: eclipse,
+                    child: MoonBreathing(
+                      active: eclipse,
+                      child: MoonGlyph(
+                        size: 132,
+                        illumination: s.illumination,
+                        waxing: s.waxing,
+                        southernHemisphere: moon.southernHemisphere,
+                        eclipse: eclipse,
+                      ),
                     ),
                   ),
                 ),
@@ -175,6 +178,19 @@ class MoonSheet extends StatelessWidget {
 
             const SizedBox(height: 22),
             _FullMoonMixCard(snapshot: s, history: history),
+
+            const SizedBox(height: 22),
+            Text(
+              strings.moonCycleTitle,
+              style: locale.getTextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textMuted,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _CycleStrip(snapshot: s, southern: moon.southernHemisphere, accent: accent),
 
             const SizedBox(height: 22),
             Text(
@@ -240,6 +256,126 @@ class MoonSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _CycleStrip extends StatefulWidget {
+  final MoonSnapshot snapshot;
+  final bool southern;
+  final Color accent;
+
+  const _CycleStrip({required this.snapshot, required this.southern, required this.accent});
+
+  @override
+  State<_CycleStrip> createState() => _CycleStripState();
+}
+
+class _CycleStripState extends State<_CycleStrip> {
+  static const double _itemWidth = 74;
+  ScrollController? _scroll;
+
+  @override
+  void dispose() {
+    _scroll?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.read<LocaleProvider>();
+    final strings = locale.strings;
+    final phases = MoonCalculator.cycleOf(widget.snapshot);
+    final current = phases.indexWhere((p) => p.name == widget.snapshot.name);
+
+    return LayoutBuilder(builder: (context, c) {
+      // Start with today's phase centred.
+      _scroll ??= ScrollController(
+        initialScrollOffset: (current * _itemWidth - (c.maxWidth - _itemWidth) / 2)
+            .clamp(0.0, (phases.length * _itemWidth - c.maxWidth).clamp(0.0, double.infinity)),
+      );
+      return SizedBox(
+        height: 112,
+        child: ListView.builder(
+          controller: _scroll,
+          scrollDirection: Axis.horizontal,
+          itemCount: phases.length,
+          itemExtent: _itemWidth,
+          itemBuilder: (_, i) {
+            final p = phases[i];
+            final isToday = i == current;
+            return Semantics(
+              selected: isToday,
+              label: '${strings.moonPhaseName(p.name)}, ${strings.shortDate(p.time.toLocal())}',
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+                decoration: BoxDecoration(
+                  color: isToday ? widget.accent.withValues(alpha: 0.10) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isToday ? widget.accent.withValues(alpha: 0.55) : Colors.transparent,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 12,
+                      child: isToday
+                          ? Text(
+                              strings.moonToday,
+                              style: locale.getTextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                color: widget.accent,
+                                letterSpacing: 1.2,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: p.name == MoonPhaseName.newMoon
+                          ? BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.borderGlow),
+                            )
+                          : null,
+                      child: MoonGlyph(
+                        size: 28,
+                        illumination: p.illumination,
+                        waxing: p.waxing,
+                        southernHemisphere: widget.southern,
+                        halo: false,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      strings.moonPhaseName(p.name),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        height: 1.15,
+                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                        color: isToday ? AppColors.textBright : AppColors.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      strings.shortDate(p.time.toLocal()),
+                      style: locale.getTextStyle(fontSize: 8.5, color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 }
 

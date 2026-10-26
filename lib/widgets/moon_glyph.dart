@@ -39,6 +39,44 @@ class MoonGlyph extends StatelessWidget {
   }
 }
 
+/// Slow pulse for the blood moon. Static when [active] is false or the system
+/// asks to reduce motion.
+class MoonBreathing extends StatefulWidget {
+  final bool active;
+  final Widget child;
+
+  const MoonBreathing({super.key, required this.active, required this.child});
+
+  @override
+  State<MoonBreathing> createState() => _MoonBreathingState();
+}
+
+class _MoonBreathingState extends State<MoonBreathing> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final animate = widget.active && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
+    if (!animate) {
+      if (_c.isAnimating) _c.stop();
+      return widget.child;
+    }
+    if (!_c.isAnimating) _c.repeat(reverse: true);
+    return ScaleTransition(
+      scale: Tween(begin: 1.0, end: 1.07)
+          .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)),
+      child: widget.child,
+    );
+  }
+}
+
 class MoonPainter extends CustomPainter {
   final double illumination;
   final bool waxing;

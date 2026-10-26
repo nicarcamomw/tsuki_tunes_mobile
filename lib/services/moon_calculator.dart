@@ -57,6 +57,18 @@ class LunarEclipse {
       !t.isAfter(umbralEnd);
 }
 
+/// One of the eight named phases within a lunar cycle. For the four principal
+/// phases [time] is the exact event; for the in-between ones it is the
+/// midpoint of the period.
+class CyclePhase {
+  final MoonPhaseName name;
+  final DateTime time;
+  final double illumination;
+  final bool waxing;
+
+  const CyclePhase(this.name, this.time, this.illumination, this.waxing);
+}
+
 class MoonSnapshot {
   final DateTime at;
   /// 0 = new, 1 = full.
@@ -368,6 +380,34 @@ class MoonCalculator {
       nextFull: next(MoonPhaseKind.fullMoon),
       upcoming: upcoming,
     );
+  }
+
+  /// The eight phases of the cycle [s] is in, from its new moon to the next.
+  static List<CyclePhase> cycleOf(MoonSnapshot s) {
+    var start = s.previousNew.time;
+    // In the hours before a new moon, that new moon starts the cycle shown.
+    if (s.name == MoonPhaseName.newMoon &&
+        s.nextNew.time.difference(s.at) < s.at.difference(s.previousNew.time)) {
+      start = s.nextNew.time;
+    }
+    final p = eventsBetween(
+            start.subtract(const Duration(hours: 1)), start.add(const Duration(days: 31)))
+        .take(5)
+        .map((e) => e.time)
+        .toList();
+    DateTime mid(DateTime a, DateTime b) =>
+        a.add(Duration(milliseconds: b.difference(a).inMilliseconds ~/ 2));
+
+    return [
+      CyclePhase(MoonPhaseName.newMoon, p[0], 0, true),
+      CyclePhase(MoonPhaseName.waxingCrescent, mid(p[0], p[1]), 0.25, true),
+      CyclePhase(MoonPhaseName.firstQuarter, p[1], 0.5, true),
+      CyclePhase(MoonPhaseName.waxingGibbous, mid(p[1], p[2]), 0.8, true),
+      CyclePhase(MoonPhaseName.fullMoon, p[2], 1, true),
+      CyclePhase(MoonPhaseName.waningGibbous, mid(p[2], p[3]), 0.8, false),
+      CyclePhase(MoonPhaseName.lastQuarter, p[3], 0.5, false),
+      CyclePhase(MoonPhaseName.waningCrescent, mid(p[3], p[4]), 0.25, false),
+    ];
   }
 
   // ── Lunar eclipses (Meeus ch. 54) ──

@@ -62,6 +62,23 @@ void main() {
       expect(quarter.illumination, closeTo(0.5, 0.03));
     });
 
+    test('the cycle has the eight phases in order and contains today', () {
+      for (final at in [
+        DateTime.utc(2026, 10, 26, 3), // full
+        DateTime.utc(2026, 11, 9, 6), // hours before a new moon
+        DateTime.utc(2026, 11, 13), // crescent
+      ]) {
+        final s = MoonCalculator.snapshot(at);
+        final cycle = MoonCalculator.cycleOf(s);
+        expect(cycle.map((p) => p.name), MoonPhaseName.values);
+        for (var i = 1; i < cycle.length; i++) {
+          expect(cycle[i].time.isAfter(cycle[i - 1].time), isTrue);
+        }
+        final today = cycle.firstWhere((p) => p.name == s.name);
+        expect(today.time.difference(at).abs(), lessThan(const Duration(days: 4)));
+      }
+    });
+
     test('waning after the full moon', () {
       final s = MoonCalculator.snapshot(DateTime.utc(2026, 10, 29));
       expect(s.name, MoonPhaseName.waningGibbous);

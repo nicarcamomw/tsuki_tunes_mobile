@@ -381,6 +381,18 @@ class AppStrings {
         AppLanguage.ja => days != null ? '満月まであと$days日 🌕' : '満月まであと$hours時間 🌕',
       };
 
+  String get moonCycleTitle => switch (language) {
+        AppLanguage.es => 'CICLO LUNAR · 8 FASES',
+        AppLanguage.en => 'LUNAR CYCLE · 8 PHASES',
+        AppLanguage.ja => '月の満ち欠け · 8相',
+      };
+
+  String get moonToday => switch (language) {
+        AppLanguage.es => 'HOY',
+        AppLanguage.en => 'TODAY',
+        AppLanguage.ja => '今日',
+      };
+
   String get moonUpcomingTitle => switch (language) {
         AppLanguage.es => 'PRÓXIMAS FASES',
         AppLanguage.en => 'UPCOMING PHASES',

@@ -40,12 +40,15 @@ class MoonButton extends StatelessWidget {
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
-              MoonGlyph(
-                size: size,
-                illumination: s.illumination,
-                waxing: s.waxing,
-                southernHemisphere: moon.southernHemisphere,
-                eclipse: moon.eclipseActive,
+              MoonBreathing(
+                active: moon.eclipseActive,
+                child: MoonGlyph(
+                  size: size,
+                  illumination: s.illumination,
+                  waxing: s.waxing,
+                  southernHemisphere: moon.southernHemisphere,
+                  eclipse: moon.eclipseActive,
+                ),
               ),
               if (s.isFullMoonWindow && !moon.eclipseActive)
                 Positioned(

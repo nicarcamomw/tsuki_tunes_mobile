@@ -8,27 +8,12 @@ import '../providers/moon_provider.dart';
 
 /// Wraps the whole app: a light layer that follows tonight's real Moon (dark
 /// and intimate at new moon, silver glow at full moon) and, during a real
-/// lunar eclipse, turns everything blood red with occasional glitches.
-class MoonAtmosphere extends StatefulWidget {
+/// lunar eclipse, blood-moon light with occasional glitches. Only light is
+/// added on top: the app keeps its own colors.
+class MoonAtmosphere extends StatelessWidget {
   final Widget child;
 
   const MoonAtmosphere({super.key, required this.child});
-
-  @override
-  State<MoonAtmosphere> createState() => _MoonAtmosphereState();
-}
-
-class _MoonAtmosphereState extends State<MoonAtmosphere> {
-  // Keeps the navigator's state when the eclipse filter is added or removed.
-  final GlobalKey _appKey = GlobalKey();
-
-  // Luminance pushed into the red channel; green and blue mostly crushed.
-  static const List<double> _bloodMatrix = [
-    0.80, 0.75, 0.30, 0, 14,
-    0.20, 0.17, 0.06, 0, 0,
-    0.13, 0.11, 0.04, 0, 0,
-    0, 0, 0, 1, 0,
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +21,10 @@ class _MoonAtmosphereState extends State<MoonAtmosphere> {
     final eclipse = moon.eclipseActive;
     final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
-    Widget app = KeyedSubtree(key: _appKey, child: widget.child);
-    if (eclipse) {
-      app = ColorFiltered(colorFilter: const ColorFilter.matrix(_bloodMatrix), child: app);
-    }
-
     return Stack(
       fit: StackFit.expand,
       children: [
-        app,
+        child,
         if (moon.atmosphereEnabled && !eclipse)
           IgnorePointer(
             child: RepaintBoundary(
@@ -55,13 +35,33 @@ class _MoonAtmosphereState extends State<MoonAtmosphere> {
           ),
         if (eclipse) ...[
           const IgnorePointer(
-            child: RepaintBoundary(child: CustomPaint(painter: _EclipseVeilPainter())),
+            child: RepaintBoundary(child: CustomPaint(painter: BloodMoonLightPainter())),
           ),
           if (!reduceMotion) const IgnorePointer(child: _GlitchBursts()),
         ],
       ],
     );
   }
+}
+
+/// Edge darkening shaped like the screen. A plain RadialGradient sizes its
+/// radius from the shortest side, which on a tall phone would darken the
+/// whole top and bottom, not just the edges.
+void paintScreenVignette(Canvas canvas, Size size, Color color, {double start = 0.55}) {
+  if (size.isEmpty) return;
+  canvas.save();
+  canvas.scale(1, size.height / size.width);
+  final square = Rect.fromLTWH(0, 0, size.width, size.width);
+  canvas.drawRect(
+    square,
+    Paint()
+      ..shader = RadialGradient(
+        radius: 0.75,
+        colors: [color.withValues(alpha: 0), color.withValues(alpha: 0), color],
+        stops: [0.0, start, 1.0],
+      ).createShader(square),
+  );
+  canvas.restore();
 }
 
 /// Continuous with illumination, so every night looks slightly different.
@@ -82,19 +82,8 @@ class MoonlightPainter extends CustomPainter {
       Paint()..color = const Color(0xFF000000).withValues(alpha: 0.10 * pow(dark, 1.5)),
     );
 
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = RadialGradient(
-          radius: 1.25,
-          colors: [
-            const Color(0x00000000),
-            const Color(0x00000000),
-            const Color(0xFF000000).withValues(alpha: 0.08 + 0.22 * dark),
-          ],
-          stops: const [0.0, 0.55, 1.0],
-        ).createShader(rect),
-    );
+    paintScreenVignette(
+        canvas, size, const Color(0xFF000000).withValues(alpha: 0.08 + 0.22 * dark));
 
     // Full moon: silver light falling from the top corner where the moon sits.
     if (k > 0.02) {
@@ -133,29 +122,49 @@ class MoonlightPainter extends CustomPainter {
       (old.illumination * 200).round() != (illumination * 200).round();
 }
 
-class _EclipseVeilPainter extends CustomPainter {
-  const _EclipseVeilPainter();
+/// The light of a blood moon: a crimson glow falling from the moon's corner,
+/// a faint warm dusk over everything and deep red at the edges.
+class BloodMoonLightPainter extends CustomPainter {
+  const BloodMoonLightPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
+
+    canvas.drawRect(rect, Paint()..color = const Color(0xFF2A0306).withValues(alpha: 0.16));
+
     canvas.drawRect(
       rect,
       Paint()
-        ..shader = const RadialGradient(
-          radius: 1.2,
-          colors: [Color(0x00000000), Color(0x22300000), Color(0x995A0000)],
-          stops: [0.0, 0.55, 1.0],
+        ..shader = RadialGradient(
+          center: const Alignment(0.8, -1.1),
+          radius: 1.35,
+          colors: [
+            const Color(0xFFFF3B2A).withValues(alpha: 0.26),
+            const Color(0xFFC81E1E).withValues(alpha: 0.10),
+            const Color(0x00C81E1E),
+          ],
+          stops: const [0.0, 0.4, 1.0],
         ).createShader(rect),
     );
-    final scan = Paint()..color = const Color(0x0F000000);
-    for (var y = 0.0; y < size.height; y += 3) {
-      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1), scan);
-    }
+
+    paintScreenVignette(canvas, size, const Color(0xFF3A0006).withValues(alpha: 0.55),
+        start: 0.5);
+
+    // A thin warm rim along the top, like light catching the glass.
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height * 0.18),
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [const Color(0xFFFF4A2A).withValues(alpha: 0.10), const Color(0x00FF4A2A)],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.18)),
+    );
   }
 
   @override
-  bool shouldRepaint(_EclipseVeilPainter old) => false;
+  bool shouldRepaint(BloodMoonLightPainter old) => false;
 }
 
 /// Short, thin glitch bands every few seconds. Kept small and dim so they
@@ -181,13 +190,13 @@ class _GlitchBurstsState extends State<_GlitchBursts> {
   }
 
   void _schedule() {
-    _next = Timer(Duration(milliseconds: 2200 + _rng.nextInt(3800)), _burst);
+    _next = Timer(Duration(milliseconds: 4500 + _rng.nextInt(5500)), _burst);
   }
 
   void _burst() {
     if (!mounted) return;
-    var frames = 3 + _rng.nextInt(3);
-    _showKanji = _rng.nextDouble() < 0.35;
+    var frames = 2 + _rng.nextInt(3);
+    _showKanji = _rng.nextDouble() < 0.3;
     void step() {
       if (!mounted) return;
       if (frames-- <= 0) {
@@ -199,12 +208,12 @@ class _GlitchBurstsState extends State<_GlitchBursts> {
         return;
       }
       setState(() {
-        _bands = List.generate(2 + _rng.nextInt(4), (_) => _Band(
+        _bands = List.generate(1 + _rng.nextInt(3), (_) => _Band(
               y: _rng.nextDouble(),
-              height: 2 + _rng.nextDouble() * 10,
-              shift: (_rng.nextDouble() - 0.5) * 24,
-              cyan: _rng.nextBool(),
-              alpha: 0.12 + _rng.nextDouble() * 0.18,
+              height: 1.5 + _rng.nextDouble() * 6,
+              shift: (_rng.nextDouble() - 0.5) * 18,
+              cyan: _rng.nextDouble() < 0.3,
+              alpha: 0.08 + _rng.nextDouble() * 0.12,
             ));
       });
       _frame = Timer(const Duration(milliseconds: 120), step);
@@ -273,7 +282,7 @@ class _GlitchPainter extends CustomPainter {
           style: TextStyle(
             fontSize: size.width * 0.38,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFFFF2A1A).withValues(alpha: 0.10),
+            color: const Color(0xFFFF2A1A).withValues(alpha: 0.07),
           ),
         ),
         textDirection: TextDirection.ltr,

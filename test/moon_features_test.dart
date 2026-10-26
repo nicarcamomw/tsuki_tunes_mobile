@@ -115,14 +115,17 @@ void main() {
     await tester.pump();
     expect(find.text('1'), findsOneWidget);
 
+    final bloodLight = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is BloodMoonLightPainter);
+
     moon.previewEclipse();
     await tester.pump();
-    expect(find.byType(ColorFiltered), findsOneWidget);
+    expect(bloodLight, findsOneWidget);
     expect(find.text('1'), findsOneWidget);
 
     await tester.pump(MoonProvider.eclipsePreviewLength + const Duration(seconds: 1));
     await tester.pump();
-    expect(find.byType(ColorFiltered), findsNothing);
+    expect(bloodLight, findsNothing);
     expect(find.text('1'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
