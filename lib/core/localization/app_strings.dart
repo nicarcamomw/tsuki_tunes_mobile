@@ -2831,6 +2831,183 @@ class AppStrings {
         AppLanguage.ja => 'フォロー中のアーティストのリリースレーダー',
       };
 
+  // --- Song Radio ---
+  String get radioStart => switch (language) {
+        AppLanguage.es => 'Iniciar radio',
+        AppLanguage.en => 'Start radio',
+        AppLanguage.ja => 'ラジオを開始',
+      };
+
+  String radioStarted(String title) => switch (language) {
+        AppLanguage.es => 'Radio de «$title» en marcha',
+        AppLanguage.en => '“$title” radio is on',
+        AppLanguage.ja => '「$title」のラジオを開始しました',
+      };
+
+  String get radioNoResults => switch (language) {
+        AppLanguage.es => 'No encontramos canciones parecidas. Prueba con otra.',
+        AppLanguage.en => "Couldn't find similar songs. Try another one.",
+        AppLanguage.ja => '似た曲が見つかりませんでした。別の曲でお試しください。',
+      };
+
+  String get radioLabel => switch (language) {
+        AppLanguage.es => 'RADIO',
+        AppLanguage.en => 'RADIO',
+        AppLanguage.ja => 'ラジオ',
+      };
+
+  String radioBasedOn(String title) => switch (language) {
+        AppLanguage.es => 'Basada en «$title»',
+        AppLanguage.en => 'Based on “$title”',
+        AppLanguage.ja => '「$title」から',
+      };
+
+  String radioReasonLastFm(String title) => switch (language) {
+        AppLanguage.es => 'Parecida a «$title»',
+        AppLanguage.en => 'Similar to “$title”',
+        AppLanguage.ja => '「$title」に似た曲',
+      };
+
+  String radioReasonDeezer(String artist) => switch (language) {
+        AppLanguage.es => 'Radio de $artist',
+        AppLanguage.en => '$artist radio',
+        AppLanguage.ja => '$artistのラジオ',
+      };
+
+  String get radioLoadingMore => switch (language) {
+        AppLanguage.es => 'Buscando más canciones...',
+        AppLanguage.en => 'Finding more songs...',
+        AppLanguage.ja => '曲を探しています...',
+      };
+
+  String get radioInfinite => switch (language) {
+        AppLanguage.es => 'La radio sigue: siempre habrá otra canción',
+        AppLanguage.en => 'The radio keeps going: there’s always another song',
+        AppLanguage.ja => 'ラジオは続きます。次の曲が必ずあります',
+      };
+
+  String get radioOffline => switch (language) {
+        AppLanguage.es => 'Sin conexión: la radio seguirá cuando vuelva la red',
+        AppLanguage.en => 'Offline: the radio resumes when you reconnect',
+        AppLanguage.ja => 'オフライン：接続が戻るとラジオが再開します',
+      };
+
+  String get radioExhausted => switch (language) {
+        AppLanguage.es => 'Se acabaron las ideas por aquí. Prueba «Más como esta» o cambia el estilo.',
+        AppLanguage.en => 'Ran out of ideas here. Try “More like this” or change the style.',
+        AppLanguage.ja => 'ここで候補が尽きました。「似た曲をもっと」かスタイル変更をお試しください。',
+      };
+
+  String get radioModeTitle => switch (language) {
+        AppLanguage.es => 'ESTILO DE RADIO',
+        AppLanguage.en => 'RADIO STYLE',
+        AppLanguage.ja => 'ラジオのスタイル',
+      };
+
+  String get radioModeFamiliar => switch (language) {
+        AppLanguage.es => 'Fiel',
+        AppLanguage.en => 'Familiar',
+        AppLanguage.ja => '定番',
+      };
+
+  String get radioModeFamiliarDesc => switch (language) {
+        AppLanguage.es => 'Se queda cerca de la canción original.',
+        AppLanguage.en => 'Stays close to the original song.',
+        AppLanguage.ja => '元の曲の近くにとどまります。',
+      };
+
+  String get radioModeBalanced => switch (language) {
+        AppLanguage.es => 'Equilibrada',
+        AppLanguage.en => 'Balanced',
+        AppLanguage.ja => 'バランス',
+      };
+
+  String get radioModeBalancedDesc => switch (language) {
+        AppLanguage.es => 'Mezcla canciones parecidas con descubrimientos.',
+        AppLanguage.en => 'Mixes close matches with discoveries.',
+        AppLanguage.ja => '似た曲と新しい発見をミックスします。',
+      };
+
+  String get radioModeAdventurous => switch (language) {
+        AppLanguage.es => 'Aventurera',
+        AppLanguage.en => 'Adventurous',
+        AppLanguage.ja => '冒険',
+      };
+
+  String get radioModeAdventurousDesc => switch (language) {
+        AppLanguage.es => 'Se aleja canción a canción y descubre artistas nuevos.',
+        AppLanguage.en => 'Drifts song by song toward new artists.',
+        AppLanguage.ja => '曲ごとに離れていき、新しいアーティストを発見します。',
+      };
+
+  String get radioMoreLikeThis => switch (language) {
+        AppLanguage.es => 'Más como esta',
+        AppLanguage.en => 'More like this',
+        AppLanguage.ja => '似た曲をもっと',
+      };
+
+  String get radioLessLikeThis => switch (language) {
+        AppLanguage.es => 'Menos de esto',
+        AppLanguage.en => 'Less like this',
+        AppLanguage.ja => 'これは控えめに',
+      };
+
+  String get radioMoreSnack => switch (language) {
+        AppLanguage.es => 'La radio irá más por este lado',
+        AppLanguage.en => 'The radio will lean this way',
+        AppLanguage.ja => 'この方向の曲を増やします',
+      };
+
+  String radioLessSnack(String artist) => switch (language) {
+        AppLanguage.es => 'No pondremos más $artist en esta radio',
+        AppLanguage.en => "We won't play $artist on this radio again",
+        AppLanguage.ja => 'このラジオでは$artistを再生しません',
+      };
+
+  String get radioStop => switch (language) {
+        AppLanguage.es => 'Detener radio',
+        AppLanguage.en => 'Stop radio',
+        AppLanguage.ja => 'ラジオを停止',
+      };
+
+  String get radioStopped => switch (language) {
+        AppLanguage.es => 'Radio detenida. La cola se queda como está.',
+        AppLanguage.en => 'Radio stopped. Your queue stays as it is.',
+        AppLanguage.ja => 'ラジオを停止しました。キューはそのままです。',
+      };
+
+  String get radioSourcesBoth => switch (language) {
+        AppLanguage.es => 'Fuentes: Last.fm + Deezer',
+        AppLanguage.en => 'Sources: Last.fm + Deezer',
+        AppLanguage.ja => 'ソース：Last.fm + Deezer',
+      };
+
+  String get radioSourcesDeezerOnly => switch (language) {
+        AppLanguage.es => 'Fuente: Deezer (Last.fm no está configurado)',
+        AppLanguage.en => 'Source: Deezer (Last.fm is not configured)',
+        AppLanguage.ja => 'ソース：Deezer（Last.fm未設定）',
+      };
+
+  String get radioLearnHint => switch (language) {
+        AppLanguage.es =>
+          'Aprende de ti: si saltas un artista dos veces deja de ponerlo, y lo que escuchas entero guía lo que viene.',
+        AppLanguage.en =>
+          'It learns from you: skip an artist twice and it stops playing them; songs you finish steer what comes next.',
+        AppLanguage.ja => 'あなたから学習します。同じアーティストを2回スキップすると再生しなくなり、最後まで聴いた曲が次の選曲を導きます。',
+      };
+
+  String get radioTune => switch (language) {
+        AppLanguage.es => 'AJUSTAR',
+        AppLanguage.en => 'TUNE',
+        AppLanguage.ja => '調整',
+      };
+
+  String get a11yRadio => switch (language) {
+        AppLanguage.es => 'Radio de la canción',
+        AppLanguage.en => 'Song radio',
+        AppLanguage.ja => '曲のラジオ',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',

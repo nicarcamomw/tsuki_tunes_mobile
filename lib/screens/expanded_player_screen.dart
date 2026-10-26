@@ -18,6 +18,7 @@ import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
 import '../services/translation_service.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/tap_scale.dart';
 import 'album_detail_screen.dart';
@@ -149,6 +150,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
     final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
+    final radioActive = context.select<AudioProvider, bool>((a) => a.isRadioActive);
     final playbackError =
         context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
 
@@ -270,6 +272,28 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            IconButton(
+                              tooltip: radioActive
+                                  ? '${strings.a11yRadio}: ${strings.radioTune}'
+                                  : strings.radioStart,
+                              icon: Icon(
+                                Icons.sensors,
+                                color: radioActive
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary,
+                              ),
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                if (radioActive) {
+                                  showRadioControlSheet(context);
+                                } else {
+                                  startRadioWithFeedback(context, track,
+                                      bottomMargin:
+                                          MediaQuery.paddingOf(context).bottom +
+                                              12);
+                                }
+                              },
+                            ),
                             IconButton(
                               tooltip: strings.a11yLyrics,
                               icon: Icon(
@@ -826,10 +850,146 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   }
 
   Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
+    // The queue list is mutated in place (radio refills, reorders), so
+    // rebuild on a fingerprint of it rather than on identity.
+    return Expanded(
+      child: Selector<AudioProvider, (int, int, bool, RadioStatus, RadioMode)>(
+        selector: (_, a) => (
+          Object.hashAll(a.queue.map((t) => t.id)),
+          a.currentIndex,
+          a.isRadioActive,
+          a.radioStatus,
+          a.radioMode,
+        ),
+        builder: (context, _, __) => _buildQueuePanel(audio, locale),
+      ),
+    );
+  }
+
+  Widget _buildRadioBanner(AudioProvider audio, LocaleProvider locale) {
+    final strings = locale.strings;
+    final seed = audio.radioSeed;
+    if (seed == null) return const SizedBox.shrink();
+    final modeLabel = switch (audio.radioMode) {
+      RadioMode.familiar => strings.radioModeFamiliar,
+      RadioMode.balanced => strings.radioModeBalanced,
+      RadioMode.adventurous => strings.radioModeAdventurous,
+    };
+    return Semantics(
+      button: true,
+      label: '${strings.a11yRadio}. ${strings.radioBasedOn(seed.title)}',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          showRadioControlSheet(context);
+        },
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              AppColors.accent.withValues(alpha: 0.14),
+              AppColors.neonPurple.withValues(alpha: 0.06),
+            ]),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.all_inclusive, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${strings.radioLabel} · ${modeLabel.toUpperCase()}',
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                    Text(
+                      strings.radioBasedOn(seed.title),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textBright,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border:
+                      Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  strings.radioTune,
+                  style: locale.getTextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioFooter(AudioProvider audio, LocaleProvider locale) {
+    final status = audio.radioStatus;
+    final warn =
+        status == RadioStatus.offline || status == RadioStatus.exhausted;
+    final color = warn ? AppColors.warning : AppColors.textMuted;
+    return Padding(
+      key: const ValueKey('radio_footer'),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Semantics(
+        liveRegion: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (status == RadioStatus.loading)
+              const SizedBox.square(
+                dimension: 12,
+                child: CircularProgressIndicator(
+                    strokeWidth: 1.5, color: AppColors.accent),
+              )
+            else
+              Icon(warn ? Icons.info_outline : Icons.all_inclusive,
+                  size: 14, color: color),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                radioStatusLabel(locale.strings, status),
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQueuePanel(AudioProvider audio, LocaleProvider locale) {
     final queue = audio.queue;
     final strings = locale.strings;
-    return Expanded(
-      child: Container(
+    return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.bgMid.withValues(alpha: 0.85),
@@ -969,6 +1129,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            if (audio.isRadioActive) _buildRadioBanner(audio, locale),
             if (queue.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1013,6 +1174,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     )
                   : ReorderableListView.builder(
                       buildDefaultDragHandles: false,
+                      footer: audio.isRadioActive
+                          ? _buildRadioFooter(audio, locale)
+                          : null,
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 8),
                       itemCount: queue.length,
@@ -1152,6 +1316,25 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
+                                        if (radioReasonLabel(strings,
+                                                audio.radioReasonFor(t.id))
+                                            case final why?)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 2),
+                                            child: Text(
+                                              why,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: locale.getTextStyle(
+                                                color: AppColors.neonCyan
+                                                    .withValues(alpha: 0.75),
+                                                fontSize: 8.5,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -1219,8 +1402,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _loadLyricsForTrack(Track track) async {
