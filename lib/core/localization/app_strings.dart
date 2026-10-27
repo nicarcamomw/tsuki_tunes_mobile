@@ -2091,6 +2091,1229 @@ class AppStrings {
         AppLanguage.ja => 'プレイリストを選択',
       };
 
+  // --- Lyrics Translation ---
+  String get translateButton => switch (language) {
+        AppLanguage.es => '訳',
+        AppLanguage.en => '訳',
+        AppLanguage.ja => '訳',
+      };
+
+  String get translateTooltip => switch (language) {
+        AppLanguage.es => 'Traducir letras',
+        AppLanguage.en => 'Translate lyrics',
+        AppLanguage.ja => '歌詞を翻訳',
+      };
+
+  String get translationHide => switch (language) {
+        AppLanguage.es => 'Ocultar traducción',
+        AppLanguage.en => 'Hide translation',
+        AppLanguage.ja => '翻訳を非表示',
+      };
+
+  String get translating => switch (language) {
+        AppLanguage.es => '// TRADUCIENDO...',
+        AppLanguage.en => '// TRANSLATING...',
+        AppLanguage.ja => '// 翻訳中...',
+      };
+
+  String get translationError => switch (language) {
+        AppLanguage.es => 'Error al traducir. Reintenta.',
+        AppLanguage.en => 'Translation failed. Retry.',
+        AppLanguage.ja => '翻訳に失敗しました。再試行してください。',
+      };
+
+  String get downloadingModel => switch (language) {
+        AppLanguage.es => '// DESCARGANDO MODELO DE IDIOMA...',
+        AppLanguage.en => '// DOWNLOADING LANGUAGE MODEL...',
+        AppLanguage.ja => '// 言語モデルをダウンロード中...',
+      };
+
+  String get downloadModelTitle => switch (language) {
+        AppLanguage.es => 'Descargar modelo de idioma',
+        AppLanguage.en => 'Download language model',
+        AppLanguage.ja => '言語モデルをダウンロード',
+      };
+
+  String downloadModelDesc(String size) => switch (language) {
+        AppLanguage.es => 'Se necesita descargar ~$size MB de datos. Solo se hace una vez y después funciona sin internet.',
+        AppLanguage.en => 'Need to download ~$size MB of data. This only happens once, then works offline.',
+        AppLanguage.ja => '約${size}MBのデータダウンロードが必要です。一度だけで、以降はオフラインで動作します。',
+      };
+
+  String get downloadModelConfirm => switch (language) {
+        AppLanguage.es => 'DESCARGAR',
+        AppLanguage.en => 'DOWNLOAD',
+        AppLanguage.ja => 'ダウンロード',
+      };
+
+  String get translatedTag => switch (language) {
+        AppLanguage.es => 'TRADUCIDO OFFLINE',
+        AppLanguage.en => 'TRANSLATED OFFLINE',
+        AppLanguage.ja => 'オフライン翻訳済み',
+      };
+
+  String get a11yTranslate => switch (language) {
+        AppLanguage.es => 'Traducir letras',
+        AppLanguage.en => 'Translate lyrics',
+        AppLanguage.ja => '歌詞を翻訳',
+      };
+
+  String get a11yHideTranslation => switch (language) {
+        AppLanguage.es => 'Ocultar traducción',
+        AppLanguage.en => 'Hide translation',
+        AppLanguage.ja => '翻訳を非表示',
+      };
+
+  // --- Lyrics Search ---
+  String get tabByLyrics => switch (language) {
+        AppLanguage.es => 'Por Letra',
+        AppLanguage.en => 'By Lyrics',
+        AppLanguage.ja => '歌詞検索',
+      };
+
+  String get lyricsSearchHint => switch (language) {
+        AppLanguage.es => 'Escribe un fragmento de letra...',
+        AppLanguage.en => 'Type a lyrics fragment...',
+        AppLanguage.ja => '歌詞の一部を入力...',
+      };
+
+  String get lyricsSearchEmpty => switch (language) {
+        AppLanguage.es => 'BUSCA POR FRAGMENTO DE LETRA',
+        AppLanguage.en => 'SEARCH BY LYRICS FRAGMENT',
+        AppLanguage.ja => '歌詞の一部で検索',
+      };
+
+  String get lyricsSearchEmptySubtitle => switch (language) {
+        AppLanguage.es => '"No me acuerdo del nombre pero dice..."',
+        AppLanguage.en => '"I don\'t remember the name but it goes..."',
+        AppLanguage.ja => '「曲名は忘れたけど歌詞は...」',
+      };
+
+  String lyricsSearchResults(int count) => switch (language) {
+        AppLanguage.es => '$count resultados por letra',
+        AppLanguage.en => '$count lyrics results',
+        AppLanguage.ja => '歌詞検索 $count 件',
+      };
+
+  String get lyricsSearchError => switch (language) {
+        AppLanguage.es => 'Error al buscar por letra. Revisa tu conexión.',
+        AppLanguage.en => 'Lyrics search failed. Check your connection.',
+        AppLanguage.ja => '歌詞検索に失敗しました。接続を確認してください。',
+      };
+
+  String get lyricsSearchNoResults => switch (language) {
+        AppLanguage.es => 'No se encontraron canciones con esa letra',
+        AppLanguage.en => 'No songs found with those lyrics',
+        AppLanguage.ja => 'その歌詞に一致する曲が見つかりません',
+      };
+
+  String get a11yLyricsSearch => switch (language) {
+        AppLanguage.es => 'Buscar por letra',
+        AppLanguage.en => 'Search by lyrics',
+        AppLanguage.ja => '歌詞で検索',
+      };
+
+  // --- Tsuki Wrapped ---
+  String get wrappedTitle => switch (language) {
+        AppLanguage.es => 'TSUKI WRAPPED',
+        AppLanguage.en => 'TSUKI WRAPPED',
+        AppLanguage.ja => 'TSUKI WRAPPED',
+      };
+
+  String wrappedYear(int year) => switch (language) {
+        AppLanguage.es => 'TU AÑO $year EN MÚSICA',
+        AppLanguage.en => 'YOUR $year IN MUSIC',
+        AppLanguage.ja => '$year年の音楽まとめ',
+      };
+
+  String get wrappedIntroSlide => switch (language) {
+        AppLanguage.es => '¿Preparado para revivir tu año?',
+        AppLanguage.en => 'Ready to relive your year?',
+        AppLanguage.ja => '今年を振り返る準備はいい？',
+      };
+
+  String get wrappedTopTracks => switch (language) {
+        AppLanguage.es => 'TUS CANCIONES FAVORITAS',
+        AppLanguage.en => 'YOUR TOP TRACKS',
+        AppLanguage.ja => 'あなたのトップ楽曲',
+      };
+
+  String get wrappedTopArtists => switch (language) {
+        AppLanguage.es => 'TUS ARTISTAS FAVORITOS',
+        AppLanguage.en => 'YOUR TOP ARTISTS',
+        AppLanguage.ja => 'あなたのトップアーティスト',
+      };
+
+  String get wrappedListeningTime => switch (language) {
+        AppLanguage.es => 'TIEMPO DE ESCUCHA',
+        AppLanguage.en => 'LISTENING TIME',
+        AppLanguage.ja => '再生時間',
+      };
+
+  String wrappedMinutes(int minutes) => switch (language) {
+        AppLanguage.es => '$minutes minutos',
+        AppLanguage.en => '$minutes minutes',
+        AppLanguage.ja => '$minutes 分',
+      };
+
+  String wrappedHours(int hours) => switch (language) {
+        AppLanguage.es => '$hours horas',
+        AppLanguage.en => '$hours hours',
+        AppLanguage.ja => '$hours 時間',
+      };
+
+  String wrappedTotalTracks(int count) => switch (language) {
+        AppLanguage.es => '$count reproducciones',
+        AppLanguage.en => '$count plays',
+        AppLanguage.ja => '$count 回再生',
+      };
+
+  String wrappedUniqueCount(int tracks, int artists) => switch (language) {
+        AppLanguage.es => '$tracks canciones únicas · $artists artistas',
+        AppLanguage.en => '$tracks unique tracks · $artists artists',
+        AppLanguage.ja => '$tracks 曲 · $artists アーティスト',
+      };
+
+  String get wrappedFavoriteHour => switch (language) {
+        AppLanguage.es => 'TU HORA FAVORITA',
+        AppLanguage.en => 'YOUR FAVORITE HOUR',
+        AppLanguage.ja => 'お気に入りの時間帯',
+      };
+
+  String wrappedHourLabel(int hour) {
+    final amPm = hour >= 12 ? 'PM' : 'AM';
+    final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return switch (language) {
+      AppLanguage.es => '$h12:00 $amPm',
+      AppLanguage.en => '$h12:00 $amPm',
+      AppLanguage.ja => '$hour:00',
+    };
+  }
+
+  String get wrappedFunFacts => switch (language) {
+        AppLanguage.es => 'DATOS CURIOSOS',
+        AppLanguage.en => 'FUN FACTS',
+        AppLanguage.ja => 'おもしろデータ',
+      };
+
+  String wrappedFactLateNight(String title, String artist) => switch (language) {
+        AppLanguage.es => 'Tu canción del 3 AM fue "$title" de $artist 🌙',
+        AppLanguage.en => 'Your 3 AM song was "$title" by $artist 🌙',
+        AppLanguage.ja => '深夜3時の曲は $artist の「$title」🌙',
+      };
+
+  String wrappedFactMarathon(String date, int count) => switch (language) {
+        AppLanguage.es => 'Tu día maratón: $count canciones el $date 🔥',
+        AppLanguage.en => 'Your marathon day: $count tracks on $date 🔥',
+        AppLanguage.ja => 'マラソンデー: $dateに$count曲再生 🔥',
+      };
+
+  String wrappedFactLoyal(String artist, int count) => switch (language) {
+        AppLanguage.es => 'Fan incondicional de $artist con $count reproducciones 💎',
+        AppLanguage.en => 'Devoted fan of $artist with $count plays 💎',
+        AppLanguage.ja => '$artist の熱狂的ファン — $count回再生 💎',
+      };
+
+  String wrappedFactDawn(int count) => switch (language) {
+        AppLanguage.es => 'Escuchaste $count canciones al amanecer (5-7 AM) 🌅',
+        AppLanguage.en => 'You listened to $count tracks at dawn (5-7 AM) 🌅',
+        AppLanguage.ja => '夜明け(5〜7時)に$count曲再生 🌅',
+      };
+
+  String wrappedFactOneHit(String title, String artist, int count) => switch (language) {
+        AppLanguage.es => '"$title" de $artist en repeat: $count veces 🔄',
+        AppLanguage.en => '"$title" by $artist on repeat: $count times 🔄',
+        AppLanguage.ja => '$artist の「$title」を$count回リピート 🔄',
+      };
+
+  String wrappedFactNightOwl(int pct) => switch (language) {
+        AppLanguage.es => 'El $pct% de tu música fue de noche. ¿Dormiste bien? 😴',
+        AppLanguage.en => '$pct% of your music was at night. Did you sleep well? 😴',
+        AppLanguage.ja => '音楽の$pct%が夜間再生。ちゃんと寝てる？ 😴',
+      };
+
+  String wrappedFactEarlyBird(int pct) => switch (language) {
+        AppLanguage.es => 'El $pct% de tu música fue tempranito. ¡Madrugador! 🐦',
+        AppLanguage.en => '$pct% of your music was early morning. Early bird! 🐦',
+        AppLanguage.ja => '音楽の$pct%が早朝再生。早起きさん！ 🐦',
+      };
+
+  String wrappedFactWeekend(int weekendAvg, int weekdayAvg) => switch (language) {
+        AppLanguage.es => 'Fin de semana pro: ~$weekendAvg canciones/día vs ~$weekdayAvg entre semana 🎉',
+        AppLanguage.en => 'Weekend warrior: ~$weekendAvg tracks/day vs ~$weekdayAvg on weekdays 🎉',
+        AppLanguage.ja => '週末の音楽好き: 1日平均$weekendAvg曲 vs 平日$weekdayAvg曲 🎉',
+      };
+
+  String wrappedPlays(int count) => switch (language) {
+        AppLanguage.es => '$count reproducciones',
+        AppLanguage.en => '$count plays',
+        AppLanguage.ja => '$count 回再生',
+      };
+
+  String get wrappedOutro => switch (language) {
+        AppLanguage.es => 'NOS VEMOS EL PRÓXIMO AÑO',
+        AppLanguage.en => 'SEE YOU NEXT YEAR',
+        AppLanguage.ja => 'また来年',
+      };
+
+  String get wrappedOutroSubtitle => switch (language) {
+        AppLanguage.es => 'Sigue escuchando. El sistema recuerda todo.',
+        AppLanguage.en => 'Keep listening. The system remembers everything.',
+        AppLanguage.ja => '聴き続けよう。システムはすべて記録している。',
+      };
+
+  String get wrappedShare => switch (language) {
+        AppLanguage.es => 'COMPARTIR',
+        AppLanguage.en => 'SHARE',
+        AppLanguage.ja => 'シェア',
+      };
+
+  String get wrappedNoData => switch (language) {
+        AppLanguage.es => 'No hay datos suficientes para este año',
+        AppLanguage.en => 'Not enough data for this year',
+        AppLanguage.ja => 'この年のデータが不十分です',
+      };
+
+  String get wrappedNoDataSubtitle => switch (language) {
+        AppLanguage.es => 'Escucha más canciones para desbloquear tu Wrapped',
+        AppLanguage.en => 'Listen to more tracks to unlock your Wrapped',
+        AppLanguage.ja => 'もっと曲を聴いて Wrapped をアンロックしよう',
+      };
+
+  String get wrappedViewYourWrapped => switch (language) {
+        AppLanguage.es => 'VER TU WRAPPED',
+        AppLanguage.en => 'VIEW YOUR WRAPPED',
+        AppLanguage.ja => 'WRAPPED を見る',
+      };
+
+  String get a11yWrapped => switch (language) {
+        AppLanguage.es => 'Tsuki Wrapped resumen anual',
+        AppLanguage.en => 'Tsuki Wrapped annual summary',
+        AppLanguage.ja => 'Tsuki Wrapped 年間まとめ',
+      };
+
+  String get a11yShareSlide => switch (language) {
+        AppLanguage.es => 'Compartir esta diapositiva',
+        AppLanguage.en => 'Share this slide',
+        AppLanguage.ja => 'このスライドをシェア',
+      };
+
+  String get a11yNextSlide => switch (language) {
+        AppLanguage.es => 'Siguiente diapositiva',
+        AppLanguage.en => 'Next slide',
+        AppLanguage.ja => '次のスライド',
+      };
+
+  String get a11yPreviousSlide => switch (language) {
+        AppLanguage.es => 'Diapositiva anterior',
+        AppLanguage.en => 'Previous slide',
+        AppLanguage.ja => '前のスライド',
+      };
+
+  // --- Listening Clock ---
+  String get clockTitle => switch (language) {
+        AppLanguage.es => 'RELOJ DE ESCUCHA',
+        AppLanguage.en => 'LISTENING CLOCK',
+        AppLanguage.ja => 'リスニングクロック',
+      };
+
+  String get clockRadar => switch (language) {
+        AppLanguage.es => 'RADAR DE ACTIVIDAD',
+        AppLanguage.en => 'ACTIVITY RADAR',
+        AppLanguage.ja => 'アクティビティレーダー',
+      };
+
+  String get clockDailyActivity => switch (language) {
+        AppLanguage.es => 'ACTIVIDAD DIARIA',
+        AppLanguage.en => 'DAILY ACTIVITY',
+        AppLanguage.ja => 'デイリーアクティビティ',
+      };
+
+  String clockPeakHour(String hour, int count) => switch (language) {
+        AppLanguage.es => 'Hora pico: $hour — $count reproducciones',
+        AppLanguage.en => 'Peak hour: $hour — $count plays',
+        AppLanguage.ja => 'ピークアワー: $hour — $count回再生',
+      };
+
+  String clockTotalYear(int count) => switch (language) {
+        AppLanguage.es => '◈ $count REPRODUCCIONES ESTE AÑO // CLOCK.SYS',
+        AppLanguage.en => '◈ $count PLAYS THIS YEAR // CLOCK.SYS',
+        AppLanguage.ja => '◈ 今年$count回再生 // CLOCK.SYS',
+      };
+
+  String get clockNoData => switch (language) {
+        AppLanguage.es => 'Sin datos de escucha',
+        AppLanguage.en => 'No listening data',
+        AppLanguage.ja => 'リスニングデータなし',
+      };
+
+  String get clockNoDataSubtitle => switch (language) {
+        AppLanguage.es => 'Escucha música para activar el radar',
+        AppLanguage.en => 'Listen to music to activate the radar',
+        AppLanguage.ja => '音楽を聴いてレーダーを起動しよう',
+      };
+
+  String get clockViewClock => switch (language) {
+        AppLanguage.es => 'VER RADAR',
+        AppLanguage.en => 'VIEW RADAR',
+        AppLanguage.ja => 'レーダーを見る',
+      };
+
+  String get a11yClock => switch (language) {
+        AppLanguage.es => 'Reloj de escucha y radar de actividad',
+        AppLanguage.en => 'Listening clock and activity radar',
+        AppLanguage.ja => 'リスニングクロックとアクティビティレーダー',
+      };
+
+  // --- Rabbit Hole (Artist Graph) ---
+  String get rabbitHoleTitle => switch (language) {
+        AppLanguage.es => 'MADRIGUERA',
+        AppLanguage.en => 'RABBIT HOLE',
+        AppLanguage.ja => 'ラビットホール',
+      };
+
+  String get rabbitHoleSubtitle => switch (language) {
+        AppLanguage.es => 'Explora artistas relacionados',
+        AppLanguage.en => 'Explore related artists',
+        AppLanguage.ja => '関連アーティストを探索',
+      };
+
+  String get rabbitHoleLoading => switch (language) {
+        AppLanguage.es => 'TEJIENDO LA RED...',
+        AppLanguage.en => 'WEAVING THE WEB...',
+        AppLanguage.ja => 'ウェブを構築中...',
+      };
+
+  String get rabbitHoleTapToExpand => switch (language) {
+        AppLanguage.es => 'TOCA PARA EXPANDIR',
+        AppLanguage.en => 'TAP TO EXPAND',
+        AppLanguage.ja => 'タップして展開',
+      };
+
+  String rabbitHoleConnections(int count) => switch (language) {
+        AppLanguage.es => '$count CONEXIONES',
+        AppLanguage.en => '$count CONNECTIONS',
+        AppLanguage.ja => '$count 件の接続',
+      };
+
+  String get rabbitHoleDeadEnd => switch (language) {
+        AppLanguage.es => 'CALLEJÓN SIN SALIDA · TOCA PARA REINTENTAR',
+        AppLanguage.en => 'DEAD END · TAP TO RETRY',
+        AppLanguage.ja => '行き止まり · タップで再試行',
+      };
+
+  String get rabbitHoleMaxReached => switch (language) {
+        AppLanguage.es =>
+          'La red llegó a su límite. Reinicia desde este artista para seguir bajando.',
+        AppLanguage.en =>
+          'The web is full. Restart from this artist to keep digging.',
+        AppLanguage.ja => 'ネットワークが上限に達しました。このアーティストから再開して探索を続けましょう。',
+      };
+
+  String get rabbitHoleRestartHere => switch (language) {
+        AppLanguage.es => 'REINICIAR AQUÍ',
+        AppLanguage.en => 'RESTART HERE',
+        AppLanguage.ja => 'ここから再開',
+      };
+
+  String get rabbitHoleOpenArtist => switch (language) {
+        AppLanguage.es => 'VER ARTISTA',
+        AppLanguage.en => 'VIEW ARTIST',
+        AppLanguage.ja => 'アーティスト',
+      };
+
+  String get rabbitHoleFitAll => switch (language) {
+        AppLanguage.es => 'Ver toda la red',
+        AppLanguage.en => 'Fit whole web',
+        AppLanguage.ja => '全体を表示',
+      };
+
+  String get rabbitHoleHint => switch (language) {
+        AppLanguage.es =>
+          'Toca un nodo para expandir · Mantén y arrastra para moverlo · Pellizca para hacer zoom',
+        AppLanguage.en =>
+          'Tap a node to expand · Hold and drag to move it · Pinch to zoom',
+        AppLanguage.ja => 'ノードをタップで展開 · 長押しでドラッグ · ピンチでズーム',
+      };
+
+  String get rabbitHoleEmpty => switch (language) {
+        AppLanguage.es => 'SIN CONEXIONES',
+        AppLanguage.en => 'NO CONNECTIONS',
+        AppLanguage.ja => '接続なし',
+      };
+
+  String get rabbitHoleEmptySubtitle => switch (language) {
+        AppLanguage.es =>
+          'No encontramos artistas relacionados. Revisa tu conexión e inténtalo de nuevo.',
+        AppLanguage.en =>
+          "We couldn't find related artists. Check your connection and try again.",
+        AppLanguage.ja => '関連アーティストが見つかりませんでした。接続を確認して再試行してください。',
+      };
+
+  String get rabbitHoleRecenter => switch (language) {
+        AppLanguage.es => 'Recentrar',
+        AppLanguage.en => 'Recenter',
+        AppLanguage.ja => '中心に戻す',
+      };
+
+  String rabbitHoleNodes(int count) => switch (language) {
+        AppLanguage.es => '$count NODOS',
+        AppLanguage.en => '$count NODES',
+        AppLanguage.ja => '$count ノード',
+      };
+
+  String rabbitHoleDepth(int count) => switch (language) {
+        AppLanguage.es => 'PROFUNDIDAD $count',
+        AppLanguage.en => 'DEPTH $count',
+        AppLanguage.ja => '深さ $count',
+      };
+
+  String get rabbitHoleViewGraph => switch (language) {
+        AppLanguage.es => 'EXPLORAR',
+        AppLanguage.en => 'EXPLORE',
+        AppLanguage.ja => '探索する',
+      };
+
+  String get a11yRabbitHole => switch (language) {
+        AppLanguage.es =>
+          'Madriguera de conejo: grafo interactivo de artistas relacionados',
+        AppLanguage.en =>
+          'Rabbit hole: interactive graph of related artists',
+        AppLanguage.ja => 'ラビットホール：関連アーティストのインタラクティブグラフ',
+      };
+
+  // --- Release Radar ---
+  String get radarTitle => switch (language) {
+        AppLanguage.es => 'RADAR DE LANZAMIENTOS',
+        AppLanguage.en => 'RELEASE RADAR',
+        AppLanguage.ja => 'リリースレーダー',
+      };
+
+  String radarWatching(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 artista vigilado' : '$count artistas vigilados',
+        AppLanguage.en => count == 1 ? '1 artist watched' : '$count artists watched',
+        AppLanguage.ja => '$count 組のアーティストを監視中',
+      };
+
+  String radarNewCount(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 LANZAMIENTO NUEVO' : '$count LANZAMIENTOS NUEVOS',
+        AppLanguage.en => count == 1 ? '1 NEW RELEASE' : '$count NEW RELEASES',
+        AppLanguage.ja => '新着 $count 件',
+      };
+
+  String get radarSectionNew => switch (language) {
+        AppLanguage.es => 'NUEVO PARA TI',
+        AppLanguage.en => 'NEW FOR YOU',
+        AppLanguage.ja => 'あなたへの新着',
+      };
+
+  String get radarSectionRecent => switch (language) {
+        AppLanguage.es => 'ÚLTIMOS 60 DÍAS',
+        AppLanguage.en => 'LAST 60 DAYS',
+        AppLanguage.ja => '過去60日間',
+      };
+
+  String get radarNotifyToggle => switch (language) {
+        AppLanguage.es => 'Avisarme de lanzamientos',
+        AppLanguage.en => 'Notify me about releases',
+        AppLanguage.ja => 'リリースを通知する',
+      };
+
+  String get radarNotifyToggleSubtitle => switch (language) {
+        AppLanguage.es => 'Una revisión al día en segundo plano',
+        AppLanguage.en => 'One background check per day',
+        AppLanguage.ja => '1日1回バックグラウンドで確認',
+      };
+
+  String get radarPermissionDenied => switch (language) {
+        AppLanguage.es => 'Las notificaciones están desactivadas para Tsuki Tunes.',
+        AppLanguage.en => 'Notifications are turned off for Tsuki Tunes.',
+        AppLanguage.ja => 'Tsuki Tunesの通知がオフになっています。',
+      };
+
+  String get radarPermissionAction => switch (language) {
+        AppLanguage.es => 'ACTIVAR',
+        AppLanguage.en => 'TURN ON',
+        AppLanguage.ja => 'オンにする',
+      };
+
+  String get radarPermissionSettingsHint => switch (language) {
+        AppLanguage.es =>
+          'Actívalas en Ajustes › Aplicaciones › Tsuki Tunes › Notificaciones.',
+        AppLanguage.en =>
+          'Turn them on in Settings › Apps › Tsuki Tunes › Notifications.',
+        AppLanguage.ja => '設定 › アプリ › Tsuki Tunes › 通知 でオンにしてください。',
+      };
+
+  String get radarCheckNow => switch (language) {
+        AppLanguage.es => 'Revisar ahora',
+        AppLanguage.en => 'Check now',
+        AppLanguage.ja => '今すぐ確認',
+      };
+
+  String get radarChecking => switch (language) {
+        AppLanguage.es => 'ESCANEANDO...',
+        AppLanguage.en => 'SCANNING...',
+        AppLanguage.ja => 'スキャン中...',
+      };
+
+  String radarLastCheck(Duration? ago) {
+    if (ago == null) {
+      return switch (language) {
+        AppLanguage.es => 'Aún sin revisar',
+        AppLanguage.en => 'Not checked yet',
+        AppLanguage.ja => '未確認',
+      };
+    }
+    final String span;
+    if (ago.inMinutes < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'justo ahora',
+        AppLanguage.en => 'just now',
+        AppLanguage.ja => 'たった今',
+      };
+      return switch (language) {
+        AppLanguage.es => 'Última revisión: $span',
+        AppLanguage.en => 'Last checked $span',
+        AppLanguage.ja => '最終確認：$span',
+      };
+    } else if (ago.inHours < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'hace ${ago.inMinutes} min',
+        AppLanguage.en => '${ago.inMinutes} min ago',
+        AppLanguage.ja => '${ago.inMinutes}分前',
+      };
+    } else if (ago.inDays < 1) {
+      span = switch (language) {
+        AppLanguage.es => 'hace ${ago.inHours} h',
+        AppLanguage.en => '${ago.inHours} h ago',
+        AppLanguage.ja => '${ago.inHours}時間前',
+      };
+    } else {
+      span = switch (language) {
+        AppLanguage.es => ago.inDays == 1 ? 'hace 1 día' : 'hace ${ago.inDays} días',
+        AppLanguage.en => ago.inDays == 1 ? '1 day ago' : '${ago.inDays} days ago',
+        AppLanguage.ja => '${ago.inDays}日前',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => 'Última revisión: $span',
+      AppLanguage.en => 'Last checked $span',
+      AppLanguage.ja => '最終確認：$span',
+    };
+  }
+
+  String get radarEmptyNoArtistsTitle => switch (language) {
+        AppLanguage.es => 'SIGUE ARTISTAS',
+        AppLanguage.en => 'FOLLOW SOME ARTISTS',
+        AppLanguage.ja => 'アーティストをフォロー',
+      };
+
+  String get radarEmptyNoArtists => switch (language) {
+        AppLanguage.es =>
+          'El radar vigila a los artistas que sigues y te avisa cuando sacan algo nuevo. Toca SEGUIR en el perfil de un artista.',
+        AppLanguage.en =>
+          'The radar watches the artists you follow and tells you when they drop something new. Tap FOLLOW on an artist page.',
+        AppLanguage.ja => 'レーダーはフォロー中のアーティストを監視し、新作が出たらお知らせします。アーティストページで「フォロー」をタップしてください。',
+      };
+
+  String get radarEmptyNoReleasesTitle => switch (language) {
+        AppLanguage.es => 'SIN LANZAMIENTOS RECIENTES',
+        AppLanguage.en => 'NO RECENT RELEASES',
+        AppLanguage.ja => '最近のリリースなし',
+      };
+
+  String get radarEmptyNoReleases => switch (language) {
+        AppLanguage.es =>
+          'Tus artistas no sacaron nada en los últimos 60 días. Te avisaremos en cuanto lo hagan.',
+        AppLanguage.en =>
+          "Your artists haven't released anything in the last 60 days. We'll let you know as soon as they do.",
+        AppLanguage.ja => '過去60日間に新しいリリースはありません。リリースされたらすぐにお知らせします。',
+      };
+
+  String get radarIosNote => switch (language) {
+        AppLanguage.es =>
+          'En iPhone, iOS decide cuándo ejecutar la revisión en segundo plano. Abrir la app también busca lanzamientos.',
+        AppLanguage.en =>
+          'On iPhone, iOS decides when the background check runs. Opening the app also looks for releases.',
+        AppLanguage.ja => 'iPhoneでは、バックグラウンド確認のタイミングはiOSが決定します。アプリを開いたときにも確認します。',
+      };
+
+  String radarType(String recordType) => switch (recordType) {
+        'single' => 'SINGLE',
+        'ep' => 'EP',
+        _ => switch (language) {
+            AppLanguage.es => 'ÁLBUM',
+            AppLanguage.en => 'ALBUM',
+            AppLanguage.ja => 'アルバム',
+          },
+      };
+
+  String radarReleasedAgo(int days) {
+    if (days < 0) {
+      return switch (language) {
+        AppLanguage.es => 'PRÓXIMAMENTE',
+        AppLanguage.en => 'UPCOMING',
+        AppLanguage.ja => '近日公開',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => days == 0 ? 'HOY' : days == 1 ? 'AYER' : 'HACE $days DÍAS',
+      AppLanguage.en => days == 0 ? 'TODAY' : days == 1 ? 'YESTERDAY' : '$days DAYS AGO',
+      AppLanguage.ja => days == 0 ? '今日' : days == 1 ? '昨日' : '$days日前',
+    };
+  }
+
+  String radarNotifSingle(String artist, String recordType) => switch (language) {
+        AppLanguage.es => switch (recordType) {
+            'single' => '🔥 $artist sacó un single nuevo',
+            'ep' => '🔥 $artist sacó un EP nuevo',
+            _ => '🔥 $artist sacó un álbum nuevo',
+          },
+        AppLanguage.en => switch (recordType) {
+            'single' => '🔥 $artist dropped a new single',
+            'ep' => '🔥 $artist dropped a new EP',
+            _ => '🔥 $artist dropped a new album',
+          },
+        AppLanguage.ja => switch (recordType) {
+            'single' => '🔥 $artistが新しいシングルをリリース',
+            'ep' => '🔥 $artistが新しいEPをリリース',
+            _ => '🔥 $artistが新しいアルバムをリリース',
+          },
+      };
+
+  String radarNotifMany(int count) => switch (language) {
+        AppLanguage.es => '🔥 $count lanzamientos nuevos',
+        AppLanguage.en => '🔥 $count new releases',
+        AppLanguage.ja => '🔥 新着リリース $count 件',
+      };
+
+  String radarNotifManyBody(List<String> artists) {
+    final shown = artists.take(2).toList();
+    final rest = artists.length - shown.length;
+    final names = shown.join(', ');
+    if (rest <= 0) {
+      if (shown.length < 2) return names;
+      return switch (language) {
+        AppLanguage.es => '${shown[0]} y ${shown[1]}',
+        AppLanguage.en => '${shown[0]} and ${shown[1]}',
+        AppLanguage.ja => '${shown[0]}、${shown[1]}',
+      };
+    }
+    return switch (language) {
+      AppLanguage.es => '$names y $rest más',
+      AppLanguage.en => '$names and $rest more',
+      AppLanguage.ja => '$names 他$rest組',
+    };
+  }
+
+  String get radarChannelName => switch (language) {
+        AppLanguage.es => 'Radar de lanzamientos',
+        AppLanguage.en => 'Release radar',
+        AppLanguage.ja => 'リリースレーダー',
+      };
+
+  String get radarChannelDescription => switch (language) {
+        AppLanguage.es => 'Avisos cuando los artistas que sigues sacan música nueva',
+        AppLanguage.en => 'Alerts when artists you follow release new music',
+        AppLanguage.ja => 'フォロー中のアーティストの新曲をお知らせ',
+      };
+
+  String radarFollowSnack(String artist) => switch (language) {
+        AppLanguage.es => 'Te avisaremos cuando $artist saque algo nuevo',
+        AppLanguage.en => "We'll let you know when $artist releases something new",
+        AppLanguage.ja => '$artistの新作が出たらお知らせします',
+      };
+
+  String get a11yRadar => switch (language) {
+        AppLanguage.es => 'Radar de lanzamientos de los artistas que sigues',
+        AppLanguage.en => 'Release radar for the artists you follow',
+        AppLanguage.ja => 'フォロー中のアーティストのリリースレーダー',
+      };
+
+  // --- Song Radio ---
+  String get radioStart => switch (language) {
+        AppLanguage.es => 'Iniciar radio',
+        AppLanguage.en => 'Start radio',
+        AppLanguage.ja => 'ラジオを開始',
+      };
+
+  String radioStarted(String title) => switch (language) {
+        AppLanguage.es => 'Radio de «$title» en marcha',
+        AppLanguage.en => '“$title” radio is on',
+        AppLanguage.ja => '「$title」のラジオを開始しました',
+      };
+
+  String get radioNoResults => switch (language) {
+        AppLanguage.es => 'No encontramos canciones parecidas. Prueba con otra.',
+        AppLanguage.en => "Couldn't find similar songs. Try another one.",
+        AppLanguage.ja => '似た曲が見つかりませんでした。別の曲でお試しください。',
+      };
+
+  String get radioLabel => switch (language) {
+        AppLanguage.es => 'RADIO',
+        AppLanguage.en => 'RADIO',
+        AppLanguage.ja => 'ラジオ',
+      };
+
+  String radioBasedOn(String title) => switch (language) {
+        AppLanguage.es => 'Basada en «$title»',
+        AppLanguage.en => 'Based on “$title”',
+        AppLanguage.ja => '「$title」から',
+      };
+
+  String radioReasonLastFm(String title) => switch (language) {
+        AppLanguage.es => 'Parecida a «$title»',
+        AppLanguage.en => 'Similar to “$title”',
+        AppLanguage.ja => '「$title」に似た曲',
+      };
+
+  String radioReasonDeezer(String artist) => switch (language) {
+        AppLanguage.es => 'Radio de $artist',
+        AppLanguage.en => '$artist radio',
+        AppLanguage.ja => '$artistのラジオ',
+      };
+
+  String get radioLoadingMore => switch (language) {
+        AppLanguage.es => 'Buscando más canciones...',
+        AppLanguage.en => 'Finding more songs...',
+        AppLanguage.ja => '曲を探しています...',
+      };
+
+  String get radioInfinite => switch (language) {
+        AppLanguage.es => 'La radio sigue: siempre habrá otra canción',
+        AppLanguage.en => 'The radio keeps going: there’s always another song',
+        AppLanguage.ja => 'ラジオは続きます。次の曲が必ずあります',
+      };
+
+  String get radioOffline => switch (language) {
+        AppLanguage.es => 'Sin conexión: la radio seguirá cuando vuelva la red',
+        AppLanguage.en => 'Offline: the radio resumes when you reconnect',
+        AppLanguage.ja => 'オフライン：接続が戻るとラジオが再開します',
+      };
+
+  String get radioExhausted => switch (language) {
+        AppLanguage.es => 'Se acabaron las ideas por aquí. Prueba «Más como esta» o cambia el estilo.',
+        AppLanguage.en => 'Ran out of ideas here. Try “More like this” or change the style.',
+        AppLanguage.ja => 'ここで候補が尽きました。「似た曲をもっと」かスタイル変更をお試しください。',
+      };
+
+  String get radioModeTitle => switch (language) {
+        AppLanguage.es => 'ESTILO DE RADIO',
+        AppLanguage.en => 'RADIO STYLE',
+        AppLanguage.ja => 'ラジオのスタイル',
+      };
+
+  String get radioModeFamiliar => switch (language) {
+        AppLanguage.es => 'Fiel',
+        AppLanguage.en => 'Familiar',
+        AppLanguage.ja => '定番',
+      };
+
+  String get radioModeFamiliarDesc => switch (language) {
+        AppLanguage.es => 'Se queda cerca de la canción original.',
+        AppLanguage.en => 'Stays close to the original song.',
+        AppLanguage.ja => '元の曲の近くにとどまります。',
+      };
+
+  String get radioModeBalanced => switch (language) {
+        AppLanguage.es => 'Equilibrada',
+        AppLanguage.en => 'Balanced',
+        AppLanguage.ja => 'バランス',
+      };
+
+  String get radioModeBalancedDesc => switch (language) {
+        AppLanguage.es => 'Mezcla canciones parecidas con descubrimientos.',
+        AppLanguage.en => 'Mixes close matches with discoveries.',
+        AppLanguage.ja => '似た曲と新しい発見をミックスします。',
+      };
+
+  String get radioModeAdventurous => switch (language) {
+        AppLanguage.es => 'Aventurera',
+        AppLanguage.en => 'Adventurous',
+        AppLanguage.ja => '冒険',
+      };
+
+  String get radioModeAdventurousDesc => switch (language) {
+        AppLanguage.es => 'Se aleja canción a canción y descubre artistas nuevos.',
+        AppLanguage.en => 'Drifts song by song toward new artists.',
+        AppLanguage.ja => '曲ごとに離れていき、新しいアーティストを発見します。',
+      };
+
+  String get radioMoreLikeThis => switch (language) {
+        AppLanguage.es => 'Más como esta',
+        AppLanguage.en => 'More like this',
+        AppLanguage.ja => '似た曲をもっと',
+      };
+
+  String get radioLessLikeThis => switch (language) {
+        AppLanguage.es => 'Menos de esto',
+        AppLanguage.en => 'Less like this',
+        AppLanguage.ja => 'これは控えめに',
+      };
+
+  String get radioMoreSnack => switch (language) {
+        AppLanguage.es => 'La radio irá más por este lado',
+        AppLanguage.en => 'The radio will lean this way',
+        AppLanguage.ja => 'この方向の曲を増やします',
+      };
+
+  String radioLessSnack(String artist) => switch (language) {
+        AppLanguage.es => 'No pondremos más $artist en esta radio',
+        AppLanguage.en => "We won't play $artist on this radio again",
+        AppLanguage.ja => 'このラジオでは$artistを再生しません',
+      };
+
+  String get radioStop => switch (language) {
+        AppLanguage.es => 'Detener radio',
+        AppLanguage.en => 'Stop radio',
+        AppLanguage.ja => 'ラジオを停止',
+      };
+
+  String get radioStopped => switch (language) {
+        AppLanguage.es => 'Radio detenida. La cola se queda como está.',
+        AppLanguage.en => 'Radio stopped. Your queue stays as it is.',
+        AppLanguage.ja => 'ラジオを停止しました。キューはそのままです。',
+      };
+
+  String get radioSourcesBoth => switch (language) {
+        AppLanguage.es => 'Fuentes: Last.fm + Deezer',
+        AppLanguage.en => 'Sources: Last.fm + Deezer',
+        AppLanguage.ja => 'ソース：Last.fm + Deezer',
+      };
+
+  String get radioSourcesDeezerOnly => switch (language) {
+        AppLanguage.es => 'Fuente: Deezer (Last.fm no está configurado)',
+        AppLanguage.en => 'Source: Deezer (Last.fm is not configured)',
+        AppLanguage.ja => 'ソース：Deezer（Last.fm未設定）',
+      };
+
+  String get radioLearnHint => switch (language) {
+        AppLanguage.es =>
+          'Aprende de ti: si saltas un artista dos veces deja de ponerlo, y lo que escuchas entero guía lo que viene.',
+        AppLanguage.en =>
+          'It learns from you: skip an artist twice and it stops playing them; songs you finish steer what comes next.',
+        AppLanguage.ja => 'あなたから学習します。同じアーティストを2回スキップすると再生しなくなり、最後まで聴いた曲が次の選曲を導きます。',
+      };
+
+  String get radioTune => switch (language) {
+        AppLanguage.es => 'AJUSTAR',
+        AppLanguage.en => 'TUNE',
+        AppLanguage.ja => '調整',
+      };
+
+  String get a11yRadio => switch (language) {
+        AppLanguage.es => 'Radio de la canción',
+        AppLanguage.en => 'Song radio',
+        AppLanguage.ja => '曲のラジオ',
+      };
+
+  // --- Dates ---
+  static const List<String> _monthsEs = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun', //
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  ];
+  static const List<String> _monthsEn = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// "26 oct 2025" / "Oct 26, 2025" / "2025年10月26日".
+  String shortDate(DateTime d) => switch (language) {
+        AppLanguage.es => '${d.day} ${_monthsEs[d.month - 1]} ${d.year}',
+        AppLanguage.en => '${_monthsEn[d.month - 1]} ${d.day}, ${d.year}',
+        AppLanguage.ja => '${d.year}年${d.month}月${d.day}日',
+      };
+
+  /// [weekday] uses DateTime's 1 (Monday) .. 7 (Sunday).
+  String weekdayName(int weekday) {
+    const es = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+    const en = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const ja = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'];
+    final i = weekday < 1 ? 0 : (weekday > 7 ? 6 : weekday - 1);
+    return switch (language) {
+      AppLanguage.es => es[i],
+      AppLanguage.en => en[i],
+      AppLanguage.ja => ja[i],
+    };
+  }
+
+  // --- Wrapped: play log vs discoveries ---
+  String get wrappedTopDiscoveries => switch (language) {
+        AppLanguage.es => 'DESCUBRIMIENTOS DEL AÑO',
+        AppLanguage.en => 'DISCOVERIES OF THE YEAR',
+        AppLanguage.ja => '今年の発見',
+      };
+
+  String wrappedDiscoveredSongs(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 canción descubierta' : '$count canciones descubiertas',
+        AppLanguage.en => count == 1 ? '1 song discovered' : '$count songs discovered',
+        AppLanguage.ja => '$count 曲を発見',
+      };
+
+  String get wrappedNewMusicTime => switch (language) {
+        AppLanguage.es => 'MÚSICA NUEVA',
+        AppLanguage.en => 'NEW MUSIC',
+        AppLanguage.ja => '新しい音楽',
+      };
+
+  String wrappedFactMarathonDiscovery(String date, int count) => switch (language) {
+        AppLanguage.es => 'Tu día de descubrimientos: $count canciones nuevas el $date 🔥',
+        AppLanguage.en => 'Your discovery day: $count new songs on $date 🔥',
+        AppLanguage.ja => '発見の日: $dateに$count曲の新曲 🔥',
+      };
+
+  String wrappedFactLoyalDiscovery(String artist, int count) => switch (language) {
+        AppLanguage.es => 'Fan incondicional de $artist: descubriste $count de sus canciones 💎',
+        AppLanguage.en => 'Devoted fan of $artist: you discovered $count of their songs 💎',
+        AppLanguage.ja => '$artist の熱狂的ファン — $count曲を発見 💎',
+      };
+
+  String get wrappedBasedOnDiscoveries => switch (language) {
+        AppLanguage.es =>
+          'Basado en las canciones que marcaste como escuchadas. Desde ahora Tsuki cuenta cada reproducción para tu próximo Wrapped.',
+        AppLanguage.en =>
+          'Based on the songs you marked as listened. From now on Tsuki counts every play for your next Wrapped.',
+        AppLanguage.ja => '「聴いた」とマークした曲に基づいています。これからは次のWrappedのために毎回の再生を記録します。',
+      };
+
+  String wrappedPlaysSince(String date) => switch (language) {
+        AppLanguage.es => 'Basado en tus reproducciones desde el $date',
+        AppLanguage.en => 'Based on your plays since $date',
+        AppLanguage.ja => '$date以降の再生に基づいています',
+      };
+
+  // --- Time Machine ---
+  String get timeMachineTitle => switch (language) {
+        AppLanguage.es => 'MÁQUINA DEL TIEMPO',
+        AppLanguage.en => 'TIME MACHINE',
+        AppLanguage.ja => 'タイムマシン',
+      };
+
+  String get timeMachineYearAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 año',
+        AppLanguage.en => '1 year ago',
+        AppLanguage.ja => '1年前',
+      };
+
+  String get timeMachineSixMonthsAgo => switch (language) {
+        AppLanguage.es => 'Hace 6 meses',
+        AppLanguage.en => '6 months ago',
+        AppLanguage.ja => '6か月前',
+      };
+
+  String get timeMachineMonthAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 mes',
+        AppLanguage.en => '1 month ago',
+        AppLanguage.ja => '1か月前',
+      };
+
+  String get timeMachineWeekAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 semana',
+        AppLanguage.en => '1 week ago',
+        AppLanguage.ja => '1週間前',
+      };
+
+  String get timeMachineRandom => switch (language) {
+        AppLanguage.es => 'Día al azar',
+        AppLanguage.en => 'Random day',
+        AppLanguage.ja => 'ランダムな日',
+      };
+
+  String get timeMachineRewinding => switch (language) {
+        AppLanguage.es => 'REBOBINANDO...',
+        AppLanguage.en => 'REWINDING...',
+        AppLanguage.ja => '巻き戻し中...',
+      };
+
+  String get timeMachineKindPlays => switch (language) {
+        AppLanguage.es => 'REPRODUCCIONES',
+        AppLanguage.en => 'PLAYS',
+        AppLanguage.ja => '再生',
+      };
+
+  String get timeMachineKindDiscoveries => switch (language) {
+        AppLanguage.es => 'DESCUBRIMIENTOS',
+        AppLanguage.en => 'DISCOVERIES',
+        AppLanguage.ja => '発見',
+      };
+
+  String get timeMachineExactDay => switch (language) {
+        AppLanguage.es => 'ESE DÍA',
+        AppLanguage.en => 'THAT DAY',
+        AppLanguage.ja => 'その日',
+      };
+
+  String get timeMachineThatWeek => switch (language) {
+        AppLanguage.es => 'ESA SEMANA',
+        AppLanguage.en => 'THAT WEEK',
+        AppLanguage.ja => 'その週',
+      };
+
+  String get timeMachineHeadlineRepeat => switch (language) {
+        AppLanguage.es => 'No parabas de escuchar esto 👀',
+        AppLanguage.en => "You couldn't stop playing this 👀",
+        AppLanguage.ja => 'これをずっと聴いていました 👀',
+      };
+
+  String get timeMachineHeadlinePlayed => switch (language) {
+        AppLanguage.es => 'Esto estabas escuchando',
+        AppLanguage.en => 'This is what you were playing',
+        AppLanguage.ja => 'この曲を聴いていました',
+      };
+
+  String get timeMachineHeadlineDiscovered => switch (language) {
+        AppLanguage.es => 'Esto descubriste',
+        AppLanguage.en => 'This is what you discovered',
+        AppLanguage.ja => 'この曲を発見しました',
+      };
+
+  String timeMachineTimes(int count, bool exactDay) => switch (language) {
+        AppLanguage.es => count == 1
+            ? (exactDay ? 'Una vez ese día' : 'Una vez esa semana')
+            : (exactDay ? '$count veces ese día' : '$count veces esa semana'),
+        AppLanguage.en => count == 1
+            ? (exactDay ? 'Once that day' : 'Once that week')
+            : (exactDay ? '$count times that day' : '$count times that week'),
+        AppLanguage.ja => exactDay ? 'その日に$count回' : 'その週に$count回',
+      };
+
+  String timeMachineDiscoveredAt(String time) => switch (language) {
+        AppLanguage.es => 'Descubierta a las $time',
+        AppLanguage.en => 'Discovered at $time',
+        AppLanguage.ja => '$timeに発見',
+      };
+
+  String timeMachineDiscoveredOn(String weekday) => switch (language) {
+        AppLanguage.es => 'Descubierta el $weekday',
+        AppLanguage.en => 'Discovered on $weekday',
+        AppLanguage.ja => '$weekdayに発見',
+      };
+
+  String get timeMachinePlay => switch (language) {
+        AppLanguage.es => 'REPRODUCIR ESTE RECUERDO',
+        AppLanguage.en => 'PLAY THIS MEMORY',
+        AppLanguage.ja => 'この思い出を再生',
+      };
+
+  String get timeMachinePlaying => switch (language) {
+        AppLanguage.es => 'Reproduciendo tu recuerdo',
+        AppLanguage.en => 'Playing your memory',
+        AppLanguage.ja => '思い出を再生中',
+      };
+
+  String get timeMachinePlayFailed => switch (language) {
+        AppLanguage.es => 'No pudimos cargar estas canciones. Revisa tu conexión.',
+        AppLanguage.en => "Couldn't load these songs. Check your connection.",
+        AppLanguage.ja => '曲を読み込めませんでした。接続を確認してください。',
+      };
+
+  String get timeMachineNothingTitle => switch (language) {
+        AppLanguage.es => 'NADA POR AQUÍ',
+        AppLanguage.en => 'NOTHING HERE',
+        AppLanguage.ja => '何もありません',
+      };
+
+  String get timeMachineNothing => switch (language) {
+        AppLanguage.es => 'No hay historial de esos días. Prueba otra fecha o viaja a un día al azar.',
+        AppLanguage.en => 'No history for those days. Try another date or travel to a random day.',
+        AppLanguage.ja => 'その頃の履歴はありません。別の日付かランダムな日をお試しください。',
+      };
+
+  String get timeMachineNoHistory => switch (language) {
+        AppLanguage.es => 'Aún no hay días con historial para viajar.',
+        AppLanguage.en => 'There are no days with history to travel to yet.',
+        AppLanguage.ja => '移動できる履歴の日がまだありません。',
+      };
+
+  String timeMachineCountingSince(String date) => switch (language) {
+        AppLanguage.es =>
+          'Tsuki cuenta cada reproducción desde el $date. A partir de ahí, los recuerdos muestran lo que tenías en repeat.',
+        AppLanguage.en =>
+          'Tsuki has counted every play since $date. From then on, memories show what you had on repeat.',
+        AppLanguage.ja => 'Tsukiは$dateから毎回の再生を記録しています。それ以降の思い出ではリピートしていた曲が表示されます。',
+      };
+
+  String get timeMachineCountingStarts => switch (language) {
+        AppLanguage.es =>
+          'Desde hoy Tsuki cuenta cada reproducción: con el tiempo verás lo que tenías en repeat, no solo lo que descubriste.',
+        AppLanguage.en =>
+          'From today Tsuki counts every play: over time you’ll see what you had on repeat, not just what you discovered.',
+        AppLanguage.ja => '今日から毎回の再生を記録します。いずれ発見した曲だけでなく、リピートしていた曲も表示されます。',
+      };
+
+  String get timeMachineNotifyToggle => switch (language) {
+        AppLanguage.es => 'Recuerdos ocasionales',
+        AppLanguage.en => 'Occasional memories',
+        AppLanguage.ja => 'ときどき思い出を通知',
+      };
+
+  String get timeMachineNotifyToggleSubtitle => switch (language) {
+        AppLanguage.es => 'Como mucho uno por semana, solo de días memorables',
+        AppLanguage.en => 'At most one a week, only from memorable days',
+        AppLanguage.ja => '最大週1回、印象的な日だけ',
+      };
+
+  String timeMachineNotifRepeat(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año no parabas de escuchar «$title» 👀',
+        AppLanguage.en => 'A year ago you couldn’t stop playing “$title” 👀',
+        AppLanguage.ja => '1年前、「$title」をずっと聴いていました 👀',
+      };
+
+  String timeMachineNotifRepeatBody(String artist, int count) => switch (language) {
+        AppLanguage.es => '$artist · $count reproducciones',
+        AppLanguage.en => '$artist · $count plays',
+        AppLanguage.ja => '$artist · $count回再生',
+      };
+
+  String timeMachineNotifPlayed(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año sonaba «$title» 👀',
+        AppLanguage.en => 'A year ago “$title” was playing 👀',
+        AppLanguage.ja => '1年前は「$title」を聴いていました 👀',
+      };
+
+  String timeMachineNotifDiscovered(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año descubriste «$title» 👀',
+        AppLanguage.en => 'A year ago you discovered “$title” 👀',
+        AppLanguage.ja => '1年前、「$title」を発見しました 👀',
+      };
+
+  String get timeMachineChannelName => switch (language) {
+        AppLanguage.es => 'Máquina del tiempo',
+        AppLanguage.en => 'Time Machine',
+        AppLanguage.ja => 'タイムマシン',
+      };
+
+  String get timeMachineChannelDescription => switch (language) {
+        AppLanguage.es => 'Recuerdos de lo que escuchabas hace un año',
+        AppLanguage.en => 'Memories of what you were listening to a year ago',
+        AppLanguage.ja => '1年前に聴いていた曲の思い出',
+      };
+
+  String get timeMachineCardEmpty => switch (language) {
+        AppLanguage.es => '¿Qué escuchabas hace un año?',
+        AppLanguage.en => 'What were you listening to a year ago?',
+        AppLanguage.ja => '1年前は何を聴いていた？',
+      };
+
+  String timeMachineCardTeaser(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año: «$title»',
+        AppLanguage.en => 'A year ago: “$title”',
+        AppLanguage.ja => '1年前:「$title」',
+      };
+
+  String timeMachineCardTeaserRepeat(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año: «$title» en repeat',
+        AppLanguage.en => 'A year ago: “$title” on repeat',
+        AppLanguage.ja => '1年前:「$title」をリピート',
+      };
+
+  String get a11yTimeMachine => switch (language) {
+        AppLanguage.es => 'Máquina del tiempo: lo que escuchabas hace un año',
+        AppLanguage.en => 'Time Machine: what you were listening to a year ago',
+        AppLanguage.ja => 'タイムマシン：1年前に聴いていた曲',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',

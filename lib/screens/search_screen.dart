@@ -8,8 +8,10 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../models/lyrics_search_result.dart';
 import '../providers/locale_provider.dart';
 import '../providers/search_provider.dart';
+import '../services/deezer_api_service.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
@@ -65,7 +67,11 @@ class _SearchScreenState extends State<SearchScreen> {
   void _onSearchChanged(String query, SearchProvider provider) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      provider.search(query);
+      if (_selectedTabIndex == 4) {
+        provider.searchLyrics(query);
+      } else {
+        provider.search(query);
+      }
     });
   }  @override
   Widget build(BuildContext context) {
@@ -85,11 +91,13 @@ class _SearchScreenState extends State<SearchScreen> {
         }
       });
     }
+    final hasLyricsResults = search.lyricsResults.isNotEmpty;
     final tabs = [
       strings.tabAll,
       hasResults ? '${strings.tabArtists} (${search.artists.length})' : strings.tabArtists,
       hasResults ? '${strings.tabAlbums} (${search.albums.length})' : strings.tabAlbums,
       hasResults ? '${strings.tabTracks} (${search.tracks.length})' : strings.tabTracks,
+      hasLyricsResults ? '${strings.tabByLyrics} (${search.lyricsResults.length})' : strings.tabByLyrics,
     ];
 
     return GestureDetector(
@@ -212,7 +220,14 @@ class _SearchScreenState extends State<SearchScreen> {
                       onTap: () {
                         HapticFeedback.lightImpact();
                         FocusScope.of(context).unfocus();
+                        final prev = _selectedTabIndex;
                         setState(() => _selectedTabIndex = index);
+                        if (index == 4 && prev != 4) {
+                          final q = _controller.text.trim();
+                          if (q.length >= 3) {
+                            context.read<SearchProvider>().searchLyrics(q);
+                          }
+                        }
                       },
                       child: Container(
                         margin: const EdgeInsets.only(right: 8),
@@ -243,15 +258,17 @@ class _SearchScreenState extends State<SearchScreen> {
 
               // Content
               Expanded(
-                child: search.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: AppColors.accent),
-                      )
-                    : search.hasError
-                        ? _buildErrorState(search, strings, locale)
-                        : search.query.isEmpty
-                            ? _buildEmptyState(strings, locale)
-                            : _buildResults(search, strings, locale),
+                child: _selectedTabIndex == 4
+                    ? _buildLyricsTabContent(search, strings, locale)
+                    : search.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(color: AppColors.accent),
+                          )
+                        : search.hasError
+                            ? _buildErrorState(search, strings, locale)
+                            : search.query.isEmpty
+                                ? _buildEmptyState(strings, locale)
+                                : _buildResults(search, strings, locale),
               ),
             ],
           ),
@@ -468,6 +485,249 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLyricsTabContent(SearchProvider search, AppStrings strings, LocaleProvider locale) {
+    if (search.isLyricsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      );
+    }
+
+    if (search.hasLyricsError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
+            const SizedBox(height: 12),
+            Text(
+              strings.lyricsSearchError,
+              style: locale.getTextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Semantics(
+              button: true,
+              label: strings.retry,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  search.retryLyricsSearch();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    strings.retry,
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final q = _controller.text.trim();
+    if (q.length < 3) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lyrics_outlined, size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yLyricsSearch),
+            const SizedBox(height: 12),
+            Text(
+              strings.lyricsSearchEmpty,
+              style: locale.getTextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              strings.lyricsSearchEmptySubtitle,
+              style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (search.lyricsResults.isEmpty) {
+      return Center(
+        child: Text(
+          strings.lyricsSearchNoResults,
+          style: locale.getTextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.only(bottom: 120),
+      itemCount: search.lyricsResults.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Text(
+              strings.lyricsSearchResults(search.lyricsResults.length).toUpperCase(),
+              style: locale.getTextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+                letterSpacing: 1.2,
+              ),
+            ),
+          );
+        }
+        return _buildLyricsResultTile(search.lyricsResults[index - 1], q, locale);
+      },
+    );
+  }
+
+  Widget _buildLyricsResultTile(LyricsSearchResult result, String query, LocaleProvider locale) {
+    final snippet = result.lyricsSnippet;
+
+    return InkWell(
+      onTap: () async {
+        unawaited(HapticFeedback.lightImpact());
+        try {
+          final deezerResults = await DeezerApiService().search(
+            '${result.trackName} ${result.artistName}',
+          );
+          final tracks = deezerResults['tracks'];
+          if (tracks != null && tracks.isNotEmpty) {
+            if (!mounted) return;
+            final provider = context.read<SearchProvider>();
+            _controller.text = '${result.trackName} ${result.artistName}';
+            unawaited(provider.search('${result.trackName} ${result.artistName}'));
+            setState(() => _selectedTabIndex = 3);
+          }
+        } catch (_) {}
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+              ),
+              child: const Icon(Icons.lyrics_outlined, color: AppColors.accent, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    result.trackName,
+                    style: locale.getTextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textBright,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${result.artistName}  ·  ${result.albumName}',
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (snippet.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    _buildHighlightedSnippet(snippet, query, locale),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              result.durationFormatted,
+              style: locale.getTextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightedSnippet(String snippet, String query, LocaleProvider locale) {
+    final lowerSnippet = snippet.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final matchIndex = lowerSnippet.indexOf(lowerQuery);
+
+    if (matchIndex == -1) {
+      return Text(
+        snippet,
+        style: locale
+            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .copyWith(fontStyle: FontStyle.italic),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final before = snippet.substring(0, matchIndex);
+    final match = snippet.substring(matchIndex, matchIndex + query.length);
+    final after = snippet.substring(matchIndex + query.length);
+
+    return RichText(
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: locale
+            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .copyWith(fontStyle: FontStyle.italic),
+        children: [
+          TextSpan(text: before),
+          TextSpan(
+            text: match,
+            style: locale
+                .getTextStyle(
+                  fontSize: 11,
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w700,
+                )
+                .copyWith(fontStyle: FontStyle.italic),
+          ),
+          TextSpan(text: after),
         ],
       ),
     );

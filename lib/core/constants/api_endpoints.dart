@@ -29,6 +29,8 @@ class ApiEndpoints {
       '$deezerBase/artist/$id/albums?type=compile&limit=$limit&index=$index';
   static String artistRelated(String id, {int limit = 20}) =>
       '$deezerBase/artist/$id/related?limit=$limit';
+  static String artistRadio(String id, {int limit = 25}) =>
+      '$deezerBase/artist/$id/radio?limit=$limit';
   static String album(String id) => '$deezerBase/album/$id';
   static String track(String id) => '$deezerBase/track/$id';
 

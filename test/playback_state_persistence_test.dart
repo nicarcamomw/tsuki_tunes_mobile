@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/services/song_radio.dart';
 import 'package:tsuki_tunes_mobile/services/storage_service.dart';
 
 Track createTestTrack(String id, {int duration = 180}) {
@@ -100,6 +101,47 @@ void main() {
       // Crucial: Must NOT auto-play
       expect(provider.isPlaying, isFalse);
       expect(provider.isBuffering, isFalse);
+    });
+
+    test('AudioProvider restores an active song radio after restart', () async {
+      final storage = StorageService();
+      final seed = createTestTrack('seed');
+      final picked = createTestTrack('p1').copyWith(previewUrl: 'https://cdn/p1.mp3');
+      final radio = SongRadio(
+        seed: seed,
+        mode: RadioMode.familiar,
+        similar: (_, __) async => [],
+        artistRadio: (_) async => [picked],
+        search: (_) async => [],
+        useLastFm: false,
+      );
+      final batch = await radio.nextBatch(count: 4);
+      final queue = [seed, ...batch];
+
+      await storage.savePlaybackState(
+        queue,
+        0,
+        5000,
+        radio.toJson(keepReasonsFor: queue.map((t) => t.id)),
+      );
+
+      final provider = AudioProvider(storage: storage);
+      await provider.restorePlaybackStateForTesting();
+
+      expect(provider.isRadioActive, isTrue);
+      expect(provider.radioSeed?.id, 'seed');
+      expect(provider.radioMode, RadioMode.familiar);
+      expect(provider.radioReasonFor('p1')?.source, RadioSource.deezer);
+      expect(provider.isPlaying, isFalse);
+
+      // Saving again keeps the radio in the snapshot.
+      provider.persistPlaybackStateNowForTesting();
+      final saved = await storage.getPlaybackState();
+      expect(saved?['radio'], isA<Map>());
+
+      provider.stopRadio();
+      provider.persistPlaybackStateNowForTesting();
+      expect((await storage.getPlaybackState())?['radio'], isNull);
     });
 
     test('stop() clears persisted playback state in storage', () async {

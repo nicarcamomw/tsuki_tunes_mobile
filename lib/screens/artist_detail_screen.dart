@@ -19,6 +19,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/lastfm_service.dart';
+import '../services/release_radar_service.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -27,6 +28,7 @@ import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
+import 'rabbit_hole_screen.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -420,6 +422,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           library.unfollowArtist(widget.artist.id);
                         } else {
                           library.followArtist(widget.artist);
+                          _announceRadar(strings);
                         }
                       },
                       child: AnimatedContainer(
@@ -1016,6 +1019,34 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     );
   }
 
+  /// Following is the moment the user wants alerts, so that's when we ask.
+  Future<void> _announceRadar(AppStrings strings) async {
+    final radar = ReleaseRadarService();
+    if (!ReleaseRadarService.isSupported) return;
+    await radar.askPermissionOnceForFollow();
+    if (!mounted || !radar.notifyEnabled.value) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.bgCard,
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            const Icon(Icons.radar, size: 16, color: AppColors.neonCyan),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                strings.radarFollowSnack(widget.artist.name),
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ));
+  }
+
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
@@ -1033,6 +1064,45 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  appNavigatorKey.currentState?.push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          RabbitHoleScreen(seedArtist: widget.artist),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: AppColors.neonPurple.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.hub, size: 12,
+                          color: AppColors.neonPurple.withValues(alpha: 0.9)),
+                      const SizedBox(width: 4),
+                      Text(
+                        strings.rabbitHoleViewGraph,
+                        style: locale.getTextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neonPurple,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

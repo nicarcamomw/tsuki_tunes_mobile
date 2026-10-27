@@ -17,6 +17,7 @@ import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
+import 'radio_control_sheet.dart';
 import 'tap_scale.dart';
 
 class _PlayingIndicator extends StatefulWidget {
@@ -382,6 +383,21 @@ class TrackTile extends StatelessWidget {
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            ListTile(
+              leading: const Icon(Icons.sensors, color: AppColors.accent),
+              title: Text(
+                strings.radioStart,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  color: AppColors.textBright,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                startRadioWithFeedback(context, track,
+                    bottomMargin: hasTrack ? 152 : 12);
+              },
+            ),
             ListTile(
               leading: Icon(Icons.playlist_play, color: AppColors.accent, semanticLabel: strings.a11yPlayNext),
               title: Text(

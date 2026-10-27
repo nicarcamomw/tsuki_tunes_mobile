@@ -399,6 +399,18 @@ class PlaybackQueue {
     return wasCurrent;
   }
 
+  /// Drops the first [count] already-played tracks (endless radio queues).
+  void dropBefore(int count) {
+    if (count <= 0 || count > _currentIndex) return;
+    _tracks.removeRange(0, count);
+    _currentIndex -= count;
+    _history
+      ..removeWhere((i) => i < count)
+      ..setAll(0, [for (final i in _history) i - count]);
+    final next = _nextShuffleIndex;
+    if (next != null) _nextShuffleIndex = next >= count ? next - count : null;
+  }
+
   /// Keeps only [keep] (the playing track), or empties the queue.
   void clear({Track? keep}) {
     _nextShuffleIndex = null;

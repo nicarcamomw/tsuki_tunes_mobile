@@ -350,7 +350,8 @@ class StorageService implements StorageContract {
   }
 
   @override
-  Future<void> savePlaybackState(List<Track>? queue, [int? currentIndex, int? positionMs]) async {
+  Future<void> savePlaybackState(List<Track>? queue,
+      [int? currentIndex, int? positionMs, Map<String, dynamic>? radio]) async {
     final prefs = await SharedPreferences.getInstance();
     if (queue == null || queue.isEmpty) {
       await prefs.remove(_playbackStateKey);
@@ -359,6 +360,8 @@ class StorageService implements StorageContract {
         'queue': queue.map((t) => t.toJson()).toList(),
         'currentIndex': currentIndex ?? 0,
         'position': positionMs ?? 0,
+        // Same snapshot as the queue, so the radio always matches it.
+        if (radio != null) 'radio': radio,
       };
       await prefs.setString(_playbackStateKey, json.encode(state));
     }

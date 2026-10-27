@@ -16,7 +16,9 @@ import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
+import '../services/translation_service.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/tap_scale.dart';
 import 'album_detail_screen.dart';
@@ -47,6 +49,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   final Map<int, GlobalKey> _lineKeys = {};
   late final AnimationController _snapBack;
   late Animation<double> _snapAnimation;
+
+  bool _showTranslation = false;
+  bool _isTranslating = false;
+  bool _isDownloadingModel = false;
+  List<String>? _translatedLines;
+  String? _lastTranslatedTrackId;
 
   @override
   void initState() {
@@ -142,6 +150,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
     final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
+    final radioActive = context.select<AudioProvider, bool>((a) => a.isRadioActive);
     final playbackError =
         context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
 
@@ -263,6 +272,28 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            IconButton(
+                              tooltip: radioActive
+                                  ? '${strings.a11yRadio}: ${strings.radioTune}'
+                                  : strings.radioStart,
+                              icon: Icon(
+                                Icons.sensors,
+                                color: radioActive
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary,
+                              ),
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                if (radioActive) {
+                                  showRadioControlSheet(context);
+                                } else {
+                                  startRadioWithFeedback(context, track,
+                                      bottomMargin:
+                                          MediaQuery.paddingOf(context).bottom +
+                                              12);
+                                }
+                              },
+                            ),
                             IconButton(
                               tooltip: strings.a11yLyrics,
                               icon: Icon(
@@ -819,10 +850,146 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   }
 
   Widget _buildQueueView(AudioProvider audio, LocaleProvider locale) {
+    // The queue list is mutated in place (radio refills, reorders), so
+    // rebuild on a fingerprint of it rather than on identity.
+    return Expanded(
+      child: Selector<AudioProvider, (int, int, bool, RadioStatus, RadioMode)>(
+        selector: (_, a) => (
+          Object.hashAll(a.queue.map((t) => t.id)),
+          a.currentIndex,
+          a.isRadioActive,
+          a.radioStatus,
+          a.radioMode,
+        ),
+        builder: (context, _, __) => _buildQueuePanel(audio, locale),
+      ),
+    );
+  }
+
+  Widget _buildRadioBanner(AudioProvider audio, LocaleProvider locale) {
+    final strings = locale.strings;
+    final seed = audio.radioSeed;
+    if (seed == null) return const SizedBox.shrink();
+    final modeLabel = switch (audio.radioMode) {
+      RadioMode.familiar => strings.radioModeFamiliar,
+      RadioMode.balanced => strings.radioModeBalanced,
+      RadioMode.adventurous => strings.radioModeAdventurous,
+    };
+    return Semantics(
+      button: true,
+      label: '${strings.a11yRadio}. ${strings.radioBasedOn(seed.title)}',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          showRadioControlSheet(context);
+        },
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              AppColors.accent.withValues(alpha: 0.14),
+              AppColors.neonPurple.withValues(alpha: 0.06),
+            ]),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.all_inclusive, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${strings.radioLabel} · ${modeLabel.toUpperCase()}',
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                    Text(
+                      strings.radioBasedOn(seed.title),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textBright,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border:
+                      Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  strings.radioTune,
+                  style: locale.getTextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.accent,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioFooter(AudioProvider audio, LocaleProvider locale) {
+    final status = audio.radioStatus;
+    final warn =
+        status == RadioStatus.offline || status == RadioStatus.exhausted;
+    final color = warn ? AppColors.warning : AppColors.textMuted;
+    return Padding(
+      key: const ValueKey('radio_footer'),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Semantics(
+        liveRegion: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (status == RadioStatus.loading)
+              const SizedBox.square(
+                dimension: 12,
+                child: CircularProgressIndicator(
+                    strokeWidth: 1.5, color: AppColors.accent),
+              )
+            else
+              Icon(warn ? Icons.info_outline : Icons.all_inclusive,
+                  size: 14, color: color),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                radioStatusLabel(locale.strings, status),
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQueuePanel(AudioProvider audio, LocaleProvider locale) {
     final queue = audio.queue;
     final strings = locale.strings;
-    return Expanded(
-      child: Container(
+    return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.bgMid.withValues(alpha: 0.85),
@@ -962,6 +1129,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            if (audio.isRadioActive) _buildRadioBanner(audio, locale),
             if (queue.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1006,6 +1174,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     )
                   : ReorderableListView.builder(
                       buildDefaultDragHandles: false,
+                      footer: audio.isRadioActive
+                          ? _buildRadioFooter(audio, locale)
+                          : null,
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 8),
                       itemCount: queue.length,
@@ -1145,6 +1316,25 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
+                                        if (radioReasonLabel(strings,
+                                                audio.radioReasonFor(t.id))
+                                            case final why?)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 2),
+                                            child: Text(
+                                              why,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: locale.getTextStyle(
+                                                color: AppColors.neonCyan
+                                                    .withValues(alpha: 0.75),
+                                                fontSize: 8.5,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -1212,8 +1402,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _loadLyricsForTrack(Track track) async {
@@ -1227,6 +1416,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     setState(() {
       _isLoadingLyrics = true;
       _lyrics = null;
+      _showTranslation = false;
+      _translatedLines = null;
+      _isTranslating = false;
+      _isDownloadingModel = false;
     });
 
     try {
@@ -1305,31 +1498,55 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       ],
                     ),
                   ),
-                  if (_lyrics?.isSynced == true)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_lyrics?.isSynced == true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            locale.strings.syncedTapToSeek,
+                            style: locale.getTextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.accent,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        locale.strings.syncedTapToSeek,
-                        style: locale.getTextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
+                      if (_lyrics != null && !_lyrics!.isInstrumental && _lyrics!.plainLyrics.isNotEmpty)
+                        _buildTranslateButton(locale, track),
+                    ],
+                  ),
                 ],
               ),
             ),
             const Divider(color: AppColors.border, height: 1),
+            if (_showTranslation && _translatedLines != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                color: AppColors.accent.withValues(alpha: 0.08),
+                child: Text(
+                  locale.strings.translatedTag,
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent.withValues(alpha: 0.7),
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
             Expanded(
               child: Consumer<AudioProvider>(
                 builder: (context, liveAudio, _) {
@@ -1341,6 +1558,191 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildTranslateButton(LocaleProvider locale, Track track) {
+    final strings = locale.strings;
+    final isActive = _showTranslation && _translatedLines != null;
+    final isLoading = _isTranslating || _isDownloadingModel;
+
+    return TapScale(
+      semanticLabel: isActive ? strings.a11yHideTranslation : strings.a11yTranslate,
+      onTap: isLoading ? null : () => _onTranslateTap(locale, track),
+      scaleDown: 0.85,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.accent.withValues(alpha: 0.2)
+              : AppColors.bgHover,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive
+                ? AppColors.accent.withValues(alpha: 0.6)
+                : AppColors.border,
+          ),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: AppColors.accent,
+                ),
+              )
+            : Text(
+                strings.translateButton,
+                style: locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isActive ? AppColors.accent : AppColors.textPrimary,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _onTranslateTap(LocaleProvider locale, Track track) async {
+    if (_showTranslation && _translatedLines != null) {
+      setState(() => _showTranslation = false);
+      return;
+    }
+
+    if (_lastTranslatedTrackId == track.id && _translatedLines != null) {
+      setState(() => _showTranslation = true);
+      return;
+    }
+
+    final service = TranslationService();
+    final targetLang = locale.currentLanguage;
+
+    final needed = await service.requiredModels(targetLang: targetLang);
+    if (needed.isNotEmpty && mounted) {
+      final confirmed = await _showDownloadDialog(locale, needed.length);
+      if (!confirmed || !mounted) return;
+
+      setState(() => _isDownloadingModel = true);
+      try {
+        await service.downloadRequiredModels(targetLang: targetLang);
+      } catch (e) {
+        debugPrint('[Translation] Model download failed: $e');
+        if (mounted) {
+          setState(() => _isDownloadingModel = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(locale.strings.translationError),
+              backgroundColor: AppColors.bgCard,
+            ),
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _isDownloadingModel = false);
+    }
+
+    setState(() => _isTranslating = true);
+
+    try {
+      final lines = _lyrics!.isSynced
+          ? _lyrics!.lines.map((l) => l.text).toList()
+          : _lyrics!.plainLyrics.split('\n');
+
+      final translated = await service.translateLines(
+        lines: lines,
+        trackId: track.id,
+        targetLang: targetLang,
+      );
+
+      if (mounted && _lastLoadedTrackId == track.id) {
+        setState(() {
+          _translatedLines = translated;
+          _lastTranslatedTrackId = track.id;
+          _showTranslation = true;
+          _isTranslating = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Translation] Error: $e');
+      if (mounted) {
+        setState(() => _isTranslating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(locale.strings.translationError),
+            backgroundColor: AppColors.bgCard,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showDownloadDialog(LocaleProvider locale, int modelCount) async {
+    final strings = locale.strings;
+    final size = (modelCount * 30).toString();
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.bgMid,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.borderGlow.withValues(alpha: 0.5)),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.download_rounded, color: AppColors.accent, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    strings.downloadModelTitle,
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              strings.downloadModelDesc(size),
+              style: locale.getTextStyle(
+                fontSize: 12,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  strings.cancel,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  strings.downloadModelConfirm,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   Widget _buildLyricsContent(AudioProvider audio, LocaleProvider locale, Track track) {
@@ -1519,26 +1921,49 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             : Colors.transparent,
                       ),
                     ),
-                    child: Text(
-                      line.text,
-                      textAlign: TextAlign.center,
-                      style: locale.getTextStyle(
-                        fontSize: isActive ? 17 : 13,
-                        fontWeight:
-                            isActive ? FontWeight.w800 : FontWeight.w500,
-                        color: isActive
-                            ? AppColors.accent
-                            : AppColors.textPrimary.withValues(alpha: 0.4),
-                        shadows: isActive
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.accent
-                                      .withValues(alpha: 0.7),
-                                  blurRadius: 12,
-                                ),
-                              ]
-                            : null,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          line.text,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: isActive ? 17 : 13,
+                            fontWeight:
+                                isActive ? FontWeight.w800 : FontWeight.w500,
+                            color: isActive
+                                ? AppColors.accent
+                                : AppColors.textPrimary.withValues(alpha: 0.4),
+                            shadows: isActive
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.accent
+                                          .withValues(alpha: 0.7),
+                                      blurRadius: 12,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                        if (_showTranslation &&
+                            _translatedLines != null &&
+                            i < _translatedLines!.length &&
+                            _translatedLines![i].isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              _translatedLines![i],
+                              textAlign: TextAlign.center,
+                              style: locale.getTextStyle(
+                                fontSize: isActive ? 13 : 11,
+                                fontWeight: FontWeight.w400,
+                                color: isActive
+                                    ? AppColors.textPrimary.withValues(alpha: 0.7)
+                                    : AppColors.textMuted.withValues(alpha: 0.5),
+                              ).copyWith(fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -1595,6 +2020,43 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
               ),
             ),
         ],
+      );
+    }
+
+    if (_showTranslation && _translatedLines != null) {
+      final plainLines = _lyrics!.plainLyrics.split('\n');
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          children: [
+            for (int i = 0; i < plainLines.length; i++) ...[
+              Text(
+                plainLines[i],
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  height: 1.6,
+                  color: AppColors.textPrimary.withValues(alpha: 0.8),
+                ),
+              ),
+              if (i < _translatedLines!.length && _translatedLines![i].isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _translatedLines![i],
+                    textAlign: TextAlign.center,
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      color: AppColors.textMuted.withValues(alpha: 0.6),
+                    ).copyWith(fontStyle: FontStyle.italic),
+                  ),
+                )
+              else
+                const SizedBox(height: 8),
+            ],
+          ],
+        ),
       );
     }
 

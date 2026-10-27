@@ -519,6 +519,22 @@ class DeezerApiService implements MusicApiContract {
     });
   }
 
+  /// Deezer's mix of this artist and similar ones. Not cached: each call
+  /// returns a different selection, which keeps song radios fresh.
+  Future<List<Track>> getArtistRadio(String artistId, {int limit = 25}) async {
+    try {
+      final data =
+          await _fetchJson(ApiEndpoints.artistRadio(artistId, limit: limit));
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        return list.map((item) => Track.fromJson(item)).toList();
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] getArtistRadio($artistId) error: $e');
+    }
+    return <Track>[];
+  }
+
   @override
   Future<List<Track>> enrichTracksWithContributors(List<Track> tracks) async {
     final enriched = <Track>[];

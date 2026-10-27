@@ -39,6 +39,17 @@ dependencies:
   flutter_web_auth_2: ^5.1.0
   crypto: ^3.0.7
 
+  # Share & Path
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+
+  # Release radar: daily background check + local notifications
+  workmanager: ^0.10.10
+  flutter_local_notifications: ^19.4.2
+
+  # Offline Translation (Google ML Kit)
+  google_mlkit_translation: ^0.13.0
+
   # Spotify Native Playback
   spotify_sdk: ^4.0.0
   audio_session: ^0.1.25

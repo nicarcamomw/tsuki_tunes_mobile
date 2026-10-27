@@ -4,11 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/album.dart';
 import '../models/artist.dart';
+import '../models/lyrics_search_result.dart';
 import '../models/track.dart';
 import '../services/deezer_api_service.dart';
+import '../services/lyrics_service.dart';
 
 class SearchProvider extends ChangeNotifier {
   final DeezerApiService _api = DeezerApiService();
+  final LyricsService _lyricsService = LyricsService();
   static const _historyKey = 'search_history';
   static const _maxHistory = 10;
 
@@ -22,6 +25,11 @@ class SearchProvider extends ChangeNotifier {
   List<Artist> _artists = [];
   List<Album> _albums = [];
 
+  List<LyricsSearchResult> _lyricsResults = [];
+  bool _isLyricsLoading = false;
+  bool _hasLyricsError = false;
+  int _lyricsSearchGeneration = 0;
+
   List<String> _searchHistory = [];
 
   String get query => _query;
@@ -31,6 +39,9 @@ class SearchProvider extends ChangeNotifier {
   List<Track> get tracks => _tracks;
   List<Artist> get artists => _artists;
   List<Album> get albums => _albums;
+  List<LyricsSearchResult> get lyricsResults => _lyricsResults;
+  bool get isLyricsLoading => _isLyricsLoading;
+  bool get hasLyricsError => _hasLyricsError;
   List<String> get searchHistory => _searchHistory;
 
   SearchProvider() {
@@ -108,8 +119,46 @@ class SearchProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> searchLyrics(String queryText) async {
+    final cleanQuery = queryText.trim();
+    if (cleanQuery.length < 3) {
+      _lyricsResults = [];
+      _isLyricsLoading = false;
+      _hasLyricsError = false;
+      notifyListeners();
+      return;
+    }
+
+    _query = cleanQuery;
+    _isLyricsLoading = true;
+    _hasLyricsError = false;
+    final generation = ++_lyricsSearchGeneration;
+    notifyListeners();
+
+    try {
+      final results = await _lyricsService.searchByLyrics(cleanQuery);
+      if (generation != _lyricsSearchGeneration) return;
+      _lyricsResults = results;
+      _hasLyricsError = false;
+    } catch (e) {
+      if (generation != _lyricsSearchGeneration) return;
+      debugPrint('Lyrics search error: $e');
+      _hasLyricsError = true;
+      _lyricsResults = [];
+    } finally {
+      if (generation == _lyricsSearchGeneration) {
+        _isLyricsLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
   void retryLastSearch() {
     if (_query.isNotEmpty) search(_query);
+  }
+
+  void retryLyricsSearch() {
+    if (_query.isNotEmpty) searchLyrics(_query);
   }
 
   void clear() {
@@ -117,9 +166,13 @@ class SearchProvider extends ChangeNotifier {
     _tracks = [];
     _artists = [];
     _albums = [];
+    _lyricsResults = [];
     _isLoading = false;
     _hasError = false;
+    _isLyricsLoading = false;
+    _hasLyricsError = false;
     _searchGeneration++;
+    _lyricsSearchGeneration++;
     notifyListeners();
   }
 }

@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
@@ -22,12 +19,12 @@ Track _track(String id) => Track(
     );
 
 class FakeSpotifyService extends SpotifyService {
-  bool _connected = true;
+  final bool _connected = true;
   bool _premium = true;
   String? _playbackUri;
   bool _isPlaying = false;
   int _progressMs = 0;
-  int _durationMs = 180000;
+  final int _durationMs = 180000;
   bool playWillFail = false;
   int pauseCount = 0;
   int resumeCount = 0;
