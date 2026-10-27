@@ -101,11 +101,11 @@ class _RadioControlSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.watch<AudioProvider>();
+    final audio = context.read<AudioProvider>();
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
-    final seed = audio.radioSeed;
-    final current = audio.currentTrack;
+    final seed = context.select<AudioProvider, Track?>((a) => a.radioSeed);
+    final current = context.select<AudioProvider, Track?>((a) => a.currentTrack);
 
     if (seed == null) {
       // Radio ended while the sheet was open.
@@ -115,8 +115,9 @@ class _RadioControlSheet extends StatelessWidget {
       return const SizedBox(height: 120);
     }
 
-    final status = audio.radioStatus;
-    final mode = audio.radioMode;
+    final status = context.select<AudioProvider, RadioStatus>((a) => a.radioStatus);
+    final mode = context.select<AudioProvider, RadioMode>((a) => a.radioMode);
+    final usesLastFm = context.select<AudioProvider, bool>((a) => a.radioUsesLastFm);
     final modeDesc = switch (mode) {
       RadioMode.familiar => strings.radioModeFamiliarDesc,
       RadioMode.balanced => strings.radioModeBalancedDesc,
@@ -205,7 +206,7 @@ class _RadioControlSheet extends StatelessWidget {
             _StatusLine(status: status, locale: locale),
             const SizedBox(height: 4),
             Text(
-              audio.radioUsesLastFm
+              usesLastFm
                   ? strings.radioSourcesBoth
                   : strings.radioSourcesDeezerOnly,
               style: locale.getTextStyle(

@@ -462,28 +462,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                 const SizedBox(height: 16),
 
-                // Progress bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Consumer<AudioProvider>(
-                    builder: (context, audioPos, _) => ProgressBar(
-                      progress: audioPos.position,
-                      total: audioPos.duration,
-                      buffered: audioPos.bufferedPosition,
-                      onSeek: audioPos.seek,
-                      progressBarColor: AppColors.accent,
-                      baseBarColor: AppColors.border,
-                      bufferedBarColor: AppColors.borderGlow,
-                      thumbColor: AppColors.accent,
-                      thumbGlowColor: AppColors.accentGlow,
-                      thumbRadius: 7.0,
-                      timeLabelTextStyle: locale.getTextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
+                // Progress bar — isolated so position ticks don't rebuild
+                // the rest of the player.
+                _IsolatedProgressBar(locale: locale),
 
                 if (playbackError != null)
                   Padding(
@@ -2336,6 +2317,40 @@ class _TitleMarqueeState extends State<_TitleMarquee> {
         widget.text,
         style: widget.style,
         maxLines: 1,
+      ),
+    );
+  }
+}
+
+class _IsolatedProgressBar extends StatelessWidget {
+  const _IsolatedProgressBar({required this.locale});
+
+  final LocaleProvider locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final position = context.select<AudioProvider, Duration>((a) => a.position);
+    final duration = context.select<AudioProvider, Duration>((a) => a.duration);
+    final buffered =
+        context.select<AudioProvider, Duration>((a) => a.bufferedPosition);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ProgressBar(
+        progress: position,
+        total: duration,
+        buffered: buffered,
+        onSeek: context.read<AudioProvider>().seek,
+        progressBarColor: AppColors.accent,
+        baseBarColor: AppColors.border,
+        bufferedBarColor: AppColors.borderGlow,
+        thumbColor: AppColors.accent,
+        thumbGlowColor: AppColors.accentGlow,
+        thumbRadius: 7.0,
+        timeLabelTextStyle: locale.getTextStyle(
+          fontSize: 11,
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }
