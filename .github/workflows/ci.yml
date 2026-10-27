@@ -36,6 +36,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      # The release build (two NDKs, R8, three ABIs) runs the stock runner
+      # out of disk at packaging time. Drop preinstalled toolchains this
+      # job never uses, including stale NDKs (the pinned one is installed
+      # below).
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
+            /usr/local/lib/android/sdk/ndk/* /usr/local/lib/android/sdk/system-images
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          df -h /
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
