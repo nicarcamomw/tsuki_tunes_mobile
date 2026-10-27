@@ -25,6 +25,7 @@ import 'services/home_widget_service.dart';
 import 'services/media_session_handler.dart';
 import 'services/release_radar_service.dart';
 import 'services/storage_service.dart';
+import 'services/tile_channel_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -123,6 +124,7 @@ class TsukiTunesApp extends StatelessWidget {
             audio.onListenedThreshold = (track) {
               if (!library.isTrackListened(track.id)) library.markTrack(track);
             };
+            TileChannelService.init(audio);
             return audio;
           },
         ),
