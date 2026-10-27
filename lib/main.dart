@@ -174,8 +174,8 @@ class TsukiTunesApp extends StatelessWidget {
             player.onListenedThreshold = (track) {
               if (!library.isTrackListened(track.id)) library.markTrack(track);
             };
-            TileChannelService.init(audio);
-            return audio;
+            if (audio != null) TileChannelService.init(audio);
+            return player;
           },
         ),
         ChangeNotifierProxyProvider2<AudioProvider, LibraryProvider, RunProvider>(

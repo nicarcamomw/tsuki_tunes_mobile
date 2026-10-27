@@ -47,12 +47,14 @@ class VoiceSearchService {
       },
       onSoundLevelChange: onSoundLevel,
       localeId: localeId,
-      listenMode: ListenMode.search,
       pauseFor: const Duration(seconds: 3),
       listenFor: const Duration(seconds: 15),
-      cancelOnError: true,
-      partialResults: true,
-      onDevice: true,
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.search,
+        cancelOnError: true,
+        partialResults: true,
+        onDevice: true,
+      ),
     );
   }
 

@@ -26,7 +26,7 @@ class SpotifyService {
   static const _profileKey = 'spotify_profile';
 
   static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    aOptions: AndroidOptions(),
   );
 
   String? _accessToken;

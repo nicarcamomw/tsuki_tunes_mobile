@@ -93,8 +93,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
     final spokenText = await VoiceSearchSheet.show(
       context,
-      localeId: voiceService.localeForLanguage(locale.language.code),
-      langCode: locale.language.code,
+      localeId: voiceService.localeForLanguage(locale.currentLanguage.code),
+      langCode: locale.currentLanguage.code,
     );
 
     if (!mounted || spokenText == null || spokenText.isEmpty) return;
