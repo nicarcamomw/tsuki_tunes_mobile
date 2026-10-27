@@ -359,49 +359,79 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
+    final coverSize = size * 0.54;
     final disc = RepaintBoundary(
-      child: Container(
+      child: SizedBox(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.bgDeep,
-          border: Border.all(
-            color: widget.isPlaying ? AppColors.accent : AppColors.border,
-            width: 2,
-          ),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            ExcludeSemantics(
-              child: ClipOval(
-                child: SizedBox(
-                  width: size * 0.58,
-                  height: size * 0.58,
-                  child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          memCacheWidth: imageCacheSize(context, size * 0.58),
-                          imageUrl: widget.imageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => const _CoverPlaceholder(),
-                          errorWidget: (_, __, ___) => const _CoverPlaceholder(),
-                        )
-                      : const _CoverPlaceholder(iconSize: 40),
+        child: CustomPaint(
+          painter: _VinylPainter(isPlaying: widget.isPlaying),
+          child: Center(
+            child: ExcludeSemantics(
+              child: SizedBox(
+                width: coverSize,
+                height: coverSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipOval(
+                      child: SizedBox.expand(
+                        child: widget.imageUrl != null &&
+                                widget.imageUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                memCacheWidth:
+                                    imageCacheSize(context, coverSize),
+                                imageUrl: widget.imageUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) =>
+                                    const _CoverPlaceholder(),
+                                errorWidget: (_, __, ___) =>
+                                    const _CoverPlaceholder(),
+                              )
+                            : const _CoverPlaceholder(iconSize: 40),
+                      ),
+                    ),
+                    // Vignette softens cover edges into the vinyl
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Color(0x00000000),
+                            Color(0x00000000),
+                            Color(0x28000000),
+                          ],
+                          stops: [0.0, 0.6, 1.0],
+                        ),
+                      ),
+                      child: SizedBox.expand(),
+                    ),
+                    // Metallic center spindle
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const RadialGradient(
+                          center: Alignment(-0.35, -0.35),
+                          radius: 0.85,
+                          colors: [
+                            Color(0xFF606070),
+                            Color(0xFF2A2A38),
+                            Color(0xFF111118),
+                          ],
+                        ),
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Center pin
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.bgDeep,
-                border: Border.all(color: AppColors.accent, width: 2),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -418,23 +448,29 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              // Glow behind, groove rings and shockwaves on top: both are
-              // circles, so they stay out of the rotation and only repaint
-              // themselves; the disc with its cover is recorded once.
               Positioned.fill(
-                child: CustomPaint(painter: _GlowPainter(_frame, widget.isPlaying)),
+                child: CustomPaint(
+                    painter: _GlowPainter(_frame, widget.isPlaying)),
               ),
               AnimatedBuilder(
                 animation: _frame,
                 builder: (_, child) => Transform.scale(
                   scale: 1 + 0.02 * _frame.pulse,
-                  child: Transform.rotate(angle: _frame.rotation, child: child),
+                  child: Transform.rotate(
+                      angle: _frame.rotation, child: child),
                 ),
                 child: disc,
               ),
               Positioned.fill(
                 child: IgnorePointer(
-                  child: CustomPaint(painter: _RingsPainter(_frame, widget.isPlaying)),
+                  child: CustomPaint(
+                      painter: _SpecularPainter(_frame)),
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                      painter: _RingsPainter(_frame, widget.isPlaying)),
                 ),
               ),
               Positioned(
@@ -501,10 +537,24 @@ class _GlowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final a = f.glow * (0.24 + 0.56 * f.pulse);
-    if (a <= 0.003) return;
     final c = size.center(Offset.zero);
     final r = size.width / 2;
+
+    // Soft drop shadow (fades as glow takes over)
+    final shadowA = 0.35 * (1 - f.glow * 0.5);
+    if (shadowA > 0.004) {
+      canvas.drawCircle(
+        Offset(c.dx + 1.5, c.dy + 4),
+        r * 1.01,
+        Paint()
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16)
+          ..color = const Color(0xFF000000).withValues(alpha: shadowA),
+      );
+    }
+
+    // Red accent glow
+    final a = f.glow * (0.24 + 0.56 * f.pulse);
+    if (a <= 0.003) return;
     final outer = r * (1.16 + 0.12 * f.pulse);
     canvas.drawCircle(
       c,
@@ -556,7 +606,7 @@ class _RingsPainter extends CustomPainter {
     if (f.pulse > 0.01) {
       canvas.drawCircle(
         c,
-        w * 0.295,
+        w * 0.275,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
@@ -597,4 +647,241 @@ class _RingsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingsPainter old) => old.playing != playing;
+}
+
+/// The vinyl record surface: base, grooves, label zone, rim bevel and
+/// iridescent sweep. Baked once into the RepaintBoundary and only
+/// repaints when play state changes the accent ring.
+class _VinylPainter extends CustomPainter {
+  final bool isPlaying;
+  const _VinylPainter({required this.isPlaying});
+
+  static const double _coverR = 0.54;
+  static const double _labelR = 0.58;
+  static const double _grooveR = 0.93;
+  static const int _grooveCount = 35;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2;
+
+    // Base vinyl with depth gradient
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          colors: const [
+            Color(0xFF151520),
+            Color(0xFF0E0E16),
+            Color(0xFF0A0A10),
+          ],
+          stops: const [0.0, 0.6, 1.0],
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+
+    // Outer rim bevel (metallic sweep)
+    canvas.drawCircle(
+      c,
+      r - 0.75,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..shader = SweepGradient(
+          colors: const [
+            Color(0xFF3A3A4A),
+            Color(0xFF1E1E28),
+            Color(0xFF101018),
+            Color(0xFF1E1E28),
+            Color(0xFF3A3A4A),
+          ],
+          stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+
+    // Edge light catch (bright arc on upper-left rim)
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r - 0.25),
+      -pi * 0.85,
+      pi * 0.6,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0x22FFFFFF),
+    );
+
+    // Accent ring on rim when playing
+    if (isPlaying) {
+      canvas.drawCircle(
+        c,
+        r - 2.5,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..color = AppColors.accent.withValues(alpha: 0.35),
+      );
+    }
+
+    // Label zone (between cover art and grooves)
+    final labelInner = r * _coverR;
+    final labelOuter = r * _labelR;
+    canvas.drawCircle(
+      c,
+      (labelInner + labelOuter) / 2,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = labelOuter - labelInner
+        ..color = const Color(0xFF16161F),
+    );
+    canvas.drawCircle(
+      c,
+      labelInner,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF282838),
+    );
+    canvas.drawCircle(
+      c,
+      labelOuter,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.6
+        ..color = const Color(0xFF222232),
+    );
+
+    // Groove lines
+    final grooveZone = r * _grooveR - labelOuter;
+    for (var i = 0; i < _grooveCount; i++) {
+      final t = i / (_grooveCount - 1);
+      final gr = labelOuter + t * grooveZone;
+      final isBand = i > 0 && i % 9 == 0;
+      final alpha = isBand ? 0.13 : (0.045 + 0.02 * sin(i * 1.3));
+      canvas.drawCircle(
+        c,
+        gr,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isBand ? 1.0 : 0.45
+          ..color = Color.fromRGBO(180, 190, 225, alpha),
+      );
+    }
+
+    // Iridescent rainbow sweep over grooves
+    canvas.save();
+    canvas.clipPath(
+      Path()
+        ..addOval(Rect.fromCircle(center: c, radius: r * _grooveR))
+        ..addOval(Rect.fromCircle(center: c, radius: labelOuter))
+        ..fillType = PathFillType.evenOdd,
+    );
+    canvas.drawCircle(
+      c,
+      r * _grooveR,
+      Paint()
+        ..shader = SweepGradient(
+          colors: const [
+            Color(0x054400FF),
+            Color(0x0700AAFF),
+            Color(0x0500FF88),
+            Color(0x07FFAA00),
+            Color(0x05FF0066),
+            Color(0x054400FF),
+          ],
+        ).createShader(Rect.fromCircle(center: c, radius: r * _grooveR)),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_VinylPainter old) => old.isPlaying != isPlaying;
+}
+
+/// Non-rotating specular highlight and groove shimmer that sits on top
+/// of the rotating disc, simulating a fixed light source.
+class _SpecularPainter extends CustomPainter {
+  final _Frame f;
+  _SpecularPainter(this.f) : super(repaint: f);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2;
+
+    // Clip to disc bounds
+    canvas.save();
+    canvas.clipPath(
+        Path()..addOval(Rect.fromCircle(center: c, radius: r * 0.96)));
+
+    // Broad specular highlight (upper-left)
+    final a = 0.045 + 0.02 * f.glow;
+    final hl = Offset(c.dx - r * 0.28, c.dy - r * 0.35);
+    canvas.drawOval(
+      Rect.fromCenter(center: hl, width: r * 1.2, height: r * 0.55),
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Color.fromRGBO(255, 255, 255, a),
+            Color.fromRGBO(255, 255, 255, a * 0.25),
+            const Color(0x00FFFFFF),
+          ],
+          stops: const [0.0, 0.4, 1.0],
+        ).createShader(Rect.fromCenter(
+            center: hl, width: r * 1.2, height: r * 0.55)),
+    );
+
+    // Tight bright spot
+    final sp = Offset(c.dx - r * 0.15, c.dy - r * 0.2);
+    canvas.drawCircle(
+      sp,
+      r * 0.12,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Color.fromRGBO(255, 255, 255, a * 0.5),
+            const Color(0x00FFFFFF),
+          ],
+        ).createShader(Rect.fromCircle(center: sp, radius: r * 0.12)),
+    );
+    canvas.restore();
+
+    // Groove shimmer: counter-rotates slowly to simulate light
+    // catching different grooves as the disc turns.
+    if (f.glow > 0.01) {
+      final grooveOuter = r * _VinylPainter._grooveR;
+      final grooveInner = r * _VinylPainter._labelR;
+      canvas.save();
+      canvas.clipPath(
+        Path()
+          ..addOval(Rect.fromCircle(center: c, radius: grooveOuter))
+          ..addOval(Rect.fromCircle(center: c, radius: grooveInner))
+          ..fillType = PathFillType.evenOdd,
+      );
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(-f.rotation * 0.5);
+      canvas.translate(-c.dx, -c.dy);
+
+      final sA = 0.04 * f.glow;
+      canvas.drawCircle(
+        c,
+        grooveOuter,
+        Paint()
+          ..shader = SweepGradient(
+            colors: [
+              Color.fromRGBO(255, 255, 255, sA),
+              const Color(0x00FFFFFF),
+              Color.fromRGBO(255, 255, 255, sA * 0.5),
+              const Color(0x00FFFFFF),
+            ],
+            stops: const [0.0, 0.25, 0.5, 0.75],
+          ).createShader(Rect.fromCircle(center: c, radius: grooveOuter)),
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SpecularPainter old) => false;
 }
