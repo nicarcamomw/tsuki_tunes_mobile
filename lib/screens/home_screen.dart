@@ -1633,6 +1633,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
               if (seedArtist != null)
                 ClipOval(
                   child: CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 30),
                     imageUrl: seedArtist!.getBestImage(size: 'small'),
                     width: 30,
                     height: 30,

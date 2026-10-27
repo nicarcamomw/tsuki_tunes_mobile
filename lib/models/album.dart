@@ -60,7 +60,7 @@ class Album {
     return Album(
       id: json['id']?.toString() ?? '',
       title: json['title'] ?? 'Unknown Album',
-      coverUrl: json['cover_big'] ?? json['cover_medium'] ?? json['cover'] ?? '',
+      coverUrl: json['cover_medium'] ?? json['cover_big'] ?? json['cover'] ?? '',
       coverXl: json['cover_xl'],
       artistId: artistJson?['id']?.toString() ?? '',
       artistName: artistJson?['name'] ?? 'Unknown Artist',

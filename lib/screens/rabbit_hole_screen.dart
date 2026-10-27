@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
@@ -1328,6 +1329,7 @@ class _FocusCard extends StatelessWidget {
                     child: const Icon(Icons.person, color: AppColors.textMuted),
                   )
                 : CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 44),
                     imageUrl: node.artist.getBestImage(size: 'medium'),
                     width: 44,
                     height: 44,

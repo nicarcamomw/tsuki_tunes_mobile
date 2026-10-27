@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/wrapped_data.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -658,6 +659,7 @@ class _TopTracksSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: track.coverUrl.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 100),
                     imageUrl: track.coverUrl,
                     width: 100,
                     height: 100,
@@ -751,6 +753,7 @@ class _TopTracksSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
             child: track.coverUrl.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 40),
                     imageUrl: track.coverUrl,
                     width: 40,
                     height: 40,
@@ -907,6 +910,7 @@ class _TopArtistsSlide extends StatelessWidget {
           ClipOval(
             child: artist.coverUrl != null && artist.coverUrl!.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, (isFirst ? 56.0 : 40.0)),
                     imageUrl: artist.coverUrl!,
                     width: isFirst ? 56 : 40,
                     height: isFirst ? 56 : 40,
