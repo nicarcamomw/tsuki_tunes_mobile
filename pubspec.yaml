@@ -43,6 +43,9 @@ dependencies:
   share_plus: ^10.1.4
   path_provider: ^2.1.5
 
+  # Home Screen Widgets
+  home_widget: ^0.7.0
+
   # Release radar: daily background check + local notifications
   workmanager: ^0.10.10
   flutter_local_notifications: ^19.4.2

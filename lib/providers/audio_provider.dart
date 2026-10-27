@@ -15,6 +15,7 @@ import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/deezer_api_service.dart';
+import '../services/home_widget_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
 import '../services/song_radio.dart';
@@ -177,9 +178,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _mediaItemKey;
   String? _mediaStateKey;
 
+  String? _widgetTrackKey;
+  bool? _widgetPlayingKey;
+
   @override
   void notifyListeners() {
     _syncMediaSession();
+    _syncHomeWidget();
     super.notifyListeners();
   }
 
@@ -233,6 +238,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       bufferedPosition: _bufferedPosition,
       speed: 1.0,
     ));
+  }
+
+  void _syncHomeWidget() {
+    final trackKey = _currentTrack?.id;
+    final playingKey = _isPlaying;
+    if (trackKey == _widgetTrackKey && playingKey == _widgetPlayingKey) return;
+    _widgetTrackKey = trackKey;
+    _widgetPlayingKey = playingKey;
+    HomeWidgetService()
+        .updateTrack(_currentTrack, isPlaying: _isPlaying);
   }
 
   @visibleForTesting

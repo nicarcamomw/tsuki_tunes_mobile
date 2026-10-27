@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_player_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:background="@drawable/widget_player_bg">
+
+    <!-- Album cover -->
+    <ImageView
+        android:id="@+id/img_cover"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:scaleType="centerCrop"
+        android:contentDescription="Album cover"
+        android:src="@android:drawable/ic_menu_gallery" />
+
+    <!-- Track info -->
+    <LinearLayout
+        android:id="@+id/track_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/img_cover"
+        android:layout_above="@id/controls"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="4dp"
+        android:orientation="vertical"
+        android:gravity="start|center_vertical">
+
+        <TextView
+            android:id="@+id/txt_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tsuki Tunes"
+            android:textColor="#FFE5E5E5"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium" />
+
+        <TextView
+            android:id="@+id/txt_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No track playing"
+            android:textColor="#FF888888"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Playback controls -->
+    <LinearLayout
+        android:id="@+id/controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/img_cover"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="12dp"
+        android:orientation="horizontal"
+        android:gravity="start|center_vertical">
+
+        <ImageView
+            android:id="@+id/btn_prev"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="Previous"
+            android:padding="6dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <ImageView
+            android:id="@+id/btn_play_pause"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="Play/Pause"
+            android:padding="6dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <ImageView
+            android:id="@+id/btn_next"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_media_next"
+            android:contentDescription="Next"
+            android:padding="6dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+</RelativeLayout>
