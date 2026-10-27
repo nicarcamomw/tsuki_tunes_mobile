@@ -46,14 +46,14 @@ class VoiceSearchService {
         onResult(result.recognizedWords, result.finalResult);
       },
       onSoundLevelChange: onSoundLevel,
-      localeId: localeId,
-      pauseFor: const Duration(seconds: 3),
-      listenFor: const Duration(seconds: 15),
       listenOptions: SpeechListenOptions(
         listenMode: ListenMode.search,
         cancelOnError: true,
         partialResults: true,
         onDevice: true,
+        localeId: localeId,
+        pauseFor: const Duration(seconds: 3),
+        listenFor: const Duration(seconds: 15),
       ),
     );
   }

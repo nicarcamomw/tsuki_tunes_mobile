@@ -47,7 +47,7 @@ dependencies:
   home_widget: ^0.7.0
 
   # Voice Search (on-device speech recognition)
-  speech_to_text: ^6.6.2
+  speech_to_text: ^7.5.0
 
   # Release radar: daily background check + local notifications
   workmanager: ^0.10.10
