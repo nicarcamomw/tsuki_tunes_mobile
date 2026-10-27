@@ -86,7 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _startVoiceSearch() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     FocusScope.of(context).unfocus();
     final locale = context.read<LocaleProvider>();
     final voiceService = VoiceSearchService();
@@ -108,12 +108,12 @@ class _SearchScreenState extends State<SearchScreen> {
     if (command.action == VoiceAction.play) {
       await search.search(command.query);
       if (search.tracks.isNotEmpty && mounted) {
-        HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
         final audio = context.read<AudioProvider>();
         await audio.playTrack(search.tracks.first, newQueue: search.tracks);
       }
     } else {
-      search.search(command.query);
+      unawaited(search.search(command.query));
     }
   }  @override
   Widget build(BuildContext context) {

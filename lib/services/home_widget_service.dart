@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -21,7 +22,7 @@ class HomeWidgetService {
     if (_initialized) return;
     _initialized = true;
     if (!Platform.isAndroid && !Platform.isIOS) return;
-    HomeWidget.setAppGroupId(appGroupId);
+    unawaited(HomeWidget.setAppGroupId(appGroupId));
     await _updateMoonPhase();
   }
 

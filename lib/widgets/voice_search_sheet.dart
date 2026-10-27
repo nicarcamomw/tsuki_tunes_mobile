@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -78,7 +79,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
 
     setState(() => _state = _SheetState.listening);
     _pulseController.repeat();
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
 
     await _voice.listen(
       localeId: widget.localeId,
@@ -94,7 +95,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
   }
 
   void _onFinalResult(String text) async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() => _state = _SheetState.done);
     _pulseController.stop();
     await Future.delayed(const Duration(milliseconds: 400));
