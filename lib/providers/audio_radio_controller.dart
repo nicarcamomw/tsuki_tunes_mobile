@@ -17,7 +17,7 @@ class AudioRadioController {
   final Future<void> Function() _persistPlaybackState;
   final bool Function() _isOnline;
 
-  SongRadio? _radio;
+  SongRadio? radio;
   RadioStatus _status = RadioStatus.ready;
   RadioMode _modePref = RadioMode.balanced;
   Future<bool>? _topUpFuture;
@@ -35,26 +35,23 @@ class AudioRadioController {
         _persistPlaybackState = persistPlaybackState,
         _isOnline = isOnline;
 
-  bool get isActive => _radio != null;
-  Track? get seed => _radio?.seed;
-  RadioMode get mode => _radio?.mode ?? _modePref;
+  bool get isActive => radio != null;
+  Track? get seed => radio?.seed;
+  RadioMode get mode => radio?.mode ?? _modePref;
   RadioStatus get status => _status;
-  bool get usesLastFm => _radio?.usesLastFm ?? false;
-  RadioReason? reasonFor(String trackId) => _radio?.reasonFor(trackId);
+  bool get usesLastFm => radio?.usesLastFm ?? false;
+  RadioReason? reasonFor(String trackId) => radio?.reasonFor(trackId);
   RadioMode get modePref => _modePref;
 
-  set radio(SongRadio? r) => _radio = r;
-  SongRadio? get radio => _radio;
-
   Map<String, dynamic>? snapshot(Iterable<String> trackIds) =>
-      _radio?.toJson(keepReasonsFor: trackIds);
+      radio?.toJson(keepReasonsFor: trackIds);
 
   void restoreFrom(Map<String, dynamic> raw, List<Track> queue) {
-    final radio = SongRadio.fromJson(raw);
-    if (radio != null) {
-      radio.markQueued(queue);
-      _radio = radio;
-      _modePref = radio.mode;
+    final restored = SongRadio.fromJson(raw);
+    if (restored != null) {
+      restored.markQueued(queue);
+      radio = restored;
+      _modePref = restored.mode;
       _status = RadioStatus.ready;
     }
   }
@@ -66,23 +63,23 @@ class AudioRadioController {
     required void Function() clearQueue,
   }) async {
     await _loadModePref();
-    final radio = SongRadio(seed: seed, mode: _modePref);
+    final newRadio = SongRadio(seed: seed, mode: _modePref);
     _topUpFuture = null;
     _status = RadioStatus.loading;
 
     if (currentTrack?.id == seed.id) {
-      _radio = radio;
+      radio = newRadio;
       clearQueue();
       _onStateChanged();
     } else {
       final playing = playTrack(seed, newQueue: [seed]);
-      _radio = radio;
+      radio = newRadio;
       unawaited(playing);
     }
 
     final added = await topUp(force: true, count: 10);
-    if (!added && identical(_radio, radio)) {
-      _radio = null;
+    if (!added && identical(radio, newRadio)) {
+      radio = null;
       unawaited(_persistPlaybackState());
       _onStateChanged();
     }
@@ -90,8 +87,8 @@ class AudioRadioController {
   }
 
   void stop() {
-    if (_radio == null) return;
-    _radio = null;
+    if (radio == null) return;
+    radio = null;
     unawaited(_persistPlaybackState());
     _onStateChanged();
   }
@@ -101,20 +98,20 @@ class AudioRadioController {
     unawaited(SharedPreferences.getInstance()
         .then((p) => p.setInt(_modeKey, m.index))
         .catchError((_) => false));
-    final radio = _radio;
-    if (radio == null || radio.mode == m) {
+    final r = radio;
+    if (r == null || r.mode == m) {
       _onStateChanged();
       return;
     }
-    radio.setMode(m);
+    r.setMode(m);
     unawaited(_persistPlaybackState());
     await replaceUpcoming(keep: 1);
   }
 
   Future<void> moreLikeThis(Track track) async {
-    final radio = _radio;
-    if (radio == null) return;
-    radio.moreLikeThis(track);
+    final r = radio;
+    if (r == null) return;
+    r.moreLikeThis(track);
     await replaceUpcoming(keep: 1);
   }
 
@@ -122,12 +119,12 @@ class AudioRadioController {
     Track track, {
     required Future<void> Function() next,
   }) async {
-    final radio = _radio;
-    if (radio == null) return;
-    radio.lessLikeThis(track);
+    final r = radio;
+    if (r == null) return;
+    r.lessLikeThis(track);
     if (!_q.isShuffle) {
       for (var i = _q.length - 1; i > _q.currentIndex; i--) {
-        if (radio.isBanned(_q.tracks[i])) _q.removeAt(i);
+        if (r.isBanned(_q.tracks[i])) _q.removeAt(i);
       }
     }
     await topUp(force: true);
@@ -136,13 +133,13 @@ class AudioRadioController {
 
   void registerLeaving(Track incoming, Track? current, Duration position,
       Duration duration, {bool completed = false}) {
-    final radio = _radio;
-    if (radio == null || current == null || current.id == incoming.id) return;
+    final r = radio;
+    if (r == null || current == null || current.id == incoming.id) return;
     final total = duration.inMilliseconds;
     final fraction = completed
         ? 1.0
         : (total > 0 ? (position.inMilliseconds / total).clamp(0.0, 1.0) : 0.0);
-    radio.registerPlayed(current, fraction);
+    r.registerPlayed(current, fraction);
   }
 
   int _remaining() {
@@ -154,26 +151,26 @@ class AudioRadioController {
   }
 
   Future<bool> topUp({bool force = false, int count = 8}) {
-    if (_radio == null) return Future.value(false);
+    if (radio == null) return Future.value(false);
     if (!force && _remaining() >= _lowWater) return Future.value(true);
     return _topUpFuture ??=
         _doTopUp(count).whenComplete(() => _topUpFuture = null);
   }
 
   Future<bool> _doTopUp(int count) async {
-    final radio = _radio;
-    if (radio == null) return false;
+    final r = radio;
+    if (r == null) return false;
     _status = RadioStatus.loading;
     _onStateChanged();
 
     List<Track> batch;
     try {
-      batch = await radio.nextBatch(count: count);
+      batch = await r.nextBatch(count: count);
     } catch (e) {
       debugPrint('[AudioRadio] refill failed: $e');
       batch = const [];
     }
-    if (!identical(_radio, radio)) return false;
+    if (!identical(radio, r)) return false;
 
     final added = _q.append(batch);
     _trimHistory();
@@ -194,12 +191,12 @@ class AudioRadioController {
   }
 
   Future<void> replaceUpcoming({required int keep}) async {
-    final radio = _radio;
-    if (radio == null) return;
+    final r = radio;
+    if (r == null) return;
     if (!_q.isShuffle) {
       final firstReplaceable = _q.currentIndex + 1 + keep;
       for (var i = _q.length - 1; i >= firstReplaceable; i--) {
-        final reason = radio.reasonFor(_q.tracks[i].id);
+        final reason = r.reasonFor(_q.tracks[i].id);
         if (reason != null && reason.source != RadioSource.seed) _q.removeAt(i);
       }
     }
