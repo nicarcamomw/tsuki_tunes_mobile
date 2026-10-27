@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
@@ -17,6 +18,7 @@ import '../screens/login_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
+import '../services/storage_service.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
 import 'weather_sheet.dart';
@@ -593,6 +595,12 @@ class ProfileBottomSheet {
                     ),
                     child: Column(
                       children: [
+                        _BirthdayRow(
+                          locale: locale,
+                          strings: strings,
+                          onChanged: () => setModalState(() {}),
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
                         _settingSwitch(
                           locale: locale,
                           icon: Icons.nightlight_round,
@@ -911,5 +919,130 @@ class ProfileBottomSheet {
         );
       }
     }
+  }
+}
+
+class _BirthdayRow extends StatefulWidget {
+  final LocaleProvider locale;
+  final AppStrings strings;
+  final VoidCallback onChanged;
+
+  const _BirthdayRow({
+    required this.locale,
+    required this.strings,
+    required this.onChanged,
+  });
+
+  @override
+  State<_BirthdayRow> createState() => _BirthdayRowState();
+}
+
+class _BirthdayRowState extends State<_BirthdayRow> {
+  String? _birthday;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final b = await StorageService().getBirthday();
+    if (mounted) setState(() { _birthday = b; _loaded = true; });
+  }
+
+  String _formatBirthday(String mmdd) {
+    final parts = mmdd.split('-');
+    if (parts.length != 2) return mmdd;
+    final month = int.tryParse(parts[0]) ?? 1;
+    final day = int.tryParse(parts[1]) ?? 1;
+    final d = DateTime(2000, month, day);
+    return widget.strings.shortDate(d);
+  }
+
+  Future<void> _pickDate() async {
+    DateTime initial = DateTime(2000, 6, 15);
+    if (_birthday != null) {
+      final parts = _birthday!.split('-');
+      if (parts.length == 2) {
+        initial = DateTime(
+          2000,
+          int.tryParse(parts[0]) ?? 6,
+          int.tryParse(parts[1]) ?? 15,
+        );
+      }
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000, 1, 1),
+      lastDate: DateTime(2000, 12, 31),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.sakura,
+            surface: AppColors.bgCard,
+            onSurface: AppColors.textPrimary,
+          ),
+          dialogTheme: const DialogTheme(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      final mmdd = '${picked.month.toString().padLeft(2, '0')}-'
+          '${picked.day.toString().padLeft(2, '0')}';
+      await StorageService().saveBirthday(mmdd);
+      if (mounted) {
+        setState(() => _birthday = mmdd);
+        widget.onChanged();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _pickDate,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.cake_rounded,
+                color: _birthday != null ? AppColors.sakura : AppColors.textMuted,
+                size: 18),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                widget.strings.birthdayTitle,
+                style: widget.locale.getTextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textBright,
+                ),
+              ),
+            ),
+            if (_loaded)
+              Text(
+                _birthday != null
+                    ? _formatBirthday(_birthday!)
+                    : widget.strings.birthdayNotSet,
+                style: widget.locale.getTextStyle(
+                  fontSize: 11,
+                  color: _birthday != null ? AppColors.sakura : AppColors.textMuted,
+                ),
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.textMuted, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 }

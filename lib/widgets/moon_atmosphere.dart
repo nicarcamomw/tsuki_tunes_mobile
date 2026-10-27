@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/moon_provider.dart';
+import 'sakura_overlay.dart';
 import 'witching_hour_overlay.dart';
 
 /// Wraps the whole app: a light layer that follows tonight's real Moon (dark
@@ -40,6 +41,7 @@ class MoonAtmosphere extends StatelessWidget {
           ),
           if (!reduceMotion) const IgnorePointer(child: _GlitchBursts()),
         ],
+        if (!reduceMotion) const IgnorePointer(child: SakuraOverlay()),
         if (!reduceMotion) const IgnorePointer(child: WitchingHourOverlay()),
       ],
     );
