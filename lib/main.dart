@@ -53,14 +53,38 @@ void main() async {
     ),
   );
 
-  await _initCrashReporting();
-  await DeezerDiskCache().init();
-  runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
-  // After runApp so scheduling and permission plumbing never delay first frame.
-  unawaited(ReleaseRadarService().initForeground());
-  unawaited(HomeWidgetService().initialize());
-  unawaited(HomeWidgetService().registerInteractivityCallback());
+  // Only Firebase.initializeApp() before first frame — AuthProvider needs it
+  // but Crashlytics, AppCheck, disk cache and media session can wait.
+  await _initFirebaseCore();
+  runApp(const TsukiTunesApp());
+  _deferredInit();
 }
+
+/// Minimal pre-frame Firebase init: just Firebase.initializeApp() so
+/// AuthProvider (which calls FirebaseService().initialize()) can proceed.
+Future<void> _initFirebaseCore() async {
+  if (kIsWeb) return;
+  try {
+    await FirebaseService().initializeCore();
+  } catch (e) {
+    debugPrint('[main] Firebase core init failed: $e');
+  }
+}
+
+/// Everything that doesn't need to block the first frame.
+void _deferredInit() {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final mediaFuture = _initMediaSession();
+    await Future.wait([_initCrashReporting(), DeezerDiskCache().init(), mediaFuture]);
+    _deferredMediaHandler.value = await mediaFuture;
+    unawaited(ReleaseRadarService().initForeground());
+    unawaited(HomeWidgetService().initialize());
+    unawaited(HomeWidgetService().registerInteractivityCallback());
+  });
+}
+
+final ValueNotifier<TsukiAudioHandler?> _deferredMediaHandler =
+    ValueNotifier(null);
 
 /// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
 /// in debug builds so development crashes don't pollute the dashboard.
@@ -102,9 +126,7 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
 }
 
 class TsukiTunesApp extends StatelessWidget {
-  final TsukiAudioHandler? mediaHandler;
-
-  const TsukiTunesApp({super.key, this.mediaHandler});
+  const TsukiTunesApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +136,6 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) {
           final library = LibraryProvider();
-          // Mirrors followed artists into the radar's own store so the
-          // background job can read them without Firebase.
           library.addListener(() {
             ReleaseRadarService().watchArtists(library.followedArtists);
           });
@@ -144,9 +164,15 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
             PlayHistory, MaskProvider, AudioProvider>(
-          create: (_) => AudioProvider(mediaHandler: mediaHandler),
+          create: (_) {
+            final audio = AudioProvider();
+            _deferredMediaHandler.addListener(() {
+              audio.attachDeferredMediaHandler(_deferredMediaHandler.value);
+            });
+            return audio;
+          },
           update: (_, library, connectivity, ambient, history, masks, audio) {
-            final player = audio ?? AudioProvider(mediaHandler: mediaHandler);
+            final player = audio ?? AudioProvider();
             player.setConnectivityProvider(connectivity);
             player.onPlayCounted = (track) {
               history.record(track);

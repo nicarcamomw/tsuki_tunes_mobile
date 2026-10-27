@@ -12,6 +12,12 @@ import '../models/track.dart';
 import 'contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 
+/// Top-level so it can be sent to an isolate via [compute].
+dynamic _decodeJson(String source) => json.decode(source);
+
+/// Threshold in bytes above which JSON decoding runs in an isolate.
+const int _isolateThreshold = 10 * 1024;
+
 class _CacheEntry {
   final dynamic data;
   final DateTime expiry;
@@ -103,6 +109,12 @@ class DeezerApiService implements MusicApiContract {
     }
   }
 
+  /// Decodes [body] on an isolate when it is large enough to jank the UI.
+  static Future<dynamic> _decode(String body) {
+    if (body.length >= _isolateThreshold) return compute(_decodeJson, body);
+    return Future.value(json.decode(body));
+  }
+
   /// Fetches JSON from [url]. Returns decoded data on success.
   /// Returns `null` for entity lookups (getArtist, getTrack, etc.).
   /// Throws [DeezerApiException] for search/chart operations that need error propagation.
@@ -121,8 +133,7 @@ class DeezerApiService implements MusicApiContract {
         }
 
         if (res.statusCode == 200) {
-          final decoded = json.decode(res.body);
-          // Check for Deezer quota limit error returned with HTTP 200 (code 4 or 800)
+          final decoded = await _decode(res.body);
           if (decoded is Map<String, dynamic> && decoded['error'] != null) {
             final errCode = decoded['error']['code'];
             if (errCode == 4 || errCode == 800) {
@@ -131,7 +142,7 @@ class DeezerApiService implements MusicApiContract {
               final retryRes =
                   await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
               if (retryRes.statusCode == 200) {
-                final retryDecoded = json.decode(retryRes.body);
+                final retryDecoded = await _decode(retryRes.body);
                 if (retryDecoded is Map<String, dynamic> && retryDecoded['error'] == null) {
                   return retryDecoded;
                 }
@@ -164,7 +175,7 @@ class DeezerApiService implements MusicApiContract {
         final res = await http
             .get(Uri.parse(proxyUrl))
             .timeout(const Duration(seconds: 8));
-        if (res.statusCode == 200) return json.decode(res.body);
+        if (res.statusCode == 200) return _decode(res.body);
       } catch (e) {
         if (e is DeezerApiException) rethrow;
         debugPrint('[DeezerAPI] CORS proxy error: $e');
@@ -174,7 +185,7 @@ class DeezerApiService implements MusicApiContract {
     try {
       final res =
           await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-      if (res.statusCode == 200) return json.decode(res.body);
+      if (res.statusCode == 200) return _decode(res.body);
     } catch (e) {
       if (e is DeezerApiException) rethrow;
       final msg = '[DeezerAPI] Direct web fetch error for $url: $e';

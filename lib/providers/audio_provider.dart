@@ -167,6 +167,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     await _storage.savePrecacheWifiOnly(enabled);
   }
 
+  void attachDeferredMediaHandler(TsukiAudioHandler? handler) {
+    if (handler != null && _mediaHandler == null) _attachMediaHandler(handler);
+  }
+
   void _attachMediaHandler(TsukiAudioHandler handler) {
     _mediaHandler = handler;
     handler.onPlay = () async {

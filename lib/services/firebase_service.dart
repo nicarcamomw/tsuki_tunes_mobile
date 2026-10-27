@@ -12,6 +12,7 @@ class FirebaseService {
   factory FirebaseService() => _instance;
   FirebaseService._internal();
 
+  bool _coreReady = false;
   bool _initialized = false;
   bool _appCheckActive = false;
   FirebaseAuth? _auth;
@@ -35,11 +36,19 @@ class FirebaseService {
   User? get currentUser => _auth?.currentUser;
   bool get isSignedIn => currentUser != null;
 
-  Future<void> initialize() async {
-    if (_initialized) return;
+  /// Firebase.initializeApp() only — enough for AuthProvider to start
+  /// listening. The rest (AppCheck, Crashlytics) runs after the first frame.
+  Future<void> initializeCore() async {
+    if (_coreReady) return;
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    _coreReady = true;
+  }
+
+  Future<void> initialize() async {
+    if (_initialized) return;
+    await initializeCore();
     await _activateAppCheck();
     _auth = FirebaseAuth.instance;
     _db = FirebaseFirestore.instance;

@@ -6,6 +6,9 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+dynamic _decodeJson(String source) => json.decode(source);
+const int _isolateThreshold = 10 * 1024;
+
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
@@ -51,7 +54,10 @@ class DeezerDiskCache {
       final file = File('${_dir!.path}/${_hash(key)}.json');
       if (!file.existsSync()) return null;
       final content = await file.readAsString();
-      final envelope = json.decode(content) as Map<String, dynamic>;
+      final decoded = content.length >= _isolateThreshold
+          ? await compute(_decodeJson, content)
+          : json.decode(content);
+      final envelope = decoded as Map<String, dynamic>;
       final expiryMs = envelope['e'] as int;
       if (DateTime.now().millisecondsSinceEpoch > expiryMs) {
         unawaited(file.delete().catchError((_) {}));
