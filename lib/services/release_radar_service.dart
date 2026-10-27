@@ -18,6 +18,7 @@ import '../core/localization/app_strings.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/radar_release.dart';
+import 'time_machine_service.dart';
 
 /// Also the iOS BGTask identifier: must match Info.plist and AppDelegate.
 const String kReleaseRadarTask = 'com.tsuki.releaseRadar';
@@ -29,10 +30,12 @@ void releaseRadarDispatcher() {
     DartPluginRegistrant.ensureInitialized();
     try {
       // iOS gives background refresh ~30s; stay well inside it.
-      await ReleaseRadarService().runCheck(budget: const Duration(seconds: 22));
+      await ReleaseRadarService().runCheck(budget: const Duration(seconds: 20));
     } catch (e) {
       debugPrint('[ReleaseRadar] background check failed: $e');
     }
+    // Local-only (no network): reads the schedule the app precomputed.
+    await TimeMachineService().runBackgroundCheck();
     // Never ask the OS to retry: tomorrow's run picks up where this one left.
     return true;
   });
@@ -90,7 +93,7 @@ class ReleaseRadarService {
       FlutterLocalNotificationsPlugin();
   bool _notificationsReady = false;
   bool _running = false;
-  bool _pendingOpen = false;
+  String? _pendingPayload;
   Set<String>? _watchedIds;
   AppLifecycleListener? _lifecycle;
 
@@ -129,7 +132,7 @@ class ReleaseRadarService {
     try {
       await _initNotifications(foreground: true);
       // Cold start from a notification: Home may already be listening.
-      if (_pendingOpen) openRequests.value++;
+      if (_pendingPayload != null) openRequests.value++;
     } catch (e) {
       debugPrint('[ReleaseRadar] notifications init failed: $e');
     }
@@ -205,11 +208,15 @@ class ReleaseRadarService {
     await prefs.setBool(_notifyKey, enabled);
   }
 
-  bool consumePendingOpen() {
-    final pending = _pendingOpen;
-    _pendingOpen = false;
+  /// Payload of a tapped notification not handled yet: [radarPayload] or
+  /// the Time Machine's.
+  String? consumePendingOpen() {
+    final pending = _pendingPayload;
+    _pendingPayload = null;
     return pending;
   }
+
+  static const String radarPayload = _payload;
 
   // ---------------------------------------------------------------------------
   // Notification permission
@@ -441,21 +448,58 @@ class ReleaseRadarService {
     );
     if (foreground) {
       final launch = await _notifications.getNotificationAppLaunchDetails();
-      if ((launch?.didNotificationLaunchApp ?? false) &&
-          launch?.notificationResponse?.payload == _payload) {
-        _pendingOpen = true;
+      final launchPayload = launch?.notificationResponse?.payload;
+      if ((launch?.didNotificationLaunchApp ?? false) && launchPayload != null) {
+        _pendingPayload = launchPayload;
       }
     }
     _notificationsReady = true;
   }
 
   void _onNotificationTap(NotificationResponse response) {
-    if (response.payload != _payload) return;
-    _pendingOpen = true;
+    final payload = response.payload;
+    if (payload == null) return;
+    _pendingPayload = payload;
     openRequests.value++;
   }
 
-  AppLanguage _language(SharedPreferences prefs) {
+  /// Generic local notification, shared by other background features.
+  Future<void> showLocalNotification({
+    required int id,
+    required String title,
+    required String body,
+    required String payload,
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
+  }) async {
+    try {
+      await _initNotifications(foreground: false);
+      await _notifications.show(
+        id,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: channelDescription,
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+            color: const Color(0xFFFF1919),
+            styleInformation: BigTextStyleInformation(body),
+          ),
+          iOS: const DarwinNotificationDetails(),
+        ),
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('[Notifications] show failed: $e');
+    }
+  }
+
+  /// The user's app language, readable from a background isolate.
+  static AppLanguage languageFromPrefs(SharedPreferences prefs) {
     final saved = prefs.getString(_languageKey);
     if (saved != null) return AppLanguage.fromCode(saved);
     try {
@@ -468,7 +512,7 @@ class ReleaseRadarService {
   Future<void> _notify(List<RadarRelease> fresh, SharedPreferences prefs) async {
     try {
       await _initNotifications(foreground: false);
-      final strings = AppStrings(_language(prefs));
+      final strings = AppStrings(languageFromPrefs(prefs));
 
       final String title;
       final String body;

@@ -3008,6 +3008,312 @@ class AppStrings {
         AppLanguage.ja => '曲のラジオ',
       };
 
+  // --- Dates ---
+  static const List<String> _monthsEs = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun', //
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  ];
+  static const List<String> _monthsEn = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// "26 oct 2025" / "Oct 26, 2025" / "2025年10月26日".
+  String shortDate(DateTime d) => switch (language) {
+        AppLanguage.es => '${d.day} ${_monthsEs[d.month - 1]} ${d.year}',
+        AppLanguage.en => '${_monthsEn[d.month - 1]} ${d.day}, ${d.year}',
+        AppLanguage.ja => '${d.year}年${d.month}月${d.day}日',
+      };
+
+  /// [weekday] uses DateTime's 1 (Monday) .. 7 (Sunday).
+  String weekdayName(int weekday) {
+    const es = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+    const en = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const ja = ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日'];
+    final i = weekday < 1 ? 0 : (weekday > 7 ? 6 : weekday - 1);
+    return switch (language) {
+      AppLanguage.es => es[i],
+      AppLanguage.en => en[i],
+      AppLanguage.ja => ja[i],
+    };
+  }
+
+  // --- Wrapped: play log vs discoveries ---
+  String get wrappedTopDiscoveries => switch (language) {
+        AppLanguage.es => 'DESCUBRIMIENTOS DEL AÑO',
+        AppLanguage.en => 'DISCOVERIES OF THE YEAR',
+        AppLanguage.ja => '今年の発見',
+      };
+
+  String wrappedDiscoveredSongs(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 canción descubierta' : '$count canciones descubiertas',
+        AppLanguage.en => count == 1 ? '1 song discovered' : '$count songs discovered',
+        AppLanguage.ja => '$count 曲を発見',
+      };
+
+  String get wrappedNewMusicTime => switch (language) {
+        AppLanguage.es => 'MÚSICA NUEVA',
+        AppLanguage.en => 'NEW MUSIC',
+        AppLanguage.ja => '新しい音楽',
+      };
+
+  String wrappedFactMarathonDiscovery(String date, int count) => switch (language) {
+        AppLanguage.es => 'Tu día de descubrimientos: $count canciones nuevas el $date 🔥',
+        AppLanguage.en => 'Your discovery day: $count new songs on $date 🔥',
+        AppLanguage.ja => '発見の日: ${date}に$count曲の新曲 🔥',
+      };
+
+  String wrappedFactLoyalDiscovery(String artist, int count) => switch (language) {
+        AppLanguage.es => 'Fan incondicional de $artist: descubriste $count de sus canciones 💎',
+        AppLanguage.en => 'Devoted fan of $artist: you discovered $count of their songs 💎',
+        AppLanguage.ja => '$artist の熱狂的ファン — $count曲を発見 💎',
+      };
+
+  String get wrappedBasedOnDiscoveries => switch (language) {
+        AppLanguage.es =>
+          'Basado en las canciones que marcaste como escuchadas. Desde ahora Tsuki cuenta cada reproducción para tu próximo Wrapped.',
+        AppLanguage.en =>
+          'Based on the songs you marked as listened. From now on Tsuki counts every play for your next Wrapped.',
+        AppLanguage.ja => '「聴いた」とマークした曲に基づいています。これからは次のWrappedのために毎回の再生を記録します。',
+      };
+
+  String wrappedPlaysSince(String date) => switch (language) {
+        AppLanguage.es => 'Basado en tus reproducciones desde el $date',
+        AppLanguage.en => 'Based on your plays since $date',
+        AppLanguage.ja => '$date以降の再生に基づいています',
+      };
+
+  // --- Time Machine ---
+  String get timeMachineTitle => switch (language) {
+        AppLanguage.es => 'MÁQUINA DEL TIEMPO',
+        AppLanguage.en => 'TIME MACHINE',
+        AppLanguage.ja => 'タイムマシン',
+      };
+
+  String get timeMachineYearAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 año',
+        AppLanguage.en => '1 year ago',
+        AppLanguage.ja => '1年前',
+      };
+
+  String get timeMachineSixMonthsAgo => switch (language) {
+        AppLanguage.es => 'Hace 6 meses',
+        AppLanguage.en => '6 months ago',
+        AppLanguage.ja => '6か月前',
+      };
+
+  String get timeMachineMonthAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 mes',
+        AppLanguage.en => '1 month ago',
+        AppLanguage.ja => '1か月前',
+      };
+
+  String get timeMachineWeekAgo => switch (language) {
+        AppLanguage.es => 'Hace 1 semana',
+        AppLanguage.en => '1 week ago',
+        AppLanguage.ja => '1週間前',
+      };
+
+  String get timeMachineRandom => switch (language) {
+        AppLanguage.es => 'Día al azar',
+        AppLanguage.en => 'Random day',
+        AppLanguage.ja => 'ランダムな日',
+      };
+
+  String get timeMachineRewinding => switch (language) {
+        AppLanguage.es => 'REBOBINANDO...',
+        AppLanguage.en => 'REWINDING...',
+        AppLanguage.ja => '巻き戻し中...',
+      };
+
+  String get timeMachineKindPlays => switch (language) {
+        AppLanguage.es => 'REPRODUCCIONES',
+        AppLanguage.en => 'PLAYS',
+        AppLanguage.ja => '再生',
+      };
+
+  String get timeMachineKindDiscoveries => switch (language) {
+        AppLanguage.es => 'DESCUBRIMIENTOS',
+        AppLanguage.en => 'DISCOVERIES',
+        AppLanguage.ja => '発見',
+      };
+
+  String get timeMachineExactDay => switch (language) {
+        AppLanguage.es => 'ESE DÍA',
+        AppLanguage.en => 'THAT DAY',
+        AppLanguage.ja => 'その日',
+      };
+
+  String get timeMachineThatWeek => switch (language) {
+        AppLanguage.es => 'ESA SEMANA',
+        AppLanguage.en => 'THAT WEEK',
+        AppLanguage.ja => 'その週',
+      };
+
+  String get timeMachineHeadlineRepeat => switch (language) {
+        AppLanguage.es => 'No parabas de escuchar esto 👀',
+        AppLanguage.en => "You couldn't stop playing this 👀",
+        AppLanguage.ja => 'これをずっと聴いていました 👀',
+      };
+
+  String get timeMachineHeadlinePlayed => switch (language) {
+        AppLanguage.es => 'Esto estabas escuchando',
+        AppLanguage.en => 'This is what you were playing',
+        AppLanguage.ja => 'この曲を聴いていました',
+      };
+
+  String get timeMachineHeadlineDiscovered => switch (language) {
+        AppLanguage.es => 'Esto descubriste',
+        AppLanguage.en => 'This is what you discovered',
+        AppLanguage.ja => 'この曲を発見しました',
+      };
+
+  String timeMachineTimes(int count, bool exactDay) => switch (language) {
+        AppLanguage.es => count == 1
+            ? (exactDay ? 'Una vez ese día' : 'Una vez esa semana')
+            : (exactDay ? '$count veces ese día' : '$count veces esa semana'),
+        AppLanguage.en => count == 1
+            ? (exactDay ? 'Once that day' : 'Once that week')
+            : (exactDay ? '$count times that day' : '$count times that week'),
+        AppLanguage.ja => exactDay ? 'その日に$count回' : 'その週に$count回',
+      };
+
+  String timeMachineDiscoveredAt(String time) => switch (language) {
+        AppLanguage.es => 'Descubierta a las $time',
+        AppLanguage.en => 'Discovered at $time',
+        AppLanguage.ja => '$timeに発見',
+      };
+
+  String timeMachineDiscoveredOn(String weekday) => switch (language) {
+        AppLanguage.es => 'Descubierta el $weekday',
+        AppLanguage.en => 'Discovered on $weekday',
+        AppLanguage.ja => '$weekdayに発見',
+      };
+
+  String get timeMachinePlay => switch (language) {
+        AppLanguage.es => 'REPRODUCIR ESTE RECUERDO',
+        AppLanguage.en => 'PLAY THIS MEMORY',
+        AppLanguage.ja => 'この思い出を再生',
+      };
+
+  String get timeMachinePlaying => switch (language) {
+        AppLanguage.es => 'Reproduciendo tu recuerdo',
+        AppLanguage.en => 'Playing your memory',
+        AppLanguage.ja => '思い出を再生中',
+      };
+
+  String get timeMachinePlayFailed => switch (language) {
+        AppLanguage.es => 'No pudimos cargar estas canciones. Revisa tu conexión.',
+        AppLanguage.en => "Couldn't load these songs. Check your connection.",
+        AppLanguage.ja => '曲を読み込めませんでした。接続を確認してください。',
+      };
+
+  String get timeMachineNothingTitle => switch (language) {
+        AppLanguage.es => 'NADA POR AQUÍ',
+        AppLanguage.en => 'NOTHING HERE',
+        AppLanguage.ja => '何もありません',
+      };
+
+  String get timeMachineNothing => switch (language) {
+        AppLanguage.es => 'No hay historial de esos días. Prueba otra fecha o viaja a un día al azar.',
+        AppLanguage.en => 'No history for those days. Try another date or travel to a random day.',
+        AppLanguage.ja => 'その頃の履歴はありません。別の日付かランダムな日をお試しください。',
+      };
+
+  String get timeMachineNoHistory => switch (language) {
+        AppLanguage.es => 'Aún no hay días con historial para viajar.',
+        AppLanguage.en => 'There are no days with history to travel to yet.',
+        AppLanguage.ja => '移動できる履歴の日がまだありません。',
+      };
+
+  String timeMachineCountingSince(String date) => switch (language) {
+        AppLanguage.es =>
+          'Tsuki cuenta cada reproducción desde el $date. A partir de ahí, los recuerdos muestran lo que tenías en repeat.',
+        AppLanguage.en =>
+          'Tsuki has counted every play since $date. From then on, memories show what you had on repeat.',
+        AppLanguage.ja => 'Tsukiは$dateから毎回の再生を記録しています。それ以降の思い出ではリピートしていた曲が表示されます。',
+      };
+
+  String get timeMachineCountingStarts => switch (language) {
+        AppLanguage.es =>
+          'Desde hoy Tsuki cuenta cada reproducción: con el tiempo verás lo que tenías en repeat, no solo lo que descubriste.',
+        AppLanguage.en =>
+          'From today Tsuki counts every play: over time you’ll see what you had on repeat, not just what you discovered.',
+        AppLanguage.ja => '今日から毎回の再生を記録します。いずれ発見した曲だけでなく、リピートしていた曲も表示されます。',
+      };
+
+  String get timeMachineNotifyToggle => switch (language) {
+        AppLanguage.es => 'Recuerdos ocasionales',
+        AppLanguage.en => 'Occasional memories',
+        AppLanguage.ja => 'ときどき思い出を通知',
+      };
+
+  String get timeMachineNotifyToggleSubtitle => switch (language) {
+        AppLanguage.es => 'Como mucho uno por semana, solo de días memorables',
+        AppLanguage.en => 'At most one a week, only from memorable days',
+        AppLanguage.ja => '最大週1回、印象的な日だけ',
+      };
+
+  String timeMachineNotifRepeat(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año no parabas de escuchar «$title» 👀',
+        AppLanguage.en => 'A year ago you couldn’t stop playing “$title” 👀',
+        AppLanguage.ja => '1年前、「$title」をずっと聴いていました 👀',
+      };
+
+  String timeMachineNotifRepeatBody(String artist, int count) => switch (language) {
+        AppLanguage.es => '$artist · $count reproducciones',
+        AppLanguage.en => '$artist · $count plays',
+        AppLanguage.ja => '$artist · $count回再生',
+      };
+
+  String timeMachineNotifPlayed(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año sonaba «$title» 👀',
+        AppLanguage.en => 'A year ago “$title” was playing 👀',
+        AppLanguage.ja => '1年前は「$title」を聴いていました 👀',
+      };
+
+  String timeMachineNotifDiscovered(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año descubriste «$title» 👀',
+        AppLanguage.en => 'A year ago you discovered “$title” 👀',
+        AppLanguage.ja => '1年前、「$title」を発見しました 👀',
+      };
+
+  String get timeMachineChannelName => switch (language) {
+        AppLanguage.es => 'Máquina del tiempo',
+        AppLanguage.en => 'Time Machine',
+        AppLanguage.ja => 'タイムマシン',
+      };
+
+  String get timeMachineChannelDescription => switch (language) {
+        AppLanguage.es => 'Recuerdos de lo que escuchabas hace un año',
+        AppLanguage.en => 'Memories of what you were listening to a year ago',
+        AppLanguage.ja => '1年前に聴いていた曲の思い出',
+      };
+
+  String get timeMachineCardEmpty => switch (language) {
+        AppLanguage.es => '¿Qué escuchabas hace un año?',
+        AppLanguage.en => 'What were you listening to a year ago?',
+        AppLanguage.ja => '1年前は何を聴いていた？',
+      };
+
+  String timeMachineCardTeaser(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año: «$title»',
+        AppLanguage.en => 'A year ago: “$title”',
+        AppLanguage.ja => '1年前:「$title」',
+      };
+
+  String timeMachineCardTeaserRepeat(String title) => switch (language) {
+        AppLanguage.es => 'Hace 1 año: «$title» en repeat',
+        AppLanguage.en => 'A year ago: “$title” on repeat',
+        AppLanguage.ja => '1年前:「$title」をリピート',
+      };
+
+  String get a11yTimeMachine => switch (language) {
+        AppLanguage.es => 'Máquina del tiempo: lo que escuchabas hace un año',
+        AppLanguage.en => 'Time Machine: what you were listening to a year ago',
+        AppLanguage.ja => 'タイムマシン：1年前に聴いていた曲',
+      };
+
   // --- Similar Artists ---
   String get similarArtists => switch (language) {
         AppLanguage.es => 'ARTISTAS SIMILARES',

@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 
 import '../models/album.dart';
 import '../models/artist.dart';
+import '../models/play_day.dart';
 import '../models/track.dart';
 import '../services/firebase_service.dart';
+import '../services/play_history_service.dart';
 import '../services/storage_service.dart';
 
 class ListenedTrackData {
@@ -684,6 +686,50 @@ class LibraryProvider extends ChangeNotifier {
   // --- Listened tracks (Firestore) ---
 
   bool isTrackListened(String trackId) => _listenedTrackIds.contains(trackId);
+
+  // --- Play log (every play, per day) ---
+
+  PlayHistoryService? _playHistory;
+  PlayHistoryService get _history =>
+      _playHistory ??= PlayHistoryService(_firebase.db);
+
+  String? get _syncUid {
+    final uid = _currentUid ?? _firebase.currentUser?.uid;
+    return uid != null && _canSyncToFirestore(uid) ? uid : null;
+  }
+
+  /// Counts one real play (the player calls this once per play, past the
+  /// listen threshold). Fire-and-forget: offline writes sync later.
+  Future<void> recordPlay(Track track) async {
+    final uid = _syncUid;
+    if (uid == null || track.id.isEmpty) return;
+    try {
+      await _history.recordPlay(uid, track);
+    } catch (e) {
+      debugPrint('[LibraryProvider] recordPlay failed: $e');
+    }
+  }
+
+  Future<List<PlayDay>> loadPlayDays(DateTime from, DateTime to) async {
+    final uid = _syncUid;
+    if (uid == null) return const [];
+    try {
+      return await _history.loadRange(uid, from, to);
+    } catch (e) {
+      debugPrint('[LibraryProvider] loadPlayDays failed: $e');
+      return const [];
+    }
+  }
+
+  Future<DateTime?> firstRecordedPlayDay() async {
+    final uid = _syncUid;
+    if (uid == null) return null;
+    try {
+      return await _history.firstRecordedDay(uid);
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<void> markTrack(Track track) async {
     final uid = _currentUid ?? _firebase.currentUser?.uid;

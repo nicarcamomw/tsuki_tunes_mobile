@@ -24,8 +24,10 @@ import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
 import '../models/radar_release.dart';
 import '../services/release_radar_service.dart';
+import '../services/time_machine_service.dart';
 import 'rabbit_hole_screen.dart';
 import 'release_radar_screen.dart';
+import 'time_machine_screen.dart';
 import 'wrapped_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -58,10 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openRadarIfRequested() {
-    if (!mounted || !ReleaseRadarService().consumePendingOpen()) return;
-    appNavigatorKey.currentState?.push(
-      MaterialPageRoute(builder: (_) => const ReleaseRadarScreen()),
-    );
+    if (!mounted) return;
+    final payload = ReleaseRadarService().consumePendingOpen();
+    if (payload == null) return;
+    final Widget screen = payload == TimeMachineService.payload
+        ? const TimeMachineScreen()
+        : const ReleaseRadarScreen();
+    appNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => screen));
   }
 
   @override
@@ -601,6 +606,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+
+              if (auth.isLoggedIn && listenedCount > 0)
+                const SliverToBoxAdapter(child: TimeMachineEntryCard()),
 
               if (auth.isLoggedIn && ReleaseRadarService.isSupported)
                 SliverToBoxAdapter(

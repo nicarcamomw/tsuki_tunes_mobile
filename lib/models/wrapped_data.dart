@@ -105,6 +105,14 @@ class WrappedData {
   final List<WrappedFunFact> funFacts;
   final DateTime generatedAt;
 
+  /// True when built from the per-play log (real play counts). False when
+  /// only first listens were available ("discoveries"), where counts would
+  /// all be 1 and must not be shown as plays.
+  final bool basedOnPlays;
+
+  /// First day with recorded plays in [year], when [basedOnPlays].
+  final DateTime? playsSince;
+
   const WrappedData({
     required this.year,
     required this.topTracks,
@@ -117,6 +125,8 @@ class WrappedData {
     required this.hourDistribution,
     required this.funFacts,
     required this.generatedAt,
+    this.basedOnPlays = false,
+    this.playsSince,
   });
 
   bool get isEmpty => totalTracksPlayed == 0;
@@ -150,6 +160,10 @@ class WrappedData {
       generatedAt: json['generatedAt'] != null
           ? DateTime.parse(json['generatedAt'] as String)
           : DateTime.now(),
+      basedOnPlays: json['basedOnPlays'] == true,
+      playsSince: json['playsSince'] is String
+          ? DateTime.tryParse(json['playsSince'] as String)
+          : null,
     );
   }
 
@@ -166,5 +180,7 @@ class WrappedData {
             hourDistribution.map((k, v) => MapEntry(k.toString(), v)),
         'funFacts': funFacts.map((e) => e.toJson()).toList(),
         'generatedAt': generatedAt.toIso8601String(),
+        'basedOnPlays': basedOnPlays,
+        if (playsSince != null) 'playsSince': playsSince!.toIso8601String(),
       };
 }

@@ -116,6 +116,7 @@ class TsukiTunesApp extends StatelessWidget {
             audio.onTrackStarted = (track) {
               library.addRecentTrack(track);
             };
+            audio.onPlayCounted = library.recordPlay;
             audio.onListenedThreshold = (track) {
               if (!library.isTrackListened(track.id)) library.markTrack(track);
             };

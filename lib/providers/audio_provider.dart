@@ -103,6 +103,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// 80% of the track.
   Function(Track)? onListenedThreshold;
 
+  /// Called once per play when it has been heard long enough to count.
+  Function(Track)? onPlayCounted;
+  int _playCountedGeneration = -1;
+
   // Song radio: keeps the queue topped up while active.
   SongRadio? _radio;
   RadioStatus _radioStatus = RadioStatus.ready;
@@ -233,6 +237,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @visibleForTesting
   void checkListenedThresholdForTesting() => _checkListenedThreshold();
+
+  @visibleForTesting
+  void checkPlayCountedForTesting() => _checkPlayCounted();
+
+  /// A play counts once per play past half the track (30 s at most), so
+  /// quick skips and previews abandoned early don't inflate stats.
+  void _checkPlayCounted() {
+    if (_playCountedGeneration == _playGeneration) return;
+    final track = _currentTrack;
+    if (track == null || _duration <= Duration.zero) return;
+    final half = _duration.inMilliseconds ~/ 2;
+    final needed = half < 30000 ? half : 30000;
+    if (_position.inMilliseconds < needed) return;
+    _playCountedGeneration = _playGeneration;
+    onPlayCounted?.call(track);
+  }
 
   void _checkListenedThreshold() {
     if (!_autoMarkListened || _autoMarkedGeneration == _playGeneration) return;
@@ -627,6 +647,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         } else {
           _maybePersistPosition();
           _checkListenedThreshold();
+          _checkPlayCounted();
           _checkSpotifyCrossfade();
           notifyListeners();
           if (_spotifyPollTick % pollInterval == 0) {
@@ -776,6 +797,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (_isPlaying) {
           _maybePersistPosition();
           _checkListenedThreshold();
+          _checkPlayCounted();
         }
         notifyListeners();
       }

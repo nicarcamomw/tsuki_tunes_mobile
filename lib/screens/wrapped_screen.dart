@@ -45,11 +45,17 @@ class _WrappedScreenState extends State<WrappedScreen>
     _generateWrapped();
   }
 
-  void _generateWrapped() {
+  Future<void> _generateWrapped() async {
     final library = context.read<LibraryProvider>();
-    final data = WrappedService().generateWrapped(
-      library.listenedTracks,
-      widget.year,
+    final days = await library.loadPlayDays(
+      DateTime(widget.year, 1, 1),
+      DateTime(widget.year, 12, 31),
+    );
+    if (!mounted) return;
+    final data = WrappedService().generate(
+      days: days,
+      listened: library.listenedTracks,
+      year: widget.year,
     );
     setState(() {
       _data = data;
@@ -340,17 +346,32 @@ class _WrappedScreenState extends State<WrappedScreen>
       LocaleProvider locale, dynamic strings, WrappedData data) {
     final slides = <Widget>[];
 
+    final since = data.playsSince;
+    final String? sourceNote = !data.basedOnPlays
+        ? strings.wrappedBasedOnDiscoveries
+        : (since != null && since.isAfter(DateTime(widget.year, 1, 15)))
+            ? strings.wrappedPlaysSince(strings.shortDate(since))
+            : null;
     slides.add(_IntroSlide(
-        year: widget.year, locale: locale, strings: strings));
+        year: widget.year,
+        locale: locale,
+        strings: strings,
+        note: sourceNote));
 
     if (data.topTracks.isNotEmpty) {
       slides.add(_TopTracksSlide(
-          tracks: data.topTracks, locale: locale, strings: strings));
+          tracks: data.topTracks,
+          basedOnPlays: data.basedOnPlays,
+          locale: locale,
+          strings: strings));
     }
 
     if (data.topArtists.isNotEmpty) {
       slides.add(_TopArtistsSlide(
-          artists: data.topArtists, locale: locale, strings: strings));
+          artists: data.topArtists,
+          basedOnPlays: data.basedOnPlays,
+          locale: locale,
+          strings: strings));
     }
 
     slides.add(_ListeningTimeSlide(data: data, locale: locale, strings: strings));
@@ -377,8 +398,12 @@ class _IntroSlide extends StatelessWidget {
   final int year;
   final LocaleProvider locale;
   final dynamic strings;
+  final String? note;
   const _IntroSlide(
-      {required this.year, required this.locale, required this.strings});
+      {required this.year,
+      required this.locale,
+      required this.strings,
+      this.note});
 
   @override
   Widget build(BuildContext context) {
@@ -482,6 +507,18 @@ class _IntroSlide extends StatelessWidget {
                   )
                       .animate()
                       .fadeIn(duration: 800.ms, delay: 900.ms),
+                  if (note != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      note!,
+                      textAlign: TextAlign.center,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
+                    ).animate().fadeIn(duration: 800.ms, delay: 1100.ms),
+                  ],
                   const SizedBox(height: 48),
                   // Telemetry decoration
                   Text(
@@ -526,10 +563,19 @@ class _IntroSlide extends StatelessWidget {
 
 class _TopTracksSlide extends StatelessWidget {
   final List<WrappedTrackEntry> tracks;
+  final bool basedOnPlays;
   final LocaleProvider locale;
   final dynamic strings;
   const _TopTracksSlide(
-      {required this.tracks, required this.locale, required this.strings});
+      {required this.tracks,
+      required this.basedOnPlays,
+      required this.locale,
+      required this.strings});
+
+  // Without a play log every song was "played" once: show the album instead
+  // of a meaningless "1 play".
+  String _caption(WrappedTrackEntry t) =>
+      basedOnPlays ? strings.wrappedPlays(t.playCount) : t.albumTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -548,7 +594,9 @@ class _TopTracksSlide extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                strings.wrappedTopTracks,
+                basedOnPlays
+                    ? strings.wrappedTopTracks
+                    : strings.wrappedTopDiscoveries,
                 style: locale.getTextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -660,7 +708,9 @@ class _TopTracksSlide extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                strings.wrappedPlays(track.playCount),
+                _caption(track),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -741,14 +791,15 @@ class _TopTracksSlide extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            strings.wrappedPlays(track.playCount),
-            style: locale.getTextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
+          if (basedOnPlays)
+            Text(
+              strings.wrappedPlays(track.playCount),
+              style: locale.getTextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -761,10 +812,14 @@ class _TopTracksSlide extends StatelessWidget {
 
 class _TopArtistsSlide extends StatelessWidget {
   final List<WrappedArtistEntry> artists;
+  final bool basedOnPlays;
   final LocaleProvider locale;
   final dynamic strings;
   const _TopArtistsSlide(
-      {required this.artists, required this.locale, required this.strings});
+      {required this.artists,
+      required this.basedOnPlays,
+      required this.locale,
+      required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -882,7 +937,9 @@ class _TopArtistsSlide extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  strings.wrappedPlays(artist.playCount),
+                  basedOnPlays
+                      ? strings.wrappedPlays(artist.playCount)
+                      : strings.wrappedDiscoveredSongs(artist.playCount),
                   style: locale.getTextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -930,7 +987,9 @@ class _ListeningTimeSlide extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  strings.wrappedListeningTime,
+                  data.basedOnPlays
+                      ? strings.wrappedListeningTime
+                      : strings.wrappedNewMusicTime,
                   style: locale.getTextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -1009,7 +1068,9 @@ class _ListeningTimeSlide extends StatelessWidget {
                         color: AppColors.neonPurple.withValues(alpha: 0.2)),
                   ),
                   child: Text(
-                    strings.wrappedTotalTracks(data.totalTracksPlayed),
+                    data.basedOnPlays
+                        ? strings.wrappedTotalTracks(data.totalTracksPlayed)
+                        : strings.wrappedDiscoveredSongs(data.totalTracksPlayed),
                     style: locale.getTextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1299,13 +1360,19 @@ class _FunFactsSlide extends StatelessWidget {
 
   String _factToText(WrappedFunFact fact) {
     final d = fact.data;
+    final count = (d['count'] as num?)?.toInt() ?? 0;
+    final date = DateTime.tryParse('${d['date'] ?? ''}');
+    final dateLabel = date == null ? '${d['date'] ?? ''}' : strings.shortDate(date);
+    final plays = data.basedOnPlays;
     return switch (fact.key) {
       'late_night_song' => strings.wrappedFactLateNight(
           d['title'] ?? '', d['artistName'] ?? ''),
-      'marathon_day' => strings.wrappedFactMarathon(
-          d['date'] ?? '', (d['count'] as num?)?.toInt() ?? 0),
-      'loyal_artist' => strings.wrappedFactLoyal(
-          d['name'] ?? '', (d['count'] as num?)?.toInt() ?? 0),
+      'marathon_day' => plays
+          ? strings.wrappedFactMarathon(dateLabel, count)
+          : strings.wrappedFactMarathonDiscovery(dateLabel, count),
+      'loyal_artist' => plays
+          ? strings.wrappedFactLoyal(d['name'] ?? '', count)
+          : strings.wrappedFactLoyalDiscovery(d['name'] ?? '', count),
       'dawn_listener' => strings.wrappedFactDawn(
           (d['count'] as num?)?.toInt() ?? 0),
       'one_hit_wonder' => strings.wrappedFactOneHit(

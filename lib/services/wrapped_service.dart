@@ -1,3 +1,4 @@
+import '../models/play_day.dart';
 import '../models/wrapped_data.dart';
 import '../providers/library_provider.dart';
 
@@ -6,181 +7,267 @@ class WrappedService {
   factory WrappedService() => _instance;
   WrappedService._internal();
 
-  WrappedData generateWrapped(List<ListenedTrackData> tracks, int year) {
-    final yearTracks = tracks
-        .where((t) => t.listenedAt != null && t.listenedAt!.year == year)
-        .toList();
+  /// Below this many logged plays, counts are too thin to rank anything and
+  /// the recap falls back to discoveries (first listens).
+  static const int minPlaysForPlayBased = 30;
 
-    if (yearTracks.isEmpty) {
-      return WrappedData(
+  WrappedData generate({
+    required List<PlayDay> days,
+    required List<ListenedTrackData> listened,
+    required int year,
+  }) {
+    final yearDays = days.where((d) => d.date.startsWith('$year-')).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final plays = yearDays.fold<int>(0, (s, d) => s + d.totalPlays);
+    if (plays >= minPlaysForPlayBased) return _fromPlays(yearDays, year);
+    return generateFromDiscoveries(listened, year);
+  }
+
+  WrappedData _empty(int year) => WrappedData(
         year: year,
-        topTracks: [],
-        topArtists: [],
+        topTracks: const [],
+        topArtists: const [],
         totalMinutesListened: 0,
         totalTracksPlayed: 0,
         uniqueTracksCount: 0,
         uniqueArtistsCount: 0,
         favoriteHour: 0,
-        hourDistribution: {},
-        funFacts: [],
+        hourDistribution: const {},
+        funFacts: const [],
         generatedAt: DateTime.now(),
       );
-    }
 
-    final topTracks = _buildTopTracks(yearTracks);
-    final topArtists = _buildTopArtists(yearTracks);
-    final hourDist = _buildHourDistribution(yearTracks);
-    final favHour = _findFavoriteHour(hourDist);
-    final totalSeconds =
-        yearTracks.fold<int>(0, (sum, t) => sum + t.duration);
-    final uniqueTracks = yearTracks.map((t) => t.trackId).toSet();
-    final uniqueArtists = yearTracks.map((t) => t.artistName).toSet();
-    final funFacts = _generateFunFacts(yearTracks, topArtists, hourDist);
+  // ---------------------------------------------------------------------------
+  // From the play log: real counts
+  // ---------------------------------------------------------------------------
+
+  WrappedData _fromPlays(List<PlayDay> days, int year) {
+    final tracks = <String, _PlayAgg>{};
+    final hourDist = <int, int>{};
+    var totalSeconds = 0;
+    var totalPlays = 0;
+
+    for (final day in days) {
+      totalSeconds += day.seconds;
+      day.hours.forEach((h, c) => hourDist.update(h, (v) => v + c, ifAbsent: () => c));
+      for (final e in day.plays.entries) {
+        final meta = day.tracks[e.key] ??
+            PlayDayTrack(id: e.key, title: '', artistName: '');
+        final agg = tracks.putIfAbsent(e.key, () => _PlayAgg(meta));
+        if (meta.title.isNotEmpty) agg.meta = meta; // days are oldest first
+        agg.plays += e.value;
+        agg.seconds += e.value * meta.durationSeconds;
+        totalPlays += e.value;
+      }
+    }
+    if (totalPlays == 0) return _empty(year);
+
+    final ranked = tracks.values.toList()
+      ..sort((a, b) {
+        final c = b.plays.compareTo(a.plays);
+        return c != 0 ? c : b.seconds.compareTo(a.seconds);
+      });
+    final topTracks = [
+      for (final a in ranked.take(5))
+        WrappedTrackEntry(
+          trackId: a.meta.id,
+          title: a.meta.title,
+          artistName: a.meta.artistName,
+          albumTitle: a.meta.albumTitle,
+          coverUrl: a.meta.coverUrl,
+          playCount: a.plays,
+          totalSeconds: a.seconds,
+        ),
+    ];
+
+    final artists = <String, _ArtistAgg>{};
+    for (final a in ranked) {
+      final name = a.meta.artistName;
+      if (name.isEmpty) continue;
+      final agg = artists.putIfAbsent(name, () => _ArtistAgg(name));
+      agg.playCount += a.plays;
+      agg.totalSeconds += a.seconds;
+      // ranked is sorted, so the first cover seen is the most played track's.
+      agg.cover ??= a.meta.coverUrl;
+    }
+    final topArtists = (artists.values.toList()
+          ..sort((a, b) {
+            final c = b.playCount.compareTo(a.playCount);
+            return c != 0 ? c : b.totalSeconds.compareTo(a.totalSeconds);
+          }))
+        .take(5)
+        .map((a) => WrappedArtistEntry(
+              name: a.name,
+              playCount: a.playCount,
+              totalSeconds: a.totalSeconds,
+              coverUrl: a.cover,
+            ))
+        .toList();
+
+    final facts = <WrappedFunFact>[];
+    final marathon = days.reduce((a, b) => a.totalPlays >= b.totalPlays ? a : b);
+    facts.add(WrappedFunFact(
+      key: 'marathon_day',
+      data: {'date': marathon.date, 'count': marathon.totalPlays},
+    ));
+    _addLoyalArtist(topArtists, facts);
+    _addDawnListener(hourDist, facts);
+    if (ranked.first.plays >= 10) {
+      facts.add(WrappedFunFact(key: 'one_hit_wonder', data: {
+        'title': ranked.first.meta.title,
+        'artistName': ranked.first.meta.artistName,
+        'count': ranked.first.plays,
+      }));
+    }
+    _addShareOfHours(hourDist, totalPlays, facts);
+    var weekend = 0, weekday = 0;
+    for (final d in days) {
+      final wd = d.day.weekday;
+      if (wd == DateTime.saturday || wd == DateTime.sunday) {
+        weekend += d.totalPlays;
+      } else {
+        weekday += d.totalPlays;
+      }
+    }
+    _addWeekendWarrior(weekend, weekday, facts);
 
     return WrappedData(
       year: year,
       topTracks: topTracks,
       topArtists: topArtists,
       totalMinutesListened: totalSeconds ~/ 60,
-      totalTracksPlayed: yearTracks.length,
-      uniqueTracksCount: uniqueTracks.length,
-      uniqueArtistsCount: uniqueArtists.length,
-      favoriteHour: favHour,
+      totalTracksPlayed: totalPlays,
+      uniqueTracksCount: tracks.length,
+      uniqueArtistsCount: artists.length,
+      favoriteHour: _findFavoriteHour(hourDist),
       hourDistribution: hourDist,
-      funFacts: funFacts,
+      funFacts: facts,
       generatedAt: DateTime.now(),
+      basedOnPlays: true,
+      playsSince: days.first.day,
     );
   }
 
-  List<WrappedTrackEntry> _buildTopTracks(List<ListenedTrackData> tracks) {
-    final Map<String, _TrackAgg> agg = {};
-    for (final t in tracks) {
-      final a = agg.putIfAbsent(t.trackId, () => _TrackAgg(t));
-      a.playCount++;
-      a.totalSeconds += t.duration;
+  // ---------------------------------------------------------------------------
+  // From first listens only: "what you discovered", never fake play counts
+  // ---------------------------------------------------------------------------
+
+  WrappedData generateFromDiscoveries(List<ListenedTrackData> tracks, int year) {
+    final yearTracks = tracks
+        .where((t) => t.listenedAt != null && t.listenedAt!.year == year)
+        .toList()
+      ..sort((a, b) => a.listenedAt!.compareTo(b.listenedAt!));
+    if (yearTracks.isEmpty) return _empty(year);
+
+    // playCount here means "songs discovered" (each song appears once).
+    final artists = <String, _ArtistAgg>{};
+    final firstTrackOf = <String, ListenedTrackData>{};
+    for (final t in yearTracks) {
+      final agg = artists.putIfAbsent(t.artistName, () => _ArtistAgg(t.artistName));
+      agg.playCount++;
+      agg.totalSeconds += t.duration;
+      agg.cover ??= t.coverUrl;
+      firstTrackOf.putIfAbsent(t.artistName, () => t);
     }
-
-    final sorted = agg.values.toList()
+    final topArtistAggs = artists.values.toList()
       ..sort((a, b) {
-        final cmp = b.playCount.compareTo(a.playCount);
-        return cmp != 0 ? cmp : b.totalSeconds.compareTo(a.totalSeconds);
+        final c = b.playCount.compareTo(a.playCount);
+        return c != 0 ? c : b.totalSeconds.compareTo(a.totalSeconds);
       });
-
-    return sorted.take(5).map((a) => WrappedTrackEntry(
-          trackId: a.track.trackId,
-          title: a.track.title,
-          artistName: a.track.artistName,
-          albumTitle: a.track.albumTitle,
-          coverUrl: a.track.coverUrl,
+    final topArtists = [
+      for (final a in topArtistAggs.take(5))
+        WrappedArtistEntry(
+          name: a.name,
           playCount: a.playCount,
           totalSeconds: a.totalSeconds,
-        )).toList();
-  }
+          coverUrl: a.cover,
+        ),
+    ];
 
-  List<WrappedArtistEntry> _buildTopArtists(List<ListenedTrackData> tracks) {
-    final Map<String, _ArtistAgg> agg = {};
-    for (final t in tracks) {
-      final a = agg.putIfAbsent(
-          t.artistName, () => _ArtistAgg(t.artistName));
-      a.playCount++;
-      a.totalSeconds += t.duration;
-      a.trackPlays.update(t.trackId, (v) => v + 1, ifAbsent: () => 1);
-      a.trackCovers[t.trackId] = t.coverUrl;
+    // Highlights: the first song discovered from each top artist.
+    final topTracks = [
+      for (final a in topArtists)
+        if (firstTrackOf[a.name] case final t?)
+          WrappedTrackEntry(
+            trackId: t.trackId,
+            title: t.title,
+            artistName: t.artistName,
+            albumTitle: t.albumTitle,
+            coverUrl: t.coverUrl,
+            playCount: 1,
+            totalSeconds: t.duration,
+          ),
+    ];
+
+    final hourDist = <int, int>{};
+    for (final t in yearTracks) {
+      hourDist.update(t.listenedAt!.hour, (v) => v + 1, ifAbsent: () => 1);
     }
 
-    final sorted = agg.values.toList()
-      ..sort((a, b) {
-        final cmp = b.playCount.compareTo(a.playCount);
-        return cmp != 0 ? cmp : b.totalSeconds.compareTo(a.totalSeconds);
-      });
-
-    return sorted.take(5).map((a) {
-      String? bestCover;
-      if (a.trackPlays.isNotEmpty) {
-        final bestTrackId = a.trackPlays.entries
-            .reduce((a, b) => a.value >= b.value ? a : b)
-            .key;
-        bestCover = a.trackCovers[bestTrackId];
+    final facts = <WrappedFunFact>[];
+    _addLateNightSong(yearTracks, facts);
+    _addMarathonDay(yearTracks, facts);
+    _addLoyalArtist(topArtists, facts);
+    _addDawnListener(hourDist, facts);
+    _addShareOfHours(hourDist, yearTracks.length, facts);
+    var weekend = 0, weekday = 0;
+    for (final t in yearTracks) {
+      final wd = t.listenedAt!.weekday;
+      if (wd == DateTime.saturday || wd == DateTime.sunday) {
+        weekend++;
+      } else {
+        weekday++;
       }
-      return WrappedArtistEntry(
-        name: a.name,
-        playCount: a.playCount,
-        totalSeconds: a.totalSeconds,
-        coverUrl: bestCover,
-      );
-    }).toList();
+    }
+    _addWeekendWarrior(weekend, weekday, facts);
+
+    return WrappedData(
+      year: year,
+      topTracks: topTracks,
+      topArtists: topArtists,
+      totalMinutesListened:
+          yearTracks.fold<int>(0, (s, t) => s + t.duration) ~/ 60,
+      totalTracksPlayed: yearTracks.length,
+      uniqueTracksCount: yearTracks.length,
+      uniqueArtistsCount: artists.length,
+      favoriteHour: _findFavoriteHour(hourDist),
+      hourDistribution: hourDist,
+      funFacts: facts,
+      generatedAt: DateTime.now(),
+      basedOnPlays: false,
+    );
   }
 
-  Map<int, int> _buildHourDistribution(List<ListenedTrackData> tracks) {
-    final Map<int, int> dist = {};
-    for (final t in tracks) {
-      final hour = t.listenedAt!.hour;
-      dist.update(hour, (v) => v + 1, ifAbsent: () => 1);
-    }
-    return dist;
-  }
+  // ---------------------------------------------------------------------------
+  // Fun facts
+  // ---------------------------------------------------------------------------
 
   int _findFavoriteHour(Map<int, int> hourDist) {
     if (hourDist.isEmpty) return 0;
-    return hourDist.entries
-        .reduce((a, b) => a.value >= b.value ? a : b)
-        .key;
-  }
-
-  List<WrappedFunFact> _generateFunFacts(
-    List<ListenedTrackData> tracks,
-    List<WrappedArtistEntry> topArtists,
-    Map<int, int> hourDist,
-  ) {
-    final facts = <WrappedFunFact>[];
-
-    _addLateNightSong(tracks, facts);
-    _addMarathonDay(tracks, facts);
-    _addLoyalArtist(topArtists, facts);
-    _addDawnListener(hourDist, facts);
-    _addOneHitWonder(tracks, facts);
-    _addNightOwl(tracks, hourDist, facts);
-    _addEarlyBird(tracks, hourDist, facts);
-    _addWeekendWarrior(tracks, facts);
-
-    return facts;
+    return hourDist.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   }
 
   void _addLateNightSong(
       List<ListenedTrackData> tracks, List<WrappedFunFact> facts) {
-    final lateNight =
-        tracks.where((t) => t.listenedAt!.hour >= 1 && t.listenedAt!.hour <= 4);
+    final lateNight = tracks
+        .where((t) => t.listenedAt!.hour >= 1 && t.listenedAt!.hour <= 4)
+        .toList();
     if (lateNight.isEmpty) return;
-
-    final Map<String, int> counts = {};
-    final Map<String, ListenedTrackData> refs = {};
-    for (final t in lateNight) {
-      counts.update(t.trackId, (v) => v + 1, ifAbsent: () => 1);
-      refs.putIfAbsent(t.trackId, () => t);
-    }
-
-    final bestId = counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
-    final best = refs[bestId]!;
+    final best = lateNight.first;
     facts.add(WrappedFunFact(
       key: 'late_night_song',
-      data: {
-        'title': best.title,
-        'artistName': best.artistName,
-        'hour': 3,
-      },
+      data: {'title': best.title, 'artistName': best.artistName, 'hour': 3},
     ));
   }
 
   void _addMarathonDay(
       List<ListenedTrackData> tracks, List<WrappedFunFact> facts) {
-    final Map<String, int> dayCounts = {};
+    final dayCounts = <String, int>{};
     for (final t in tracks) {
-      final day =
-          '${t.listenedAt!.year}-${t.listenedAt!.month.toString().padLeft(2, '0')}-${t.listenedAt!.day.toString().padLeft(2, '0')}';
-      dayCounts.update(day, (v) => v + 1, ifAbsent: () => 1);
+      dayCounts.update(PlayDay.keyFor(t.listenedAt!), (v) => v + 1,
+          ifAbsent: () => 1);
     }
     if (dayCounts.isEmpty) return;
-
     final best = dayCounts.entries.reduce((a, b) => a.value >= b.value ? a : b);
     facts.add(WrappedFunFact(
       key: 'marathon_day',
@@ -199,83 +286,32 @@ class WrappedService {
     }
   }
 
-  void _addDawnListener(
-      Map<int, int> hourDist, List<WrappedFunFact> facts) {
+  void _addDawnListener(Map<int, int> hourDist, List<WrappedFunFact> facts) {
     final dawnCount = [5, 6, 7].fold<int>(0, (s, h) => s + (hourDist[h] ?? 0));
     if (dawnCount > 5) {
-      facts.add(WrappedFunFact(
-        key: 'dawn_listener',
-        data: {'count': dawnCount},
-      ));
+      facts.add(WrappedFunFact(key: 'dawn_listener', data: {'count': dawnCount}));
     }
   }
 
-  void _addOneHitWonder(
-      List<ListenedTrackData> tracks, List<WrappedFunFact> facts) {
-    final Map<String, int> counts = {};
-    final Map<String, ListenedTrackData> refs = {};
-    for (final t in tracks) {
-      counts.update(t.trackId, (v) => v + 1, ifAbsent: () => 1);
-      refs.putIfAbsent(t.trackId, () => t);
+  void _addShareOfHours(
+      Map<int, int> hourDist, int total, List<WrappedFunFact> facts) {
+    if (total <= 0) return;
+    int share(List<int> hours) =>
+        (hours.fold<int>(0, (s, h) => s + (hourDist[h] ?? 0)) / total * 100)
+            .round();
+    final night = share([22, 23, 0, 1, 2, 3, 4]);
+    if (night > 30) {
+      facts.add(WrappedFunFact(key: 'night_owl', data: {'percentage': night}));
     }
-    if (counts.isEmpty) return;
-
-    final best = counts.entries.reduce((a, b) => a.value >= b.value ? a : b);
-    if (best.value >= 10) {
-      final t = refs[best.key]!;
-      facts.add(WrappedFunFact(
-        key: 'one_hit_wonder',
-        data: {'title': t.title, 'artistName': t.artistName, 'count': best.value},
-      ));
+    final morning = share([5, 6, 7, 8, 9]);
+    if (morning > 30) {
+      facts.add(WrappedFunFact(key: 'early_bird', data: {'percentage': morning}));
     }
   }
 
-  void _addNightOwl(List<ListenedTrackData> tracks, Map<int, int> hourDist,
-      List<WrappedFunFact> facts) {
-    if (tracks.isEmpty) return;
-    final nightHours = [22, 23, 0, 1, 2, 3, 4];
-    final nightCount =
-        nightHours.fold<int>(0, (s, h) => s + (hourDist[h] ?? 0));
-    final pct = (nightCount / tracks.length * 100).round();
-    if (pct > 30) {
-      facts.add(WrappedFunFact(
-        key: 'night_owl',
-        data: {'percentage': pct},
-      ));
-    }
-  }
-
-  void _addEarlyBird(List<ListenedTrackData> tracks, Map<int, int> hourDist,
-      List<WrappedFunFact> facts) {
-    if (tracks.isEmpty) return;
-    final morningHours = [5, 6, 7, 8, 9];
-    final morningCount =
-        morningHours.fold<int>(0, (s, h) => s + (hourDist[h] ?? 0));
-    final pct = (morningCount / tracks.length * 100).round();
-    if (pct > 30) {
-      facts.add(WrappedFunFact(
-        key: 'early_bird',
-        data: {'percentage': pct},
-      ));
-    }
-  }
-
-  void _addWeekendWarrior(
-      List<ListenedTrackData> tracks, List<WrappedFunFact> facts) {
-    if (tracks.isEmpty) return;
-    int weekendCount = 0;
-    int weekdayCount = 0;
-    for (final t in tracks) {
-      final wd = t.listenedAt!.weekday;
-      if (wd == DateTime.saturday || wd == DateTime.sunday) {
-        weekendCount++;
-      } else {
-        weekdayCount++;
-      }
-    }
-
-    final weekendAvg = weekendCount / 2.0;
-    final weekdayAvg = weekdayCount / 5.0;
+  void _addWeekendWarrior(int weekend, int weekday, List<WrappedFunFact> facts) {
+    final weekendAvg = weekend / 2.0;
+    final weekdayAvg = weekday / 5.0;
     if (weekdayAvg > 0 && weekendAvg > weekdayAvg * 1.5) {
       facts.add(WrappedFunFact(
         key: 'weekend_warrior',
@@ -288,18 +324,17 @@ class WrappedService {
   }
 }
 
-class _TrackAgg {
-  final ListenedTrackData track;
-  int playCount = 0;
-  int totalSeconds = 0;
-  _TrackAgg(this.track);
+class _PlayAgg {
+  PlayDayTrack meta;
+  int plays = 0;
+  int seconds = 0;
+  _PlayAgg(this.meta);
 }
 
 class _ArtistAgg {
   final String name;
   int playCount = 0;
   int totalSeconds = 0;
-  final Map<String, int> trackPlays = {};
-  final Map<String, String> trackCovers = {};
+  String? cover;
   _ArtistAgg(this.name);
 }
