@@ -44,7 +44,7 @@ dependencies:
   path_provider: ^2.1.5
 
   # Release radar: daily background check + local notifications
-  workmanager: ^0.9.0
+  workmanager: ^0.10.10
   flutter_local_notifications: ^19.4.2
 
   # Offline Translation (Google ML Kit)
