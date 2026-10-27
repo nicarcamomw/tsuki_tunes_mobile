@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
@@ -42,6 +42,9 @@ class ArtistDetailScreen extends StatefulWidget {
 class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   final ScrollController _scrollController = ScrollController();
+  // Entry points like the track menu only know the artist's id and name, so
+  // the full profile (photos, fans, release count) is fetched on open.
+  late Artist _artist = widget.artist;
   List<Track> _topTracks = [];
   List<Album> _albums = [];
   int _totalAlbums = 0;
@@ -60,6 +63,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadArtistInfo();
     _loadArtistData();
     _trackVisit();
   }
@@ -86,8 +90,20 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   void _trackVisit() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LibraryProvider>().trackArtistVisit(widget.artist.name);
+      context.read<LibraryProvider>().trackArtistVisit(_artist.name);
     });
+  }
+
+  bool get _needsArtistInfo =>
+      _artist.pictureUrl.isEmpty ||
+      (_artist.fansCount == 0 && _artist.albumsCount == 0);
+
+  Future<void> _loadArtistInfo() async {
+    if (!_needsArtistInfo) return;
+    final full = await _api.getArtist(widget.artist.id);
+    if (mounted && full != null) {
+      setState(() => _artist = full);
+    }
   }
 
   Future<void> _loadArtistData() async {
@@ -107,11 +123,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
     try {
       final results = await Future.wait([
-        _api.getArtistTopTracks(widget.artist.id, limit: 10),
-        _api.getArtistAlbumsPage(widget.artist.id, limit: 250, index: 0),
-        LastFmService.getArtistTags(widget.artist.name),
-        _api.getArtistCompilations(widget.artist.id),
-        _api.getRelatedArtists(widget.artist.id),
+        _api.getArtistTopTracks(_artist.id, limit: 10),
+        _api.getArtistAlbumsPage(_artist.id, limit: 250, index: 0),
+        LastFmService.getArtistTags(_artist.name),
+        _api.getArtistCompilations(_artist.id),
+        _api.getRelatedArtists(_artist.id),
       ]);
       if (mounted) {
         final pagedAlbums = results[1] as ArtistAlbumsPage;
@@ -141,14 +157,19 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
   }
 
+  bool _isOwnRelease(Album a) {
+    if (a.artistId.isNotEmpty) return a.artistId == _artist.id;
+    return a.artistName.toLowerCase().trim() ==
+        _artist.name.toLowerCase().trim();
+  }
+
   /// Own releases (albums, EPs, singles) grouped by type + title, so that
   /// duplicate editions (explicit/clean, re-uploads) count as one release.
-  /// "Appears on" compilations are excluded: they are mostly other artists'
-  /// tracks and would make the discography impossible to complete.
+  /// Features and compilations are excluded.
   List<List<Album>> get _ownReleaseGroups {
     final groups = <String, List<Album>>{};
     for (final a in _albums) {
-      if (a.recordType == 'compile') continue;
+      if (!_isOwnRelease(a)) continue;
       final key = '${a.recordType}|${a.title.trim().toLowerCase()}';
       groups.putIfAbsent(key, () => []).add(a);
     }
@@ -158,16 +179,21 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   Map<String, List<Album>> get _categorizedAlbums {
     final Map<String, List<Album>> cats = {
       'album': [],
-      'single_ep': [],
-      'compile': [],
+      'ep': [],
+      'single': [],
+      'appears_on': [],
     };
     for (final a in _albums) {
-      if (a.recordType == 'album') {
+      if (!_isOwnRelease(a)) {
+        cats['appears_on']!.add(a);
+      } else if (a.recordType == 'album') {
         cats['album']!.add(a);
-      } else if (a.recordType == 'single' || a.recordType == 'ep') {
-        cats['single_ep']!.add(a);
-      } else if (a.recordType == 'compile') {
-        cats['compile']!.add(a);
+      } else if (a.recordType == 'ep' || a.recordType == 'compile') {
+        cats['ep']!.add(a);
+      } else if (a.recordType == 'single') {
+        cats['single']!.add(a);
+      } else {
+        cats['album']!.add(a);
       }
     }
     return cats;
@@ -192,7 +218,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         !_hasMoreAlbums &&
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
-    final isFollowed = library.isArtistFollowed(widget.artist.id);
+    final isFollowed = library.isArtistFollowed(_artist.id);
     final isGuest = context.watch<AuthProvider>().isGuest;
 
     final cats = _categorizedAlbums;
@@ -205,7 +231,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
-        onRefresh: _loadArtistData,
+        onRefresh: () => Future.wait([_loadArtistInfo(), _loadArtistData()]),
         child: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -218,7 +244,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               opacity: _showTitleInAppBar ? 1.0 : 0.0,
               duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
               child: Text(
-                widget.artist.name,
+                _artist.name,
                 style: locale.getTextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -288,10 +314,11 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (widget.artist.pictureUrl.isNotEmpty)
+                  if (_artist.pictureUrl.isNotEmpty)
                     ExcludeSemantics(
                       child: CachedNetworkImage(
-                        imageUrl: widget.artist.getBestImage(size: 'xl'),
+                        memCacheWidth: imageCacheSize(context, (420).toDouble()),
+                        imageUrl: _artist.getBestImage(size: 'xl'),
                         fit: BoxFit.cover,
                         alignment: Alignment.topCenter,
                       ),
@@ -319,8 +346,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                     child: Semantics(
                       header: true,
                       child: DistortedArtistName(
-                        name: widget.artist.name,
-                        artistId: widget.artist.id,
+                        name: _artist.name,
+                        artistId: _artist.id,
                         fontSize: 30,
                       ),
                     ),
@@ -340,7 +367,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   // Stats row
                   Row(
                     children: [
-                      if (widget.artist.fansCount > 0) ...[
+                      if (_artist.fansCount > 0) ...[
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -350,7 +377,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              strings.artistFans(Formatters.formatNumber(widget.artist.fansCount)),
+                              strings.artistFans(Formatters.formatNumber(_artist.fansCount)),
                               style: locale.getTextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -361,7 +388,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         ),
                         const SizedBox(width: 16),
                       ],
-                      if (widget.artist.albumsCount > 0)
+                      if (_artist.albumsCount > 0)
                         Semantics(
                           button: true,
                           label: _showStats ? strings.a11yHideStats : strings.a11yShowStats,
@@ -380,7 +407,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                strings.artistReleases(widget.artist.albumsCount),
+                                strings.artistReleases(_artist.albumsCount),
                                 style: locale.getTextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -419,9 +446,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       onTap: () {
                         HapticFeedback.lightImpact();
                         if (isFollowed) {
-                          library.unfollowArtist(widget.artist.id);
+                          library.unfollowArtist(_artist.id);
                         } else {
-                          library.followArtist(widget.artist);
+                          library.followArtist(_artist);
                           _announceRadar(strings);
                         }
                       },
@@ -513,29 +540,25 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                               strings.albumCountLabel(cats['album']!.length),
                               locale,
                             ),
-                          if (_albums
-                              .where((a) => a.recordType == 'ep')
-                              .isNotEmpty)
+                          if (cats['ep']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.ep(
                                   size: 15, color: AppColors.accent),
-                              strings.epCountLabel(_albums.where((a) => a.recordType == 'ep').length),
+                              strings.epCountLabel(cats['ep']!.length),
                               locale,
                             ),
-                          if (_albums
-                              .where((a) => a.recordType == 'single')
-                              .isNotEmpty)
+                          if (cats['single']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.nota(
                                   size: 15, color: AppColors.accent),
-                              strings.singleCountLabel(_albums.where((a) => a.recordType == 'single').length),
+                              strings.singleCountLabel(cats['single']!.length),
                               locale,
                             ),
-                          if (cats['compile']!.isNotEmpty)
+                          if (cats['appears_on']!.isNotEmpty)
                             _buildBreakdownItem(
                               AppCustomIcons.grupo(
                                   size: 15, color: AppColors.accent),
-                              strings.appearsOnCountLabel(cats['compile']!.length),
+                              strings.appearsOnCountLabel(cats['appears_on']!.length),
                               locale,
                             ),
                         ],
@@ -797,28 +820,12 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             ),
             if (cats['album']!.isNotEmpty)
               ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings, icon: Icons.album_rounded),
-            if (_albums.where((a) => a.recordType == 'ep').isNotEmpty)
-              ..._buildCategorySection(
-                strings.tabEps,
-                _albums.where((a) => a.recordType == 'ep').toList(),
-                'ep',
-                library,
-                locale,
-                strings,
-                icon: Icons.album_outlined,
-              ),
-            if (_albums.where((a) => a.recordType == 'single').isNotEmpty)
-              ..._buildCategorySection(
-                strings.tabSingles,
-                _albums.where((a) => a.recordType == 'single').toList(),
-                'single',
-                library,
-                locale,
-                strings,
-                icon: Icons.music_note_rounded,
-              ),
-            if (cats['compile']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAppearsOn, cats['compile']!, 'compile', library, locale, strings, icon: Icons.groups_rounded),
+            if (cats['ep']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabEps, cats['ep']!, 'ep', library, locale, strings, icon: Icons.album_outlined),
+            if (cats['single']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabSingles, cats['single']!, 'single', library, locale, strings, icon: Icons.music_note_rounded),
+            if (cats['appears_on']!.isNotEmpty)
+              ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -881,8 +888,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           await appNavigatorKey.currentState?.push<List<Album>>(
                         MaterialPageRoute(
                           builder: (_) => ArtistDiscographyScreen(
-                            artistId: widget.artist.id,
-                            artistName: widget.artist.name,
+                            artistId: _artist.id,
+                            artistName: _artist.name,
                             albums: _albums,
                             totalAlbums: _totalAlbums,
                             initialFilter: filterKey,
@@ -995,6 +1002,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     final image = ExcludeSemantics(
       child: album.coverUrl.isNotEmpty
           ? CachedNetworkImage(
+            memCacheWidth: imageCacheSize(context, (200).toDouble()),
               imageUrl: album.coverUrl,
               fit: BoxFit.cover,
               width: double.infinity,
@@ -1037,7 +1045,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                strings.radarFollowSnack(widget.artist.name),
+                strings.radarFollowSnack(_artist.name),
                 style: const TextStyle(
                     color: AppColors.textPrimary, fontSize: 12),
               ),
@@ -1145,6 +1153,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                           child: ExcludeSemantics(child: ClipOval(
                             child: artist.pictureUrl.isNotEmpty
                                 ? CachedNetworkImage(
+                                  memCacheWidth: imageCacheSize(context, (100).toDouble()),
                                     imageUrl: artist.getBestImage(size: 'medium'),
                                     fit: BoxFit.cover,
                                     width: 100,
@@ -1195,7 +1204,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   Widget _buildStoredContentSection(
       LibraryProvider library, LocaleProvider locale, AppStrings strings) {
-    final artistName = widget.artist.name;
+    final artistName = _artist.name;
     final artistNameLower = artistName.toLowerCase().trim();
     final albumIds = _albums.map((a) => a.id).toSet();
 
@@ -1210,13 +1219,18 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       'album': [],
       'ep': [],
       'single': [],
-      'compile': [],
+      'appears_on': [],
     };
     for (final album in _albums) {
-      final key = albumCats.containsKey(album.recordType)
-          ? album.recordType
-          : 'album';
-      albumCats[key]!.add(album);
+      if (!_isOwnRelease(album)) {
+        albumCats['appears_on']!.add(album);
+      } else if (album.recordType == 'ep' || album.recordType == 'compile') {
+        albumCats['ep']!.add(album);
+      } else if (album.recordType == 'single') {
+        albumCats['single']!.add(album);
+      } else {
+        albumCats['album']!.add(album);
+      }
     }
 
     return Padding(
@@ -1244,8 +1258,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
           ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        // An opaque plate looks the same as the old backdrop blur over this
+        // dark page, without blurring the screen on every scroll frame.
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: AppColors.bgDeep),
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.bgCard.withValues(alpha: 0.6),
@@ -1276,9 +1292,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             height: 44,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(22),
-                              child: widget.artist.pictureUrl.isNotEmpty
+                              child: _artist.pictureUrl.isNotEmpty
                                   ? CachedNetworkImage(
-                                      imageUrl: widget.artist.pictureUrl,
+                                    memCacheWidth: imageCacheSize(context, (44).toDouble()),
+                                      imageUrl: _artist.pictureUrl,
                                       fit: BoxFit.cover,
                                     )
                                   : Container(
@@ -1376,7 +1393,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                   _buildStoredStat(
                                     Icons.people_rounded,
                                     strings.tabAppearsOn,
-                                    albumCats['compile']!,
+                                    albumCats['appears_on']!,
                                     library,
                                     locale,
                                   ),

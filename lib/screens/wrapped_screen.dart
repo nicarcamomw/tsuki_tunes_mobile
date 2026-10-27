@@ -350,7 +350,7 @@ class _WrappedScreenState extends State<WrappedScreen>
     final String? sourceNote = !data.basedOnPlays
         ? strings.wrappedBasedOnDiscoveries
         : (since != null && since.isAfter(DateTime(widget.year, 1, 15)))
-            ? strings.wrappedPlaysSince(strings.shortDate(since))
+            ? strings.wrappedPlaysSince(strings.longDate(since))
             : null;
     slides.add(_IntroSlide(
         year: widget.year,
@@ -1361,7 +1361,7 @@ class _FunFactsSlide extends StatelessWidget {
     final d = fact.data;
     final count = (d['count'] as num?)?.toInt() ?? 0;
     final date = DateTime.tryParse('${d['date'] ?? ''}');
-    final dateLabel = date == null ? '${d['date'] ?? ''}' : strings.shortDate(date);
+    final dateLabel = date == null ? '${d['date'] ?? ''}' : strings.longDate(date);
     final plays = data.basedOnPlays;
     return switch (fact.key) {
       'late_night_song' => strings.wrappedFactLateNight(

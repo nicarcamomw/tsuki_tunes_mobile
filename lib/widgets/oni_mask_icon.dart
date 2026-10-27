@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
+import '../providers/mask_provider.dart';
+import 'oni_mask_art.dart';
 
 class OniMaskIcon extends StatefulWidget {
   final bool isActive;
@@ -67,8 +72,37 @@ class _OniMaskIconState extends State<OniMaskIcon>
     super.dispose();
   }
 
+  /// The equipped collectible mask in full color when active, its muted
+  /// silhouette when not. Without an equipped mask: the classic tengu.
+  Widget _maskImage(OniMask? equipped, double t, Color mutedColor) {
+    // Decode at display size: these sit in every track row.
+    final cacheWidth = imageCacheSize(context, widget.size);
+    if (equipped == null || t < 0.5) {
+      return Image.asset(
+        equipped?.asset() ?? 'assets/images/tengu.png',
+        cacheWidth: cacheWidth,
+        fit: BoxFit.contain,
+        color: mutedColor,
+        colorBlendMode: BlendMode.srcIn,
+      );
+    }
+    return Opacity(
+      opacity: ((t - 0.5) * 2).clamp(0.0, 1.0),
+      child: OniMaskArt.image(equipped, widget.size, cacheWidth: cacheWidth),
+    );
+  }
+
+  OniMask? _equipped(BuildContext context) {
+    try {
+      return context.select<MaskProvider, OniMask?>((m) => m.equipped);
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final equipped = _equipped(context);
     if (!widget.showContainer) {
       return AnimatedBuilder(
         animation: _glowAnimation,
@@ -81,12 +115,7 @@ class _OniMaskIconState extends State<OniMaskIcon>
           return SizedBox(
             width: widget.size,
             height: widget.size,
-            child: Image.asset(
-              'assets/images/tengu.png',
-              fit: BoxFit.contain,
-              color: maskColor,
-              colorBlendMode: BlendMode.srcIn,
-            ),
+            child: _maskImage(equipped, _glowAnimation.value, maskColor),
           );
         },
       );
@@ -112,7 +141,8 @@ class _OniMaskIconState extends State<OniMaskIcon>
           width: containerSize,
           height: containerSize,
           decoration: BoxDecoration(
-            color: Colors.transparent,
+            // A dark plate keeps colored collectible masks readable on the glow.
+            color: equipped != null ? AppColors.bgDeep : Colors.transparent,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: borderColor, width: 2),
             boxShadow: t > 0.01
@@ -128,12 +158,7 @@ class _OniMaskIconState extends State<OniMaskIcon>
             child: SizedBox(
               width: widget.size,
               height: widget.size,
-              child: Image.asset(
-                'assets/images/tengu.png',
-                fit: BoxFit.contain,
-                color: maskColor,
-                colorBlendMode: BlendMode.srcIn,
-              ),
+              child: _maskImage(equipped, t, maskColor),
             ),
           ),
         );

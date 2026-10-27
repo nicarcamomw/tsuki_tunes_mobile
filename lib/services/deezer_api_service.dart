@@ -18,6 +18,14 @@ class _CacheEntry {
   bool get isExpired => DateTime.now().isAfter(expiry);
 }
 
+class TrackAudioInfo {
+  final double bpm;
+  /// Deezer's loudness measure in dB: higher (less negative) is louder.
+  final double? gain;
+
+  const TrackAudioInfo({required this.bpm, this.gain});
+}
+
 class DeezerApiService implements MusicApiContract {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
@@ -278,6 +286,47 @@ class DeezerApiService implements MusicApiContract {
     return [];
   }
 
+  /// Tempo and loudness of a track, only returned by /track/{id}. A bpm of 0
+  /// means Deezer doesn't know it; null means the request failed (worth
+  /// retrying later).
+  Future<TrackAudioInfo?> getTrackAudioInfo(String trackId) async {
+    try {
+      final data = await _fetchJson(ApiEndpoints.track(trackId));
+      if (data is Map<String, dynamic> && data['error'] == null && data['id'] != null) {
+        final bpm = data['bpm'];
+        final gain = data['gain'];
+        return TrackAudioInfo(
+          bpm: bpm is num ? bpm.toDouble() : 0,
+          gain: gain is num && gain != 0 ? gain.toDouble() : null,
+        );
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] getTrackAudioInfo($trackId) error: $e');
+    }
+    return null;
+  }
+
+  /// Top 100 global tracks; the guess-the-song game needs a bigger pool than
+  /// the home chart.
+  Future<List<Track>> getLargeChartTracks() async {
+    const cacheKey = 'chart_tracks_large';
+    final cached = _getCached<List<Track>>(cacheKey);
+    if (cached != null) return cached;
+
+    try {
+      final data = await _fetchJson(ApiEndpoints.chartTracksLarge);
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        final tracks = list.map((item) => Track.fromJson(item)).toList();
+        _setCache(cacheKey, tracks);
+        return tracks;
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] getLargeChartTracks error: $e');
+    }
+    return [];
+  }
+
   @override
   Future<List<Artist>> getChartArtists() async {
     const cacheKey = 'chart_artists';
@@ -381,7 +430,13 @@ class DeezerApiService implements MusicApiContract {
             ApiEndpoints.artistAlbums(artistId, limit: limit, index: index));
         if (data is Map<String, dynamic>) {
           final List list = data['data'] ?? [];
-          final items = list.map((item) => Album.fromJson(item)).toList();
+          final items = list.map((item) {
+            final album = Album.fromJson(item);
+            if (album.artistId.isEmpty) {
+              return album.copyWith(artistId: artistId);
+            }
+            return album;
+          }).toList();
           final int total =
               (data['total'] is int) ? data['total'] : items.length;
           final bool hasMore =

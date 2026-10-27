@@ -43,6 +43,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
   SpotifyFallbackReason? _lastShownError;
   PlaybackError? _lastShownPlaybackError;
+  String? _lastShownSyncError;
 
   // Timestamps para detección de Double-Tap a 0 ms de latencia
   DateTime? _lastTapTime;
@@ -111,6 +112,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         context.select<AudioProvider, SpotifyFallbackReason?>((a) => a.lastSpotifyError);
     final playbackError =
         context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
+    final syncError =
+        context.select<LibraryProvider, String?>((l) => l.lastSyncError);
     final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
@@ -206,6 +209,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   color: AppColors.error,
                   width: 1.2,
                 ),
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    }
+
+    // Sync error feedback — the user sees a toast when a mark/unmark failed.
+    if (syncError == null) {
+      _lastShownSyncError = null;
+    } else if (syncError != _lastShownSyncError) {
+      _lastShownSyncError = syncError;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.sync_problem, color: AppColors.accent, size: 18, semanticLabel: strings.a11ySyncError),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      strings.syncError,
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textBright,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.bgCard,
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(
+                bottom: bottomBarHeight + 12,
+                left: 16,
+                right: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
               ),
               duration: const Duration(seconds: 4),
             ),
@@ -380,10 +425,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return ValueListenableBuilder<int>(
       valueListenable: _tabNotifier,
       builder: (context, selectedIndex, _) {
-        final library = context.watch<LibraryProvider>();
+        final currentLibraryCount =
+            context.select<LibraryProvider, int>((l) => l.listenedCount);
         final locale = context.watch<LocaleProvider>();
         final strings = locale.strings;
-        final currentLibraryCount = library.listenedTrackIds.length;
         _lastSeenLibraryCount ??= currentLibraryCount;
 
         // Si el usuario entra o está en la pestaña LIBRARY (2), sincronizamos inmediatamente
@@ -468,7 +513,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       _tabNotifier.value = index;
       if (index == 2) {
         final lib = context.read<LibraryProvider>();
-        _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        _lastSeenLibraryCount = lib.listenedCount;
       }
     } else {
       // Tap adicional en la pestaña ya activa: Acción inteligente instantánea
@@ -478,8 +523,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         NavigationEvents.onSearchFocus?.call();
       } else if (index == 2) {
         final lib = context.read<LibraryProvider>();
-        if (_lastSeenLibraryCount != lib.listenedTrackIds.length) {
-          _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        if (_lastSeenLibraryCount != lib.listenedCount) {
+          _lastSeenLibraryCount = lib.listenedCount;
         }
         NavigationEvents.onLibraryScrollToTop?.call();
       }
@@ -529,7 +574,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _loadedTabs.add(2);
         _tabNotifier.value = 2;
         final lib = context.read<LibraryProvider>();
-        _lastSeenLibraryCount = lib.listenedTrackIds.length;
+        _lastSeenLibraryCount = lib.listenedCount;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           NavigationEvents.onLibraryScrollToTop?.call();
         });

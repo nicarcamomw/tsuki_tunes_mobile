@@ -16,6 +16,7 @@ class ApiEndpoints {
 
   // Charts
   static const String chartTracks = '$deezerBase/chart/0/tracks?limit=25';
+  static const String chartTracksLarge = '$deezerBase/chart/0/tracks?limit=100';
   static const String chartArtists = '$deezerBase/chart/0/artists?limit=15';
   static const String chartAlbums = '$deezerBase/chart/0/albums?limit=15';
 

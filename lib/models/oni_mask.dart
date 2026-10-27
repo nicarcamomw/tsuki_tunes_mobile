@@ -1,0 +1,374 @@
+import 'dart:ui';
+
+import '../core/localization/app_language.dart';
+
+enum MaskRarity { common, rare, epic, secret, legendary }
+
+enum MaskArt { tengu, kabuki, hannya, cyberOni }
+
+/// A collectible mask: one of the four illustrations, dyed with a color
+/// matrix, unlocked by an achievement.
+class OniMask {
+  final String id;
+  final String kanji;
+  final MaskArt art;
+  final MaskRarity rarity;
+  /// Hidden until unlocked: no name, no hint.
+  final bool secret;
+  /// 4x5 color matrix applied to the art, or null for the original colors.
+  final List<double>? dye;
+  /// For counted goals (e.g. 100 plays), the target shown as progress.
+  final int? goal;
+  final Map<AppLanguage, String> names;
+  final Map<AppLanguage, String> descriptions;
+
+  const OniMask({
+    required this.id,
+    required this.kanji,
+    required this.art,
+    required this.rarity,
+    required this.names,
+    required this.descriptions,
+    this.secret = false,
+    this.dye,
+    this.goal,
+  });
+
+  String asset() => switch (art) {
+        MaskArt.tengu => 'assets/images/tengu.png',
+        MaskArt.kabuki => 'assets/images/oni.png',
+        MaskArt.hannya => 'assets/images/hannya.png',
+        MaskArt.cyberOni => 'assets/images/cyber_oni_mask.png',
+      };
+
+  String name(AppLanguage l) => names[l] ?? names[AppLanguage.es]!;
+  String description(AppLanguage l) => descriptions[l] ?? descriptions[AppLanguage.es]!;
+
+  Color get rarityColor => switch (rarity) {
+        MaskRarity.common => const Color(0xFFB8C0D0),
+        MaskRarity.rare => const Color(0xFF00E5FF),
+        MaskRarity.epic => const Color(0xFFB026FF),
+        MaskRarity.secret => const Color(0xFFFF2A4A),
+        MaskRarity.legendary => const Color(0xFFFFC94A),
+      };
+}
+
+/// Luminance-preserving tint: keeps the illustration's shading and detail,
+/// recolors it toward [color].
+List<double> maskDye(Color color, {double strength = 0.85, double gain = 1.25}) {
+  final r = color.r, g = color.g, b = color.b;
+  final keep = 1 - strength;
+  List<double> row(double c, int channel) {
+    final k = strength * c * gain;
+    return [
+      (channel == 0 ? keep : 0) + k * 0.2126,
+      (channel == 1 ? keep : 0) + k * 0.7152,
+      (channel == 2 ? keep : 0) + k * 0.0722,
+      0,
+      0,
+    ];
+  }
+
+  return [...row(r, 0), ...row(g, 1), ...row(b, 2), 0, 0, 0, 1, 0];
+}
+
+/// Photographic negative with a cold tint: eerie on purpose.
+const List<double> _negative = [
+  -0.85, 0, 0, 0, 200,
+  0, -0.95, 0, 0, 235,
+  0, 0, -1.0, 0, 255,
+  0, 0, 0, 1, 0,
+];
+
+class MaskCatalog {
+  static final List<OniMask> all = [
+    const OniMask(
+      id: 'hajime',
+      kanji: '初',
+      art: MaskArt.tengu,
+      rarity: MaskRarity.common,
+      names: {
+        AppLanguage.es: 'Primer Eco',
+        AppLanguage.en: 'First Echo',
+        AppLanguage.ja: '初の響き',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha tu primera canción completa.',
+        AppLanguage.en: 'Listen to your first full song.',
+        AppLanguage.ja: '初めて曲を最後まで聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'hyaku',
+      kanji: '百',
+      art: MaskArt.kabuki,
+      rarity: MaskRarity.common,
+      goal: 100,
+      names: {
+        AppLanguage.es: 'Cien Voces',
+        AppLanguage.en: 'Hundred Voices',
+        AppLanguage.ja: '百の声',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 100 canciones.',
+        AppLanguage.en: 'Listen to 100 songs.',
+        AppLanguage.ja: '100曲を聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'sen',
+      kanji: '千',
+      art: MaskArt.hannya,
+      rarity: MaskRarity.epic,
+      goal: 1000,
+      names: {
+        AppLanguage.es: 'Mil Ecos',
+        AppLanguage.en: 'Thousand Echoes',
+        AppLanguage.ja: '千の響き',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 1000 canciones.',
+        AppLanguage.en: 'Listen to 1000 songs.',
+        AppLanguage.ja: '1000曲を聴く。',
+      },
+    ),
+    OniMask(
+      id: 'oshi',
+      kanji: '推',
+      art: MaskArt.kabuki,
+      rarity: MaskRarity.rare,
+      goal: 50,
+      dye: maskDye(const Color(0xFFFF6B9D)),
+      names: const {
+        AppLanguage.es: 'Devoción',
+        AppLanguage.en: 'Devotion',
+        AppLanguage.ja: '推し',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escucha 50 canciones de un mismo artista.',
+        AppLanguage.en: 'Listen to 50 songs by the same artist.',
+        AppLanguage.ja: '同じアーティストの曲を50回聴く。',
+      },
+    ),
+    OniMask(
+      id: 'tabibito',
+      kanji: '旅',
+      art: MaskArt.tengu,
+      rarity: MaskRarity.rare,
+      goal: 10,
+      dye: maskDye(const Color(0xFF2EE6A6)),
+      names: const {
+        AppLanguage.es: 'Viajero',
+        AppLanguage.en: 'Wanderer',
+        AppLanguage.ja: '旅人',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Descubre 10 artistas nuevos en una semana.',
+        AppLanguage.en: 'Discover 10 new artists in one week.',
+        AppLanguage.ja: '1週間で新しいアーティストを10組発見する。',
+      },
+    ),
+    OniMask(
+      id: 'kanpeki',
+      kanji: '完',
+      art: MaskArt.hannya,
+      rarity: MaskRarity.rare,
+      dye: maskDye(const Color(0xFFE6ECF5), strength: 0.9, gain: 1.45),
+      names: const {
+        AppLanguage.es: 'Álbum Perfecto',
+        AppLanguage.en: 'Perfect Album',
+        AppLanguage.ja: '完璧',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escucha un álbum entero sin saltar ninguna canción.',
+        AppLanguage.en: 'Listen to a whole album without skipping a song.',
+        AppLanguage.ja: 'アルバムを1曲も飛ばさずに最後まで聴く。',
+      },
+    ),
+    OniMask(
+      id: 'ame',
+      kanji: '雨',
+      art: MaskArt.kabuki,
+      rarity: MaskRarity.rare,
+      goal: 5,
+      dye: maskDye(const Color(0xFF4FA8FF)),
+      names: const {
+        AppLanguage.es: 'Espíritu de la Lluvia',
+        AppLanguage.en: 'Rain Spirit',
+        AppLanguage.ja: '雨の精',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escucha 5 horas de lluvia o tormenta en el ambiente.',
+        AppLanguage.en: 'Listen to 5 hours of rain or storm ambience.',
+        AppLanguage.ja: '雨や嵐の環境音を5時間聴く。',
+      },
+    ),
+    OniMask(
+      id: 'mangetsu',
+      kanji: '月',
+      art: MaskArt.kabuki,
+      rarity: MaskRarity.rare,
+      dye: maskDye(const Color(0xFFD6E0F5), strength: 0.7, gain: 1.35),
+      names: const {
+        AppLanguage.es: 'Luna Llena',
+        AppLanguage.en: 'Full Moon',
+        AppLanguage.ja: '満月',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escucha música en una noche de luna llena.',
+        AppLanguage.en: 'Listen to music on a full moon night.',
+        AppLanguage.ja: '満月の夜に音楽を聴く。',
+      },
+    ),
+    OniMask(
+      id: 'yoru',
+      kanji: '夜',
+      art: MaskArt.hannya,
+      rarity: MaskRarity.rare,
+      goal: 25,
+      dye: maskDye(const Color(0xFF7A5CFF)),
+      names: const {
+        AppLanguage.es: 'Criatura Nocturna',
+        AppLanguage.en: 'Night Creature',
+        AppLanguage.ja: '夜の者',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escucha 25 canciones entre la medianoche y las 5 AM.',
+        AppLanguage.en: 'Listen to 25 songs between midnight and 5 AM.',
+        AppLanguage.ja: '深夜0時から朝5時の間に25曲聴く。',
+      },
+    ),
+    OniMask(
+      id: 'mimi',
+      kanji: '耳',
+      art: MaskArt.tengu,
+      rarity: MaskRarity.epic,
+      dye: maskDye(const Color(0xFFFFC94A), gain: 1.35),
+      names: const {
+        AppLanguage.es: 'Oído Absoluto',
+        AppLanguage.en: 'Perfect Pitch',
+        AppLanguage.ja: '絶対音感',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Adivina el reto diario con solo 1 segundo.',
+        AppLanguage.en: 'Guess the daily challenge from 1 second.',
+        AppLanguage.ja: 'デイリーチャレンジを1秒で当てる。',
+      },
+    ),
+    OniMask(
+      id: 'ren',
+      kanji: '連',
+      art: MaskArt.tengu,
+      rarity: MaskRarity.epic,
+      goal: 7,
+      dye: maskDye(const Color(0xFFB026FF)),
+      names: const {
+        AppLanguage.es: 'Racha de Siete',
+        AppLanguage.en: 'Seven Streak',
+        AppLanguage.ja: '七連',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Gana el reto diario 7 días seguidos.',
+        AppLanguage.en: 'Win the daily challenge 7 days in a row.',
+        AppLanguage.ja: 'デイリーチャレンジに7日連続で勝つ。',
+      },
+    ),
+    const OniMask(
+      id: 'sanji',
+      kanji: '三',
+      art: MaskArt.kabuki,
+      rarity: MaskRarity.secret,
+      secret: true,
+      dye: _negative,
+      names: {
+        AppLanguage.es: '3:33',
+        AppLanguage.en: '3:33',
+        AppLanguage.ja: '三時三十三分',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escuchaste música a las 3:33 de la madrugada.',
+        AppLanguage.en: 'You were listening to music at 3:33 AM.',
+        AppLanguage.ja: '午前3時33分に音楽を聴いていた。',
+      },
+    ),
+    OniMask(
+      id: 'chizuki',
+      kanji: '血',
+      art: MaskArt.tengu,
+      rarity: MaskRarity.secret,
+      secret: true,
+      dye: maskDye(const Color(0xFFB0101E), strength: 0.75, gain: 1.4),
+      names: const {
+        AppLanguage.es: 'Luna de Sangre',
+        AppLanguage.en: 'Blood Moon',
+        AppLanguage.ja: '血月',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Viste un eclipse lunar dentro de Tsuki.',
+        AppLanguage.en: 'You saw a lunar eclipse inside Tsuki.',
+        AppLanguage.ja: 'Tsukiの中で月食を見た。',
+      },
+    ),
+    OniMask(
+      id: 'shuchaku',
+      kanji: '執',
+      art: MaskArt.hannya,
+      rarity: MaskRarity.secret,
+      secret: true,
+      dye: maskDye(const Color(0xFF9CFF3A)),
+      names: const {
+        AppLanguage.es: 'Obsesión',
+        AppLanguage.en: 'Obsession',
+        AppLanguage.ja: '執着',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Escuchaste la misma canción 10 veces en un día.',
+        AppLanguage.en: 'You played the same song 10 times in one day.',
+        AppLanguage.ja: '1日に同じ曲を10回聴いた。',
+      },
+    ),
+    const OniMask(
+      id: 'hannya',
+      kanji: '般',
+      art: MaskArt.cyberOni,
+      rarity: MaskRarity.secret,
+      secret: true,
+      names: {
+        AppLanguage.es: 'Noche de Hannya',
+        AppLanguage.en: 'Hannya Night',
+        AppLanguage.ja: '般若の夜',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escuchaste música la noche de Halloween.',
+        AppLanguage.en: 'You listened to music on Halloween night.',
+        AppLanguage.ja: 'ハロウィンの夜に音楽を聴いた。',
+      },
+    ),
+    OniMask(
+      id: 'oni',
+      kanji: '鬼',
+      art: MaskArt.cyberOni,
+      rarity: MaskRarity.legendary,
+      secret: true,
+      dye: maskDye(const Color(0xFFFFB02E), strength: 0.55, gain: 1.3),
+      names: const {
+        AppLanguage.es: 'El Oni',
+        AppLanguage.en: 'The Oni',
+        AppLanguage.ja: '鬼',
+      },
+      descriptions: const {
+        AppLanguage.es: 'Reuniste todas las demás máscaras.',
+        AppLanguage.en: 'You collected every other mask.',
+        AppLanguage.ja: '他のすべての面を集めた。',
+      },
+    ),
+  ];
+
+  static OniMask? byId(String? id) {
+    if (id == null) return null;
+    for (final m in all) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
+}

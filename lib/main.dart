@@ -10,22 +10,34 @@ import 'package:provider/provider.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
+import 'providers/ambient_provider.dart';
 import 'providers/audio_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/library_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/mask_provider.dart';
+import 'providers/moon_provider.dart';
 import 'providers/playlist_provider.dart';
+import 'providers/run_provider.dart';
 import 'providers/search_provider.dart';
+import 'providers/shake_skip_provider.dart';
+import 'providers/weather_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
+import 'screens/mask_collection_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/firebase_service.dart';
 import 'services/home_widget_service.dart';
 import 'services/media_session_handler.dart';
+import 'services/play_history.dart';
 import 'services/release_radar_service.dart';
 import 'services/storage_service.dart';
 import 'services/tile_channel_service.dart';
+import 'widgets/mask_unlock_banner.dart';
+import 'widgets/moon_atmosphere.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,24 +124,73 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => LocaleProvider(storage: StorageService()),
         ),
-        ChangeNotifierProxyProvider2<LibraryProvider, ConnectivityProvider, AudioProvider>(
+        ChangeNotifierProvider(
+          create: (ctx) => AmbientProvider(
+            labelFor: (sound) => ctx.read<LocaleProvider>().strings.ambientName(sound),
+          ),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, MaskProvider>(
+          create: (_) => MaskProvider(),
+          update: (_, auth, masks) =>
+              masks!..setUser(auth.isAuthenticated ? auth.uid : null),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => MoonProvider()
+            ..onEclipseSeen = () => ctx.read<MaskProvider>().onEclipseSeen(),
+        ),
+        ChangeNotifierProvider(create: (_) => PlayHistory()..load()),
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
+            PlayHistory, MaskProvider, AudioProvider>(
           create: (_) => AudioProvider(mediaHandler: mediaHandler),
-          update: (_, library, connectivity, audio) {
-            audio ??= AudioProvider(mediaHandler: mediaHandler);
-            audio.setConnectivityProvider(connectivity);
-            audio.onTrackStarted = (track) {
-              library.addRecentTrack(track);
+          update: (_, library, connectivity, ambient, history, masks, audio) {
+            final player = audio ?? AudioProvider(mediaHandler: mediaHandler);
+            player.setConnectivityProvider(connectivity);
+            player.onPlayCounted = (track) {
+              history.record(track);
+              masks.onPlayCounted(track);
+              library.recordPlay(track);
             };
-            audio.onPlayCounted = library.recordPlay;
-            audio.onListenedThreshold = (track) {
+            player.onTrackCompleted = masks.onTrackCompleted;
+            player.onSleepTimerFinished = ambient.onSleepTimerFinished;
+            player.onAmbientPlay = ambient.resumeAll;
+            player.onAmbientPause = ambient.pauseAll;
+            player.onAmbientStop = ambient.stopAll;
+            ambient.onMediaStateChanged = player.setAmbientMediaState;
+            masks.isMusicPlaying = () => player.isPlaying;
+            masks.isRainPlaying = () =>
+                ambient.isPlaying &&
+                (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
+            if (library.listenedTracksLoaded && !masks.artistsSeeded) {
+              masks.seedKnownArtists([
+                ...library.listenedTracks.map((t) => t.artistName),
+                ...library.favoriteArtists.map((a) => a.name),
+              ]);
+            }
+            player.onTrackStarted = (track) {
+              library.addRecentTrack(track);
+              masks.onTrackStarted(track);
+            };
+            player.onListenedThreshold = (track) {
               if (!library.isTrackListened(track.id)) library.markTrack(track);
             };
             TileChannelService.init(audio);
             return audio;
           },
         ),
+        ChangeNotifierProxyProvider2<AudioProvider, LibraryProvider, RunProvider>(
+          create: (_) => RunProvider(),
+          update: (_, audio, library, run) => run!..attach(audio, library),
+        ),
+        ChangeNotifierProxyProvider2<AudioProvider, RunProvider, ShakeSkipProvider>(
+          // Not lazy: it has to listen from launch once switched on.
+          lazy: false,
+          create: (_) => ShakeSkipProvider(),
+          update: (_, audio, run, shake) => shake!..attach(audio, run),
+        ),
       ],
       child: MaterialApp(
+        navigatorKey: rootNavigatorKey,
         title: 'Tsuki Tunes',
         debugShowCheckedModeBanner: false,
         theme: CyberTheme.darkTheme,
@@ -142,7 +203,13 @@ class TsukiTunesApp extends StatelessWidget {
           );
           return MediaQuery(
             data: mediaQuery.copyWith(textScaler: clampedScaler),
-            child: child!,
+            child: MaskUnlockLayer(
+              onOpenCollection: () {
+                final nav = rootNavigatorKey.currentContext;
+                if (nav != null) MaskCollectionScreen.open(nav);
+              },
+              child: MoonAtmosphere(child: child!),
+            ),
           );
         },
         home: const _AuthGate(),

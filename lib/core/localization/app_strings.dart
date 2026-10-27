@@ -1,3 +1,11 @@
+import 'dart:math';
+
+import '../../models/oni_mask.dart';
+import '../../services/ambient_sound_generator.dart';
+import '../../services/bpm_flow.dart';
+import '../../services/cadence_detector.dart';
+import '../../services/moon_calculator.dart';
+import '../../services/weather_service.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -285,34 +293,1271 @@ class AppStrings {
         AppLanguage.ja => 'プロフィール // 設定',
       };
 
+  String get settingsPlaybackSection => switch (language) {
+        AppLanguage.es => 'REPRODUCCIÓN',
+        AppLanguage.en => 'PLAYBACK',
+        AppLanguage.ja => '再生',
+      };
+
+  String get settingsStorageSection => switch (language) {
+        AppLanguage.es => 'ALMACENAMIENTO',
+        AppLanguage.en => 'STORAGE',
+        AppLanguage.ja => 'ストレージ',
+      };
+
+  String get settingsGeneralSection => switch (language) {
+        AppLanguage.es => 'GENERAL',
+        AppLanguage.en => 'GENERAL',
+        AppLanguage.ja => '一般',
+      };
+
+  String get normalizeTitle => switch (language) {
+        AppLanguage.es => 'Normalizar volumen',
+        AppLanguage.en => 'Normalize volume',
+        AppLanguage.ja => '音量を均一化',
+      };
+
+  String get normalizeSubtitle => switch (language) {
+        AppLanguage.es => 'Iguala el volumen de las previews de Deezer. Spotify ya lo hace solo.',
+        AppLanguage.en => 'Evens out Deezer preview volume. Spotify already does this itself.',
+        AppLanguage.ja => 'Deezerプレビューの音量を揃えます。Spotifyは自動で調整済み。',
+      };
+
+  // --- Flow (queue by tempo) ---
+  String get flowButton => 'FLOW';
+
+  String get flowTitle => switch (language) {
+        AppLanguage.es => 'FLOW · ORDENAR POR TEMPO',
+        AppLanguage.en => 'FLOW · ORDER BY TEMPO',
+        AppLanguage.ja => 'FLOW · テンポで並べ替え',
+      };
+
+  String get flowSubtitle => switch (language) {
+        AppLanguage.es => 'Reordena lo que viene en tu cola según el BPM de cada canción.',
+        AppLanguage.en => 'Reorders what is coming up in your queue by each song\'s BPM.',
+        AppLanguage.ja => '各曲のBPMに合わせてキューの次の曲を並べ替えます。',
+      };
+
+  String flowAnalyzing(int done, int total) => switch (language) {
+        AppLanguage.es => 'Analizando el tempo… $done de $total',
+        AppLanguage.en => 'Reading tempos… $done of $total',
+        AppLanguage.ja => 'テンポを解析中… $done / $total',
+      };
+
+  String flowCoverage(int known, int total) => switch (language) {
+        AppLanguage.es => 'BPM conocido en $known de $total canciones',
+        AppLanguage.en => 'BPM known for $known of $total songs',
+        AppLanguage.ja => '$total曲中$known曲のBPMが判明',
+      };
+
+  String get flowLowCoverage => switch (language) {
+        AppLanguage.es => 'Deezer no tiene el BPM de muchas de estas canciones. El orden será parcial: las que no lo tienen se quedan donde están.',
+        AppLanguage.en => 'Deezer lacks the BPM of many of these songs. The order will be partial: those without it stay where they are.',
+        AppLanguage.ja => '多くの曲のBPMがDeezerにありません。並べ替えは部分的になり、BPMのない曲はそのままの位置に残ります。',
+      };
+
+  String get flowNotEnough => switch (language) {
+        AppLanguage.es => 'Muy pocas canciones de tu cola tienen BPM en Deezer, así que no se puede ordenar.',
+        AppLanguage.en => 'Too few songs in your queue have a BPM on Deezer to reorder it.',
+        AppLanguage.ja => 'BPMが分かる曲が少なすぎて並べ替えできません。',
+      };
+
+  String get flowError => switch (language) {
+        AppLanguage.es => 'No se pudo consultar el tempo. Revisa tu conexión.',
+        AppLanguage.en => "Couldn't read the tempos. Check your connection.",
+        AppLanguage.ja => 'テンポを取得できませんでした。接続を確認してください。',
+      };
+
+  String flowModeName(FlowMode mode) => switch (language) {
+        AppLanguage.es => switch (mode) {
+            FlowMode.rise => 'Subir energía',
+            FlowMode.calm => 'Calmar',
+            FlowMode.wave => 'Ola DJ',
+          },
+        AppLanguage.en => switch (mode) {
+            FlowMode.rise => 'Build energy',
+            FlowMode.calm => 'Wind down',
+            FlowMode.wave => 'DJ wave',
+          },
+        AppLanguage.ja => switch (mode) {
+            FlowMode.rise => '盛り上げる',
+            FlowMode.calm => '落ち着く',
+            FlowMode.wave => 'DJウェーブ',
+          },
+      };
+
+  String flowModeDescription(FlowMode mode) => switch (language) {
+        AppLanguage.es => switch (mode) {
+            FlowMode.rise => 'El tempo sube poco a poco. Para entrenar o prender la fiesta.',
+            FlowMode.calm => 'El tempo baja poco a poco. Para relajarte, estudiar o dormir.',
+            FlowMode.wave => 'Sube hasta un clímax y luego baja, como un set de DJ.',
+          },
+        AppLanguage.en => switch (mode) {
+            FlowMode.rise => 'Tempo climbs gradually. For workouts or getting the party going.',
+            FlowMode.calm => 'Tempo slows down gradually. For relaxing, studying or sleep.',
+            FlowMode.wave => 'Builds to a climax, then comes down, like a DJ set.',
+          },
+        AppLanguage.ja => switch (mode) {
+            FlowMode.rise => 'テンポが徐々に上がる。運動やパーティーに。',
+            FlowMode.calm => 'テンポが徐々に下がる。リラックス、勉強、睡眠に。',
+            FlowMode.wave => 'クライマックスまで上がって下がる。DJセットのように。',
+          },
+      };
+
+  String flowApplied(int from, int to) => switch (language) {
+        AppLanguage.es => 'Cola ordenada · $from → $to BPM',
+        AppLanguage.en => 'Queue ordered · $from → $to BPM',
+        AppLanguage.ja => 'キューを並べ替えました · $from → $to BPM',
+      };
+
+  String flowAppliedWave(int from, int peak, int to) => switch (language) {
+        AppLanguage.es => 'Cola ordenada · $from → $peak → $to BPM',
+        AppLanguage.en => 'Queue ordered · $from → $peak → $to BPM',
+        AppLanguage.ja => 'キューを並べ替えました · $from → $peak → $to BPM',
+      };
+
+  String get flowHalfTimeNote => switch (language) {
+        AppLanguage.es => 'Las canciones a mitad o al doble de tempo (70 y 140 BPM) se tratan como el mismo ritmo, igual que hacen los DJs.',
+        AppLanguage.en => 'Songs at half or double tempo (70 and 140 BPM) count as the same pace, like DJs pair them.',
+        AppLanguage.ja => '半分や倍のテンポ（70と140 BPM）は同じリズムとして扱います。DJと同じ考え方です。',
+      };
+
+  // --- Running mode ---
+  String get runTitle => switch (language) {
+        AppLanguage.es => 'MODO RUN',
+        AppLanguage.en => 'RUN MODE',
+        AppLanguage.ja => 'ランモード',
+      };
+
+  String get runCardSubtitle => switch (language) {
+        AppLanguage.es => 'La música sigue tu paso',
+        AppLanguage.en => 'Music follows your steps',
+        AppLanguage.ja => '音楽が歩調に合わせる',
+      };
+
+  String runCardActive(int? spm) => switch (language) {
+        AppLanguage.es => spm == null ? 'Activo · leyendo tu ritmo' : 'Activo · $spm pasos/min',
+        AppLanguage.en => spm == null ? 'On · reading your pace' : 'On · $spm steps/min',
+        AppLanguage.ja => spm == null ? '作動中 · 歩調を計測中' : '作動中 · 毎分$spm歩',
+      };
+
+  String get runIntro => switch (language) {
+        AppLanguage.es => 'Mide tus pasos por minuto con el acelerómetro y pone canciones a ese BPM. Si aceleras, la música acelera contigo.',
+        AppLanguage.en => 'Measures your steps per minute with the accelerometer and plays songs at that BPM. Speed up and the music speeds up with you.',
+        AppLanguage.ja => '加速度センサーで毎分の歩数を測り、そのBPMの曲を流します。ペースを上げれば音楽も一緒に上がります。',
+      };
+
+  String get runStart => switch (language) {
+        AppLanguage.es => 'INICIAR',
+        AppLanguage.en => 'START',
+        AppLanguage.ja => 'スタート',
+      };
+
+  String get runStop => switch (language) {
+        AppLanguage.es => 'TERMINAR',
+        AppLanguage.en => 'FINISH',
+        AppLanguage.ja => '終了',
+      };
+
+  String get runSpmUnit => switch (language) {
+        AppLanguage.es => 'PASOS/MIN',
+        AppLanguage.en => 'STEPS/MIN',
+        AppLanguage.ja => '歩/分',
+      };
+
+  String runState(MotionState state) => switch (language) {
+        AppLanguage.es => switch (state) {
+            MotionState.still => 'SIN RITMO',
+            MotionState.walking => 'CAMINANDO',
+            MotionState.running => 'CORRIENDO',
+          },
+        AppLanguage.en => switch (state) {
+            MotionState.still => 'NO RHYTHM',
+            MotionState.walking => 'WALKING',
+            MotionState.running => 'RUNNING',
+          },
+        AppLanguage.ja => switch (state) {
+            MotionState.still => 'リズムなし',
+            MotionState.walking => 'ウォーキング',
+            MotionState.running => 'ランニング',
+          },
+      };
+
+  String get runWaiting => switch (language) {
+        AppLanguage.es => 'Empieza a caminar o trotar. En unos segundos detecto tu ritmo.',
+        AppLanguage.en => 'Start walking or jogging. Your pace shows up in a few seconds.',
+        AppLanguage.ja => '歩くか走り始めてください。数秒で歩調を検出します。',
+      };
+
+  String get runSearching => switch (language) {
+        AppLanguage.es => 'Buscando canciones a tu ritmo…',
+        AppLanguage.en => 'Finding songs at your pace…',
+        AppLanguage.ja => 'あなたのペースの曲を探しています…',
+      };
+
+  String get runNoMatches => switch (language) {
+        AppLanguage.es => 'Aún no encuentro canciones a este ritmo. Vuelvo a buscar en cuanto cambies de paso.',
+        AppLanguage.en => 'No songs at this pace yet. I\'ll search again as soon as your pace changes.',
+        AppLanguage.ja => 'このペースの曲がまだ見つかりません。ペースが変わったら再検索します。',
+      };
+
+  String runMusicAt(int bpm) => switch (language) {
+        AppLanguage.es => 'Música a $bpm BPM',
+        AppLanguage.en => 'Music at $bpm BPM',
+        AppLanguage.ja => '$bpm BPMの音楽',
+      };
+
+  String get runLock => switch (language) {
+        AppLanguage.es => 'Fijar ritmo',
+        AppLanguage.en => 'Lock pace',
+        AppLanguage.ja => 'ペースを固定',
+      };
+
+  String get runUnlock => switch (language) {
+        AppLanguage.es => 'Seguir mis pasos',
+        AppLanguage.en => 'Follow my steps',
+        AppLanguage.ja => '歩調に合わせる',
+      };
+
+  String get runLockedHint => switch (language) {
+        AppLanguage.es => 'Ritmo fijo: la música no cambia aunque cambies de paso.',
+        AppLanguage.en => 'Pace locked: the music holds even if your steps change.',
+        AppLanguage.ja => 'ペース固定中：歩調が変わっても音楽は変わりません。',
+      };
+
+  String get runSyncTitle => switch (language) {
+        AppLanguage.es => 'Sincronizar tempo',
+        AppLanguage.en => 'Sync tempo',
+        AppLanguage.ja => 'テンポを同期',
+      };
+
+  String get runSyncSubtitle => switch (language) {
+        AppLanguage.es => 'Ajusta la velocidad de la canción hasta ±8% para que el beat vaya con tus pasos. La voz no cambia de tono.',
+        AppLanguage.en => 'Adjusts song speed by up to ±8% so the beat matches your steps. Voices keep their pitch.',
+        AppLanguage.ja => '曲の速度を最大±8%調整してビートを歩調に合わせます。声の高さは変わりません。',
+      };
+
+  String get runSyncSpotify => switch (language) {
+        AppLanguage.es => 'Spotify no permite cambiar la velocidad: elijo canciones a tu ritmo, pero suenan a su tempo original.',
+        AppLanguage.en => 'Spotify doesn\'t allow changing speed: songs are picked for your pace but play at their own tempo.',
+        AppLanguage.ja => 'Spotifyは速度を変更できません。ペースに合う曲を選びますが、元のテンポで再生されます。',
+      };
+
+  String runSongTempo(int bpm, double rate) {
+    final pct = ((rate - 1) * 100).round();
+    final adj = pct == 0 ? '' : ' · ${pct > 0 ? '+' : ''}$pct%';
+    return '$bpm BPM$adj';
+  }
+
+  String get runUnknownTempo => switch (language) {
+        AppLanguage.es => 'BPM desconocido',
+        AppLanguage.en => 'BPM unknown',
+        AppLanguage.ja => 'BPM不明',
+      };
+
+  String get runStatTime => switch (language) {
+        AppLanguage.es => 'TIEMPO',
+        AppLanguage.en => 'TIME',
+        AppLanguage.ja => '時間',
+      };
+
+  String get runStatSteps => switch (language) {
+        AppLanguage.es => 'PASOS',
+        AppLanguage.en => 'STEPS',
+        AppLanguage.ja => '歩数',
+      };
+
+  String get runStatAverage => switch (language) {
+        AppLanguage.es => 'PROMEDIO',
+        AppLanguage.en => 'AVERAGE',
+        AppLanguage.ja => '平均',
+      };
+
+  String get runStatSongs => switch (language) {
+        AppLanguage.es => 'CANCIONES',
+        AppLanguage.en => 'SONGS',
+        AppLanguage.ja => '曲',
+      };
+
+  String get runNoSensor => switch (language) {
+        AppLanguage.es => 'No pude leer el acelerómetro de este teléfono. Elige el ritmo a mano con − y +.',
+        AppLanguage.en => 'Couldn\'t read this phone\'s accelerometer. Set the pace by hand with − and +.',
+        AppLanguage.ja => 'この端末の加速度センサーを読み取れません。− と + でペースを設定してください。',
+      };
+
+  String get runBackgroundHint => switch (language) {
+        AppLanguage.es => 'Puedes bloquear la pantalla: mientras suene la música sigo leyendo tus pasos. Si tu teléfono cierra apps en segundo plano, pon la batería de Tsuki en "Sin restricciones".',
+        AppLanguage.en => 'You can lock the screen: while music plays I keep reading your steps. If your phone kills background apps, set Tsuki\'s battery to "Unrestricted".',
+        AppLanguage.ja => '画面をロックしても大丈夫です。音楽が流れている間は歩数を読み続けます。バックグラウンドでアプリが終了する場合は、Tsukiのバッテリー設定を「制限なし」にしてください。',
+      };
+
+  String get runHalfTimeNote => switch (language) {
+        AppLanguage.es => 'Corriendo también valen canciones a medio tempo: 85 BPM = un beat cada 2 pasos a 170.',
+        AppLanguage.en => 'When running, half-tempo songs count too: 85 BPM = one beat every 2 steps at 170.',
+        AppLanguage.ja => 'ランニング中は半分のテンポの曲も対象です：170歩なら85 BPM（2歩で1拍）。',
+      };
+
+  String get runSettingTitle => switch (language) {
+        AppLanguage.es => 'Modo Run',
+        AppLanguage.en => 'Run mode',
+        AppLanguage.ja => 'ランモード',
+      };
+
+  String get runSettingSubtitle => switch (language) {
+        AppLanguage.es => 'Muestra la tarjeta en el inicio. Apagado, se oculta y no usa el sensor.',
+        AppLanguage.en => 'Shows its card on the home screen. Off, it is hidden and the sensor is never used.',
+        AppLanguage.ja => 'ホームにカードを表示します。オフにすると非表示になり、センサーも使いません。',
+      };
+
+  // --- Beat sync (Rinnegan) ---
+  String get beatSyncHint => switch (language) {
+        AppLanguage.es => 'TOCA AL RITMO PARA SINCRONIZAR',
+        AppLanguage.en => 'TAP TO THE BEAT TO SYNC',
+        AppLanguage.ja => 'リズムに合わせてタップで同期',
+      };
+
+  String beatSyncTapping(int count) {
+    final n = count.clamp(0, 4);
+    final dots = '●' * n + '○' * max(0, 3 - n);
+    return 'SYNC $dots';
+  }
+
+  String beatSyncLocked(int bpm) => 'SYNC · $bpm BPM';
+
+  String beatSyncTempo(int bpm) => switch (language) {
+        AppLanguage.es => 'TEMPO TUYO · $bpm BPM',
+        AppLanguage.en => 'YOUR TEMPO · $bpm BPM',
+        AppLanguage.ja => 'タップのテンポ · $bpm BPM',
+      };
+
+  String beatSyncAuto(int bpm) => 'AUTO · $bpm BPM';
+
+  String get beatSyncNoTempo => switch (language) {
+        AppLanguage.es => 'SIN BPM · TOCA 4 VECES',
+        AppLanguage.en => 'NO BPM · TAP 4 TIMES',
+        AppLanguage.ja => 'BPMなし · 4回タップ',
+      };
+
+  // --- Weather ---
+  String dayPartName(DayPart part) => switch (language) {
+        AppLanguage.es => switch (part) {
+            DayPart.lateNight => 'Madrugada',
+            DayPart.morning => 'Mañana',
+            DayPart.afternoon => 'Tarde',
+            DayPart.night => 'Noche',
+          },
+        AppLanguage.en => switch (part) {
+            DayPart.lateNight => 'Late night',
+            DayPart.morning => 'Morning',
+            DayPart.afternoon => 'Afternoon',
+            DayPart.night => 'Night',
+          },
+        AppLanguage.ja => switch (part) {
+            DayPart.lateNight => '深夜',
+            DayPart.morning => '朝',
+            DayPart.afternoon => '午後',
+            DayPart.night => '夜',
+          },
+      };
+
+  /// "Tarde lluviosa", "Clear night", "雨の夜".
+  String skyPhrase(DayPart part, Sky sky, {required bool isDay}) {
+    final dark = part == DayPart.night || part == DayPart.lateNight;
+    switch (language) {
+      case AppLanguage.es:
+        final noun = dayPartName(part);
+        final adj = switch (sky) {
+          Sky.clear => isDay && !dark ? 'soleada' : 'despejada',
+          Sky.fewClouds => 'con algunas nubes',
+          Sky.cloudy => 'nublada',
+          Sky.overcast => 'gris',
+          Sky.fog => 'con niebla',
+          Sky.drizzle => 'con llovizna',
+          Sky.rain => 'lluviosa',
+          Sky.snow => 'con nieve',
+          Sky.storm => 'de tormenta',
+        };
+        return '$noun $adj';
+      case AppLanguage.en:
+        final noun = dark ? 'night' : dayPartName(part).toLowerCase();
+        final adj = switch (sky) {
+          Sky.clear => isDay && !dark ? 'Sunny' : 'Clear',
+          Sky.fewClouds => 'Partly cloudy',
+          Sky.cloudy => 'Cloudy',
+          Sky.overcast => 'Grey',
+          Sky.fog => 'Foggy',
+          Sky.drizzle => 'Drizzly',
+          Sky.rain => 'Rainy',
+          Sky.snow => 'Snowy',
+          Sky.storm => 'Stormy',
+        };
+        return '$adj $noun';
+      case AppLanguage.ja:
+        final adj = switch (sky) {
+          Sky.clear => '晴れた',
+          Sky.fewClouds => '薄曇りの',
+          Sky.cloudy => '曇りの',
+          Sky.overcast => 'どんよりした',
+          Sky.fog => '霧の',
+          Sky.drizzle => '小雨の',
+          Sky.rain => '雨の',
+          Sky.snow => '雪の',
+          Sky.storm => '嵐の',
+        };
+        return '$adj${dayPartName(part)}';
+    }
+  }
+
+  String skyName(Sky sky) => switch (language) {
+        AppLanguage.es => switch (sky) {
+            Sky.clear => 'Despejado',
+            Sky.fewClouds => 'Algunas nubes',
+            Sky.cloudy => 'Nublado',
+            Sky.overcast => 'Cubierto',
+            Sky.fog => 'Niebla',
+            Sky.drizzle => 'Llovizna',
+            Sky.rain => 'Lluvia',
+            Sky.snow => 'Nieve',
+            Sky.storm => 'Tormenta',
+          },
+        AppLanguage.en => switch (sky) {
+            Sky.clear => 'Clear',
+            Sky.fewClouds => 'Few clouds',
+            Sky.cloudy => 'Cloudy',
+            Sky.overcast => 'Overcast',
+            Sky.fog => 'Fog',
+            Sky.drizzle => 'Drizzle',
+            Sky.rain => 'Rain',
+            Sky.snow => 'Snow',
+            Sky.storm => 'Storm',
+          },
+        AppLanguage.ja => switch (sky) {
+            Sky.clear => '晴れ',
+            Sky.fewClouds => '晴れ時々曇り',
+            Sky.cloudy => '曇り',
+            Sky.overcast => '本曇り',
+            Sky.fog => '霧',
+            Sky.drizzle => '霧雨',
+            Sky.rain => '雨',
+            Sky.snow => '雪',
+            Sky.storm => '雷雨',
+          },
+      };
+
+  String get weatherTitle => switch (language) {
+        AppLanguage.es => 'CLIMA',
+        AppLanguage.en => 'WEATHER',
+        AppLanguage.ja => '天気',
+      };
+
+  String get weatherSettingTitle => switch (language) {
+        AppLanguage.es => 'Clima en el inicio',
+        AppLanguage.en => 'Weather on home',
+        AppLanguage.ja => 'ホームに天気を表示',
+      };
+
+  String get weatherSettingSubtitle => switch (language) {
+        AppLanguage.es => 'El inicio cambia con el clima, la hora y la luna. Si llueve, te propone música para la lluvia.',
+        AppLanguage.en => 'Home changes with the weather, time and moon. When it rains, it offers music for the rain.',
+        AppLanguage.ja => '天気・時間・月に合わせてホームが変化。雨の日は雨に合う音楽を提案します。',
+      };
+
+  String get weatherEnable => switch (language) {
+        AppLanguage.es => 'Activar clima',
+        AppLanguage.en => 'Turn on weather',
+        AppLanguage.ja => '天気をオンにする',
+      };
+
+  String get weatherUseLocation => switch (language) {
+        AppLanguage.es => 'Usar mi ubicación aproximada',
+        AppLanguage.en => 'Use my approximate location',
+        AppLanguage.ja => 'おおよその現在地を使う',
+      };
+
+  String get weatherOrCity => switch (language) {
+        AppLanguage.es => 'O elige una ciudad',
+        AppLanguage.en => 'Or pick a city',
+        AppLanguage.ja => 'または都市を選択',
+      };
+
+  String get weatherSearchHint => switch (language) {
+        AppLanguage.es => 'Buscar ciudad…',
+        AppLanguage.en => 'Search city…',
+        AppLanguage.ja => '都市を検索…',
+      };
+
+  String get weatherPrivacy => switch (language) {
+        AppLanguage.es => 'Tsuki usa tu ubicación aproximada (unos 2 km) solo para el clima. Se envía redondeada a Open-Meteo, un servicio sin cuenta ni registro, y nunca en segundo plano.',
+        AppLanguage.en => 'Tsuki uses your approximate location (about 2 km) only for the weather. It is sent rounded to Open-Meteo, a service with no account or sign-up, and never in the background.',
+        AppLanguage.ja => 'おおよその位置（約2km）は天気のためだけに使います。丸めた座標をアカウント不要のOpen-Meteoに送信し、バックグラウンドでは使いません。',
+      };
+
+  String get weatherHere => switch (language) {
+        AppLanguage.es => 'Tu ubicación',
+        AppLanguage.en => 'Your location',
+        AppLanguage.ja => '現在地',
+      };
+
+  String weatherUpdated(int minutes) => switch (language) {
+        AppLanguage.es => minutes < 1 ? 'Actualizado ahora' : 'Actualizado hace $minutes min',
+        AppLanguage.en => minutes < 1 ? 'Updated just now' : 'Updated $minutes min ago',
+        AppLanguage.ja => minutes < 1 ? 'たった今更新' : '$minutes分前に更新',
+      };
+
+  String get weatherDenied => switch (language) {
+        AppLanguage.es => 'Sin permiso de ubicación. Puedes elegir tu ciudad abajo.',
+        AppLanguage.en => 'No location permission. You can pick your city below.',
+        AppLanguage.ja => '位置情報の許可がありません。下で都市を選べます。',
+      };
+
+  String get weatherDeniedForever => switch (language) {
+        AppLanguage.es => 'El permiso está bloqueado. Actívalo en los ajustes de Android o elige tu ciudad.',
+        AppLanguage.en => 'The permission is blocked. Allow it in Android settings or pick your city.',
+        AppLanguage.ja => '許可がブロックされています。Androidの設定で許可するか、都市を選んでください。',
+      };
+
+  String get weatherServiceOff => switch (language) {
+        AppLanguage.es => 'La ubicación del teléfono está apagada.',
+        AppLanguage.en => "The phone's location is off.",
+        AppLanguage.ja => '端末の位置情報がオフです。',
+      };
+
+  String get weatherLocationFailed => switch (language) {
+        AppLanguage.es => 'No pude obtener tu ubicación. Prueba de nuevo o elige tu ciudad.',
+        AppLanguage.en => "Couldn't get your location. Try again or pick your city.",
+        AppLanguage.ja => '位置を取得できませんでした。もう一度試すか、都市を選んでください。',
+      };
+
+  String get weatherOpenSettings => switch (language) {
+        AppLanguage.es => 'Abrir ajustes',
+        AppLanguage.en => 'Open settings',
+        AppLanguage.ja => '設定を開く',
+      };
+
+  String get weatherOffline => switch (language) {
+        AppLanguage.es => 'Sin conexión con el servicio del clima.',
+        AppLanguage.en => "Can't reach the weather service.",
+        AppLanguage.ja => '天気サービスに接続できません。',
+      };
+
+  String get weatherNoResults => switch (language) {
+        AppLanguage.es => 'No encontré esa ciudad.',
+        AppLanguage.en => "Couldn't find that city.",
+        AppLanguage.ja => '都市が見つかりません。',
+      };
+
+  String get weatherTurnOff => switch (language) {
+        AppLanguage.es => 'Apagar clima',
+        AppLanguage.en => 'Turn off weather',
+        AppLanguage.ja => '天気をオフにする',
+      };
+
+  String rainOfferTitle(String? place) => switch (language) {
+        AppLanguage.es => place == null ? 'Está lloviendo donde estás' : 'Está lloviendo en $place',
+        AppLanguage.en => place == null ? "It's raining where you are" : "It's raining in $place",
+        AppLanguage.ja => place == null ? '今いる場所で雨が降っています' : '$placeで雨が降っています',
+      };
+
+  String get rainOfferQuestion => switch (language) {
+        AppLanguage.es => '¿Pongo algo para la lluvia?',
+        AppLanguage.en => 'Shall I play something for the rain?',
+        AppLanguage.ja => '雨に合う曲をかけましょうか？',
+      };
+
+  String get rainOfferYes => switch (language) {
+        AppLanguage.es => 'Sí, ponlo',
+        AppLanguage.en => 'Yes, play it',
+        AppLanguage.ja => 'かける',
+      };
+
+  String get rainOfferNo => switch (language) {
+        AppLanguage.es => 'Ahora no',
+        AppLanguage.en => 'Not now',
+        AppLanguage.ja => '今はいい',
+      };
+
+  String get rainOfferAddRain => switch (language) {
+        AppLanguage.es => 'Sumar lluvia de fondo',
+        AppLanguage.en => 'Add rain in the background',
+        AppLanguage.ja => '雨音も重ねる',
+      };
+
+  String get rainOfferPreparing => switch (language) {
+        AppLanguage.es => 'Buscando tus canciones tranquilas…',
+        AppLanguage.en => 'Finding your calm songs…',
+        AppLanguage.ja => '落ち着いた曲を探しています…',
+      };
+
+  String get rainOfferEmpty => switch (language) {
+        AppLanguage.es => 'Todavía no encuentro canciones tranquilas tuyas. Guarda algunas favoritas y lo intento otra vez.',
+        AppLanguage.en => "I can't find calm songs of yours yet. Save a few favourites and I'll try again.",
+        AppLanguage.ja => 'まだ落ち着いた曲が見つかりません。お気に入りを追加してから再度お試しください。',
+      };
+
+  String rainOfferPlaying(int count) => switch (language) {
+        AppLanguage.es => 'Sonando: $count canciones para la lluvia',
+        AppLanguage.en => 'Playing $count songs for the rain',
+        AppLanguage.ja => '雨の曲を$count曲再生中',
+      };
+
+  // --- Shake to skip ---
+  String get shakeSkipTitle => switch (language) {
+        AppLanguage.es => 'Agitar para saltar',
+        AppLanguage.en => 'Shake to skip',
+        AppLanguage.ja => '振ってスキップ',
+      };
+
+  String get shakeSkipSubtitle => switch (language) {
+        AppLanguage.es => 'Agita el teléfono con firmeza para pasar a la siguiente canción. Funciona con la app abierta y se pausa en Modo Run.',
+        AppLanguage.en => 'Shake the phone firmly to skip to the next song. Works with the app open and pauses in Run mode.',
+        AppLanguage.ja => '端末をしっかり振ると次の曲へ。アプリ表示中に動作し、ランモード中は停止します。',
+      };
+
+  // --- Oni masks ---
+  String get masksTitle => switch (language) {
+        AppLanguage.es => 'MÁSCARAS ONI',
+        AppLanguage.en => 'ONI MASKS',
+        AppLanguage.ja => '鬼の面',
+      };
+
+  String masksCount(int unlocked, int total) => '$unlocked / $total';
+
+  String get masksNoneYet => switch (language) {
+        AppLanguage.es => 'Aún sin máscara',
+        AppLanguage.en => 'No mask yet',
+        AppLanguage.ja => 'まだ面がありません',
+      };
+
+  String get masksEquippedHint => switch (language) {
+        AppLanguage.es => 'Tu máscara equipada marca tus canciones escuchadas y aparece en tu perfil.',
+        AppLanguage.en => 'Your equipped mask marks your listened songs and shows on your profile.',
+        AppLanguage.ja => '装備中の面は聴いた曲の印になり、プロフィールにも表示されます。',
+      };
+
+  String get maskSecretName => switch (language) {
+        AppLanguage.es => '???',
+        AppLanguage.en => '???',
+        AppLanguage.ja => '？？？',
+      };
+
+  String get maskSecretHint => switch (language) {
+        AppLanguage.es => 'Máscara secreta. Nadie sabe cómo conseguirla… todavía.',
+        AppLanguage.en => 'Secret mask. Nobody knows how to get it… yet.',
+        AppLanguage.ja => '秘密の面。手に入れ方は誰も知らない…まだ。',
+      };
+
+  String get maskEquip => switch (language) {
+        AppLanguage.es => 'EQUIPAR',
+        AppLanguage.en => 'EQUIP',
+        AppLanguage.ja => '装備する',
+      };
+
+  String get maskEquipped => switch (language) {
+        AppLanguage.es => 'EQUIPADA',
+        AppLanguage.en => 'EQUIPPED',
+        AppLanguage.ja => '装備中',
+      };
+
+  String maskUnlockedOn(String date) => switch (language) {
+        AppLanguage.es => 'Desbloqueada el $date',
+        AppLanguage.en => 'Unlocked on $date',
+        AppLanguage.ja => '$date に解放',
+      };
+
+  String get maskUnlockedTitle => switch (language) {
+        AppLanguage.es => 'MÁSCARA DESBLOQUEADA',
+        AppLanguage.en => 'MASK UNLOCKED',
+        AppLanguage.ja => '面を解放',
+      };
+
+  String maskRarity(MaskRarity r) => switch (language) {
+        AppLanguage.es => switch (r) {
+            MaskRarity.common => 'COMÚN',
+            MaskRarity.rare => 'RARA',
+            MaskRarity.epic => 'ÉPICA',
+            MaskRarity.secret => 'SECRETA',
+            MaskRarity.legendary => 'LEGENDARIA',
+          },
+        AppLanguage.en => switch (r) {
+            MaskRarity.common => 'COMMON',
+            MaskRarity.rare => 'RARE',
+            MaskRarity.epic => 'EPIC',
+            MaskRarity.secret => 'SECRET',
+            MaskRarity.legendary => 'LEGENDARY',
+          },
+        AppLanguage.ja => switch (r) {
+            MaskRarity.common => '並',
+            MaskRarity.rare => '希少',
+            MaskRarity.epic => '極',
+            MaskRarity.secret => '秘',
+            MaskRarity.legendary => '伝説',
+          },
+      };
+
+  String get masksProfileRow => switch (language) {
+        AppLanguage.es => 'Colección de máscaras',
+        AppLanguage.en => 'Mask collection',
+        AppLanguage.ja => '面のコレクション',
+      };
+
+  // --- Moon ---
+  String moonPhaseName(MoonPhaseName name) => switch (language) {
+        AppLanguage.es => switch (name) {
+            MoonPhaseName.newMoon => 'Luna nueva',
+            MoonPhaseName.waxingCrescent => 'Luna creciente',
+            MoonPhaseName.firstQuarter => 'Cuarto creciente',
+            MoonPhaseName.waxingGibbous => 'Gibosa creciente',
+            MoonPhaseName.fullMoon => 'Luna llena',
+            MoonPhaseName.waningGibbous => 'Gibosa menguante',
+            MoonPhaseName.lastQuarter => 'Cuarto menguante',
+            MoonPhaseName.waningCrescent => 'Luna menguante',
+          },
+        AppLanguage.en => switch (name) {
+            MoonPhaseName.newMoon => 'New moon',
+            MoonPhaseName.waxingCrescent => 'Waxing crescent',
+            MoonPhaseName.firstQuarter => 'First quarter',
+            MoonPhaseName.waxingGibbous => 'Waxing gibbous',
+            MoonPhaseName.fullMoon => 'Full moon',
+            MoonPhaseName.waningGibbous => 'Waning gibbous',
+            MoonPhaseName.lastQuarter => 'Last quarter',
+            MoonPhaseName.waningCrescent => 'Waning crescent',
+          },
+        AppLanguage.ja => switch (name) {
+            MoonPhaseName.newMoon => '新月',
+            MoonPhaseName.waxingCrescent => '三日月',
+            MoonPhaseName.firstQuarter => '上弦の月',
+            MoonPhaseName.waxingGibbous => '十三夜月',
+            MoonPhaseName.fullMoon => '満月',
+            MoonPhaseName.waningGibbous => '寝待月',
+            MoonPhaseName.lastQuarter => '下弦の月',
+            MoonPhaseName.waningCrescent => '有明月',
+          },
+      };
+
+  String moonEventName(MoonPhaseKind kind) => moonPhaseName(switch (kind) {
+        MoonPhaseKind.newMoon => MoonPhaseName.newMoon,
+        MoonPhaseKind.firstQuarter => MoonPhaseName.firstQuarter,
+        MoonPhaseKind.fullMoon => MoonPhaseName.fullMoon,
+        MoonPhaseKind.lastQuarter => MoonPhaseName.lastQuarter,
+      });
+
+  String get moonTonightTitle => switch (language) {
+        AppLanguage.es => 'LA LUNA DE ESTA NOCHE',
+        AppLanguage.en => "TONIGHT'S MOON",
+        AppLanguage.ja => '今夜の月',
+      };
+
+  String moonIlluminated(int percent) => switch (language) {
+        AppLanguage.es => '$percent% iluminada',
+        AppLanguage.en => '$percent% illuminated',
+        AppLanguage.ja => '輝面比 $percent%',
+      };
+
+  String moonAge(int day) => switch (language) {
+        AppLanguage.es => 'Día $day del ciclo lunar',
+        AppLanguage.en => 'Day $day of the lunar cycle',
+        AppLanguage.ja => '月齢 $day',
+      };
+
+  String get moonFullTonight => switch (language) {
+        AppLanguage.es => 'Luna llena esta noche 🌕',
+        AppLanguage.en => 'Full moon tonight 🌕',
+        AppLanguage.ja => '今夜は満月 🌕',
+      };
+
+  /// Countdown phrase: [days] when ≥ 1, otherwise [hours].
+  String moonUntilFull({int? days, int? hours}) => switch (language) {
+        AppLanguage.es => days != null
+            ? (days == 1 ? 'Falta 1 día para luna llena 🌕' : 'Faltan $days días para luna llena 🌕')
+            : (hours == 1 ? 'Falta 1 hora para luna llena 🌕' : 'Faltan $hours horas para luna llena 🌕'),
+        AppLanguage.en => days != null
+            ? (days == 1 ? '1 day until full moon 🌕' : '$days days until full moon 🌕')
+            : (hours == 1 ? '1 hour until full moon 🌕' : '$hours hours until full moon 🌕'),
+        AppLanguage.ja => days != null ? '満月まであと$days日 🌕' : '満月まであと$hours時間 🌕',
+      };
+
+  String get moonCycleTitle => switch (language) {
+        AppLanguage.es => 'CICLO LUNAR · 8 FASES',
+        AppLanguage.en => 'LUNAR CYCLE · 8 PHASES',
+        AppLanguage.ja => '月の満ち欠け · 8相',
+      };
+
+  String get moonToday => switch (language) {
+        AppLanguage.es => 'HOY',
+        AppLanguage.en => 'TODAY',
+        AppLanguage.ja => '今日',
+      };
+
+  String get moonUpcomingTitle => switch (language) {
+        AppLanguage.es => 'PRÓXIMAS FASES',
+        AppLanguage.en => 'UPCOMING PHASES',
+        AppLanguage.ja => '次の月相',
+      };
+
+  String get moonMixTitle => switch (language) {
+        AppLanguage.es => 'MIX DE LUNA LLENA',
+        AppLanguage.en => 'FULL MOON MIX',
+        AppLanguage.ja => '満月ミックス',
+      };
+
+  String moonMixUnlocked(int count) => switch (language) {
+        AppLanguage.es => 'Tus $count canciones más escuchadas de este ciclo lunar',
+        AppLanguage.en => 'Your $count most played songs of this lunar cycle',
+        AppLanguage.ja => 'この月の周期で最も聴いた$count曲',
+      };
+
+  String moonMixLocked(String when) => switch (language) {
+        AppLanguage.es => 'Se desbloquea con la luna llena · $when',
+        AppLanguage.en => 'Unlocks at the full moon · $when',
+        AppLanguage.ja => '満月で解放 · $when',
+      };
+
+  String moonMixProgress(int count) => switch (language) {
+        AppLanguage.es => count == 0
+            ? 'Escucha música este ciclo para llenarlo'
+            : 'Ya llevas $count ${count == 1 ? 'canción' : 'canciones'} en este ciclo',
+        AppLanguage.en => count == 0
+            ? 'Listen to music this cycle to fill it'
+            : '$count ${count == 1 ? 'song' : 'songs'} so far this cycle',
+        AppLanguage.ja => count == 0 ? 'この周期に音楽を聴いて満たそう' : 'この周期で$count曲',
+      };
+
+  String get moonMixEmpty => switch (language) {
+        AppLanguage.es => 'Este ciclo no escuchaste música todavía. ¡El próximo mix te espera!',
+        AppLanguage.en => "You haven't listened to anything this cycle yet. Next mix awaits!",
+        AppLanguage.ja => 'この周期はまだ何も聴いていません。次のミックスをお楽しみに！',
+      };
+
+  String get moonMixPlay => switch (language) {
+        AppLanguage.es => 'REPRODUCIR',
+        AppLanguage.en => 'PLAY',
+        AppLanguage.ja => '再生',
+      };
+
+  String get moonMixSave => switch (language) {
+        AppLanguage.es => 'GUARDAR PLAYLIST',
+        AppLanguage.en => 'SAVE PLAYLIST',
+        AppLanguage.ja => 'プレイリストに保存',
+      };
+
+  String moonMixPlaylistName(String date) => switch (language) {
+        AppLanguage.es => '🌕 Luna llena · $date',
+        AppLanguage.en => '🌕 Full moon · $date',
+        AppLanguage.ja => '🌕 満月 · $date',
+      };
+
+  String get moonMixSaved => switch (language) {
+        AppLanguage.es => 'Mix guardado en tus playlists 🌕',
+        AppLanguage.en => 'Mix saved to your playlists 🌕',
+        AppLanguage.ja => 'ミックスをプレイリストに保存しました 🌕',
+      };
+
+  String get moonMixSaveFailed => switch (language) {
+        AppLanguage.es => 'No se pudo guardar. Inicia sesión e inténtalo de nuevo.',
+        AppLanguage.en => "Couldn't save. Sign in and try again.",
+        AppLanguage.ja => '保存できませんでした。ログインして再試行してください。',
+      };
+
+  String get moonEclipseNow => switch (language) {
+        AppLanguage.es => 'ECLIPSE LUNAR EN CURSO',
+        AppLanguage.en => 'LUNAR ECLIPSE IN PROGRESS',
+        AppLanguage.ja => '月食進行中',
+      };
+
+  String moonEclipseKind(LunarEclipseKind kind) => switch (language) {
+        AppLanguage.es => switch (kind) {
+            LunarEclipseKind.total => 'total',
+            LunarEclipseKind.partial => 'parcial',
+            LunarEclipseKind.penumbral => 'penumbral',
+          },
+        AppLanguage.en => switch (kind) {
+            LunarEclipseKind.total => 'total',
+            LunarEclipseKind.partial => 'partial',
+            LunarEclipseKind.penumbral => 'penumbral',
+          },
+        AppLanguage.ja => switch (kind) {
+            LunarEclipseKind.total => '皆既',
+            LunarEclipseKind.partial => '部分',
+            LunarEclipseKind.penumbral => '半影',
+          },
+      };
+
+  String moonNextEclipse(String date, LunarEclipseKind kind) => switch (language) {
+        AppLanguage.es => 'Próximo eclipse lunar: $date · ${moonEclipseKind(kind)}',
+        AppLanguage.en => 'Next lunar eclipse: $date · ${moonEclipseKind(kind)}',
+        AppLanguage.ja => '次の月食：$date · ${moonEclipseKind(kind)}月食',
+      };
+
+  String get moonAtmosphereTitle => switch (language) {
+        AppLanguage.es => 'Atmósfera lunar',
+        AppLanguage.en => 'Lunar atmosphere',
+        AppLanguage.ja => '月のアトモスフィア',
+      };
+
+  String get moonAtmosphereSubtitle => switch (language) {
+        AppLanguage.es => 'La app cambia de luz con la luna real de cada noche',
+        AppLanguage.en => 'The app follows the real Moon each night',
+        AppLanguage.ja => '毎晩の実際の月に合わせて光が変わる',
+      };
+
+  String get a11yMoon => switch (language) {
+        AppLanguage.es => 'Fase lunar',
+        AppLanguage.en => 'Moon phase',
+        AppLanguage.ja => '月相',
+      };
+
+  String shortDate(DateTime d) {
+    const es = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const en = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return switch (language) {
+      AppLanguage.es => '${d.day} ${es[d.month - 1]}',
+      AppLanguage.en => '${en[d.month - 1]} ${d.day}',
+      AppLanguage.ja => '${d.month}月${d.day}日',
+    };
+  }
+
+  String longDate(DateTime d) => switch (language) {
+        AppLanguage.ja => '${d.year}年${shortDate(d)}',
+        AppLanguage.en => '${shortDate(d)}, ${d.year}',
+        AppLanguage.es => '${shortDate(d)} ${d.year}',
+      };
+
+  // --- Ambient mixer ---
+  String get ambientTitle => switch (language) {
+        AppLanguage.es => 'AMBIENTE',
+        AppLanguage.en => 'AMBIENT',
+        AppLanguage.ja => 'アンビエント',
+      };
+
+  String get ambientSubtitle => switch (language) {
+        AppLanguage.es => 'Suena encima de tu música, también de Spotify',
+        AppLanguage.en => 'Plays on top of your music, Spotify included',
+        AppLanguage.ja => '音楽の上に重ねて再生（Spotifyも対応）',
+      };
+
+  String ambientName(AmbientSound sound) => switch (language) {
+        AppLanguage.es => switch (sound) {
+            AmbientSound.rain => 'Lluvia',
+            AmbientSound.storm => 'Tormenta',
+            AmbientSound.waves => 'Olas',
+            AmbientSound.fire => 'Fogata',
+            AmbientSound.wind => 'Viento',
+            AmbientSound.night => 'Noche',
+            AmbientSound.brownNoise => 'Ruido marrón',
+          },
+        AppLanguage.en => switch (sound) {
+            AmbientSound.rain => 'Rain',
+            AmbientSound.storm => 'Storm',
+            AmbientSound.waves => 'Waves',
+            AmbientSound.fire => 'Campfire',
+            AmbientSound.wind => 'Wind',
+            AmbientSound.night => 'Night',
+            AmbientSound.brownNoise => 'Brown noise',
+          },
+        AppLanguage.ja => switch (sound) {
+            AmbientSound.rain => '雨',
+            AmbientSound.storm => '嵐',
+            AmbientSound.waves => '波',
+            AmbientSound.fire => '焚き火',
+            AmbientSound.wind => '風',
+            AmbientSound.night => '夜',
+            AmbientSound.brownNoise => 'ブラウンノイズ',
+          },
+      };
+
+  String get ambientAfterTimerTitle => switch (language) {
+        AppLanguage.es => 'Cuando termine el temporizador',
+        AppLanguage.en => 'When the sleep timer ends',
+        AppLanguage.ja => 'スリープタイマー終了後',
+      };
+
+  String ambientAfterTimerOption(int minutes) => switch (language) {
+        AppLanguage.es => minutes == 0
+            ? 'Apagar con la música'
+            : minutes < 0
+                ? 'No apagar'
+                : 'Seguir $minutes min',
+        AppLanguage.en => minutes == 0
+            ? 'Stop with the music'
+            : minutes < 0
+                ? 'Keep playing'
+                : 'Keep $minutes min',
+        AppLanguage.ja => minutes == 0
+            ? '音楽と一緒に停止'
+            : minutes < 0
+                ? '止めない'
+                : 'あと$minutes分',
+      };
+
+  String ambientStopsIn(String time) => switch (language) {
+        AppLanguage.es => 'Se apaga en $time',
+        AppLanguage.en => 'Stops in $time',
+        AppLanguage.ja => '$time 後に停止',
+      };
+
+  String get ambientStopAll => switch (language) {
+        AppLanguage.es => 'APAGAR TODO',
+        AppLanguage.en => 'STOP ALL',
+        AppLanguage.ja => 'すべて停止',
+      };
+
+  String get ambientPause => switch (language) {
+        AppLanguage.es => 'PAUSAR',
+        AppLanguage.en => 'PAUSE',
+        AppLanguage.ja => '一時停止',
+      };
+
+  String get ambientResume => switch (language) {
+        AppLanguage.es => 'REANUDAR',
+        AppLanguage.en => 'RESUME',
+        AppLanguage.ja => '再開',
+      };
+
+  String get ambientHint => switch (language) {
+        AppLanguage.es => 'Combínalo con el temporizador para dormir: la música se apaga suave y la lluvia sigue.',
+        AppLanguage.en => 'Pair it with the sleep timer: the music fades out and the rain keeps going.',
+        AppLanguage.ja => 'スリープタイマーと組み合わせると、音楽はフェードアウトし雨音は続きます。',
+      };
+
+  String get homeAmbientCardSubtitle => switch (language) {
+        AppLanguage.es => 'Lluvia, olas, fogata…',
+        AppLanguage.en => 'Rain, waves, campfire…',
+        AppLanguage.ja => '雨・波・焚き火…',
+      };
+
+  String ambientPlayingCount(int count) => switch (language) {
+        AppLanguage.es => '$count sonando',
+        AppLanguage.en => '$count playing',
+        AppLanguage.ja => '$count 再生中',
+      };
+
+  // --- Guess the song ---
+  String get guessTitle => switch (language) {
+        AppLanguage.es => 'ADIVINA LA CANCIÓN',
+        AppLanguage.en => 'GUESS THE SONG',
+        AppLanguage.ja => '曲当てクイズ',
+      };
+
+  String get guessModeDaily => switch (language) {
+        AppLanguage.es => 'Reto diario',
+        AppLanguage.en => 'Daily',
+        AppLanguage.ja => 'デイリー',
+      };
+
+  String get guessModeLibrary => switch (language) {
+        AppLanguage.es => 'Mis canciones',
+        AppLanguage.en => 'My songs',
+        AppLanguage.ja => 'マイソング',
+      };
+
+  String get guessModeArtist => switch (language) {
+        AppLanguage.es => 'Artista',
+        AppLanguage.en => 'Artist',
+        AppLanguage.ja => 'アーティスト',
+      };
+
+  String get guessPickArtist => switch (language) {
+        AppLanguage.es => 'Elige un artista y adivina su discografía',
+        AppLanguage.en => 'Pick an artist and guess their discography',
+        AppLanguage.ja => 'アーティストを選んで曲を当てよう',
+      };
+
+  String get guessArtistSearchHint => switch (language) {
+        AppLanguage.es => 'Busca un artista…',
+        AppLanguage.en => 'Search an artist…',
+        AppLanguage.ja => 'アーティストを検索…',
+      };
+
+  String get guessYourArtists => switch (language) {
+        AppLanguage.es => 'TUS ARTISTAS',
+        AppLanguage.en => 'YOUR ARTISTS',
+        AppLanguage.ja => 'あなたのアーティスト',
+      };
+
+  String get guessArtistChange => switch (language) {
+        AppLanguage.es => 'CAMBIAR',
+        AppLanguage.en => 'CHANGE',
+        AppLanguage.ja => '変更',
+      };
+
+  String get guessArtistTooFew => switch (language) {
+        AppLanguage.es => 'Este artista no tiene suficientes canciones para jugar. Prueba con otro.',
+        AppLanguage.en => "This artist doesn't have enough songs to play. Try another one.",
+        AppLanguage.ja => 'このアーティストは曲が足りません。別のアーティストを試してください。',
+      };
+
+  String get guessModeChart => switch (language) {
+        AppLanguage.es => 'Top mundial',
+        AppLanguage.en => 'Global top',
+        AppLanguage.ja => 'グローバルTOP',
+      };
+
+  String get guessHowTo => switch (language) {
+        AppLanguage.es => 'Escucha el fragmento y adivina la canción. Cada fallo o salto desbloquea más segundos.',
+        AppLanguage.en => 'Listen to the clip and guess the song. Every miss or skip unlocks more seconds.',
+        AppLanguage.ja => 'クリップを聴いて曲を当てよう。外すかスキップすると再生時間が延びます。',
+      };
+
+  String get guessSearchHint => switch (language) {
+        AppLanguage.es => 'Escribe tu respuesta…',
+        AppLanguage.en => 'Type your guess…',
+        AppLanguage.ja => '曲名を入力…',
+      };
+
+  String guessSkip(int seconds) => switch (language) {
+        AppLanguage.es => 'SALTAR (+${seconds}s)',
+        AppLanguage.en => 'SKIP (+${seconds}s)',
+        AppLanguage.ja => 'スキップ（+$seconds秒）',
+      };
+
+  String get guessGiveUp => switch (language) {
+        AppLanguage.es => 'RENDIRSE',
+        AppLanguage.en => 'GIVE UP',
+        AppLanguage.ja => 'ギブアップ',
+      };
+
+  String get guessTapToPlay => switch (language) {
+        AppLanguage.es => 'Reproducir fragmento',
+        AppLanguage.en => 'Play clip',
+        AppLanguage.ja => 'クリップを再生',
+      };
+
+  String get guessAttemptSkipped => switch (language) {
+        AppLanguage.es => 'Saltado',
+        AppLanguage.en => 'Skipped',
+        AppLanguage.ja => 'スキップ',
+      };
+
+  String get guessRightArtist => switch (language) {
+        AppLanguage.es => 'artista correcto',
+        AppLanguage.en => 'right artist',
+        AppLanguage.ja => 'アーティストは正解',
+      };
+
+  String guessWonIn(int attempts) => switch (language) {
+        AppLanguage.es => attempts == 1 ? '¡Al primer segundo! 🤯' : '¡Lo adivinaste en $attempts intentos!',
+        AppLanguage.en => attempts == 1 ? 'First second! 🤯' : 'Got it in $attempts tries!',
+        AppLanguage.ja => attempts == 1 ? '1秒で正解！🤯' : '$attempts回目で正解！',
+      };
+
+  String get guessLost => switch (language) {
+        AppLanguage.es => 'Era esta canción',
+        AppLanguage.en => 'It was this song',
+        AppLanguage.ja => '正解はこの曲',
+      };
+
+  String get guessListenFull => switch (language) {
+        AppLanguage.es => 'ESCUCHAR',
+        AppLanguage.en => 'PLAY',
+        AppLanguage.ja => '再生',
+      };
+
+  String get guessShare => switch (language) {
+        AppLanguage.es => 'COPIAR RESULTADO',
+        AppLanguage.en => 'COPY RESULT',
+        AppLanguage.ja => '結果をコピー',
+      };
+
+  String get guessCopied => switch (language) {
+        AppLanguage.es => 'Resultado copiado, ¡pégalo donde quieras!',
+        AppLanguage.en => 'Result copied, paste it anywhere!',
+        AppLanguage.ja => '結果をコピーしました！',
+      };
+
+  String get guessNext => switch (language) {
+        AppLanguage.es => 'SIGUIENTE',
+        AppLanguage.en => 'NEXT',
+        AppLanguage.ja => '次へ',
+      };
+
+  String guessNextDailyIn(String time) => switch (language) {
+        AppLanguage.es => 'Próximo reto en $time',
+        AppLanguage.en => 'Next challenge in $time',
+        AppLanguage.ja => '次のチャレンジまで $time',
+      };
+
+  String get guessStatsTitle => switch (language) {
+        AppLanguage.es => 'ESTADÍSTICAS',
+        AppLanguage.en => 'STATS',
+        AppLanguage.ja => '統計',
+      };
+
+  String get guessStatsPlayed => switch (language) {
+        AppLanguage.es => 'Jugados',
+        AppLanguage.en => 'Played',
+        AppLanguage.ja => 'プレイ',
+      };
+
+  String get guessStatsWinRate => switch (language) {
+        AppLanguage.es => '% Victorias',
+        AppLanguage.en => 'Win %',
+        AppLanguage.ja => '勝率',
+      };
+
+  String get guessStatsStreak => switch (language) {
+        AppLanguage.es => 'Racha',
+        AppLanguage.en => 'Streak',
+        AppLanguage.ja => '連続',
+      };
+
+  String get guessStatsMaxStreak => switch (language) {
+        AppLanguage.es => 'Mejor racha',
+        AppLanguage.en => 'Best streak',
+        AppLanguage.ja => '最高連続',
+      };
+
+  String get guessStatsDistribution => switch (language) {
+        AppLanguage.es => 'INTENTOS PARA ADIVINAR',
+        AppLanguage.en => 'GUESS DISTRIBUTION',
+        AppLanguage.ja => '正解までの回数',
+      };
+
+  String guessSessionStreak(int n, int best) => switch (language) {
+        AppLanguage.es => 'Racha $n · Récord $best',
+        AppLanguage.en => 'Streak $n · Best $best',
+        AppLanguage.ja => '連続 $n · 最高 $best',
+      };
+
+  String get guessLibraryTooSmall => switch (language) {
+        AppLanguage.es => 'Guarda o escucha más canciones para jugar con tu biblioteca. Por ahora juegas con el top mundial.',
+        AppLanguage.en => 'Save or play more songs to use your library. For now you play with the global top.',
+        AppLanguage.ja => 'ライブラリで遊ぶには曲をもっと保存・再生してください。今はグローバルTOPで遊べます。',
+      };
+
+  String get guessLoadError => switch (language) {
+        AppLanguage.es => 'No se pudo cargar la canción',
+        AppLanguage.en => "Couldn't load the song",
+        AppLanguage.ja => '曲を読み込めませんでした',
+      };
+
+  String get guessNoResults => switch (language) {
+        AppLanguage.es => 'Sin resultados',
+        AppLanguage.en => 'No results',
+        AppLanguage.ja => '結果なし',
+      };
+
+  String guessShareHeader(int day) => switch (language) {
+        AppLanguage.es => 'Tsuki Tunes 🌙 Reto #$day',
+        AppLanguage.en => 'Tsuki Tunes 🌙 Challenge #$day',
+        AppLanguage.ja => 'Tsuki Tunes 🌙 チャレンジ #$day',
+      };
+
+  String get guessDailyDone => switch (language) {
+        AppLanguage.es => 'Reto de hoy completado ✓',
+        AppLanguage.en => "Today's challenge done ✓",
+        AppLanguage.ja => '本日のチャレンジ完了 ✓',
+      };
+
   String get crossfadeTitle => switch (language) {
-        AppLanguage.es => 'CROSSFADE PROGRESIVO',
-        AppLanguage.en => 'SMOOTH CROSSFADE',
+        AppLanguage.es => 'Crossfade',
+        AppLanguage.en => 'Crossfade',
         AppLanguage.ja => 'クロスフェード',
       };
 
   String get crossfadeSubtitle => switch (language) {
-        AppLanguage.es => 'Transición suave de DJ entre canciones sin silencios',
-        AppLanguage.en => 'Smooth DJ mix transitions between songs without gaps',
-        AppLanguage.ja => '曲間の無音をなくしDJのようにスムーズにつなぐ',
-      };
-
-  String get crossfadeOff => switch (language) {
-        AppLanguage.es => 'Desactivado',
-        AppLanguage.en => 'Disabled',
-        AppLanguage.ja => 'オフ',
-      };
-
-  String get crossfadeDJ => switch (language) {
-        AppLanguage.es => 'DJ',
-        AppLanguage.en => 'DJ',
-        AppLanguage.ja => 'DJ',
-      };
-
-  String get crossfadeMax => switch (language) {
-        AppLanguage.es => 'Máx',
-        AppLanguage.en => 'Max',
-        AppLanguage.ja => '最大',
+        AppLanguage.es => 'Transición suave entre canciones',
+        AppLanguage.en => 'Smooth transition between songs',
+        AppLanguage.ja => '曲間をスムーズにつなぐ',
       };
 
   String get autoMarkTitle => switch (language) {
@@ -340,8 +1585,8 @@ class AppStrings {
       };
 
   String get clearAudioCache => switch (language) {
-        AppLanguage.es => 'BORRAR CACHÉ DE AUDIO',
-        AppLanguage.en => 'CLEAR AUDIO CACHE',
+        AppLanguage.es => 'Borrar caché de audio',
+        AppLanguage.en => 'Clear audio cache',
         AppLanguage.ja => '音声キャッシュを削除',
       };
 
@@ -1566,6 +2811,18 @@ class AppStrings {
         AppLanguage.es => 'Error de reproducción',
         AppLanguage.en => 'Playback error',
         AppLanguage.ja => '再生エラー',
+      };
+
+  String get syncError => switch (language) {
+        AppLanguage.es => 'No se pudo guardar. Intenta de nuevo.',
+        AppLanguage.en => 'Could not save. Try again.',
+        AppLanguage.ja => '保存できませんでした。もう一度お試しください。',
+      };
+
+  String get a11ySyncError => switch (language) {
+        AppLanguage.es => 'Error de sincronización',
+        AppLanguage.en => 'Sync error',
+        AppLanguage.ja => '同期エラー',
       };
 
   String get a11ySleepTimer => switch (language) {
@@ -3009,22 +4266,6 @@ class AppStrings {
       };
 
   // --- Dates ---
-  static const List<String> _monthsEs = [
-    'ene', 'feb', 'mar', 'abr', 'may', 'jun', //
-    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-  ];
-  static const List<String> _monthsEn = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-
-  /// "26 oct 2025" / "Oct 26, 2025" / "2025年10月26日".
-  String shortDate(DateTime d) => switch (language) {
-        AppLanguage.es => '${d.day} ${_monthsEs[d.month - 1]} ${d.year}',
-        AppLanguage.en => '${_monthsEn[d.month - 1]} ${d.day}, ${d.year}',
-        AppLanguage.ja => '${d.year}年${d.month}月${d.day}日',
-      };
-
   /// [weekday] uses DateTime's 1 (Monday) .. 7 (Sunday).
   String weekdayName(int weekday) {
     const es = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
 
 Track createTestTrack(String id) {
   return Track(
@@ -213,6 +214,66 @@ void main() {
 
       expect(provider.isSleepTimerActive, isTrue);
       expect(provider.sleepTimerRemaining!.inMinutes, inInclusiveRange(4, 5));
+    });
+
+    test('expired sleep timer notifies onSleepTimerFinished once', () {
+      var fired = 0;
+      provider.onSleepTimerFinished = () => fired++;
+      provider.setSleepTimer(const Duration(minutes: 5));
+      provider.setSleepTimerDeadlineForTesting(
+          DateTime.now().subtract(const Duration(seconds: 1)));
+
+      provider.checkSleepTimer();
+      provider.checkSleepTimer();
+
+      expect(fired, 1);
+    });
+
+    test('a play counts once after 30 seconds', () {
+      final counted = <String>[];
+      provider.onPlayCounted = (t) => counted.add(t.id);
+
+      provider.setPositionForTesting(const Duration(seconds: 10));
+      provider.checkPlayCountedForTesting();
+      expect(counted, isEmpty);
+
+      provider.setPositionForTesting(const Duration(seconds: 31));
+      provider.checkPlayCountedForTesting();
+      provider.checkPlayCountedForTesting();
+      expect(counted, ['1']);
+    });
+
+    test('cancelling the sleep timer does not notify onSleepTimerFinished', () {
+      var fired = 0;
+      provider.onSleepTimerFinished = () => fired++;
+      provider.setSleepTimer(const Duration(minutes: 5));
+      provider.setSleepTimer(null);
+      provider.checkSleepTimer();
+
+      expect(fired, 0);
+    });
+  });
+
+  group('Preview loudness normalization', () {
+    test('the player scales previews by loudness and the switch turns it off', () async {
+      final service = AudioPlayerService();
+      final provider = AudioProvider(service: service);
+      await Future.delayed(const Duration(milliseconds: 20));
+      final track = createTestTrack('n1');
+
+      expect(provider.normalizeVolume, isTrue);
+      expect(service.loudnessFor, isNotNull);
+      // Unknown loudness: untouched.
+      expect(service.loudnessFor!(track), 1.0);
+
+      await provider.setNormalizeVolume(false);
+      expect(service.loudnessFor!(track), 1.0);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('normalize_preview_volume'), isFalse);
+
+      final reloaded = AudioProvider();
+      await Future.delayed(const Duration(milliseconds: 20));
+      expect(reloaded.normalizeVolume, isFalse);
     });
   });
 

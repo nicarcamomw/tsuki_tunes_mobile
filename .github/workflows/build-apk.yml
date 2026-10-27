@@ -1,0 +1,127 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, ccr-5f5575bc-4meay6]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Release builds (two NDKs, R8, three ABIs) ran the stock runner out of
+      # disk at packaging time; drop toolchains this job never uses,
+      # including stale NDKs (the pinned one is installed below).
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk-bundle \
+            /usr/local/lib/android/sdk/ndk/* /usr/local/lib/android/sdk/system-images \
+            /usr/local/share/powershell /usr/share/swift /usr/local/share/boost \
+            /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          sudo apt-get clean || true
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # The signing key is committed encrypted; the password lives only in
+      # the ANDROID_KEYSTORE_PASSWORD repository secret.
+      - name: Decrypt signing key
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Missing repository secret ANDROID_KEYSTORE_PASSWORD"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/kspass"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in android/app/release-keystore.jks.enc \
+            -out android/app/release.jks \
+            -pass file:"$RUNNER_TEMP/kspass"
+          rm "$RUNNER_TEMP/kspass"
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=tsuki"
+            echo "storeFile=release.jks"
+          } > android/key.properties
+
+      # The project pins a preview NDK whose license Gradle can't accept by itself.
+      - name: Install Android NDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          NDK_VERSION=$(grep -oP 'ndkVersion\s*=\s*"\K[^"]+' android/app/build.gradle.kts)
+          "$SDKMANAGER" "ndk;$NDK_VERSION"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # android/gradle.properties asks for an 8 GB heap plus 4 GB metaspace;
+      # on the 16 GB runner that got the job killed mid-build. The
+      # user-level file overrides it for CI only.
+      - name: Limit Gradle memory for CI
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          org.gradle.daemon=false
+          org.gradle.workers.max=2
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+
+      # LASTFM_API_KEY is optional: without it the song radio uses Deezer only.
+      - name: Build APK
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        run: >-
+          flutter build apk --release --split-per-abi
+          --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
+
+      # Most phones need the arm64 build; the others cover old 32-bit and x86 devices.
+      - name: Rename APKs
+        run: |
+          OUT=build/app/outputs/flutter-apk
+          N=${{ github.run_number }}
+          mv "$OUT/app-arm64-v8a-release.apk" "tsuki-tunes-$N.apk"
+          mv "$OUT/app-armeabi-v7a-release.apk" "tsuki-tunes-$N-armeabi-v7a.apk"
+          mv "$OUT/app-x86_64-release.apk" "tsuki-tunes-$N-x86_64.apk"
+          ls -lh tsuki-tunes-*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tsuki-tunes-apk
+          path: tsuki-tunes-*.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Tsuki Tunes APK ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          files: tsuki-tunes-*.apk
+          body: |
+            Built from `${{ github.ref_name }}` @ ${{ github.sha }}.
+
+            Download `tsuki-tunes-${{ github.run_number }}.apk` (arm64) for almost any modern phone.
+            The `armeabi-v7a` build is for old 32-bit phones; `x86_64` is for emulators.
