@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 
@@ -7,6 +9,7 @@ import '../models/track.dart';
 class HomeWidgetService {
   static const _playerWidget = 'TsukiPlayerWidgetProvider';
   static const _lunaWidget = 'TsukiLunaWidgetProvider';
+  static const appGroupId = 'com.tsuki.tsuki_tunes_mobile';
 
   static final HomeWidgetService _instance = HomeWidgetService._();
   factory HomeWidgetService() => _instance;
@@ -17,15 +20,18 @@ class HomeWidgetService {
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
-    HomeWidget.setAppGroupId('com.tsuki.tsuki_tunes_mobile');
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    HomeWidget.setAppGroupId(appGroupId);
     await _updateMoonPhase();
   }
 
   Future<void> registerInteractivityCallback() async {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
     await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
   }
 
   Future<void> updateTrack(Track? track, {required bool isPlaying}) async {
+    if (!_initialized) return;
     await Future.wait([
       HomeWidget.saveWidgetData('track_title', track?.title ?? ''),
       HomeWidget.saveWidgetData(
@@ -41,6 +47,7 @@ class HomeWidgetService {
   }
 
   Future<void> updatePlayState(bool isPlaying) async {
+    if (!_initialized) return;
     await HomeWidget.saveWidgetData('is_playing', isPlaying);
     await _refreshWidgets();
   }
@@ -80,6 +87,12 @@ class HomeWidgetService {
 @pragma('vm:entry-point')
 Future<void> widgetBackgroundCallback(Uri? uri) async {
   if (uri == null) return;
-  final action = uri.host;
-  debugPrint('[HomeWidget] background callback: $action');
+  final host = uri.host;
+  debugPrint('[HomeWidget] background action: $host');
+  // Widget button taps arrive here. The actual playback control goes through
+  // the system media session — audio_service's notification already provides
+  // prev/play-pause/next on the lock-screen and notification shade, and the
+  // widget buttons send the same MediaSession transport commands via the
+  // Android MediaController API in TsukiPlayerWidgetProvider. This callback
+  // handles any Flutter-side bookkeeping (currently none needed).
 }

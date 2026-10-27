@@ -12,5 +12,4 @@
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_luna"
     android:widgetCategory="home_screen"
-    android:description="@string/widget_luna_description"
-    android:previewLayout="@layout/widget_luna" />
+    android:description="@string/widget_luna_description" />

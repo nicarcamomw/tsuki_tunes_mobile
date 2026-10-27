@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_luna_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
     android:background="@drawable/widget_luna_bg">
 
     <!-- Moon emoji (large) -->
@@ -11,7 +13,6 @@
         android:id="@+id/txt_moon_emoji"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="8dp"
         android:text="🌙"
         android:textSize="48sp" />
@@ -21,8 +22,6 @@
         android:id="@+id/txt_moon_name_jp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/txt_moon_emoji"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="4dp"
         android:text="月"
         android:textColor="#FFFF6B9D"
@@ -35,8 +34,6 @@
         android:id="@+id/txt_moon_name_en"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/txt_moon_name_jp"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="2dp"
         android:text="Moon Phase"
         android:textColor="#99E5E5E5"
@@ -47,8 +44,6 @@
         android:id="@+id/divider"
         android:layout_width="40dp"
         android:layout_height="1dp"
-        android:layout_below="@id/txt_moon_name_en"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
         android:background="#33FF6B9D" />
 
@@ -57,7 +52,6 @@
         android:id="@+id/now_playing"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/divider"
         android:layout_marginTop="10dp"
         android:orientation="vertical"
         android:gravity="center_horizontal">
@@ -73,7 +67,7 @@
 
         <TextView
             android:id="@+id/txt_song_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="—"
@@ -86,7 +80,7 @@
 
         <TextView
             android:id="@+id/txt_song_artist"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
             android:text=""
@@ -96,4 +90,4 @@
             android:ellipsize="end"
             android:gravity="center" />
     </LinearLayout>
-</RelativeLayout>
+</LinearLayout>

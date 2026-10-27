@@ -70,6 +70,9 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.tsuki.widget.PLAY_PAUSE" />
+                <action android:name="com.tsuki.widget.NEXT" />
+                <action android:name="com.tsuki.widget.PREV" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

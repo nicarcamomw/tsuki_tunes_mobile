@@ -12,5 +12,4 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_player"
     android:widgetCategory="home_screen"
-    android:description="@string/widget_player_description"
-    android:previewLayout="@layout/widget_player" />
+    android:description="@string/widget_player_description" />
