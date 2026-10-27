@@ -32,6 +32,7 @@ import 'services/home_widget_service.dart';
 import 'services/media_session_handler.dart';
 import 'services/play_history.dart';
 import 'services/release_radar_service.dart';
+import 'services/deezer_disk_cache.dart';
 import 'services/storage_service.dart';
 import 'services/tile_channel_service.dart';
 import 'widgets/mask_unlock_banner.dart';
@@ -53,6 +54,7 @@ void main() async {
   );
 
   await _initCrashReporting();
+  await DeezerDiskCache().init();
   runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
   // After runApp so scheduling and permission plumbing never delay first frame.
   unawaited(ReleaseRadarService().initForeground());
