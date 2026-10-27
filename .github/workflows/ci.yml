@@ -31,8 +31,10 @@ jobs:
         run: flutter test
 
   # Independent of analyze-and-test so a lint nit never blocks getting an
-  # installable APK; review those results before merging.
+  # installable APK; review those results before merging. PRs only: on main,
+  # build-apk.yml builds the signed APK and publishes the release.
   build-apk:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

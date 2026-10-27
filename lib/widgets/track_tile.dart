@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
@@ -193,6 +194,7 @@ class TrackTile extends StatelessWidget {
                   height: 46,
                   child: track.coverUrl.isNotEmpty
                       ? CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, (46).toDouble()),
                           imageUrl: track.coverUrl,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
@@ -323,216 +325,237 @@ class TrackTile extends StatelessWidget {
     final strings = context.read<LocaleProvider>().strings;
     final locale = context.read<LocaleProvider>();
     final hasTrack = context.read<AudioProvider>().currentTrack != null;
+
+    void showConfirmation(String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+          ),
+          backgroundColor: AppColors.bgCard,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
+    Widget menuItem({
+      required IconData icon,
+      required String label,
+      required String semanticLabel,
+      required VoidCallback onTap,
+    }) {
+      return ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        minTileHeight: 52,
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppColors.accent, size: 20, semanticLabel: semanticLabel),
+        ),
+        title: Text(
+          label,
+          style: locale.getTextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textBright,
+          ),
+        ),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+      );
+    }
+
+    // Root navigator so the sheet sits above the bottom bar and mini player
+    // instead of being partially hidden behind them.
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
       backgroundColor: AppColors.bgCard,
+      constraints: BoxConstraints(
+        maxWidth: 600,
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: hasTrack ? 140 : 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: track.coverUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: track.coverUrl,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(color: AppColors.bgMid),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          track.title,
-                          style: locale.getTextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textBright,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          track.fullArtistName,
-                          style: locale.getTextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(color: AppColors.border, height: 1),
-            ListTile(
-              leading: const Icon(Icons.sensors, color: AppColors.accent),
-              title: Text(
-                strings.radioStart,
-                style: locale.getTextStyle(
-                  fontSize: 14,
-                  color: AppColors.textBright,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                startRadioWithFeedback(context, track,
-                    bottomMargin: hasTrack ? 152 : 12);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.playlist_play, color: AppColors.accent, semanticLabel: strings.a11yPlayNext),
-              title: Text(
-                strings.playNext,
-                style: locale.getTextStyle(
-                  fontSize: 14,
-                  color: AppColors.textBright,
-                ),
-              ),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(ctx);
-                context.read<AudioProvider>().playNext(track);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      strings.addedPlayNext,
-                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                    ),
-                    backgroundColor: AppColors.bgCard,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.queue_music, color: AppColors.accent, semanticLabel: strings.a11yAddToQueue),
-              title: Text(
-                strings.addToQueue,
-                style: locale.getTextStyle(
-                  fontSize: 14,
-                  color: AppColors.textBright,
-                ),
-              ),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(ctx);
-                context.read<AudioProvider>().addToQueue(track);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      strings.addedToQueue,
-                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                    ),
-                    backgroundColor: AppColors.bgCard,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.playlist_add, color: AppColors.accent, semanticLabel: strings.a11yAddToPlaylist),
-              title: Text(
-                strings.addToPlaylist,
-                style: locale.getTextStyle(
-                  fontSize: 14,
-                  color: AppColors.textBright,
-                ),
-              ),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(ctx);
-                showPlaylistSelector(context, track);
-              },
-            ),
-            if (track.artistId.isNotEmpty)
-              ListTile(
-                leading: Icon(Icons.person_outline, color: AppColors.accent, semanticLabel: strings.a11yGoToArtist),
-                title: Text(
-                  strings.goToArtist,
-                  style: locale.getTextStyle(
-                    fontSize: 14,
-                    color: AppColors.textBright,
-                  ),
-                ),
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(ctx);
-                  appNavigatorKey.currentState?.push(
-                    MaterialPageRoute(
-                      builder: (_) => ArtistDetailScreen(
-                        artist: Artist(
-                          id: track.artistId,
-                          name: track.artistName,
-                          pictureUrl: '',
-                          fansCount: 0,
-                          albumsCount: 0,
-                        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: track.coverUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                              memCacheWidth: imageCacheSize(context, (56).toDouble()),
+                                imageUrl: track.coverUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(color: AppColors.bgMid),
+                                errorWidget: (_, __, ___) => Container(color: AppColors.bgMid),
+                              )
+                            : Container(color: AppColors.bgMid),
                       ),
                     ),
-                  );
-                },
-              ),
-            if (track.albumId.isNotEmpty)
-              ListTile(
-                leading: Icon(Icons.album_outlined, color: AppColors.accent, semanticLabel: strings.a11yGoToAlbum),
-                title: Text(
-                  strings.goToAlbum,
-                  style: locale.getTextStyle(
-                    fontSize: 14,
-                    color: AppColors.textBright,
-                  ),
-                ),
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(ctx);
-                  appNavigatorKey.currentState?.push(
-                    MaterialPageRoute(
-                      builder: (_) => AlbumDetailScreen(
-                        album: Album(
-                          id: track.albumId,
-                          title: track.albumTitle,
-                          coverUrl: track.coverUrl,
-                          artistId: track.artistId,
-                          artistName: track.artistName,
-                          releaseDate: '',
-                          recordType: 'album',
-                          fansCount: 0,
-                          tracksCount: 0,
-                          tracks: [],
-                        ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            track.title,
+                            style: locale.getTextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textBright,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            track.fullArtistName,
+                            style: locale.getTextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (track.albumTitle.isNotEmpty)
+                            Text(
+                              track.albumTitle,
+                              style: locale.getTextStyle(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
                     ),
-                  );
+                  ],
+                ),
+              ),
+              const Divider(color: AppColors.border, height: 1),
+              const SizedBox(height: 6),
+              menuItem(
+                icon: Icons.sensors,
+                label: strings.radioStart,
+                semanticLabel: strings.radioStart,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  startRadioWithFeedback(context, track,
+                      bottomMargin: hasTrack ? 152 : 12);
                 },
               ),
-            const SizedBox(height: 8),
-          ],
-        ),
+              menuItem(
+                icon: Icons.playlist_play,
+                label: strings.playNext,
+                semanticLabel: strings.a11yPlayNext,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.read<AudioProvider>().playNext(track);
+                  showConfirmation(strings.addedPlayNext);
+                },
+              ),
+              menuItem(
+                icon: Icons.queue_music,
+                label: strings.addToQueue,
+                semanticLabel: strings.a11yAddToQueue,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.read<AudioProvider>().addToQueue(track);
+                  showConfirmation(strings.addedToQueue);
+                },
+              ),
+              menuItem(
+                icon: Icons.playlist_add,
+                label: strings.addToPlaylist,
+                semanticLabel: strings.a11yAddToPlaylist,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showPlaylistSelector(context, track);
+                },
+              ),
+              if (track.artistId.isNotEmpty || track.albumId.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  child: Divider(color: AppColors.border, height: 1),
+                ),
+              if (track.artistId.isNotEmpty)
+                menuItem(
+                  icon: Icons.person_outline,
+                  label: strings.goToArtist,
+                  semanticLabel: strings.a11yGoToArtist,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    // ArtistDetailScreen fetches the full profile (photo,
+                    // fans, releases) from the id on open.
+                    appNavigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => ArtistDetailScreen(
+                          artist: Artist(
+                            id: track.artistId,
+                            name: track.artistName,
+                            pictureUrl: '',
+                            fansCount: 0,
+                            albumsCount: 0,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              if (track.albumId.isNotEmpty)
+                menuItem(
+                  icon: Icons.album_outlined,
+                  label: strings.goToAlbum,
+                  semanticLabel: strings.a11yGoToAlbum,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    appNavigatorKey.currentState?.push(
+                      MaterialPageRoute(
+                        builder: (_) => AlbumDetailScreen(
+                          album: Album(
+                            id: track.albumId,
+                            title: track.albumTitle,
+                            coverUrl: track.coverUrl,
+                            artistId: track.artistId,
+                            artistName: track.artistName,
+                            releaseDate: '',
+                            recordType: 'album',
+                            fansCount: 0,
+                            tracksCount: 0,
+                            tracks: [],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );

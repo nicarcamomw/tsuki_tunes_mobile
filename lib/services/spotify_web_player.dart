@@ -11,7 +11,13 @@ class SpotifyNativePlayer {
 
   bool _isConnected = false;
   String? _deviceId;
+  String? _accessToken;
+  // Cancelled through _cancelQuietly (the platform stream may already be
+  // gone), which the lint can't see.
+  // ignore: cancel_subscriptions
   StreamSubscription? _stateSub;
+  // ignore: cancel_subscriptions
+  StreamSubscription? _connectionSub;
   Future<bool>? _connecting;
 
   // Last state reported by the Spotify app.
@@ -31,8 +37,9 @@ class SpotifyNativePlayer {
 
   /// Connects once; concurrent callers share the same attempt.
   Future<bool> connect({String? accessToken}) {
+    if (accessToken != null) _accessToken = accessToken;
     if (_isConnected) return Future.value(true);
-    return _connecting ??= _connect(accessToken).whenComplete(() {
+    return _connecting ??= _connect(_accessToken).whenComplete(() {
       _connecting = null;
     });
   }
@@ -46,13 +53,55 @@ class SpotifyNativePlayer {
         scope: 'streaming app-remote-control user-modify-playback-state',
       );
       _isConnected = result;
-      if (_isConnected) _startListening();
+      if (_isConnected) {
+        _watchConnection();
+        _startListening();
+      }
       debugPrint('SpotifyNative: connected=$_isConnected');
       return _isConnected;
     } catch (e) {
       debugPrint('SpotifyNative: connect error: $e');
       onError?.call(e.toString());
       return false;
+    }
+  }
+
+  /// The system can kill the Spotify app at any time; without this the
+  /// connection would keep reporting itself as alive and never reconnect.
+  void _watchConnection() {
+    if (_connectionSub != null) return;
+    _connectionSub = SpotifySdk.subscribeConnectionStatus().listen(
+      (status) {
+        if (status.connected) {
+          if (!_isConnected) {
+            _isConnected = true;
+            _startListening();
+          }
+        } else if (_isConnected) {
+          debugPrint('SpotifyNative: connection lost (${status.message})');
+          _markDisconnected();
+        }
+      },
+      onError: (e) {
+        debugPrint('SpotifyNative: connection status error: $e');
+      },
+    );
+  }
+
+  void _markDisconnected() {
+    _isConnected = false;
+    _lastTrackUri = null;
+    _lastPaused = true;
+    final sub = _stateSub;
+    _stateSub = null;
+    if (sub != null) unawaited(_cancelQuietly(sub));
+  }
+
+  Future<void> _cancelQuietly(StreamSubscription sub) async {
+    try {
+      await sub.cancel();
+    } catch (_) {
+      // The platform stream may already be gone ("No active stream to cancel").
     }
   }
 
@@ -76,9 +125,19 @@ class SpotifyNativePlayer {
     );
   }
 
-  /// Plays [uri] in the Spotify app through App Remote.
+  /// Plays [uri] in the Spotify app through App Remote. A failure usually
+  /// means the Spotify app died after we connected, so reconnect (which
+  /// relaunches it in the background) and try once more.
   Future<bool> playUri(String uri) async {
     if (!_isConnected) return false;
+    if (await _tryPlay(uri)) return true;
+    debugPrint('SpotifyNative: play failed, reconnecting to relaunch Spotify');
+    _markDisconnected();
+    if (!await connect()) return false;
+    return _tryPlay(uri);
+  }
+
+  Future<bool> _tryPlay(String uri) async {
     try {
       await SpotifySdk.play(spotifyUri: uri);
       return true;
@@ -116,12 +175,12 @@ class SpotifyNativePlayer {
   }
 
   Future<void> disconnect() async {
-    try {
-      await _stateSub?.cancel();
-    } catch (_) {
-      // The platform stream may already be gone ("No active stream to cancel").
-    }
+    final stateSub = _stateSub;
+    final connectionSub = _connectionSub;
     _stateSub = null;
+    _connectionSub = null;
+    if (stateSub != null) await _cancelQuietly(stateSub);
+    if (connectionSub != null) await _cancelQuietly(connectionSub);
     try {
       await SpotifySdk.disconnect();
     } catch (_) {}

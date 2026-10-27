@@ -115,8 +115,12 @@ void main() {
       expect(library.listenedTrackIds.length, equals(900));
       expect(library.totalTracksCount, equals(900));
 
+      // The local cache is only written by the Firestore delta listener once
+      // the server confirms (no phantom tracks after a kill or failed
+      // write). The test chunk handler bypasses Firestore, so nothing is
+      // confirmed and nothing may be cached yet.
       final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.length, equals(900));
+      expect(cached, isEmpty);
     });
 
     test('unmarkAlbumTracks: partial failure on chunk 2 keeps chunk 1 deleted and restores chunk 2', () async {

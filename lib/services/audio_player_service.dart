@@ -16,6 +16,18 @@ class AudioPlayerService implements AudioPlayerContract {
   Timer? _fadeTimer;
   bool _isCrossfading = false;
 
+  /// Volume factor for loudness normalization of a track (1.0 = untouched).
+  /// Every volume this service sets is scaled by the active track's factor.
+  double Function(Track track)? loudnessFor;
+  double _loudness = 1.0;
+  Timer? _loudnessRamp;
+
+  /// Playback speed for a track (1.0 = normal). The pitch is kept, so small
+  /// changes only shift the tempo.
+  double Function(Track track)? speedFor;
+  double _speed = 1.0;
+  Timer? _speedRamp;
+
   final StreamController<Duration> _positionCtrl = StreamController<Duration>.broadcast();
   final StreamController<Duration?> _durationCtrl = StreamController<Duration?>.broadcast();
   final StreamController<Duration> _bufferedCtrl = StreamController<Duration>.broadcast();
@@ -66,6 +78,17 @@ class AudioPlayerService implements AudioPlayerContract {
 
   AudioPlayer get player => _activePlayer;
 
+  /// Starts [p] without waiting on it: just_audio's play() only completes
+  /// when playback pauses or ends (Android holds the reply until then), so
+  /// awaiting it would hold the caller for the whole song. That stalled the
+  /// crossfade (the incoming deck stayed silent) and delayed everything that
+  /// runs once a track has started.
+  void _start(AudioPlayer p) {
+    unawaited(p.play().catchError((Object e) {
+      debugPrint('[AudioPlayerService] play error: $e');
+    }));
+  }
+
   @override
   Stream<Duration> get positionStream => _positionCtrl.stream;
   @override
@@ -93,7 +116,12 @@ class AudioPlayerService implements AudioPlayerContract {
     for (var attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await _activePlayer.stop();
-        unawaited(_activePlayer.setVolume(1.0));
+        _loudnessRamp?.cancel();
+        _loudness = loudnessFor?.call(track) ?? 1.0;
+        unawaited(_activePlayer.setVolume(_loudness));
+        _speedRamp?.cancel();
+        _speed = speedFor?.call(track) ?? 1.0;
+        unawaited(_activePlayer.setSpeed(_speed));
         if (localPath != null && !kIsWeb) {
           debugPrint('[AudioPlayerService] Zero-latency play from pre-cached file: $localPath');
           await _activePlayer.setFilePath(localPath);
@@ -103,7 +131,7 @@ class AudioPlayerService implements AudioPlayerContract {
         if (initialPosition != null && initialPosition > Duration.zero) {
           await _activePlayer.seek(initialPosition);
         }
-        await _activePlayer.play();
+        _start(_activePlayer);
         return;
       } catch (e) {
         lastError = e;
@@ -130,13 +158,15 @@ class AudioPlayerService implements AudioPlayerContract {
 
     try {
       unawaited(_standbyPlayer.setVolume(0.0));
+      final inSpeed = speedFor?.call(nextTrack) ?? 1.0;
+      unawaited(_standbyPlayer.setSpeed(inSpeed));
       if (localPath != null && !kIsWeb) {
         debugPrint('[AudioPlayerService] Crossfade loading pre-cached file: $localPath');
         await _standbyPlayer.setFilePath(localPath);
       } else {
         await _standbyPlayer.setUrl(nextTrack.previewUrl);
       }
-      await _standbyPlayer.play();
+      _start(_standbyPlayer);
 
       // Hook active stream to incoming player so UI reflects incoming track
       _hookActivePlayer(_standbyPlayer);
@@ -148,13 +178,18 @@ class AudioPlayerService implements AudioPlayerContract {
 
       final outgoingPlayer = _activePlayer;
       final incomingPlayer = _standbyPlayer;
+      _loudnessRamp?.cancel();
+      _speedRamp?.cancel();
+      _speed = inSpeed;
+      final outLevel = _loudness;
+      final inLevel = loudnessFor?.call(nextTrack) ?? 1.0;
 
       _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
         currentStep++;
         final progress = (currentStep / totalSteps).clamp(0.0, 1.0);
 
-        outgoingPlayer.setVolume((1.0 - progress).clamp(0.0, 1.0));
-        incomingPlayer.setVolume(progress.clamp(0.0, 1.0));
+        outgoingPlayer.setVolume(((1.0 - progress) * outLevel).clamp(0.0, 1.0));
+        incomingPlayer.setVolume((progress * inLevel).clamp(0.0, 1.0));
 
         if (currentStep >= totalSteps) {
           timer.cancel();
@@ -164,6 +199,7 @@ class AudioPlayerService implements AudioPlayerContract {
 
           _activePlayer = incomingPlayer;
           _standbyPlayer = outgoingPlayer;
+          _loudness = inLevel;
           _isCrossfading = false;
           debugPrint('[AudioPlayerService] Crossfade complete! Swapped active deck.');
         }
@@ -181,17 +217,15 @@ class AudioPlayerService implements AudioPlayerContract {
     if (_isCrossfading) {
       _standbyPlayer.stop();
       _standbyPlayer.setVolume(1.0);
-      _activePlayer.setVolume(1.0);
+      _activePlayer.setVolume(_loudness);
       _isCrossfading = false;
     }
   }
 
   @override
   Future<void> resume() async {
-    await _activePlayer.play();
-    if (_isCrossfading) {
-      await _standbyPlayer.play();
-    }
+    _start(_activePlayer);
+    if (_isCrossfading) _start(_standbyPlayer);
   }
 
   @override
@@ -216,10 +250,51 @@ class AudioPlayerService implements AudioPlayerContract {
   }
 
   @override
-  Future<void> setVolume(double volume) async => await _activePlayer.setVolume(volume);
+  Future<void> setVolume(double volume) async =>
+      await _activePlayer.setVolume((volume * _loudness).clamp(0.0, 1.0));
+
+  /// Re-reads [track]'s loudness (it may have arrived after playback began)
+  /// and glides the volume there, so the change is not heard as a jump.
+  void refreshLoudness(Track track) {
+    if (_isCrossfading) return;
+    final target = loudnessFor?.call(track) ?? 1.0;
+    final from = _loudness;
+    if ((target - from).abs() < 0.01) return;
+    _loudnessRamp?.cancel();
+    const steps = 12;
+    var i = 0;
+    _loudnessRamp = Timer.periodic(const Duration(milliseconds: 50), (t) {
+      i++;
+      _loudness = from + (target - from) * (i / steps);
+      _activePlayer.setVolume(_loudness.clamp(0.0, 1.0));
+      if (i >= steps) t.cancel();
+    });
+  }
+
+  /// Re-reads [track]'s speed and glides there over about a second, so a
+  /// tempo change sounds like the song easing faster or slower, not a jump.
+  void refreshSpeed(Track track) {
+    if (_isCrossfading) return;
+    final target = speedFor?.call(track) ?? 1.0;
+    final from = _speed;
+    if ((target - from).abs() < 0.002) return;
+    _speedRamp?.cancel();
+    const steps = 10;
+    var i = 0;
+    _speedRamp = Timer.periodic(const Duration(milliseconds: 120), (t) {
+      i++;
+      _speed = from + (target - from) * (i / steps);
+      _activePlayer.setSpeed(_speed);
+      if (i >= steps) t.cancel();
+    });
+  }
+
+  double get speed => _speed;
 
   @override
   Future<void> dispose() async {
+    _speedRamp?.cancel();
+    _loudnessRamp?.cancel();
     _cancelCrossfade();
     unawaited(_posSub?.cancel());
     unawaited(_durSub?.cancel());

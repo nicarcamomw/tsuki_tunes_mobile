@@ -14,6 +14,7 @@ import '../models/repeat_mode.dart';
 import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
+import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
@@ -86,6 +87,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Duration? _sleepTimerRemaining;
   bool _stopAfterCurrentTrack = false;
   int? _sleepTimerOriginalMinutes;
+  bool _sleepFadeApplied = false;
+  static const int _sleepFadeSeconds = 20;
+
+  /// Fired when the sleep timer stops the music, so ambient sounds can decide
+  /// whether to keep going.
+  VoidCallback? onSleepTimerFinished;
+
+  // Ambient-only media session state, shown when no track is loaded.
+  String? _ambientTitle;
+  bool _ambientPlaying = false;
+  Future<void> Function()? onAmbientPlay;
+  Future<void> Function()? onAmbientPause;
+  Future<void> Function()? onAmbientStop;
 
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
@@ -102,10 +116,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Called once per play when [autoMarkListened] is on and playback passes
   /// 80% of the track.
   Function(Track)? onListenedThreshold;
-
-  /// Called once per play when it has been heard long enough to count.
-  Function(Track)? onPlayCounted;
-  int _playCountedGeneration = -1;
 
   // Song radio: keeps the queue topped up while active.
   SongRadio? _radio;
@@ -160,12 +170,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _attachMediaHandler(TsukiAudioHandler handler) {
     _mediaHandler = handler;
     handler.onPlay = () async {
+      if (_showsAmbient) return onAmbientPlay?.call();
       if (!_isPlaying) await togglePlay();
     };
     handler.onPause = () async {
+      if (_showsAmbient) return onAmbientPause?.call();
       if (_isPlaying) await togglePlay();
     };
-    handler.onStop = stop;
+    handler.onStop = () async {
+      await stop();
+      await onAmbientStop?.call();
+    };
     handler.onSkipToNext = next;
     handler.onSkipToPrevious = previous;
     handler.onSeek = (pos) => seek(pos);
@@ -183,9 +198,45 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     super.notifyListeners();
   }
 
+  bool get _showsAmbient => _currentTrack == null && _ambientTitle != null;
+
+  void setAmbientMediaState({required String? title, required bool playing}) {
+    _ambientTitle = title;
+    _ambientPlaying = playing;
+    _syncMediaSession();
+  }
+
+  void _syncAmbientMediaSession(TsukiAudioHandler handler, bool force) {
+    final itemKey = 'ambient|$_ambientTitle';
+    if (itemKey != _mediaItemKey) {
+      _mediaItemKey = itemKey;
+      handler.mediaItem.add(MediaItem(
+        id: 'tsuki_ambient',
+        title: _ambientTitle!,
+        artist: 'Tsuki Tunes',
+      ));
+    }
+    final stateKey = 'ambient|$_ambientPlaying|$itemKey';
+    if (!force && stateKey == _mediaStateKey) return;
+    _mediaStateKey = stateKey;
+    handler.playbackState.add(PlaybackState(
+      controls: [
+        _ambientPlaying ? MediaControl.pause : MediaControl.play,
+        MediaControl.stop,
+      ],
+      androidCompactActionIndices: const [0, 1],
+      processingState: AudioProcessingState.ready,
+      playing: _ambientPlaying,
+    ));
+  }
+
   void _syncMediaSession({bool force = false}) {
     final handler = _mediaHandler;
     if (handler == null) return;
+    if (_showsAmbient) {
+      _syncAmbientMediaSession(handler, force);
+      return;
+    }
     final track = _currentTrack;
 
     final itemKey = track == null
@@ -238,23 +289,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   void checkListenedThresholdForTesting() => _checkListenedThreshold();
 
-  @visibleForTesting
-  void checkPlayCountedForTesting() => _checkPlayCounted();
+  /// Fired once per play when it has really been listened to: 30 seconds or
+  /// half the track, whichever comes first (the usual "counts as a play" rule).
+  Function(Track)? onPlayCounted;
+  int _countedGeneration = -1;
 
-  /// A play counts once per play past half the track (30 s at most), so
-  /// quick skips and previews abandoned early don't inflate stats.
+  /// The track reached its end (or crossfaded into the next): not skipped.
+  Function(Track)? onTrackCompleted;
+
   void _checkPlayCounted() {
-    if (_playCountedGeneration == _playGeneration) return;
+    if (_countedGeneration == _playGeneration) return;
     final track = _currentTrack;
     if (track == null || _duration <= Duration.zero) return;
-    final half = _duration.inMilliseconds ~/ 2;
-    final needed = half < 30000 ? half : 30000;
-    if (_position.inMilliseconds < needed) return;
-    _playCountedGeneration = _playGeneration;
+    final half = Duration(milliseconds: _duration.inMilliseconds ~/ 2);
+    final needed = half < const Duration(seconds: 30) ? half : const Duration(seconds: 30);
+    if (_position < needed) return;
+    _countedGeneration = _playGeneration;
     onPlayCounted?.call(track);
   }
 
+  @visibleForTesting
+  void checkPlayCountedForTesting() => _checkPlayCounted();
+
   void _checkListenedThreshold() {
+    _checkPlayCounted();
     if (!_autoMarkListened || _autoMarkedGeneration == _playGeneration) return;
     final track = _currentTrack;
     if (track == null || _duration <= Duration.zero) return;
@@ -340,6 +398,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _nativePlayer = nativePlayer ?? SpotifyNativePlayer(),
         _connectivityProvider = connectivityProvider {
     if (mediaHandler != null) _attachMediaHandler(mediaHandler);
+    _service.loudnessFor = _loudnessFor;
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
     _initSubscriptions();
@@ -361,6 +420,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _startPositionTimer();
         _syncSpotifyPlaybackState();
       }
+      // The system may have killed Spotify while we were in the background.
+      if (_useSpotify) _warmUpSpotifyDevice();
     }
   }
 
@@ -406,6 +467,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _q.tracks,
         _q.currentIndex,
         _position.inMilliseconds,
+        _isPlaying,
         _radioSnapshot(),
       );
     });
@@ -425,6 +487,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _q.tracks,
       _q.currentIndex,
       _position.inMilliseconds,
+      _isPlaying,
       _radioSnapshot(),
     );
   }
@@ -458,6 +521,38 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       final restoredTrack = restoredQueue[restoredIndex];
       final posMs = (rawPosMs is num) ? rawPosMs.toInt() : 0;
+      final wasPlaying = state['wasPlaying'] as bool? ?? false;
+      final savedAtMs = state['savedAt'] as int?;
+
+      // Detect stale track completion after process death: if the track was
+      // playing when persisted and enough wall-clock time has passed for it to
+      // have ended, advance to the next track instead of restoring the old one.
+      if (wasPlaying && savedAtMs != null && restoredQueue.length > 1) {
+        final savedAt = DateTime.fromMillisecondsSinceEpoch(savedAtMs);
+        final elapsed = DateTime.now().difference(savedAt);
+        final trackDur = Duration(
+            seconds: restoredTrack.durationSeconds > 0
+                ? restoredTrack.durationSeconds
+                : 30);
+        final estimatedPos = Duration(milliseconds: posMs) + elapsed;
+        if (estimatedPos >= trackDur) {
+          final nextIndex = (restoredIndex + 1) % restoredQueue.length;
+          final nextTrack = restoredQueue[nextIndex];
+          _q.restore(restoredQueue, nextIndex);
+          _currentTrack = nextTrack;
+          _position = Duration.zero;
+          _duration = Duration(
+              seconds: nextTrack.durationSeconds > 0
+                  ? nextTrack.durationSeconds
+                  : 30);
+          _isPlaying = false;
+          _isBuffering = false;
+          _prefetchNextTrack();
+          notifyListeners();
+          debugPrint('[AudioProvider] Track "${restoredTrack.title}" would have ended during background; advanced to "${nextTrack.title}"');
+          return;
+        }
+      }
 
       _q.restore(restoredQueue, restoredIndex);
       _currentTrack = restoredTrack;
@@ -498,9 +593,49 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _crossfadeSeconds = await _storage.getCrossfadeSeconds();
       _autoMarkListened = await _storage.getAutoMarkListened();
       _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
+      final prefs = await SharedPreferences.getInstance();
+      _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+    }
+  }
+
+  // ── Loudness normalization (Deezer previews only) ──
+
+  static const _normalizeKey = 'normalize_preview_volume';
+  bool _normalizeVolume = true;
+  bool get normalizeVolume => _normalizeVolume;
+
+  double _loudnessFor(Track track) => _normalizeVolume
+      ? Loudness.factorFor(BpmService.shared.cachedGain(track.id))
+      : 1.0;
+
+  Future<void> setNormalizeVolume(bool enabled) async {
+    _normalizeVolume = enabled;
+    notifyListeners();
+    final track = _currentTrack;
+    if (track != null) {
+      _service.refreshLoudness(track);
+      if (enabled) unawaited(_ensureLoudness(track));
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_normalizeKey, enabled);
+    } catch (_) {}
+  }
+
+  /// Fetches the loudness of [track] if unknown (then glides to it) and of
+  /// the next few, so they start at the right volume. Spotify normalizes on
+  /// its own, so its playback is left alone.
+  Future<void> _ensureLoudness(Track track) async {
+    if (!_normalizeVolume || (_useSpotify && !_spotifyFallbackActive)) return;
+    if (BpmService.shared.cachedGain(track.id) == null) {
+      await BpmService.shared.gainFor(track.id);
+      if (_currentTrack?.id == track.id) _service.refreshLoudness(track);
+    }
+    for (final next in upcomingTracks.take(3)) {
+      await BpmService.shared.gainFor(next.id);
     }
   }
 
@@ -582,17 +717,28 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  bool _warmingUpSpotify = false;
+
+  /// Makes sure the Spotify app on this phone is running so playback works
+  /// without the user opening Spotify by hand. Another device (PC, speaker)
+  /// being listed doesn't count: only an active Smartphone does.
   void _warmUpSpotifyDevice() {
+    if (_warmingUpSpotify || _nativePlayer.isConnected) return;
+    _warmingUpSpotify = true;
     Future.microtask(() async {
       try {
-        final device = await _spotify.ensureActiveDevice();
-        debugPrint('[AudioProvider] Spotify device pre-warm: ${device ?? "no device found"}');
-        if (device != null) return;
+        final devices = await _spotify.getDevices();
+        final phoneActive = devices.any(
+            (d) => d['type'] == 'Smartphone' && d['is_active'] == true);
+        if (phoneActive) {
+          debugPrint('[AudioProvider] Spotify pre-warm: phone already active');
+          return;
+        }
 
-        // No active device — wake Spotify via native SDK (invisible, no UI)
+        // Connecting App Remote launches Spotify in the background (no UI).
         final token = _spotify.accessToken;
         if (token == null) return;
-        debugPrint('[AudioProvider] No Spotify device found, waking via native SDK...');
+        debugPrint('[AudioProvider] Spotify not active on this phone, waking via App Remote...');
         final connected = await _nativePlayer.connect(accessToken: token);
         if (connected) {
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -603,6 +749,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
       } catch (e) {
         debugPrint('[AudioProvider] Spotify device pre-warm error: $e');
+      } finally {
+        _warmingUpSpotify = false;
       }
     });
   }
@@ -647,7 +795,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         } else {
           _maybePersistPosition();
           _checkListenedThreshold();
-          _checkPlayCounted();
           _checkSpotifyCrossfade();
           notifyListeners();
           if (_spotifyPollTick % pollInterval == 0) {
@@ -676,15 +823,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final state = await _spotify.getPlaybackState();
       if (!_spotifyActive || _completionHandled) return;
       if (state == null) {
-        // No Spotify session at all (app closed or frozen): stop pretending
-        // to play, outside the grace period after a play command.
+        // No Spotify session at all (app closed or frozen).
         final sincePlay = DateTime.now().difference(_lastPlayCommandTime);
         final nativePlaying = _currentSpotifyUri != null &&
             _nativePlayer.isPlayingUri(_currentSpotifyUri!);
-        if (_isPlaying && !nativePlaying && sincePlay.inSeconds >= 10) {
-          debugPrint('[AudioProvider] Spotify session gone, marking paused');
-          _isPlaying = false;
-          notifyListeners();
+
+        // Check if the track should have ended while Spotify was gone.
+        if (!nativePlaying && sincePlay.inSeconds >= 10) {
+          final elapsed = DateTime.now().difference(_spotifySyncTime);
+          final estimatedPos = _spotifySyncPosition + elapsed;
+          if (_isPlaying &&
+              estimatedPos >= _duration &&
+              _duration > Duration.zero) {
+            debugPrint('[AudioProvider] Spotify session gone, track would have ended; advancing');
+            _stopPositionTimer();
+            _completionHandled = false;
+            _crossfadeTriggered = false;
+            _handleTrackCompleted();
+            return;
+          }
+          if (_isPlaying) {
+            debugPrint('[AudioProvider] Spotify session gone, marking paused');
+            _isPlaying = false;
+            notifyListeners();
+          }
         }
         return;
       }
@@ -694,7 +856,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final item = state['item'] as Map<String, dynamic>?;
       final durationMs = item?['duration_ms'] as int? ?? 0;
 
-      // Detect playback transferred to another device
+      // Detect playback transferred to another device or Spotify auto-advanced
       if (item != null && _currentTrack != null && _currentSpotifyUri != null) {
         final playingUri = item['uri'] as String?;
         // Spotify may relink the track to another market's version.
@@ -702,6 +864,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (playingUri != null &&
             playingUri != _currentSpotifyUri &&
             linkedUri != _currentSpotifyUri) {
+          // If the estimated position is past the track's duration, Spotify
+          // auto-advanced because our track ended — advance our queue too.
+          final elapsed = DateTime.now().difference(_spotifySyncTime);
+          final estimatedPos = _spotifySyncPosition + elapsed;
+          if (estimatedPos >= _duration && _duration > Duration.zero) {
+            debugPrint('[AudioProvider] Spotify auto-advanced ($playingUri vs $_currentSpotifyUri), advancing queue');
+            _stopPositionTimer();
+            _completionHandled = false;
+            _crossfadeTriggered = false;
+            _handleTrackCompleted();
+            return;
+          }
           debugPrint('[AudioProvider] Spotify playing different track ($playingUri vs $_currentSpotifyUri), pausing');
           _isPlaying = false;
           _stopPositionTimer();
@@ -797,7 +971,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         if (_isPlaying) {
           _maybePersistPosition();
           _checkListenedThreshold();
-          _checkPlayCounted();
         }
         notifyListeners();
       }
@@ -1005,6 +1178,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (gen != _playGeneration) return;
       onTrackStarted?.call(track);
+      unawaited(_ensureLoudness(track));
       _persistPlaybackState();
       _prefetchNextTrack();
       unawaited(_radioTopUp());
@@ -1494,6 +1668,40 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _persistPlaybackState();
     notifyListeners();
   }
+  /// Spotify plays full songs on its own player, whose speed can't be set.
+  bool get canChangeTempo => !_useSpotify || _spotifyFallbackActive;
+
+  /// Playback speed per track (running mode locks songs onto the steps).
+  /// Null plays everything at normal speed.
+  set tempoFor(double Function(Track track)? fn) {
+    _service.speedFor = fn == null ? null : (t) => canChangeTempo ? fn(t) : 1.0;
+    refreshTempo();
+  }
+
+  /// Speed the current track actually plays at.
+  double get playbackSpeed => canChangeTempo ? _service.speed : 1.0;
+
+  /// Applies the current [tempoFor] to the playing track, gliding there.
+  void refreshTempo() {
+    final track = _currentTrack;
+    if (track != null) _service.refreshSpeed(track);
+  }
+
+  /// The tracks after the current one, in play order.
+  List<Track> get upcomingTracks =>
+      _q.isEmpty ? const [] : _q.tracks.sublist(_q.currentIndex + 1);
+
+  /// Applies a new order to the upcoming tracks (e.g. the BPM flow). Shuffle
+  /// is turned off, otherwise it would ignore the order.
+  void setUpcomingOrder(List<Track> upcoming) {
+    if (_q.isShuffle) _q.toggleShuffle();
+    _q.replaceUpcoming(upcoming);
+    _prefetchedTargetTrackId = null;
+    _prefetchNextTrack();
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
   void playNext(Track track) {
     if (!_q.insertNext(track)) return;
     _persistPlaybackState();
@@ -1547,12 +1755,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_completionHandled || _crossfadeTriggered) return;
     if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
     _completionHandled = true;
+    final finished = _currentTrack;
+    if (finished != null) onTrackCompleted?.call(finished);
 
     if (_stopAfterCurrentTrack) {
       _stopAfterCurrentTrack = false;
       _sleepTimerDeadline = null;
       _sleepTimerRemaining = null;
       stop();
+      onSleepTimerFinished?.call();
       return;
     }
 
@@ -1782,6 +1993,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
     debugPrint('[AudioProvider] Spotify crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s before end)');
+    final outgoing = _currentTrack;
+    if (outgoing != null) onTrackCompleted?.call(outgoing);
 
     _radioRegisterLeaving(nextTrack, completed: true);
     _currentTrack = nextTrack;
@@ -1794,6 +2007,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     notifyListeners();
     onTrackStarted?.call(nextTrack);
+    unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
     unawaited(_radioTopUp());
 
@@ -1823,6 +2037,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
     _radioRegisterLeaving(nextTrack, completed: true);
+    final outgoing = _currentTrack;
+    if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = nextTrack;
     _position = Duration.zero;
     _duration = Duration(
@@ -1834,6 +2050,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[AudioProvider] Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
     notifyListeners();
     onTrackStarted?.call(nextTrack);
+    unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
     unawaited(_radioTopUp());
 
@@ -1856,6 +2073,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void setSleepTimer(Duration? duration) {
     _sleepTimer?.cancel();
     _sleepTimer = null;
+    _restoreSleepFade();
 
     if (duration == null) {
       _sleepTimerDeadline = null;
@@ -1900,11 +2118,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _sleepTimerRemaining = null;
       _stopAfterCurrentTrack = false;
       _sleepTimerOriginalMinutes = null;
+      _sleepFadeApplied = false;
       stop();
+      onSleepTimerFinished?.call();
     } else {
       _sleepTimerRemaining = remaining;
+      _applySleepFade(remaining);
       notifyListeners();
     }
+  }
+
+  /// Lowers the preview volume over the last seconds so the music doesn't
+  /// cut off abruptly. Spotify volume can't be controlled from here.
+  void _applySleepFade(Duration remaining) {
+    if (_spotifyActive && !_spotifyFallbackActive) return;
+    if (remaining.inSeconds > _sleepFadeSeconds) return;
+    _sleepFadeApplied = true;
+    final level = remaining.inMilliseconds / (_sleepFadeSeconds * 1000);
+    unawaited(_service.setVolume(level.clamp(0.0, 1.0)));
+  }
+
+  void _restoreSleepFade() {
+    if (!_sleepFadeApplied) return;
+    _sleepFadeApplied = false;
+    unawaited(_service.setVolume(1.0));
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,10 +8,18 @@ import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/mask_provider.dart';
+import '../providers/moon_provider.dart';
+import '../providers/run_provider.dart';
+import '../providers/shake_skip_provider.dart';
+import '../providers/weather_provider.dart';
 import '../screens/login_screen.dart';
+import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
 import 'language_selector_sheet.dart';
+import 'oni_mask_art.dart';
+import 'weather_sheet.dart';
 
 class ProfileBottomSheet {
   static void show(BuildContext context, AuthProvider auth) {
@@ -26,6 +36,8 @@ class ProfileBottomSheet {
       ),
       builder: (ctx) {
         final audioProvider = context.read<AudioProvider>();
+        final moon = context.read<MoonProvider>();
+        final masks = context.read<MaskProvider>();
         final spotify = audioProvider.spotify;
         final locale = context.read<LocaleProvider>();
         final strings = locale.strings;
@@ -45,6 +57,7 @@ class ProfileBottomSheet {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Drag handle
                   Center(
                     child: Container(
                       width: 36,
@@ -56,614 +69,715 @@ class ProfileBottomSheet {
                       ),
                     ),
                   ),
-                  if (auth.user?.photoURL != null)
-                    CircleAvatar(
-                    radius: 30,
-                    backgroundImage: NetworkImage(auth.user!.photoURL!),
-                  ),
-                const SizedBox(height: 12),
-                Text(
-                  auth.user?.displayName ?? '',
-                  style: locale.getTextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textBright,
-                  ),
-                ),
-                Text(
-                  auth.user?.email ?? '',
-                  style: locale.getTextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 20),
 
-                // Spotify connection
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgMid,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: spotify.isConnected
-                          ? AppColors.accent.withValues(alpha: 0.5)
-                          : AppColors.border,
+                  // Profile header
+                  Builder(builder: (_) {
+                    final equipped = masks.equipped;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        if (auth.user?.photoURL != null)
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(auth.user!.photoURL!),
+                          )
+                        else
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: AppColors.bgMid,
+                            child: Icon(Icons.person_rounded, color: AppColors.textMuted),
+                          ),
+                        if (equipped != null)
+                          Positioned(
+                            right: -14,
+                            bottom: -10,
+                            child: OniMaskArt(mask: equipped, size: 36, unlocked: true),
+                          ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  Text(
+                    auth.user?.displayName ?? '',
+                    style: locale.getTextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textBright,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(Icons.music_note,
-                            color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Spotify',
-                              style: locale.getTextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textBright,
-                              ),
-                            ),
-                            Text(
-                              isConnecting
-                                  ? strings.spotifyConnecting
-                                  : spotify.isConnected
-                                      ? (spotify.isPremium
-                                          ? 'Premium · ${spotify.displayName ?? strings.spotifyDefaultUser}'
-                                          : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
-                                      : strings.spotifyNotConnected,
-                              style: locale.getTextStyle(
-                                fontSize: 10,
-                                color: isConnecting
-                                    ? AppColors.accent
-                                    : spotify.isConnected
-                                        ? AppColors.accent
-                                        : AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (spotify.isConnected)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.launch_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yOpenExternal),
-                              tooltip: strings.openSpotifyTooltip,
-                              onPressed: () => spotify.openSpotifyApp(),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                await spotify.disconnect();
-                                await audioProvider.updateSpotifyState();
-                                setModalState(() {});
-                              },
-                              child: Text(
-                                strings.spotifyDisconnect,
-                                style: locale.getTextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      else if (isConnecting)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.accent,
-                          ),
-                        )
-                      else
-                        OutlinedButton(
-                          onPressed: () async {
-                            isConnecting = true;
-                            setModalState(() {});
-                            try {
-                              final success = await spotify.connect();
-                              isConnecting = false;
-                              if (success) {
-                                await audioProvider.updateSpotifyState();
-                                setModalState(() {});
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        strings.spotifySyncSuccess,
-                                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                                      ),
-                                      backgroundColor: AppColors.bgCard,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                setModalState(() {});
-                                if (context.mounted) {
-                                  final rawError = spotify.lastError;
-                                  String msg = strings.spotifyConnectError;
-                                  if (rawError != null) {
-                                    final lower = rawError.toLowerCase();
-                                    if (lower.contains('cancel') || lower.contains('cancelada') || lower.contains('canceled_by_user')) {
-                                      msg = strings.spotifyCanceledByUser;
-                                    }
-                                  }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        msg,
-                                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                                      ),
-                                      backgroundColor: AppColors.bgCard,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                      duration: const Duration(seconds: 3),
-                                    ),
-                                  );
-                                }
-                              }
-                            } catch (e) {
-                              isConnecting = false;
-                              setModalState(() {});
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yPlaybackError),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            strings.spotifyConnectError,
-                                            style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.bgCard,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      side: const BorderSide(color: AppColors.error, width: 1.2),
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.accent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 6),
-                          ),
-                          child: Text(
-                            strings.spotifyConnect,
-                            style: locale.getTextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ),
-                    ],
+                  Text(
+                    auth.user?.email ?? '',
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await Future.delayed(const Duration(milliseconds: 120));
+                      if (context.mounted) await MaskCollectionScreen.open(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentDim,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.theater_comedy_rounded, size: 15, color: AppColors.accent),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${strings.masksProfileRow} · ${strings.masksCount(masks.unlockedCount, masks.totalCount)}',
+                            style: locale.getTextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textBright,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
-                if (spotify.isConnected) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                  // ── Spotify connection ──
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMid,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: spotify.isConnected
+                            ? AppColors.accent.withValues(alpha: 0.5)
+                            : AppColors.border,
+                      ),
+                    ),
                     child: Row(
                       children: [
-                        Icon(
-                          spotify.isPremium ? Icons.verified_rounded : Icons.info_outline_rounded,
-                          size: 13,
-                          color: AppColors.accent,
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.music_note,
+                              color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            spotify.isPremium
-                                ? (spotify.activeDeviceName != null
-                                    ? strings.spotifyActiveDevice(spotify.activeDeviceName!)
-                                    : strings.spotifyPremiumActive)
-                                : strings.spotifyStandardPreview,
-                            style: locale.getTextStyle(
-                              fontSize: 10,
-                              color: AppColors.textSecondary,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Spotify',
+                                style: locale.getTextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textBright,
+                                ),
+                              ),
+                              Text(
+                                isConnecting
+                                    ? strings.spotifyConnecting
+                                    : spotify.isConnected
+                                        ? (spotify.isPremium
+                                            ? 'Premium · ${spotify.displayName ?? strings.spotifyDefaultUser}'
+                                            : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
+                                        : strings.spotifyNotConnected,
+                                style: locale.getTextStyle(
+                                  fontSize: 10,
+                                  color: isConnecting
+                                      ? AppColors.accent
+                                      : spotify.isConnected
+                                          ? AppColors.accent
+                                          : AppColors.textMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 14),
-
-                // Crossfade Progresivo (Ajustes de audio DJ)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgMid,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: audioProvider.crossfadeSeconds > 0
-                          ? AppColors.neonCyan.withValues(alpha: 0.35)
-                          : AppColors.border,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: audioProvider.crossfadeSeconds > 0
-                                  ? AppColors.neonCyan.withValues(alpha: 0.15)
-                                  : AppColors.bgCard,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: audioProvider.crossfadeSeconds > 0
-                                    ? AppColors.neonCyan
-                                    : AppColors.border,
-                                width: 1,
+                        if (spotify.isConnected)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.launch_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yOpenExternal),
+                                tooltip: strings.openSpotifyTooltip,
+                                onPressed: () => spotify.openSpotifyApp(),
                               ),
-                            ),
-                            child: Icon(
-                              Icons.graphic_eq_rounded,
-                              color: audioProvider.crossfadeSeconds > 0
-                                  ? AppColors.neonCyan
-                                  : AppColors.textMuted,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  strings.crossfadeTitle,
+                              TextButton(
+                                onPressed: () async {
+                                  await spotify.disconnect();
+                                  await audioProvider.updateSpotifyState();
+                                  setModalState(() {});
+                                },
+                                child: Text(
+                                  strings.spotifyDisconnect,
                                   style: locale.getTextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.8,
-                                    color: AppColors.textBright,
-                                  ),
-                                ),
-                                Text(
-                                  strings.crossfadeSubtitle,
-                                  style: locale.getTextStyle(
-                                    fontSize: 9.5,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: audioProvider.crossfadeSeconds > 0
-                                  ? AppColors.neonCyan.withValues(alpha: 0.12)
-                                  : AppColors.bgCard,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: audioProvider.crossfadeSeconds > 0
-                                    ? AppColors.neonCyan.withValues(alpha: 0.7)
-                                    : AppColors.border,
                               ),
+                            ],
+                          )
+                        else if (isConnecting)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.accent,
+                            ),
+                          )
+                        else
+                          OutlinedButton(
+                            onPressed: () async {
+                              isConnecting = true;
+                              setModalState(() {});
+                              try {
+                                final success = await spotify.connect();
+                                isConnecting = false;
+                                if (success) {
+                                  await audioProvider.updateSpotifyState();
+                                  setModalState(() {});
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          strings.spotifySyncSuccess,
+                                          style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                        ),
+                                        backgroundColor: AppColors.bgCard,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  setModalState(() {});
+                                  if (context.mounted) {
+                                    final rawError = spotify.lastError;
+                                    String msg = strings.spotifyConnectError;
+                                    if (rawError != null) {
+                                      final lower = rawError.toLowerCase();
+                                      if (lower.contains('cancel') || lower.contains('cancelada') || lower.contains('canceled_by_user')) {
+                                        msg = strings.spotifyCanceledByUser;
+                                      }
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          msg,
+                                          style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                        ),
+                                        backgroundColor: AppColors.bgCard,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                isConnecting = false;
+                                setModalState(() {});
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yPlaybackError),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              strings.spotifyConnectError,
+                                              style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      backgroundColor: AppColors.bgCard,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                        side: const BorderSide(color: AppColors.error, width: 1.2),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.accent),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
                             ),
                             child: Text(
-                              audioProvider.crossfadeSeconds > 0
-                                  ? strings.crossfadeSecondsLabel(audioProvider.crossfadeSeconds)
-                                  : strings.crossfadeOff,
+                              strings.spotifyConnect,
                               style: locale.getTextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: audioProvider.crossfadeSeconds > 0
-                                    ? AppColors.neonCyan
-                                    : AppColors.textMuted,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  if (spotify.isConnected) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            spotify.isPremium ? Icons.verified_rounded : Icons.info_outline_rounded,
+                            size: 13,
+                            color: AppColors.accent,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              spotify.isPremium
+                                  ? (spotify.activeDeviceName != null
+                                      ? strings.spotifyActiveDevice(spotify.activeDeviceName!)
+                                      : strings.spotifyPremiumActive)
+                                  : strings.spotifyStandardPreview,
+                              style: locale.getTextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      SliderTheme(
-                        data: SliderTheme.of(ctx).copyWith(
-                          trackHeight: 3,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                          activeTrackColor: AppColors.neonCyan,
-                          inactiveTrackColor: AppColors.border,
-                          thumbColor: AppColors.neonCyan,
-                          overlayColor: AppColors.neonCyan.withValues(alpha: 0.2),
-                        ),
-                        child: Slider(
-                          value: audioProvider.crossfadeSeconds.toDouble(),
-                          min: 0,
-                          max: 12,
-                          divisions: 12,
-                          onChanged: (val) {
-                            final sec = val.round();
-                            audioProvider.setCrossfadeSeconds(sec);
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // ── PLAYBACK section ──
+                  _sectionHeader(locale, strings.settingsPlaybackSection),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMid,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.graphic_eq_rounded,
+                          title: strings.crossfadeTitle,
+                          subtitle: strings.crossfadeSubtitle,
+                          value: audioProvider.crossfadeSeconds > 0,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setCrossfadeSeconds(v ? 3 : 0);
                             setModalState(() {});
                           },
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '0s (${strings.crossfadeOff})',
-                              style: locale.getTextStyle(
-                                fontSize: 9,
-                                color: AppColors.textMuted,
-                              ),
+                        if (audioProvider.crossfadeSeconds > 0) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '0s',
+                                  style: locale.getTextStyle(
+                                    fontSize: 9,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(ctx).copyWith(
+                                      trackHeight: 3,
+                                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                                      activeTrackColor: AppColors.accent,
+                                      inactiveTrackColor: AppColors.border,
+                                      thumbColor: AppColors.accent,
+                                      overlayColor: AppColors.accent.withValues(alpha: 0.2),
+                                    ),
+                                    child: Slider(
+                                      value: audioProvider.crossfadeSeconds.toDouble(),
+                                      min: 1,
+                                      max: 12,
+                                      divisions: 11,
+                                      onChanged: (val) {
+                                        final sec = val.round();
+                                        audioProvider.setCrossfadeSeconds(sec);
+                                        setModalState(() {});
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '12s',
+                                  style: locale.getTextStyle(
+                                    fontSize: 9,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '3s (${strings.crossfadeDJ})',
-                              style: locale.getTextStyle(
-                                fontSize: 9,
-                                color: audioProvider.crossfadeSeconds == 3
-                                    ? AppColors.neonCyan
-                                    : AppColors.textMuted,
-                                fontWeight: audioProvider.crossfadeSeconds == 3
-                                    ? FontWeight.w700
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            Text(
-                              '12s (${strings.crossfadeMax})',
-                              style: locale.getTextStyle(
-                                fontSize: 9,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Playback settings
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgMid,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      _settingSwitch(
-                        locale: locale,
-                        icon: Icons.task_alt_rounded,
-                        title: strings.autoMarkTitle,
-                        subtitle: strings.autoMarkSubtitle,
-                        value: audioProvider.autoMarkListened,
-                        onChanged: (v) {
-                          HapticFeedback.selectionClick();
-                          audioProvider.setAutoMarkListened(v);
-                          setModalState(() {});
-                        },
-                      ),
-                      Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
-                      _settingSwitch(
-                        locale: locale,
-                        icon: Icons.wifi_rounded,
-                        title: strings.precacheWifiTitle,
-                        subtitle: strings.precacheWifiSubtitle,
-                        value: audioProvider.precacheWifiOnly,
-                        onChanged: (v) {
-                          HapticFeedback.selectionClick();
-                          audioProvider.setPrecacheWifiOnly(v);
-                          setModalState(() {});
-                        },
-                      ),
-                      Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
-                      TextButton.icon(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          AudioPrecacheService().clearCache();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(strings.audioCacheCleared)),
-                          );
-                        },
-                        icon: Icon(Icons.delete_sweep_rounded,
-                            color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearCache),
-                        label: Text(
-                          strings.clearAudioCache,
-                          style: locale.getTextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 0.8,
                           ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                strings.crossfadeSecondsLabel(audioProvider.crossfadeSeconds),
+                                style: locale.getTextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.task_alt_rounded,
+                          title: strings.autoMarkTitle,
+                          subtitle: strings.autoMarkSubtitle,
+                          value: audioProvider.autoMarkListened,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setAutoMarkListened(v);
+                            setModalState(() {});
+                          },
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Language Selector Button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      await Future.delayed(const Duration(milliseconds: 120));
-                      if (context.mounted) {
-                        LanguageSelectorSheet.show(context);
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.language_rounded,
-                      color: AppColors.accent,
-                      size: 16,
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.equalizer_rounded,
+                          title: strings.normalizeTitle,
+                          subtitle: strings.normalizeSubtitle,
+                          value: audioProvider.normalizeVolume,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setNormalizeVolume(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.vibration_rounded,
+                          title: strings.shakeSkipTitle,
+                          subtitle: strings.shakeSkipSubtitle,
+                          value: context.read<ShakeSkipProvider>().enabled,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            context.read<ShakeSkipProvider>().setEnabled(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.directions_run_rounded,
+                          title: strings.runSettingTitle,
+                          subtitle: strings.runSettingSubtitle,
+                          value: context.read<RunProvider>().enabled,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            context.read<RunProvider>().setEnabled(v);
+                            setModalState(() {});
+                          },
+                        ),
+                      ],
                     ),
-                    label: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── STORAGE section ──
+                  _sectionHeader(locale, strings.settingsStorageSection),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMid,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
                       children: [
-                        Text(
-                          strings.languageOption,
-                          style: locale.getTextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
-                            letterSpacing: 0.8,
-                          ),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.wifi_rounded,
+                          title: strings.precacheWifiTitle,
+                          subtitle: strings.precacheWifiSubtitle,
+                          value: audioProvider.precacheWifiOnly,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setPrecacheWifiOnly(v);
+                            setModalState(() {});
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentDim,
-                            borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            locale.currentLanguage.tag,
-                            style: locale.getTextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            AudioPrecacheService().clearCache();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(strings.audioCacheCleared)),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_sweep_rounded,
+                                    color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearCache),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    strings.clearAudioCache,
+                                    style: locale.getTextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded,
+                                    color: AppColors.textMuted, size: 18),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: AppColors.accent.withValues(alpha: 0.6),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
                   ),
-                ),
 
-                const SizedBox(height: 10),
+                  const SizedBox(height: 20),
 
-                // Tutorial & Masks guide
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      await Future.delayed(const Duration(milliseconds: 120));
-                      if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (pushedCtx) => OnboardingScreen(
-                              onComplete: () {
-                                if (Navigator.of(pushedCtx).canPop()) {
-                                  Navigator.of(pushedCtx).pop();
-                                }
-                              },
+                  // ── GENERAL section ──
+                  _sectionHeader(locale, strings.settingsGeneralSection),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.bgMid,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.nightlight_round,
+                          title: strings.moonAtmosphereTitle,
+                          subtitle: strings.moonAtmosphereSubtitle,
+                          value: moon.atmosphereEnabled,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            moon.setAtmosphereEnabled(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.cloud_rounded,
+                          title: strings.weatherSettingTitle,
+                          subtitle: strings.weatherSettingSubtitle,
+                          value: context.read<WeatherProvider>().enabled,
+                          onChanged: (v) async {
+                            unawaited(HapticFeedback.selectionClick());
+                            final weather = context.read<WeatherProvider>();
+                            if (!v) {
+                              await weather.disable();
+                              setModalState(() {});
+                              return;
+                            }
+                            // Turning it on starts with choosing where.
+                            Navigator.pop(ctx);
+                            await Future.delayed(const Duration(milliseconds: 120));
+                            if (context.mounted) await WeatherSheet.show(context);
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        // Language
+                        InkWell(
+                          onTap: () async {
+                            Navigator.pop(ctx);
+                            await Future.delayed(const Duration(milliseconds: 120));
+                            if (context.mounted) {
+                              LanguageSelectorSheet.show(context);
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.language_rounded,
+                                    color: AppColors.accent, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    strings.languageOption,
+                                    style: locale.getTextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textBright,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accentDim,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    locale.currentLanguage.tag,
+                                    style: locale.getTextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.accent,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(Icons.chevron_right_rounded,
+                                    color: AppColors.textMuted, size: 18),
+                              ],
                             ),
                           ),
-                        );
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.auto_stories_rounded,
-                      color: AppColors.neonCyan,
-                      size: 16,
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        // Tutorial
+                        InkWell(
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+                          onTap: () async {
+                            Navigator.pop(ctx);
+                            await Future.delayed(const Duration(milliseconds: 120));
+                            if (context.mounted) {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (pushedCtx) => OnboardingScreen(
+                                    onComplete: () {
+                                      if (Navigator.of(pushedCtx).canPop()) {
+                                        Navigator.of(pushedCtx).pop();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_stories_rounded,
+                                    color: AppColors.neonCyan, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    strings.tutorialOption,
+                                    style: locale.getTextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textBright,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded,
+                                    color: AppColors.textMuted, size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    label: Text(
-                      strings.tutorialOption,
-                      style: locale.getTextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.neonCyan,
-                        letterSpacing: 0.8,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Logout ──
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await _confirmLogout(context, auth);
+                      },
+                      icon: Icon(Icons.logout, color: AppColors.accent, size: 18, semanticLabel: strings.a11yLogout),
+                      label: Text(
+                        strings.logoutOption,
+                        style: locale.getTextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.accent,
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: AppColors.neonCyan.withValues(alpha: 0.6),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.accent),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Logout
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      await _confirmLogout(context, auth);
-                    },
-                    icon: Icon(Icons.logout, color: AppColors.accent, semanticLabel: strings.a11yLogout),
-                    label: Text(
-                      strings.logoutOption,
-                      style: locale.getTextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         );
       },
     ).whenComplete(() {
       FocusManager.instance.primaryFocus?.unfocus();
     });
+  }
+
+  static Widget _sectionHeader(LocaleProvider locale, String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Text(
+          title,
+          style: locale.getTextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            color: AppColors.textMuted,
+          ),
+        ),
+      ),
+    );
   }
 
   static Widget _settingSwitch({

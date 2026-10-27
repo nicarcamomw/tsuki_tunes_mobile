@@ -236,7 +236,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
               child: Text(
                 _firstPlayDay != null
                     ? strings.timeMachineCountingSince(
-                        strings.shortDate(_firstPlayDay!))
+                        strings.longDate(_firstPlayDay!))
                     : strings.timeMachineCountingStarts,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
@@ -348,7 +348,7 @@ class _DateHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    strings.shortDate(anchor).toUpperCase(),
+                    strings.longDate(anchor).toUpperCase(),
                     style: locale.getTextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,

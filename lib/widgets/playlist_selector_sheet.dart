@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
 import '../providers/locale_provider.dart';
 import '../providers/playlist_provider.dart';
@@ -124,6 +126,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
                           height: 40,
                           child: playlist.coverUrl.isNotEmpty
                               ? CachedNetworkImage(
+                                memCacheWidth: imageCacheSize(context, (40).toDouble()),
                                   imageUrl: playlist.coverUrl,
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Container(

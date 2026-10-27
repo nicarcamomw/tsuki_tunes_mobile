@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../providers/audio_provider.dart';
 import '../providers/connectivity_provider.dart';
@@ -240,6 +242,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           child: (albumData.coverXl ?? albumData.coverUrl)
                                   .isNotEmpty
                               ? CachedNetworkImage(
+                                memCacheWidth: imageCacheSize(context, (260).toDouble()),
                                   imageUrl:
                                       albumData.coverXl ?? albumData.coverUrl,
                                   fit: BoxFit.cover,

@@ -8,25 +8,33 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/radar_release.dart';
+import '../providers/ambient_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/run_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
 import '../services/time_machine_service.dart';
 import '../widgets/album_card.dart';
+import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/sky_line.dart';
+import 'guess_song_screen.dart';
 import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
 import 'rabbit_hole_screen.dart';
 import 'release_radar_screen.dart';
+import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
 import 'wrapped_screen.dart';
 
@@ -46,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   bool _releasesLoading = false;
+  bool _dailyDone = false;
 
   @override
   void initState() {
@@ -54,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     NavigationEvents.onHomeOpenProfile = openProfile;
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
+    _refreshDailyDone();
     ReleaseRadarService().openRequests.addListener(_openRadarIfRequested);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _openRadarIfRequested());
@@ -172,8 +182,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final artistAlbums = await _api.getArtistAlbums(top.artist!.id);
         if (artistAlbums.isEmpty) return <Album>[];
         return artistAlbums.map((a) {
-          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
-            return a.copyWith(artistName: top.entry.name);
+          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
+          final needsId = a.artistId.isEmpty;
+          if (needsName || needsId) {
+            return a.copyWith(
+              artistName: needsName ? top.entry.name : null,
+              artistId: needsId ? top.artist!.id : null,
+            );
           }
           return a;
         }).toList();
@@ -216,8 +231,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final artistAlbums = await _api.getArtistAlbums(artist.id);
         if (artistAlbums.isEmpty) return <Album>[];
         return artistAlbums.map((a) {
-          if (a.artistName == 'Unknown Artist' || a.artistName.isEmpty) {
-            return a.copyWith(artistName: artist.name);
+          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
+          final needsId = a.artistId.isEmpty;
+          if (needsName || needsId) {
+            return a.copyWith(
+              artistName: needsName ? artist.name : null,
+              artistId: needsId ? artist.id : null,
+            );
           }
           return a;
         }).toList();
@@ -253,7 +273,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedTracks.length);
+    final statsLoaded = context.select<LibraryProvider, bool>((l) => l.listenedTracksLoaded);
+    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedCount);
     final artistsCount = context.select<LibraryProvider, int>((l) => l.uniqueArtistsCount);
     final albumsCount = context.select<LibraryProvider, int>((l) => l.uniqueAlbumsCount);
     final (topArtistName, topArtistScore) = context.select<LibraryProvider, (String, String)>((l) {
@@ -278,126 +299,149 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: scrollController,
           slivers: [
             SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Semantics(
-                            header: true,
-                            child: Row(
+              child: SkyBackdrop(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  strings.homeHeader.replaceAll(' // 01', ''),
-                                  style: locale.getTextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textBright,
-                                    letterSpacing: 2,
+                                Semantics(
+                                  header: true,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                    children: [
+                                      Text(
+                                        strings.homeHeader.replaceAll(' // 01', ''),
+                                        style: locale.getTextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.textBright,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' // 01',
+                                        style: locale.getTextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   ),
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
-                                  ' // 01',
-                                  style: locale.getTextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.accent,
+                                  strings.homeTelemetry,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.notoSansJp(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accent.withValues(alpha: 0.8),
+                                    letterSpacing: 1.2,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            strings.homeTelemetry,
-                            style: GoogleFonts.notoSansJp(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent.withValues(alpha: 0.8),
-                              letterSpacing: 1.2,
                             ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Selector<AudioProvider, bool>(
-                            selector: (_, audio) =>
-                                audio.useSpotify || audio.spotify.isConnected,
-                            builder: (context, isSpotify, _) {
-                              final badgeColor = AppColors.accent;
-                              final badgeBg = AppColors.accentDim;
-                              final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
+                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                const MoonButton(),
+                                const SizedBox(width: 4),
+                                Selector<AudioProvider, bool>(
+                                  selector: (_, audio) =>
+                                      audio.useSpotify || audio.spotify.isConnected,
+                                  builder: (context, isSpotify, _) {
+                                    final badgeColor = AppColors.accent;
+                                    final badgeBg = AppColors.accentDim;
+                                    final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
 
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: badgeBg,
-                                  borderRadius: BorderRadius.circular(2),
-                                  border: Border.all(
-                                    color: badgeColor.withValues(alpha: 0.5),
-                                    width: 0.8,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: badgeColor.withValues(alpha: 0.2),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: badgeColor,
+                                        color: badgeBg,
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(
+                                          color: badgeColor.withValues(alpha: 0.5),
+                                          width: 0.8,
+                                        ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: badgeColor.withValues(alpha: 0.7),
-                                            blurRadius: 4,
-                                            spreadRadius: 0.5,
+                                            color: badgeColor.withValues(alpha: 0.2),
+                                            blurRadius: 6,
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      badgeText,
-                                      style: locale.getTextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        color: badgeColor,
-                                        letterSpacing: 1.5,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: badgeColor,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: badgeColor.withValues(alpha: 0.7),
+                                                  blurRadius: 4,
+                                                  spreadRadius: 0.5,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            badgeText,
+                                            style: locale.getTextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: badgeColor,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                          if (auth.isLoggedIn) ...[
-                            const SizedBox(width: 8),
-                            _GearProfileButton(
-                              auth: auth,
-                              label: strings.profileTitle,
+                                if (auth.isLoggedIn) ...[
+                                  const SizedBox(width: 8),
+                                  _GearProfileButton(
+                                    auth: auth,
+                                    label: strings.profileTitle,
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+                      child: SkyLine(),
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SliverToBoxAdapter(child: RainOfferCard()),
 
             if (_isLoading)
               const HomeSkeletonLoader()
@@ -479,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else ...[
-              if (auth.isLoggedIn && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
+              if (auth.isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
                 SliverFillRemaining(
                   child: Center(
                     child: Padding(
@@ -564,29 +608,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildStatCard(
-                              strings.statsTracks, '$listenedCount', strings.statsListened,
-                              locale: locale),
-                          _buildStatCard(
-                              strings.statsArtists, '$artistsCount', strings.statsInSystem,
-                              locale: locale),
-                          _buildStatCard(
-                              strings.statsAlbums, '$albumsCount', strings.statsInSystem,
-                              locale: locale),
-                          _buildStatCard(
-                            strings.statsTopArtist,
-                            topArtistName,
-                            strings.statsAffinity(topArtistScore),
-                            isTextValue: true,
-                            locale: locale,
-                          ),
-                        ],
-                      ),
+                      physics: statsLoaded ? null : const NeverScrollableScrollPhysics(),
+                      child: statsLoaded
+                          ? Row(
+                              children: [
+                                _buildStatCard(
+                                    strings.statsTracks, '$listenedCount', strings.statsListened,
+                                    locale: locale),
+                                _buildStatCard(
+                                    strings.statsArtists, '$artistsCount', strings.statsInSystem,
+                                    locale: locale),
+                                _buildStatCard(
+                                    strings.statsAlbums, '$albumsCount', strings.statsInSystem,
+                                    locale: locale),
+                                _buildStatCard(
+                                  strings.statsTopArtist,
+                                  topArtistName,
+                                  strings.statsAffinity(topArtistScore),
+                                  isTextValue: true,
+                                  locale: locale,
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: List.generate(4, (_) => const Padding(
+                                padding: EdgeInsets.only(right: 10),
+                                child: SkeletonLoader(width: 140, height: 76),
+                              )),
+                            ),
                     ),
                   ),
                 ),
+
+              SliverToBoxAdapter(child: _buildFeatureCards(locale)),
 
               if (auth.isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
@@ -798,6 +852,146 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _refreshDailyDone() async {
+    final done = await GuessSongScreen.isDailyDone();
+    if (mounted && done != _dailyDone) setState(() => _dailyDone = done);
+  }
+
+  Future<void> _openGuessGame() async {
+    unawaited(HapticFeedback.lightImpact());
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(builder: (_) => const GuessSongScreen()),
+    );
+    await _refreshDailyDone();
+  }
+
+  Widget _buildFeatureCards(LocaleProvider locale) {
+    final strings = locale.strings;
+    final ambientCount = context.select<AmbientProvider, int>(
+        (a) => a.isPlaying ? a.activeSounds.length : 0);
+    final run = context.select<RunProvider, (bool, int?, bool)>(
+        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _featureCard(
+                  locale: locale,
+                  icon: Icons.music_note_rounded,
+                  color: AppColors.accent,
+                  title: strings.guessTitle,
+                  subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
+                  highlight: !_dailyDone,
+                  onTap: _openGuessGame,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _featureCard(
+                  locale: locale,
+                  icon: Icons.water_drop_rounded,
+                  color: AppColors.neonCyan,
+                  title: strings.ambientTitle,
+                  subtitle: ambientCount > 0
+                      ? strings.ambientPlayingCount(ambientCount)
+                      : strings.homeAmbientCardSubtitle,
+                  highlight: ambientCount > 0,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    AmbientMixerSheet.show(context);
+                  },
+                ),
+              ),
+            ],
+          ),
+          if (run.$3) ...[
+            const SizedBox(height: 10),
+            _featureCard(
+              locale: locale,
+              icon: Icons.directions_run_rounded,
+              color: AppColors.neonGreen,
+              title: strings.runTitle,
+              subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
+              highlight: run.$1,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                RunModeScreen.open(context);
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _featureCard({
+    required LocaleProvider locale,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required bool highlight,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withValues(alpha: highlight ? 0.18 : 0.08),
+                AppColors.bgCard,
+              ],
+            ),
+            border: Border.all(color: color.withValues(alpha: highlight ? 0.6 : 0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(fontSize: 10, color: color),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatCard(String label, String value, String meta,
       {bool isTextValue = false, required LocaleProvider locale}) {
     return Semantics(
@@ -861,13 +1055,34 @@ class _HomeScreenState extends State<HomeScreen> {
       button: true,
       label: '${locale.strings.tabArtists} $rank, ${entry.name}',
       child: InkWell(
-      onTap: () {
+      onTap: () async {
         if (artist != null) {
           appNavigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ArtistDetailScreen(artist: artist),
             ),
           );
+        } else {
+          try {
+            final results = await _api.searchArtists(entry.name, limit: 3);
+            Artist? matched;
+            for (final a in results) {
+              if (a.name.toLowerCase() == entry.name.toLowerCase()) {
+                matched = a;
+                break;
+              }
+            }
+            matched ??= results.isNotEmpty ? results.first : null;
+            if (mounted && matched != null) {
+              appNavigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  builder: (_) => ArtistDetailScreen(artist: matched!),
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('[HomeScreen] retry artist search for ${entry.name}: $e');
+          }
         }
       },
       child: Container(
@@ -898,6 +1113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 40,
                 child: artist != null && artist.pictureUrl.isNotEmpty
                     ? CachedNetworkImage(
+                      memCacheWidth: imageCacheSize(context, (40).toDouble()),
                         imageUrl: artist.pictureUrl,
                         fit: BoxFit.cover,
                       )
@@ -983,6 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 40,
                 child: artist.pictureUrl.isNotEmpty
                     ? CachedNetworkImage(
+                      memCacheWidth: imageCacheSize(context, (40).toDouble()),
                         imageUrl: artist.pictureUrl,
                         fit: BoxFit.cover,
                       )

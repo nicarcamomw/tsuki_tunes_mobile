@@ -8,15 +8,20 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/synced_lyrics.dart';
 import '../models/track.dart';
+import '../providers/ambient_provider.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../services/bpm_flow.dart';
 import '../services/lyrics_service.dart';
 import '../services/translation_service.dart';
+import '../widgets/ambient_mixer_sheet.dart';
+import '../widgets/flow_sheet.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
@@ -153,6 +158,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final radioActive = context.select<AudioProvider, bool>((a) => a.isRadioActive);
     final playbackError =
         context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
+    // Only this track's listened flag: watching the whole library would rebuild
+    // the player on every sync and history update.
+    final isListened = context.select<LibraryProvider, bool>(
+        (l) => track != null && l.isTrackListened(track.id));
 
     if (track == null) {
       return PopScope(
@@ -182,8 +191,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
       );
     }
 
-    final library = context.watch<LibraryProvider>();
-    final isListened = library.isTrackListened(track.id);
+    final library = context.read<LibraryProvider>();
 
     return PopScope(
       canPop: true,
@@ -343,7 +351,13 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                   // Art, Lyrics or Queue
                   if (_viewMode == _CenterViewMode.queue)
-                    _buildQueueView(audio, locale)
+                    // Rebuild when the order or the playing track changes,
+                    // not on every position tick.
+                    Selector<AudioProvider, (int, int)>(
+                      selector: (_, a) =>
+                          (Object.hashAll(a.queue.map((t) => t.id)), a.currentIndex),
+                      builder: (context, _, __) => _buildQueueView(audio, locale),
+                    )
                   else if (_viewMode == _CenterViewMode.lyrics)
                     _buildLyricsView(audio, locale, track)
                   else ...[
@@ -356,6 +370,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         isPlaying: isPlaying,
                         imageUrl: track.coverUrl,
                         size: MediaQuery.of(context).size.width * 0.72,
+                        trackId: track.id,
+                        fullSong: !context.select<AudioProvider, bool>((a) => a.canChangeTempo),
+                        position: () => audio.position,
+                        speed: () => audio.playbackSpeed,
                       ),
                     ),
                     ),
@@ -642,7 +660,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SizedBox(width: 40),
+                      Builder(builder: (c) => _buildAmbientButton(c, locale)),
                       Text(
                         useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                         style: locale.getTextStyle(
@@ -651,7 +669,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                           letterSpacing: 2,
                         ),
                       ),
-                      _buildSleepTimerButton(context, audio, locale),
+                      Builder(builder: (c) => _buildSleepTimerButton(c, audio, locale)),
                     ],
                   ),
                 ),
@@ -666,10 +684,53 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   );
 }
 
+  Widget _buildAmbientButton(BuildContext context, LocaleProvider locale) {
+    final count = context.select<AmbientProvider, int>(
+        (a) => a.isPlaying ? a.activeSounds.length : 0);
+    final active = count > 0;
+    return TapScale(
+      semanticLabel: locale.strings.ambientTitle,
+      onTap: () => AmbientMixerSheet.show(context),
+      scaleDown: 0.85,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? AppColors.neonCyan.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: active ? Border.all(color: AppColors.neonCyan.withValues(alpha: 0.4)) : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.water_drop_outlined,
+              size: 16,
+              color: active ? AppColors.neonCyan : AppColors.textMuted,
+            ),
+            if (active) ...[
+              const SizedBox(width: 4),
+              Text(
+                '$count',
+                style: locale.getTextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.neonCyan,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSleepTimerButton(BuildContext context, AudioProvider audio, LocaleProvider locale) {
     final strings = locale.strings;
     final isActive = context.select<AudioProvider, bool>((a) => a.isSleepTimerActive);
-    final remaining = context.select<AudioProvider, Duration?>((a) => a.sleepTimerRemaining);
+    // Whole seconds: the label shows nothing finer, so no rebuild per tick.
+    final remainingSeconds =
+        context.select<AudioProvider, int?>((a) => a.sleepTimerRemaining?.inSeconds);
+    final remaining = remainingSeconds == null ? null : Duration(seconds: remainingSeconds);
 
     String label = '';
     if (remaining != null) {
@@ -1058,6 +1119,43 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (audio.upcomingTracks.length >= 3) ...[
+                    Semantics(
+                      button: true,
+                      label: strings.flowTitle,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          FlowSheet.show(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.neonCyan.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.show_chart_rounded, size: 13, color: AppColors.neonCyan),
+                              const SizedBox(width: 4),
+                              Text(
+                                strings.flowButton,
+                                style: locale.getTextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.neonCyan,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   if (queue.length > 1)
                     Semantics(
                       button: true,
@@ -1180,6 +1278,8 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 8),
                       itemCount: queue.length,
+                      // onReorderItem already adjusts newIndex for the
+                      // removed item, unlike the deprecated onReorder.
                       onReorderItem: (oldIndex, newIndex) {
                         audio.reorderQueue(oldIndex, newIndex);
                       },
@@ -1270,6 +1370,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       height: 36,
                                       child: t.coverUrl.isNotEmpty
                                           ? CachedNetworkImage(
+                                            memCacheWidth: imageCacheSize(context, (36).toDouble()),
                                               imageUrl: t.coverUrl,
                                               fit: BoxFit.cover,
                                               placeholder: (_, __) => Container(
@@ -1338,6 +1439,18 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                       ],
                                     ),
                                   ),
+                                  if (BpmService.shared.cached(t.id) case final bpm?)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Text(
+                                        '${bpm.round()}',
+                                        style: locale.getTextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.neonCyan.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ),
                                   Semantics(
                                     button: true,
                                     label: strings.queueRemoveLabel,
@@ -1548,10 +1661,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 ),
               ),
             Expanded(
-              child: Consumer<AudioProvider>(
-                builder: (context, liveAudio, _) {
-                  return _buildLyricsContent(liveAudio, locale, track);
-                },
+              // Rebuild when the active line changes, not on every position tick.
+              child: Selector<AudioProvider, int>(
+                selector: (_, a) => _lyrics?.activeIndexAt(a.position) ?? -1,
+                builder: (context, _, __) =>
+                    _buildLyricsContent(context.read<AudioProvider>(), locale, track),
               ),
             ),
           ],

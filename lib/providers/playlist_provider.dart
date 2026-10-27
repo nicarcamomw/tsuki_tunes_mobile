@@ -203,16 +203,19 @@ class PlaylistProvider extends ChangeNotifier {
 
   // --- CRUD Operations ---
 
-  Future<Playlist?> createPlaylist(String name) async {
+  /// [tracks] are included in the same write, so seeding a playlist costs one
+  /// write instead of one per track.
+  Future<Playlist?> createPlaylist(String name, {List<Track> tracks = const []}) async {
     final uid = _currentUid;
     if (uid == null || name.trim().isEmpty || _isWriteThrottled()) return null;
 
     final now = DateTime.now();
     final tempId = 'local_${now.millisecondsSinceEpoch}';
+    final seen = <String>{};
     final playlist = Playlist(
       id: tempId,
       name: name.trim(),
-      tracks: [],
+      tracks: tracks.where((t) => seen.add(t.id)).toList(),
       createdAt: now,
       updatedAt: now,
     );
