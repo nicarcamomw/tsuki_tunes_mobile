@@ -74,13 +74,31 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" --install "ndk;$NDK_VERSION"
 
+      # android/gradle.properties gives Gradle an 8 GB heap plus 4 GB
+      # metaspace, which on the 16 GB runner (alongside the Kotlin daemon and
+      # Dart AOT) got the runner killed mid-build. The user-level file
+      # overrides the project one for CI only.
+      - name: Limit Gradle memory for CI
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          org.gradle.daemon=false
+          org.gradle.workers.max=2
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+
       # Signed with the debug key unless android/key.properties exists (see
       # android/app/build.gradle.kts). LASTFM_API_KEY is optional: without
-      # it the song radio uses Deezer only.
+      # it the song radio uses Deezer only. Phone ABIs only: x86_64 is for
+      # emulators and would add a third Dart AOT compile.
       - name: Build release APK
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-        run: flutter build apk --release --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
+        run: >-
+          flutter build apk --release
+          --target-platform android-arm,android-arm64
+          --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
