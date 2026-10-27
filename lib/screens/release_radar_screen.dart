@@ -56,7 +56,7 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
   }
 
   Future<void> _requestPermission() async {
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     final granted = await _radar.requestPermission();
     if (!mounted) return;
     setState(() => _permission = granted);
@@ -74,13 +74,13 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
   }
 
   Future<void> _toggleNotify(bool enabled) async {
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     await _radar.setNotifyEnabled(enabled);
     if (enabled && _permission == false) await _requestPermission();
   }
 
   Future<void> _checkNow() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     await _radar.checkNow();
   }
 

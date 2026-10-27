@@ -34,11 +34,15 @@ class LastFmService {
       final response = await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) return [];
       final data = jsonDecode(response.body);
-      final list = data is Map ? data['similartracks']?['track'] : null;
+      final similar = data is Map ? data['similartracks'] : null;
+      final list = similar is Map ? similar['track'] : null;
       if (list is! List) return [];
       return [
         for (final t in list)
-          if (t is Map && t['name'] != null && t['artist']?['name'] != null)
+          if (t is Map &&
+              t['name'] != null &&
+              t['artist'] is Map &&
+              t['artist']['name'] != null)
             LastFmSimilarTrack(
               t['artist']['name'].toString(),
               t['name'].toString(),

@@ -225,7 +225,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
       if (node.depth == 0 && fresh.isEmpty) _seedFailed = true;
     });
 
-    if (fresh.isEmpty && node.depth > 0) HapticFeedback.lightImpact();
+    if (fresh.isEmpty && node.depth > 0) unawaited(HapticFeedback.lightImpact());
     if (added < newcomers) _notifyMaxReached();
     _wakePhysics();
   }
@@ -258,7 +258,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(16, 0, 16, _kPanelHeight + 8),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, _kPanelHeight + 8),
         backgroundColor: AppColors.bgCard,
         duration: const Duration(seconds: 6),
         content: Text(

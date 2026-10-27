@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/services/translation_service.dart';
 
 void main() {

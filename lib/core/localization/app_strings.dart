@@ -2223,7 +2223,7 @@ class AppStrings {
   String wrappedYear(int year) => switch (language) {
         AppLanguage.es => 'TU AÑO $year EN MÚSICA',
         AppLanguage.en => 'YOUR $year IN MUSIC',
-        AppLanguage.ja => '${year}年の音楽まとめ',
+        AppLanguage.ja => '$year年の音楽まとめ',
       };
 
   String get wrappedIntroSlide => switch (language) {
@@ -2284,8 +2284,8 @@ class AppStrings {
     final amPm = hour >= 12 ? 'PM' : 'AM';
     final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
     return switch (language) {
-      AppLanguage.es => '${h12}:00 $amPm',
-      AppLanguage.en => '${h12}:00 $amPm',
+      AppLanguage.es => '$h12:00 $amPm',
+      AppLanguage.en => '$h12:00 $amPm',
       AppLanguage.ja => '$hour:00',
     };
   }
@@ -2305,7 +2305,7 @@ class AppStrings {
   String wrappedFactMarathon(String date, int count) => switch (language) {
         AppLanguage.es => 'Tu día maratón: $count canciones el $date 🔥',
         AppLanguage.en => 'Your marathon day: $count tracks on $date 🔥',
-        AppLanguage.ja => 'マラソンデー: ${date}に$count曲再生 🔥',
+        AppLanguage.ja => 'マラソンデー: $dateに$count曲再生 🔥',
       };
 
   String wrappedFactLoyal(String artist, int count) => switch (language) {
@@ -3060,7 +3060,7 @@ class AppStrings {
   String wrappedFactMarathonDiscovery(String date, int count) => switch (language) {
         AppLanguage.es => 'Tu día de descubrimientos: $count canciones nuevas el $date 🔥',
         AppLanguage.en => 'Your discovery day: $count new songs on $date 🔥',
-        AppLanguage.ja => '発見の日: ${date}に$count曲の新曲 🔥',
+        AppLanguage.ja => '発見の日: $dateに$count曲の新曲 🔥',
       };
 
   String wrappedFactLoyalDiscovery(String artist, int count) => switch (language) {

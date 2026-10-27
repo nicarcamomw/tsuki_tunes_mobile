@@ -612,7 +612,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return InkWell(
       onTap: () async {
-        HapticFeedback.lightImpact();
+        unawaited(HapticFeedback.lightImpact());
         try {
           final deezerResults = await DeezerApiService().search(
             '${result.trackName} ${result.artistName}',
@@ -622,7 +622,7 @@ class _SearchScreenState extends State<SearchScreen> {
             if (!mounted) return;
             final provider = context.read<SearchProvider>();
             _controller.text = '${result.trackName} ${result.artistName}';
-            provider.search('${result.trackName} ${result.artistName}');
+            unawaited(provider.search('${result.trackName} ${result.artistName}'));
             setState(() => _selectedTabIndex = 3);
           }
         } catch (_) {}
@@ -696,11 +696,9 @@ class _SearchScreenState extends State<SearchScreen> {
     if (matchIndex == -1) {
       return Text(
         snippet,
-        style: locale.getTextStyle(
-          fontSize: 11,
-          color: AppColors.textMuted,
-          fontStyle: FontStyle.italic,
-        ),
+        style: locale
+            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .copyWith(fontStyle: FontStyle.italic),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
@@ -714,21 +712,20 @@ class _SearchScreenState extends State<SearchScreen> {
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(
-        style: locale.getTextStyle(
-          fontSize: 11,
-          color: AppColors.textMuted,
-          fontStyle: FontStyle.italic,
-        ),
+        style: locale
+            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .copyWith(fontStyle: FontStyle.italic),
         children: [
           TextSpan(text: before),
           TextSpan(
             text: match,
-            style: locale.getTextStyle(
-              fontSize: 11,
-              color: AppColors.accent,
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.italic,
-            ),
+            style: locale
+                .getTextStyle(
+                  fontSize: 11,
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w700,
+                )
+                .copyWith(fontStyle: FontStyle.italic),
           ),
           TextSpan(text: after),
         ],

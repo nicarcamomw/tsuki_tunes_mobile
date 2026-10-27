@@ -97,7 +97,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
   Future<void> _play() async {
     final moment = _moment;
     if (moment == null || _starting) return;
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     setState(() => _starting = true);
     final strings = context.read<LocaleProvider>().strings;
     final audio = context.read<AudioProvider>();

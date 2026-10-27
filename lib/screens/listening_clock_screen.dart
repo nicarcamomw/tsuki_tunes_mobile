@@ -203,7 +203,7 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
               onTapDown: (details) {
                 final box = context.findRenderObject() as RenderBox?;
                 if (box == null) return;
-                final radarCenter = Offset(160, 160);
+                final radarCenter = const Offset(160, 160);
                 final local = details.localPosition;
                 final dx = local.dx - radarCenter.dx;
                 final dy = local.dy - radarCenter.dy;

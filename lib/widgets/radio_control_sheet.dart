@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +18,7 @@ Future<void> startRadioWithFeedback(
   Track track, {
   double bottomMargin = 12,
 }) async {
-  HapticFeedback.mediumImpact();
+  unawaited(HapticFeedback.mediumImpact());
   final audio = context.read<AudioProvider>();
   final locale = context.read<LocaleProvider>();
   final messenger = ScaffoldMessenger.of(context);

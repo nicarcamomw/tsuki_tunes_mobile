@@ -1584,7 +1584,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
           ),
         ),
         child: isLoading
-            ? SizedBox(
+            ? const SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
@@ -1691,7 +1691,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             ),
             title: Row(
               children: [
-                Icon(Icons.download_rounded, color: AppColors.accent, size: 20),
+                const Icon(Icons.download_rounded, color: AppColors.accent, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

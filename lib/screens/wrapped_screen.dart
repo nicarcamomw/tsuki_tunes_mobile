@@ -1173,7 +1173,6 @@ class _FavoriteHourSlide extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final barWidth = (constraints.maxWidth - 46) / 24;
         return Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [

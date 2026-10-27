@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -110,7 +111,7 @@ class TranslationService {
     }
 
     _memCache[key] = translated;
-    _saveToDisk(key, translated);
+    unawaited(_saveToDisk(key, translated));
     return translated;
   }
 
