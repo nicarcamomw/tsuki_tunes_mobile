@@ -4598,4 +4598,17 @@ class AppStrings {
         AppLanguage.en => 'Discography incomplete',
         AppLanguage.ja => 'ディスコグラフィー未完了',
       };
+
+  // --- Voice Search ---
+  String get a11yVoiceSearch => switch (language) {
+        AppLanguage.es => 'Búsqueda por voz',
+        AppLanguage.en => 'Voice search',
+        AppLanguage.ja => '音声検索',
+      };
+
+  String get voicePlaying => switch (language) {
+        AppLanguage.es => 'Reproduciendo',
+        AppLanguage.en => 'Playing',
+        AppLanguage.ja => '再生中',
+      };
 }

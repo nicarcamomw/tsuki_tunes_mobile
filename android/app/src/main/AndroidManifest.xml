@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <!-- Android 13+: needed to show the playback notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Voice search: on-device speech recognition -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Weather on the home screen: approximate location only, never in the background -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
@@ -71,6 +73,48 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        <!-- Home Screen Widget: Player controls -->
+        <receiver
+            android:name=".TsukiPlayerWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.tsuki.widget.PLAY_PAUSE" />
+                <action android:name="com.tsuki.widget.NEXT" />
+                <action android:name="com.tsuki.widget.PREV" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_player_info" />
+        </receiver>
+
+        <!-- Quick Settings Tile: Rain Mix -->
+        <service
+            android:name=".RainMixTileService"
+            android:label="Rain Mix"
+            android:icon="@drawable/ic_rain_tile"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.ACTIVE_TILE"
+                android:value="false" />
+        </service>
+
+        <!-- Home Screen Widget: Luna (moon phase + song) -->
+        <receiver
+            android:name=".TsukiLunaWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_luna_info" />
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

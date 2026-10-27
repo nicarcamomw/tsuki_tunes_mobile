@@ -28,10 +28,12 @@ import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/firebase_service.dart';
+import 'services/home_widget_service.dart';
 import 'services/media_session_handler.dart';
 import 'services/play_history.dart';
 import 'services/release_radar_service.dart';
 import 'services/storage_service.dart';
+import 'services/tile_channel_service.dart';
 import 'widgets/mask_unlock_banner.dart';
 import 'widgets/moon_atmosphere.dart';
 
@@ -54,6 +56,8 @@ void main() async {
   runApp(TsukiTunesApp(mediaHandler: await _initMediaSession()));
   // After runApp so scheduling and permission plumbing never delay first frame.
   unawaited(ReleaseRadarService().initForeground());
+  unawaited(HomeWidgetService().initialize());
+  unawaited(HomeWidgetService().registerInteractivityCallback());
 }
 
 /// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
@@ -170,7 +174,8 @@ class TsukiTunesApp extends StatelessWidget {
             player.onListenedThreshold = (track) {
               if (!library.isTrackListened(track.id)) library.markTrack(track);
             };
-            return player;
+            TileChannelService.init(audio);
+            return audio;
           },
         ),
         ChangeNotifierProxyProvider2<AudioProvider, LibraryProvider, RunProvider>(
