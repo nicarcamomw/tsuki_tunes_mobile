@@ -18,17 +18,16 @@ import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
-import '../services/song_radio.dart';
 import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
+import 'audio_radio_controller.dart';
+import 'audio_sleep_timer.dart';
 import 'connectivity_provider.dart';
 
 export '../models/playback_error.dart';
 export '../models/repeat_mode.dart';
-export '../services/song_radio.dart' show RadioMode, RadioReason, RadioSource;
-
-enum RadioStatus { loading, ready, offline, exhausted }
+export 'audio_radio_controller.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayerService _service;
@@ -81,18 +80,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // URI last sent to Spotify, to detect playback taken over elsewhere.
   String? _currentSpotifyUri;
 
-  // Sleep timer
-  Timer? _sleepTimer;
-  DateTime? _sleepTimerDeadline;
-  Duration? _sleepTimerRemaining;
-  bool _stopAfterCurrentTrack = false;
-  int? _sleepTimerOriginalMinutes;
-  bool _sleepFadeApplied = false;
-  static const int _sleepFadeSeconds = 20;
+  late final SleepTimerController _sleepCtrl;
 
-  /// Fired when the sleep timer stops the music, so ambient sounds can decide
-  /// whether to keep going.
-  VoidCallback? onSleepTimerFinished;
+  VoidCallback? get onSleepTimerFinished => _sleepCtrl.onFinished;
+  set onSleepTimerFinished(VoidCallback? cb) => _sleepCtrl.onFinished = cb;
 
   // Ambient-only media session state, shown when no track is loaded.
   String? _ambientTitle;
@@ -117,21 +108,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// 80% of the track.
   Function(Track)? onListenedThreshold;
 
-  // Song radio: keeps the queue topped up while active.
-  SongRadio? _radio;
-  RadioStatus _radioStatus = RadioStatus.ready;
-  RadioMode _radioModePref = RadioMode.balanced;
-  Future<bool>? _radioTopUpFuture;
-  static const int _radioLowWater = 4;
-  static const int _radioMaxQueue = 150;
-  static const String _radioModeKey = 'tsuki_radio_mode';
+  late final AudioRadioController _radioCtrl;
 
-  bool get isRadioActive => _radio != null;
-  Track? get radioSeed => _radio?.seed;
-  RadioMode get radioMode => _radio?.mode ?? _radioModePref;
-  RadioStatus get radioStatus => _radioStatus;
-  bool get radioUsesLastFm => _radio?.usesLastFm ?? false;
-  RadioReason? radioReasonFor(String trackId) => _radio?.reasonFor(trackId);
+  bool get isRadioActive => _radioCtrl.isActive;
+  Track? get radioSeed => _radioCtrl.seed;
+  RadioMode get radioMode => _radioCtrl.mode;
+  RadioStatus get radioStatus => _radioCtrl.status;
+  bool get radioUsesLastFm => _radioCtrl.usesLastFm;
+  RadioReason? radioReasonFor(String trackId) => _radioCtrl.reasonFor(trackId);
 
   Track? get currentTrack => _currentTrack;
   List<Track> get queue => _q.tracks;
@@ -323,27 +307,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _autoMarkedGeneration = _playGeneration;
     onListenedThreshold?.call(track);
   }
-  Duration? get sleepTimerRemaining {
-    if (_sleepTimerDeadline != null) {
-      final diff = _sleepTimerDeadline!.difference(DateTime.now());
-      return diff.isNegative ? Duration.zero : diff;
-    }
-    return _sleepTimerRemaining;
-  }
-  bool get isSleepTimerActive =>
-      _sleepTimerDeadline != null || _sleepTimerRemaining != null || _stopAfterCurrentTrack;
-  int? get sleepTimerOriginalMinutes => _sleepTimerOriginalMinutes;
+  Duration? get sleepTimerRemaining => _sleepCtrl.remaining;
+  bool get isSleepTimerActive => _sleepCtrl.isActive;
+  int? get sleepTimerOriginalMinutes => _sleepCtrl.originalMinutes;
   int? get nextShuffleIndex => _q.nextShuffleIndex;
 
   @visibleForTesting
   List<int> get playHistory => _q.history;
 
   @visibleForTesting
-  DateTime? get sleepTimerDeadline => _sleepTimerDeadline;
+  // ignore: invalid_use_of_visible_for_testing_member
+  DateTime? get sleepTimerDeadline => _sleepCtrl.deadline;
 
   @visibleForTesting
   void setSleepTimerDeadlineForTesting(DateTime? deadline) {
-    _sleepTimerDeadline = deadline;
+    // ignore: invalid_use_of_visible_for_testing_member
+    _sleepCtrl.setDeadlineForTesting(deadline);
   }
 
   @visibleForTesting
@@ -399,6 +378,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _connectivityProvider = connectivityProvider {
     if (mediaHandler != null) _attachMediaHandler(mediaHandler);
     _service.loudnessFor = _loudnessFor;
+    _sleepCtrl = SleepTimerController(
+      service: _service,
+      onStateChanged: notifyListeners,
+      onStop: stop,
+    );
+    _radioCtrl = AudioRadioController(
+      queue: _q,
+      onStateChanged: notifyListeners,
+      persistPlaybackState: () async => _persistPlaybackState(),
+      isOnline: () => _online,
+    );
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
     _initSubscriptions();
@@ -414,7 +404,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _persistPlaybackState();
     }
     if (state == AppLifecycleState.resumed) {
-      checkSleepTimer();
+      _sleepCtrl.check();
       _checkBackgroundCompletion();
       if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
@@ -474,7 +464,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Map<String, dynamic>? _radioSnapshot() =>
-      _radio?.toJson(keepReasonsFor: _q.tracks.map((t) => t.id));
+      _radioCtrl.snapshot(_q.tracks.map((t) => t.id));
 
   @visibleForTesting
   void persistPlaybackStateNowForTesting() {
@@ -566,20 +556,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       final rawRadio = state['radio'];
       if (rawRadio is Map) {
-        final radio = SongRadio.fromJson(Map<String, dynamic>.from(rawRadio));
-        if (radio != null) {
-          radio.markQueued(restoredQueue);
-          _radio = radio;
-          _radioModePref = radio.mode;
-          _radioStatus = RadioStatus.ready;
-        }
+        _radioCtrl.restoreFrom(Map<String, dynamic>.from(rawRadio), restoredQueue);
       }
 
       _prefetchNextTrack();
       notifyListeners();
       // Make sure the restored radio has songs lined up before they're due.
-      if (_radio != null) unawaited(_radioTopUp());
-      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue${_radio != null ? ', radio on' : ''})');
+      if (_radioCtrl.isActive) unawaited(_radioCtrl.topUp());
+      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue${_radioCtrl.isActive ? ', radio on' : ''})');
     } catch (e) {
       debugPrint('[AudioProvider] Error restoring playback state: $e');
     }
@@ -1125,8 +1109,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> playTrack(Track track, {List<Track>? newQueue}) async {
     // Playing an album/playlist replaces the radio; picking within the
     // queue keeps it and teaches it whether the last song was skipped.
-    if (newQueue != null) _radio = null;
-    _radioRegisterLeaving(track);
+    if (newQueue != null) _radioCtrl.radio = null;
+    _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
     if (newQueue != null && newQueue.isNotEmpty) _prefetchUpcoming();
 
@@ -1181,7 +1165,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       unawaited(_ensureLoudness(track));
       _persistPlaybackState();
       _prefetchNextTrack();
-      unawaited(_radioTopUp());
+      unawaited(_radioCtrl.topUp());
     } catch (e) {
       if (gen != _playGeneration) return;
       _isBuffering = false;
@@ -1617,7 +1601,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _isPlaying = false;
     _isBuffering = false;
     _position = Duration.zero;
-    _radio = null;
+    _radioCtrl.radio = null;
     notifyListeners();
   }
 
@@ -1740,7 +1724,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _persistPlaybackState();
     notifyListeners();
     // A radio never runs dry: clearing it just means "fresh picks, please".
-    unawaited(_radioTopUp());
+    unawaited(_radioCtrl.topUp());
   }
   @visibleForTesting
   Future<void> handleTrackCompletedForTesting() async {
@@ -1758,24 +1742,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final finished = _currentTrack;
     if (finished != null) onTrackCompleted?.call(finished);
 
-    if (_stopAfterCurrentTrack) {
-      _stopAfterCurrentTrack = false;
-      _sleepTimerDeadline = null;
-      _sleepTimerRemaining = null;
-      stop();
-      onSleepTimerFinished?.call();
-      return;
-    }
+    if (_sleepCtrl.handleTrackEnd()) return;
 
     if (_q.repeatMode == PlaybackRepeatMode.one && _currentTrack != null) {
       playTrack(_currentTrack!);
     } else if (_q.repeatMode == PlaybackRepeatMode.all) {
       next();
     } else if (_q.shouldStopAtEnd()) {
-      if (_radio != null) {
-        // Refill failed to stay ahead (e.g. slow network): wait for it.
+      if (_radioCtrl.isActive) {
         unawaited(
-            _radioTopUp(force: true).then((added) => added ? next() : stop()));
+            _radioCtrl.topUp(force: true).then((added) => added ? next() : stop()));
       } else {
         stop();
       }
@@ -1785,183 +1761,41 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // ---------------------------------------------------------------------------
-  // Song radio
+  // Song radio (delegated to AudioRadioController)
   // ---------------------------------------------------------------------------
 
-  /// Starts an endless radio from [seed]. Returns false when no similar
-  /// songs could be found at all.
-  Future<bool> startRadio(Track seed) async {
-    await _loadRadioModePref();
-    final radio = SongRadio(seed: seed, mode: _radioModePref);
-    _radioTopUpFuture = null;
-    _radioStatus = RadioStatus.loading;
+  Future<bool> startRadio(Track seed) => _radioCtrl.start(
+        seed,
+        currentTrack: _currentTrack,
+        playTrack: playTrack,
+        clearQueue: () {
+          _prefetchedTargetTrackId = null;
+          _q.clear(keep: _currentTrack);
+          _persistPlaybackState();
+        },
+      );
 
-    if (_currentTrack?.id == seed.id) {
-      // Keep the song playing; the radio replaces what comes after it.
-      _radio = radio;
-      _prefetchedTargetTrackId = null;
-      _q.clear(keep: _currentTrack);
-      _persistPlaybackState();
-      notifyListeners();
-    } else {
-      // Assigned after playTrack's synchronous start, so the new radio
-      // doesn't learn from the unrelated song being replaced.
-      final playing = playTrack(seed, newQueue: [seed]);
-      _radio = radio;
-      unawaited(playing);
-    }
+  void stopRadio() => _radioCtrl.stop();
 
-    final added = await _radioTopUp(force: true, count: 10);
-    if (!added && identical(_radio, radio)) {
-      _radio = null;
-      _persistPlaybackState();
-      notifyListeners();
-    }
-    return added;
-  }
+  Future<void> setRadioMode(RadioMode mode) => _radioCtrl.setMode(mode);
 
-  void stopRadio() {
-    if (_radio == null) return;
-    _radio = null;
-    _persistPlaybackState();
-    notifyListeners();
-  }
-
-  Future<void> setRadioMode(RadioMode mode) async {
-    _radioModePref = mode;
-    unawaited(SharedPreferences.getInstance()
-        .then((p) => p.setInt(_radioModeKey, mode.index))
-        .catchError((_) => false));
-    final radio = _radio;
-    if (radio == null || radio.mode == mode) {
-      notifyListeners();
-      return;
-    }
-    radio.setMode(mode);
-    _persistPlaybackState();
-    await _radioReplaceUpcoming(keep: 1);
-  }
-
-  /// Steers the radio toward the current song.
   Future<void> radioMoreLikeThis() async {
-    final radio = _radio;
     final track = _currentTrack;
-    if (radio == null || track == null) return;
-    radio.moreLikeThis(track);
-    await _radioReplaceUpcoming(keep: 1);
+    if (track == null) return;
+    await _radioCtrl.moreLikeThis(track);
   }
 
-  /// Bans the current artist from this radio and skips the song.
   Future<void> radioLessLikeThis() async {
-    final radio = _radio;
     final track = _currentTrack;
-    if (radio == null || track == null) return;
-    radio.lessLikeThis(track);
-    if (!_q.isShuffle) {
-      for (var i = _q.length - 1; i > _q.currentIndex; i--) {
-        if (radio.isBanned(_q.tracks[i])) _q.removeAt(i);
-      }
-    }
-    _prefetchedTargetTrackId = null;
-    await _radioTopUp(force: true);
-    await next();
-  }
-
-  Future<void> _loadRadioModePref() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final i = prefs.getInt(_radioModeKey);
-      if (i != null && i >= 0 && i < RadioMode.values.length) {
-        _radioModePref = RadioMode.values[i];
-      }
-    } catch (_) {}
-  }
-
-  /// Teaches the radio how much of the outgoing song was heard.
-  void _radioRegisterLeaving(Track incoming, {bool completed = false}) {
-    final radio = _radio;
-    final leaving = _currentTrack;
-    if (radio == null || leaving == null || leaving.id == incoming.id) return;
-    final total = _duration.inMilliseconds;
-    final fraction = completed
-        ? 1.0
-        : (total > 0 ? (_position.inMilliseconds / total).clamp(0.0, 1.0) : 0.0);
-    radio.registerPlayed(leaving, fraction);
-  }
-
-  int _radioRemaining() {
-    if (_q.isShuffle) {
-      final heard = {..._q.history, _q.currentIndex};
-      return _q.length - heard.length;
-    }
-    return _q.length - _q.currentIndex - 1;
-  }
-
-  /// Single-flight refill: concurrent callers share the same request.
-  Future<bool> _radioTopUp({bool force = false, int count = 8}) {
-    if (_radio == null) return Future.value(false);
-    if (!force && _radioRemaining() >= _radioLowWater) return Future.value(true);
-    return _radioTopUpFuture ??=
-        _doRadioTopUp(count).whenComplete(() => _radioTopUpFuture = null);
-  }
-
-  Future<bool> _doRadioTopUp(int count) async {
-    final radio = _radio;
-    if (radio == null) return false;
-    _radioStatus = RadioStatus.loading;
-    notifyListeners();
-
-    List<Track> batch;
-    try {
-      batch = await radio.nextBatch(count: count);
-    } catch (e) {
-      debugPrint('[AudioProvider] radio refill failed: $e');
-      batch = const [];
-    }
-    if (!identical(_radio, radio)) return false;
-
-    final added = _q.append(batch);
-    _trimRadioHistory();
-    _radioStatus = added > 0
-        ? RadioStatus.ready
-        : (_online ? RadioStatus.exhausted : RadioStatus.offline);
-    if (added > 0) {
-      _prefetchNextTrack();
-      _persistPlaybackState();
-    }
-    notifyListeners();
-    return added > 0;
-  }
-
-  /// Endless queues would grow forever: forget most of what was played.
-  void _trimRadioHistory() {
-    if (_q.isShuffle || _q.length <= _radioMaxQueue) return;
-    final drop = _q.currentIndex - 30;
-    if (drop > 0) _q.dropBefore(drop);
-  }
-
-  /// Swaps the radio's upcoming picks for fresh ones (mode change, "more
-  /// like this"), keeping the next [keep] songs and anything the user queued.
-  Future<void> _radioReplaceUpcoming({required int keep}) async {
-    final radio = _radio;
-    if (radio == null) return;
-    if (!_q.isShuffle) {
-      final firstReplaceable = _q.currentIndex + 1 + keep;
-      for (var i = _q.length - 1; i >= firstReplaceable; i--) {
-        final reason = radio.reasonFor(_q.tracks[i].id);
-        if (reason != null && reason.source != RadioSource.seed) _q.removeAt(i);
-      }
-    }
-    _prefetchedTargetTrackId = null;
-    notifyListeners();
-    await _radioTopUp(force: true);
+    if (track == null) return;
+    await _radioCtrl.lessLikeThis(track, next: next);
   }
 
   void _checkCrossfade(Duration pos) {
     if (_q.repeatMode == PlaybackRepeatMode.one) return;
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered) return;
     if (_useSpotify && !_spotifyFallbackActive) return;
-    if (_stopAfterCurrentTrack) return;
+    if (_sleepCtrl.stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
     if (pos.inSeconds < 2) return;
 
@@ -1974,7 +1808,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _checkSpotifyCrossfade() {
     if (_q.repeatMode == PlaybackRepeatMode.one) return;
     if (_crossfadeSeconds <= 0 || _crossfadeTriggered) return;
-    if (_stopAfterCurrentTrack) return;
+    if (_sleepCtrl.stopAfterCurrentTrack) return;
     if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
     if (_position.inSeconds < 2) return;
 
@@ -1996,7 +1830,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final outgoing = _currentTrack;
     if (outgoing != null) onTrackCompleted?.call(outgoing);
 
-    _radioRegisterLeaving(nextTrack, completed: true);
+    _radioCtrl.registerLeaving(nextTrack, _currentTrack, _position, _duration, completed: true);
     _currentTrack = nextTrack;
     _position = Duration.zero;
     _duration = Duration(
@@ -2009,7 +1843,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     onTrackStarted?.call(nextTrack);
     unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
-    unawaited(_radioTopUp());
+    unawaited(_radioCtrl.topUp());
 
     try {
       await _playViaSpotify(nextTrack);
@@ -2036,7 +1870,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
-    _radioRegisterLeaving(nextTrack, completed: true);
+    _radioCtrl.registerLeaving(nextTrack, _currentTrack, _position, _duration, completed: true);
     final outgoing = _currentTrack;
     if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = nextTrack;
@@ -2052,7 +1886,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     onTrackStarted?.call(nextTrack);
     unawaited(_ensureLoudness(nextTrack));
     _prefetchNextTrack();
-    unawaited(_radioTopUp());
+    unawaited(_radioCtrl.topUp());
 
     try {
       final freshNext = await _withFreshPreview(nextTrack);
@@ -2070,79 +1904,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  void setSleepTimer(Duration? duration) {
-    _sleepTimer?.cancel();
-    _sleepTimer = null;
-    _restoreSleepFade();
+  void setSleepTimer(Duration? duration) => _sleepCtrl.set(duration);
 
-    if (duration == null) {
-      _sleepTimerDeadline = null;
-      _sleepTimerRemaining = null;
-      _stopAfterCurrentTrack = false;
-      _sleepTimerOriginalMinutes = null;
-      notifyListeners();
-      return;
-    }
-
-    if (duration == Duration.zero) {
-      _sleepTimerDeadline = null;
-      _stopAfterCurrentTrack = true;
-      _sleepTimerRemaining = null;
-      _sleepTimerOriginalMinutes = 0;
-      notifyListeners();
-      return;
-    }
-
-    _sleepTimerDeadline = DateTime.now().add(duration);
-    _sleepTimerRemaining = duration;
-    _stopAfterCurrentTrack = false;
-    _sleepTimerOriginalMinutes = duration.inMinutes;
-    notifyListeners();
-
-    _sleepTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      checkSleepTimer();
-    });
-  }
-
-  void checkSleepTimer() {
-    if (_sleepTimerDeadline == null) {
-      _sleepTimer?.cancel();
-      _sleepTimer = null;
-      return;
-    }
-    final remaining = _sleepTimerDeadline!.difference(DateTime.now());
-    if (remaining.inSeconds <= 0) {
-      _sleepTimer?.cancel();
-      _sleepTimer = null;
-      _sleepTimerDeadline = null;
-      _sleepTimerRemaining = null;
-      _stopAfterCurrentTrack = false;
-      _sleepTimerOriginalMinutes = null;
-      _sleepFadeApplied = false;
-      stop();
-      onSleepTimerFinished?.call();
-    } else {
-      _sleepTimerRemaining = remaining;
-      _applySleepFade(remaining);
-      notifyListeners();
-    }
-  }
-
-  /// Lowers the preview volume over the last seconds so the music doesn't
-  /// cut off abruptly. Spotify volume can't be controlled from here.
-  void _applySleepFade(Duration remaining) {
-    if (_spotifyActive && !_spotifyFallbackActive) return;
-    if (remaining.inSeconds > _sleepFadeSeconds) return;
-    _sleepFadeApplied = true;
-    final level = remaining.inMilliseconds / (_sleepFadeSeconds * 1000);
-    unawaited(_service.setVolume(level.clamp(0.0, 1.0)));
-  }
-
-  void _restoreSleepFade() {
-    if (!_sleepFadeApplied) return;
-    _sleepFadeApplied = false;
-    unawaited(_service.setVolume(1.0));
-  }
+  void checkSleepTimer() => _sleepCtrl.check();
 
   @override
   void dispose() {
@@ -2155,7 +1919,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _eventSub?.cancel();
     _stopPositionTimer();
     _retryTimer?.cancel();
-    _sleepTimer?.cancel();
+    _sleepCtrl.dispose();
     _nativePlayer.dispose();
     _service.dispose();
     super.dispose();
