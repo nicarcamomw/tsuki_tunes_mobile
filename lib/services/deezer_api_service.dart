@@ -9,6 +9,7 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
 import '../models/track.dart';
+import 'api_disk_cache.dart';
 import 'contracts/music_api_contract.dart';
 
 class _CacheEntry {
@@ -33,11 +34,19 @@ class DeezerApiService implements MusicApiContract {
 
   final Map<String, _CacheEntry> _cache = {};
   final Map<String, Future> _inFlight = {};
+  final ApiDiskCache _diskCache = ApiDiskCache();
+
+  Future<void> initDiskCache() => _diskCache.init();
 
   static const int _searchTtlMinutes = 120;
   static const int _entityTtlMinutes = 1440;
+  static const int _chartTtlMinutes = 60;
   static const int _minArtistFans = 5000;
   static const int _minTrackRank = 10000;
+
+  static const Duration _entityDiskTtl = Duration(hours: 24);
+  static const Duration _chartDiskTtl = Duration(hours: 1);
+  static const Duration _searchDiskTtl = Duration(hours: 2);
 
   static const List<String> _corsProxies = [
     'https://api.allorigins.win/raw?url=',
@@ -63,9 +72,9 @@ class DeezerApiService implements MusicApiContract {
     return null;
   }
 
-  void _setCache(String key, dynamic data, {bool isSearch = false}) {
+  void _setCache(String key, dynamic data, {int? ttlMinutes}) {
     _pruneCache();
-    final ttl = isSearch ? _searchTtlMinutes : _entityTtlMinutes;
+    final ttl = ttlMinutes ?? _entityTtlMinutes;
     _cache[key] = _CacheEntry(data, DateTime.now().add(Duration(minutes: ttl)));
   }
 
@@ -165,6 +174,34 @@ class DeezerApiService implements MusicApiContract {
     }
   }
 
+  /// Memory-miss path: check disk → hit network → fall back to stale disk.
+  /// Callers must check in-memory cache first.
+  Future<dynamic> _resolveJson({
+    required String cacheKey,
+    required String url,
+    Duration diskTtl = _entityDiskTtl,
+    bool throwOnError = false,
+  }) async {
+    final diskData = await _diskCache.get(cacheKey);
+    if (diskData != null) return diskData;
+
+    try {
+      final data = await _fetchJson(url, throwOnError: throwOnError);
+      if (data != null) {
+        unawaited(_diskCache.put(cacheKey, data, diskTtl));
+        return data;
+      }
+    } catch (e) {
+      if (e is DeezerApiException) {
+        final stale = await _diskCache.getStale(cacheKey);
+        if (stale != null) return stale;
+        rethrow;
+      }
+    }
+
+    return await _diskCache.getStale(cacheKey);
+  }
+
   // --- Parallel search (like web: 3 endpoints) ---
 
   /// Parallel search across artists, albums, and tracks.
@@ -191,7 +228,7 @@ class DeezerApiService implements MusicApiContract {
         'tracks': results[2] as List<Track>,
       };
 
-      _setCache(cacheKey, result, isSearch: true);
+      _setCache(cacheKey, result, ttlMinutes: _searchTtlMinutes);
       return result;
     });
   }
@@ -203,8 +240,10 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
-    final data = await _fetchJson(
-      ApiEndpoints.searchArtists(query, limit: limit),
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.searchArtists(query, limit: limit),
+      diskTtl: _searchDiskTtl,
       throwOnError: true,
     );
     if (data is Map<String, dynamic>) {
@@ -212,7 +251,7 @@ class DeezerApiService implements MusicApiContract {
       final all = items.map((item) => Artist.fromJson(item)).toList();
       final filtered = all.where((a) => a.fansCount >= _minArtistFans).toList();
       final artists = filtered.isNotEmpty ? filtered : all;
-      _setCache(cacheKey, artists, isSearch: true);
+      _setCache(cacheKey, artists, ttlMinutes: _searchTtlMinutes);
       return artists;
     }
     return [];
@@ -225,14 +264,16 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Album>>(cacheKey);
     if (cached != null) return cached;
 
-    final data = await _fetchJson(
-      ApiEndpoints.searchAlbums(query, limit: limit),
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.searchAlbums(query, limit: limit),
+      diskTtl: _searchDiskTtl,
       throwOnError: true,
     );
     if (data is Map<String, dynamic>) {
       final List items = data['data'] ?? [];
       final albums = items.map((item) => Album.fromJson(item)).toList();
-      _setCache(cacheKey, albums, isSearch: true);
+      _setCache(cacheKey, albums, ttlMinutes: _searchTtlMinutes);
       return albums;
     }
     return [];
@@ -245,8 +286,10 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
-    final data = await _fetchJson(
-      ApiEndpoints.searchTracks(query, limit: limit),
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.searchTracks(query, limit: limit),
+      diskTtl: _searchDiskTtl,
       throwOnError: true,
     );
     if (data is Map<String, dynamic>) {
@@ -254,7 +297,7 @@ class DeezerApiService implements MusicApiContract {
       final all = items.map((item) => Track.fromJson(item)).toList();
       final filtered = all.where((t) => t.rank == null || t.rank! >= _minTrackRank).toList();
       final tracks = filtered.isNotEmpty ? filtered : all;
-      _setCache(cacheKey, tracks, isSearch: true);
+      _setCache(cacheKey, tracks, ttlMinutes: _searchTtlMinutes);
       return tracks;
     }
     return [];
@@ -272,16 +315,16 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
-    try {
-      final data = await _fetchJson(ApiEndpoints.chartTracks);
-      if (data is Map<String, dynamic>) {
-        final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
-        _setCache(cacheKey, tracks);
-        return tracks;
-      }
-    } catch (e) {
-      debugPrint('[DeezerAPI] getChartTracks error: $e');
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.chartTracks,
+      diskTtl: _chartDiskTtl,
+    );
+    if (data is Map<String, dynamic>) {
+      final List list = data['data'] ?? [];
+      final tracks = list.map((item) => Track.fromJson(item)).toList();
+      _setCache(cacheKey, tracks, ttlMinutes: _chartTtlMinutes);
+      return tracks;
     }
     return [];
   }
@@ -313,16 +356,16 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
-    try {
-      final data = await _fetchJson(ApiEndpoints.chartTracksLarge);
-      if (data is Map<String, dynamic>) {
-        final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
-        _setCache(cacheKey, tracks);
-        return tracks;
-      }
-    } catch (e) {
-      debugPrint('[DeezerAPI] getLargeChartTracks error: $e');
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.chartTracksLarge,
+      diskTtl: _chartDiskTtl,
+    );
+    if (data is Map<String, dynamic>) {
+      final List list = data['data'] ?? [];
+      final tracks = list.map((item) => Track.fromJson(item)).toList();
+      _setCache(cacheKey, tracks, ttlMinutes: _chartTtlMinutes);
+      return tracks;
     }
     return [];
   }
@@ -333,16 +376,16 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
-    try {
-      final data = await _fetchJson(ApiEndpoints.chartArtists);
-      if (data is Map<String, dynamic>) {
-        final List list = data['data'] ?? [];
-        final artists = list.map((item) => Artist.fromJson(item)).toList();
-        _setCache(cacheKey, artists);
-        return artists;
-      }
-    } catch (e) {
-      debugPrint('[DeezerAPI] getChartArtists error: $e');
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.chartArtists,
+      diskTtl: _chartDiskTtl,
+    );
+    if (data is Map<String, dynamic>) {
+      final List list = data['data'] ?? [];
+      final artists = list.map((item) => Artist.fromJson(item)).toList();
+      _setCache(cacheKey, artists, ttlMinutes: _chartTtlMinutes);
+      return artists;
     }
     return [];
   }
@@ -378,15 +421,15 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(ApiEndpoints.artist(id));
-        if (data is Map<String, dynamic>) {
-          final artist = Artist.fromJson(data);
-          _setCache(cacheKey, artist);
-          return artist;
-        }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getArtist($id) error: $e');
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.artist(id),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final artist = Artist.fromJson(data);
+        _setCache(cacheKey, artist);
+        return artist;
       }
       return null;
     });
@@ -399,17 +442,16 @@ class DeezerApiService implements MusicApiContract {
     final cached = _getCached<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
-    try {
-      final data =
-          await _fetchJson(ApiEndpoints.artistTopTracks(artistId, limit: limit));
-      if (data is Map<String, dynamic>) {
-        final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
-        _setCache(cacheKey, tracks);
-        return tracks;
-      }
-    } catch (e) {
-      debugPrint('[DeezerAPI] getArtistTopTracks($artistId) error: $e');
+    final data = await _resolveJson(
+      cacheKey: cacheKey,
+      url: ApiEndpoints.artistTopTracks(artistId, limit: limit),
+      diskTtl: _entityDiskTtl,
+    );
+    if (data is Map<String, dynamic>) {
+      final List list = data['data'] ?? [];
+      final tracks = list.map((item) => Track.fromJson(item)).toList();
+      _setCache(cacheKey, tracks);
+      return tracks;
     }
     return [];
   }
@@ -425,34 +467,32 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(
-            ApiEndpoints.artistAlbums(artistId, limit: limit, index: index));
-        if (data is Map<String, dynamic>) {
-          final List list = data['data'] ?? [];
-          final items = list.map((item) {
-            final album = Album.fromJson(item);
-            if (album.artistId.isEmpty) {
-              return album.copyWith(artistId: artistId);
-            }
-            return album;
-          }).toList();
-          final int total =
-              (data['total'] is int) ? data['total'] : items.length;
-          final bool hasMore =
-              (index + items.length) < total && items.isNotEmpty;
-          final page = ArtistAlbumsPage(
-            items: items,
-            total: total,
-            hasMore: hasMore,
-            nextIndex: index + items.length,
-          );
-          _setCache(cacheKey, page);
-          return page;
-        }
-      } catch (e) {
-        debugPrint(
-            '[DeezerAPI] getArtistAlbumsPage($artistId, index: $index) error: $e');
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.artistAlbums(artistId, limit: limit, index: index),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        final items = list.map((item) {
+          final album = Album.fromJson(item);
+          if (album.artistId.isEmpty) {
+            return album.copyWith(artistId: artistId);
+          }
+          return album;
+        }).toList();
+        final int total =
+            (data['total'] is int) ? data['total'] : items.length;
+        final bool hasMore =
+            (index + items.length) < total && items.isNotEmpty;
+        final page = ArtistAlbumsPage(
+          items: items,
+          total: total,
+          hasMore: hasMore,
+          nextIndex: index + items.length,
+        );
+        _setCache(cacheKey, page);
+        return page;
       }
       return ArtistAlbumsPage.empty;
     });
@@ -465,20 +505,19 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(
-            ApiEndpoints.artistCompilations(artistId, limit: limit));
-        if (data is Map<String, dynamic>) {
-          final List list = data['data'] ?? [];
-          final items = list.map((item) {
-            final album = Album.fromJson(item);
-            return album.copyWith(recordType: 'compile');
-          }).toList();
-          _setCache(cacheKey, items);
-          return items;
-        }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getArtistCompilations($artistId) error: $e');
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.artistCompilations(artistId, limit: limit),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        final items = list.map((item) {
+          final album = Album.fromJson(item);
+          return album.copyWith(recordType: 'compile');
+        }).toList();
+        _setCache(cacheKey, items);
+        return items;
       }
       return <Album>[];
     });
@@ -517,15 +556,15 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(ApiEndpoints.album(albumId));
-        if (data is Map<String, dynamic>) {
-          final album = Album.fromJson(data);
-          _setCache(cacheKey, album);
-          return album;
-        }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getAlbum($albumId) error: $e');
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.album(albumId),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final album = Album.fromJson(data);
+        _setCache(cacheKey, album);
+        return album;
       }
       return null;
     });
@@ -538,15 +577,30 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(ApiEndpoints.track(trackId));
-        if (data is Map<String, dynamic>) {
-          final track = Track.fromJson(data);
-          _setCache(cacheKey, track);
-          return track;
+      if (forceRefresh) {
+        // Skip disk cache on force refresh, go straight to network
+        try {
+          final data = await _fetchJson(ApiEndpoints.track(trackId));
+          if (data is Map<String, dynamic>) {
+            unawaited(_diskCache.put(cacheKey, data, _entityDiskTtl));
+            final track = Track.fromJson(data);
+            _setCache(cacheKey, track);
+            return track;
+          }
+        } catch (e) {
+          debugPrint('[DeezerAPI] getTrack($trackId) error: $e');
         }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getTrack($trackId) error: $e');
+        return null;
+      }
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.track(trackId),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final track = Track.fromJson(data);
+        _setCache(cacheKey, track);
+        return track;
       }
       return null;
     });
@@ -558,17 +612,16 @@ class DeezerApiService implements MusicApiContract {
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
-      try {
-        final data = await _fetchJson(
-            ApiEndpoints.artistRelated(artistId, limit: limit));
-        if (data is Map<String, dynamic>) {
-          final List list = data['data'] ?? [];
-          final artists = list.map((item) => Artist.fromJson(item)).toList();
-          _setCache(cacheKey, artists);
-          return artists;
-        }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getRelatedArtists($artistId) error: $e');
+      final data = await _resolveJson(
+        cacheKey: cacheKey,
+        url: ApiEndpoints.artistRelated(artistId, limit: limit),
+        diskTtl: _entityDiskTtl,
+      );
+      if (data is Map<String, dynamic>) {
+        final List list = data['data'] ?? [];
+        final artists = list.map((item) => Artist.fromJson(item)).toList();
+        _setCache(cacheKey, artists);
+        return artists;
       }
       return <Artist>[];
     });
@@ -618,7 +671,10 @@ class DeezerApiService implements MusicApiContract {
   }
 
   @override
-  void clearCache() => _cache.clear();
+  void clearCache() {
+    _cache.clear();
+    unawaited(_diskCache.clear());
+  }
 }
 
 /// Custom exception for Deezer API errors — allows callers to distinguish
