@@ -9,12 +9,15 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../models/lyrics_search_result.dart';
+import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/search_provider.dart';
 import '../services/deezer_api_service.dart';
+import '../services/voice_search_service.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
+import '../widgets/voice_search_sheet.dart';
 import 'main_navigation_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -30,12 +33,19 @@ class _SearchScreenState extends State<SearchScreen> {
   Timer? _debounce;
   int _selectedTabIndex = 0;
   String _lastAnnouncedQuery = '';
+  bool _voiceAvailable = false;
 
   @override
   void initState() {
     super.initState();
     NavigationEvents.onSearchFocus = focusSearchInput;
     NavigationEvents.onSearchClear = clearAndFocus;
+    _initVoice();
+  }
+
+  Future<void> _initVoice() async {
+    final available = await VoiceSearchService().initialize();
+    if (mounted) setState(() => _voiceAvailable = available);
   }
 
   @override
@@ -73,6 +83,38 @@ class _SearchScreenState extends State<SearchScreen> {
         provider.search(query);
       }
     });
+  }
+
+  Future<void> _startVoiceSearch() async {
+    HapticFeedback.lightImpact();
+    FocusScope.of(context).unfocus();
+    final locale = context.read<LocaleProvider>();
+    final voiceService = VoiceSearchService();
+
+    final spokenText = await VoiceSearchSheet.show(
+      context,
+      localeId: voiceService.localeForLanguage(locale.language.code),
+      langCode: locale.language.code,
+    );
+
+    if (!mounted || spokenText == null || spokenText.isEmpty) return;
+
+    final command = VoiceSearchService.parseCommand(spokenText);
+    if (command.query.isEmpty) return;
+
+    _controller.text = command.query;
+    final search = context.read<SearchProvider>();
+
+    if (command.action == VoiceAction.play) {
+      await search.search(command.query);
+      if (search.tracks.isNotEmpty && mounted) {
+        HapticFeedback.mediumImpact();
+        final audio = context.read<AudioProvider>();
+        await audio.playTrack(search.tracks.first, newQueue: search.tracks);
+      }
+    } else {
+      search.search(command.query);
+    }
   }  @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchProvider>();
@@ -187,14 +229,21 @@ class _SearchScreenState extends State<SearchScreen> {
                       suffixIcon: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _controller,
                         builder: (context, value, _) {
-                          if (value.text.isEmpty) return const SizedBox.shrink();
+                          if (value.text.isNotEmpty) {
+                            return IconButton(
+                              icon: Icon(Icons.clear, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
+                              tooltip: strings.a11yClearSearch,
+                              onPressed: () {
+                                _controller.clear();
+                                search.clear();
+                              },
+                            );
+                          }
+                          if (!_voiceAvailable) return const SizedBox.shrink();
                           return IconButton(
-                            icon: Icon(Icons.clear, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
-                            tooltip: strings.a11yClearSearch,
-                            onPressed: () {
-                              _controller.clear();
-                              search.clear();
-                            },
+                            icon: const Icon(Icons.mic, color: AppColors.accent, size: 20),
+                            tooltip: strings.a11yVoiceSearch,
+                            onPressed: _startVoiceSearch,
                           );
                         },
                       ),

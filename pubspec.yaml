@@ -46,6 +46,9 @@ dependencies:
   # Home Screen Widgets
   home_widget: ^0.7.0
 
+  # Voice Search (on-device speech recognition)
+  speech_to_text: ^6.6.2
+
   # Release radar: daily background check + local notifications
   workmanager: ^0.10.10
   flutter_local_notifications: ^19.4.2
