@@ -51,6 +51,16 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The app pins a preview NDK; Gradle can't auto-install it until its
+      # preview license is accepted. The version is read from the build file
+      # so the two never drift.
+      - name: Install pinned Android NDK
+        run: |
+          NDK_VERSION=$(sed -n 's/.*ndkVersion = "\([^"]*\)".*/\1/p' android/app/build.gradle.kts)
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install "ndk;$NDK_VERSION"
+
       # Signed with the debug key unless android/key.properties exists (see
       # android/app/build.gradle.kts). LASTFM_API_KEY is optional: without
       # it the song radio uses Deezer only.
