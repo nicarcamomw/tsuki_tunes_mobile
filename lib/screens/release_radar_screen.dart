@@ -590,7 +590,7 @@ class _NotifyRow extends StatelessWidget {
             child: SwitchListTile(
               value: enabled,
               onChanged: onToggle,
-              activeColor: AppColors.accent,
+              activeThumbColor: AppColors.accent,
               contentPadding: const EdgeInsets.symmetric(horizontal: 14),
               secondary: Icon(
                 enabled

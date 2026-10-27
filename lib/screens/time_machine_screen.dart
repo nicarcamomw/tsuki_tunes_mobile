@@ -262,7 +262,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
                     setState(() => _notify = v);
                     _service.setNotificationsEnabled(v);
                   },
-                  activeColor: AppColors.neonPurple,
+                  activeThumbColor: AppColors.neonPurple,
                   secondary: Icon(
                     _notify
                         ? Icons.notifications_active_outlined
