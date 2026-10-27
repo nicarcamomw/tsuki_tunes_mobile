@@ -33,14 +33,25 @@ void main() {
       );
     });
 
-    test('rejects different artistId', () {
+    test('rejects different artistId when name also differs', () {
       expect(
         AlbumCategorizer.isOwnRelease(
-          _album('1', artistId: '99'),
+          _album('1', artistId: '99', artistName: 'Other'),
           artistId: ownId,
           artistName: ownName,
         ),
         isFalse,
+      );
+    });
+
+    test('matches by name when artistId differs but name matches', () {
+      expect(
+        AlbumCategorizer.isOwnRelease(
+          _album('1', artistId: '99', artistName: 'Main Artist'),
+          artistId: ownId,
+          artistName: ownName,
+        ),
+        isTrue,
       );
     });
 

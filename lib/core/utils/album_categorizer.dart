@@ -7,7 +7,7 @@ class AlbumCategorizer {
   AlbumCategorizer._();
 
   static bool isOwnRelease(Album album, {required String artistId, required String artistName}) {
-    if (album.artistId.isNotEmpty) return album.artistId == artistId;
+    if (album.artistId.isNotEmpty && album.artistId == artistId) return true;
     return album.artistName.toLowerCase().trim() ==
         artistName.toLowerCase().trim();
   }
