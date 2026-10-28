@@ -970,6 +970,12 @@ class AppStrings {
         AppLanguage.ja => '装備中',
       };
 
+  String get maskUnequip => switch (language) {
+        AppLanguage.es => 'DESEQUIPAR',
+        AppLanguage.en => 'UNEQUIP',
+        AppLanguage.ja => '外す',
+      };
+
   String maskUnlockedOn(String date) => switch (language) {
         AppLanguage.es => 'Desbloqueada el $date',
         AppLanguage.en => 'Unlocked on $date',

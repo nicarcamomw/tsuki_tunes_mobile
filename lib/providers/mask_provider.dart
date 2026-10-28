@@ -114,7 +114,11 @@ class MaskProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_unlockedKey,
           jsonEncode(_unlocked.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))));
-      if (_equipped != null) await prefs.setString(_equippedKey, _equipped!);
+      if (_equipped != null) {
+        await prefs.setString(_equippedKey, _equipped!);
+      } else {
+        await prefs.remove(_equippedKey);
+      }
       await prefs.setString(_statsKey, _stats.encode());
     } catch (e) {
       debugPrint('[Masks] save error: $e');
@@ -225,6 +229,14 @@ class MaskProvider extends ChangeNotifier {
     notifyListeners();
     unawaited(_saveLocal());
     unawaited(_writeCloud({'equipped': id}));
+  }
+
+  void unequip() {
+    if (_equipped == null) return;
+    _equipped = null;
+    notifyListeners();
+    unawaited(_saveLocal());
+    unawaited(_writeCloud({'equipped': null}));
   }
 
   void dismissCelebration() {

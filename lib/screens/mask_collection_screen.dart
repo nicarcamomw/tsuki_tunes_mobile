@@ -417,22 +417,23 @@ class _MaskDetail extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: isEquipped
-                      ? null
-                      : () {
-                          HapticFeedback.mediumImpact();
-                          masks.equip(mask.id);
-                        },
-                  icon: Icon(isEquipped ? Icons.check_rounded : Icons.face_retouching_natural, size: 18),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    if (isEquipped) {
+                      masks.unequip();
+                    } else {
+                      masks.equip(mask.id);
+                    }
+                  },
+                  icon: Icon(isEquipped ? Icons.close_rounded : Icons.face_retouching_natural, size: 18),
                   label: Text(
-                    isEquipped ? strings.maskEquipped : strings.maskEquip,
+                    isEquipped ? strings.maskUnequip : strings.maskEquip,
                     style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isEquipped ? rColor : Colors.white,
-                    backgroundColor: isEquipped ? rColor.withValues(alpha: 0.10) : rColor.withValues(alpha: 0.25),
-                    disabledForegroundColor: rColor,
-                    side: BorderSide(color: rColor, width: 1.5),
+                    foregroundColor: isEquipped ? AppColors.textSecondary : Colors.white,
+                    backgroundColor: isEquipped ? AppColors.bgMid.withValues(alpha: 0.5) : rColor.withValues(alpha: 0.25),
+                    side: BorderSide(color: isEquipped ? AppColors.border : rColor, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
