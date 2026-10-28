@@ -23,6 +23,7 @@ import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
 import '../services/time_machine_service.dart';
 import '../widgets/album_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/moon_button.dart';
@@ -902,20 +903,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withValues(alpha: highlight ? 0.18 : 0.08),
-                AppColors.bgCard,
-              ],
-            ),
-            border: Border.all(color: color.withValues(alpha: highlight ? 0.6 : 0.3)),
-          ),
+        child: GlassCard(
+          color: color,
+          highlightAlpha: highlight ? 0.18 : 0.08,
+          dimAlpha: highlight ? 0.08 : 0.03,
+          borderAlpha: highlight ? 0.6 : 0.3,
           child: Row(
             children: [
               Icon(icon, color: color, size: 22),
@@ -1375,17 +1367,13 @@ class _WrappedEntryCard extends StatelessWidget {
             MaterialPageRoute(builder: (_) => WrappedScreen(year: year)),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.accent,
+          highlightAlpha: 0.12,
+          dimAlpha: 0.04,
+          borderAlpha: 0.4,
+          borderRadius: 6,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1A0808), Color(0xFF0A0A1A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
-          ),
           child: Column(
             children: [
               Container(
@@ -1454,18 +1442,13 @@ class _ListeningClockEntryCard extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const ListeningClockScreen()),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.neonCyan,
+          highlightAlpha: 0.08,
+          dimAlpha: 0.03,
+          borderAlpha: 0.3,
+          borderRadius: 6,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF08101A), Color(0xFF0A0A14)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-                color: AppColors.neonCyan.withValues(alpha: 0.3)),
-          ),
           child: Column(
             children: [
               Container(
@@ -1536,19 +1519,14 @@ class _RabbitHoleEntryCard extends StatelessWidget {
             ),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.neonPurple,
+          highlightAlpha: 0.10,
+          dimAlpha: 0.04,
+          borderAlpha: 0.3,
+          borderRadius: 6,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF100A1A), Color(0xFF0A0814)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border:
-                Border.all(color: AppColors.neonPurple.withValues(alpha: 0.3)),
-          ),
           child: Row(
             children: [
               Container(
@@ -1642,23 +1620,16 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
                         builder: (_) => const ReleaseRadarScreen()),
                   );
                 },
-                child: Container(
+                child: GlassCard(
+                  color: accent,
+                  highlightAlpha: hasNews ? 0.12 : 0.08,
+                  dimAlpha: hasNews ? 0.04 : 0.03,
+                  borderAlpha: hasNews ? 0.55 : 0.3,
+                  borderRadius: 6,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: hasNews
-                          ? const [Color(0xFF1A0A0A), Color(0xFF0A0A14)]
-                          : const [Color(0xFF0A1418), Color(0xFF0A0A14)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: accent.withValues(alpha: hasNews ? 0.55 : 0.3)),
-                  ),
                   child: Row(
                     children: [
                       Stack(
@@ -1744,3 +1715,4 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
     );
   }
 }
+

@@ -15,6 +15,7 @@ import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
 import '../services/time_machine_service.dart';
+import '../widgets/glass_card.dart';
 import 'main_navigation_screen.dart';
 
 enum _Period { year, sixMonths, month, week, random }
@@ -760,19 +761,14 @@ class _TimeMachineEntryCardState extends State<TimeMachineEntryCard> {
             MaterialPageRoute(builder: (_) => const TimeMachineScreen()),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.neonPurple,
+          highlightAlpha: 0.10,
+          dimAlpha: 0.04,
+          borderAlpha: 0.35,
+          borderRadius: 6,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF120A1E), Color(0xFF0A0A14)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border:
-                Border.all(color: AppColors.neonPurple.withValues(alpha: 0.35)),
-          ),
           child: Row(
             children: [
               Container(
