@@ -149,15 +149,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final audio = context.read<AudioProvider>();
-    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
-    final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
-    final isBuffering = context.select<AudioProvider, bool>((a) => a.isBuffering);
-    final isShuffle = context.select<AudioProvider, bool>((a) => a.isShuffle);
-    final repeatMode = context.select<AudioProvider, PlaybackRepeatMode>((a) => a.repeatMode);
-    final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
-    final radioActive = context.select<AudioProvider, bool>((a) => a.isRadioActive);
-    final playbackError =
-        context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
+    final (track, isPlaying, isBuffering, isShuffle, repeatMode, useSpotify, radioActive, playbackError) =
+        context.select<AudioProvider, (Track?, bool, bool, bool, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.isShuffle, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
     // Only this track's listened flag: watching the whole library would rebuild
     // the player on every sync and history update.
     final isListened = context.select<LibraryProvider, bool>(

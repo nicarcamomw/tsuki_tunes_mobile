@@ -849,6 +849,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: ListView.builder(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
+              cacheExtent: 200,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: search.artists.length,
               itemBuilder: (context, i) => ArtistCard(artist: search.artists[i]),
@@ -878,6 +879,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: ListView.builder(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
+              cacheExtent: 200,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: search.albums.length,
               itemBuilder: (context, i) => AlbumCard(album: search.albums[i]),

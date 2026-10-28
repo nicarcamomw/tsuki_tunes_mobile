@@ -159,6 +159,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         backgroundColor: AppColors.bgCard,
         onRefresh: _loadAlbumDetails,
         child: CustomScrollView(
+        cacheExtent: 300,
         slivers: [
           // App Bar
           SliverAppBar(

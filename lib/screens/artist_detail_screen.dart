@@ -219,7 +219,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
     final isFollowed = library.isArtistFollowed(_artist.id);
-    final isGuest = context.watch<AuthProvider>().isGuest;
+    final isGuest = context.select<AuthProvider, bool>((a) => a.isGuest);
 
     final cats = _categorizedAlbums;
 
@@ -234,6 +234,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         onRefresh: () => Future.wait([_loadArtistInfo(), _loadArtistData()]),
         child: CustomScrollView(
         controller: _scrollController,
+        cacheExtent: 400,
         slivers: [
           // Hero with parallax
           SliverAppBar(
@@ -1120,6 +1121,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             height: 170,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              cacheExtent: 200,
               itemCount: _relatedArtists.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {

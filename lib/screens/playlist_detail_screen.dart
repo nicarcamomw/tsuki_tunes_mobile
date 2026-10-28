@@ -51,6 +51,7 @@ class PlaylistDetailScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: CustomScrollView(
+        cacheExtent: 300,
         slivers: [
           // App bar with cover
           SliverAppBar(

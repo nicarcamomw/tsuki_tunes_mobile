@@ -142,6 +142,7 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
             onRefresh: _radar.checkNow,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
+              cacheExtent: 300,
               slivers: [
                 SliverToBoxAdapter(
                   child: _RadarHeader(

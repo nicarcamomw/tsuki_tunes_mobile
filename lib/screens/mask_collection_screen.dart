@@ -16,7 +16,7 @@ class MaskCollectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
     final equipped = masks.equipped;
 

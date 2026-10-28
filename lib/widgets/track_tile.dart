@@ -131,8 +131,8 @@ class TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentTrackId = context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
-    final isAudioPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
+    final (currentTrackId, isAudioPlaying) = context.select<AudioProvider, (String?, bool)>(
+        (a) => (a.currentTrack?.id, a.isPlaying));
     final isListened = context.select<LibraryProvider, bool>((l) => l.isTrackListened(track.id));
     final locale = context.read<LocaleProvider>();
     final isCurrent = currentTrackId == track.id;

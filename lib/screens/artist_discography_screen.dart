@@ -235,6 +235,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             constraints: const BoxConstraints(maxWidth: 600),
             child: CustomScrollView(
               controller: _scrollController,
+              cacheExtent: 300,
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
