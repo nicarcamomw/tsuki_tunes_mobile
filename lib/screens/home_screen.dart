@@ -615,7 +615,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       physics: statsLoaded ? null : const NeverScrollableScrollPhysics(),
                       child: statsLoaded
-                          ? Row(
+                          ? IntrinsicHeight(
+                              child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _buildStatCard(
                                     strings.statsTracks, '$listenedCount', strings.statsListened,
@@ -634,6 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   locale: locale,
                                 ),
                               ],
+                            ),
                             )
                           : Row(
                               children: List.generate(4, (_) => const Padding(
