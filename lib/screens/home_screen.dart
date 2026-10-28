@@ -53,7 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<_TopArtistDisplay> _topArtistsDisplay = [];
   bool _isLoading = true;
   bool _hasError = false;
-  bool _releasesLoading = false;
   bool _dailyDone = false;
 
   @override
@@ -117,14 +116,29 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final featured = await _api.getFeaturedArtists();
-      if (mounted) {
-        setState(() {
-          _featuredArtists = featured;
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
 
-      if (mounted) _computeTopArtists();
+      final library = context.read<LibraryProvider>();
+      final topEntries = library.getTopArtists(limit: 5);
+
+      List<_TopArtistDisplay> topDisplay = [];
+      List<Album> releases = [];
+
+      if (topEntries.isNotEmpty) {
+        topDisplay = await _fetchTopArtistPictures(topEntries);
+        if (!mounted) return;
+        releases = await _loadLatestFromTopArtists(topDisplay);
+      } else if (featured.isNotEmpty) {
+        releases = await _loadLatestFromFeatured(featured);
+      }
+      if (!mounted) return;
+
+      setState(() {
+        _featuredArtists = featured;
+        _topArtistsDisplay = topDisplay;
+        _latestReleases = releases;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('[HomeScreen] loadHomeData error: $e');
       if (mounted) {
@@ -136,20 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _computeTopArtists() {
-    final library = context.read<LibraryProvider>();
-    final topEntries = library.getTopArtists(limit: 5);
-
-    if (topEntries.isEmpty) {
-      _loadLatestFromFeatured();
-      return;
-    }
-
-    _fetchTopArtistPictures(topEntries);
-  }
-
-  Future<void> _fetchTopArtistPictures(List<TopArtistEntry> entries) async {
-    final display = await Future.wait(entries.map((entry) async {
+  Future<List<_TopArtistDisplay>> _fetchTopArtistPictures(List<TopArtistEntry> entries) async {
+    return await Future.wait(entries.map((entry) async {
       try {
         final results = await _api.searchArtists(entry.name, limit: 3);
         Artist? matched;
@@ -166,15 +168,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return _TopArtistDisplay(entry: entry, artist: null);
       }
     }));
-
-    if (mounted) {
-      setState(() => _topArtistsDisplay = display);
-      unawaited(_loadLatestFromTopArtists(display));
-    }
   }
 
-  Future<void> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
-    setState(() => _releasesLoading = true);
+  Future<List<Album>> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
     final validTops = tops.take(10).where((t) => t.artist != null).toList();
     final cutoff = DateTime.now().subtract(const Duration(days: 365));
     final results = await Future.wait(validTops.map((top) async {
@@ -213,20 +209,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-
-    if (mounted) {
-      setState(() {
-        _latestReleases = allAlbums.take(15).toList();
-        _releasesLoading = false;
-      });
-    }
+    return allAlbums.take(15).toList();
   }
 
-  Future<void> _loadLatestFromFeatured() async {
-    if (!mounted) return;
-    setState(() => _releasesLoading = true);
+  Future<List<Album>> _loadLatestFromFeatured(List<Artist> featured) async {
     final cutoff = DateTime.now().subtract(const Duration(days: 365));
-    final results = await Future.wait(_featuredArtists.take(6).map((artist) async {
+    final results = await Future.wait(featured.take(6).map((artist) async {
       try {
         final artistAlbums = await _api.getArtistAlbums(artist.id);
         if (artistAlbums.isEmpty) return <Album>[];
@@ -262,13 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-
-    if (mounted) {
-      setState(() {
-        _latestReleases = allAlbums.take(15).toList();
-        _releasesLoading = false;
-      });
-    }
+    return allAlbums.take(15).toList();
   }
 
   @override
@@ -760,52 +742,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: _releasesLoading
-                    ? SizedBox(
-                        height: 185,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: List.generate(3, (_) => const Padding(
-                            padding: EdgeInsets.only(right: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SkeletonLoader(width: 135, height: 135),
-                                SizedBox(height: 8),
-                                SkeletonLoader(width: 110, height: 13),
-                                SizedBox(height: 4),
-                                SkeletonLoader(width: 80, height: 11),
-                              ],
-                            ),
-                          )),
+                child: _latestReleases.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          strings.emptyReleases,
+                          style: locale.getTextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       )
-                    : _latestReleases.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              strings.emptyReleases,
-                              style: locale.getTextStyle(
-                                fontSize: 12,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          )
-                        : SizedBox(
-                            height: 185,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _latestReleases.length,
-                              itemBuilder: (context, index) {
-                                return AlbumCard(
-                                    album: _latestReleases[index]);
-                              },
-                            ),
-                          ),
+                    : SizedBox(
+                        height: 185,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _latestReleases.length,
+                          itemBuilder: (context, index) {
+                            return AlbumCard(
+                                album: _latestReleases[index]);
+                          },
+                        ),
+                      ),
               ),
 
               if (_featuredArtists.isNotEmpty) ...[
