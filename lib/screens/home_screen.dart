@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
@@ -37,7 +38,6 @@ import 'release_radar_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
 import 'wrapped_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

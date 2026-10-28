@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
@@ -21,7 +22,6 @@ import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../providers/library_provider.dart';
@@ -12,7 +13,6 @@ import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class ArtistDiscographyScreen extends StatefulWidget {
   final String? artistId;

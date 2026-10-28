@@ -9,11 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../models/radar_release.dart';
 import '../providers/locale_provider.dart';
 import '../services/release_radar_service.dart';
 import 'album_detail_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class ReleaseRadarScreen extends StatefulWidget {
   const ReleaseRadarScreen({super.key});

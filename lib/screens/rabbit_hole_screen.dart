@@ -10,12 +10,12 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../models/artist.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 // Canvas is far larger than the screen so nodes stay hit-testable anywhere.
 const double _kCanvas = 6000;

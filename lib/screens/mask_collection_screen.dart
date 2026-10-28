@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../providers/locale_provider.dart';
 import '../providers/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/swipeable_sheet.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class MaskCollectionScreen extends StatelessWidget {
   const MaskCollectionScreen({super.key});

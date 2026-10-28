@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
@@ -10,7 +11,6 @@ import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../widgets/tap_scale.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class ArtistCard extends StatelessWidget {
   final Artist artist;

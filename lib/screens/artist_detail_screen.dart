@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
@@ -29,7 +30,6 @@ import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
 import 'rabbit_hole_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;

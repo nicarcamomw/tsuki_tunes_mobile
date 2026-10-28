@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
@@ -29,7 +30,6 @@ import '../widgets/tap_scale.dart';
 import 'album_detail_screen.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 enum _CenterViewMode { artwork, lyrics, queue }
 

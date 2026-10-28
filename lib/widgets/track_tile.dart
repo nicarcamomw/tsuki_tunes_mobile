@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
@@ -20,7 +21,6 @@ import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
 import 'tap_scale.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class _PlayingIndicator extends StatefulWidget {
   final bool isPlaying;

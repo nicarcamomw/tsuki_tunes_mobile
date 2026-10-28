@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
@@ -16,7 +17,6 @@ import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
 import '../services/time_machine_service.dart';
 import 'main_navigation_screen.dart';
-import '../core/utils/cyber_page_route.dart';
 
 enum _Period { year, sixMonths, month, week, random }
 

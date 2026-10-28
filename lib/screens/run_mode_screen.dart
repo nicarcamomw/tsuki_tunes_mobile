@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
@@ -14,7 +15,6 @@ import '../providers/locale_provider.dart';
 import '../providers/run_provider.dart';
 import '../services/cadence_detector.dart';
 import '../services/pace_matcher.dart';
-import '../core/utils/cyber_page_route.dart';
 
 class RunModeScreen extends StatelessWidget {
   const RunModeScreen({super.key});
