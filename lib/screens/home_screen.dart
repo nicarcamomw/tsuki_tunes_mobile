@@ -697,23 +697,53 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-                    child: Semantics(
-                      header: true,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [AppColors.textBright, AppColors.accent],
-                          stops: [0.5, 1.0],
-                        ).createShader(bounds),
-                        child: Text(
-                          strings.topArtistsTitle,
-                          style: locale.getTextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 1.2,
+                    child: Row(
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [AppColors.textBright, AppColors.accent],
+                              stops: [0.5, 1.0],
+                            ).createShader(bounds),
+                            child: Text(
+                              strings.topArtistsTitle,
+                              style: locale.getTextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => _showAffinityInfo(context, locale),
+                          child: Semantics(
+                            button: true,
+                            label: strings.affinityInfoTitle,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.textMuted, width: 1),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '?',
+                                  style: locale.getTextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1096,6 +1126,73 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     ),
+    );
+  }
+
+  void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
+    final strings = locale.strings;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 32,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textMuted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              strings.affinityInfoTitle,
+              style: locale.getTextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textBright,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              strings.affinityInfoBody,
+              style: locale.getTextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(
+                  strings.affinityInfoClose,
+                  style: locale.getTextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

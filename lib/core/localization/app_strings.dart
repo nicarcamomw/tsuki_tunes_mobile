@@ -1753,6 +1753,39 @@ class AppStrings {
         AppLanguage.ja => '親密度: $score',
       };
 
+  String get affinityInfoTitle => switch (language) {
+        AppLanguage.es => '¿Cómo se calcula la afinidad?',
+        AppLanguage.en => 'How is affinity calculated?',
+        AppLanguage.ja => '親密度の計算方法',
+      };
+
+  String get affinityInfoBody => switch (language) {
+        AppLanguage.es =>
+          'La afinidad mide tu conexión con cada artista basándose en dos factores:\n\n'
+          '🎵  Canciones guardadas — Cada canción que marcas como escuchada de un artista suma 2 puntos.\n\n'
+          '👁  Visitas al perfil — Cada vez que visitas la página de un artista suma 1 punto.\n\n'
+          'Fórmula:\n(canciones escuchadas × 2) + visitas al perfil\n\n'
+          'Cuanto más escuches y explores a un artista, mayor será tu afinidad con él.',
+        AppLanguage.en =>
+          'Affinity measures your connection with each artist based on two factors:\n\n'
+          '🎵  Saved tracks — Each track you mark as listened from an artist adds 2 points.\n\n'
+          '👁  Profile visits — Each time you visit an artist\'s page adds 1 point.\n\n'
+          'Formula:\n(listened tracks × 2) + profile visits\n\n'
+          'The more you listen and explore an artist, the higher your affinity.',
+        AppLanguage.ja =>
+          '親密度は2つの要素に基づいてアーティストとのつながりを測定します：\n\n'
+          '🎵  保存した楽曲 — 再生済みとしてマークした楽曲ごとに2ポイント。\n\n'
+          '👁  プロフィール訪問 — アーティストページを訪問するたびに1ポイント。\n\n'
+          '計算式：\n（再生済み楽曲数 × 2）+ プロフィール訪問数\n\n'
+          'アーティストを聴いて探索するほど、親密度が上がります。',
+      };
+
+  String get affinityInfoClose => switch (language) {
+        AppLanguage.es => 'Entendido',
+        AppLanguage.en => 'Got it',
+        AppLanguage.ja => '了解',
+      };
+
   String get featured => switch (language) {
         AppLanguage.es => 'DESTACADO',
         AppLanguage.en => 'FEATURED',
