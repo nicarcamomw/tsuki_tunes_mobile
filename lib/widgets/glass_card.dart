@@ -55,9 +55,7 @@ class _GlassCardState extends State<GlassCard>
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     final br = BorderRadius.circular(widget.borderRadius);
-    final border = Border.all(
-      color: widget.color.withValues(alpha: widget.borderAlpha),
-    );
+    final borderColor = widget.color.withValues(alpha: widget.borderAlpha);
 
     if (reduceMotion) {
       return Container(
@@ -73,40 +71,103 @@ class _GlassCardState extends State<GlassCard>
               AppColors.bgCard,
             ],
           ),
-          border: border,
+          border: Border.all(color: borderColor),
         ),
         child: widget.child,
       );
     }
 
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (context, child) {
-        final t = _anim.value * 2 * pi;
-        final dx = sin(t + _phase) * 0.5;
-        final dy = cos(t * 0.7 + _phase) * 0.35;
-
-        return Container(
-          margin: widget.margin,
+    Widget inner = RepaintBoundary(
+      child: CustomPaint(
+        painter: _GlassPainter(
+          color: widget.color,
+          highlightAlpha: widget.highlightAlpha,
+          dimAlpha: widget.dimAlpha,
+          borderAlpha: widget.borderAlpha,
+          borderRadius: widget.borderRadius,
+          bgCard: AppColors.bgCard,
+          phase: _phase,
+          animation: _anim,
+        ),
+        child: Padding(
           padding: widget.padding,
-          decoration: BoxDecoration(
-            borderRadius: br,
-            gradient: LinearGradient(
-              begin: Alignment(-1.0 + dx, -1.0 + dy),
-              end: Alignment(1.0 - dx * 0.4, 1.0 - dy * 0.4),
-              colors: [
-                widget.color.withValues(alpha: widget.highlightAlpha),
-                AppColors.bgCard,
-                widget.color.withValues(alpha: widget.dimAlpha),
-              ],
-              stops: const [0.0, 0.55, 1.0],
-            ),
-            border: border,
-          ),
-          child: child,
-        );
-      },
-      child: widget.child,
+          child: widget.child,
+        ),
+      ),
+    );
+
+    if (widget.margin != null) {
+      inner = Padding(padding: widget.margin!, child: inner);
+    }
+
+    return inner;
+  }
+}
+
+class _GlassPainter extends CustomPainter {
+  final Color color;
+  final double highlightAlpha;
+  final double dimAlpha;
+  final double borderAlpha;
+  final double borderRadius;
+  final Color bgCard;
+  final double phase;
+
+  _GlassPainter({
+    required this.color,
+    required this.highlightAlpha,
+    required this.dimAlpha,
+    required this.borderAlpha,
+    required this.borderRadius,
+    required this.bgCard,
+    required this.phase,
+    required Animation<double> animation,
+  }) : _animation = animation, super(repaint: animation);
+
+  final Animation<double> _animation;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+
+    final t = _animation.value * 2 * pi;
+    final dx = sin(t + phase) * 0.5;
+    final dy = cos(t * 0.7 + phase) * 0.35;
+
+    final shader = LinearGradient(
+      begin: Alignment(-1.0 + dx, -1.0 + dy),
+      end: Alignment(1.0 - dx * 0.4, 1.0 - dy * 0.4),
+      colors: [
+        color.withValues(alpha: highlightAlpha),
+        bgCard,
+        color.withValues(alpha: dimAlpha),
+      ],
+      stops: const [0.0, 0.55, 1.0],
+    ).createShader(rect);
+
+    canvas.save();
+    canvas.clipRRect(rrect);
+    canvas.drawRect(rect, Paint()..shader = shader);
+    canvas.restore();
+
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = color.withValues(alpha: borderAlpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
     );
   }
+
+  @override
+  bool shouldRepaint(_GlassPainter old) =>
+      old.color != color ||
+      old.highlightAlpha != highlightAlpha ||
+      old.dimAlpha != dimAlpha ||
+      old.borderAlpha != borderAlpha ||
+      old.borderRadius != borderRadius ||
+      old.bgCard != bgCard ||
+      old.phase != phase;
 }

@@ -1,5 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+
 import '../core/constants/app_colors.dart';
+
+class _SharedPulse {
+  static final _SharedPulse instance = _SharedPulse._();
+  _SharedPulse._();
+
+  final ValueNotifier<double> value = ValueNotifier(0.5);
+  int _refs = 0;
+  Ticker? _ticker;
+
+  void ref() {
+    if (++_refs == 1) {
+      _ticker = Ticker(_onTick)..start();
+    }
+  }
+
+  void unref() {
+    if (--_refs <= 0) {
+      _refs = 0;
+      _ticker?.dispose();
+      _ticker = null;
+    }
+  }
+
+  void _onTick(Duration elapsed) {
+    final ms = elapsed.inMilliseconds % 2400;
+    final t = ms < 1200 ? ms / 1200.0 : 2.0 - ms / 1200.0;
+    value.value = 0.3 + 0.4 * (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+  }
+}
 
 class SkeletonLoader extends StatefulWidget {
   final double width;
@@ -17,52 +48,76 @@ class SkeletonLoader extends StatefulWidget {
   State<SkeletonLoader> createState() => _SkeletonLoaderState();
 }
 
-class _SkeletonLoaderState extends State<SkeletonLoader>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
+class _SkeletonLoaderState extends State<SkeletonLoader> {
+  bool _reduceMotion = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _SharedPulse.instance.ref();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.of(context).disableAnimations) {
-      _controller.stop();
-      _controller.value = 0.5;
-    }
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _SharedPulse.instance.unref();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, _) => Container(
+    if (_reduceMotion) {
+      return Container(
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          color: AppColors.bgCard.withValues(alpha: _animation.value),
+          color: AppColors.bgCard.withValues(alpha: 0.5),
         ),
+      );
+    }
+    return CustomPaint(
+      painter: _PulsePainter(
+        borderRadius: widget.borderRadius,
+        color: AppColors.bgCard,
+        pulse: _SharedPulse.instance.value,
       ),
+      child: SizedBox(width: widget.width, height: widget.height),
     );
   }
+}
+
+class _PulsePainter extends CustomPainter {
+  final double borderRadius;
+  final Color color;
+  final ValueNotifier<double> pulse;
+
+  _PulsePainter({
+    required this.borderRadius,
+    required this.color,
+    required this.pulse,
+  }) : super(repaint: pulse);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Offset.zero & size,
+        Radius.circular(borderRadius),
+      ),
+      Paint()..color = color.withValues(alpha: pulse.value),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PulsePainter old) =>
+      old.borderRadius != borderRadius || old.color != color;
 }
 
 class HomeSkeletonLoader extends StatelessWidget {

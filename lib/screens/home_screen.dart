@@ -760,6 +760,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           scrollDirection: Axis.horizontal,
                           padding:
                               const EdgeInsets.symmetric(horizontal: 16),
+                          cacheExtent: 300,
                           itemCount: _latestReleases.length,
                           itemBuilder: (context, index) {
                             return AlbumCard(
@@ -793,6 +794,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
+                      cacheExtent: 300,
                       itemCount: _featuredArtists.length,
                       itemBuilder: (context, index) {
                         return ArtistCard(artist: _featuredArtists[index]);
