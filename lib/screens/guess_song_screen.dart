@@ -923,18 +923,41 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     }
 
     return Container(
-      height: 42,
+      height: 44,
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: done ? color.withValues(alpha: 0.08) : AppColors.bgCard,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: done || isCurrent ? 0.7 : 1)),
+        color: done ? color.withValues(alpha: 0.06) : AppColors.bgCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withValues(alpha: done ? 0.4 : isCurrent ? 0.5 : 0.15),
+        ),
       ),
       child: Row(
         children: [
+          Container(width: 3, color: color.withValues(alpha: done || isCurrent ? 0.8 : 0.15)),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 18,
+            child: Text(
+              '${i + 1}',
+              style: locale.getTextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: done ? color : AppColors.textMuted,
+              ),
+            ),
+          ),
           if (icon != null) ...[
-            Icon(icon, size: 16, color: color),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.15),
+              ),
+              child: Icon(icon, size: 13, color: color),
+            ),
             const SizedBox(width: 8),
           ],
           Expanded(
@@ -949,10 +972,22 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
               ),
             ),
           ),
-          Text(
-            '${GuessGame.clipSeconds[i]}s',
-            style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.bgMid,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '${GuessGame.clipSeconds[i]}s',
+              style: locale.getTextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+              ),
+            ),
           ),
+          const SizedBox(width: 10),
         ],
       ),
     );
@@ -966,42 +1001,45 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth;
       return SizedBox(
-        height: 14,
+        height: 6,
         child: Stack(
           children: [
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppColors.border),
+                  color: AppColors.bgMid,
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: w * unlocked,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.neonPurple.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(4),
+            if (unlocked > 0)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: w * unlocked,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.neonPurple.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: w * head,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(4),
+            if (head > 0)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: max(6, w * head),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.accent, AppColors.sakura],
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
-            ),
             if (!_finished)
               for (final s in GuessGame.clipSeconds.take(GuessGame.maxAttempts - 1))
                 Positioned(
@@ -1009,7 +1047,9 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                   top: 0,
                   bottom: 0,
                   width: 1,
-                  child: Container(color: AppColors.borderGlow),
+                  child: Container(
+                    color: AppColors.border.withValues(alpha: 0.6),
+                  ),
                 ),
           ],
         ),
@@ -1028,18 +1068,22 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.accent,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.accent, Color(0xFFCC1414)],
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accent.withValues(alpha: _clipPlaying ? 0.6 : 0.3),
-                blurRadius: _clipPlaying ? 22 : 12,
+                color: AppColors.accent.withValues(alpha: _clipPlaying ? 0.5 : 0.25),
+                blurRadius: _clipPlaying ? 20 : 10,
               ),
             ],
           ),
           child: Icon(
             _clipPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
             color: Colors.white,
-            size: size * 0.55,
+            size: size * 0.5,
           ),
         ),
       ),
@@ -1088,27 +1132,47 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                             final t = _suggestions[i];
                             return InkWell(
                               onTap: () => _submit(t),
+                              borderRadius: BorderRadius.circular(8),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      t.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: locale.getTextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textBright,
-                                      ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: t.coverUrl.isEmpty
+                                          ? Container(width: 36, height: 36, color: AppColors.bgMid)
+                                          : CachedNetworkImage(
+                                              imageUrl: t.coverUrl,
+                                              width: 36,
+                                              height: 36,
+                                              memCacheWidth: 108,
+                                              fit: BoxFit.cover,
+                                            ),
                                     ),
-                                    Text(
-                                      t.artistName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: locale.getTextStyle(
-                                          fontSize: 10, color: AppColors.textSecondary),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            t.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: locale.getTextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textBright,
+                                            ),
+                                          ),
+                                          Text(
+                                            t.artistName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: locale.getTextStyle(
+                                                fontSize: 10, color: AppColors.textSecondary),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1178,6 +1242,33 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     );
   }
 
+  Widget _outcomeDots() {
+    return Row(
+      children: List.generate(GuessGame.maxAttempts, (i) {
+        final done = i < _outcomes.length;
+        final color = done
+            ? switch (_outcomes[i]) {
+                GuessOutcome.correct => AppColors.success,
+                GuessOutcome.rightArtist => AppColors.warning,
+                GuessOutcome.wrong => AppColors.accent,
+                GuessOutcome.skipped => AppColors.border,
+              }
+            : Colors.transparent;
+        return Expanded(
+          child: Container(
+            height: 6,
+            margin: EdgeInsets.only(right: i < GuessGame.maxAttempts - 1 ? 4 : 0),
+            decoration: BoxDecoration(
+              color: done ? color : null,
+              borderRadius: BorderRadius.circular(3),
+              border: done ? null : Border.all(color: AppColors.border),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
   Widget _revealCard(LocaleProvider locale) {
     final strings = locale.strings;
     final t = _target!;
@@ -1188,36 +1279,65 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     final ss = (untilNext.inSeconds % 60).toString().padLeft(2, '0');
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.6)),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 18)],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 24, spreadRadius: -4)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _won ? strings.guessWonIn(_outcomes.length) : strings.guessLost,
-            style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color),
-          ),
-          const SizedBox(height: 4),
-          Text(GuessGame.emojiRow(_outcomes), style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 12),
           Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: t.coverUrl.isEmpty
-                    ? Container(width: 76, height: 76, color: AppColors.bgMid)
-                    : CachedNetworkImage(
-                        imageUrl: t.coverUrl,
-                        width: 76,
-                        height: 76,
-                        memCacheWidth: 228,
-                        fit: BoxFit.cover,
-                      ),
+              Expanded(
+                child: Text(
+                  _won ? strings.guessWonIn(_outcomes.length) : strings.guessLost,
+                  style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  '${_won ? _outcomes.length : 'X'}/${GuessGame.maxAttempts}',
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _outcomeDots(),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12)],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: t.coverUrl.isEmpty
+                      ? Container(width: 80, height: 80, color: AppColors.bgMid)
+                      : CachedNetworkImage(
+                          imageUrl: t.coverUrl,
+                          width: 80,
+                          height: 80,
+                          memCacheWidth: 240,
+                          fit: BoxFit.cover,
+                        ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1260,12 +1380,26 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           ),
           if (_mode == GuessMode.daily) ...[
             const SizedBox(height: 12),
-            Text(
-              strings.guessNextDailyIn('$hh:$mm:$ss'),
-              style: locale.getTextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.bgMid,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.schedule_rounded, size: 13, color: AppColors.textMuted),
+                  const SizedBox(width: 6),
+                  Text(
+                    strings.guessNextDailyIn('$hh:$mm:$ss'),
+                    style: locale.getTextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1328,14 +1462,31 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '${strings.guessStatsTitle} · ${strings.guessModeDaily}',
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
-                  letterSpacing: 1.5,
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.borderGlow,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${strings.guessStatsTitle} · ${strings.guessModeDaily}',
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Row(
@@ -1374,11 +1525,14 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                           builder: (_, c) => Align(
                             alignment: Alignment.centerLeft,
                             child: Container(
-                              width: max(22, c.maxWidth * s.distribution[i] / maxCount),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              color: i < GuessGame.maxAttempts
-                                  ? AppColors.success.withValues(alpha: 0.7)
-                                  : AppColors.accent.withValues(alpha: 0.6),
+                              width: max(24, c.maxWidth * s.distribution[i] / maxCount),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: i < GuessGame.maxAttempts
+                                    ? AppColors.success.withValues(alpha: 0.7)
+                                    : AppColors.accent.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                               child: Text(
                                 '${s.distribution[i]}',
                                 textAlign: TextAlign.right,
