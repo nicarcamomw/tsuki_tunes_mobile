@@ -208,21 +208,23 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
             body: SafeArea(
               child: Column(
                 children: [
-                  // Top bar
+                  // Top bar — symmetric: chevron | centered source | menu
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        IconButton(
-                          tooltip: strings.a11yCollapsePlayer,
-                          icon: const Icon(Icons.keyboard_arrow_down,
-                              size: 30, color: AppColors.textPrimary),
-                          onPressed: () {
-                            NavigationEvents.isPlayerExpanded.value = false;
-                            Navigator.of(context).pop();
-                          },
+                        SizedBox(
+                          width: 48,
+                          child: IconButton(
+                            tooltip: strings.a11yCollapsePlayer,
+                            icon: const Icon(Icons.keyboard_arrow_down,
+                                size: 30, color: AppColors.textPrimary),
+                            onPressed: () {
+                              NavigationEvents.isPlayerExpanded.value = false;
+                              Navigator.of(context).pop();
+                            },
+                          ),
                         ),
                         Expanded(
                           child: InkWell(
@@ -234,28 +236,14 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        strings.playingFrom,
-                                        style: locale.getTextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textMuted,
-                                          letterSpacing: 2.0,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const ExcludeSemantics(
-                                        child: Icon(
-                                          Icons.chevron_right,
-                                          size: 11,
-                                          color: AppColors.textMuted,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    strings.playingFrom,
+                                    style: locale.getTextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textMuted,
+                                      letterSpacing: 2.0,
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
@@ -277,82 +265,27 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                             ),
                           ),
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: radioActive
-                                  ? '${strings.a11yRadio}: ${strings.radioTune}'
-                                  : strings.radioStart,
-                              icon: Icon(
-                                Icons.sensors,
-                                color: radioActive
-                                    ? AppColors.accent
-                                    : AppColors.textPrimary,
-                              ),
-                              onPressed: () {
-                                HapticFeedback.selectionClick();
-                                if (radioActive) {
-                                  showRadioControlSheet(context);
-                                } else {
-                                  startRadioWithFeedback(context, track,
-                                      bottomMargin:
-                                          MediaQuery.paddingOf(context).bottom +
-                                              12);
-                                }
-                              },
-                            ),
-                            IconButton(
-                              tooltip: strings.a11yLyrics,
-                              icon: Icon(
-                                Icons.lyrics_outlined,
-                                color: _viewMode == _CenterViewMode.lyrics
-                                    ? AppColors.accent
-                                    : AppColors.textPrimary,
-                              ),
-                              onPressed: () {
-                                HapticFeedback.selectionClick();
-                                setState(() {
-                                  if (_viewMode == _CenterViewMode.lyrics) {
-                                    _viewMode = _CenterViewMode.artwork;
-                                  } else {
-                                    _viewMode = _CenterViewMode.lyrics;
-                                    _lastActiveLyricIndex = -1;
-                                    _lineKeys.clear();
-                                    _userInteracting = false;
-                                    _resumeAutoScrollTimer?.cancel();
-                                  }
-                                });
-                              },
-                            ),
-                            IconButton(
-                              tooltip: strings.a11yQueue,
-                              icon: Icon(
-                                Icons.queue_music,
-                                color: _viewMode == _CenterViewMode.queue
-                                    ? AppColors.accent
-                                    : AppColors.textPrimary,
-                              ),
-                              onPressed: () {
-                                HapticFeedback.selectionClick();
-                                setState(() {
-                                  _viewMode =
-                                      _viewMode == _CenterViewMode.queue
-                                          ? _CenterViewMode.artwork
-                                          : _CenterViewMode.queue;
-                                });
-                              },
-                            ),
-                          ],
+                        SizedBox(
+                          width: 48,
+                          child: IconButton(
+                            tooltip: strings.a11yQueue,
+                            icon: const Icon(Icons.more_vert,
+                                size: 24, color: AppColors.textPrimary),
+                            onPressed: () {
+                              HapticFeedback.selectionClick();
+                              _showSongOptionsSheet(
+                                context, audio, track, locale,
+                                radioActive: radioActive,
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Art, Lyrics or Queue
+                  // Art or Queue (lyrics now live at the bottom)
                   if (_viewMode == _CenterViewMode.queue)
-                    // Rebuild when the order or the playing track changes,
-                    // not on every position tick.
                     Selector<AudioProvider, (int, int)>(
                       selector: (_, a) =>
                           (Object.hashAll(a.queue.map((t) => t.id)), a.currentIndex),
@@ -362,7 +295,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     _buildLyricsView(audio, locale, track)
                   else ...[
                     const Spacer(),
-                    // Rinnegan Visualizer
                     ExcludeSemantics(
                     child: Hero(
                       tag: 'player_art_${track.id}',
@@ -655,7 +587,13 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+
+                // Spotify-style lyrics strip at the bottom
+                if (_viewMode == _CenterViewMode.artwork)
+                  _buildLyricsStrip(audio, locale, track),
+
+                SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 8 : 16),
               ],
             ),
           ),
@@ -888,6 +826,342 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         ),
       ),
     ),
+    );
+  }
+
+  // ── Song options bottom sheet (replaces the old top-bar buttons) ──
+
+  void _showSongOptionsSheet(
+    BuildContext context,
+    AudioProvider audio,
+    Track track,
+    LocaleProvider locale, {
+    required bool radioActive,
+  }) {
+    final strings = locale.strings;
+    final bpm = BpmService.shared.cached(track.id);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.bgMid,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Track header
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: track.coverUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: track.coverUrl,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(color: AppColors.bgHover),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            track.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: locale.getTextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textBright,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            track.fullArtistName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: locale.getTextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.border, height: 1),
+                const SizedBox(height: 8),
+                // BPM info
+                if (bpm != null)
+                  _songOptionTile(
+                    icon: Icons.speed,
+                    label: 'BPM',
+                    trailing: '${bpm.round()}',
+                    locale: locale,
+                  ),
+                // Queue
+                _songOptionTile(
+                  icon: Icons.queue_music,
+                  label: strings.a11yQueue,
+                  locale: locale,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.selectionClick();
+                    setState(() => _viewMode = _CenterViewMode.queue);
+                  },
+                ),
+                // Radio
+                _songOptionTile(
+                  icon: Icons.sensors,
+                  label: radioActive ? strings.radioTune : strings.radioStart,
+                  locale: locale,
+                  accentIcon: radioActive,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.selectionClick();
+                    if (radioActive) {
+                      showRadioControlSheet(context);
+                    } else {
+                      startRadioWithFeedback(context, track,
+                          bottomMargin:
+                              MediaQuery.paddingOf(context).bottom + 12);
+                    }
+                  },
+                ),
+                // Lyrics full view
+                _songOptionTile(
+                  icon: Icons.lyrics_outlined,
+                  label: strings.a11yLyrics,
+                  locale: locale,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _viewMode = _CenterViewMode.lyrics;
+                      _lastActiveLyricIndex = -1;
+                      _lineKeys.clear();
+                      _userInteracting = false;
+                      _resumeAutoScrollTimer?.cancel();
+                    });
+                  },
+                ),
+                // Go to album
+                if (track.albumId.isNotEmpty)
+                  _songOptionTile(
+                    icon: Icons.album,
+                    label: track.albumTitle.isNotEmpty
+                        ? track.albumTitle
+                        : strings.unknownAlbum,
+                    locale: locale,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToSource(context, track);
+                    },
+                  ),
+                // Go to artist
+                if (track.artistId.isNotEmpty)
+                  _songOptionTile(
+                    icon: Icons.person,
+                    label: track.artistName,
+                    locale: locale,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).pop();
+                      appNavigatorKey.currentState?.push(
+                        MaterialPageRoute(
+                          builder: (_) => ArtistDetailScreen(
+                            artist: Artist(
+                              id: track.artistId,
+                              name: track.artistName,
+                              pictureUrl: track.coverUrl,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _songOptionTile({
+    required IconData icon,
+    required String label,
+    required LocaleProvider locale,
+    String? trailing,
+    bool accentIcon = false,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 20,
+                color: accentIcon ? AppColors.accent : AppColors.textSecondary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (trailing != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  trailing,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ),
+            if (onTap != null && trailing == null)
+              const Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Spotify-style lyrics strip at the bottom ──
+
+  Widget _buildLyricsStrip(
+      AudioProvider audio, LocaleProvider locale, Track track) {
+    if (_lastLoadedTrackId != track.id && !_isLoadingLyrics) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadLyricsForTrack(track);
+      });
+    }
+
+    return Selector<AudioProvider, int>(
+      selector: (_, a) => _lyrics?.activeIndexAt(a.position) ?? -1,
+      builder: (context, activeIndex, __) {
+        String? currentLine;
+        String? nextLine;
+
+        if (_lyrics != null && !_lyrics!.isInstrumental) {
+          if (_lyrics!.isSynced && _lyrics!.lines.isNotEmpty) {
+            if (activeIndex >= 0 && activeIndex < _lyrics!.lines.length) {
+              currentLine = _lyrics!.lines[activeIndex].text;
+            }
+            if (activeIndex + 1 < _lyrics!.lines.length) {
+              nextLine = _lyrics!.lines[activeIndex + 1].text;
+            }
+          } else if (_lyrics!.plainLyrics.isNotEmpty) {
+            final lines = _lyrics!.plainLyrics.split('\n');
+            if (lines.isNotEmpty) {
+              currentLine = lines.first;
+              if (lines.length > 1) nextLine = lines[1];
+            }
+          }
+        }
+
+        if (_isLoadingLyrics || currentLine == null) {
+          return const SizedBox.shrink();
+        }
+
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() {
+              _viewMode = _CenterViewMode.lyrics;
+              _lastActiveLyricIndex = -1;
+              _lineKeys.clear();
+              _userInteracting = false;
+              _resumeAutoScrollTimer?.cancel();
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.bgMid.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.borderGlow.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        currentLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textBright,
+                        ),
+                      ),
+                      if (nextLine != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          nextLine,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: locale.getTextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.open_in_full, size: 16, color: AppColors.accent,
+                    semanticLabel: locale.strings.a11yLyrics),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
