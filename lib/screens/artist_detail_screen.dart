@@ -826,7 +826,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
             if (cats['single']!.isNotEmpty)
               ..._buildCategorySection(strings.tabSingles, cats['single']!, 'single', library, locale, strings, icon: Icons.music_note_rounded),
             if (cats['appears_on']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded),
+              ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded, isAppearsOn: true),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -839,7 +839,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   List<Widget> _buildCategorySection(
-      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings, {IconData? icon}) {
+      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings, {IconData? icon, bool isAppearsOn = false}) {
     const maxVisible = 8;
     final visible = albums.take(maxVisible).toList();
     final hasMore = albums.length > maxVisible;
@@ -932,7 +932,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ),
           delegate: SliverChildBuilderDelegate(
             (context, index) =>
-                _buildDiscographyItem(context, visible[index], library, locale, strings),
+                _buildDiscographyItem(context, visible[index], library, locale, strings, isAppearsOn: isAppearsOn),
             childCount: visible.length,
           ),
         ),
@@ -941,9 +941,13 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
   }
 
   Widget _buildDiscographyItem(
-      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, AppStrings strings,
+      {bool isAppearsOn = false}) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
+    final subtitle = isAppearsOn
+        ? '${album.year}  ·  ${album.artistName}'
+        : '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}';
 
     return Semantics(
       button: true,
@@ -985,7 +989,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+              subtitle,
               style: locale.getTextStyle(
                 fontSize: 10,
                 color: AppColors.textMuted,

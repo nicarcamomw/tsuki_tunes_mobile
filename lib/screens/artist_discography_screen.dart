@@ -287,8 +287,11 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final album = _filtered[index];
+                          final showArtist = _filter == 'appears_on' ||
+                              (_filter == 'all' && !_isOwnRelease(album));
                           return _buildItem(
-                              context, album, library, locale, strings);
+                              context, album, library, locale, strings,
+                              isAppearsOn: showArtist);
                         },
                         childCount: _filtered.length,
                       ),
@@ -429,13 +432,17 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   }
 
   Widget _buildItem(BuildContext context, Album album, LibraryProvider library,
-      LocaleProvider locale, AppStrings strings) {
+      LocaleProvider locale, AppStrings strings,
+      {bool isAppearsOn = false}) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
+    final subtitle = isAppearsOn
+        ? '${album.year}  ·  ${album.artistName}'
+        : '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}';
 
     return Semantics(
       button: true,
-      label: '${album.title}, ${strings.albumTypeLabel(album.recordType)}',
+      label: '${album.title}, ${album.artistName}',
       child: GestureDetector(
         onTap: () async {
           await appNavigatorKey.currentState?.push(
@@ -471,7 +478,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            '${album.year}  ·  ${strings.albumTypeLabel(album.recordType)}',
+            subtitle,
             style: locale.getTextStyle(
               fontSize: 10,
               color: AppColors.textMuted,
