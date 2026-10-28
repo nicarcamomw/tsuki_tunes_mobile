@@ -256,16 +256,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final statsLoaded = context.select<LibraryProvider, bool>((l) => l.listenedTracksLoaded);
-    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedCount);
-    final artistsCount = context.select<LibraryProvider, int>((l) => l.uniqueArtistsCount);
-    final albumsCount = context.select<LibraryProvider, int>((l) => l.uniqueAlbumsCount);
-    final (topArtistName, topArtistScore) = context.select<LibraryProvider, (String, String)>((l) {
+    final (statsLoaded, listenedCount, artistsCount, albumsCount, topArtistName, topArtistScore) =
+        context.select<LibraryProvider, (bool, int, int, int, String, String)>((l) {
       final top = l.getTopArtists(limit: 1);
-      if (top.isEmpty) return ('---', '0');
-      return (top.first.name, top.first.score.toString());
+      return (
+        l.listenedTracksLoaded,
+        l.listenedCount,
+        l.uniqueArtistsCount,
+        l.uniqueAlbumsCount,
+        top.isNotEmpty ? top.first.name : '---',
+        top.isNotEmpty ? top.first.score.toString() : '0',
+      );
     });
-    final auth = context.watch<AuthProvider>();
+    final isLoggedIn = context.select<AuthProvider, bool>((a) => a.isLoggedIn);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
 
@@ -280,6 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: _loadHomeData,
         child: CustomScrollView(
           controller: scrollController,
+          cacheExtent: 400,
           slivers: [
             SliverToBoxAdapter(
               child: SkyBackdrop(
@@ -403,10 +407,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                                   },
                                 ),
-                                if (auth.isLoggedIn) ...[
+                                if (isLoggedIn) ...[
                                   const SizedBox(width: 8),
                                   _GearProfileButton(
-                                    auth: auth,
                                     label: strings.profileTitle,
                                   ),
                                 ],
@@ -506,7 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else ...[
-              if (auth.isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
+              if (isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
                 SliverFillRemaining(
                   child: Center(
                     child: Padding(
@@ -584,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               else ...[
-              if (auth.isLoggedIn)
+              if (isLoggedIn)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding:
@@ -625,7 +628,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SliverToBoxAdapter(child: _buildFeatureCards(locale)),
 
-              if (auth.isLoggedIn && listenedCount > 0)
+              if (isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -644,10 +647,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              if (auth.isLoggedIn && listenedCount > 0)
+              if (isLoggedIn && listenedCount > 0)
                 const SliverToBoxAdapter(child: TimeMachineEntryCard()),
 
-              if (auth.isLoggedIn && ReleaseRadarService.isSupported)
+              if (isLoggedIn && ReleaseRadarService.isSupported)
                 SliverToBoxAdapter(
                   child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
                 ),
@@ -1202,9 +1205,8 @@ class _TopArtistDisplay {
 }
 
 class _GearProfileButton extends StatefulWidget {
-  final AuthProvider auth;
   final String label;
-  const _GearProfileButton({required this.auth, required this.label});
+  const _GearProfileButton({required this.label});
 
   @override
   State<_GearProfileButton> createState() => _GearProfileButtonState();
@@ -1239,11 +1241,12 @@ class _GearProfileButtonState extends State<_GearProfileButton>
 
   void _onTap() {
     if (!_reduceMotion) _controller.forward(from: 0.0);
-    ProfileBottomSheet.show(context, widget.auth);
+    ProfileBottomSheet.show(context, context.read<AuthProvider>());
   }
 
   @override
   Widget build(BuildContext context) {
+    final photoURL = context.select<AuthProvider, String?>((a) => a.user?.photoURL);
     return Semantics(
       button: true,
       label: widget.label,
@@ -1267,10 +1270,10 @@ class _GearProfileButtonState extends State<_GearProfileButton>
               child: CircleAvatar(
                 radius: 12,
                 backgroundColor: AppColors.bgCard,
-                backgroundImage: widget.auth.user?.photoURL != null
-                    ? NetworkImage(widget.auth.user!.photoURL!)
+                backgroundImage: photoURL != null
+                    ? NetworkImage(photoURL)
                     : null,
-                child: widget.auth.user?.photoURL == null
+                child: photoURL == null
                     ? Icon(Icons.person,
                         size: 14, color: AppColors.accent, semanticLabel: widget.label)
                     : null,
