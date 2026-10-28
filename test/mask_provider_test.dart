@@ -42,19 +42,19 @@ void main() {
     expect(masks.pendingCelebration, isNull);
   });
 
-  test('play count goals show progress and unlock at 100', () {
-    for (var i = 0; i < 99; i++) {
+  test('play count goals show progress and unlock at 250', () {
+    for (var i = 0; i < 249; i++) {
       masks.onPlayCounted(_t('$i', artist: 'A$i'));
     }
     expect(masks.isUnlocked('hyaku'), isFalse);
-    expect(masks.progress('hyaku'), (99, 100));
+    expect(masks.progress('hyaku'), (249, 250));
     masks.onPlayCounted(_t('x'));
     expect(masks.isUnlocked('hyaku'), isTrue);
   });
 
-  test('night creature needs 25 plays after midnight', () {
+  test('night creature needs 50 plays after midnight', () {
     now = DateTime(2026, 11, 12, 1, 10);
-    for (var i = 0; i < 25; i++) {
+    for (var i = 0; i < 50; i++) {
       masks.onPlayCounted(_t('$i'));
     }
     expect(masks.isUnlocked('yoru'), isTrue);
@@ -76,15 +76,15 @@ void main() {
     expect(masks.isUnlocked('hannya'), isTrue);
   });
 
-  test('secret: the same song ten times in one day', () {
-    for (var i = 0; i < 9; i++) {
+  test('secret: the same song 15 times in one day', () {
+    for (var i = 0; i < 14; i++) {
       masks.onPlayCounted(_t('loop'));
     }
     expect(masks.isUnlocked('shuchaku'), isFalse);
     now = now.add(const Duration(days: 1));
     masks.onPlayCounted(_t('loop'));
     expect(masks.isUnlocked('shuchaku'), isFalse, reason: 'a new day starts over');
-    for (var i = 0; i < 9; i++) {
+    for (var i = 0; i < 14; i++) {
       masks.onPlayCounted(_t('loop'));
     }
     expect(masks.isUnlocked('shuchaku'), isTrue);
@@ -94,17 +94,17 @@ void main() {
     masks.seedKnownArtists(['Known 0', 'Known 1']);
     masks.onPlayCounted(_t('k0', artist: 'Known 0'));
     masks.onPlayCounted(_t('k1', artist: 'Known 1'));
-    for (var i = 0; i < 9; i++) {
+    for (var i = 0; i < 19; i++) {
       masks.onPlayCounted(_t('n$i', artist: 'New $i'));
     }
     expect(masks.isUnlocked('tabibito'), isFalse);
-    expect(masks.progress('tabibito'), (9, 10));
-    masks.onPlayCounted(_t('n9', artist: 'New 9'));
+    expect(masks.progress('tabibito'), (19, 20));
+    masks.onPlayCounted(_t('n19', artist: 'New 19'));
     expect(masks.isUnlocked('tabibito'), isTrue);
   });
 
-  test('devotion: 50 plays of one artist', () {
-    for (var i = 0; i < 50; i++) {
+  test('devotion: 100 plays of one artist', () {
+    for (var i = 0; i < 100; i++) {
       now = now.add(const Duration(hours: 3));
       masks.onPlayCounted(_t('$i', artist: 'Chop Suey Fans, feat. X'));
     }
@@ -166,24 +166,24 @@ void main() {
     });
   });
 
-  test('rain spirit after five hours of rain ambience', () {
+  test('rain spirit after ten hours of rain ambience', () {
     var raining = true;
     masks.isRainPlaying = () => raining;
-    masks.tick(const Duration(hours: 4));
+    masks.tick(const Duration(hours: 9));
     raining = false;
     masks.tick(const Duration(hours: 2));
     expect(masks.isUnlocked('ame'), isFalse);
-    expect(masks.progress('ame'), (4, 5));
+    expect(masks.progress('ame'), (9, 10));
     raining = true;
     masks.tick(const Duration(hours: 1));
     expect(masks.isUnlocked('ame'), isTrue);
   });
 
   test('guess game masks', () {
-    masks.onDailyGuessFinished(won: true, attempts: 2, streak: 6);
+    masks.onDailyGuessFinished(won: true, attempts: 2, streak: 13);
     expect(masks.isUnlocked('mimi'), isFalse);
     expect(masks.isUnlocked('ren'), isFalse);
-    masks.onDailyGuessFinished(won: true, attempts: 1, streak: 7);
+    masks.onDailyGuessFinished(won: true, attempts: 1, streak: 14);
     expect(masks.isUnlocked('mimi'), isTrue);
     expect(masks.isUnlocked('ren'), isTrue);
   });

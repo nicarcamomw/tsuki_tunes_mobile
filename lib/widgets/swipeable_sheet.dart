@@ -44,11 +44,10 @@ class SwipeableSheet extends StatelessWidget {
         initialChildSize: initialChildSize,
         maxChildSize: maxChildSize,
         minChildSize: minChildSize,
-        builder: (ctx, controller) => Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
+        builder: (ctx, controller) => Material(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          clipBehavior: Clip.antiAlias,
           child: builder(ctx, controller),
         ),
       ),

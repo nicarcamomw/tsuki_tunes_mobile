@@ -41,8 +41,8 @@ void main() {
 
     await tester.tap(find.text('Cien Voces'));
     await tester.pumpAndSettle();
-    expect(find.text('Escucha 100 canciones.'), findsOneWidget);
-    expect(find.text('0/100'), findsWidgets);
+    expect(find.text('Escucha 250 canciones.'), findsOneWidget);
+    expect(find.text('0/250'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox());
     masks.dispose();

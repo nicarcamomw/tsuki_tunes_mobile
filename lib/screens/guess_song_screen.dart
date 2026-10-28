@@ -1477,13 +1477,16 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                 children: [
                   const Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.accent),
                   const SizedBox(width: 8),
-                  Text(
-                    '${strings.guessStatsTitle} · ${strings.guessModeDaily}',
-                    style: locale.getTextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                      letterSpacing: 1.5,
+                  Expanded(
+                    child: Text(
+                      '${strings.guessStatsTitle} · ${strings.guessModeDaily}',
+                      style: locale.getTextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        letterSpacing: 1.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
