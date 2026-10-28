@@ -21,6 +21,7 @@ import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;
@@ -33,6 +34,7 @@ class AlbumDetailScreen extends StatefulWidget {
 
 class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
+  final ScrollController _scroll = ScrollController();
   Album? _fullAlbum;
   bool _isLoading = true;
   bool _hasError = false;
@@ -41,6 +43,12 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   void initState() {
     super.initState();
     _loadAlbumDetails();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAlbumDetails() async {
@@ -159,6 +167,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         backgroundColor: AppColors.bgCard,
         onRefresh: _loadAlbumDetails,
         child: CustomScrollView(
+        controller: _scroll,
         slivers: [
           // App Bar
           SliverAppBar(
@@ -213,55 +222,68 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 children: [
-                  // Cover
-                  Center(
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: allListened
-                              ? AppColors.accent
-                              : AppColors.accent,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
+                  // Cover with parallax
+                  AnimatedBuilder(
+                    animation: _scroll,
+                    builder: (context, child) {
+                      final offset = _scroll.hasClients ? _scroll.offset : 0.0;
+                      return Transform.translate(
+                        offset: Offset(0, offset * 0.25),
+                        child: child,
+                      );
+                    },
+                    child: Center(
+                    child: Hero(
+                      tag: 'album-cover-${widget.album.id}',
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
                             color: allListened
-                                ? AppColors.accent.withValues(alpha: 0.4)
-                                : AppColors.accentGlow,
-                            blurRadius: allListened ? 24 : 18,
-                            spreadRadius: allListened ? 4 : 2,
+                                ? AppColors.accent
+                                : AppColors.accent,
+                            width: 1.5,
                           ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: ExcludeSemantics(
-                          child: (albumData.coverXl ?? albumData.coverUrl)
-                                  .isNotEmpty
-                              ? CachedNetworkImage(
-                                memCacheWidth: imageCacheSize(context, (260).toDouble()),
-                                  imageUrl:
-                                      albumData.coverXl ?? albumData.coverUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (_, __) =>
-                                      Container(color: AppColors.bgMid),
-                                  errorWidget: (_, __, ___) => Container(
+                          boxShadow: [
+                            BoxShadow(
+                              color: allListened
+                                  ? AppColors.accent.withValues(alpha: 0.4)
+                                  : AppColors.accentGlow,
+                              blurRadius: allListened ? 24 : 18,
+                              spreadRadius: allListened ? 4 : 2,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: ExcludeSemantics(
+                            child: (albumData.coverXl ?? albumData.coverUrl)
+                                    .isNotEmpty
+                                ? CachedNetworkImage(
+                                  memCacheWidth: imageCacheSize(context, (260).toDouble()),
+                                    imageUrl:
+                                        albumData.coverXl ?? albumData.coverUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, __) =>
+                                        Container(color: AppColors.bgMid),
+                                    errorWidget: (_, __, ___) => Container(
+                                      color: AppColors.bgMid,
+                                      child: const Icon(Icons.album,
+                                          size: 50, color: AppColors.accent),
+                                    ),
+                                  )
+                                : Container(
                                     color: AppColors.bgMid,
                                     child: const Icon(Icons.album,
                                         size: 50, color: AppColors.accent),
                                   ),
-                                )
-                              : Container(
-                                  color: AppColors.bgMid,
-                                  child: const Icon(Icons.album,
-                                      size: 50, color: AppColors.accent),
-                                ),
+                          ),
                         ),
                       ),
                     ),
+                  ),
                   ),
 
                   const SizedBox(height: 16),
@@ -317,7 +339,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                               await _api.getArtist(albumData.artistId);
                           if (mounted && artist != null) {
                             appNavigatorKey.currentState?.push(
-                              MaterialPageRoute(
+                              CyberPageRoute(
                                 builder: (_) =>
                                     ArtistDetailScreen(artist: artist),
                               ),

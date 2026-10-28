@@ -15,6 +15,7 @@ import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 // Canvas is far larger than the screen so nodes stay hit-testable anywhere.
 const double _kCanvas = 6000;
@@ -433,7 +434,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   void _openArtist(_GraphNode node) {
     HapticFeedback.lightImpact();
     appNavigatorKey.currentState?.push(
-      MaterialPageRoute(
+      CyberPageRoute(
         builder: (_) => ArtistDetailScreen(artist: node.artist),
       ),
     );

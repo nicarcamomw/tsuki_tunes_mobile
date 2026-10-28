@@ -29,6 +29,7 @@ import 'album_detail_screen.dart';
 import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
 import 'rabbit_hole_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
@@ -886,7 +887,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                       unawaited(HapticFeedback.lightImpact());
                       final updated =
                           await appNavigatorKey.currentState?.push<List<Album>>(
-                        MaterialPageRoute(
+                        CyberPageRoute(
                           builder: (_) => ArtistDiscographyScreen(
                             artistId: _artist.id,
                             artistName: _artist.name,
@@ -950,7 +951,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       child: GestureDetector(
         onTap: () async {
           await appNavigatorKey.currentState?.push(
-            MaterialPageRoute(
+            CyberPageRoute(
               builder: (_) => AlbumDetailScreen(album: album),
             ),
           );
@@ -1079,7 +1080,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 onTap: () {
                   HapticFeedback.lightImpact();
                   appNavigatorKey.currentState?.push(
-                    MaterialPageRoute(
+                    CyberPageRoute(
                       builder: (_) =>
                           RabbitHoleScreen(seedArtist: widget.artist),
                     ),
@@ -1131,7 +1132,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   onTap: () {
                     HapticFeedback.lightImpact();
                     appNavigatorKey.currentState?.push(
-                      MaterialPageRoute(
+                      CyberPageRoute(
                         builder: (_) => ArtistDetailScreen(artist: artist),
                       ),
                     );

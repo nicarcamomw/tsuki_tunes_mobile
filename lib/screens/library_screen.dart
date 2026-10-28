@@ -23,6 +23,7 @@ import '../screens/album_detail_screen.dart';
 import '../screens/playlist_detail_screen.dart';
 import '../widgets/artist_card.dart';
 import 'main_navigation_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class _AlbumGroupData {
   final String albumId;
@@ -479,8 +480,10 @@ class _LibraryScreenState extends State<LibraryScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.library_music_outlined,
-                                    size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyLibrary),
+                                Opacity(
+                                  opacity: 0.3,
+                                  child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyLibrary),
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   strings.emptyLibraryTitle,
@@ -633,8 +636,10 @@ class _LibraryScreenState extends State<LibraryScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.queue_music,
-                            size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyPlaylist),
+                        Opacity(
+                          opacity: 0.3,
+                          child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyPlaylist),
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           strings.noPlaylistsTitle,
@@ -990,7 +995,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       onPressed: () {
                         final album = _buildAlbumFromGroup(group);
                         appNavigatorKey.currentState?.push(
-                          MaterialPageRoute(
+                          CyberPageRoute(
                             builder: (_) => AlbumDetailScreen(album: album),
                           ),
                         );
@@ -1185,7 +1190,7 @@ class _PlaylistListTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         onTap: () {
           appNavigatorKey.currentState?.push(
-            MaterialPageRoute(
+            CyberPageRoute(
               builder: (_) => PlaylistDetailScreen(playlistId: playlist.id),
             ),
           );

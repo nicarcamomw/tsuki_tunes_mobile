@@ -265,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     return Semantics(
                       button: true,
                       label: tabs[index],
-                      child: GestureDetector(
+                      child: _TapScale(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         FocusScope.of(context).unfocus();
@@ -340,7 +340,10 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search, size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11ySearchEmpty),
+              Opacity(
+                opacity: 0.3,
+                child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11ySearchEmpty),
+              ),
               const SizedBox(height: 12),
               Text(
                 strings.emptyStateTitle,
@@ -911,6 +914,37 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
         ],
       ],
+    );
+  }
+}
+
+class _TapScale extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+  const _TapScale({required this.onTap, required this.child});
+
+  @override
+  State<_TapScale> createState() => _TapScaleState();
+}
+
+class _TapScaleState extends State<_TapScale> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.93),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
     );
   }
 }

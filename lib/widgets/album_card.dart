@@ -9,6 +9,7 @@ import '../providers/locale_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'tap_scale.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class AlbumCard extends StatelessWidget {
   final Album album;
@@ -29,7 +30,7 @@ class AlbumCard extends StatelessWidget {
       onTap: () {
         FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
+          CyberPageRoute(
             builder: (_) => AlbumDetailScreen(album: album),
           ),
         );
@@ -41,38 +42,41 @@ class AlbumCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: width,
-              height: width,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppColors.border, width: 1),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.accentDim,
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: ExcludeSemantics(
-                  child: album.coverUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                        memCacheWidth: imageCacheSize(context, (width).toDouble()),
-                          imageUrl: album.coverUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(color: AppColors.bgMid),
-                          errorWidget: (_, __, ___) => Container(
+            Hero(
+              tag: 'album-cover-${album.id}',
+              child: Container(
+                width: width,
+                height: width,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: AppColors.accentDim,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: ExcludeSemantics(
+                    child: album.coverUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                          memCacheWidth: imageCacheSize(context, (width).toDouble()),
+                            imageUrl: album.coverUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(color: AppColors.bgMid),
+                            errorWidget: (_, __, ___) => Container(
+                              color: AppColors.bgMid,
+                              child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
+                            ),
+                          )
+                        : Container(
                             color: AppColors.bgMid,
                             child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
                           ),
-                        )
-                      : Container(
-                          color: AppColors.bgMid,
-                          child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
-                        ),
+                  ),
                 ),
               ),
             ),

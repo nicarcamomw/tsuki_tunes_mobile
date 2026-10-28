@@ -20,17 +20,20 @@ class SkeletonLoader extends StatefulWidget {
 class _SkeletonLoaderState extends State<SkeletonLoader>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _animation;
+  late final Animation<double> _shimmer;
+
+  static const _baseColor = Color(0xFF1E2030);
+  static const _highlightColor = Color(0xFF2A2E42);
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+    _shimmer = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
     );
   }
 
@@ -39,7 +42,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
     super.didChangeDependencies();
     if (MediaQuery.of(context).disableAnimations) {
       _controller.stop();
-      _controller.value = 0.5;
+      _controller.value = 0.0;
     }
   }
 
@@ -52,13 +55,18 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _animation,
+      animation: _shimmer,
       builder: (context, _) => Container(
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          color: AppColors.bgCard.withValues(alpha: _animation.value),
+          gradient: LinearGradient(
+            begin: Alignment(_shimmer.value - 1, 0),
+            end: Alignment(_shimmer.value + 1, 0),
+            colors: const [_baseColor, _highlightColor, _baseColor],
+            stops: const [0.0, 0.5, 1.0],
+          ),
         ),
       ),
     );

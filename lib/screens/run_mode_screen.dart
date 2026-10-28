@@ -14,12 +14,13 @@ import '../providers/locale_provider.dart';
 import '../providers/run_provider.dart';
 import '../services/cadence_detector.dart';
 import '../services/pace_matcher.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class RunModeScreen extends StatelessWidget {
   const RunModeScreen({super.key});
 
   static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
-      .push(MaterialPageRoute(builder: (_) => const RunModeScreen()));
+      .push(CyberPageRoute(builder: (_) => const RunModeScreen()));
 
   @override
   Widget build(BuildContext context) {

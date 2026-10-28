@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/locale_provider.dart';
 import '../screens/login_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class GuestLibraryGate extends StatelessWidget {
   const GuestLibraryGate({super.key});
@@ -52,7 +53,7 @@ class GuestLibraryGate extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    CyberPageRoute(builder: (_) => const LoginScreen()),
                     (_) => false,
                   );
                 },

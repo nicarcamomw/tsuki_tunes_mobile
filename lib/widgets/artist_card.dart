@@ -10,6 +10,7 @@ import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../widgets/tap_scale.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class ArtistCard extends StatelessWidget {
   final Artist artist;
@@ -30,7 +31,7 @@ class ArtistCard extends StatelessWidget {
       onTap: () {
         FocusScope.of(context).unfocus();
         appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
+          CyberPageRoute(
             builder: (_) => ArtistDetailScreen(artist: artist),
           ),
         );

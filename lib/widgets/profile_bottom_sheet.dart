@@ -21,6 +21,7 @@ import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
 import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class ProfileBottomSheet {
   static void show(BuildContext context, AuthProvider auth) {
@@ -683,7 +684,7 @@ class ProfileBottomSheet {
                             await Future.delayed(const Duration(milliseconds: 120));
                             if (context.mounted) {
                               Navigator.of(context, rootNavigator: true).push(
-                                MaterialPageRoute(
+                                CyberPageRoute(
                                   builder: (pushedCtx) => OnboardingScreen(
                                     onComplete: () {
                                       if (Navigator.of(pushedCtx).canPop()) {

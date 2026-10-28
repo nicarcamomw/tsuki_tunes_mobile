@@ -13,6 +13,7 @@ import '../models/radar_release.dart';
 import '../providers/locale_provider.dart';
 import '../services/release_radar_service.dart';
 import 'album_detail_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class ReleaseRadarScreen extends StatefulWidget {
   const ReleaseRadarScreen({super.key});
@@ -87,7 +88,7 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
   void _openRelease(RadarRelease release) {
     HapticFeedback.lightImpact();
     Navigator.of(context).push(
-      MaterialPageRoute(
+      CyberPageRoute(
         builder: (_) => AlbumDetailScreen(album: release.toAlbum()),
       ),
     );

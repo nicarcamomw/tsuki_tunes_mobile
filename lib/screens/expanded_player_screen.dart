@@ -29,6 +29,7 @@ import '../widgets/tap_scale.dart';
 import 'album_detail_screen.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 enum _CenterViewMode { artwork, lyrics, queue }
 
@@ -116,7 +117,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     if (track.albumId.isNotEmpty) {
       Navigator.of(context).pop();
       appNavigatorKey.currentState?.push(
-        MaterialPageRoute(
+        CyberPageRoute(
           builder: (_) => AlbumDetailScreen(
             album: Album(
               id: track.albumId,
@@ -131,7 +132,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     } else if (track.artistId.isNotEmpty) {
       Navigator.of(context).pop();
       appNavigatorKey.currentState?.push(
-        MaterialPageRoute(
+        CyberPageRoute(
           builder: (_) => ArtistDetailScreen(
             artist: Artist(
               id: track.artistId,
@@ -341,7 +342,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                 if (track.artistId.isNotEmpty) {
                                   Navigator.of(context).pop();
                                   appNavigatorKey.currentState?.push(
-                                    MaterialPageRoute(
+                                    CyberPageRoute(
                                       builder: (_) => ArtistDetailScreen(
                                         artist: Artist(
                                           id: track.artistId,
@@ -475,40 +476,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         semanticLabel: isPlaying ? strings.a11yPause : strings.a11yPlay,
                         onTap: isBuffering ? null : audio.togglePlay,
                         scaleDown: 0.88,
-                        child: Container(
-                          width: 68,
-                          height: 68,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.accent,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.accentGlow,
-                                blurRadius: 18,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: isBuffering
-                                ? const SizedBox(
-                                    width: 28,
-                                    height: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                              AppColors.textBright),
-                                    ),
-                                  )
-                                : Icon(
-                                    isPlaying
-                                        ? Icons.pause
-                                        : Icons.play_arrow,
-                                    size: 36,
-                                    color: AppColors.textBright,
-                                  ),
-                          ),
+                        child: _PulsingGlowPlay(
+                          isPlaying: isPlaying,
+                          isBuffering: isBuffering,
                         ),
                       ),
 
@@ -988,7 +958,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       Navigator.pop(context);
                       Navigator.of(context).pop();
                       appNavigatorKey.currentState?.push(
-                        MaterialPageRoute(
+                        CyberPageRoute(
                           builder: (_) => ArtistDetailScreen(
                             artist: Artist(
                               id: track.artistId,
@@ -2625,6 +2595,86 @@ class _IsolatedProgressBar extends StatelessWidget {
           fontSize: 11,
           color: AppColors.textSecondary,
         ),
+      ),
+    );
+  }
+}
+
+class _PulsingGlowPlay extends StatefulWidget {
+  final bool isPlaying;
+  final bool isBuffering;
+  const _PulsingGlowPlay({required this.isPlaying, required this.isBuffering});
+
+  @override
+  State<_PulsingGlowPlay> createState() => _PulsingGlowPlayState();
+}
+
+class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _glow = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    if (widget.isPlaying) _glow.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PulsingGlowPlay old) {
+    super.didUpdateWidget(old);
+    if (widget.isPlaying && !_glow.isAnimating) {
+      _glow.repeat(reverse: true);
+    } else if (!widget.isPlaying && _glow.isAnimating) {
+      _glow.animateTo(0.0, duration: const Duration(milliseconds: 300));
+    }
+  }
+
+  @override
+  void dispose() {
+    _glow.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _glow,
+      builder: (context, child) => Container(
+        width: 68,
+        height: 68,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.accent,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accentGlow,
+              blurRadius: 18 + 12 * _glow.value,
+              spreadRadius: 2 + 4 * _glow.value,
+            ),
+          ],
+        ),
+        child: child,
+      ),
+      child: Center(
+        child: widget.isBuffering
+            ? const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppColors.textBright),
+                ),
+              )
+            : Icon(
+                widget.isPlaying ? Icons.pause : Icons.play_arrow,
+                size: 36,
+                color: AppColors.textBright,
+              ),
       ),
     );
   }

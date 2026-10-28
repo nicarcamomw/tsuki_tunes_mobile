@@ -20,6 +20,7 @@ import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
 import 'tap_scale.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class _PlayingIndicator extends StatefulWidget {
   final bool isPlaying;
@@ -512,7 +513,7 @@ class TrackTile extends StatelessWidget {
                     // ArtistDetailScreen fetches the full profile (photo,
                     // fans, releases) from the id on open.
                     appNavigatorKey.currentState?.push(
-                      MaterialPageRoute(
+                      CyberPageRoute(
                         builder: (_) => ArtistDetailScreen(
                           artist: Artist(
                             id: track.artistId,
@@ -534,7 +535,7 @@ class TrackTile extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(ctx);
                     appNavigatorKey.currentState?.push(
-                      MaterialPageRoute(
+                      CyberPageRoute(
                         builder: (_) => AlbumDetailScreen(
                           album: Album(
                             id: track.albumId,

@@ -12,6 +12,7 @@ import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class ArtistDiscographyScreen extends StatefulWidget {
   final String? artistId;
@@ -438,7 +439,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
       child: GestureDetector(
         onTap: () async {
           await appNavigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
+            CyberPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
           );
           if (mounted) setState(() {});
         },

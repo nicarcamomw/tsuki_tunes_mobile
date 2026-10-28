@@ -37,6 +37,7 @@ import 'release_radar_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
 import 'wrapped_screen.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -76,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final Widget screen = payload == TimeMachineService.payload
         ? const TimeMachineScreen()
         : const ReleaseRadarScreen();
-    appNavigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => screen));
+    appNavigatorKey.currentState?.push(CyberPageRoute(builder: (_) => screen));
   }
 
   @override
@@ -545,10 +546,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: AppColors.accent.withValues(alpha: 0.3),
                               ),
                             ),
-                            child: Icon(
-                              Icons.headphones_rounded,
-                              color: AppColors.accent,
-                              size: 28,
+                            child: Image.asset(
+                              'assets/images/tengu.png',
+                              width: 28,
+                              height: 28,
                               semanticLabel: strings.homeEmptyTitle,
                             ),
                           ),
@@ -695,13 +696,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Semantics(
                       header: true,
-                      child: Text(
-                        strings.topArtistsTitle,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textBright,
-                          letterSpacing: 1.2,
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [AppColors.textBright, AppColors.accent],
+                          stops: [0.5, 1.0],
+                        ).createShader(bounds),
+                        child: Text(
+                          strings.topArtistsTitle,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
                     ),
@@ -723,13 +730,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Semantics(
                       header: true,
-                      child: Text(
-                        strings.topArtistsTitle,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textBright,
-                          letterSpacing: 1.2,
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [AppColors.textBright, AppColors.accent],
+                          stops: [0.5, 1.0],
+                        ).createShader(bounds),
+                        child: Text(
+                          strings.topArtistsTitle,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
                     ),
@@ -751,13 +764,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
                   child: Semantics(
                     header: true,
-                    child: Text(
-                      strings.latestReleasesTitle,
-                      style: locale.getTextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textBright,
-                        letterSpacing: 1.2,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [AppColors.textBright, AppColors.accent],
+                        stops: [0.5, 1.0],
+                      ).createShader(bounds),
+                      child: Text(
+                        strings.latestReleasesTitle,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
@@ -818,13 +837,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
                     child: Semantics(
                       header: true,
-                      child: Text(
-                        strings.recommendedTitle,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textBright,
-                          letterSpacing: 1.2,
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [AppColors.textBright, AppColors.accent],
+                          stops: [0.5, 1.0],
+                        ).createShader(bounds),
+                        child: Text(
+                          strings.recommendedTitle,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
                     ),
@@ -864,7 +889,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openGuessGame() async {
     unawaited(HapticFeedback.lightImpact());
     await Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(builder: (_) => const GuessSongScreen()),
+      CyberPageRoute(builder: (_) => const GuessSongScreen()),
     );
     await _refreshDailyDone();
   }
@@ -998,6 +1023,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStatCard(String label, String value, String meta,
       {bool isTextValue = false, required LocaleProvider locale}) {
+    final numValue = isTextValue ? null : int.tryParse(value);
     return Semantics(
       label: '$label: $value, $meta',
       child: Container(
@@ -1022,22 +1048,39 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: isTextValue
-                ? locale.getTextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
-                  )
-                : locale.getTextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.accent,
-                  ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (numValue != null)
+            TweenAnimationBuilder<int>(
+              tween: IntTween(begin: 0, end: numValue),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (context, val, _) => Text(
+                '$val',
+                style: locale.getTextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.accent,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            )
+          else
+            Text(
+              value,
+              style: isTextValue
+                  ? locale.getTextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.accent,
+                    )
+                  : locale.getTextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.accent,
+                    ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           const SizedBox(height: 4),
           Text(
             meta,
@@ -1063,7 +1106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () async {
         if (artist != null) {
           appNavigatorKey.currentState?.push(
-            MaterialPageRoute(
+            CyberPageRoute(
               builder: (_) => ArtistDetailScreen(artist: artist),
             ),
           );
@@ -1080,7 +1123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             matched ??= results.isNotEmpty ? results.first : null;
             if (mounted && matched != null) {
               appNavigatorKey.currentState?.push(
-                MaterialPageRoute(
+                CyberPageRoute(
                   builder: (_) => ArtistDetailScreen(artist: matched!),
                 ),
               );
@@ -1172,7 +1215,7 @@ class _HomeScreenState extends State<HomeScreen> {
       borderRadius: BorderRadius.circular(4),
       onTap: () {
         appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
+          CyberPageRoute(
             builder: (_) => ArtistDetailScreen(artist: artist),
           ),
         );
@@ -1418,7 +1461,7 @@ class _WrappedEntryCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           appNavigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => WrappedScreen(year: year)),
+            CyberPageRoute(builder: (_) => WrappedScreen(year: year)),
           );
         },
         child: Container(
@@ -1497,7 +1540,7 @@ class _ListeningClockEntryCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           appNavigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => const ListeningClockScreen()),
+            CyberPageRoute(builder: (_) => const ListeningClockScreen()),
           );
         },
         child: Container(
@@ -1577,7 +1620,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           appNavigatorKey.currentState?.push(
-            MaterialPageRoute(
+            CyberPageRoute(
               builder: (_) => RabbitHoleScreen(seedArtist: seedArtist!),
             ),
           );
@@ -1683,7 +1726,7 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
                 onTap: () {
                   HapticFeedback.lightImpact();
                   appNavigatorKey.currentState?.push(
-                    MaterialPageRoute(
+                    CyberPageRoute(
                         builder: (_) => const ReleaseRadarScreen()),
                   );
                 },

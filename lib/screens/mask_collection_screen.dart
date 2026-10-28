@@ -7,12 +7,13 @@ import '../providers/locale_provider.dart';
 import '../providers/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/swipeable_sheet.dart';
+import '../core/utils/cyber_page_route.dart';
 
 class MaskCollectionScreen extends StatelessWidget {
   const MaskCollectionScreen({super.key});
 
   static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
-      .push(MaterialPageRoute(builder: (_) => const MaskCollectionScreen()));
+      .push(CyberPageRoute(builder: (_) => const MaskCollectionScreen()));
 
   @override
   Widget build(BuildContext context) {
