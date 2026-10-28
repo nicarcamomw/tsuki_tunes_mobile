@@ -11,6 +11,7 @@ import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/song_radio.dart';
+import 'swipeable_sheet.dart';
 
 /// Starts a song radio and tells the user how it went.
 Future<void> startRadioWithFeedback(
@@ -33,14 +34,11 @@ Future<void> startRadioWithFeedback(
 }
 
 Future<void> showRadioControlSheet(BuildContext context) {
-  return showModalBottomSheet(
-    context: context,
-    backgroundColor: AppColors.bgCard,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (_) => const _RadioControlSheet(),
+  return SwipeableSheet.show(
+    context,
+    initialChildSize: 0.55,
+    maxChildSize: 0.85,
+    builder: (_, controller) => const _RadioControlSheet(),
   );
 }
 

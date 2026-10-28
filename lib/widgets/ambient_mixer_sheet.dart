@@ -7,20 +7,17 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/ambient_provider.dart';
 import '../providers/locale_provider.dart';
+import 'swipeable_sheet.dart';
 
 class AmbientMixerSheet extends StatefulWidget {
   const AmbientMixerSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => const AmbientMixerSheet(),
+    return SwipeableSheet.show(
+      context,
+      initialChildSize: 0.65,
+      maxChildSize: 0.92,
+      builder: (_, controller) => const AmbientMixerSheet(),
     );
   }
 

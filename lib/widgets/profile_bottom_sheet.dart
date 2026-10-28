@@ -19,6 +19,7 @@ import '../screens/onboarding_screen.dart';
 import '../services/audio_precache_service.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
+import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
 
 class ProfileBottomSheet {
@@ -26,15 +27,11 @@ class ProfileBottomSheet {
     FocusScope.of(context).unfocus();
     FocusManager.instance.primaryFocus?.unfocus();
 
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
+    SwipeableSheet.show(
+      context,
+      initialChildSize: 0.75,
+      maxChildSize: 0.92,
+      builder: (ctx, sheetController) {
         final audioProvider = context.read<AudioProvider>();
         final moon = context.read<MoonProvider>();
         final masks = context.read<MaskProvider>();

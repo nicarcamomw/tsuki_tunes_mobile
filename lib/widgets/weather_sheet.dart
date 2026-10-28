@@ -11,21 +11,18 @@ import '../providers/weather_provider.dart';
 import '../services/device_location.dart';
 import '../services/weather_service.dart';
 import 'sky_line.dart';
+import 'swipeable_sheet.dart';
 
 /// Weather status and setup: where it comes from (approximate location or a
 /// chosen city), with the privacy note right where the choice is made.
 class WeatherSheet extends StatefulWidget {
   const WeatherSheet({super.key});
 
-  static Future<void> show(BuildContext context) => showModalBottomSheet(
-        context: context,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        backgroundColor: AppColors.bgCard,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (_) => const WeatherSheet(),
+  static Future<void> show(BuildContext context) => SwipeableSheet.show(
+        context,
+        initialChildSize: 0.65,
+        maxChildSize: 0.92,
+        builder: (_, controller) => const WeatherSheet(),
       );
 
   @override

@@ -16,6 +16,7 @@ import '../providers/playlist_provider.dart';
 import '../services/play_history.dart';
 import 'cyber_glitch_text.dart';
 import 'moon_glyph.dart';
+import 'swipeable_sheet.dart';
 
 const _silver = Color(0xFFD6E0F5);
 const _blood = Color(0xFFE0452B);
@@ -26,15 +27,11 @@ class MoonSheet extends StatelessWidget {
   static Future<void> show(BuildContext context) {
     context.read<MoonProvider>().refresh();
     context.read<PlayHistory>().load();
-    return showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => const MoonSheet(),
+    return SwipeableSheet.show(
+      context,
+      initialChildSize: 0.75,
+      maxChildSize: 0.92,
+      builder: (_, controller) => const MoonSheet(),
     );
   }
 

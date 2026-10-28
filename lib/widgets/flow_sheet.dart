@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
+import 'swipeable_sheet.dart';
 
 /// Reads the tempo of the upcoming tracks, shows how many Deezer knows, and
 /// reorders the queue in the chosen flow.
@@ -14,15 +15,11 @@ class FlowSheet extends StatefulWidget {
 
   const FlowSheet({super.key, this.service});
 
-  static Future<void> show(BuildContext context) => showModalBottomSheet(
-        context: context,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        backgroundColor: AppColors.bgCard,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (_) => const FlowSheet(),
+  static Future<void> show(BuildContext context) => SwipeableSheet.show(
+        context,
+        initialChildSize: 0.55,
+        maxChildSize: 0.85,
+        builder: (_, controller) => const FlowSheet(),
       );
 
   @override

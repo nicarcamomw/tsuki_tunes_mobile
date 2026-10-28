@@ -8,6 +8,7 @@ import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../providers/locale_provider.dart';
 import '../services/storage_service.dart';
+import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
 
 class LanguageSelectorSheet extends StatelessWidget {
@@ -15,17 +16,12 @@ class LanguageSelectorSheet extends StatelessWidget {
 
   static void show(BuildContext context) {
     FocusManager.instance.primaryFocus?.unfocus();
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
+    SwipeableSheet.show(
+      context,
       backgroundColor: AppColors.bgDeep,
-      barrierColor: Colors.black87,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: AppColors.borderGlow, width: 1.2),
-      ),
-      builder: (_) => const LanguageSelectorSheet(),
+      initialChildSize: 0.50,
+      maxChildSize: 0.80,
+      builder: (_, controller) => const LanguageSelectorSheet(),
     ).whenComplete(() {
       FocusManager.instance.primaryFocus?.unfocus();
     });
