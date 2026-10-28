@@ -23,7 +23,7 @@ class MaskProvider extends ChangeNotifier {
   static const _unlockedKey = 'masks_unlocked_v1';
   static const _equippedKey = 'masks_equipped_v1';
   static const _statsKey = 'masks_stats_v1';
-  static const int rainGoalSeconds = 5 * 3600;
+  static const int rainGoalSeconds = 10 * 3600;
 
   final DateTime Function() _clock;
   final Future<Album?> Function(String albumId) _albumLookup;
@@ -255,12 +255,12 @@ class MaskProvider extends ChangeNotifier {
     _stats.trimMaps();
 
     unlock('hajime');
-    if (_stats.plays >= 100) unlock('hyaku');
-    if (_stats.plays >= 1000) unlock('sen');
-    if (_stats.nightPlays >= 25) unlock('yoru');
-    if ((_stats.artistPlays[artist] ?? 0) >= 50) unlock('oshi');
-    if (_stats.newArtistsSince(now.subtract(const Duration(days: 7))) >= 10) unlock('tabibito');
-    if (todayCount >= 10) unlock('shuchaku');
+    if (_stats.plays >= 250) unlock('hyaku');
+    if (_stats.plays >= 2500) unlock('sen');
+    if (_stats.nightPlays >= 50) unlock('yoru');
+    if ((_stats.artistPlays[artist] ?? 0) >= 100) unlock('oshi');
+    if (_stats.newArtistsSince(now.subtract(const Duration(days: 7))) >= 20) unlock('tabibito');
+    if (todayCount >= 15) unlock('shuchaku');
     if (MoonCalculator.snapshot(now).isFullMoonWindow) unlock('mangetsu');
     _checkMoments(now);
     notifyListeners();
@@ -303,7 +303,7 @@ class MaskProvider extends ChangeNotifier {
   void onDailyGuessFinished({required bool won, required int attempts, required int streak}) {
     _stats.guessStreak = streak;
     if (won && attempts == 1) unlock('mimi');
-    if (streak >= 7) unlock('ren');
+    if (streak >= 14) unlock('ren');
     notifyListeners();
     unawaited(_saveLocal());
   }

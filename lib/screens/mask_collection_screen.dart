@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../providers/locale_provider.dart';
 import '../providers/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/swipeable_sheet.dart';
 
 class MaskCollectionScreen extends StatelessWidget {
   const MaskCollectionScreen({super.key});
@@ -252,14 +253,11 @@ class _ProgressBar extends StatelessWidget {
 }
 
 void _showDetail(BuildContext context, OniMask mask) {
-  showModalBottomSheet(
-    context: context,
-    useRootNavigator: true,
-    backgroundColor: AppColors.bgCard,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (_) => _MaskDetail(mask: mask),
+  SwipeableSheet.show(
+    context,
+    initialChildSize: 0.55,
+    maxChildSize: 0.80,
+    builder: (_, controller) => _MaskDetail(mask: mask),
   );
 }
 
@@ -279,11 +277,12 @@ class _MaskDetail extends StatelessWidget {
     final isEquipped = masks.equipped?.id == mask.id;
     final progress = unlocked ? null : masks.progress(mask.id);
     final at = masks.unlockedAt(mask.id);
-    final color = unlocked ? mask.rarityColor : AppColors.textMuted;
+    final rColor = mask.rarityColor;
+    final color = unlocked ? rColor : AppColors.textMuted;
 
     return SafeArea(
       top: false,
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -327,16 +326,82 @@ class _MaskDetail extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            Text(
-              hidden ? strings.maskSecretHint : mask.description(lang),
-              textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.35),
-            ),
+            // Description / hint
+            if (hidden)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.visibility_off_rounded, size: 14, color: AppColors.textMuted),
+                  const SizedBox(width: 6),
+                  Text(
+                    strings.maskSecretHint,
+                    style: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.35),
+                  ),
+                ],
+              )
+            else ...[
+              if (!unlocked)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_open_rounded, size: 14, color: rColor.withValues(alpha: 0.7)),
+                      const SizedBox(width: 6),
+                      Text(
+                        strings.maskHowToUnlock,
+                        style: locale.getTextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: rColor.withValues(alpha: 0.7),
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  mask.description(lang),
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.35),
+                ),
+              ),
+            ],
+            // Progress bar for all locked masks with a goal
             if (progress != null) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: 220,
-                child: _ProgressBar(current: progress.$1, goal: progress.$2, color: mask.rarityColor),
+                child: _ProgressBar(current: progress.$1, goal: progress.$2, color: rColor),
+              ),
+            ],
+            // For locked masks without a numeric goal, show a locked status
+            if (!unlocked && !hidden && progress == null) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: rColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: rColor.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_outline_rounded, size: 14, color: rColor.withValues(alpha: 0.6)),
+                    const SizedBox(width: 6),
+                    Text(
+                      strings.maskLocked,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: rColor.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
             if (at != null) ...[
@@ -350,7 +415,7 @@ class _MaskDetail extends StatelessWidget {
             if (unlocked)
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: isEquipped
                       ? null
                       : () {
@@ -362,11 +427,11 @@ class _MaskDetail extends StatelessWidget {
                     isEquipped ? strings.maskEquipped : strings.maskEquip,
                     style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: mask.rarityColor.withValues(alpha: 0.18),
-                    disabledForegroundColor: mask.rarityColor,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isEquipped ? rColor : Colors.white,
+                    backgroundColor: isEquipped ? rColor.withValues(alpha: 0.10) : rColor.withValues(alpha: 0.25),
+                    disabledForegroundColor: rColor,
+                    side: BorderSide(color: rColor, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),

@@ -952,6 +952,18 @@ class AppStrings {
         AppLanguage.ja => '装備する',
       };
 
+  String get maskHowToUnlock => switch (language) {
+        AppLanguage.es => 'CÓMO CONSEGUIRLA',
+        AppLanguage.en => 'HOW TO UNLOCK',
+        AppLanguage.ja => '解放条件',
+      };
+
+  String get maskLocked => switch (language) {
+        AppLanguage.es => 'Aún bloqueada',
+        AppLanguage.en => 'Still locked',
+        AppLanguage.ja => '未解放',
+      };
+
   String get maskEquipped => switch (language) {
         AppLanguage.es => 'EQUIPADA',
         AppLanguage.en => 'EQUIPPED',

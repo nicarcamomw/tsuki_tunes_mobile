@@ -420,13 +420,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                                   },
                                 ),
-                                if (auth.isLoggedIn) ...[
-                                  const SizedBox(width: 8),
-                                  _GearProfileButton(
-                                    auth: auth,
-                                    label: strings.profileTitle,
+                                const SizedBox(width: 8),
+                                Opacity(
+                                  opacity: auth.isLoggedIn ? 1.0 : 0.0,
+                                  child: IgnorePointer(
+                                    ignoring: !auth.isLoggedIn,
+                                    child: _GearProfileButton(
+                                      auth: auth,
+                                      label: strings.profileTitle,
+                                    ),
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ],

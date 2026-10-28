@@ -103,16 +103,16 @@ class MaskCatalog {
       kanji: '百',
       art: MaskArt.kabuki,
       rarity: MaskRarity.common,
-      goal: 100,
+      goal: 250,
       names: {
         AppLanguage.es: 'Cien Voces',
         AppLanguage.en: 'Hundred Voices',
         AppLanguage.ja: '百の声',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 100 canciones.',
-        AppLanguage.en: 'Listen to 100 songs.',
-        AppLanguage.ja: '100曲を聴く。',
+        AppLanguage.es: 'Escucha 250 canciones.',
+        AppLanguage.en: 'Listen to 250 songs.',
+        AppLanguage.ja: '250曲を聴く。',
       },
     ),
     const OniMask(
@@ -120,16 +120,16 @@ class MaskCatalog {
       kanji: '千',
       art: MaskArt.hannya,
       rarity: MaskRarity.epic,
-      goal: 1000,
+      goal: 2500,
       names: {
         AppLanguage.es: 'Mil Ecos',
         AppLanguage.en: 'Thousand Echoes',
         AppLanguage.ja: '千の響き',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 1000 canciones.',
-        AppLanguage.en: 'Listen to 1000 songs.',
-        AppLanguage.ja: '1000曲を聴く。',
+        AppLanguage.es: 'Escucha 2500 canciones.',
+        AppLanguage.en: 'Listen to 2500 songs.',
+        AppLanguage.ja: '2500曲を聴く。',
       },
     ),
     OniMask(
@@ -137,7 +137,7 @@ class MaskCatalog {
       kanji: '推',
       art: MaskArt.kabuki,
       rarity: MaskRarity.rare,
-      goal: 50,
+      goal: 100,
       dye: maskDye(const Color(0xFFFF6B9D)),
       names: const {
         AppLanguage.es: 'Devoción',
@@ -145,9 +145,9 @@ class MaskCatalog {
         AppLanguage.ja: '推し',
       },
       descriptions: const {
-        AppLanguage.es: 'Escucha 50 canciones de un mismo artista.',
-        AppLanguage.en: 'Listen to 50 songs by the same artist.',
-        AppLanguage.ja: '同じアーティストの曲を50回聴く。',
+        AppLanguage.es: 'Escucha 100 canciones de un mismo artista.',
+        AppLanguage.en: 'Listen to 100 songs by the same artist.',
+        AppLanguage.ja: '同じアーティストの曲を100回聴く。',
       },
     ),
     OniMask(
@@ -155,7 +155,7 @@ class MaskCatalog {
       kanji: '旅',
       art: MaskArt.tengu,
       rarity: MaskRarity.rare,
-      goal: 10,
+      goal: 20,
       dye: maskDye(const Color(0xFF2EE6A6)),
       names: const {
         AppLanguage.es: 'Viajero',
@@ -163,9 +163,9 @@ class MaskCatalog {
         AppLanguage.ja: '旅人',
       },
       descriptions: const {
-        AppLanguage.es: 'Descubre 10 artistas nuevos en una semana.',
-        AppLanguage.en: 'Discover 10 new artists in one week.',
-        AppLanguage.ja: '1週間で新しいアーティストを10組発見する。',
+        AppLanguage.es: 'Descubre 20 artistas nuevos en una semana.',
+        AppLanguage.en: 'Discover 20 new artists in one week.',
+        AppLanguage.ja: '1週間で新しいアーティストを20組発見する。',
       },
     ),
     OniMask(
@@ -190,7 +190,7 @@ class MaskCatalog {
       kanji: '雨',
       art: MaskArt.kabuki,
       rarity: MaskRarity.rare,
-      goal: 5,
+      goal: 10,
       dye: maskDye(const Color(0xFF4FA8FF)),
       names: const {
         AppLanguage.es: 'Espíritu de la Lluvia',
@@ -198,9 +198,9 @@ class MaskCatalog {
         AppLanguage.ja: '雨の精',
       },
       descriptions: const {
-        AppLanguage.es: 'Escucha 5 horas de lluvia o tormenta en el ambiente.',
-        AppLanguage.en: 'Listen to 5 hours of rain or storm ambience.',
-        AppLanguage.ja: '雨や嵐の環境音を5時間聴く。',
+        AppLanguage.es: 'Escucha 10 horas de lluvia o tormenta en el ambiente.',
+        AppLanguage.en: 'Listen to 10 hours of rain or storm ambience.',
+        AppLanguage.ja: '雨や嵐の環境音を10時間聴く。',
       },
     ),
     OniMask(
@@ -225,7 +225,7 @@ class MaskCatalog {
       kanji: '夜',
       art: MaskArt.hannya,
       rarity: MaskRarity.rare,
-      goal: 25,
+      goal: 50,
       dye: maskDye(const Color(0xFF7A5CFF)),
       names: const {
         AppLanguage.es: 'Criatura Nocturna',
@@ -233,9 +233,9 @@ class MaskCatalog {
         AppLanguage.ja: '夜の者',
       },
       descriptions: const {
-        AppLanguage.es: 'Escucha 25 canciones entre la medianoche y las 5 AM.',
-        AppLanguage.en: 'Listen to 25 songs between midnight and 5 AM.',
-        AppLanguage.ja: '深夜0時から朝5時の間に25曲聴く。',
+        AppLanguage.es: 'Escucha 50 canciones entre la medianoche y las 5 AM.',
+        AppLanguage.en: 'Listen to 50 songs between midnight and 5 AM.',
+        AppLanguage.ja: '深夜0時から朝5時の間に50曲聴く。',
       },
     ),
     OniMask(
@@ -260,17 +260,17 @@ class MaskCatalog {
       kanji: '連',
       art: MaskArt.tengu,
       rarity: MaskRarity.epic,
-      goal: 7,
+      goal: 14,
       dye: maskDye(const Color(0xFFB026FF)),
       names: const {
-        AppLanguage.es: 'Racha de Siete',
-        AppLanguage.en: 'Seven Streak',
-        AppLanguage.ja: '七連',
+        AppLanguage.es: 'Racha Imparable',
+        AppLanguage.en: 'Unstoppable Streak',
+        AppLanguage.ja: '連勝街道',
       },
       descriptions: const {
-        AppLanguage.es: 'Gana el reto diario 7 días seguidos.',
-        AppLanguage.en: 'Win the daily challenge 7 days in a row.',
-        AppLanguage.ja: 'デイリーチャレンジに7日連続で勝つ。',
+        AppLanguage.es: 'Gana el reto diario 14 días seguidos.',
+        AppLanguage.en: 'Win the daily challenge 14 days in a row.',
+        AppLanguage.ja: 'デイリーチャレンジに14日連続で勝つ。',
       },
     ),
     const OniMask(
@@ -322,9 +322,9 @@ class MaskCatalog {
         AppLanguage.ja: '執着',
       },
       descriptions: const {
-        AppLanguage.es: 'Escuchaste la misma canción 10 veces en un día.',
-        AppLanguage.en: 'You played the same song 10 times in one day.',
-        AppLanguage.ja: '1日に同じ曲を10回聴いた。',
+        AppLanguage.es: 'Escuchaste la misma canción 15 veces en un día.',
+        AppLanguage.en: 'You played the same song 15 times in one day.',
+        AppLanguage.ja: '1日に同じ曲を15回聴いた。',
       },
     ),
     const OniMask(
