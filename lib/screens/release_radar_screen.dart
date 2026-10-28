@@ -692,6 +692,7 @@ class _ReleaseTile extends StatelessWidget {
       label: '${release.title}, ${release.artistName}, $type, $when',
       excludeSemantics: true,
       child: InkWell(
+        borderRadius: BorderRadius.circular(6),
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

@@ -542,6 +542,7 @@ class ProfileBottomSheet {
                         ),
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
                         InkWell(
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
                           onTap: () {
                             HapticFeedback.lightImpact();
                             AudioPrecacheService().clearCache();
@@ -626,6 +627,7 @@ class ProfileBottomSheet {
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
                         // Language
                         InkWell(
+                          borderRadius: BorderRadius.zero,
                           onTap: () async {
                             Navigator.pop(ctx);
                             await Future.delayed(const Duration(milliseconds: 120));

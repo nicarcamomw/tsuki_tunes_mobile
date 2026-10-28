@@ -1059,6 +1059,7 @@ class _HomeScreenState extends State<HomeScreen> {
       button: true,
       label: '${locale.strings.tabArtists} $rank, ${entry.name}',
       child: InkWell(
+      borderRadius: BorderRadius.circular(4),
       onTap: () async {
         if (artist != null) {
           appNavigatorKey.currentState?.push(
@@ -1168,6 +1169,7 @@ class _HomeScreenState extends State<HomeScreen> {
       button: true,
       label: '${locale.strings.featured} $rank, ${artist.name}',
       child: InkWell(
+      borderRadius: BorderRadius.circular(4),
       onTap: () {
         appNavigatorKey.currentState?.push(
           MaterialPageRoute(

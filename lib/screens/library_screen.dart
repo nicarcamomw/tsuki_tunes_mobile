@@ -914,6 +914,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
         children: [
           // Header
           InkWell(
+            borderRadius: BorderRadius.circular(4),
             onTap: onToggle,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1036,6 +1037,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                       ...group.tracks.map((trackData) {
               final isCurrentTrack = currentTrackId == trackData.trackId;
               return InkWell(
+                borderRadius: BorderRadius.circular(4),
                 onTap: () {
                   final queue = group.tracks
                       .map((td) => Track(
@@ -1180,6 +1182,7 @@ class _PlaylistListTile extends StatelessWidget {
         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(4),
         onTap: () {
           appNavigatorKey.currentState?.push(
             MaterialPageRoute(
