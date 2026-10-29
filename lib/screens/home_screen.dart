@@ -1072,39 +1072,46 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          if (numValue != null)
-            TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: numValue),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              builder: (context, val, _) => Text(
-                '$val',
-                style: locale.getTextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.accent,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            )
-          else
-            Text(
-              value,
-              style: isTextValue
-                  ? locale.getTextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
+          // Same height for numbers and names, so the line under them sits
+          // level across every card.
+          SizedBox(
+            height: 30,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: numValue != null
+                  ? TweenAnimationBuilder<int>(
+                      tween: IntTween(begin: 0, end: numValue),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, val, _) => Text(
+                        '$val',
+                        style: locale.getTextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.accent,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     )
-                  : locale.getTextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.accent,
+                  : Text(
+                      value,
+                      style: isTextValue
+                          ? locale.getTextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                            )
+                          : locale.getTextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                            ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
+          ),
           const SizedBox(height: 4),
           Text(
             meta,
