@@ -2268,6 +2268,30 @@ class AppStrings {
         AppLanguage.ja => '再試行',
       };
 
+  String get lyricsCardTitle => switch (language) {
+        AppLanguage.es => 'Letras',
+        AppLanguage.en => 'Lyrics',
+        AppLanguage.ja => '歌詞',
+      };
+
+  String get lyricsShare => switch (language) {
+        AppLanguage.es => 'Compartir',
+        AppLanguage.en => 'Share',
+        AppLanguage.ja => '共有',
+      };
+
+  String get lyricsTranslate => switch (language) {
+        AppLanguage.es => 'Traducir',
+        AppLanguage.en => 'Translate',
+        AppLanguage.ja => '翻訳',
+      };
+
+  String get lyricsOriginal => switch (language) {
+        AppLanguage.es => 'Original',
+        AppLanguage.en => 'Original',
+        AppLanguage.ja => '原文',
+      };
+
   // --- Track Context Menu ---
   String get goToArtist => switch (language) {
         AppLanguage.es => 'Ir al artista',
