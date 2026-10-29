@@ -419,7 +419,7 @@ class RunProvider extends ChangeNotifier {
       final pickIds = picks.map((t) => t.id).toSet();
       for (final t in picks) {
         _queued.add(t.id);
-        audio.playNext(t);
+        audio.playNext(t, userQueued: false);
       }
       final up = audio.upcomingTracks;
       audio.setUpcomingOrder([

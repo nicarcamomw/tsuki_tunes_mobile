@@ -1775,14 +1775,27 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void playNext(Track track) {
-    if (!_q.insertNext(track)) return;
-    _persistPlaybackState();
-    notifyListeners();
+  /// Whether [trackId] was queued by hand and is still waiting to play.
+  bool isUserQueued(String trackId) => _q.isUserQueued(trackId);
+
+  /// Plays [track] right after the current one. [userQueued] false is for
+  /// tracks the app picks itself (running mode).
+  void playNext(Track track, {bool userQueued = true}) {
+    if (!_q.insertNext(track, userQueued: userQueued)) return;
+    _queueChanged();
   }
+
+  /// Queues tracks after the current one and anything queued before them,
+  /// ahead of the rest of the album or playlist, like Spotify's queue.
   void addToQueue(Track track) => addAllToQueue([track]);
   void addAllToQueue(List<Track> tracks) {
-    if (_q.append(tracks) == 0) return;
+    if (_q.enqueue(tracks) == 0) return;
+    _queueChanged();
+  }
+
+  void _queueChanged() {
+    _prefetchedTargetTrackId = null;
+    _prefetchNextTrack();
     _persistPlaybackState();
     notifyListeners();
   }

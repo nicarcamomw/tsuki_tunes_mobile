@@ -1505,6 +1505,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                       itemBuilder: (context, i) {
                         final t = queue[i];
                         final isCur = audio.currentTrack?.id == t.id;
+                        final queuedByUser = !isCur && audio.isUserQueued(t.id);
                         return Dismissible(
                           key: ValueKey('queue_${t.id}_$i'),
                           direction: isCur ? DismissDirection.none : DismissDirection.endToStart,
@@ -1571,6 +1572,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                     child: isCur
                                         ? Icon(Icons.equalizer,
                                             color: AppColors.accent, size: 16, semanticLabel: strings.a11yNowPlaying)
+                                        : queuedByUser
+                                        ? Icon(Icons.queue_music,
+                                            color: AppColors.neonCyan, size: 16, semanticLabel: strings.queuedByYou)
                                         : Text(
                                             (i + 1).toString().padLeft(2, '0'),
                                             style: locale.getTextStyle(
@@ -1628,9 +1632,13 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          t.fullArtistName,
+                                          queuedByUser
+                                              ? '${strings.queuedByYou} · ${t.fullArtistName}'
+                                              : t.fullArtistName,
                                           style: locale.getTextStyle(
-                                            color: AppColors.textSecondary,
+                                            color: queuedByUser
+                                                ? AppColors.neonCyan.withValues(alpha: 0.85)
+                                                : AppColors.textSecondary,
                                             fontSize: 10.5,
                                           ),
                                           maxLines: 1,

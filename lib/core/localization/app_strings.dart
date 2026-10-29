@@ -2238,6 +2238,12 @@ class AppStrings {
         AppLanguage.ja => 'セッションを続けるには曲を追加してください',
       };
 
+  String get queuedByYou => switch (language) {
+        AppLanguage.es => 'EN COLA',
+        AppLanguage.en => 'QUEUED',
+        AppLanguage.ja => 'キュー',
+      };
+
   String get queueRemoveLabel => switch (language) {
         AppLanguage.es => 'Eliminar de la cola',
         AppLanguage.en => 'Remove from queue',

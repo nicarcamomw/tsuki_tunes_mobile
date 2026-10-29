@@ -52,6 +52,11 @@ class PlaybackQueue {
   final List<String> _albumHistory = [];
   static const int _shuffleHistorySize = 5;
 
+  // Ids the user queued by hand, in play order. Like Spotify's queue they
+  // play right after the current track, ahead of the rest of the album or
+  // playlist (shuffled or not), and carry over when a new one starts.
+  final List<String> _userQueue = [];
+
   List<Track> get tracks => _tracks;
   int get currentIndex => _currentIndex;
   bool get isEmpty => _tracks.isEmpty;
@@ -60,6 +65,8 @@ class PlaybackQueue {
   PlaybackRepeatMode get repeatMode => _repeatMode;
   int? get nextShuffleIndex => _nextShuffleIndex;
   List<int> get history => List.unmodifiable(_history);
+  List<String> get userQueue => List.unmodifiable(_userQueue);
+  bool isUserQueued(String trackId) => _userQueue.contains(trackId);
 
   Track? get current => _currentIndex >= 0 && _currentIndex < _tracks.length
       ? _tracks[_currentIndex]
@@ -73,11 +80,14 @@ class PlaybackQueue {
   void restore(List<Track> tracks, int index) {
     _tracks = List.of(tracks);
     _currentIndex = _isValid(index) ? index : (tracks.isEmpty ? -1 : 0);
+    _userQueue.clear();
   }
 
   /// Makes [track] current, replacing the queue with [newQueue] if given,
   /// otherwise selecting it in (or appending it to) the current queue.
+  /// Tracks still waiting in the user's queue stay up next either way.
   void select(Track track, {List<Track>? newQueue}) {
+    final pending = _pendingUserQueue(except: track.id);
     if (newQueue != null && newQueue.isNotEmpty) {
       _tracks = List.of(newQueue);
       _currentIndex = _tracks.indexWhere((t) => t.id == track.id);
@@ -96,6 +106,37 @@ class PlaybackQueue {
       }
     }
     _nextShuffleIndex = null;
+    _requeue(pending);
+  }
+
+  List<Track> _pendingUserQueue({String? except}) => [
+        for (final id in _userQueue)
+          if (id != except)
+            for (final t in _tracks)
+              if (t.id == id) t,
+      ];
+
+  /// Puts [pending] back right after the current track, in order. Skipped
+  /// when they're already there (the usual case: advancing one track).
+  void _requeue(List<Track> pending) {
+    _userQueue.clear();
+    if (pending.isEmpty) return;
+    final inPlace = _currentIndex + pending.length < _tracks.length &&
+        [
+          for (var k = 0; k < pending.length; k++)
+            _tracks[_currentIndex + 1 + k].id == pending[k].id
+        ].every((same) => same);
+    if (inPlace) {
+      _userQueue.addAll(pending.map((t) => t.id));
+    } else {
+      enqueue(pending);
+    }
+  }
+
+  /// Marks the track that just became current as played from the queue.
+  void _consumeCurrent() {
+    final playing = current;
+    if (playing != null) _userQueue.remove(playing.id);
   }
 
   /// Replaces the track with the same id (e.g. refreshed preview URL).
@@ -136,7 +177,7 @@ class PlaybackQueue {
 
     if (_isShuffle && _tracks.length > 1) {
       if (!_isValid(_nextShuffleIndex) || _nextShuffleIndex == _currentIndex) {
-        _nextShuffleIndex = pickSmartNext();
+        _nextShuffleIndex = _userQueuedNext() ?? pickSmartNext();
       }
       return _nextShuffleIndex;
     }
@@ -170,7 +211,7 @@ class PlaybackQueue {
           target = cached[_rng.nextInt(cached.length)];
         }
       } else {
-        target = preset ?? pickSmartNext();
+        target = preset ?? _userQueuedNext() ?? pickSmartNext();
       }
       _pushHistory(_currentIndex);
       _currentIndex = target;
@@ -191,7 +232,17 @@ class PlaybackQueue {
     }
 
     if (_isShuffle) _recordShuffle(_tracks[_currentIndex]);
+    _consumeCurrent();
     return QueueStep.play(_currentIndex);
+  }
+
+  /// The first track still waiting in the user's queue, if any.
+  int? _userQueuedNext() {
+    for (final id in _userQueue) {
+      final i = _tracks.indexWhere((t) => t.id == id);
+      if (i != -1 && i != _currentIndex) return i;
+    }
+    return null;
   }
 
   /// Moves to the previous track. [position] is the current playback
@@ -259,7 +310,7 @@ class PlaybackQueue {
     if (_isShuffle && _tracks.length > 1) {
       target = _isValid(_nextShuffleIndex) && _nextShuffleIndex != _currentIndex
           ? _nextShuffleIndex!
-          : pickSmartNext();
+          : _userQueuedNext() ?? pickSmartNext();
       _nextShuffleIndex = null;
     } else if (_currentIndex + 1 < _tracks.length) {
       target = _currentIndex + 1;
@@ -271,6 +322,7 @@ class PlaybackQueue {
     _pushHistory(_currentIndex);
     _currentIndex = target;
     if (_isShuffle) _recordShuffle(_tracks[target]);
+    _consumeCurrent();
     return target;
   }
 
@@ -343,6 +395,19 @@ class PlaybackQueue {
     }
     _nextShuffleIndex = null;
     _history.clear();
+    if (!_isShuffle) {
+      // The user's queue is what sits right after the current track: a
+      // queued song dragged further down becomes part of the list.
+      final run = <String>[];
+      for (var i = _currentIndex + 1;
+          i < _tracks.length && _userQueue.contains(_tracks[i].id);
+          i++) {
+        run.add(_tracks[i].id);
+      }
+      _userQueue
+        ..clear()
+        ..addAll(run);
+    }
   }
 
   /// Replaces everything after the current track with [upcoming], which must
@@ -358,21 +423,58 @@ class PlaybackQueue {
     _history.clear();
   }
 
-  /// Inserts right after the current track. Returns false if already queued.
-  bool insertNext(Track track) {
-    if (_tracks.any((t) => t.id == track.id)) return false;
-    final pos = min(_currentIndex + 1, _tracks.length);
+  /// Inserts right after the current track, ahead of the user's queue
+  /// ("play next"); a track already elsewhere in the queue moves there.
+  /// [userQueued] false is for app-picked tracks (running mode) that
+  /// shouldn't show as queued by hand. Returns false for the current track.
+  bool insertNext(Track track, {bool userQueued = true}) {
+    if (track.id == current?.id) return false;
+    _detach(track.id);
+    _insertAt(min(_currentIndex + 1, _tracks.length), track);
+    if (userQueued) _userQueue.insert(0, track.id);
+    _nextShuffleIndex = null;
+    return true;
+  }
+
+  /// Adds [tracks] to the user's queue: after the current track and what
+  /// was queued before, ahead of the rest of the album or playlist. A track
+  /// already elsewhere in the queue moves up. Returns how many were queued.
+  int enqueue(Iterable<Track> tracks) {
+    var added = 0;
+    for (final t in tracks) {
+      if (t.id == current?.id) continue;
+      _detach(t.id);
+      var pos = _currentIndex + 1;
+      while (pos < _tracks.length && _userQueue.contains(_tracks[pos].id)) {
+        pos++;
+      }
+      _insertAt(pos, t);
+      _userQueue.add(t.id);
+      added++;
+    }
+    if (added > 0) _nextShuffleIndex = null;
+    return added;
+  }
+
+  /// Takes the track with [id] out of the queue (and the user's queue).
+  void _detach(String id) {
+    final idx = _tracks.indexWhere((t) => t.id == id);
+    if (idx != -1 && idx != _currentIndex) removeAt(idx);
+  }
+
+  void _insertAt(int pos, Track track) {
     _tracks.insert(pos, track);
+    if (_currentIndex >= pos) _currentIndex++;
     if (_nextShuffleIndex != null && _nextShuffleIndex! >= pos) {
       _nextShuffleIndex = _nextShuffleIndex! + 1;
     }
     for (var i = 0; i < _history.length; i++) {
       if (_history[i] >= pos) _history[i]++;
     }
-    return true;
   }
 
-  /// Appends tracks not already queued. Returns how many were added.
+  /// Appends tracks not already queued, at the very end (radio top-ups).
+  /// Returns how many were added.
   int append(Iterable<Track> tracks) {
     final existing = _tracks.map((t) => t.id).toSet();
     var added = 0;
@@ -390,6 +492,7 @@ class PlaybackQueue {
     if (!_isValid(index)) return false;
     final wasCurrent = index == _currentIndex;
     final playing = current;
+    _userQueue.remove(_tracks[index].id);
     _tracks.removeAt(index);
 
     if (_nextShuffleIndex == index) {
@@ -428,6 +531,7 @@ class PlaybackQueue {
   void clear({Track? keep}) {
     _nextShuffleIndex = null;
     _history.clear();
+    _userQueue.clear();
     if (keep != null) {
       _tracks = [keep];
       _currentIndex = 0;

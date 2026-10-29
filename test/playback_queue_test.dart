@@ -152,8 +152,92 @@ void main() {
       q.next(online: true, canPlay: _all); // history [2], current 3
       expect(q.insertNext(_t('n')), isTrue);
       expect(q.tracks[4].id, 'n');
-      expect(q.insertNext(_t('n')), isFalse);
+      // Again: stays next, never duplicated. The current track can't be.
+      expect(q.insertNext(_t('n')), isTrue);
+      expect(q.tracks.where((t) => t.id == 'n'), hasLength(1));
+      expect(q.tracks[4].id, 'n');
+      expect(q.insertNext(q.current!), isFalse);
       expect(q.history, [2]);
+    });
+
+    group('user queue', () {
+      List<String> ids() => q.tracks.map((t) => t.id).toList();
+      String step() {
+        q.next(online: true, canPlay: _all);
+        return q.current!.id;
+      }
+
+      test('queued songs go after the current one, in order, before the album',
+          () {
+        q.enqueue([_t('q1')]);
+        q.enqueue([_t('q2')]);
+        expect(ids(), ['t0', 'q1', 'q2', 't1', 't2', 't3', 't4']);
+        expect(q.userQueue, ['q1', 'q2']);
+        expect(step(), 'q1');
+        expect(q.isUserQueued('q1'), isFalse);
+        expect(step(), 'q2');
+        expect(step(), 't1');
+        expect(q.userQueue, isEmpty);
+      });
+
+      test('queueing a song already later in the album moves it up', () {
+        expect(q.enqueue([tracks[4]]), 1);
+        expect(ids(), ['t0', 't4', 't1', 't2', 't3']);
+        expect(q.enqueue([q.current!]), 0);
+      });
+
+      test('play next goes ahead of what was queued', () {
+        q.enqueue([_t('q1')]);
+        q.insertNext(_t('n'));
+        expect(ids().take(3), ['t0', 'n', 'q1']);
+        expect(q.userQueue, ['n', 'q1']);
+      });
+
+      test('app-picked tracks are not marked as queued by hand', () {
+        q.insertNext(_t('run'), userQueued: false);
+        expect(q.isUserQueued('run'), isFalse);
+        q.enqueue([_t('q1')]);
+        expect(ids().take(3), ['t0', 'q1', 'run']);
+      });
+
+      test('queued songs win over shuffle picks', () {
+        q.toggleShuffle();
+        q.peekNext(); // memoizes a random pick
+        q.enqueue([_t('q1'), _t('q2')]);
+        expect(q.tracks[q.peekNext()!].id, 'q1');
+        expect(step(), 'q1');
+        expect(step(), 'q2');
+      });
+
+      test('queued songs stay up next when a new album starts', () {
+        q.enqueue([_t('q1')]);
+        final album = [for (var i = 0; i < 3; i++) _t('b$i')];
+        q.select(album[1], newQueue: album);
+        expect(ids(), ['b0', 'b1', 'q1', 'b2']);
+        expect(step(), 'q1');
+      });
+
+      test('jumping to another song keeps the queue right after it', () {
+        q.enqueue([_t('q1')]);
+        q.select(tracks[3]);
+        expect(q.current!.id, 't3');
+        expect(step(), 'q1');
+        expect(step(), 't4');
+      });
+
+      test('removing or clearing drops songs from the user queue', () {
+        q.enqueue([_t('q1'), _t('q2')]);
+        q.removeAt(1);
+        expect(q.userQueue, ['q2']);
+        q.clear(keep: q.current);
+        expect(q.userQueue, isEmpty);
+      });
+
+      test('dragging a queued song down into the list unqueues it', () {
+        q.enqueue([_t('q1'), _t('q2')]);
+        q.reorder(1, 5); // q1 after t2
+        expect(q.userQueue, ['q2']);
+      });
     });
 
     test('removeAt keeps the current track selected', () {
