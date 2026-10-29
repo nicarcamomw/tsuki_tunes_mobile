@@ -597,26 +597,49 @@ class DeezerApiService implements MusicApiContract {
     });
   }
 
-  Future<List<Artist>> getRelatedArtists(String artistId, {int limit = 20}) async {
-    final cacheKey = 'artist_related_${artistId}_$limit';
-    final cached = await _getFromCache<List<Artist>>(cacheKey);
-    if (cached != null) return cached;
+  static const int _relatedFetchLimit = 25;
 
-    return _deduped(cacheKey, () async {
-      try {
+  /// Artists similar to [artistId]. Always fetched at full size and sliced,
+  /// so the artist page, the home and the rabbit hole share one request and
+  /// one cache entry whatever [limit] they ask for. Failures return an empty
+  /// list unless [throwOnError] is set, for callers that need to tell "no
+  /// related artists" from "no network".
+  Future<List<Artist>> getRelatedArtists(String artistId,
+      {int limit = 20, bool throwOnError = false}) async {
+    final cacheKey = 'artist_related_$artistId';
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
+    if (cached != null) return cached.take(limit).toList();
+
+    try {
+      final all = await _deduped(cacheKey, () async {
         final data = await _fetchJson(
-            ApiEndpoints.artistRelated(artistId, limit: limit));
-        if (data is Map<String, dynamic>) {
-          final List list = data['data'] ?? [];
-          final artists = list.map((item) => Artist.fromJson(item)).toList();
-          _setCache(cacheKey, artists);
-          return artists;
-        }
-      } catch (e) {
-        debugPrint('[DeezerAPI] getRelatedArtists($artistId) error: $e');
-      }
+          ApiEndpoints.artistRelated(artistId, limit: _relatedFetchLimit),
+          throwOnError: true,
+        );
+        final List list =
+            (data is Map<String, dynamic> ? data['data'] as List? : null) ?? [];
+        final artists = list
+            .map((item) => Artist.fromJson(item))
+            .where((a) => a.id.isNotEmpty && a.id != artistId)
+            .toList();
+        _setCache(cacheKey, artists);
+        return artists;
+      });
+      return all.take(limit).toList();
+    } catch (e) {
+      debugPrint('[DeezerAPI] getRelatedArtists($artistId) error: $e');
+      if (throwOnError) rethrow;
       return <Artist>[];
-    });
+    }
+  }
+
+  /// Warms the cache for [artistIds] one at a time, so the next tap on any
+  /// of them answers instantly without bursting Deezer's rate limit.
+  Future<void> prefetchRelatedArtists(Iterable<String> artistIds) async {
+    for (final id in artistIds) {
+      if (_getCached<List<Artist>>('artist_related_$id') != null) continue;
+      await getRelatedArtists(id);
+    }
   }
 
   /// Deezer's mix of this artist and similar ones. Not cached: each call

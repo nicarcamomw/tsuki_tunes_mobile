@@ -3870,10 +3870,42 @@ class AppStrings {
 
   String get rabbitHoleEmptySubtitle => switch (language) {
         AppLanguage.es =>
-          'No encontramos artistas relacionados. Revisa tu conexión e inténtalo de nuevo.',
+          'Deezer todavía no tiene artistas relacionados para este artista.',
         AppLanguage.en =>
-          "We couldn't find related artists. Check your connection and try again.",
-        AppLanguage.ja => '関連アーティストが見つかりませんでした。接続を確認して再試行してください。',
+          "Deezer doesn't have related artists for this one yet.",
+        AppLanguage.ja => 'このアーティストの関連アーティストはまだありません。',
+      };
+
+  String get rabbitHoleOffline => switch (language) {
+        AppLanguage.es => 'SIN SEÑAL',
+        AppLanguage.en => 'NO SIGNAL',
+        AppLanguage.ja => '接続エラー',
+      };
+
+  String get rabbitHoleOfflineSubtitle => switch (language) {
+        AppLanguage.es =>
+          'No pudimos conectar con Deezer. Revisa tu conexión e inténtalo de nuevo.',
+        AppLanguage.en =>
+          "We couldn't reach Deezer. Check your connection and try again.",
+        AppLanguage.ja => 'Deezerに接続できませんでした。接続を確認して再試行してください。',
+      };
+
+  String get rabbitHoleNodeError => switch (language) {
+        AppLanguage.es => 'SIN SEÑAL · TOCA PARA REINTENTAR',
+        AppLanguage.en => 'NO SIGNAL · TAP TO RETRY',
+        AppLanguage.ja => '接続エラー · タップで再試行',
+      };
+
+  String get rabbitHoleListen => switch (language) {
+        AppLanguage.es => 'Escuchar a este artista',
+        AppLanguage.en => 'Listen to this artist',
+        AppLanguage.ja => 'このアーティストを聴く',
+      };
+
+  String get rabbitHoleKnown => switch (language) {
+        AppLanguage.es => 'YA LO ESCUCHAS',
+        AppLanguage.en => 'YOU LISTEN TO THEM',
+        AppLanguage.ja => '聴いたことあり',
       };
 
   String get rabbitHoleRecenter => switch (language) {

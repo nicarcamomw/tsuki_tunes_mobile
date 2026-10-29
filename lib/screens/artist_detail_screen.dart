@@ -1058,41 +1058,48 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  appNavigatorKey.currentState?.push(
-                    CyberPageRoute(
-                      builder: (_) =>
-                          RabbitHoleScreen(seedArtist: widget.artist),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: AppColors.neonPurple.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.hub, size: 12,
-                          color: AppColors.neonPurple.withValues(alpha: 0.9)),
-                      const SizedBox(width: 4),
-                      Text(
-                        strings.rabbitHoleViewGraph,
-                        style: locale.getTextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.neonPurple,
-                          letterSpacing: 1,
-                        ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    // The loaded artist, so the graph's centre has its
+                    // picture and fans even when this page was opened from
+                    // a bare link.
+                    appNavigatorKey.currentState?.push(
+                      CyberPageRoute(
+                        builder: (_) => RabbitHoleScreen(seedArtist: _artist),
                       ),
-                    ],
+                    );
+                  },
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 36),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppColors.neonPurple.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.hub, size: 14,
+                            color: AppColors.neonPurple.withValues(alpha: 0.9)),
+                        const SizedBox(width: 6),
+                        Text(
+                          strings.rabbitHoleViewGraph,
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.neonPurple,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
