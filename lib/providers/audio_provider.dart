@@ -694,6 +694,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       notifyListeners();
     };
 
+    _nativePlayer.onDisconnected = () {
+      if (!_spotifyActive || !_isPlaying) return;
+      debugPrint('[AudioProvider] Spotify app disconnected, pausing');
+      _isPlaying = false;
+      _stopPositionTimer();
+      notifyListeners();
+    };
+
     await _spotify.loadSavedState();
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
     if (_useSpotify) {
@@ -829,6 +837,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           if (_isPlaying) {
             debugPrint('[AudioProvider] Spotify session gone, marking paused');
             _isPlaying = false;
+            _stopPositionTimer();
             notifyListeners();
           }
         }

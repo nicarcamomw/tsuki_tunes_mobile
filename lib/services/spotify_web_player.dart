@@ -34,6 +34,7 @@ class SpotifyNativePlayer {
 
   void Function(int positionMs, int durationMs, bool paused)? onStateChanged;
   void Function(String error)? onError;
+  void Function()? onDisconnected;
 
   /// Connects once; concurrent callers share the same attempt.
   Future<bool> connect({String? accessToken}) {
@@ -95,6 +96,7 @@ class SpotifyNativePlayer {
     final sub = _stateSub;
     _stateSub = null;
     if (sub != null) unawaited(_cancelQuietly(sub));
+    onDisconnected?.call();
   }
 
   Future<void> _cancelQuietly(StreamSubscription sub) async {
