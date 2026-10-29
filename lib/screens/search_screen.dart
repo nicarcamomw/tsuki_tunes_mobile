@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -33,19 +34,15 @@ class _SearchScreenState extends State<SearchScreen> {
   Timer? _debounce;
   int _selectedTabIndex = 0;
   String _lastAnnouncedQuery = '';
-  bool _voiceAvailable = false;
+  // The microphone is asked for on the first tap, not when the tab opens;
+  // the voice sheet explains any problem (permission, no recognizer).
+  static const bool _voiceSupported = !kIsWeb;
 
   @override
   void initState() {
     super.initState();
     NavigationEvents.onSearchFocus = focusSearchInput;
     NavigationEvents.onSearchClear = clearAndFocus;
-    _initVoice();
-  }
-
-  Future<void> _initVoice() async {
-    final available = await VoiceSearchService().initialize();
-    if (mounted) setState(() => _voiceAvailable = available);
   }
 
   @override
@@ -89,33 +86,63 @@ class _SearchScreenState extends State<SearchScreen> {
     unawaited(HapticFeedback.lightImpact());
     FocusScope.of(context).unfocus();
     final locale = context.read<LocaleProvider>();
-    final voiceService = VoiceSearchService();
+    final audio = context.read<AudioProvider>();
+    final search = context.read<SearchProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final strings = locale.strings;
+
+    // Music playing next to the mic drowns the voice out: pause it while
+    // listening and pick it back up unless the command plays something.
+    final resumeAfter = audio.isPlaying;
+    if (resumeAfter) await audio.togglePlay();
+    if (!mounted) return;
 
     final spokenText = await VoiceSearchSheet.show(
       context,
-      localeId: voiceService.localeForLanguage(locale.currentLanguage.code),
       langCode: locale.currentLanguage.code,
     );
 
-    if (!mounted || spokenText == null || spokenText.isEmpty) return;
-
-    final command = VoiceSearchService.parseCommand(spokenText);
-    if (command.query.isEmpty) return;
+    final command = spokenText == null
+        ? null
+        : VoiceSearchService.parseCommand(spokenText);
+    if (command == null || command.query.isEmpty || !mounted) {
+      if (resumeAfter && !audio.isPlaying) await audio.togglePlay();
+      return;
+    }
 
     _controller.text = command.query;
-    final search = context.read<SearchProvider>();
 
-    if (command.action == VoiceAction.play) {
-      await search.search(command.query);
-      if (search.tracks.isNotEmpty && mounted) {
-        unawaited(HapticFeedback.mediumImpact());
-        final audio = context.read<AudioProvider>();
-        await audio.playTrack(search.tracks.first, newQueue: search.tracks);
-      }
-    } else {
+    if (command.action != VoiceAction.play) {
+      if (resumeAfter && !audio.isPlaying) unawaited(audio.togglePlay());
       unawaited(search.search(command.query));
+      return;
     }
-  }  @override
+
+    await search.search(command.query);
+    // "pon Jefe de La Combo Tortuga": try again without the "de".
+    final joined = VoiceSearchService.withoutArtistJoiner(command.query);
+    if (search.tracks.isEmpty && joined != null) {
+      _controller.text = joined;
+      await search.search(joined);
+    }
+    if (!mounted) return;
+    if (search.tracks.isEmpty) {
+      if (resumeAfter && !audio.isPlaying) unawaited(audio.togglePlay());
+      messenger.showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.bgCard,
+        content: Text(
+          '${strings.noResults}: "${command.query}"',
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+        ),
+      ));
+      return;
+    }
+    unawaited(HapticFeedback.mediumImpact());
+    await audio.playTrack(search.tracks.first, newQueue: search.tracks);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchProvider>();
     final locale = context.watch<LocaleProvider>();
@@ -239,7 +266,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               },
                             );
                           }
-                          if (!_voiceAvailable) return const SizedBox.shrink();
+                          if (!_voiceSupported) return const SizedBox.shrink();
                           return IconButton(
                             icon: const Icon(Icons.mic, color: AppColors.accent, size: 20),
                             tooltip: strings.a11yVoiceSearch,

@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <!-- Android 13+: needed to show the playback notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- Voice search: on-device speech recognition -->
+    <!-- Voice search: speech recognition -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Weather on the home screen: approximate location only, never in the background -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -16,6 +16,11 @@
     <!-- Android 11+: lets the Spotify App Remote SDK find and wake the Spotify app -->
     <queries>
         <package android:name="com.spotify.music"/>
+        <!-- Android 11+: without this the speech recognizer looks missing
+             and voice search reports itself unavailable -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
     </queries>
 
     <application

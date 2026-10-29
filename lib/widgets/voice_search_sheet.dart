@@ -3,36 +3,28 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/constants/app_colors.dart';
 import '../services/voice_search_service.dart';
 
-enum _SheetState { initializing, listening, done, error }
+enum _SheetState { initializing, listening, done, failed }
 
 class VoiceSearchSheet extends StatefulWidget {
-  final String localeId;
   final String langCode;
 
-  const VoiceSearchSheet({
-    super.key,
-    required this.localeId,
-    required this.langCode,
-  });
+  const VoiceSearchSheet({super.key, required this.langCode});
 
   static Future<String?> show(
     BuildContext context, {
-    required String localeId,
     required String langCode,
   }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => VoiceSearchSheet(
-        localeId: localeId,
-        langCode: langCode,
-      ),
+      builder: (_) => VoiceSearchSheet(langCode: langCode),
     );
   }
 
@@ -46,8 +38,14 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
   late final AnimationController _pulseController;
 
   _SheetState _state = _SheetState.initializing;
+  VoiceError? _error;
   String _recognizedText = '';
   double _soundLevel = 0;
+  String? _localeId;
+  bool _localeResolved = false;
+  bool _finished = false;
+  bool _retriedLocale = false;
+  bool _retriedBusy = false;
 
   @override
   void initState() {
@@ -56,7 +54,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    _initAndListen();
+    _start();
   }
 
   @override
@@ -66,49 +64,130 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
     super.dispose();
   }
 
-  Future<void> _initAndListen() async {
+  Future<void> _start() async {
+    _retriedBusy = false;
+    setState(() {
+      _state = _SheetState.initializing;
+      _error = null;
+      _recognizedText = '';
+      _soundLevel = 0;
+    });
     final available = await _voice.initialize();
     if (!mounted) return;
-
     if (!available) {
-      setState(() => _state = _SheetState.error);
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) Navigator.pop(context);
+      _fail(await _voice.initFailure());
       return;
     }
+    if (!_localeResolved) {
+      _localeId = await _voice.localeFor(widget.langCode);
+      _localeResolved = true;
+      if (!mounted) return;
+    }
+    await _listen();
+  }
 
-    setState(() => _state = _SheetState.listening);
+  Future<void> _listen() async {
+    setState(() {
+      _state = _SheetState.listening;
+      _error = null;
+    });
     _pulseController.repeat();
     unawaited(HapticFeedback.lightImpact());
 
     await _voice.listen(
-      localeId: widget.localeId,
+      localeId: _localeId,
       onSoundLevel: (level) {
-        if (mounted) setState(() => _soundLevel = ((level + 2) / 12).clamp(0.0, 1.0));
+        if (mounted) {
+          setState(() => _soundLevel = ((level + 2) / 12).clamp(0.0, 1.0));
+        }
       },
       onResult: (text, isFinal) {
-        if (!mounted) return;
+        if (!mounted || _finished) return;
         setState(() => _recognizedText = text);
-        if (isFinal && text.isNotEmpty) _onFinalResult(text);
+        if (isFinal && text.trim().isNotEmpty) _finish(text);
+      },
+      onStatus: (status) {
+        if (status != 'done' && status != 'notListening') return;
+        // The final result can trail the status by a moment.
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || _finished || _state != _SheetState.listening) return;
+          if (_recognizedText.trim().isNotEmpty) {
+            _finish(_recognizedText);
+          } else {
+            _fail(VoiceError.noMatch);
+          }
+        });
+      },
+      onError: (error) {
+        if (!mounted || _finished || _state != _SheetState.listening) return;
+        _onError(error);
       },
     );
   }
 
-  void _onFinalResult(String text) async {
+  void _onError(VoiceError error) {
+    // Recoverable hiccups get one silent retry.
+    if (error == VoiceError.language && !_retriedLocale && _localeId != null) {
+      _retriedLocale = true;
+      _localeId = null;
+      _voice.forgetLocale(widget.langCode);
+      _listen();
+      return;
+    }
+    if (error == VoiceError.busy && !_retriedBusy) {
+      _retriedBusy = true;
+      _voice.cancel().then((_) {
+        if (mounted && !_finished) _listen();
+      });
+      return;
+    }
+    // Whatever was heard before the hiccup is still worth searching.
+    if (_recognizedText.trim().isNotEmpty &&
+        error != VoiceError.permission &&
+        error != VoiceError.unavailable) {
+      _finish(_recognizedText);
+      return;
+    }
+    _fail(error);
+  }
+
+  void _fail(VoiceError error) {
+    _pulseController.stop();
+    unawaited(HapticFeedback.mediumImpact());
+    setState(() {
+      _state = _SheetState.failed;
+      _error = error;
+      _soundLevel = 0;
+    });
+  }
+
+  void _finish(String text) async {
+    if (_finished) return;
+    _finished = true;
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _state = _SheetState.done);
     _pulseController.stop();
     await Future.delayed(const Duration(milliseconds: 400));
-    if (mounted) Navigator.pop(context, text);
+    if (mounted) Navigator.pop(context, text.trim());
   }
 
   void _onStop() async {
+    final text = _recognizedText;
     await _voice.stop();
-    if (_recognizedText.isNotEmpty && mounted) {
-      _onFinalResult(_recognizedText);
-    } else if (mounted) {
+    if (!mounted || _finished) return;
+    if (text.trim().isNotEmpty) {
+      _finish(text);
+    } else {
       Navigator.pop(context);
     }
+  }
+
+  void _onRetry() {
+    if (_error == VoiceError.permission) {
+      Geolocator.openAppSettings();
+      return;
+    }
+    _start();
   }
 
   void _onCancel() {
@@ -116,8 +195,12 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
     Navigator.pop(context);
   }
 
+  bool get _canRetry => _error != VoiceError.unavailable;
+
   @override
   Widget build(BuildContext context) {
+    final failed = _state == _SheetState.failed;
+    final showHint = _recognizedText.isEmpty;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -162,28 +245,31 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             ),
           ),
           const SizedBox(height: 28),
-          // Mic with pulse rings
-          SizedBox(
-            width: 160,
-            height: 160,
-            child: _buildMicArea(),
+          // Mic with pulse rings; tapping it after a failure listens again
+          // (also picks up a permission just granted in Settings).
+          GestureDetector(
+            onTap: failed && _canRetry ? _start : null,
+            child: SizedBox(
+              width: 160,
+              height: 160,
+              child: _buildMicArea(),
+            ),
           ),
           const SizedBox(height: 20),
-          // Recognized text
+          // Recognized text, the hint, or why it failed
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Text(
-                _recognizedText.isEmpty ? _hintText : _recognizedText,
-                key: ValueKey(_recognizedText.isEmpty ? 'hint' : 'text'),
+                failed && showHint
+                    ? _errorDetail
+                    : (showHint ? _hintText : _recognizedText),
+                key: ValueKey(failed ? 'error' : (showHint ? 'hint' : 'text')),
                 style: TextStyle(
-                  fontSize: _recognizedText.isEmpty ? 13 : 18,
-                  fontWeight:
-                      _recognizedText.isEmpty ? FontWeight.w400 : FontWeight.w600,
-                  color: _recognizedText.isEmpty
-                      ? AppColors.textMuted
-                      : AppColors.textBright,
+                  fontSize: showHint ? 13 : 18,
+                  fontWeight: showHint ? FontWeight.w400 : FontWeight.w600,
+                  color: showHint ? AppColors.textMuted : AppColors.textBright,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
@@ -199,9 +285,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: _state == _SheetState.error
-                  ? AppColors.accent
-                  : AppColors.textSecondary,
+              color: failed ? AppColors.accent : AppColors.textSecondary,
               letterSpacing: 1.5,
             ),
           ),
@@ -224,6 +308,16 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
                   outlined: false,
                 ),
               ],
+              if (failed && _canRetry) ...[
+                const SizedBox(width: 16),
+                _buildActionButton(
+                  label: _error == VoiceError.permission
+                      ? _settingsLabel
+                      : _retryLabel,
+                  onTap: _onRetry,
+                  outlined: false,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -233,7 +327,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
   }
 
   Widget _buildMicArea() {
-    if (_state == _SheetState.error) {
+    if (_state == _SheetState.failed) {
       return Center(
         child: Container(
           width: 72,
@@ -243,7 +337,11 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             color: AppColors.accent.withValues(alpha: 0.1),
             border: Border.all(color: AppColors.accent.withValues(alpha: 0.4), width: 2),
           ),
-          child: const Icon(Icons.mic_off, color: AppColors.accent, size: 36),
+          child: Icon(
+            _canRetry ? Icons.refresh : Icons.mic_off,
+            color: AppColors.accent,
+            size: 36,
+          ),
         ),
       );
     }
@@ -355,7 +453,11 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
       };
 
   String get _statusText => switch (_state) {
-        _SheetState.initializing => 'INITIALIZING...',
+        _SheetState.initializing => switch (widget.langCode) {
+            'es' => 'PREPARANDO MICRÓFONO...',
+            'ja' => 'マイクを準備中...',
+            _ => 'STARTING MIC...',
+          },
         _SheetState.listening => switch (widget.langCode) {
             'es' => 'ESCUCHANDO...',
             'ja' => '聞いています...',
@@ -366,11 +468,56 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             'ja' => '処理中...',
             _ => 'PROCESSING...',
           },
-        _SheetState.error => switch (widget.langCode) {
-            'es' => 'VOZ NO DISPONIBLE',
-            'ja' => '音声認識が利用できません',
-            _ => 'VOICE NOT AVAILABLE',
-          },
+        _SheetState.failed => _errorTitle,
+      };
+
+  String get _errorTitle => switch ((_error, widget.langCode)) {
+        (VoiceError.permission, 'es') => 'MICRÓFONO SIN PERMISO',
+        (VoiceError.permission, 'ja') => 'マイクの許可がありません',
+        (VoiceError.permission, _) => 'NO MICROPHONE PERMISSION',
+        (VoiceError.unavailable, 'es') => 'VOZ NO DISPONIBLE',
+        (VoiceError.unavailable, 'ja') => '音声認識が利用できません',
+        (VoiceError.unavailable, _) => 'VOICE NOT AVAILABLE',
+        (VoiceError.noMatch, 'es') => 'NO TE ESCUCHÉ',
+        (VoiceError.noMatch, 'ja') => '聞き取れませんでした',
+        (VoiceError.noMatch, _) => "DIDN'T CATCH THAT",
+        (VoiceError.network, 'es') => 'SIN CONEXIÓN',
+        (VoiceError.network, 'ja') => '接続エラー',
+        (VoiceError.network, _) => 'NO CONNECTION',
+        (VoiceError.language, 'es') => 'IDIOMA NO DISPONIBLE',
+        (VoiceError.language, 'ja') => '言語が利用できません',
+        (VoiceError.language, _) => 'LANGUAGE NOT AVAILABLE',
+        (_, 'es') => 'ALGO FALLÓ',
+        (_, 'ja') => 'エラーが発生しました',
+        _ => 'SOMETHING WENT WRONG',
+      };
+
+  String get _errorDetail => switch ((_error, widget.langCode)) {
+        (VoiceError.permission, 'es') =>
+          'Permite el micrófono en Ajustes para buscar por voz',
+        (VoiceError.permission, 'ja') => '設定でマイクを許可してください',
+        (VoiceError.permission, _) =>
+          'Allow the microphone in Settings to search by voice',
+        (VoiceError.unavailable, 'es') =>
+          'Este teléfono no tiene reconocimiento de voz (usa la app de Google)',
+        (VoiceError.unavailable, 'ja') => 'この端末では音声認識が使えません',
+        (VoiceError.unavailable, _) =>
+          "This phone has no speech recognizer (it uses the Google app)",
+        (VoiceError.noMatch, 'es') =>
+          'Habla cerca del teléfono y toca para intentarlo de nuevo',
+        (VoiceError.noMatch, 'ja') => 'もう一度タップして話してください',
+        (VoiceError.noMatch, _) => 'Speak close to the phone and tap to retry',
+        (VoiceError.network, 'es') =>
+          'La búsqueda por voz necesita internet',
+        (VoiceError.network, 'ja') => '音声検索にはインターネットが必要です',
+        (VoiceError.network, _) => 'Voice search needs the internet',
+        (VoiceError.language, 'es') =>
+          'Tu reconocedor de voz no tiene este idioma',
+        (VoiceError.language, 'ja') => 'この言語は利用できません',
+        (VoiceError.language, _) => "Your speech recognizer lacks this language",
+        (_, 'es') => 'Toca para intentarlo de nuevo',
+        (_, 'ja') => 'タップして再試行',
+        _ => 'Tap to try again',
       };
 
   String get _cancelLabel => switch (widget.langCode) {
@@ -383,5 +530,17 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         'es' => 'LISTO',
         'ja' => '完了',
         _ => 'DONE',
+      };
+
+  String get _retryLabel => switch (widget.langCode) {
+        'es' => 'REINTENTAR',
+        'ja' => '再試行',
+        _ => 'RETRY',
+      };
+
+  String get _settingsLabel => switch (widget.langCode) {
+        'es' => 'AJUSTES',
+        'ja' => '設定',
+        _ => 'SETTINGS',
       };
 }
