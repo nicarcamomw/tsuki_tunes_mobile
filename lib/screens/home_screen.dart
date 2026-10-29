@@ -706,43 +706,53 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Row(
                       children: [
-                        Semantics(
-                          header: true,
-                          child: ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [AppColors.textBright, AppColors.accent],
-                              stops: [0.5, 1.0],
-                            ).createShader(bounds),
-                            child: Text(
-                              strings.topArtistsTitle,
-                              style: locale.getTextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 1.2,
+                        Flexible(
+                          child: Semantics(
+                            header: true,
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [AppColors.textBright, AppColors.accent],
+                                stops: [0.5, 1.0],
+                              ).createShader(bounds),
+                              child: Text(
+                                strings.topArtistsTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: locale.getTextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const Spacer(),
+                        // Flush right, vertically centred on the title; the
+                        // glyph is an icon so it sits dead centre in the ring.
                         GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () => _showAffinityInfo(context, locale),
                           child: Semantics(
                             button: true,
                             label: strings.affinityInfoTitle,
-                            child: Container(
-                              width: 18,
-                              height: 18,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.textMuted, width: 1),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '?',
-                                  style: locale.getTextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
+                            child: SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.textMuted, width: 1),
+                                  ),
+                                  child: const Icon(
+                                    Icons.question_mark_rounded,
+                                    size: 12,
                                     color: AppColors.textMuted,
                                   ),
                                 ),
