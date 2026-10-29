@@ -78,6 +78,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   GuessStats _stats = GuessStats();
   int _sessionStreak = 0;
   int _bestStreak = 0;
+  int _lastRecordedAttempt = -1;
   final Set<String> _playedIds = {};
 
   // Artist mode.
@@ -168,6 +169,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _target = null;
       _outcomes = [];
       _labels = [];
+      _lastRecordedAttempt = -1;
       _suggestions = [];
       _searchCtrl.clear();
     });
@@ -404,19 +406,23 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       final needle = GuessGame.normalize(q);
       setState(() {
         _suggestions = _artistPool
-            .where((t) => GuessGame.normalize(t.title).contains(needle))
+            .where((t) {
+              final normTitle = GuessGame.normalize(t.title);
+              final normAlbum = GuessGame.normalize(t.albumTitle);
+              return normTitle.contains(needle) || normAlbum.contains(needle);
+            })
             .take(8)
             .toList();
         _searching = false;
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
+    _debounce = Timer(const Duration(milliseconds: 250), () async {
       final gen = ++_searchGen;
       setState(() => _searching = true);
       List<Track> results;
       try {
-        results = await _api.searchTracks(q.trim(), limit: 8);
+        results = await _api.searchTracks(q.trim(), limit: 12);
       } catch (_) {
         results = [];
       }
@@ -437,7 +443,11 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     if (_mode == GuessMode.artist && outcome == GuessOutcome.rightArtist) {
       outcome = GuessOutcome.wrong;
     }
-    _record(outcome, _mode == GuessMode.artist ? guess.title : '${guess.title} — ${guess.artistName}');
+    final albumSuffix = guess.albumTitle.isNotEmpty ? ' · ${guess.albumTitle}' : '';
+    final label = _mode == GuessMode.artist
+        ? '${guess.title}$albumSuffix'
+        : '${guess.title} — ${guess.artistName}$albumSuffix';
+    _record(outcome, label);
   }
 
   void _skip() {
@@ -460,6 +470,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     setState(() {
       _outcomes = [..._outcomes, outcome];
       _labels = [..._labels, label];
+      _lastRecordedAttempt = _outcomes.length - 1;
       _suggestions = [];
       _searchCtrl.clear();
     });
@@ -922,7 +933,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       if (outcome == GuessOutcome.rightArtist) text = '$text · ${strings.guessRightArtist}';
     }
 
-    return Container(
+    final rowContent = Container(
       height: 44,
       margin: const EdgeInsets.only(bottom: 6),
       clipBehavior: Clip.antiAlias,
@@ -975,7 +986,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.bgMid,
+              color: isCurrent ? AppColors.neonPurple : AppColors.bgMid,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -983,7 +994,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
               style: locale.getTextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
+                color: isCurrent ? Colors.white : AppColors.textMuted,
               ),
             ),
           ),
@@ -991,6 +1002,17 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
         ],
       ),
     );
+
+    if (i == _lastRecordedAttempt && done) {
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.95, end: 1.0),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.elasticOut,
+        builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+        child: rowContent,
+      );
+    }
+    return rowContent;
   }
 
   Widget _clipBar() {
@@ -1108,7 +1130,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
         children: [
           if (_suggestions.isNotEmpty || _searching || _searchCtrl.text.trim().length >= 2)
             ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.2),
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.35),
               child: _searching && _suggestions.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -1121,8 +1143,15 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                   : _suggestions.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(12),
-                          child: Text(strings.guessNoResults,
-                              style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.search_off_rounded, size: 14, color: AppColors.textMuted),
+                              const SizedBox(width: 6),
+                              Text(strings.guessNoResults,
+                                  style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                            ],
+                          ),
                         )
                       : ListView.builder(
                           shrinkWrap: true,
@@ -1171,6 +1200,14 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                                             style: locale.getTextStyle(
                                                 fontSize: 10, color: AppColors.textSecondary),
                                           ),
+                                          if (t.albumTitle.isNotEmpty)
+                                            Text(
+                                              t.albumTitle,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: locale.getTextStyle(
+                                                  fontSize: 9, color: AppColors.textMuted),
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -1361,6 +1398,15 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
+                    if (t.albumTitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        t.albumTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                      ),
+                    ],
                   ],
                 ),
               ),

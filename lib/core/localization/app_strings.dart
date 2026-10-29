@@ -1452,6 +1452,12 @@ class AppStrings {
         AppLanguage.ja => 'アーティストは正解',
       };
 
+  String get guessRightArtistHint => switch (language) {
+        AppLanguage.es => '¡Buen artista! Sigue intentando.',
+        AppLanguage.en => 'Right artist! Keep trying.',
+        AppLanguage.ja => 'アーティストは正解！もう少し！',
+      };
+
   String guessWonIn(int attempts) => switch (language) {
         AppLanguage.es => attempts == 1 ? '¡Al primer segundo! 🤯' : '¡Lo adivinaste en $attempts intentos!',
         AppLanguage.en => attempts == 1 ? 'First second! 🤯' : 'Got it in $attempts tries!',
