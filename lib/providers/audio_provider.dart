@@ -1806,54 +1806,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _checkSpotifyCrossfade() {
-    if (_q.repeatMode == PlaybackRepeatMode.one) return;
-    if (_crossfadeSeconds <= 0 || _crossfadeTriggered) return;
-    if (_sleepCtrl.stopAfterCurrentTrack) return;
-    if (_duration <= Duration(seconds: _crossfadeSeconds)) return;
-    if (_position.inSeconds < 2) return;
-
-    final remaining = _duration - _position;
-    if (remaining <= Duration(seconds: _crossfadeSeconds)) {
-      _triggerSpotifyCrossfade();
-    }
-  }
-
-  Future<void> _triggerSpotifyCrossfade() async {
-    if (_q.isEmpty || _crossfadeTriggered) return;
-
-    final nextIdx = _q.advanceForCrossfade();
-    if (nextIdx == null) return;
-
-    _crossfadeTriggered = true;
-    final nextTrack = _q.tracks[nextIdx];
-    debugPrint('[AudioProvider] Spotify crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s before end)');
-    final outgoing = _currentTrack;
-    if (outgoing != null) onTrackCompleted?.call(outgoing);
-
-    _radioCtrl.registerLeaving(nextTrack, _currentTrack, _position, _duration, completed: true);
-    _currentTrack = nextTrack;
-    _position = Duration.zero;
-    _duration = Duration(
-        seconds: nextTrack.durationSeconds > 0 ? nextTrack.durationSeconds : 30);
-    _lastPlayStart = DateTime.now();
-    final gen = ++_playGeneration;
-    _completionHandled = false;
-
-    notifyListeners();
-    onTrackStarted?.call(nextTrack);
-    unawaited(_ensureLoudness(nextTrack));
-    _prefetchNextTrack();
-    unawaited(_radioCtrl.topUp());
-
-    try {
-      await _playViaSpotify(nextTrack);
-      if (gen != _playGeneration) return;
-      _crossfadeTriggered = false;
-    } catch (e) {
-      debugPrint('[AudioProvider] Spotify crossfade error: $e');
-      if (gen != _playGeneration) return;
-      _crossfadeTriggered = false;
-    }
+    // Spotify handles crossfade natively in its own app. Triggering a
+    // _playViaSpotify() call early causes an abrupt skip instead of a smooth
+    // transition, so we let Spotify finish the track on its own and advance
+    // the queue through the normal _handleTrackCompleted() path.
   }
 
   @visibleForTesting

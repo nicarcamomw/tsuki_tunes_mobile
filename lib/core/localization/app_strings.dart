@@ -1573,9 +1573,9 @@ class AppStrings {
       };
 
   String get crossfadeSubtitle => switch (language) {
-        AppLanguage.es => 'Transición suave entre canciones',
-        AppLanguage.en => 'Smooth transition between songs',
-        AppLanguage.ja => '曲間をスムーズにつなぐ',
+        AppLanguage.es => 'Transición suave entre canciones. Spotify usa su propio crossfade.',
+        AppLanguage.en => 'Smooth transition between songs. Spotify uses its own crossfade.',
+        AppLanguage.ja => '曲間をスムーズにつなぐ。Spotifyは独自のクロスフェードを使用。',
       };
 
   String get autoMarkTitle => switch (language) {
