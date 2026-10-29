@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Artist> _featuredArtists = [];
   List<Album> _latestReleases = [];
   List<_TopArtistDisplay> _topArtistsDisplay = [];
+  List<Artist> _recommendedArtists = [];
   bool _isLoading = true;
   bool _hasError = false;
   bool _releasesLoading = false;
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoading = true;
       _hasError = false;
+      _recommendedArtists = [];
     });
     try {
       final featured = await _api.getFeaturedArtists();
@@ -171,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       setState(() => _topArtistsDisplay = display);
       unawaited(_loadLatestFromTopArtists(display));
+      unawaited(_loadPersonalizedRecommendations(display));
     }
   }
 
@@ -269,6 +272,25 @@ class _HomeScreenState extends State<HomeScreen> {
         _latestReleases = allAlbums.take(15).toList();
         _releasesLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadPersonalizedRecommendations(List<_TopArtistDisplay> tops) async {
+    final seeds = tops.where((t) => t.artist != null).take(3).toList();
+    if (seeds.isEmpty) return;
+    final topIds = tops.map((t) => t.artist?.id).whereType<String>().toSet();
+    final all = <Artist>[];
+    final seenIds = <String>{...topIds};
+    for (final seed in seeds) {
+      try {
+        final related = await _api.getRelatedArtists(seed.artist!.id, limit: 10);
+        for (final a in related) {
+          if (seenIds.add(a.id)) all.add(a);
+        }
+      } catch (_) {}
+    }
+    if (mounted && all.isNotEmpty) {
+      setState(() => _recommendedArtists = all.take(15).toList());
     }
   }
 
@@ -864,7 +886,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
               ),
 
-              if (_featuredArtists.isNotEmpty) ...[
+              if (_recommendedArtists.isNotEmpty || _featuredArtists.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
@@ -894,9 +916,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _featuredArtists.length,
+                      itemCount: _recommendedArtists.isNotEmpty
+                          ? _recommendedArtists.length
+                          : _featuredArtists.length,
                       itemBuilder: (context, index) {
-                        return ArtistCard(artist: _featuredArtists[index]);
+                        final artist = _recommendedArtists.isNotEmpty
+                            ? _recommendedArtists[index]
+                            : _featuredArtists[index];
+                        return ArtistCard(artist: artist);
                       },
                     ),
                   ),
