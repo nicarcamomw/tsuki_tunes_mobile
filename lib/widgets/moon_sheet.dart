@@ -144,13 +144,20 @@ class MoonSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: accent.withValues(alpha: 0.35)),
                 ),
-                child: Text(
-                  countdown(strings, s),
-                  style: locale.getTextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textBright,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.brightness_1, size: 11, color: accent),
+                    const SizedBox(width: 7),
+                    Text(
+                      countdown(strings, s),
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textBright,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

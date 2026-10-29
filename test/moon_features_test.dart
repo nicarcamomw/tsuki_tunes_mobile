@@ -69,9 +69,9 @@ void main() {
 
     test('full moon window, hours and days', () {
       expect(MoonSheet.countdown(es, MoonCalculator.snapshot(DateTime.utc(2026, 10, 26, 3))),
-          'Luna llena esta noche 🌕');
+          'Luna llena esta noche');
       expect(MoonSheet.countdown(es, MoonCalculator.snapshot(DateTime.utc(2026, 11, 21, 14))),
-          'Faltan 3 días para luna llena 🌕');
+          'Faltan 3 días para luna llena');
       expect(MoonSheet.countdown(es, MoonCalculator.snapshot(DateTime.utc(2026, 11, 22, 23))),
           contains('días'));
     });

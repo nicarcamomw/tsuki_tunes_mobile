@@ -1078,20 +1078,20 @@ class AppStrings {
       };
 
   String get moonFullTonight => switch (language) {
-        AppLanguage.es => 'Luna llena esta noche 🌕',
-        AppLanguage.en => 'Full moon tonight 🌕',
-        AppLanguage.ja => '今夜は満月 🌕',
+        AppLanguage.es => 'Luna llena esta noche',
+        AppLanguage.en => 'Full moon tonight',
+        AppLanguage.ja => '今夜は満月',
       };
 
   /// Countdown phrase: [days] when ≥ 1, otherwise [hours].
   String moonUntilFull({int? days, int? hours}) => switch (language) {
         AppLanguage.es => days != null
-            ? (days == 1 ? 'Falta 1 día para luna llena 🌕' : 'Faltan $days días para luna llena 🌕')
-            : (hours == 1 ? 'Falta 1 hora para luna llena 🌕' : 'Faltan $hours horas para luna llena 🌕'),
+            ? (days == 1 ? 'Falta 1 día para luna llena' : 'Faltan $days días para luna llena')
+            : (hours == 1 ? 'Falta 1 hora para luna llena' : 'Faltan $hours horas para luna llena'),
         AppLanguage.en => days != null
-            ? (days == 1 ? '1 day until full moon 🌕' : '$days days until full moon 🌕')
-            : (hours == 1 ? '1 hour until full moon 🌕' : '$hours hours until full moon 🌕'),
-        AppLanguage.ja => days != null ? '満月まであと$days日 🌕' : '満月まであと$hours時間 🌕',
+            ? (days == 1 ? '1 day until full moon' : '$days days until full moon')
+            : (hours == 1 ? '1 hour until full moon' : '$hours hours until full moon'),
+        AppLanguage.ja => days != null ? '満月まであと$days日' : '満月まであと$hours時間',
       };
 
   String get moonCycleTitle => switch (language) {
@@ -1165,9 +1165,9 @@ class AppStrings {
       };
 
   String get moonMixSaved => switch (language) {
-        AppLanguage.es => 'Mix guardado en tus playlists 🌕',
-        AppLanguage.en => 'Mix saved to your playlists 🌕',
-        AppLanguage.ja => 'ミックスをプレイリストに保存しました 🌕',
+        AppLanguage.es => 'Mix guardado en tus playlists',
+        AppLanguage.en => 'Mix saved to your playlists',
+        AppLanguage.ja => 'ミックスをプレイリストに保存しました',
       };
 
   String get moonMixSaveFailed => switch (language) {
@@ -1471,9 +1471,9 @@ class AppStrings {
       };
 
   String guessWonIn(int attempts) => switch (language) {
-        AppLanguage.es => attempts == 1 ? '¡Al primer segundo! 🤯' : '¡Lo adivinaste en $attempts intentos!',
-        AppLanguage.en => attempts == 1 ? 'First second! 🤯' : 'Got it in $attempts tries!',
-        AppLanguage.ja => attempts == 1 ? '1秒で正解！🤯' : '$attempts回目で正解！',
+        AppLanguage.es => attempts == 1 ? '¡Al primer segundo!' : '¡Lo adivinaste en $attempts intentos!',
+        AppLanguage.en => attempts == 1 ? 'First second!' : 'Got it in $attempts tries!',
+        AppLanguage.ja => attempts == 1 ? '1秒で正解！' : '$attempts回目で正解！',
       };
 
   String get guessLost => switch (language) {
@@ -1777,25 +1777,62 @@ class AppStrings {
         AppLanguage.ja => '親密度の計算方法',
       };
 
-  String get affinityInfoBody => switch (language) {
+  String get affinityInfoIntro => switch (language) {
         AppLanguage.es =>
-          'La afinidad mide tu conexión con cada artista basándose en dos factores:\n\n'
-          '🎵  Canciones guardadas — Cada canción que marcas como escuchada de un artista suma 2 puntos.\n\n'
-          '👁  Visitas al perfil — Cada vez que visitas la página de un artista suma 1 punto.\n\n'
-          'Fórmula:\n(canciones escuchadas × 2) + visitas al perfil\n\n'
-          'Cuanto más escuches y explores a un artista, mayor será tu afinidad con él.',
+          'La afinidad mide tu conexión con cada artista según dos factores:',
         AppLanguage.en =>
-          'Affinity measures your connection with each artist based on two factors:\n\n'
-          '🎵  Saved tracks — Each track you mark as listened from an artist adds 2 points.\n\n'
-          '👁  Profile visits — Each time you visit an artist\'s page adds 1 point.\n\n'
-          'Formula:\n(listened tracks × 2) + profile visits\n\n'
-          'The more you listen and explore an artist, the higher your affinity.',
-        AppLanguage.ja =>
-          '親密度は2つの要素に基づいてアーティストとのつながりを測定します：\n\n'
-          '🎵  保存した楽曲 — 再生済みとしてマークした楽曲ごとに2ポイント。\n\n'
-          '👁  プロフィール訪問 — アーティストページを訪問するたびに1ポイント。\n\n'
-          '計算式：\n（再生済み楽曲数 × 2）+ プロフィール訪問数\n\n'
-          'アーティストを聴いて探索するほど、親密度が上がります。',
+          'Affinity measures your connection with each artist from two factors:',
+        AppLanguage.ja => '親密度は2つの要素でアーティストとのつながりを測定します：',
+      };
+
+  String get affinitySavedTitle => switch (language) {
+        AppLanguage.es => 'Canciones escuchadas',
+        AppLanguage.en => 'Listened tracks',
+        AppLanguage.ja => '再生済みの楽曲',
+      };
+
+  String get affinitySavedBody => switch (language) {
+        AppLanguage.es => 'Cada canción suya que marcas como escuchada.',
+        AppLanguage.en => 'Each of their tracks you mark as listened.',
+        AppLanguage.ja => '再生済みにした楽曲ごと。',
+      };
+
+  String get affinityVisitsTitle => switch (language) {
+        AppLanguage.es => 'Visitas al perfil',
+        AppLanguage.en => 'Profile visits',
+        AppLanguage.ja => 'プロフィール訪問',
+      };
+
+  String get affinityVisitsBody => switch (language) {
+        AppLanguage.es => 'Cada vez que abres la página del artista.',
+        AppLanguage.en => "Each time you open the artist's page.",
+        AppLanguage.ja => 'アーティストページを開くたび。',
+      };
+
+  String affinityPoints(int points) => switch (language) {
+        AppLanguage.es => '+$points ${points == 1 ? 'PT' : 'PTS'}',
+        AppLanguage.en => '+$points ${points == 1 ? 'PT' : 'PTS'}',
+        AppLanguage.ja => '+$points pt',
+      };
+
+  String get affinityFormulaLabel => switch (language) {
+        AppLanguage.es => 'FÓRMULA',
+        AppLanguage.en => 'FORMULA',
+        AppLanguage.ja => '計算式',
+      };
+
+  String get affinityFormula => switch (language) {
+        AppLanguage.es => '(escuchadas × 2) + visitas',
+        AppLanguage.en => '(listened × 2) + visits',
+        AppLanguage.ja => '（再生済み × 2）+ 訪問',
+      };
+
+  String get affinityInfoOutro => switch (language) {
+        AppLanguage.es =>
+          'Cuanto más escuches y explores a un artista, mayor será tu afinidad.',
+        AppLanguage.en =>
+          'The more you listen to and explore an artist, the higher your affinity.',
+        AppLanguage.ja => '聴いて探索するほど、親密度が上がります。',
       };
 
   String get affinityInfoClose => switch (language) {

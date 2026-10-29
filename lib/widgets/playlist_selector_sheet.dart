@@ -14,6 +14,7 @@ import '../providers/playlist_provider.dart';
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
   return showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     backgroundColor: AppColors.bgCard,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(

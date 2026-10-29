@@ -22,6 +22,7 @@ class VoiceSearchSheet extends StatefulWidget {
   }) {
     return showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => VoiceSearchSheet(langCode: langCode),
