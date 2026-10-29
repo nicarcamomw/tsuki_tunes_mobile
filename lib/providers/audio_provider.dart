@@ -418,9 +418,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _checkBackgroundCompletion() {
     if (_currentTrack == null) return;
     if (_useSpotify && _spotifyActive) {
+      if (_nativePlayer.isConnected) return;
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
-      if (estimatedPos >= _duration && _duration > Duration.zero) {
+      if (estimatedPos >= _duration + const Duration(seconds: 3) &&
+          _duration > Duration.zero) {
         _completionHandled = false;
         _crossfadeTriggered = false;
         _handleTrackCompleted();
@@ -780,8 +782,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
-        _position = _spotifySyncPosition + elapsed;
-        if (_position >= _duration && _duration > Duration.zero) {
+        final raw = _spotifySyncPosition + elapsed;
+        _position = _duration > Duration.zero && raw > _duration ? _duration : raw;
+        // When the App Remote is connected it reports the real end-of-track
+        // via onStateChanged (paused=true), so don't race it with an
+        // estimated position that can overshoot by a few seconds.  Only
+        // trigger completion from the estimate when we're polling the Web
+        // API (no real-time state) and even then allow a 3-second cushion
+        // so Spotify's own crossfade can finish naturally.
+        final estimatedEnd = !hasRealTimeState &&
+            raw >= _duration + const Duration(seconds: 3) &&
+            _duration > Duration.zero;
+        if (estimatedEnd) {
           _stopPositionTimer();
           _handleTrackCompleted();
         } else {
