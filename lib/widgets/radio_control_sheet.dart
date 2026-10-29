@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
@@ -150,6 +151,7 @@ class _RadioControlSheet extends StatelessWidget {
                     dimension: 56,
                     child: seed.coverUrl.isNotEmpty
                         ? CachedNetworkImage(
+                            memCacheWidth: imageCacheSize(context, 56),
                             imageUrl: seed.coverUrl, fit: BoxFit.cover)
                         : Container(color: AppColors.bgMid),
                   ),

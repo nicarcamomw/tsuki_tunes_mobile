@@ -125,12 +125,9 @@ class _MiniPlayerState extends State<MiniPlayer>
   @override
   Widget build(BuildContext context) {
     final audio = context.read<AudioProvider>();
-    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
-    final isPlaying = context.select<AudioProvider, bool>((a) => a.isPlaying);
-    final isBuffering =
-        context.select<AudioProvider, bool>((a) => a.isBuffering);
-    final spotifyFallbackActive =
-        context.select<AudioProvider, bool>((a) => a.spotifyFallbackActive);
+    final (track, isPlaying, isBuffering, spotifyFallbackActive) =
+        context.select<AudioProvider, (Track?, bool, bool, bool)>(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.spotifyFallbackActive));
 
     // Only this track's flag: the mini player is always on screen, and the
     // library notifies on every sync and history change.

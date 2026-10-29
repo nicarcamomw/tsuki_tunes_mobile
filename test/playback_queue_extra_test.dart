@@ -119,7 +119,7 @@ void main() {
     test('repeat one with next still advances to next track', () {
       q.setRepeatMode(PlaybackRepeatMode.one);
       final peeked = q.peekNext();
-      expect(peeked, 0);
+      expect(peeked, 1);
     });
   });
 

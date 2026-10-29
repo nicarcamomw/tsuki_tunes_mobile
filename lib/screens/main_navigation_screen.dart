@@ -107,11 +107,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final hasTrack = context.select<AudioProvider, bool>((a) => a.currentTrack != null);
-    final spotifyError =
-        context.select<AudioProvider, SpotifyFallbackReason?>((a) => a.lastSpotifyError);
-    final playbackError =
-        context.select<AudioProvider, PlaybackError?>((a) => a.lastPlaybackError);
+    final (hasTrack, spotifyError, playbackError) =
+        context.select<AudioProvider, (bool, SpotifyFallbackReason?, PlaybackError?)>(
+            (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError));
     final syncError =
         context.select<LibraryProvider, String?>((l) => l.lastSyncError);
     final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
@@ -427,7 +425,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context, selectedIndex, _) {
         final currentLibraryCount =
             context.select<LibraryProvider, int>((l) => l.listenedCount);
-        final locale = context.watch<LocaleProvider>();
+        final locale = context.read<LocaleProvider>();
         final strings = locale.strings;
         _lastSeenLibraryCount ??= currentLibraryCount;
 

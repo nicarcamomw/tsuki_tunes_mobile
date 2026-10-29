@@ -198,7 +198,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
     final isFollowed = library.isArtistFollowed(_artist.id);
-    final isGuest = context.watch<AuthProvider>().isGuest;
+    final isGuest = context.select<AuthProvider, bool>((a) => a.isGuest);
 
     final cats = _categorizedAlbums;
 

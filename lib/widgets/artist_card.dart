@@ -24,7 +24,7 @@ class ArtistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = context.read<LocaleProvider>();
 
     return TapScale(
       semanticLabel: '${artist.name}, ${locale.strings.tabArtists}',

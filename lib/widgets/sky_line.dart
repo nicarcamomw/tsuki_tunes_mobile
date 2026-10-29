@@ -87,7 +87,7 @@ class _SkyLineState extends State<SkyLine> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
     final (enabled, weather, loading) =
         context.select<WeatherProvider, (bool, WeatherNow?, bool)>(
@@ -447,7 +447,7 @@ class _RainOfferCardState extends State<RainOfferCard> {
     final offer = context.select<WeatherProvider, bool>((w) => w.rainOffer);
     final place = context.select<WeatherProvider, String?>(
         (w) => w.source == WeatherSource.place ? w.place?.name : null);
-    final locale = context.watch<LocaleProvider>();
+    final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
 
     final Widget body;

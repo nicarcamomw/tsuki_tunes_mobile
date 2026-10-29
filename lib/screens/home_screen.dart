@@ -26,6 +26,7 @@ import '../services/time_machine_service.dart';
 import '../widgets/album_card.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
@@ -55,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Artist> _recommendedArtists = [];
   bool _isLoading = true;
   bool _hasError = false;
-  bool _releasesLoading = false;
   bool _dailyDone = false;
 
   @override
@@ -120,14 +120,30 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final featured = await _api.getFeaturedArtists();
-      if (mounted) {
-        setState(() {
-          _featuredArtists = featured;
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
 
-      if (mounted) _computeTopArtists();
+      final library = context.read<LibraryProvider>();
+      final topEntries = library.getTopArtists(limit: 5);
+
+      List<_TopArtistDisplay> topDisplay = [];
+      List<Album> releases = [];
+
+      if (topEntries.isNotEmpty) {
+        topDisplay = await _fetchTopArtistPictures(topEntries);
+        if (!mounted) return;
+        releases = await _loadLatestFromTopArtists(topDisplay);
+      } else if (featured.isNotEmpty) {
+        releases = await _loadLatestFromFeatured(featured);
+      }
+      if (!mounted) return;
+
+      setState(() {
+        _featuredArtists = featured;
+        _topArtistsDisplay = topDisplay;
+        _latestReleases = releases;
+        _isLoading = false;
+      });
+      unawaited(_loadPersonalizedRecommendations(topDisplay));
     } catch (e) {
       debugPrint('[HomeScreen] loadHomeData error: $e');
       if (mounted) {
@@ -139,20 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _computeTopArtists() {
-    final library = context.read<LibraryProvider>();
-    final topEntries = library.getTopArtists(limit: 5);
-
-    if (topEntries.isEmpty) {
-      _loadLatestFromFeatured();
-      return;
-    }
-
-    _fetchTopArtistPictures(topEntries);
-  }
-
-  Future<void> _fetchTopArtistPictures(List<TopArtistEntry> entries) async {
-    final display = await Future.wait(entries.map((entry) async {
+  Future<List<_TopArtistDisplay>> _fetchTopArtistPictures(List<TopArtistEntry> entries) async {
+    return await Future.wait(entries.map((entry) async {
       try {
         final results = await _api.searchArtists(entry.name, limit: 3);
         Artist? matched;
@@ -169,16 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return _TopArtistDisplay(entry: entry, artist: null);
       }
     }));
-
-    if (mounted) {
-      setState(() => _topArtistsDisplay = display);
-      unawaited(_loadLatestFromTopArtists(display));
-      unawaited(_loadPersonalizedRecommendations(display));
-    }
   }
 
-  Future<void> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
-    setState(() => _releasesLoading = true);
+  Future<List<Album>> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
     final validTops = tops.take(10).where((t) => t.artist != null).toList();
     final cutoff = DateTime.now().subtract(const Duration(days: 365));
     final results = await Future.wait(validTops.map((top) async {
@@ -217,20 +214,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-
-    if (mounted) {
-      setState(() {
-        _latestReleases = allAlbums.take(15).toList();
-        _releasesLoading = false;
-      });
-    }
+    return allAlbums.take(15).toList();
   }
 
-  Future<void> _loadLatestFromFeatured() async {
-    if (!mounted) return;
-    setState(() => _releasesLoading = true);
+  Future<List<Album>> _loadLatestFromFeatured(List<Artist> featured) async {
     final cutoff = DateTime.now().subtract(const Duration(days: 365));
-    final results = await Future.wait(_featuredArtists.take(6).map((artist) async {
+    final results = await Future.wait(featured.take(6).map((artist) async {
       try {
         final artistAlbums = await _api.getArtistAlbums(artist.id);
         if (artistAlbums.isEmpty) return <Album>[];
@@ -266,13 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-
-    if (mounted) {
-      setState(() {
-        _latestReleases = allAlbums.take(15).toList();
-        _releasesLoading = false;
-      });
-    }
+    return allAlbums.take(15).toList();
   }
 
   Future<void> _loadPersonalizedRecommendations(List<_TopArtistDisplay> tops) async {
@@ -296,16 +279,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final statsLoaded = context.select<LibraryProvider, bool>((l) => l.listenedTracksLoaded);
-    final listenedCount = context.select<LibraryProvider, int>((l) => l.listenedCount);
-    final artistsCount = context.select<LibraryProvider, int>((l) => l.uniqueArtistsCount);
-    final albumsCount = context.select<LibraryProvider, int>((l) => l.uniqueAlbumsCount);
-    final (topArtistName, topArtistScore) = context.select<LibraryProvider, (String, String)>((l) {
+    final (statsLoaded, listenedCount, artistsCount, albumsCount, topArtistName, topArtistScore) =
+        context.select<LibraryProvider, (bool, int, int, int, String, String)>((l) {
       final top = l.getTopArtists(limit: 1);
-      if (top.isEmpty) return ('---', '0');
-      return (top.first.name, top.first.score.toString());
+      return (
+        l.listenedTracksLoaded,
+        l.listenedCount,
+        l.uniqueArtistsCount,
+        l.uniqueAlbumsCount,
+        top.isNotEmpty ? top.first.name : '---',
+        top.isNotEmpty ? top.first.score.toString() : '0',
+      );
     });
-    final auth = context.watch<AuthProvider>();
+    final isLoggedIn = context.select<AuthProvider, bool>((a) => a.isLoggedIn);
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
 
@@ -445,11 +431,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Opacity(
-                                  opacity: auth.isLoggedIn ? 1.0 : 0.0,
+                                  opacity: isLoggedIn ? 1.0 : 0.0,
                                   child: IgnorePointer(
-                                    ignoring: !auth.isLoggedIn,
+                                    ignoring: !isLoggedIn,
                                     child: _GearProfileButton(
-                                      auth: auth,
                                       label: strings.profileTitle,
                                     ),
                                   ),
@@ -550,7 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               )
             else ...[
-              if (auth.isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
+              if (isLoggedIn && statsLoaded && listenedCount == 0 && _topArtistsDisplay.isEmpty && _featuredArtists.isEmpty)
                 SliverFillRemaining(
                   child: Center(
                     child: Padding(
@@ -628,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               else ...[
-              if (auth.isLoggedIn)
+              if (isLoggedIn)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding:
@@ -672,7 +657,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SliverToBoxAdapter(child: _buildFeatureCards(locale)),
 
-              if (auth.isLoggedIn && listenedCount > 0)
+              if (isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -691,10 +676,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-              if (auth.isLoggedIn && listenedCount > 0)
+              if (isLoggedIn && listenedCount > 0)
                 const SliverToBoxAdapter(child: TimeMachineEntryCard()),
 
-              if (auth.isLoggedIn && ReleaseRadarService.isSupported)
+              if (isLoggedIn && ReleaseRadarService.isSupported)
                 SliverToBoxAdapter(
                   child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
                 ),
@@ -838,52 +823,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: _releasesLoading
-                    ? SizedBox(
-                        height: 185,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          children: List.generate(3, (_) => const Padding(
-                            padding: EdgeInsets.only(right: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SkeletonLoader(width: 135, height: 135),
-                                SizedBox(height: 8),
-                                SkeletonLoader(width: 110, height: 13),
-                                SizedBox(height: 4),
-                                SkeletonLoader(width: 80, height: 11),
-                              ],
-                            ),
-                          )),
+                child: _latestReleases.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          strings.emptyReleases,
+                          style: locale.getTextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       )
-                    : _latestReleases.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              strings.emptyReleases,
-                              style: locale.getTextStyle(
-                                fontSize: 12,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          )
-                        : SizedBox(
-                            height: 185,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: _latestReleases.length,
-                              itemBuilder: (context, index) {
-                                return AlbumCard(
-                                    album: _latestReleases[index]);
-                              },
-                            ),
-                          ),
+                    : SizedBox(
+                        height: 185,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _latestReleases.length,
+                          itemBuilder: (context, index) {
+                            return AlbumCard(
+                                album: _latestReleases[index]);
+                          },
+                        ),
+                      ),
               ),
 
               if (_recommendedArtists.isNotEmpty || _featuredArtists.isNotEmpty) ...[
@@ -1031,20 +994,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withValues(alpha: highlight ? 0.18 : 0.08),
-                AppColors.bgCard,
-              ],
-            ),
-            border: Border.all(color: color.withValues(alpha: highlight ? 0.6 : 0.3)),
-          ),
+        child: GlassCard(
+          color: color,
+          highlightAlpha: highlight ? 0.18 : 0.08,
+          dimAlpha: highlight ? 0.08 : 0.03,
+          borderAlpha: highlight ? 0.6 : 0.3,
           child: Row(
             children: [
               Icon(icon, color: color, size: 22),
@@ -1424,9 +1378,8 @@ class _TopArtistDisplay {
 }
 
 class _GearProfileButton extends StatefulWidget {
-  final AuthProvider auth;
   final String label;
-  const _GearProfileButton({required this.auth, required this.label});
+  const _GearProfileButton({required this.label});
 
   @override
   State<_GearProfileButton> createState() => _GearProfileButtonState();
@@ -1461,11 +1414,12 @@ class _GearProfileButtonState extends State<_GearProfileButton>
 
   void _onTap() {
     if (!_reduceMotion) _controller.forward(from: 0.0);
-    ProfileBottomSheet.show(context, widget.auth);
+    ProfileBottomSheet.show(context, context.read<AuthProvider>());
   }
 
   @override
   Widget build(BuildContext context) {
+    final photoURL = context.select<AuthProvider, String?>((a) => a.user?.photoURL);
     return Semantics(
       button: true,
       label: widget.label,
@@ -1489,10 +1443,10 @@ class _GearProfileButtonState extends State<_GearProfileButton>
               child: CircleAvatar(
                 radius: 12,
                 backgroundColor: AppColors.bgCard,
-                backgroundImage: widget.auth.user?.photoURL != null
-                    ? NetworkImage(widget.auth.user!.photoURL!)
+                backgroundImage: photoURL != null
+                    ? NetworkImage(photoURL)
                     : null,
-                child: widget.auth.user?.photoURL == null
+                child: photoURL == null
                     ? Icon(Icons.person,
                         size: 14, color: AppColors.accent, semanticLabel: widget.label)
                     : null,
@@ -1591,17 +1545,13 @@ class _WrappedEntryCard extends StatelessWidget {
             CyberPageRoute(builder: (_) => WrappedScreen(year: year)),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.accent,
+          highlightAlpha: 0.12,
+          dimAlpha: 0.04,
+          borderAlpha: 0.4,
+          borderRadius: 6,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1A0808), Color(0xFF0A0A1A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
-          ),
           child: Column(
             children: [
               Container(
@@ -1670,18 +1620,13 @@ class _ListeningClockEntryCard extends StatelessWidget {
             CyberPageRoute(builder: (_) => const ListeningClockScreen()),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.neonCyan,
+          highlightAlpha: 0.08,
+          dimAlpha: 0.03,
+          borderAlpha: 0.3,
+          borderRadius: 6,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF08101A), Color(0xFF0A0A14)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-                color: AppColors.neonCyan.withValues(alpha: 0.3)),
-          ),
           child: Column(
             children: [
               Container(
@@ -1752,19 +1697,14 @@ class _RabbitHoleEntryCard extends StatelessWidget {
             ),
           );
         },
-        child: Container(
+        child: GlassCard(
+          color: AppColors.neonPurple,
+          highlightAlpha: 0.10,
+          dimAlpha: 0.04,
+          borderAlpha: 0.3,
+          borderRadius: 6,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF100A1A), Color(0xFF0A0814)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(6),
-            border:
-                Border.all(color: AppColors.neonPurple.withValues(alpha: 0.3)),
-          ),
           child: Row(
             children: [
               Container(
@@ -1809,6 +1749,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
               if (seedArtist != null)
                 ClipOval(
                   child: CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 30),
                     imageUrl: seedArtist!.getBestImage(size: 'small'),
                     width: 30,
                     height: 30,
@@ -1857,23 +1798,16 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
                         builder: (_) => const ReleaseRadarScreen()),
                   );
                 },
-                child: Container(
+                child: GlassCard(
+                  color: accent,
+                  highlightAlpha: hasNews ? 0.12 : 0.08,
+                  dimAlpha: hasNews ? 0.04 : 0.03,
+                  borderAlpha: hasNews ? 0.55 : 0.3,
+                  borderRadius: 6,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: hasNews
-                          ? const [Color(0xFF1A0A0A), Color(0xFF0A0A14)]
-                          : const [Color(0xFF0A1418), Color(0xFF0A0A14)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: accent.withValues(alpha: hasNews ? 0.55 : 0.3)),
-                  ),
                   child: Row(
                     children: [
                       Stack(
@@ -1959,3 +1893,4 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
     );
   }
 }
+

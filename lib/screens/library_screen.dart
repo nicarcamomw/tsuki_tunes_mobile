@@ -911,8 +911,8 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
     final audio = context.read<AudioProvider>();
     final currentTrackId =
         context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
-    final library = context.watch<LibraryProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final library = context.read<LibraryProvider>();
+    final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
 
     return Container(
@@ -1186,7 +1186,7 @@ class _PlaylistListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
 
     return Container(

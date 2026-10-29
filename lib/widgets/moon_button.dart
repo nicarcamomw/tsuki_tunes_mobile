@@ -17,7 +17,7 @@ class MoonButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final moon = context.watch<MoonProvider>();
-    final strings = context.watch<LocaleProvider>().strings;
+    final strings = context.read<LocaleProvider>().strings;
     final s = moon.snapshot;
 
     return Semantics(

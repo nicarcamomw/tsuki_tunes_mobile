@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/utils/image_cache_size.dart';
 import '../models/wrapped_data.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -613,7 +614,7 @@ class _TopTracksSlide extends StatelessWidget {
               const SizedBox(height: 24),
               // #1 Track — featured large
               if (tracks.isNotEmpty)
-                _buildFeaturedTrack(tracks.first)
+                _buildFeaturedTrack(context, tracks.first)
                     .animate()
                     .fadeIn(duration: 600.ms, delay: 300.ms)
                     .slideY(begin: 0.15, end: 0),
@@ -624,7 +625,7 @@ class _TopTracksSlide extends StatelessWidget {
                 final track = entry.value;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _buildTrackRow(track, i + 2),
+                  child: _buildTrackRow(context, track, i + 2),
                 )
                     .animate()
                     .fadeIn(
@@ -639,7 +640,7 @@ class _TopTracksSlide extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedTrack(WrappedTrackEntry track) {
+  Widget _buildFeaturedTrack(BuildContext context, WrappedTrackEntry track) {
     return Row(
       children: [
         Container(
@@ -658,6 +659,7 @@ class _TopTracksSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: track.coverUrl.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 100),
                     imageUrl: track.coverUrl,
                     width: 100,
                     height: 100,
@@ -725,7 +727,7 @@ class _TopTracksSlide extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackRow(WrappedTrackEntry track, int rank) {
+  Widget _buildTrackRow(BuildContext context, WrappedTrackEntry track, int rank) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -751,6 +753,7 @@ class _TopTracksSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
             child: track.coverUrl.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, 40),
                     imageUrl: track.coverUrl,
                     width: 40,
                     height: 40,
@@ -858,7 +861,7 @@ class _TopArtistsSlide extends StatelessWidget {
                 final artist = entry.value;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: _buildArtistRow(artist, i + 1),
+                  child: _buildArtistRow(context, artist, i + 1),
                 )
                     .animate()
                     .fadeIn(
@@ -873,7 +876,7 @@ class _TopArtistsSlide extends StatelessWidget {
     );
   }
 
-  Widget _buildArtistRow(WrappedArtistEntry artist, int rank) {
+  Widget _buildArtistRow(BuildContext context, WrappedArtistEntry artist, int rank) {
     final isFirst = rank == 1;
     final accentColor = isFirst ? AppColors.neonCyan : AppColors.textSecondary;
 
@@ -907,6 +910,7 @@ class _TopArtistsSlide extends StatelessWidget {
           ClipOval(
             child: artist.coverUrl != null && artist.coverUrl!.isNotEmpty
                 ? CachedNetworkImage(
+                    memCacheWidth: imageCacheSize(context, (isFirst ? 56.0 : 40.0)),
                     imageUrl: artist.coverUrl!,
                     width: isFirst ? 56 : 40,
                     height: isFirst ? 56 : 40,
