@@ -374,6 +374,13 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // Fine grooves, depth and the turning marks: drawn once, then
+            // spun along with the disc.
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DiscSurfacePainter(playing: widget.isPlaying),
+              ),
+            ),
             ExcludeSemantics(
               child: ClipOval(
                 child: SizedBox(
@@ -399,6 +406,15 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
                 shape: BoxShape.circle,
                 color: AppColors.bgDeep,
                 border: Border.all(color: AppColors.accent, width: 2),
+              ),
+              alignment: const Alignment(-0.35, -0.35),
+              child: Container(
+                width: 3,
+                height: 3,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
               ),
             ),
           ],
@@ -431,6 +447,15 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
                   child: Transform.rotate(angle: _frame.rotation, child: child),
                 ),
                 child: disc,
+              ),
+              // A fixed light catching the grooves: the disc turns under it,
+              // like a record under a lamp.
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: _SheenPainter()),
+                  ),
+                ),
               ),
               Positioned.fill(
                 child: IgnorePointer(
@@ -492,6 +517,133 @@ class _SyncChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The disc's face between the cover and the rim: a touch of depth, fine
+/// vinyl grooves, a hairline inside the rim, the cover's label edge and
+/// three small tomoe marks that show it turning.
+class _DiscSurfacePainter extends CustomPainter {
+  final bool playing;
+  const _DiscSurfacePainter({required this.playing});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2;
+    // Matches the cover (0.58 of the full disc, which is 2 px wider).
+    final cover = (size.width + 4) * 0.29;
+
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            AppColors.bgDeep,
+            Color.lerp(AppColors.bgDeep, AppColors.bgHover, 0.55)!,
+            AppColors.bgDeep,
+          ],
+          stops: const [0.55, 0.86, 1],
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+
+    final groove = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+    final inner = cover + 4;
+    final outer = r - 6;
+    const count = 22;
+    for (var i = 0; i < count; i++) {
+      final gr = inner + (outer - inner) * i / (count - 1);
+      groove.color =
+          Colors.white.withValues(alpha: i.isEven ? 0.035 : 0.02);
+      canvas.drawCircle(c, gr, groove);
+    }
+
+    // Hairline inside the rim, for a crisp double edge.
+    canvas.drawCircle(
+      c,
+      r - 3,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = (playing ? AppColors.accent : AppColors.border)
+            .withValues(alpha: playing ? 0.3 : 0.6),
+    );
+
+    // The cover's label edge: a soft shadow ring around it.
+    canvas.drawCircle(
+      c,
+      cover + 1.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = Colors.black.withValues(alpha: 0.45)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+
+    // Three tomoe marks between the cover and the grooves' middle.
+    final markR = cover + (outer - cover) * 0.32;
+    final mark = Paint()
+      ..color = (playing ? AppColors.accent : AppColors.textMuted)
+          .withValues(alpha: playing ? 0.55 : 0.35);
+    for (var i = 0; i < 3; i++) {
+      final a = -pi / 2 + i * 2 * pi / 3;
+      final p = c + Offset(cos(a), sin(a)) * markR;
+      canvas.drawCircle(p, 2.4, mark);
+      // A short tail trailing the turn.
+      final tail = Path()
+        ..addArc(Rect.fromCircle(center: c, radius: markR), a - 0.22, 0.2);
+      canvas.drawPath(
+        tail,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 1.4
+          ..color = mark.color.withValues(alpha: mark.color.a * 0.6),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DiscSurfacePainter old) => old.playing != playing;
+}
+
+/// Two soft, fixed highlights on the disc's face (not on the cover).
+class _SheenPainter extends CustomPainter {
+  const _SheenPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2 - 2;
+    final cover = size.width * 0.29;
+    final ring = Path()
+      ..addOval(Rect.fromCircle(center: c, radius: r))
+      ..addOval(Rect.fromCircle(center: c, radius: cover + 2))
+      ..fillType = PathFillType.evenOdd;
+    canvas.drawPath(
+      ring,
+      Paint()
+        ..shader = SweepGradient(
+          center: Alignment.center,
+          colors: [
+            Colors.white.withValues(alpha: 0),
+            Colors.white.withValues(alpha: 0.06),
+            Colors.white.withValues(alpha: 0),
+            Colors.white.withValues(alpha: 0),
+            Colors.white.withValues(alpha: 0.035),
+            Colors.white.withValues(alpha: 0),
+            Colors.white.withValues(alpha: 0),
+          ],
+          stops: const [0.0, 0.08, 0.18, 0.5, 0.58, 0.68, 1.0],
+          transform: const GradientRotation(-pi * 0.8),
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SheenPainter old) => false;
 }
 
 class _GlowPainter extends CustomPainter {
