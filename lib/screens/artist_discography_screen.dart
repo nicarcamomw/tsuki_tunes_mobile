@@ -272,31 +272,12 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
                         ),
                       ),
                     ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.7,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 4,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final album = _filtered[index];
-                          final showArtist = _filter == 'appears_on' ||
-                              (_filter == 'all' && !_isOwnRelease(album));
-                          return _buildItem(
-                              context, album, library, locale, strings,
-                              isAppearsOn: showArtist);
-                        },
-                        childCount: _filtered.length,
-                      ),
-                    ),
                   ),
+                if (_filtered.isNotEmpty && _filter == 'all')
+                  ..._buildAllSections(cats, library, locale, strings),
+                if (_filtered.isNotEmpty && _filter != 'all')
+                  ..._buildFilteredGrid(_filtered, library, locale, strings,
+                      isAppearsOn: _filter == 'appears_on'),
                 if (_isLoadingMore)
                   SliverToBoxAdapter(
                     child: Padding(
@@ -429,6 +410,76 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAllSections(Map<String, List<Album>> cats,
+      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+    final sections = <Widget>[];
+    final order = [
+      ('album', strings.tabAlbums, Icons.album_rounded, false),
+      ('ep', strings.tabEps, Icons.album_outlined, false),
+      ('single', strings.tabSingles, Icons.music_note_rounded, false),
+      ('appears_on', strings.tabAppearsOn, Icons.groups_rounded, true),
+    ];
+    for (final (key, label, icon, isAppearsOn) in order) {
+      final items = cats[key];
+      if (items == null || items.isEmpty) continue;
+      sections.add(SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: AppColors.accent, semanticLabel: label),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: locale.getTextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${items.length}',
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+      sections.addAll(_buildFilteredGrid(items, library, locale, strings,
+          isAppearsOn: isAppearsOn));
+    }
+    return sections;
+  }
+
+  List<Widget> _buildFilteredGrid(List<Album> albums,
+      LibraryProvider library, LocaleProvider locale, AppStrings strings,
+      {bool isAppearsOn = false}) {
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.7,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 4,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _buildItem(
+                context, albums[index], library, locale, strings,
+                isAppearsOn: isAppearsOn),
+            childCount: albums.length,
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildItem(BuildContext context, Album album, LibraryProvider library,
