@@ -329,6 +329,25 @@ class StorageService implements StorageContract {
     await prefs.setString(_cachedFollowedArtistsKey(uid), json.encode(artists));
   }
 
+  // --- Birthday ---
+  static const String _birthdayKey = 'tsuki_birthday';
+
+  @override
+  Future<String?> getBirthday() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_birthdayKey);
+  }
+
+  @override
+  Future<void> saveBirthday(String? birthday) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (birthday == null) {
+      await prefs.remove(_birthdayKey);
+    } else {
+      await prefs.setString(_birthdayKey, birthday);
+    }
+  }
+
   // --- Playback State Persistence ---
   static const String _playbackStateKey = 'tsuki_playback_state';
 

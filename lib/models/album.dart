@@ -87,7 +87,31 @@ class Album {
       'fansCount': fansCount,
       'tracksCount': tracksCount,
       'link': link,
+      if (tracks.isNotEmpty) 'tracks': tracks.map((t) => t.toJson()).toList(),
     };
+  }
+
+  factory Album.fromStorage(Map<String, dynamic> map) {
+    List<Track> tracks = [];
+    if (map['tracks'] is List) {
+      tracks = (map['tracks'] as List)
+          .map((t) => Track.fromStorage(Map<String, dynamic>.from(t)))
+          .toList();
+    }
+    return Album(
+      id: map['id']?.toString() ?? '',
+      title: map['title'] ?? 'Unknown Album',
+      coverUrl: map['coverUrl'] ?? '',
+      coverXl: map['coverXl'],
+      artistId: map['artistId']?.toString() ?? '',
+      artistName: map['artistName'] ?? 'Unknown Artist',
+      releaseDate: map['releaseDate'] ?? '',
+      recordType: map['recordType'] ?? 'album',
+      fansCount: map['fansCount'] ?? 0,
+      tracksCount: map['tracksCount'] ?? 0,
+      link: map['link'],
+      tracks: tracks,
+    );
   }
 
   Album copyWith({

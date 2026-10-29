@@ -10,6 +10,13 @@ import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
 import '../models/track.dart';
 import 'contracts/music_api_contract.dart';
+import 'deezer_disk_cache.dart';
+
+/// Top-level so it can be sent to an isolate via [compute].
+dynamic _decodeJson(String source) => json.decode(source);
+
+/// Threshold in bytes above which JSON decoding runs in an isolate.
+const int _isolateThreshold = 10 * 1024;
 
 class _CacheEntry {
   final dynamic data;
@@ -33,8 +40,10 @@ class DeezerApiService implements MusicApiContract {
 
   final Map<String, _CacheEntry> _cache = {};
   final Map<String, Future> _inFlight = {};
+  final DeezerDiskCache _diskCache = DeezerDiskCache();
 
   static const int _searchTtlMinutes = 120;
+  static const int _chartTtlMinutes = 60;
   static const int _entityTtlMinutes = 1440;
   static const int _minArtistFans = 5000;
   static const int _minTrackRank = 10000;
@@ -63,10 +72,47 @@ class DeezerApiService implements MusicApiContract {
     return null;
   }
 
-  void _setCache(String key, dynamic data, {bool isSearch = false}) {
+  Future<T?> _loadFromDisk<T>(String key) async {
+    if (!_diskCache.isReady) return null;
+    final entry = await _diskCache.read(key);
+    if (entry == null) return null;
+    try {
+      final data = DeezerDiskCache.deserialize(entry.type, entry.data);
+      if (data is T) {
+        _cache[key] = _CacheEntry(data, entry.expiry);
+        return data;
+      }
+    } catch (e) {
+      debugPrint('[DeezerAPI] disk deserialize error ($key): $e');
+    }
+    return null;
+  }
+
+  Future<T?> _getFromCache<T>(String key) async {
+    return _getCached<T>(key) ?? await _loadFromDisk<T>(key);
+  }
+
+  void _setCache(String key, dynamic data,
+      {bool isSearch = false, bool isChart = false}) {
     _pruneCache();
-    final ttl = isSearch ? _searchTtlMinutes : _entityTtlMinutes;
-    _cache[key] = _CacheEntry(data, DateTime.now().add(Duration(minutes: ttl)));
+    final ttl =
+        isSearch ? _searchTtlMinutes : (isChart ? _chartTtlMinutes : _entityTtlMinutes);
+    final expiry = DateTime.now().add(Duration(minutes: ttl));
+    _cache[key] = _CacheEntry(data, expiry);
+
+    final typeTag = DeezerDiskCache.typeTagFor(data);
+    if (typeTag != null) {
+      final serialized = DeezerDiskCache.serialize(typeTag, data);
+      if (serialized != null) {
+        _diskCache.write(key, typeTag, serialized, expiry);
+      }
+    }
+  }
+
+  /// Decodes [body] on an isolate when it is large enough to jank the UI.
+  static Future<dynamic> _decode(String body) {
+    if (body.length >= _isolateThreshold) return compute(_decodeJson, body);
+    return Future.value(json.decode(body));
   }
 
   /// Fetches JSON from [url]. Returns decoded data on success.
@@ -87,8 +133,7 @@ class DeezerApiService implements MusicApiContract {
         }
 
         if (res.statusCode == 200) {
-          final decoded = json.decode(res.body);
-          // Check for Deezer quota limit error returned with HTTP 200 (code 4 or 800)
+          final decoded = await _decode(res.body);
           if (decoded is Map<String, dynamic> && decoded['error'] != null) {
             final errCode = decoded['error']['code'];
             if (errCode == 4 || errCode == 800) {
@@ -97,7 +142,7 @@ class DeezerApiService implements MusicApiContract {
               final retryRes =
                   await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
               if (retryRes.statusCode == 200) {
-                final retryDecoded = json.decode(retryRes.body);
+                final retryDecoded = await _decode(retryRes.body);
                 if (retryDecoded is Map<String, dynamic> && retryDecoded['error'] == null) {
                   return retryDecoded;
                 }
@@ -130,7 +175,7 @@ class DeezerApiService implements MusicApiContract {
         final res = await http
             .get(Uri.parse(proxyUrl))
             .timeout(const Duration(seconds: 8));
-        if (res.statusCode == 200) return json.decode(res.body);
+        if (res.statusCode == 200) return await _decode(res.body);
       } catch (e) {
         if (e is DeezerApiException) rethrow;
         debugPrint('[DeezerAPI] CORS proxy error: $e');
@@ -140,7 +185,7 @@ class DeezerApiService implements MusicApiContract {
     try {
       final res =
           await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-      if (res.statusCode == 200) return json.decode(res.body);
+      if (res.statusCode == 200) return await _decode(res.body);
     } catch (e) {
       if (e is DeezerApiException) rethrow;
       final msg = '[DeezerAPI] Direct web fetch error for $url: $e';
@@ -175,7 +220,7 @@ class DeezerApiService implements MusicApiContract {
     }
 
     final cacheKey = 'search_$query';
-    final cached = _getCached<Map<String, dynamic>>(cacheKey);
+    final cached = await _getFromCache<Map<String, dynamic>>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -200,7 +245,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Artist>> searchArtists(String query, {int limit = 25}) async {
     final cacheKey = 'search_artists_$query';
-    final cached = _getCached<List<Artist>>(cacheKey);
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
     final data = await _fetchJson(
@@ -222,7 +267,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Album>> searchAlbums(String query, {int limit = 10}) async {
     final cacheKey = 'search_albums_$query';
-    final cached = _getCached<List<Album>>(cacheKey);
+    final cached = await _getFromCache<List<Album>>(cacheKey);
     if (cached != null) return cached;
 
     final data = await _fetchJson(
@@ -242,7 +287,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Track>> searchTracks(String query, {int limit = 25}) async {
     final cacheKey = 'search_tracks_$query';
-    final cached = _getCached<List<Track>>(cacheKey);
+    final cached = await _getFromCache<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
     final data = await _fetchJson(
@@ -269,7 +314,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Track>> getChartTracks() async {
     const cacheKey = 'chart_tracks';
-    final cached = _getCached<List<Track>>(cacheKey);
+    final cached = await _getFromCache<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
     try {
@@ -277,7 +322,7 @@ class DeezerApiService implements MusicApiContract {
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
         final tracks = list.map((item) => Track.fromJson(item)).toList();
-        _setCache(cacheKey, tracks);
+        _setCache(cacheKey, tracks, isChart: true);
         return tracks;
       }
     } catch (e) {
@@ -310,7 +355,7 @@ class DeezerApiService implements MusicApiContract {
   /// the home chart.
   Future<List<Track>> getLargeChartTracks() async {
     const cacheKey = 'chart_tracks_large';
-    final cached = _getCached<List<Track>>(cacheKey);
+    final cached = await _getFromCache<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
     try {
@@ -318,7 +363,7 @@ class DeezerApiService implements MusicApiContract {
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
         final tracks = list.map((item) => Track.fromJson(item)).toList();
-        _setCache(cacheKey, tracks);
+        _setCache(cacheKey, tracks, isChart: true);
         return tracks;
       }
     } catch (e) {
@@ -330,7 +375,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Artist>> getChartArtists() async {
     const cacheKey = 'chart_artists';
-    final cached = _getCached<List<Artist>>(cacheKey);
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
     try {
@@ -338,7 +383,7 @@ class DeezerApiService implements MusicApiContract {
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
         final artists = list.map((item) => Artist.fromJson(item)).toList();
-        _setCache(cacheKey, artists);
+        _setCache(cacheKey, artists, isChart: true);
         return artists;
       }
     } catch (e) {
@@ -350,7 +395,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<List<Artist>> getFeaturedArtists() async {
     const cacheKey = 'featured_artists';
-    final cached = _getCached<List<Artist>>(cacheKey);
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
     final List<Artist> results = [];
@@ -374,7 +419,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<Artist?> getArtist(String id) async {
     final cacheKey = 'artist_$id';
-    final cached = _getCached<Artist>(cacheKey);
+    final cached = await _getFromCache<Artist>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -396,7 +441,7 @@ class DeezerApiService implements MusicApiContract {
   Future<List<Track>> getArtistTopTracks(String artistId,
       {int limit = 10}) async {
     final cacheKey = 'artist_top_${artistId}_$limit';
-    final cached = _getCached<List<Track>>(cacheKey);
+    final cached = await _getFromCache<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
     try {
@@ -421,7 +466,7 @@ class DeezerApiService implements MusicApiContract {
     int index = 0,
   }) async {
     final cacheKey = 'artist_albums_page_${artistId}_${limit}_$index';
-    final cached = _getCached<ArtistAlbumsPage>(cacheKey);
+    final cached = await _getFromCache<ArtistAlbumsPage>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -461,7 +506,7 @@ class DeezerApiService implements MusicApiContract {
   Future<List<Album>> getArtistCompilations(String artistId,
       {int limit = 50}) async {
     final cacheKey = 'artist_compilations_$artistId';
-    final cached = _getCached<List<Album>>(cacheKey);
+    final cached = await _getFromCache<List<Album>>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -488,11 +533,11 @@ class DeezerApiService implements MusicApiContract {
   Future<List<Album>> getArtistAlbums(String artistId,
       {int limit = 250, int index = 0}) async {
     final cacheKey = 'artist_albums_${artistId}_${limit}_$index';
-    final cached = _getCached<List<Album>>(cacheKey);
+    final cached = await _getFromCache<List<Album>>(cacheKey);
     if (cached != null) return cached;
 
     if (index == 0) {
-      final oldCached = _getCached<List<Album>>('artist_albums_$artistId');
+      final oldCached = await _getFromCache<List<Album>>('artist_albums_$artistId');
       if (oldCached != null) return oldCached;
     }
 
@@ -513,7 +558,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<Album?> getAlbum(String albumId) async {
     final cacheKey = 'album_$albumId';
-    final cached = _getCached<Album>(cacheKey);
+    final cached = await _getFromCache<Album>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -534,7 +579,7 @@ class DeezerApiService implements MusicApiContract {
   @override
   Future<Track?> getTrack(String trackId, {bool forceRefresh = false}) async {
     final cacheKey = 'track_$trackId';
-    final cached = forceRefresh ? null : _getCached<Track>(cacheKey);
+    final cached = forceRefresh ? null : await _getFromCache<Track>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -554,7 +599,7 @@ class DeezerApiService implements MusicApiContract {
 
   Future<List<Artist>> getRelatedArtists(String artistId, {int limit = 20}) async {
     final cacheKey = 'artist_related_${artistId}_$limit';
-    final cached = _getCached<List<Artist>>(cacheKey);
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
     if (cached != null) return cached;
 
     return _deduped(cacheKey, () async {
@@ -618,7 +663,10 @@ class DeezerApiService implements MusicApiContract {
   }
 
   @override
-  void clearCache() => _cache.clear();
+  void clearCache() {
+    _cache.clear();
+    unawaited(_diskCache.clear());
+  }
 }
 
 /// Custom exception for Deezer API errors — allows callers to distinguish

@@ -101,29 +101,11 @@ class MoonSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            Center(
-              child: Semantics(
-                label: '${strings.moonPhaseName(s.name)}, ${strings.moonIlluminated((s.illumination * 100).round())}',
-                child: GestureDetector(
-                  onLongPress: () {
-                    HapticFeedback.heavyImpact();
-                    moon.previewEclipse();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: MoonBreathing(
-                      active: eclipse,
-                      child: MoonGlyph(
-                        size: 132,
-                        illumination: s.illumination,
-                        waxing: s.waxing,
-                        southernHemisphere: moon.southernHemisphere,
-                        eclipse: eclipse,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            _TappableMoon(
+              moon: moon,
+              eclipse: eclipse,
+              phaseName: strings.moonPhaseName(s.name),
+              illuminatedLabel: strings.moonIlluminated((s.illumination * 100).round()),
             ),
             const SizedBox(height: 6),
             Center(
@@ -622,4 +604,269 @@ class _FullMoonMixCardState extends State<_FullMoonMixCard> {
       ),
     );
   }
+}
+
+class _TappableMoon extends StatefulWidget {
+  final MoonProvider moon;
+  final bool eclipse;
+  final String phaseName;
+  final String illuminatedLabel;
+
+  const _TappableMoon({
+    required this.moon,
+    required this.eclipse,
+    required this.phaseName,
+    required this.illuminatedLabel,
+  });
+
+  @override
+  State<_TappableMoon> createState() => _TappableMoonState();
+}
+
+class _TappableMoonState extends State<_TappableMoon>
+    with SingleTickerProviderStateMixin {
+  static const _requiredTaps = 10;
+  static const _tapWindow = Duration(milliseconds: 600);
+
+  int _tapCount = 0;
+  DateTime _lastTap = DateTime(0);
+  bool _rabbitVisible = false;
+
+  late final AnimationController _fadeCtrl;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    );
+    _fade = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: 12),
+      TweenSequenceItem(tween: Tween(begin: 1, end: 1), weight: 58),
+      TweenSequenceItem(tween: Tween(begin: 1, end: 0), weight: 30),
+    ]).animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut));
+    _fadeCtrl.addStatusListener((s) {
+      if (s == AnimationStatus.completed && mounted) {
+        setState(() => _rabbitVisible = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    final now = DateTime.now();
+    if (now.difference(_lastTap) > _tapWindow) {
+      _tapCount = 0;
+    }
+    _lastTap = now;
+    _tapCount++;
+
+    if (_tapCount >= _requiredTaps && !_rabbitVisible) {
+      _tapCount = 0;
+      HapticFeedback.mediumImpact();
+      setState(() => _rabbitVisible = true);
+      _fadeCtrl.forward(from: 0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.moon.snapshot;
+    return Center(
+      child: Semantics(
+        label: '${widget.phaseName}, ${widget.illuminatedLabel}',
+        child: GestureDetector(
+          onTap: _onTap,
+          onLongPress: () {
+            HapticFeedback.heavyImpact();
+            widget.moon.previewEclipse();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 132,
+                  height: 132,
+                  child: Stack(
+                    children: [
+                      MoonBreathing(
+                        active: widget.eclipse,
+                        child: MoonGlyph(
+                          size: 132,
+                          illumination: s.illumination,
+                          waxing: s.waxing,
+                          southernHemisphere: widget.moon.southernHemisphere,
+                          eclipse: widget.eclipse,
+                        ),
+                      ),
+                      if (_rabbitVisible)
+                        AnimatedBuilder(
+                          animation: _fade,
+                          builder: (context, child) => Opacity(
+                            opacity: _fade.value,
+                            child: ClipOval(
+                              child: CustomPaint(
+                                size: const Size.square(132),
+                                painter: _MoonRabbitPainter(),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (_rabbitVisible)
+                  AnimatedBuilder(
+                    animation: _fade,
+                    builder: (context, child) => Opacity(
+                      opacity: _fade.value * 0.6,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '月のうさぎ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _silver.withValues(alpha: 0.7),
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoonRabbitPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2;
+    final paint = Paint()
+      ..color = const Color(0xFF1A1D27).withValues(alpha: 0.35)
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = const Color(0xFF1A1D27).withValues(alpha: 0.30)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = r * 0.035
+      ..strokeCap = StrokeCap.round;
+
+    final bodyX = c.dx + r * 0.08;
+    final bodyY = c.dy + r * 0.18;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(bodyX, bodyY),
+        width: r * 0.42,
+        height: r * 0.50,
+      ),
+      paint,
+    );
+
+    final headX = bodyX - r * 0.02;
+    final headY = bodyY - r * 0.38;
+    canvas.drawCircle(Offset(headX, headY), r * 0.14, paint);
+
+    canvas.save();
+    canvas.translate(headX - r * 0.08, headY - r * 0.14);
+    canvas.rotate(-0.25);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: r * 0.09,
+        height: r * 0.28,
+      ),
+      paint,
+    );
+    canvas.restore();
+
+    canvas.save();
+    canvas.translate(headX + r * 0.08, headY - r * 0.14);
+    canvas.rotate(0.25);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: r * 0.09,
+        height: r * 0.28,
+      ),
+      paint,
+    );
+    canvas.restore();
+
+    final eyePaint = Paint()
+      ..color = const Color(0xFF0A0C12).withValues(alpha: 0.45);
+    canvas.drawCircle(
+      Offset(headX - r * 0.05, headY - r * 0.02),
+      r * 0.020,
+      eyePaint,
+    );
+    canvas.drawCircle(
+      Offset(headX + r * 0.05, headY - r * 0.02),
+      r * 0.020,
+      eyePaint,
+    );
+
+    final shoulderL = Offset(bodyX - r * 0.14, bodyY - r * 0.18);
+    final shoulderR = Offset(bodyX + r * 0.14, bodyY - r * 0.18);
+    final malletGrip = Offset(bodyX + r * 0.28, bodyY - r * 0.42);
+
+    canvas.drawLine(shoulderL, malletGrip, strokePaint);
+    canvas.drawLine(shoulderR, malletGrip, strokePaint);
+
+    final malletEnd = Offset(malletGrip.dx + r * 0.18, malletGrip.dy - r * 0.08);
+    canvas.drawLine(
+      malletGrip,
+      malletEnd,
+      strokePaint..strokeWidth = r * 0.04,
+    );
+
+    canvas.save();
+    canvas.translate(malletEnd.dx, malletEnd.dy);
+    canvas.rotate(-0.4);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(r * 0.06, 0), width: r * 0.16, height: r * 0.10),
+        Radius.circular(r * 0.03),
+      ),
+      paint,
+    );
+    canvas.restore();
+
+    final mortarY = bodyY + r * 0.32;
+    final mortarX = bodyX + r * 0.26;
+    final mortarPath = Path()
+      ..moveTo(mortarX - r * 0.12, mortarY - r * 0.04)
+      ..quadraticBezierTo(
+        mortarX - r * 0.14, mortarY + r * 0.10,
+        mortarX, mortarY + r * 0.11,
+      )
+      ..quadraticBezierTo(
+        mortarX + r * 0.14, mortarY + r * 0.10,
+        mortarX + r * 0.12, mortarY - r * 0.04,
+      );
+    canvas.drawPath(mortarPath, strokePaint..strokeWidth = r * 0.035);
+
+    canvas.drawCircle(
+      Offset(mortarX, mortarY + r * 0.03),
+      r * 0.045,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MoonRabbitPainter old) => false;
 }

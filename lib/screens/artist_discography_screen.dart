@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/album_categorizer.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
@@ -144,12 +145,8 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
     }
   }
 
-  bool _isOwnRelease(Album a) {
-    final id = widget.artistId;
-    if (id != null && a.artistId.isNotEmpty) return a.artistId == id;
-    return a.artistName.toLowerCase().trim() ==
-        widget.artistName.toLowerCase().trim();
-  }
+  bool _isOwnRelease(Album a) => AlbumCategorizer.isOwnRelease(
+        a, artistId: widget.artistId ?? '', artistName: widget.artistName);
 
   List<Album> get _filtered {
     if (_filter == 'all') return _allAlbums;

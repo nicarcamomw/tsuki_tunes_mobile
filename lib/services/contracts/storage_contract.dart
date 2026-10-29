@@ -38,5 +38,7 @@ abstract class StorageContract {
   Future<void> saveCachedPlaylists(String uid, List<Map<String, dynamic>> playlists);
   Future<List<Map<String, dynamic>>> getCachedFollowedArtists(String uid);
   Future<void> saveCachedFollowedArtists(String uid, List<Map<String, dynamic>> artists);
+  Future<String?> getBirthday();
+  Future<void> saveBirthday(String? birthday);
 }
 

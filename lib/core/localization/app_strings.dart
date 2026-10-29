@@ -1206,6 +1206,18 @@ class AppStrings {
         AppLanguage.ja => '次の月食：$date · ${moonEclipseKind(kind)}月食',
       };
 
+  String get birthdayTitle => switch (language) {
+        AppLanguage.es => 'Cumpleaños',
+        AppLanguage.en => 'Birthday',
+        AppLanguage.ja => '誕生日',
+      };
+
+  String get birthdayNotSet => switch (language) {
+        AppLanguage.es => 'No configurado',
+        AppLanguage.en => 'Not set',
+        AppLanguage.ja => '未設定',
+      };
+
   String get moonAtmosphereTitle => switch (language) {
         AppLanguage.es => 'Atmósfera lunar',
         AppLanguage.en => 'Lunar atmosphere',

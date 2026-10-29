@@ -584,7 +584,8 @@ class SpotifyService {
     return [];
   }
 
-  Future<bool> _transferPlayback(String deviceId) async {
+  @visibleForTesting
+  Future<bool> transferPlayback(String deviceId) async {
     try {
       final response = await http.put(
         Uri.parse('https://api.spotify.com/v1/me/player'),
@@ -630,7 +631,7 @@ class SpotifyService {
       final phoneId = smartphones.first['id'] as String?;
       if (phoneId != null) {
         debugPrint('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
-        await _transferPlayback(phoneId);
+        await transferPlayback(phoneId);
         await Future.delayed(const Duration(milliseconds: 500));
       }
       return phoneId;
@@ -698,7 +699,7 @@ class SpotifyService {
 
       // Play failed — try transfer + retry once
       debugPrint('Spotify play failed, forcing transfer and retry');
-      await _transferPlayback(targetDevice);
+      await transferPlayback(targetDevice);
       await Future.delayed(const Duration(milliseconds: 800));
 
       final retry = await http.put(

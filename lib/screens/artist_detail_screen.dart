@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
+import '../core/utils/album_categorizer.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
@@ -158,11 +159,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }
   }
 
-  bool _isOwnRelease(Album a) {
-    if (a.artistId.isNotEmpty) return a.artistId == _artist.id;
-    return a.artistName.toLowerCase().trim() ==
-        _artist.name.toLowerCase().trim();
-  }
+  bool _isOwnRelease(Album a) =>
+      AlbumCategorizer.isOwnRelease(a, artistId: _artist.id, artistName: _artist.name);
 
   /// Own releases (albums, EPs, singles) grouped by type + title, so that
   /// duplicate editions (explicit/clean, re-uploads) count as one release.
@@ -177,28 +175,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return groups.values.toList();
   }
 
-  Map<String, List<Album>> get _categorizedAlbums {
-    final Map<String, List<Album>> cats = {
-      'album': [],
-      'ep': [],
-      'single': [],
-      'appears_on': [],
-    };
-    for (final a in _albums) {
-      if (!_isOwnRelease(a)) {
-        cats['appears_on']!.add(a);
-      } else if (a.recordType == 'album') {
-        cats['album']!.add(a);
-      } else if (a.recordType == 'ep' || a.recordType == 'compile') {
-        cats['ep']!.add(a);
-      } else if (a.recordType == 'single') {
-        cats['single']!.add(a);
-      } else {
-        cats['album']!.add(a);
-      }
-    }
-    return cats;
-  }
+  Map<String, List<Album>> get _categorizedAlbums =>
+      AlbumCategorizer.categorize(_albums, artistId: _artist.id, artistName: _artist.name);
 
   @override
   Widget build(BuildContext context) {
@@ -1220,23 +1198,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     }).toList();
     final songCount = artistTracks.length;
 
-    final albumCats = <String, List<Album>>{
-      'album': [],
-      'ep': [],
-      'single': [],
-      'appears_on': [],
-    };
-    for (final album in _albums) {
-      if (!_isOwnRelease(album)) {
-        albumCats['appears_on']!.add(album);
-      } else if (album.recordType == 'ep' || album.recordType == 'compile') {
-        albumCats['ep']!.add(album);
-      } else if (album.recordType == 'single') {
-        albumCats['single']!.add(album);
-      } else {
-        albumCats['album']!.add(album);
-      }
-    }
+    final albumCats = AlbumCategorizer.categorize(
+      _albums, artistId: _artist.id, artistName: _artist.name,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
