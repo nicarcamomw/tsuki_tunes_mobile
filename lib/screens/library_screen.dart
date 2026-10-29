@@ -59,6 +59,11 @@ class _LibraryScreenState extends State<LibraryScreen>
   final Set<String> _expandedAlbums = {};
   bool _hasError = false;
 
+  // Cached album grouping — rebuilt only when the source list identity changes.
+  List<ListenedTrackData>? _cachedSource;
+  List<_AlbumGroupData> _cachedGroups = const [];
+  int _cachedTotalTracks = 0;
+
   @override
   void initState() {
     super.initState();
@@ -114,31 +119,36 @@ class _LibraryScreenState extends State<LibraryScreen>
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
     final listenedTracks = library.listenedTracks;
-    final totalTracks = listenedTracks.length;
 
-    // Group by album
-    final Map<String, _AlbumGroupData> albumMap = {};
-    for (final t in listenedTracks) {
-      final key = t.albumId.isNotEmpty ? t.albumId : t.albumTitle.isNotEmpty ? t.albumTitle : 'unknown';
-      if (!albumMap.containsKey(key)) {
-        albumMap[key] = _AlbumGroupData(
-          albumId: t.albumId,
-          albumTitle: t.albumTitle,
-          artistName: t.artistName,
-          coverUrl: t.coverUrl,
-          tracks: [],
-        );
-      }
-      albumMap[key]!.tracks.add(t);
-      if (t.listenedAt != null) {
-        final current = albumMap[key]!.latestListened;
-        if (current == null || t.listenedAt!.isAfter(current)) {
-          albumMap[key]!.latestListened = t.listenedAt;
+    // Rebuild the album grouping only when the source list changes.
+    if (!identical(listenedTracks, _cachedSource)) {
+      _cachedSource = listenedTracks;
+      _cachedTotalTracks = listenedTracks.length;
+      final Map<String, _AlbumGroupData> albumMap = {};
+      for (final t in listenedTracks) {
+        final key = t.albumId.isNotEmpty ? t.albumId : t.albumTitle.isNotEmpty ? t.albumTitle : 'unknown';
+        if (!albumMap.containsKey(key)) {
+          albumMap[key] = _AlbumGroupData(
+            albumId: t.albumId,
+            albumTitle: t.albumTitle,
+            artistName: t.artistName,
+            coverUrl: t.coverUrl,
+            tracks: [],
+          );
+        }
+        albumMap[key]!.tracks.add(t);
+        if (t.listenedAt != null) {
+          final current = albumMap[key]!.latestListened;
+          if (current == null || t.listenedAt!.isAfter(current)) {
+            albumMap[key]!.latestListened = t.listenedAt;
+          }
         }
       }
+      _cachedGroups = albumMap.values.toList();
     }
 
-    var albumGroups = albumMap.values.toList();
+    final totalTracks = _cachedTotalTracks;
+    var albumGroups = List<_AlbumGroupData>.of(_cachedGroups);
     final totalAlbums = albumGroups.length;
 
     // Filter

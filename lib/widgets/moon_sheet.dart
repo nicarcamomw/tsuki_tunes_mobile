@@ -187,7 +187,7 @@ class MoonSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            _CycleStrip(snapshot: s, southern: moon.southernHemisphere, accent: accent),
+            _CycleStrip(phases: moon.cyclePhases, currentName: s.name, southern: moon.southernHemisphere, accent: accent),
 
             const SizedBox(height: 22),
             Text(
@@ -257,11 +257,12 @@ class MoonSheet extends StatelessWidget {
 }
 
 class _CycleStrip extends StatefulWidget {
-  final MoonSnapshot snapshot;
+  final List<CyclePhase> phases;
+  final MoonPhaseName currentName;
   final bool southern;
   final Color accent;
 
-  const _CycleStrip({required this.snapshot, required this.southern, required this.accent});
+  const _CycleStrip({required this.phases, required this.currentName, required this.southern, required this.accent});
 
   @override
   State<_CycleStrip> createState() => _CycleStripState();
@@ -281,8 +282,8 @@ class _CycleStripState extends State<_CycleStrip> {
   Widget build(BuildContext context) {
     final locale = context.read<LocaleProvider>();
     final strings = locale.strings;
-    final phases = MoonCalculator.cycleOf(widget.snapshot);
-    final current = phases.indexWhere((p) => p.name == widget.snapshot.name);
+    final phases = widget.phases;
+    final current = phases.indexWhere((p) => p.name == widget.currentName);
 
     return LayoutBuilder(builder: (context, c) {
       // Start with today's phase centred.
@@ -477,9 +478,7 @@ class _FullMoonMixCardState extends State<_FullMoonMixCard> {
         : const <Track>[];
     final cycleCount = unlocked
         ? 0
-        : widget.history
-            .topBetween(s.previousFull.time, s.at, limit: 1000)
-            .length;
+        : widget.history.countBetween(s.previousFull.time, s.at);
 
     return Container(
       width: double.infinity,

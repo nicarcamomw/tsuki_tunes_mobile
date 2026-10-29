@@ -25,6 +25,9 @@ class MoonProvider extends ChangeNotifier with WidgetsBindingObserver {
   late MoonSnapshot _snapshot;
   LunarEclipse? _eclipseNow;
   LunarEclipse? _nextEclipse;
+  DateTime? _nextEclipseCheckedAt;
+  List<CyclePhase>? _cyclePhases;
+  DateTime? _cyclePrevNew;
   bool _atmosphere = true;
   DateTime? _previewUntil;
   Timer? _ticker;
@@ -48,6 +51,17 @@ class MoonProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get atmosphereEnabled => _atmosphere;
   LunarEclipse? get eclipseNow => _eclipseNow;
   LunarEclipse? get nextEclipse => _nextEclipse;
+
+  /// Cached cycle phases for the current lunation. Computed lazily and
+  /// invalidated when the underlying new-moon anchor changes (~monthly).
+  List<CyclePhase> get cyclePhases {
+    if (_cyclePhases == null || _cyclePrevNew != _snapshot.previousNew.time) {
+      _cyclePhases = MoonCalculator.cycleOf(_snapshot);
+      _cyclePrevNew = _snapshot.previousNew.time;
+    }
+    return _cyclePhases!;
+  }
+
   bool get isEclipsePreview =>
       _previewUntil != null && _clock().isBefore(_previewUntil!);
 
@@ -63,8 +77,22 @@ class MoonProvider extends ChangeNotifier with WidgetsBindingObserver {
     final t = _clock();
     _snapshot = MoonCalculator.snapshot(t);
     _eclipseNow = MoonCalculator.eclipseInProgress(t);
-    _nextEclipse = MoonCalculator.nextEclipse(t);
+    _refreshNextEclipse(t);
     if (_eclipseNow != null) onEclipseSeen?.call();
+  }
+
+  /// nextEclipse searches up to 3 years of full moons — expensive.
+  /// Cache the result and only recompute when it expires or every 6 hours.
+  void _refreshNextEclipse(DateTime t) {
+    final cached = _nextEclipse;
+    if (cached != null &&
+        !cached.end.isBefore(t) &&
+        _nextEclipseCheckedAt != null &&
+        t.difference(_nextEclipseCheckedAt!).inHours < 6) {
+      return;
+    }
+    _nextEclipse = MoonCalculator.nextEclipse(t);
+    _nextEclipseCheckedAt = t;
   }
 
   void refresh() {

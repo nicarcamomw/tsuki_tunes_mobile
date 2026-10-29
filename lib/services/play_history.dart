@@ -108,4 +108,15 @@ class PlayHistory extends ChangeNotifier {
 
   List<Track> topBetween(DateTime from, DateTime to, {int limit = 25}) =>
       rank(entries: _entries, tracks: _tracks, from: from, to: to, limit: limit);
+
+  /// Number of unique tracks played in [from, to]. O(n) scan, no sorting.
+  int countBetween(DateTime from, DateTime to) {
+    final seen = <String>{};
+    for (final e in _entries) {
+      if (e.at.isBefore(from) || e.at.isAfter(to)) continue;
+      if (!_tracks.containsKey(e.trackId)) continue;
+      seen.add(e.trackId);
+    }
+    return seen.length;
+  }
 }
