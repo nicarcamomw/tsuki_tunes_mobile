@@ -42,6 +42,26 @@ class PlaybackQueue {
   // Pre-picked next index while shuffling, so prefetching and playback
   // target the same track.
   int? _nextShuffleIndex;
+  // Shuffle picks after that one, made ahead by [peekUpcoming] (so Spotify
+  // can be told what follows) and used in this order by [next].
+  final List<int> _shuffleLookahead = [];
+
+  void _forgetShufflePicks() {
+    _nextShuffleIndex = null;
+    _shuffleLookahead.clear();
+  }
+
+  /// Moves on to the next memoized shuffle pick, if any.
+  void _advanceShufflePick() {
+    _nextShuffleIndex = null;
+    while (_shuffleLookahead.isNotEmpty) {
+      final i = _shuffleLookahead.removeAt(0);
+      if (_isValid(i) && i != _currentIndex) {
+        _nextShuffleIndex = i;
+        return;
+      }
+    }
+  }
 
   // Indices played before the current one (shuffle "previous").
   final List<int> _history = [];
@@ -105,7 +125,7 @@ class PlaybackQueue {
         _currentIndex = idx;
       }
     }
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     _requeue(pending);
   }
 
@@ -150,12 +170,12 @@ class PlaybackQueue {
 
   void toggleShuffle() {
     _isShuffle = !_isShuffle;
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
   }
 
   void setRepeatMode(PlaybackRepeatMode mode) {
     _repeatMode = mode;
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
   }
 
   PlaybackRepeatMode cycleRepeatMode() {
@@ -188,6 +208,47 @@ class PlaybackQueue {
     return null;
   }
 
+  /// The next [count] indices in play order, without moving: the list order
+  /// (wrapping with repeat-all), or memoized shuffle picks that [next] will
+  /// then follow. Empty with repeat-one.
+  List<int> peekUpcoming(int count) {
+    if (_repeatMode == PlaybackRepeatMode.one) return const [];
+    final first = peekNext();
+    if (first == null || first == _currentIndex) return const [];
+
+    if (!_isShuffle || _tracks.length <= 2) {
+      final out = <int>[];
+      var i = first;
+      while (out.length < count && i != _currentIndex) {
+        out.add(i);
+        i++;
+        if (i >= _tracks.length) {
+          if (_repeatMode != PlaybackRepeatMode.all) break;
+          i = 0;
+        }
+      }
+      return out;
+    }
+
+    final picks = [first, ..._shuffleLookahead];
+    while (picks.length < count && picks.length < _tracks.length - 1) {
+      final taken = {_currentIndex, ...picks};
+      int? pick;
+      for (final id in _userQueue) {
+        final i = _tracks.indexWhere((t) => t.id == id);
+        if (i != -1 && !taken.contains(i)) {
+          pick = i;
+          break;
+        }
+      }
+      pick ??= pickSmartNext(exclude: taken);
+      if (taken.contains(pick)) break;
+      picks.add(pick);
+      _shuffleLookahead.add(pick);
+    }
+    return picks.take(count).toList();
+  }
+
   /// Moves to the next track ("next" button, or end of track with repeat).
   QueueStep next({required bool online, required bool Function(Track) canPlay}) {
     if (_tracks.isEmpty) return QueueStep.unavailable;
@@ -215,7 +276,11 @@ class PlaybackQueue {
       }
       _pushHistory(_currentIndex);
       _currentIndex = target;
-      _nextShuffleIndex = null;
+      if (target == preset) {
+        _advanceShufflePick();
+      } else {
+        _forgetShufflePicks();
+      }
     } else if (!online) {
       final target = _findFrom(1, canPlay);
       if (target != -1) {
@@ -307,11 +372,12 @@ class PlaybackQueue {
   int? advanceForCrossfade() {
     if (_tracks.isEmpty) return null;
     int target;
+    var preset = false;
     if (_isShuffle && _tracks.length > 1) {
-      target = _isValid(_nextShuffleIndex) && _nextShuffleIndex != _currentIndex
+      preset = _isValid(_nextShuffleIndex) && _nextShuffleIndex != _currentIndex;
+      target = preset
           ? _nextShuffleIndex!
           : _userQueuedNext() ?? pickSmartNext();
-      _nextShuffleIndex = null;
     } else if (_currentIndex + 1 < _tracks.length) {
       target = _currentIndex + 1;
     } else if (_repeatMode == PlaybackRepeatMode.all) {
@@ -321,7 +387,10 @@ class PlaybackQueue {
     }
     _pushHistory(_currentIndex);
     _currentIndex = target;
-    if (_isShuffle) _recordShuffle(_tracks[target]);
+    if (_isShuffle) {
+      preset ? _advanceShufflePick() : _forgetShufflePicks();
+      _recordShuffle(_tracks[target]);
+    }
     _consumeCurrent();
     return target;
   }
@@ -341,11 +410,12 @@ class PlaybackQueue {
     if (_history.length > _maxHistory) _history.removeAt(0);
   }
 
-  /// Weighted random pick that avoids artists/albums heard most recently.
-  int pickSmartNext() {
+  /// Weighted random pick that avoids artists/albums heard most recently,
+  /// and the indices in [exclude] (besides the current one).
+  int pickSmartNext({Set<int> exclude = const {}}) {
     final candidates = [
       for (var i = 0; i < _tracks.length; i++)
-        if (i != _currentIndex) i
+        if (i != _currentIndex && !exclude.contains(i)) i
     ];
     if (candidates.isEmpty) return _currentIndex;
     if (candidates.length == 1) return candidates.first;
@@ -393,7 +463,7 @@ class PlaybackQueue {
     if (playing != null) {
       _currentIndex = _tracks.indexWhere((t) => t.id == playing.id);
     }
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     _history.clear();
     if (!_isShuffle) {
       // The user's queue is what sits right after the current track: a
@@ -419,7 +489,7 @@ class PlaybackQueue {
     final newIds = upcoming.map((t) => t.id).toList()..sort();
     if (ids.length != newIds.length || ids.join('|') != newIds.join('|')) return;
     _tracks = [...head, ...upcoming];
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     _history.clear();
   }
 
@@ -432,7 +502,7 @@ class PlaybackQueue {
     _detach(track.id);
     _insertAt(min(_currentIndex + 1, _tracks.length), track);
     if (userQueued) _userQueue.insert(0, track.id);
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     return true;
   }
 
@@ -452,7 +522,7 @@ class PlaybackQueue {
       _userQueue.add(t.id);
       added++;
     }
-    if (added > 0) _nextShuffleIndex = null;
+    if (added > 0) _forgetShufflePicks();
     return added;
   }
 
@@ -468,6 +538,7 @@ class PlaybackQueue {
     if (_nextShuffleIndex != null && _nextShuffleIndex! >= pos) {
       _nextShuffleIndex = _nextShuffleIndex! + 1;
     }
+    _shuffleLookahead.clear();
     for (var i = 0; i < _history.length; i++) {
       if (_history[i] >= pos) _history[i]++;
     }
@@ -500,6 +571,7 @@ class PlaybackQueue {
     } else if (_nextShuffleIndex != null && _nextShuffleIndex! > index) {
       _nextShuffleIndex = _nextShuffleIndex! - 1;
     }
+    _shuffleLookahead.clear();
     _history.removeWhere((i) => i == index);
     for (var i = 0; i < _history.length; i++) {
       if (_history[i] > index) _history[i]--;
@@ -525,11 +597,12 @@ class PlaybackQueue {
       ..setAll(0, [for (final i in _history) i - count]);
     final next = _nextShuffleIndex;
     if (next != null) _nextShuffleIndex = next >= count ? next - count : null;
+    _shuffleLookahead.clear();
   }
 
   /// Keeps only [keep] (the playing track), or empties the queue.
   void clear({Track? keep}) {
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     _history.clear();
     _userQueue.clear();
     if (keep != null) {
@@ -543,7 +616,7 @@ class PlaybackQueue {
 
   /// Forgets the memoized shuffle pick and the history (playback stopped).
   void resetNavigation() {
-    _nextShuffleIndex = null;
+    _forgetShufflePicks();
     _history.clear();
   }
 }

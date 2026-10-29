@@ -644,7 +644,15 @@ class SpotifyService {
     return null;
   }
 
-  Future<bool> play({String? trackUri, List<String>? trackUris, String? deviceId}) async {
+  /// Plays [trackUris] in order (or just [trackUri]) on this phone, from
+  /// [positionMs] into the first one. Spotify then moves through the list
+  /// by itself, even when Tsuki is asleep in the background.
+  Future<bool> play({
+    String? trackUri,
+    List<String>? trackUris,
+    String? deviceId,
+    int? positionMs,
+  }) async {
     await _ensureValidToken();
     if (_accessToken == null) return false;
 
@@ -663,6 +671,7 @@ class SpotifyService {
       } else if (trackUri != null) {
         body['uris'] = [trackUri];
       }
+      if (positionMs != null && positionMs > 0) body['position_ms'] = positionMs;
 
       final url =
           'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice';

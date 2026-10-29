@@ -160,6 +160,35 @@ void main() {
       expect(q.history, [2]);
     });
 
+    group('peekUpcoming', () {
+      test('list order, stopping at the end or wrapping with repeat-all', () {
+        q.select(tracks[3]);
+        expect(q.peekUpcoming(5), [4]);
+        q.setRepeatMode(PlaybackRepeatMode.all);
+        expect(q.peekUpcoming(3), [4, 0, 1]);
+        q.setRepeatMode(PlaybackRepeatMode.one);
+        expect(q.peekUpcoming(3), isEmpty);
+      });
+
+      test('shuffle picks ahead are the ones next() then plays', () {
+        q.toggleShuffle();
+        final ahead = q.peekUpcoming(3);
+        expect(ahead.toSet(), hasLength(3));
+        expect(ahead, isNot(contains(q.currentIndex)));
+        for (final i in ahead) {
+          q.next(online: true, canPlay: _all);
+          expect(q.currentIndex, i);
+        }
+      });
+
+      test('queueing by hand redoes the picks with the queued song first', () {
+        q.toggleShuffle();
+        q.peekUpcoming(3);
+        q.enqueue([_t('q1')]);
+        expect(q.tracks[q.peekUpcoming(3).first].id, 'q1');
+      });
+    });
+
     group('user queue', () {
       List<String> ids() => q.tracks.map((t) => t.id).toList();
       String step() {

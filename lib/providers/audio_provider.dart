@@ -83,6 +83,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _linkedSpotifyUri;
   // Spotify moved on to a track we didn't ask for; resuming must replay ours.
   bool _spotifyTookOver = false;
+  // Our next songs, handed to Spotify along with the current one, in play
+  // order. Spotify plays them by itself, so the queue goes on even when
+  // Android freezes or kills Tsuki in the background.
+  List<({String trackId, String uri})> _spotifyAhead = const [];
+  static const int _spotifyAheadMax = 8;
 
   late final SleepTimerController _sleepCtrl;
 
@@ -407,8 +412,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
     _initSubscriptions();
-    _restorePlaybackState();
-    _initSpotify();
+    // Once both are known, a Spotify still playing our queue after Tsuki
+    // was killed is picked up instead of the restored song shown paused.
+    unawaited(Future.wait([_restorePlaybackState(), _initSpotify()])
+        .then((_) => _adoptRunningSpotify())
+        .catchError((Object e) {
+      debugPrint('[AudioProvider] startup Spotify check failed: $e');
+    }));
     _initCrossfade();
   }
 
@@ -424,6 +434,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
         _syncSpotifyPlaybackState();
+      } else if (_useSpotify && !_isPlaying) {
+        unawaited(_adoptRunningSpotify());
       }
       // The system may have killed Spotify while we were in the background.
       if (_useSpotify) _warmUpSpotifyDevice();
@@ -433,7 +445,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _checkBackgroundCompletion() {
     if (_currentTrack == null) return;
     if (_useSpotify && _spotifyActive) {
-      if (_nativePlayer.isConnected) return;
+      // Spotify knows our next songs: the state sync on resume follows it.
+      if (_nativePlayer.isConnected || _spotifyAhead.isNotEmpty) return;
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
       if (estimatedPos >= _duration + const Duration(seconds: 3) &&
@@ -690,7 +703,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
       if (!_spotifyActive) return;
       if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
-        _onSpotifyLeftTrack(Duration(milliseconds: pos));
+        _onSpotifyLeftTrack(
+            _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
         return;
       }
       // A single track that ends without autoplay leaves Spotify paused:
@@ -822,10 +836,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         // trigger completion from the estimate when we're polling the Web
         // API (no real-time state) and even then allow a 3-second cushion
         // so Spotify's own crossfade can finish naturally.
-        final estimatedEnd = !hasRealTimeState &&
-            raw >= _duration + const Duration(seconds: 3) &&
-            _duration > Duration.zero;
-        if (estimatedEnd) {
+        final pastEnd = _duration > Duration.zero &&
+            raw >= _duration + const Duration(seconds: 3);
+        // With our next songs handed to Spotify it moves on by itself:
+        // follow what it reports instead of starting the next one.
+        if (pastEnd && !hasRealTimeState && _spotifyAhead.isEmpty) {
           _stopPositionTimer();
           _handleTrackCompleted();
         } else {
@@ -833,7 +848,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _checkListenedThreshold();
           _checkSpotifyCrossfade();
           notifyListeners();
-          if (_spotifyPollTick % pollInterval == 0) {
+          final interval =
+              pastEnd && _spotifyAhead.isNotEmpty ? 3 : pollInterval;
+          if (_spotifyPollTick % interval == 0) {
             _syncSpotifyPlaybackState();
           }
         }
@@ -901,7 +918,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         final linkedUri = (item['linked_from'] as Map?)?['uri'] as String?;
         if (linkedUri == _currentSpotifyUri) _linkedSpotifyUri = playingUri;
         if (playingUri != null && !_isOurSpotifyUri(playingUri)) {
-          _onSpotifyLeftTrack(Duration(milliseconds: progressMs));
+          _onSpotifyLeftTrack(playingUri, Duration(milliseconds: progressMs));
           return;
         }
       }
@@ -958,11 +975,196 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       (_linkedSpotifyUri != null &&
           _nativePlayer.isPlayingUri(_linkedSpotifyUri!));
 
-  /// Spotify is on a track other than ours: either it ran past the end of
-  /// ours into its autoplay (advance our queue, which replaces it), or
-  /// someone picked something else in the Spotify app (stop claiming it).
-  void _onSpotifyLeftTrack(Duration otherProgress) {
+  /// Spotify URIs for our next songs in play order, stopping at the first
+  /// one Spotify doesn't have (URIs are cached, so repeats are instant).
+  /// With a [budget], stops resolving once it runs out.
+  Future<List<({String trackId, String uri})>> _resolveAhead(
+      {Duration? budget}) async {
+    if (_sleepCtrl.stopAfterCurrentTrack) return const [];
+    final started = DateTime.now();
+    final upcoming = [
+      for (final i in _q.peekUpcoming(_spotifyAheadMax)) _q.tracks[i],
+    ];
+    final out = <({String trackId, String uri})>[];
+    for (final t in upcoming) {
+      if (budget != null && DateTime.now().difference(started) > budget) break;
+      final uri = await _resolveSpotifyUri(t);
+      if (uri == null) break;
+      out.add((trackId: t.id, uri: uri));
+    }
+    return out;
+  }
+
+  /// Spotify moved through the list we handed it, [k] + 1 songs along:
+  /// catch our queue up without a new play (which would restart the song).
+  /// If our queue changed since the list was sent, take over with a fresh
+  /// play instead, at the very start of the song.
+  void _followSpotify(int k, Duration progress) {
+    final passed = _spotifyAhead.sublist(0, k + 1);
+    final expected = [for (final i in _q.peekUpcoming(k + 1)) _q.tracks[i].id];
+    final stale = expected.length != passed.length ||
+        [for (var i = 0; i < passed.length; i++) expected[i] == passed[i].trackId]
+            .contains(false);
+    if (stale ||
+        _sleepCtrl.stopAfterCurrentTrack ||
+        _q.repeatMode == PlaybackRepeatMode.one) {
+      debugPrint('[AudioProvider] Spotify list out of date, taking over');
+      _spotifyAhead = const [];
+      _stopPositionTimer();
+      _completionHandled = false;
+      _handleTrackCompleted();
+      return;
+    }
+
+    final finished = _currentTrack;
+    if (finished != null) onTrackCompleted?.call(finished);
+    for (var i = 0; i <= k; i++) {
+      _q.next(online: true, canPlay: (_) => true);
+    }
+    final track = _q.current;
+    if (track == null) return;
+    debugPrint('[AudioProvider] Spotify moved on to "${track.title}", following');
+    _radioCtrl.registerLeaving(track, finished, _position, _duration,
+        completed: true);
+
+    final now = DateTime.now();
+    _spotifyAhead = _spotifyAhead.sublist(k + 1);
+    _currentTrack = track;
+    _currentSpotifyUri = passed.last.uri;
+    _linkedSpotifyUri = null;
+    _spotifyTookOver = false;
+    _playGeneration++;
+    _completionHandled = false;
+    _crossfadeTriggered = false;
+    _lastPlayStart = now;
+    _lastPlayCommandTime = now;
+    _position = progress;
+    _spotifySyncPosition = progress;
+    _spotifySyncTime = now;
+    _duration =
+        Duration(seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
+    _isBuffering = false;
+    _isPlaying = true;
+    _startPositionTimer();
+    onTrackStarted?.call(track);
+    _persistPlaybackState();
+    notifyListeners();
+    _prefetchNextTrack();
+    unawaited(_radioCtrl.topUp());
+    if (_spotifyAhead.length < 2) unawaited(_reissueSpotifyAhead());
+  }
+
+  /// Hands Spotify a fresh list from the current song on, from where it is,
+  /// so it never runs out of our queue. Only near a song's start, where the
+  /// brief restart goes unnoticed; otherwise the next song boundary does it.
+  Future<void> _reissueSpotifyAhead() async {
+    final gen = _playGeneration;
+    final uri = _currentSpotifyUri;
+    if (uri == null || !_spotifyActive) return;
+    final ahead = await _resolveAhead();
+    if (gen != _playGeneration || !_spotifyActive) return;
+    if (ahead.length <= _spotifyAhead.length) return;
+    final pos =
+        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+    if (pos > const Duration(seconds: 8)) return;
+    final ok = await _spotify.play(
+      trackUris: [uri, ...ahead.map((e) => e.uri)],
+      positionMs: pos.inMilliseconds,
+    );
+    if (gen != _playGeneration || !ok) return;
+    _spotifyAhead = ahead;
+    _lastPlayCommandTime = DateTime.now();
+  }
+
+  /// Tsuki was closed or killed while Spotify kept playing our queue: pick
+  /// up the song it's on (when it's one of ours) instead of showing the old
+  /// one paused.
+  Future<void> _adoptRunningSpotify() async {
+    if (!_useSpotify || _q.isEmpty || _isPlaying || _spotifyActive) return;
+    final state = await _spotify.getPlaybackState();
+    if (state == null || state['is_playing'] != true) return;
+    if (_isPlaying || _spotifyActive) return;
+    final item = state['item'] as Map<String, dynamic>?;
+    final uri = item?['uri'] as String?;
+    final name = item?['name'] as String?;
+    if (item == null || uri == null || name == null) return;
+    final artists = [
+      for (final a in (item['artists'] as List? ?? const []))
+        if (a is Map) (a['name'] as String? ?? '').toLowerCase(),
+    ];
+    final idx = queueIndexMatching(_q.tracks, name, artists,
+        from: _q.currentIndex < 0 ? 0 : _q.currentIndex);
+    if (idx == null) return;
+
+    final track = _q.tracks[idx];
+    _q.select(track);
+    final progress = Duration(milliseconds: state['progress_ms'] as int? ?? 0);
+    final durationMs = item['duration_ms'] as int? ?? 0;
+    final now = DateTime.now();
+    debugPrint('[AudioProvider] Spotify is playing "${track.title}" from our queue, picking it up');
+    _currentTrack = track;
+    _currentSpotifyUri = uri;
+    _linkedSpotifyUri = null;
+    _spotifyActive = true;
+    _spotifyFallbackActive = false;
+    _spotifyTookOver = false;
+    _spotifyAhead = const [];
+    _isPlaying = true;
+    _isBuffering = false;
+    _position = progress;
+    _spotifySyncPosition = progress;
+    _spotifySyncTime = now;
+    _lastPlayCommandTime = now;
+    _lastPlayStart = now.subtract(progress);
+    _duration = durationMs > 0
+        ? Duration(milliseconds: durationMs)
+        : Duration(seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
+    _playGeneration++;
+    _completionHandled = false;
+    _startPositionTimer();
+    notifyListeners();
+    _prefetchNextTrack();
+  }
+
+  /// Index of the queue track that is [title] by one of [artists], looking
+  /// from [from] onwards first. Version tags like "(Remix)" are ignored.
+  @visibleForTesting
+  static int? queueIndexMatching(
+    List<Track> queue,
+    String title,
+    List<String> artists, {
+    int from = 0,
+  }) {
+    String norm(String s) => s
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s*[\(\[].*?[\)\]]'), '')
+        .replaceAll(RegExp(r'\s+-\s+.*$'), '')
+        .trim();
+    final wanted = norm(title);
+    for (var k = 0; k < queue.length; k++) {
+      final i = (from + k) % queue.length;
+      final t = queue[i];
+      if (norm(t.title) != wanted) continue;
+      final a = t.artistName.toLowerCase();
+      if (artists.isEmpty ||
+          artists.any((x) => x.isNotEmpty && (x.contains(a) || a.contains(x)))) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  /// Spotify is on a track other than ours: the next song of the list we
+  /// handed it (follow along), past the end of ours into its autoplay
+  /// (advance our queue, which replaces it), or something someone picked in
+  /// the Spotify app (stop claiming it).
+  void _onSpotifyLeftTrack(String? uri, Duration otherProgress) {
     if (_isBuffering || _completionHandled || _crossfadeTriggered) return;
+    final k = uri == null ? -1 : _spotifyAhead.indexWhere((e) => e.uri == uri);
+    if (k != -1) {
+      _followSpotify(k, otherProgress);
+      return;
+    }
     if (DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) return;
 
     if (_isPlaying && _duration > Duration.zero) {
@@ -1292,6 +1494,36 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _currentSpotifyUri = uri;
     _linkedSpotifyUri = null;
     _spotifyTookOver = false;
+    _spotifyAhead = const [];
+
+    // Preferred: hand Spotify the next songs of our queue along with this
+    // one. It then plays them by itself, so the queue goes on even when
+    // Android freezes or kills Tsuki in the background (otherwise Spotify
+    // falls into its own autoplay when the song ends).
+    final ahead =
+        await _resolveAhead(budget: const Duration(milliseconds: 1200));
+    if (gen != _playGeneration) return;
+    if (ahead.isNotEmpty) {
+      final ok =
+          await _spotify.play(trackUris: [uri, ...ahead.map((e) => e.uri)]);
+      if (gen != _playGeneration) return;
+      if (ok) {
+        debugPrint('Spotify: playing with ${ahead.length} queued songs ahead');
+        _spotifyAhead = ahead;
+        _spotifyActive = true;
+        _spotifyFallbackActive = false;
+        _isPlaying = false;
+        _isBuffering = true;
+        _position = Duration.zero;
+        _lastPlayCommandTime = DateTime.now();
+        notifyListeners();
+        _prefetchNextTrack();
+        unawaited(_resolveAhead());
+        unawaited(_verifySpotifyPlayback(gen, uri, track));
+        return;
+      }
+      debugPrint('Spotify: list play failed, playing the single song');
+    }
 
     // Fast path: App Remote is already connected (warm-up or previous play),
     // skip the Web API round-trips that fail on phones where the Spotify app
@@ -1386,6 +1618,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final connected = await _nativePlayer.connect(accessToken: token);
       if (gen != _playGeneration) return;
       if (connected && await _nativePlayer.playUri(uri)) {
+        // App Remote plays the single song: Spotify no longer has the list.
+        _spotifyAhead = const [];
         final now = DateTime.now();
         _position = Duration.zero;
         _spotifySyncPosition = Duration.zero;
