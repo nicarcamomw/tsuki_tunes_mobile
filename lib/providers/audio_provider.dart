@@ -79,6 +79,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   DateTime _lastPlayCommandTime = DateTime(2000);
   // URI last sent to Spotify, to detect playback taken over elsewhere.
   String? _currentSpotifyUri;
+  // The market version Spotify actually plays when it relinks that URI.
+  String? _linkedSpotifyUri;
+  // Spotify moved on to a track we didn't ask for; resuming must replay ours.
+  bool _spotifyTookOver = false;
 
   late final SleepTimerController _sleepCtrl;
 
@@ -332,6 +336,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   void setPositionForTesting(Duration pos) {
     _position = pos;
+  }
+
+  /// Pretends the current play started [by] earlier, past the grace periods.
+  @visibleForTesting
+  void backdatePlayStartForTesting(Duration by) {
+    _lastPlayStart = _lastPlayStart.subtract(by);
+    _lastPlayCommandTime = _lastPlayCommandTime.subtract(by);
   }
 
   Future<void> setCrossfadeSeconds(int seconds) async {
@@ -678,7 +689,23 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
       if (!_spotifyActive) return;
-      if (_nativePlayer.lastTrackUri != _currentSpotifyUri) return;
+      if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
+        _onSpotifyLeftTrack(Duration(milliseconds: pos));
+        return;
+      }
+      // A single track that ends without autoplay leaves Spotify paused:
+      // that is the end of our track, not the user pausing.
+      if (paused && _isPlaying && !_isBuffering && _duration > Duration.zero) {
+        final estimated =
+            _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+        if (pos >= dur - 1500 ||
+            estimated >= _duration - const Duration(seconds: 3)) {
+          debugPrint('[AudioProvider] Spotify stopped at the end of the track, advancing');
+          _stopPositionTimer();
+          _handleTrackCompleted();
+          return;
+        }
+      }
       _spotifySyncPosition = Duration(milliseconds: pos);
       _spotifySyncTime = DateTime.now();
       _position = _spotifySyncPosition;
@@ -700,12 +727,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       notifyListeners();
     };
 
+    // Android often drops the App Remote link while we are in the background
+    // and Spotify keeps playing, so losing it says nothing about playback:
+    // ask the Web API instead (the timer keeps polling it from now on).
     _nativePlayer.onDisconnected = () {
       if (!_spotifyActive || !_isPlaying) return;
-      debugPrint('[AudioProvider] Spotify app disconnected, pausing');
-      _isPlaying = false;
-      _stopPositionTimer();
-      notifyListeners();
+      debugPrint('[AudioProvider] App Remote link lost, checking Spotify through the Web API');
+      unawaited(_syncSpotifyPlaybackState());
     };
 
     await _spotify.loadSavedState();
@@ -831,10 +859,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final state = await _spotify.getPlaybackState();
       if (!_spotifyActive || _completionHandled) return;
       if (state == null) {
+        // A failed request (no network in Doze, rate limit) tells us nothing.
+        if (_spotify.lastPlaybackStateFailed) return;
         // No Spotify session at all (app closed or frozen).
         final sincePlay = DateTime.now().difference(_lastPlayCommandTime);
-        final nativePlaying = _currentSpotifyUri != null &&
-            _nativePlayer.isPlayingUri(_currentSpotifyUri!);
+        final nativePlaying = _nativePlayingOurTrack;
 
         // Check if the track should have ended while Spotify was gone.
         if (!nativePlaying && sincePlay.inSeconds >= 10) {
@@ -870,25 +899,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         final playingUri = item['uri'] as String?;
         // Spotify may relink the track to another market's version.
         final linkedUri = (item['linked_from'] as Map?)?['uri'] as String?;
-        if (playingUri != null &&
-            playingUri != _currentSpotifyUri &&
-            linkedUri != _currentSpotifyUri) {
-          // If the estimated position is past the track's duration, Spotify
-          // auto-advanced because our track ended — advance our queue too.
-          final elapsed = DateTime.now().difference(_spotifySyncTime);
-          final estimatedPos = _spotifySyncPosition + elapsed;
-          if (estimatedPos >= _duration && _duration > Duration.zero) {
-            debugPrint('[AudioProvider] Spotify auto-advanced ($playingUri vs $_currentSpotifyUri), advancing queue');
-            _stopPositionTimer();
-            _completionHandled = false;
-            _crossfadeTriggered = false;
-            _handleTrackCompleted();
-            return;
-          }
-          debugPrint('[AudioProvider] Spotify playing different track ($playingUri vs $_currentSpotifyUri), pausing');
-          _isPlaying = false;
-          _stopPositionTimer();
-          notifyListeners();
+        if (linkedUri == _currentSpotifyUri) _linkedSpotifyUri = playingUri;
+        if (playingUri != null && !_isOurSpotifyUri(playingUri)) {
+          _onSpotifyLeftTrack(Duration(milliseconds: progressMs));
           return;
         }
       }
@@ -934,6 +947,44 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _stopPositionTimer() {
     _spotifyPositionTimer?.cancel();
     _spotifyPositionTimer = null;
+  }
+
+  bool _isOurSpotifyUri(String? uri) =>
+      uri != null && (uri == _currentSpotifyUri || uri == _linkedSpotifyUri);
+
+  bool get _nativePlayingOurTrack =>
+      (_currentSpotifyUri != null &&
+          _nativePlayer.isPlayingUri(_currentSpotifyUri!)) ||
+      (_linkedSpotifyUri != null &&
+          _nativePlayer.isPlayingUri(_linkedSpotifyUri!));
+
+  /// Spotify is on a track other than ours: either it ran past the end of
+  /// ours into its autoplay (advance our queue, which replaces it), or
+  /// someone picked something else in the Spotify app (stop claiming it).
+  void _onSpotifyLeftTrack(Duration otherProgress) {
+    if (_isBuffering || _completionHandled || _crossfadeTriggered) return;
+    if (DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) return;
+
+    if (_isPlaying && _duration > Duration.zero) {
+      final estimated =
+          _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+      // Where our track was when the other one started.
+      final atSwitch = estimated - otherProgress;
+      if (estimated >= _duration ||
+          atSwitch >= _duration - const Duration(seconds: 10)) {
+        debugPrint('[AudioProvider] Spotify moved on after our track ended, advancing queue');
+        _stopPositionTimer();
+        _handleTrackCompleted();
+        return;
+      }
+    }
+
+    if (_spotifyTookOver) return;
+    debugPrint('[AudioProvider] Spotify switched to another track, no longer ours');
+    _spotifyTookOver = true;
+    _isPlaying = false;
+    _stopPositionTimer();
+    notifyListeners();
   }
 
   Future<void> _spotifyPause() async {
@@ -1239,6 +1290,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     debugPrint('Spotify: found URI=$uri');
     _currentSpotifyUri = uri;
+    _linkedSpotifyUri = null;
+    _spotifyTookOver = false;
 
     // Fast path: App Remote is already connected (warm-up or previous play),
     // skip the Web API round-trips that fail on phones where the Spotify app
@@ -1363,9 +1416,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   /// Plays the preview after Spotify failed. A Spotify app we just woke can
-  /// take audio focus and immediately pause the preview, so stop it first.
+  /// take audio focus and immediately pause the preview, so stop it first,
+  /// through the Web API too when App Remote is down: otherwise Spotify can
+  /// keep playing (e.g. its autoplay) on top of the preview.
   Future<void> _playPreviewInsteadOfSpotify(Track track) async {
-    await _nativePlayer.pause();
+    try {
+      await _spotifyPause();
+    } catch (_) {}
     await _nativePlayer.disconnect();
     await _service.playTrack(track);
   }
@@ -1429,6 +1486,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final confirmed = state['is_playing'] == true &&
         (item?['uri'] == uri || linked?['uri'] == uri);
     if (confirmed) {
+      if (linked?['uri'] == uri) _linkedSpotifyUri = item?['uri'] as String?;
       final durationMs = item?['duration_ms'] as int? ?? 0;
       if (durationMs > 0) _duration = Duration(milliseconds: durationMs);
       _onSpotifyConfirmed(progressMs);
@@ -1451,13 +1509,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _verifySpotifyResume() async {
     await Future.delayed(const Duration(seconds: 3));
     if (!_spotifyActive || !_isPlaying) return;
-    if (_nativePlayer.isConnected &&
-        _currentSpotifyUri != null &&
-        _nativePlayer.isPlayingUri(_currentSpotifyUri!)) {
-      return;
-    }
+    if (_nativePlayingOurTrack) return;
     final state = await _spotify.getPlaybackState();
     if (!_spotifyActive || !_isPlaying) return;
+    if (state == null && _spotify.lastPlaybackStateFailed) return;
     if (state != null && state['is_playing'] == true) return;
     debugPrint('[AudioProvider] Spotify did not resume after interruption, marking paused');
     _isPlaying = false;
@@ -1549,6 +1604,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
+      if (!_isPlaying && _spotifyTookOver && _currentTrack != null) {
+        // Spotify moved on to something else: resuming there would keep
+        // playing that, so start our track again where it was.
+        final savedPos = _position;
+        await playTrack(_currentTrack!);
+        if (savedPos > Duration.zero) await seek(savedPos);
+        return;
+      }
       if (_isPlaying) {
         await _spotifyPause();
         _isPlaying = false;
@@ -1621,6 +1684,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
     _spotifyActive = false;
     _spotifyFallbackActive = false;
+    _spotifyTookOver = false;
     await _service.stop();
     _currentTrack = null;
     _isPlaying = false;

@@ -31,8 +31,12 @@ class FakeSpotifyService extends SpotifyService {
   int seekCount = 0;
   int lastSeekMs = 0;
   int profileRefreshCount = 0;
+  bool stateRequestFails = false;
 
   void setPremium(bool v) => _premium = v;
+
+  @override
+  bool get lastPlaybackStateFailed => stateRequestFails;
   void setPlaying(String uri, {int progressMs = 0}) {
     _playbackUri = uri;
     _isPlaying = true;
@@ -106,7 +110,7 @@ class FakeSpotifyService extends SpotifyService {
 
   @override
   Future<Map<String, dynamic>?> getPlaybackState() async {
-    if (_playbackUri == null) return null;
+    if (stateRequestFails || _playbackUri == null) return null;
     return {
       'is_playing': _isPlaying,
       'progress_ms': _progressMs,
@@ -409,6 +413,83 @@ void main() {
       fakeNative.simulateStateChanged(5500, 180000, false, uri: 'spotify:track:t1');
       await Future.delayed(Duration.zero);
       expect(provider.isPlaying, isTrue);
+    });
+  });
+
+  group('Spotify keeps playing while we are in the background', () {
+    Future<AudioProvider> playing(List<Track> tracks, {int atMs = 1000}) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(atMs, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      return provider;
+    }
+
+    test('losing the App Remote link does not mark playback paused', () async {
+      final provider = await playing([_track('t1')]);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 2000);
+
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+      await Future.delayed(Duration.zero);
+
+      expect(provider.isPlaying, isTrue);
+    });
+
+    test('a failed Web API request does not mark playback paused', () async {
+      final provider = await playing([_track('t1')]);
+      fakeSpotify.stateRequestFails = true;
+
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+      await Future.delayed(Duration.zero);
+
+      expect(provider.isPlaying, isTrue);
+    });
+
+    test('Spotify autoplay after our track ends advances our queue', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 178000);
+
+      fakeNative.simulateStateChanged(500, 200000, false,
+          uri: 'spotify:track:autoplay');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('Spotify pausing at the end of the track advances our queue', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 179000);
+
+      fakeNative.simulateStateChanged(0, 180000, true, uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('another track picked in Spotify mid-song: paused, play replays ours',
+        () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 60000);
+
+      fakeNative.simulateStateChanged(1000, 200000, false,
+          uri: 'spotify:track:OTHER');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isFalse);
+
+      fakeNative.resumeCount = 0;
+      await provider.togglePlay();
+
+      expect(fakeNative.resumeCount, 0);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
+      expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
     });
   });
 

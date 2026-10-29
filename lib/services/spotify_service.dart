@@ -805,7 +805,15 @@ class SpotifyService {
     }
   }
 
+  bool _playbackStateFailed = false;
+
+  /// Whether the last [getPlaybackState] returned null because the request
+  /// failed (no network, rate limit, server error) rather than because
+  /// Spotify has no active session.
+  bool get lastPlaybackStateFailed => _playbackStateFailed;
+
   Future<Map<String, dynamic>?> getPlaybackState() async {
+    _playbackStateFailed = true;
     await _ensureValidToken();
     if (_accessToken == null) return null;
 
@@ -816,7 +824,12 @@ class SpotifyService {
       );
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
+        _playbackStateFailed = false;
         return json.decode(response.body);
+      }
+      // 204 (or an empty 200): no active session.
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        _playbackStateFailed = false;
       }
     } catch (e) {
       debugPrint('Spotify playback state error: $e');
