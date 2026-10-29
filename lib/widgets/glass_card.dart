@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show PointMode;
 
 import 'package:flutter/material.dart';
 
@@ -39,9 +40,11 @@ class _GlassCardState extends State<GlassCard>
   void initState() {
     super.initState();
     _phase = Random().nextDouble() * 2 * pi;
+    // Slow on purpose: the glass should drift, not flash. Every motion in
+    // the painter is periodic over one cycle, so the loop never jumps.
     _anim = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6),
+      duration: const Duration(seconds: 16),
     )..repeat();
   }
 
@@ -126,38 +129,138 @@ class _GlassPainter extends CustomPainter {
 
   final Animation<double> _animation;
 
+  // Frosted-glass grain, fixed per card size so it never shimmers.
+  List<Offset>? _grain;
+  Size? _grainSize;
+
+  List<Offset> _grainFor(Size size) {
+    if (_grain != null && _grainSize == size) return _grain!;
+    final rng = Random((phase * 1000).round());
+    final count = (size.width * size.height / 90).round().clamp(40, 900);
+    _grainSize = size;
+    return _grain = [
+      for (var i = 0; i < count; i++)
+        Offset(rng.nextDouble() * size.width, rng.nextDouble() * size.height),
+    ];
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
-
+    // One full turn per cycle; only whole multiples of t below, so the
+    // last frame matches the first.
     final t = _animation.value * 2 * pi;
-    final dx = sin(t + phase) * 0.5;
-    final dy = cos(t * 0.7 + phase) * 0.35;
-
-    final shader = LinearGradient(
-      begin: Alignment(-1.0 + dx, -1.0 + dy),
-      end: Alignment(1.0 - dx * 0.4, 1.0 - dy * 0.4),
-      colors: [
-        color.withValues(alpha: highlightAlpha),
-        bgCard,
-        color.withValues(alpha: dimAlpha),
-      ],
-      stops: const [0.0, 0.55, 1.0],
-    ).createShader(rect);
+    final longest = max(size.width, size.height);
 
     canvas.save();
     canvas.clipRRect(rrect);
-    canvas.drawRect(rect, Paint()..shader = shader);
+
+    // Base: the card tinted from the top-left corner, static.
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(color.withValues(alpha: highlightAlpha * 0.8), bgCard),
+            bgCard,
+            Color.alphaBlend(color.withValues(alpha: dimAlpha), bgCard),
+          ],
+          stops: const [0.0, 0.6, 1.0],
+        ).createShader(rect),
+    );
+
+    // Caustics: soft pools of light drifting on looping paths, like light
+    // bent through thick glass.
+    const blobs = [
+      (fx: 1, fy: 1, ox: 0.0, r: 0.75, a: 1.0),
+      (fx: 1, fy: 2, ox: 2.1, r: 0.55, a: 0.7),
+      (fx: 2, fy: 1, ox: 4.2, r: 0.45, a: 0.5),
+    ];
+    for (final b in blobs) {
+      final cx = size.width * (0.5 + 0.42 * sin(b.fx * t + phase + b.ox));
+      final cy = size.height * (0.5 + 0.38 * cos(b.fy * t + phase * 1.3 + b.ox));
+      final radius = longest * b.r;
+      final center = Offset(cx, cy);
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              color.withValues(alpha: highlightAlpha * 0.55 * b.a),
+              color.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+      );
+    }
+
+    // Ripples: faint wavy refraction lines that slowly undulate.
+    final ripple = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = Colors.white.withValues(alpha: 0.035);
+    for (var i = 0; i < 4; i++) {
+      final path = Path();
+      final baseY = size.height * (0.18 + i * 0.22);
+      final amp = size.height * (0.05 + 0.025 * sin(t + i));
+      for (double x = 0; x <= size.width; x += 6) {
+        final y = baseY +
+            amp * sin(x / size.width * 2 * pi * (1.2 + i * 0.35) + t * (i.isEven ? 1 : -1) + phase + i);
+        x == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+      }
+      canvas.drawPath(path, ripple);
+    }
+
+    // Frosted grain.
+    canvas.drawPoints(
+      PointMode.points,
+      _grainFor(size),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.045)
+        ..strokeWidth = 1,
+    );
+
+    // Sheen: a wide diagonal glint that crosses once per cycle and fades
+    // in and out, so it's invisible where the loop wraps.
+    final v = _animation.value;
+    final glint = pow(sin(pi * v), 2).toDouble();
+    if (glint > 0.01) {
+      final sweep = -0.6 + 2.2 * v;
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment(-1 + sweep * 2 - 0.6, -1),
+            end: Alignment(-1 + sweep * 2 + 0.6, 1),
+            colors: [
+              Colors.white.withValues(alpha: 0),
+              Colors.white.withValues(alpha: 0.05 * glint),
+              Colors.white.withValues(alpha: 0),
+            ],
+          ).createShader(rect),
+      );
+    }
+
     canvas.restore();
 
+    // Glass rim: border in the card's color, brighter along the top edge.
     canvas.drawRRect(
       rrect,
       Paint()
-        ..color = color.withValues(alpha: borderAlpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
+        ..strokeWidth = 1.0
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(color, Colors.white, 0.25)!.withValues(alpha: borderAlpha),
+            color.withValues(alpha: borderAlpha * 0.6),
+          ],
+        ).createShader(rect),
     );
   }
 
