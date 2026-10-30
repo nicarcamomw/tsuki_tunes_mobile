@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/firebase_service.dart';
+import '../services/storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
@@ -147,12 +148,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final leftGuestUid = _isGuest ? _guestUid : null;
     _isGuest = false;
     _guestUid = null;
     // Remove orphaned guest UID from persistent storage
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_guestUidKey);
     await prefs.remove(_guestModeKey);
+    // The guest's playlists can't be reached once its uid is gone.
+    if (leftGuestUid != null) await StorageService().clearCachedPlaylists(leftGuestUid);
     await _firebase.signOut();
     notifyListeners();
   }

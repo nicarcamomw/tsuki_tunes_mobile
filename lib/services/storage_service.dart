@@ -304,6 +304,12 @@ class StorageService implements StorageContract {
 
   // --- Cached Followed Artists (per-user) ---
 
+  Future<void> clearCachedPlaylists(String uid) async {
+    if (uid.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_cachedPlaylistsKey(uid));
+  }
+
   static String _cachedFollowedArtistsKey(String uid) => 'tsuki_cached_followed_artists_$uid';
 
   @override

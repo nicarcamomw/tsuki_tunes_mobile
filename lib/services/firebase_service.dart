@@ -132,8 +132,14 @@ class FirebaseService {
     }
   }
 
+  /// Signs out of Firebase even when Google's own sign-out fails (offline,
+  /// Play services hiccup), so a failed logout never leaves the account on.
   Future<void> signOut() async {
-    await _googleSignIn?.signOut();
+    try {
+      await _googleSignIn?.signOut();
+    } catch (e) {
+      debugPrint('Google sign-out failed (non-fatal): $e');
+    }
     await _auth?.signOut();
   }
 }

@@ -138,7 +138,21 @@ class MaskProvider extends ChangeNotifier {
   /// with this device's, keeping the earliest unlock date of each mask.
   void setUser(String? uid) {
     if (uid == _uid) return;
+    final signedOut = _uid != null && uid == null;
     _uid = uid;
+    if (signedOut) {
+      // The account's masks live in its cloud doc and come back on its next
+      // login. Kept here, the next account to sign in would upload them as
+      // its own. Waits for the local load so it can't refill them after.
+      unawaited(_ready.future.then((_) async {
+        if (_uid != null) return; // signed back in meanwhile
+        _unlocked.clear();
+        _equipped = null;
+        _celebrations.clear();
+        notifyListeners();
+        await _saveLocal();
+      }));
+    }
     if (_loaded && uid != null) unawaited(_syncFromCloud());
   }
 

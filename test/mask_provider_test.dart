@@ -225,4 +225,23 @@ void main() {
       expect(m.dye == null || m.dye!.length == 20, isTrue, reason: m.id);
     }
   });
+
+  test('signing out forgets the account\'s masks, a guest keeps theirs', () async {
+    masks.setUser('account-1');
+    masks.onPlayCounted(_t('1'));
+    expect(masks.isUnlocked('hajime'), isTrue);
+
+    masks.setUser(null);
+    await Future<void>.delayed(Duration.zero);
+    expect(masks.isUnlocked('hajime'), isFalse);
+    expect(masks.equipped, isNull);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('masks_unlocked_v1'), '{}');
+
+    // Guests (never signed in) keep what they unlock.
+    masks.onPlayCounted(_t('2'));
+    masks.setUser(null);
+    await Future<void>.delayed(Duration.zero);
+    expect(masks.isUnlocked('hajime'), isTrue);
+  });
 }

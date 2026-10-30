@@ -896,6 +896,10 @@ class ProfileBottomSheet {
     try {
       final audioProvider = context.read<AudioProvider>();
       await audioProvider.stop();
+      // The Spotify link belongs to the person, not the device: the next
+      // account on this phone must not control their Spotify.
+      await audioProvider.spotify.disconnect();
+      await audioProvider.updateSpotifyState();
 
       if (context.mounted) {
         context.read<LibraryProvider>().disconnectFirestore();
