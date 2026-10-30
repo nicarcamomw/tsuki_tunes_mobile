@@ -294,6 +294,260 @@ def sakura():
     return Image.alpha_composite(img, petals)
 
 
+
+# ── Oni types: new elements and materials ────────────────────────────────────
+
+
+def noise(scale, seed, octaves=4):
+    """Fractal value noise, 0..1, the size of a mask."""
+    rnd = np.random.default_rng(seed)
+    out = np.zeros((H, W), np.float32)
+    amp, total = 1.0, 0.0
+    for o in range(octaves):
+        cells = max(2, int(scale * 2 ** o))
+        grid = rnd.random((cells, max(2, int(cells * W / H)))).astype(np.float32)
+        img = Image.fromarray((grid * 255).astype(np.uint8), 'L').resize((W, H), Image.BICUBIC)
+        out += np.asarray(img).astype(np.float32) / 255 * amp
+        total += amp
+        amp *= 0.5
+    return out / total
+
+
+def horns():
+    """The two black horns of the white cyber oni, cut out on their own."""
+    a = load('cyber_oni_mask')
+    dark = (lum(a) < 0.32) & (a[..., 3] > 0.3)
+    keep = np.zeros((H, W), bool)
+    keep[40:212, 95:238] = True
+    keep[40:212, 332:475] = True
+    al = np.where(keep & dark, a[..., 3], 0)
+    return np.concatenate([a[..., :3], al[..., None]], -1)
+
+
+def akaoni():
+    """Red oni wreathed in fire: flame tongues licking up, embers rising."""
+    a = load('tengu')
+    alpha = a[..., 3]
+    yy = np.arange(H, dtype=np.float32)[:, None]
+    # Noise stretched tall makes flame tongues; it scrolls up the image.
+    rnd = np.random.default_rng(21)
+    tongues = np.zeros((H, W), np.float32)
+    for cells, amp in [(14, 1.0), (28, 0.5), (56, 0.25)]:
+        grid = rnd.random((max(2, cells // 5), cells)).astype(np.float32)
+        tongues += np.asarray(Image.fromarray((grid * 255).astype(np.uint8), 'L')
+                              .resize((W, H), Image.BICUBIC)).astype(np.float32) / 255 * amp
+    tongues /= 1.75
+    rim = blur(solid((255, 255, 255), alpha), 10)[..., 3]
+    # Distance above the head: flames reach up to ~110 px past the top.
+    reach = np.zeros((H, W), np.float32)
+    for k in range(0, 112, 4):
+        reach = np.maximum(reach, np.roll(rim, -k, 0) * (1 - k / 112))
+    heat = np.clip(reach * (0.35 + tongues * 1.3) - alpha * 0.6, 0, 1)
+    heat = np.clip((heat - 0.32) * 2.6, 0, 1) * np.clip(yy / 40, 0, 1)
+    fire_rgb = gradient_map(heat, [(0, (120, 10, 0)), (0.4, (240, 60, 0)), (0.75, (255, 160, 30)), (1, (255, 240, 190))])
+    fire = layer(fire_rgb, heat * 0.95)
+    glow = blur(layer(fire_rgb, heat), 9)
+    glow[..., 3] *= 0.8
+    out = over(a, over(fire, glow))
+    r = random.Random(4)
+    embers = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(embers)
+    for _ in range(36):
+        x, y, rad = r.randrange(30, W - 30), r.randrange(10, H // 2), r.uniform(1.2, 3.0)
+        d.ellipse([x - rad, y - rad, x + rad, y + rad], fill=(255, r.randint(140, 220), 60, 230))
+    return Image.alpha_composite(to_image(out), embers.filter(ImageFilter.GaussianBlur(0.8)))
+
+
+def raijin():
+    """The thunder oni: electric blue, lightning crackling around it."""
+    a = load('cyber_oni_mask')
+    alpha = a[..., 3]
+    rgb = gradient_map(lum(a), [(0, (4, 10, 40)), (0.45, (30, 80, 220)), (0.8, (140, 200, 255)), (1, (240, 250, 255))])
+    base = layer(rgb, alpha)
+    bolts = Image.new('L', (W, H), 0)
+    d = ImageDraw.Draw(bolts)
+    rnd = random.Random(9)
+
+    def bolt(x, y, ang, length, width):
+        for _ in range(length):
+            nx, ny = x + math.cos(ang) * 14, y + math.sin(ang) * 14
+            d.line([x, y, nx, ny], fill=255, width=width)
+            x, y = nx, ny
+            ang += rnd.uniform(-0.9, 0.9)
+            if rnd.random() < 0.18 and width > 1:
+                bolt(x, y, ang + rnd.uniform(-1, 1), length // 2, width - 1)
+
+    for x0, y0, ang in [(140, 110, -2.0), (420, 110, -1.1), (95, 360, 2.6), (420, 380, 0.5), (255, 560, 1.4)]:
+        bolt(x0, y0, ang, 6, 4)
+    b = np.asarray(bolts).astype(np.float32) / 255
+    glow = blur(solid((120, 200, 255), b), 7)
+    glow[..., 3] = np.clip(glow[..., 3] * 2.2, 0, 0.9)
+    return to_image(over(solid((235, 248, 255), b), over(glow, base)))
+
+
+def namahage():
+    """Akita's mountain demon: a fierce red face in a wild straw mane."""
+    a = load('cyber_oni_mask')
+    alpha = a[..., 3]
+    red = gradient_map(lum(a), [(0, (30, 4, 4)), (0.5, (170, 24, 16)), (1, (255, 190, 150))])
+    face = layer(np.clip(red * 0.85 + a[..., :3] * 0.15, 0, 1), alpha)
+    straw = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(straw)
+    rnd = random.Random(2)
+    cx, cy = W / 2, H * 0.42
+    for _ in range(900):
+        ang = rnd.uniform(math.pi * 0.95, math.pi * 2.05) if rnd.random() < 0.75 else rnd.uniform(0, math.pi)
+        r0 = rnd.uniform(150, 200)
+        r1 = r0 + rnd.uniform(40, 120)
+        x0, y0 = cx + math.cos(ang) * r0 * 0.95, cy + math.sin(ang) * r0 * 1.15
+        bend = rnd.uniform(-0.15, 0.15)
+        x1, y1 = cx + math.cos(ang + bend) * r1 * 0.95, cy + math.sin(ang + bend) * r1 * 1.15 + 30
+        shade = rnd.randint(150, 230)
+        d.line([x0, y0, x1, y1], fill=(shade, int(shade * 0.82), int(shade * 0.45), rnd.randint(150, 240)),
+               width=rnd.choice([1, 2, 2, 3]))
+    straw = straw.filter(ImageFilter.GaussianBlur(0.5))
+    return Image.alpha_composite(straw, to_image(face))
+
+
+def kijo():
+    """Kijo, the demon woman: the pale kabuki face grows horns."""
+    a = load('oni')
+    alpha = a[..., 3]
+    pale = gradient_map(lum(a), [(0, (20, 16, 30)), (0.55, (170, 160, 190)), (1, (250, 246, 255))])
+    face = layer(np.clip(pale * 0.7 + a[..., :3] * 0.3, 0, 1), alpha)
+    h = horns()
+    # Move each horn in and up so it grows out of the kabuki's forehead.
+    left = np.zeros_like(h)
+    right = np.zeros_like(h)
+    left[:, :W // 2] = h[:, :W // 2]
+    right[:, W // 2:] = h[:, W // 2:]
+    left = np.roll(np.roll(left, 40, 1), -30, 0)
+    right = np.roll(np.roll(right, -40, 1), -30, 0)
+    eyes = blur(solid((200, 40, 255), np.clip((0.12 - lum(a)) * 8, 0, 1) * alpha), 3)
+    eyes[..., 3] *= 0.6
+    return to_image(over(right, over(left, over(eyes, face))))
+
+
+def kurohannya():
+    """Black hannya: obsidian lacquer, gold trim and burning red eyes."""
+    a = load('cyber_oni_mask')
+    alpha = a[..., 3]
+    l = lum(a)
+    lacquer = gradient_map(l, [(0, (4, 4, 6)), (0.6, (26, 24, 30)), (0.9, (70, 66, 74)), (1, (150, 146, 156))])
+    trim = np.clip((edges(a, 3) - 0.25) * 1.6, 0, 1) * alpha
+    gold = gradient_map(trim, [(0, (150, 100, 20)), (1, (255, 220, 120))])
+    out = over(layer(gold, trim * 0.9), layer(lacquer, alpha))
+    eye = np.zeros((H, W), np.float32)
+    yy, xx = np.mgrid[0:H, 0:W]
+    for ex in (195, 315):
+        eye += np.exp(-(((xx - ex) / 34) ** 2 + ((yy - 300) / 16) ** 2))
+    eye = np.clip(eye, 0, 1) * (l < 0.25) * alpha
+    glow = blur(solid((255, 20, 20), eye), 8)
+    glow[..., 3] = np.clip(glow[..., 3] * 2, 0, 0.95)
+    return to_image(over(solid((255, 90, 60), eye * 0.9), over(glow, out)))
+
+
+def kibori():
+    """Tengu carved in wood: grain, rings and a waxed sheen."""
+    a = load('tengu')
+    alpha = a[..., 3]
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    n = noise(5, 31)
+    # Long vertical grain that wobbles, plus fine fibres.
+    rings = np.sin((xx + n * 70) * 0.11) * 0.5 + 0.5
+    fibres = np.asarray(Image.fromarray((np.random.default_rng(33).random((H // 12, W)) * 255).astype(np.uint8), 'L')
+                        .resize((W, H), Image.BICUBIC)).astype(np.float32) / 255
+    grain = rings * 0.16 + fibres * 0.12
+    l = lum(a)
+    t = np.clip(l * 0.85 + grain - 0.05, 0, 1)
+    wood = gradient_map(t, [(0, (42, 22, 10)), (0.4, (110, 64, 30)), (0.7, (176, 114, 60)), (1, (232, 184, 120))])
+    return to_image(layer(wood, alpha))
+
+
+def ishi():
+    """Yasha turned to stone: weathered granite, cracks and moss."""
+    a = load('hannya')
+    alpha = a[..., 3]
+    l = lum(a)
+    grit = noise(30, 41, 3)
+    t = np.clip(l * 0.7 + grit * 0.4 - 0.05, 0, 1)
+    stone = gradient_map(t, [(0, (28, 28, 30)), (0.45, (98, 96, 92)), (0.8, (160, 156, 148)), (1, (210, 206, 198))])
+    moss_amt = np.clip((noise(4, 42) - 0.55) * 4, 0, 1) * np.clip((0.6 - l) * 2, 0, 1)
+    moss = gradient_map(noise(20, 43, 2), [(0, (40, 70, 20)), (1, (110, 150, 50))])
+    rgb = stone * (1 - moss_amt[..., None] * 0.85) + moss * moss_amt[..., None] * 0.85
+    out = layer(rgb, alpha)
+    cr = Image.new('L', (W, H), 0)
+    d = ImageDraw.Draw(cr)
+    rnd = random.Random(44)
+    for _ in range(5):
+        x, y = rnd.randrange(150, 360), rnd.randrange(120, 520)
+        ang = rnd.uniform(0, 2 * math.pi)
+        for _ in range(rnd.randint(6, 12)):
+            nx, ny = x + math.cos(ang) * 11, y + math.sin(ang) * 11
+            d.line([x, y, nx, ny], fill=255, width=2)
+            x, y, ang = nx, ny, ang + rnd.uniform(-0.7, 0.7)
+    c = np.asarray(cr).astype(np.float32) / 255 * alpha
+    return to_image(over(solid((14, 14, 16), c * 0.85), out))
+
+
+def seidou():
+    """Kabuki cast in old bronze, green verdigris in the hollows."""
+    a = load('oni')
+    alpha = a[..., 3]
+    l = lum(a)
+    bronze = gradient_map(l, [(0, (30, 16, 6)), (0.4, (110, 64, 26)), (0.75, (190, 124, 60)), (1, (250, 210, 150))])
+    patina_amt = np.clip((noise(6, 51) * 0.8 + (0.55 - l)) * 1.6 - 0.6, 0, 1)
+    patina = gradient_map(noise(25, 52, 2), [(0, (40, 110, 90)), (1, (110, 190, 160))])
+    rgb = bronze * (1 - patina_amt[..., None]) + patina * patina_amt[..., None]
+    spec = np.clip((l - 0.7) * 3, 0, 1) ** 2 * (1 - patina_amt)
+    return to_image(layer(np.clip(rgb + spec[..., None] * 0.3, 0, 1), alpha))
+
+
+def yurei():
+    """A ghost mask: pale, see-through, dissolving into mist."""
+    a = load('oni')
+    alpha = a[..., 3]
+    pale = gradient_map(lum(a), [(0, (40, 60, 80)), (0.6, (190, 215, 230)), (1, (245, 252, 255))])
+    fade = np.clip(np.linspace(1.25, -0.2, H, dtype=np.float32)[:, None], 0, 1) * np.ones((1, W), np.float32)
+    mist = noise(7, 61)
+    al = alpha * np.clip(fade * 0.85 + (mist - 0.5) * 0.6, 0, 1) * 0.9
+    body = layer(pale, al)
+    halo = blur(solid((170, 220, 255), al), 14)
+    halo[..., 3] *= 0.6
+    wisp = blur(solid((200, 230, 255), np.clip((mist - 0.6) * 3, 0, 1) * np.clip(1 - fade, 0, 1) *
+                       blur(solid((255, 255, 255), alpha), 25)[..., 3]), 6)
+    return to_image(over(body, over(halo, wisp)))
+
+
+def chinoame():
+    """Blood moon: the black-gold oni before a red moon, bleeding."""
+    a = load('hannya')
+    alpha = a[..., 3]
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    dist = np.hypot(xx - W / 2, yy - H * 0.36)
+    moon = np.clip((215 - dist) / 6, 0, 1)
+    craters = noise(8, 71)
+    moon_rgb = gradient_map(np.clip(craters * 0.6 + (1 - dist / 215) * 0.5, 0, 1),
+                            [(0, (90, 4, 6)), (0.6, (200, 20, 20)), (1, (255, 90, 60))])
+    moon_layer = layer(moon_rgb, moon * 0.95)
+    halo = blur(solid((255, 30, 30), moon), 26)
+    halo[..., 3] = np.clip(halo[..., 3] * 1.2, 0, 0.8)
+    face_rgb = np.clip(a[..., :3] * np.array([1.15, 0.75, 0.7], np.float32), 0, 1)
+    out = over(layer(face_rgb, alpha), over(moon_layer, halo))
+    drips = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(drips)
+    rnd = random.Random(72)
+    rows = np.nonzero(alpha.max(1) > 0.5)[0]
+    for x in rnd.sample(range(150, 360), 7):
+        col = np.nonzero(alpha[:, x] > 0.5)[0]
+        if len(col) == 0:
+            continue
+        y0 = col[-1] - rnd.randint(30, 90)
+        length = rnd.randint(30, 80)
+        d.line([x, y0, x, min(y0 + length, rows[-1] + 30)], fill=(150, 0, 10, 230), width=rnd.choice([3, 4, 5]))
+        d.ellipse([x - 4, y0 + length - 4, x + 4, y0 + length + 4], fill=(150, 0, 10, 230))
+    return Image.alpha_composite(to_image(out), drips)
+
 STYLES = {
     'kintsugi': kintsugi,
     'hologram': hologram,
@@ -305,6 +559,16 @@ STYLES = {
     'gold': gold,
     'ice': ice,
     'sakura': sakura,
+    'akaoni': akaoni,
+    'raijin': raijin,
+    'namahage': namahage,
+    'kijo': kijo,
+    'kurohannya': kurohannya,
+    'kibori': kibori,
+    'ishi': ishi,
+    'seidou': seidou,
+    'yurei': yurei,
+    'chinoame': chinoame,
 }
 
 if __name__ == '__main__':
