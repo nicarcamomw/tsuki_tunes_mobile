@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -10,7 +11,17 @@ class LyricsService {
   factory LyricsService() => _instance;
   LyricsService._internal();
 
-  final Map<String, SyncedLyrics?> _cache = {};
+  // lrclib asks clients to identify themselves.
+  static const Map<String, String> _headers = {
+    'User-Agent': 'TsukiTunes/1.0 (https://github.com/nicarcamomw/tsuki_tunes_mobile)',
+  };
+
+  /// Songs whose lyrics are kept in memory; the oldest drop out, so a long
+  /// session doesn't hold every song's lyrics.
+  static const int _maxCached = 150;
+
+  // Insertion-ordered: the first key is the least recently used.
+  final LinkedHashMap<String, SyncedLyrics?> _cache = LinkedHashMap();
   final Map<String, Future<SyncedLyrics?>> _inFlight = {};
 
   static String _cleanString(String text) {
@@ -27,7 +38,10 @@ class LyricsService {
     final key = '${cleanTitle.toLowerCase()}__${cleanArtist.toLowerCase()}';
 
     if (_cache.containsKey(key)) {
-      return _cache[key];
+      // Touch: move to the most recently used end.
+      final hit = _cache.remove(key);
+      _cache[key] = hit;
+      return hit;
     }
 
     if (_inFlight.containsKey(key)) {
@@ -39,43 +53,43 @@ class LyricsService {
     return future;
   }
 
+  void _remember(String key, SyncedLyrics? lyrics) {
+    _cache.remove(key);
+    _cache[key] = lyrics;
+    while (_cache.length > _maxCached) {
+      _cache.remove(_cache.keys.first);
+    }
+  }
+
   Future<SyncedLyrics?> _fetchLyrics(
       String title, String artistName, String cacheKey) async {
     try {
-      final uri = Uri.parse(
-          'https://lrclib.net/api/get?track_name=${Uri.encodeComponent(title)}&artist_name=${Uri.encodeComponent(artistName)}');
+      final uri = Uri.https('lrclib.net', '/api/get', {
+        'track_name': title,
+        'artist_name': artistName,
+      });
 
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response =
+          await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is Map<String, dynamic>) {
-          final isInstrumental = data['instrumental'] == true;
-          final syncedText = data['syncedLyrics'] as String?;
-          final plainText = data['plainLyrics'] as String?;
-
-          SyncedLyrics result;
-          if (syncedText != null && syncedText.trim().isNotEmpty) {
-            result = SyncedLyrics.fromLrc(syncedText);
-          } else if (plainText != null && plainText.trim().isNotEmpty) {
-            result = SyncedLyrics(
-              isSynced: false,
-              isInstrumental: isInstrumental,
-              plainLyrics: plainText.trim(),
-            );
-          } else if (isInstrumental) {
-            result = const SyncedLyrics(isInstrumental: true);
-          } else {
-            result = SyncedLyrics.empty;
-          }
-
-          _cache[cacheKey] = result;
+          final result = _fromFields(
+            synced: data['syncedLyrics'] as String?,
+            plain: data['plainLyrics'] as String?,
+            instrumental: data['instrumental'] == true,
+          );
+          _remember(cacheKey, result);
           return result;
         }
       } else if (response.statusCode == 404) {
-        // Track not found in database - cache null to avoid re-querying repeatedly
-        _cache[cacheKey] = null;
-        return null;
+        // The exact lookup misses on small title/artist differences; a
+        // search by both fields often finds the song anyway.
+        final found = await _searchBestMatch(title, artistName);
+        // Cache misses too, so the same song isn't looked up again.
+        _remember(cacheKey, found);
+        return found;
       }
     } catch (e) {
       debugPrint('[LyricsService] Error fetching lyrics for "$title": $e');
@@ -85,11 +99,61 @@ class LyricsService {
     return null;
   }
 
+  static SyncedLyrics _fromFields({String? synced, String? plain, required bool instrumental}) {
+    if (synced != null && synced.trim().isNotEmpty) {
+      return SyncedLyrics.fromLrc(synced);
+    }
+    if (plain != null && plain.trim().isNotEmpty) {
+      return SyncedLyrics(
+        isSynced: false,
+        isInstrumental: instrumental,
+        plainLyrics: plain.trim(),
+      );
+    }
+    if (instrumental) return const SyncedLyrics(isInstrumental: true);
+    return SyncedLyrics.empty;
+  }
+
+  static String _norm(String s) =>
+      s.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
+
+  /// Best search hit for this song: same artist (loosely compared), synced
+  /// lyrics preferred over plain ones. Null when nothing fits.
+  Future<SyncedLyrics?> _searchBestMatch(String title, String artistName) async {
+    final uri = Uri.https('lrclib.net', '/api/search', {
+      'track_name': title,
+      'artist_name': artistName,
+    });
+    final response =
+        await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+    if (response.statusCode != 200) return null;
+    final data = json.decode(response.body);
+    if (data is! List) return null;
+
+    final artistKey = _norm(artistName.split(',').first);
+    final titleKey = _norm(title);
+    LyricsSearchResult? plainHit;
+    for (final item in data.whereType<Map<String, dynamic>>()) {
+      final r = LyricsSearchResult.fromJson(item);
+      final sameArtist = artistKey.isNotEmpty &&
+          (_norm(r.artistName).contains(artistKey) || artistKey.contains(_norm(r.artistName)));
+      final sameTitle = titleKey.isNotEmpty && _norm(r.trackName).contains(titleKey);
+      if (!sameArtist || !sameTitle) continue;
+      if ((r.syncedLyrics ?? '').trim().isNotEmpty) {
+        return _fromFields(synced: r.syncedLyrics, plain: r.plainLyrics, instrumental: r.instrumental);
+      }
+      plainHit ??= r;
+    }
+    final hit = plainHit;
+    if (hit == null) return null;
+    return _fromFields(synced: hit.syncedLyrics, plain: hit.plainLyrics, instrumental: hit.instrumental);
+  }
+
   Future<List<LyricsSearchResult>> searchByLyrics(String query) async {
     try {
-      final uri = Uri.parse(
-          'https://lrclib.net/api/search?q=${Uri.encodeComponent(query)}');
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final uri = Uri.https('lrclib.net', '/api/search', {'q': query});
+      final response =
+          await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -112,4 +176,7 @@ class LyricsService {
     _cache.clear();
     _inFlight.clear();
   }
+
+  @visibleForTesting
+  int get cachedCount => _cache.length;
 }

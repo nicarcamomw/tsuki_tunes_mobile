@@ -13,9 +13,25 @@ class TranslationService {
   TranslationService._internal();
 
   static const String _cachePrefix = 'tsuki_translated_lyrics_';
+  // Keys of the saved translations, oldest first.
+  static const String _indexKey = 'tsuki_translated_lyrics_index';
+
+  /// Translations kept on disk. They live in SharedPreferences, which is
+  /// read whole at launch, so it must not grow with every song translated.
+  static const int _maxSaved = 60;
+  static const int _maxInMemory = 30;
 
   final Map<String, OnDeviceTranslator> _translators = {};
+  // Insertion-ordered: the first key is the least recently used.
   final Map<String, List<String>> _memCache = {};
+
+  void _rememberInMemory(String key, List<String> lines) {
+    _memCache.remove(key);
+    _memCache[key] = lines;
+    while (_memCache.length > _maxInMemory) {
+      _memCache.remove(_memCache.keys.first);
+    }
+  }
 
   TranslateLanguage _appLangToMlKit(AppLanguage lang) {
     return switch (lang) {
@@ -67,13 +83,15 @@ class TranslationService {
   }) async {
     final key = _cacheKey(trackId, targetLang);
 
-    if (_memCache.containsKey(key)) {
-      return _memCache[key]!;
+    final inMemory = _memCache[key];
+    if (inMemory != null) {
+      _rememberInMemory(key, inMemory);
+      return inMemory;
     }
 
     final diskResult = await _loadFromDisk(key);
     if (diskResult != null && diskResult.length == lines.length) {
-      _memCache[key] = diskResult;
+      _rememberInMemory(key, diskResult);
       return diskResult;
     }
 
@@ -96,6 +114,7 @@ class TranslationService {
     );
 
     final translated = <String>[];
+    var failed = false;
     for (final line in lines) {
       if (line.trim().isEmpty) {
         translated.add('');
@@ -107,11 +126,16 @@ class TranslationService {
       } catch (e) {
         debugPrint('[TranslationService] Error translating line: $e');
         translated.add('');
+        failed = true;
       }
     }
 
-    _memCache[key] = translated;
-    unawaited(_saveToDisk(key, translated));
+    // A failed line (model still downloading, say) must not be saved as an
+    // empty translation for good: the next try translates it again.
+    if (!failed) {
+      _rememberInMemory(key, translated);
+      unawaited(_saveToDisk(key, translated));
+    }
     return translated;
   }
 
@@ -134,6 +158,21 @@ class TranslationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('$_cachePrefix$key', json.encode(lines));
+      // Most recent last; drop the oldest beyond the cap. Entries saved
+      // before the index existed are adopted (oldest first) and pruned too.
+      final index = prefs.getStringList(_indexKey) ??
+          prefs
+              .getKeys()
+              .where((k) => k.startsWith(_cachePrefix) && k != _indexKey)
+              .map((k) => k.substring(_cachePrefix.length))
+              .toList();
+      index
+        ..remove(key)
+        ..add(key);
+      while (index.length > _maxSaved) {
+        await prefs.remove('$_cachePrefix${index.removeAt(0)}');
+      }
+      await prefs.setStringList(_indexKey, index);
     } catch (e) {
       debugPrint('[TranslationService] Cache write error: $e');
     }
