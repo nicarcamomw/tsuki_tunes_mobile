@@ -612,5 +612,6 @@
   "artistCompleteTooltip": "ディスコグラフィー完了",
   "artistIncompleteTooltip": "ディスコグラフィー未完了",
   "a11yVoiceSearch": "音声検索",
-  "voicePlaying": "再生中"
+  "voicePlaying": "再生中",
+  "playlistFull": "プレイリストがいっぱいです（最大1000曲）"
 }

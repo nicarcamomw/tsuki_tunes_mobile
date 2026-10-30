@@ -1620,6 +1620,7 @@ class AppStrings {
   String addedToPlaylist(String name) => _l.addedToPlaylist(name);
 
   String get trackAlreadyInPlaylist => _l.trackAlreadyInPlaylist;
+  String get playlistFull => _l.playlistFull;
 
   String get removedFromPlaylist => _l.removedFromPlaylist;
 

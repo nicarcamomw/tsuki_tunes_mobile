@@ -77,10 +77,13 @@ class _PlaylistSelectorContent extends StatelessWidget {
                 final name = await _showCreateDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
                   final provider = context.read<PlaylistProvider>();
-                  final created = await provider.createPlaylist(name);
+                  // One write with the song in it: a second write right
+                  // after would hit the database's one-write-per-second
+                  // limit and leave the new playlist empty.
+                  final created =
+                      await provider.createPlaylist(name, tracks: [track]);
                   if (created != null && context.mounted) {
-                    final added =
-                        await provider.addTrackToPlaylist(created.id, track);
+                    final added = created.tracks.any((t) => t.id == track.id);
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +205,10 @@ class _PlaylistSelectorContent extends StatelessWidget {
                                       added
                                           ? strings
                                               .addedToPlaylist(playlist.name)
-                                          : strings.trackAlreadyInPlaylist,
+                                          : playlist.tracks.length >=
+                                                  PlaylistProvider.maxTracks
+                                              ? strings.playlistFull
+                                              : strings.trackAlreadyInPlaylist,
                                       style: locale.getTextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -253,6 +259,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLength: PlaylistProvider.maxNameLength,
           style: locale.getTextStyle(
             fontSize: 14,
             color: AppColors.textBright,

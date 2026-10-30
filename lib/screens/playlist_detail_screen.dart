@@ -386,6 +386,7 @@ class PlaylistDetailScreen extends StatelessWidget {
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLength: PlaylistProvider.maxNameLength,
           style: locale.getTextStyle(
             fontSize: 14,
             color: AppColors.textBright,

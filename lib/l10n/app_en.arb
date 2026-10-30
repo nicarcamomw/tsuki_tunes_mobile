@@ -612,5 +612,6 @@
   "artistCompleteTooltip": "Discography completed",
   "artistIncompleteTooltip": "Discography incomplete",
   "a11yVoiceSearch": "Voice search",
-  "voicePlaying": "Playing"
+  "voicePlaying": "Playing",
+  "playlistFull": "Playlist full (1000 songs max)"
 }

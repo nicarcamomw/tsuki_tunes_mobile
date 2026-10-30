@@ -35,6 +35,17 @@ class PlaylistProvider extends ChangeNotifier {
     return idx != -1 ? _playlists[idx] : null;
   }
 
+  /// The database rejects longer names and bigger playlists
+  /// (firestore.rules); checking here gives a clear no instead of a silent
+  /// rollback.
+  static const int maxNameLength = 100;
+  static const int maxTracks = 1000;
+
+  static String _cleanName(String name) {
+    final trimmed = name.trim();
+    return trimmed.length > maxNameLength ? trimmed.substring(0, maxNameLength) : trimmed;
+  }
+
   bool _isWriteThrottled() {
     final now = DateTime.now();
     _writeTimestamps.removeWhere((t) => now.difference(t).inSeconds > 60);
@@ -218,8 +229,8 @@ class PlaylistProvider extends ChangeNotifier {
     final seen = <String>{};
     final playlist = Playlist(
       id: tempId,
-      name: name.trim(),
-      tracks: tracks.where((t) => seen.add(t.id)).toList(),
+      name: _cleanName(name),
+      tracks: tracks.where((t) => seen.add(t.id)).take(maxTracks).toList(),
       createdAt: now,
       updatedAt: now,
     );
@@ -273,7 +284,7 @@ class PlaylistProvider extends ChangeNotifier {
 
     final prev = _playlists[idx];
     final updated =
-        prev.copyWith(name: newName.trim(), updatedAt: DateTime.now());
+        prev.copyWith(name: _cleanName(newName), updatedAt: DateTime.now());
 
     // Optimistic
     _playlists[idx] = updated;
@@ -287,7 +298,7 @@ class PlaylistProvider extends ChangeNotifier {
         final batch = db.batch();
         batch.update(
             db.collection('users').doc(uid).collection('playlists').doc(playlistId),
-            {'name': newName.trim(), 'updatedAt': FieldValue.serverTimestamp()});
+            {'name': updated.name, 'updatedAt': FieldValue.serverTimestamp()});
         batch.set(db.collection('users').doc(uid),
             {'lastSubWrite': FieldValue.serverTimestamp()},
             SetOptions(merge: true));
@@ -351,6 +362,7 @@ class PlaylistProvider extends ChangeNotifier {
 
     final playlist = _playlists[idx];
     if (playlist.tracks.any((t) => t.id == track.id)) return false;
+    if (playlist.tracks.length >= maxTracks) return false;
 
     final prev = playlist;
     final updatedTracks = [...playlist.tracks, track];

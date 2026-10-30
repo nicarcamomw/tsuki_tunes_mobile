@@ -1003,5 +1003,6 @@
   "artistCompleteTooltip": "Discografía completada",
   "artistIncompleteTooltip": "Discografía incompleta",
   "a11yVoiceSearch": "Búsqueda por voz",
-  "voicePlaying": "Reproduciendo"
+  "voicePlaying": "Reproduciendo",
+  "playlistFull": "Playlist llena (máximo 1000 canciones)"
 }

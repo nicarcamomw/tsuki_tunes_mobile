@@ -706,6 +706,7 @@ class _LibraryScreenState extends State<LibraryScreen>
         content: TextField(
           controller: controller,
           autofocus: true,
+          maxLength: PlaylistProvider.maxNameLength,
           style: locale.getTextStyle(
             fontSize: 14,
             color: AppColors.textBright,
