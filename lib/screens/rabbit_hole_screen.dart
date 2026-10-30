@@ -61,6 +61,8 @@ class _GraphNode {
 
   String get id => artist.id;
 
+  static double radiusFor(Artist artist, int depth) => _radiusFor(artist.fansCount, depth);
+
   static double _radiusFor(int fans, int depth) {
     if (depth == 0) return 40;
     // 1k fans -> 0, 10M fans -> 1
@@ -124,6 +126,12 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   Timer? _hintTimer;
   // Lowercased names of artists the user has listened to.
   Set<String> _knownArtists = const {};
+  // Completes once the page has finished sliding in: new nodes wait for it
+  // so their pop-in doesn't fight the route transition for frames.
+  final Completer<void> _routeSettled = Completer<void>();
+  bool _routeHooked = false;
+  Duration? _lastTick;
+  Timer? _prefetchTimer;
 
   @override
   void initState() {
@@ -152,6 +160,22 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_routeHooked) {
+      _routeHooked = true;
+      final anim = ModalRoute.of(context)?.animation;
+      if (anim == null || anim.isCompleted) {
+        _routeSettled.complete();
+      } else {
+        void onStatus(AnimationStatus status) {
+          if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+            anim.removeStatusListener(onStatus);
+            if (!_routeSettled.isCompleted) _routeSettled.complete();
+          }
+        }
+
+        anim.addStatusListener(onStatus);
+      }
+    }
     _reduceMotion = MediaQuery.of(context).disableAnimations;
     if (_reduceMotion) {
       _pulse.stop();
@@ -163,6 +187,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   @override
   void dispose() {
     _hintTimer?.cancel();
+    _prefetchTimer?.cancel();
     _physics.dispose();
     _pulse.dispose();
     _camera.dispose();
@@ -222,6 +247,24 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
 
     final fresh =
         related.where((a) => a.id.isNotEmpty && a.id != id).toList();
+
+    // Fetch and decode the newcomers' photos before they pop in (briefly, so
+    // a slow image never holds the web back), and let the page finish
+    // sliding in: both would otherwise land mid-animation and drop frames.
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final photos = [
+      for (final a in fresh.take(_kMaxNodes - _nodes.length))
+        if (!_nodes.containsKey(a.id) && a.pictureUrl.isNotEmpty)
+          precacheImage(
+            _NodeView.imageProvider(a, _GraphNode.radiusFor(a, node.depth + 1), dpr),
+            context,
+          ),
+    ];
+    await Future.wait([
+      _routeSettled.future,
+      Future.wait(photos).timeout(const Duration(milliseconds: 450), onTimeout: () => const []),
+    ]);
+    if (!mounted || !identical(_nodes[id], node)) return;
     final newcomers = fresh.where((a) => !_nodes.containsKey(a.id)).length;
     final slots = min(newcomers, _kMaxNodes - _nodes.length);
 
@@ -269,7 +312,11 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
     if (fresh.isEmpty && node.depth > 0) unawaited(HapticFeedback.lightImpact());
     if (added < newcomers) _notifyMaxReached();
     _wakePhysics();
-    unawaited(_api.prefetchRelatedArtists(newIds.take(_kPrefetchChildren)));
+    // Warm the next level once the pop-in is over, not during it.
+    _prefetchTimer?.cancel();
+    _prefetchTimer = Timer(const Duration(milliseconds: 900), () {
+      unawaited(_api.prefetchRelatedArtists(newIds.take(_kPrefetchChildren)));
+    });
   }
 
   void _retrySeed() {
@@ -350,16 +397,27 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   // ---------------------------------------------------------------------------
 
   void _wakePhysics() {
-    if (!_physics.isActive) _physics.start();
+    if (!_physics.isActive) {
+      _lastTick = null;
+      _physics.start();
+    }
   }
 
-  void _onTick(Duration _) {
-    final settled = _step();
+  void _onTick(Duration elapsed) {
+    // Steps are tuned for 60 fps; scale by the real frame time so motion
+    // keeps its speed on 90/120 Hz screens and after a dropped frame
+    // (capped, so a long hitch slows the web instead of flinging it).
+    final last = _lastTick;
+    _lastTick = elapsed;
+    final f = last == null
+        ? 1.0
+        : ((elapsed - last).inMicroseconds / 16667).clamp(0.25, 2.0);
+    final settled = _step(f);
     _frame.value++;
     if (settled) _physics.stop();
   }
 
-  bool _step() {
+  bool _step(double f) {
     final nodes = _nodes.values.toList(growable: false);
 
     for (var i = 0; i < nodes.length; i++) {
@@ -377,7 +435,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
         // Hard-ish collision so circles and labels never overlap.
         final gap = a.radius + b.radius + 34;
         if (dist < gap) force += (gap - dist) * 0.2;
-        final push = delta * (force / dist);
+        final push = delta * (force * f / dist);
         a.velocity += push;
         b.velocity -= push;
       }
@@ -392,30 +450,31 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
       final dist = max(delta.distance, 0.01);
       final ideal = (a.radius + b.radius + 70) * (e.isTree ? 1.0 : 1.8);
       final k = e.isTree ? 0.025 : 0.004;
-      final pull = delta * ((dist - ideal) * k / dist);
+      final pull = delta * ((dist - ideal) * k * f / dist);
       a.velocity += pull;
       b.velocity -= pull;
       if (e.appear < 1) {
-        e.appear = min(1.0, e.appear + 0.035);
+        e.appear = min(1.0, e.appear + 0.035 * f);
         animating = true;
       }
     }
 
     const limit = _kCanvas / 2 - 150;
     var maxSpeed = 0.0;
+    final damping = pow(_kDamping, f).toDouble();
     for (final n in nodes) {
       if (n.appear < 1) {
-        n.appear = min(1.0, n.appear + 0.05);
+        n.appear = min(1.0, n.appear + 0.05 * f);
         animating = true;
       }
       if (n.pinned) {
         n.velocity = Offset.zero;
         continue;
       }
-      n.velocity = (n.velocity - n.position * _kGravity) * _kDamping;
+      n.velocity = (n.velocity - n.position * (_kGravity * f)) * damping;
       final speed = n.velocity.distance;
       if (speed > _kMaxSpeed) n.velocity = n.velocity * (_kMaxSpeed / speed);
-      final next = n.position + n.velocity;
+      final next = n.position + n.velocity * f;
       n.position = Offset(
         next.dx.clamp(-limit, limit),
         next.dy.clamp(-limit, limit),
@@ -779,8 +838,8 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
 // Node
 // ---------------------------------------------------------------------------
 
-/// Places each node centred on its position, scaled and faded by how far it
-/// has appeared. Runs at paint time, so physics steps never rebuild nodes.
+/// Places each node centred on its position, scaled by how far it has
+/// appeared. Runs at paint time, so physics steps never rebuild nodes.
 class _NodeFlowDelegate extends FlowDelegate {
   final List<_GraphNode> nodes;
 
@@ -811,7 +870,10 @@ class _NodeFlowDelegate extends FlowDelegate {
       )
         ..multiply(Matrix4.diagonal3Values(pop, pop, 1))
         ..multiply(Matrix4.translationValues(-width / 2, -node.radius, 0));
-      context.paintChild(i, transform: transform, opacity: appear);
+      // Scale only: an opacity here would push every appearing node
+      // through its own offscreen layer each frame, the costliest part of
+      // a burst of a dozen pop-ins.
+      context.paintChild(i, transform: transform);
     }
   }
 
@@ -845,6 +907,17 @@ class _NodeView extends StatelessWidget {
     0, 0, 0, 0.7, 0,
   ]);
 
+  static int _photoWidth(double r, double dpr) => (r * 2 * dpr).round();
+
+  /// The provider [build]'s image resolves to (same URL and decode size),
+  /// so precaching it means the photo is ready the moment the node shows.
+  static ImageProvider imageProvider(Artist artist, double r, double dpr) =>
+      ResizeImage.resizeIfNeeded(
+        _photoWidth(r, dpr),
+        null,
+        CachedNetworkImageProvider(artist.getBestImage(size: 'medium')),
+      );
+
   Widget _placeholder(double r) => Container(
         color: AppColors.bgCard,
         alignment: Alignment.center,
@@ -872,7 +945,7 @@ class _NodeView extends StatelessWidget {
         : CachedNetworkImage(
             imageUrl: node.artist.getBestImage(size: 'medium'),
             fit: BoxFit.cover,
-            memCacheWidth: (r * 2 * dpr).round(),
+            memCacheWidth: _photoWidth(r, dpr),
             fadeInDuration: const Duration(milliseconds: 200),
             placeholder: (_, __) => _placeholder(r),
             errorWidget: (_, __, ___) => _placeholder(r),
