@@ -41,6 +41,10 @@ import 'widgets/moon_atmosphere.dart';
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  // debugPrint also writes to the system log in release builds, where any
+  // app with log access (or a bug report) could read songs, searches and
+  // request URLs. Errors still reach Crashlytics.
+  if (kReleaseMode) debugPrint = (String? message, {int? wrapWidth}) {};
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setSystemUIOverlayStyle(
