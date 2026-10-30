@@ -630,5 +630,9 @@
   "a11yMoveDown": "下へ移動",
   "queuePlayedHeader": "再生済み（{count}）",
   "queueMoreShuffled": "ほか{count}曲（シャッフル）",
-  "queueSummary": "{count}曲・{minutes}分"
+  "queueSummary": "{count}曲・{minutes}分",
+  "playlistEdit": "プレイリストを編集",
+  "playlistEditDone": "完了",
+  "playlistEditHint": "≡をドラッグで並べ替え・⊖で削除",
+  "playlistRemoveFromThis": "このプレイリストから削除"
 }

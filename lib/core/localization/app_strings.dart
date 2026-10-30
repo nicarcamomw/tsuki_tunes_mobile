@@ -1227,6 +1227,10 @@ class AppStrings {
   String get playNext => _l.playNext;
 
   String get addedPlayNext => _l.addedPlayNext;
+  String get playlistEdit => _l.playlistEdit;
+  String get playlistEditDone => _l.playlistEditDone;
+  String get playlistEditHint => _l.playlistEditHint;
+  String get playlistRemoveFromThis => _l.playlistRemoveFromThis;
   String get queueNowPlaying => _l.queueNowPlaying;
   String get queueComingUp => _l.queueComingUp;
   String get queueShuffledTag => _l.queueShuffledTag;

@@ -424,6 +424,51 @@ class PlaylistProvider extends ChangeNotifier {
     return true;
   }
 
+  /// Puts [track] back at [index] (undoing a removal), in one write.
+  Future<bool> insertTrackAt(String playlistId, Track track, int index) async {
+    final uid = _currentUid;
+    if (uid == null || _isWriteThrottled()) return false;
+
+    final idx = _playlists.indexWhere((p) => p.id == playlistId);
+    if (idx == -1) return false;
+
+    final prev = _playlists[idx];
+    if (prev.tracks.any((t) => t.id == track.id)) return false;
+    if (prev.tracks.length >= maxTracks) return false;
+    final tracks = List<Track>.from(prev.tracks)
+      ..insert(index.clamp(0, prev.tracks.length), track);
+    final updated = prev.copyWith(tracks: tracks, updatedAt: DateTime.now());
+
+    // Optimistic
+    _playlists[idx] = updated;
+    notifyListeners();
+    _persistCache(uid);
+
+    if (!_isGuest && _canSyncToFirestore(uid)) {
+      _startSync();
+      try {
+        final order = tracks.map((t) => t.id).toList();
+        await _commitTracks(
+            uid,
+            updated,
+            (server) => mergePlaylistTracks(server,
+                add: track.toJson(), order: order));
+      } catch (e) {
+        debugPrint('[PlaylistProvider] insertTrackAt rollback: $e');
+        final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
+        if (rollIdx != -1) {
+          _playlists[rollIdx] = prev;
+          notifyListeners();
+          _persistCache(uid);
+        }
+        return false;
+      } finally {
+        _endSync();
+      }
+    }
+    return true;
+  }
+
   Future<void> removeTrackFromPlaylist(
       String playlistId, String trackId) async {
     final uid = _currentUid;

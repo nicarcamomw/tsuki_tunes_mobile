@@ -1024,5 +1024,9 @@
   "queueMoreShuffled": "+{count} más, en orden aleatorio",
   "@queueMoreShuffled": {"placeholders": {"count": {"type": "int"}}},
   "queueSummary": "{count, plural, =1{1 canción} other{{count} canciones}} · {minutes} min",
-  "@queueSummary": {"placeholders": {"count": {"type": "int"}, "minutes": {"type": "int"}}}
+  "@queueSummary": {"placeholders": {"count": {"type": "int"}, "minutes": {"type": "int"}}},
+  "playlistEdit": "Editar playlist",
+  "playlistEditDone": "LISTO",
+  "playlistEditHint": "Arrastra ≡ para ordenar · toca ⊖ para quitar",
+  "playlistRemoveFromThis": "Quitar de esta playlist"
 }

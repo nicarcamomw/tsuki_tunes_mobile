@@ -124,6 +124,8 @@ class TrackTile extends StatelessWidget {
   /// Swiping the song to the right adds it to the queue. Off where the row
   /// already has its own swipe (e.g. removing it from a playlist).
   final bool swipeToQueue;
+  /// Extra entries on top of the long-press menu.
+  final List<TrackMenuAction> menuActions;
 
   const TrackTile({
     super.key,
@@ -133,6 +135,7 @@ class TrackTile extends StatelessWidget {
     this.showListenedCheckbox = true,
     this.onUnmark,
     this.swipeToQueue = true,
+    this.menuActions = const [],
   });
 
   void _addToQueue(BuildContext context) {
@@ -166,7 +169,7 @@ class TrackTile extends StatelessWidget {
         },
         onLongPress: () {
           HapticFeedback.mediumImpact();
-          showTrackActions(context, track);
+          showTrackActions(context, track, extra: menuActions);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

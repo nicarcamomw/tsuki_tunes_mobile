@@ -630,5 +630,9 @@
   "a11yMoveDown": "Move down",
   "queuePlayedHeader": "PLAYED ({count})",
   "queueMoreShuffled": "+{count} more, shuffled",
-  "queueSummary": "{count, plural, =1{1 song} other{{count} songs}} · {minutes} min"
+  "queueSummary": "{count, plural, =1{1 song} other{{count} songs}} · {minutes} min",
+  "playlistEdit": "Edit playlist",
+  "playlistEditDone": "DONE",
+  "playlistEditHint": "Drag ≡ to reorder · tap ⊖ to remove",
+  "playlistRemoveFromThis": "Remove from this playlist"
 }
