@@ -11,6 +11,7 @@ import '../models/track.dart';
 import '../services/firebase_service.dart';
 import '../services/play_history_service.dart';
 import '../services/storage_service.dart';
+import '../services/sub_write_queue.dart';
 
 class ListenedTrackData {
   final String trackId;
@@ -665,7 +666,7 @@ class LibraryProvider extends ChangeNotifier {
       // The rules only accept subcollection writes stamped with the time.
       batch.set(userDoc, {'lastSubWrite': FieldValue.serverTimestamp()},
           SetOptions(merge: true));
-      await batch.commit();
+      await SubWriteQueue.instance.run(batch.commit);
     }).catchError((Object e) {
       debugPrint('[LibraryProvider] deletion log prune failed: $e');
     });
@@ -854,7 +855,7 @@ class LibraryProvider extends ChangeNotifier {
       },
       SetOptions(merge: true),
     );
-    await batch.commit();
+    await SubWriteQueue.instance.run(batch.commit);
     _lastSyncError = null;
   }
 
@@ -920,7 +921,7 @@ class LibraryProvider extends ChangeNotifier {
       },
       SetOptions(merge: true),
     );
-    await batch.commit();
+    await SubWriteQueue.instance.run(batch.commit);
     _lastSyncError = null;
   }
 
@@ -981,7 +982,6 @@ class LibraryProvider extends ChangeNotifier {
       const batchLimit = 450;
 
       for (var i = 0; i < newData.length; i += batchLimit) {
-        if (i > 0) await Future.delayed(const Duration(milliseconds: 1100));
         final chunk = newData.sublist(
             i, i + batchLimit > newData.length ? newData.length : i + batchLimit);
 
@@ -1004,7 +1004,7 @@ class LibraryProvider extends ChangeNotifier {
             },
             SetOptions(merge: true),
           );
-          await batch.commit();
+          await SubWriteQueue.instance.run(batch.commit);
         }
         committedData.addAll(chunk);
       }
@@ -1071,7 +1071,6 @@ class LibraryProvider extends ChangeNotifier {
       const batchLimit = 240;
 
       for (var i = 0; i < toUnmark.length; i += batchLimit) {
-        if (i > 0) await Future.delayed(const Duration(milliseconds: 1100));
         final chunk = toUnmark.sublist(
             i, i + batchLimit > toUnmark.length ? toUnmark.length : i + batchLimit);
 
@@ -1093,7 +1092,7 @@ class LibraryProvider extends ChangeNotifier {
             },
             SetOptions(merge: true),
           );
-          await batch.commit();
+          await SubWriteQueue.instance.run(batch.commit);
         }
         committedUnmarkedIds.addAll(chunk);
       }
@@ -1263,7 +1262,7 @@ class LibraryProvider extends ChangeNotifier {
       batch.set(db.collection('users').doc(uid),
           {'lastSubWrite': FieldValue.serverTimestamp()},
           SetOptions(merge: true));
-      await batch.commit();
+      await SubWriteQueue.instance.run(batch.commit);
     } catch (e) {
       debugPrint('[LibraryProvider] followArtist rollback: $e');
       _followedArtists = prevArtists;
@@ -1305,7 +1304,7 @@ class LibraryProvider extends ChangeNotifier {
       batch.set(db.collection('users').doc(uid),
           {'lastSubWrite': FieldValue.serverTimestamp()},
           SetOptions(merge: true));
-      await batch.commit();
+      await SubWriteQueue.instance.run(batch.commit);
     } catch (e) {
       debugPrint('[LibraryProvider] unfollowArtist rollback: $e');
       _followedArtists = prevArtists;

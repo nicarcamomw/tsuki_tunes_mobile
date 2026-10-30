@@ -7,6 +7,7 @@ import '../models/playlist.dart';
 import '../models/track.dart';
 import '../services/firebase_service.dart';
 import '../services/storage_service.dart';
+import '../services/sub_write_queue.dart';
 
 class PlaylistProvider extends ChangeNotifier {
   final StorageService _storage;
@@ -178,7 +179,7 @@ class PlaylistProvider extends ChangeNotifier {
       batch.set(_firebase.db.collection('users').doc(uid),
           {'lastSubWrite': FieldValue.serverTimestamp()},
           SetOptions(merge: true));
-      await batch.commit();
+      await SubWriteQueue.instance.run(batch.commit);
       await _storage.saveCachedPlaylists(guestUid, []);
       debugPrint('[PlaylistProvider] Imported ${guestPlaylists.length} guest playlists');
     } catch (e) {
@@ -251,7 +252,7 @@ class PlaylistProvider extends ChangeNotifier {
         batch.set(db.collection('users').doc(uid),
             {'lastSubWrite': FieldValue.serverTimestamp()},
             SetOptions(merge: true));
-        await batch.commit();
+        await SubWriteQueue.instance.run(batch.commit);
 
         final idx = _playlists.indexWhere((p) => p.id == tempId);
         if (idx != -1) {
@@ -302,7 +303,7 @@ class PlaylistProvider extends ChangeNotifier {
         batch.set(db.collection('users').doc(uid),
             {'lastSubWrite': FieldValue.serverTimestamp()},
             SetOptions(merge: true));
-        await batch.commit();
+        await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
         debugPrint('[PlaylistProvider] renamePlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
@@ -341,7 +342,7 @@ class PlaylistProvider extends ChangeNotifier {
         batch.set(db.collection('users').doc(uid),
             {'lastSubWrite': FieldValue.serverTimestamp()},
             SetOptions(merge: true));
-        await batch.commit();
+        await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
         debugPrint('[PlaylistProvider] deletePlaylist rollback: $e');
         _playlists.insert(idx.clamp(0, _playlists.length), prev);
@@ -488,6 +489,16 @@ class PlaylistProvider extends ChangeNotifier {
   /// server, so offline it falls back to writing the local list (queued by
   /// Firestore until reconnect), which is the previous behaviour.
   Future<void> _commitTracks(
+    String uid,
+    Playlist local,
+    List<Map<String, dynamic>> Function(List<Map<String, dynamic>> server)
+        apply,
+  ) =>
+      // The transaction and its fallbacks are one turn: only one of them
+      // lands, and the next stamped write waits until it has.
+      SubWriteQueue.instance.run(() => _commitTracksNow(uid, local, apply));
+
+  Future<void> _commitTracksNow(
     String uid,
     Playlist local,
     List<Map<String, dynamic>> Function(List<Map<String, dynamic>> server)
