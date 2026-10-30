@@ -12,6 +12,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
+import 'audio_progress_selector.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
@@ -576,16 +577,18 @@ class _MiniProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = context.select<AudioProvider, double>((a) {
-      final total = a.duration.inMilliseconds;
-      if (total <= 0) return 0.0;
-      return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
-    });
-    return LinearProgressIndicator(
-      value: progress,
-      minHeight: 2.5,
-      backgroundColor: AppColors.border,
-      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+    return AudioProgressSelector<double>(
+      selector: (a) {
+        final total = a.duration.inMilliseconds;
+        if (total <= 0) return 0.0;
+        return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
+      },
+      builder: (context, progress) => LinearProgressIndicator(
+        value: progress,
+        minHeight: 2.5,
+        backgroundColor: AppColors.border,
+        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+      ),
     );
   }
 }

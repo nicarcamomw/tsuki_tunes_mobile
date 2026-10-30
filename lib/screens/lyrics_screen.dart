@@ -11,6 +11,7 @@ import '../core/constants/app_colors.dart';
 import '../models/track.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
+import '../widgets/audio_progress_selector.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/tap_scale.dart';
 
@@ -412,8 +413,13 @@ class _Progress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final position = context.select<AudioProvider, Duration>((a) => a.position);
-    final duration = context.select<AudioProvider, Duration>((a) => a.duration);
+    return AudioProgressSelector<(Duration, Duration)>(
+      selector: (a) => (a.position, a.duration),
+      builder: (context, p) => _bar(context, p.$1, p.$2),
+    );
+  }
+
+  Widget _bar(BuildContext context, Duration position, Duration duration) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: ProgressBar(

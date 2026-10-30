@@ -19,6 +19,7 @@ import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
 import '../widgets/ambient_mixer_sheet.dart';
+import '../widgets/audio_progress_selector.dart';
 import '../widgets/flow_sheet.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -1802,11 +1803,13 @@ class _IsolatedProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final position = context.select<AudioProvider, Duration>((a) => a.position);
-    final duration = context.select<AudioProvider, Duration>((a) => a.duration);
-    final buffered =
-        context.select<AudioProvider, Duration>((a) => a.bufferedPosition);
+    return AudioProgressSelector<(Duration, Duration, Duration)>(
+      selector: (a) => (a.position, a.duration, a.bufferedPosition),
+      builder: (context, p) => _bar(context, p.$1, p.$2, p.$3),
+    );
+  }
 
+  Widget _bar(BuildContext context, Duration position, Duration duration, Duration buffered) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: ProgressBar(

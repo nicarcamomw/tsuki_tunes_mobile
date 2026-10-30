@@ -16,6 +16,7 @@ import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
 import '../services/translation_service.dart';
+import 'audio_progress_selector.dart';
 
 /// Lyrics of the playing track, shared by the card under the player and the
 /// full-screen view, so they load once and a translation carries over.
@@ -308,9 +309,9 @@ class _LyricsLinesState extends State<LyricsLines> {
           _userScrolling = false;
         }
         if (!lyrics.isSynced) return _buildLines(lyrics, -1, synced: false);
-        return Selector<AudioProvider, int>(
-          selector: (_, a) => lyrics.activeIndexAt(a.position),
-          builder: (context, active, _) {
+        return AudioProgressSelector<int>(
+          selector: (a) => lyrics.activeIndexAt(a.position),
+          builder: (context, active) {
             if (active != _lastActive) {
               final first = _lastActive == -2;
               _lastActive = active;

@@ -139,6 +139,26 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   Duration get position => _position;
   Duration get duration => _duration;
   Duration get bufferedPosition => _bufferedPosition;
+
+  /// Fires when [position] or [bufferedPosition] move, which happens many
+  /// times a second while playing. Those ticks don't go through
+  /// [notifyListeners]: that would re-run every selector and dependent
+  /// provider in the app for a number only progress bars and synced lyrics
+  /// show. Read them with AudioProgressSelector.
+  Listenable get progressListenable => _progress;
+  final _ProgressNotifier _progress = _ProgressNotifier();
+
+  void _setPosition(Duration value) {
+    if (value == _position) return;
+    _position = value;
+    _progress.tick();
+  }
+
+  void _setBufferedPosition(Duration value) {
+    if (value == _bufferedPosition) return;
+    _bufferedPosition = value;
+    _progress.tick();
+  }
   bool get useSpotify => _useSpotify;
   bool get spotifyFallbackActive => _spotifyFallbackActive;
   SpotifyService get spotify => _spotify;
@@ -340,7 +360,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @visibleForTesting
   void setPositionForTesting(Duration pos) {
-    _position = pos;
+    _setPosition(pos);
   }
 
   /// Pretends the current play started [by] earlier, past the grace periods.
@@ -560,7 +580,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           final nextTrack = restoredQueue[nextIndex];
           _q.restore(restoredQueue, nextIndex);
           _currentTrack = nextTrack;
-          _position = Duration.zero;
+          _setPosition(Duration.zero);
           _duration = Duration(
               seconds: nextTrack.durationSeconds > 0
                   ? nextTrack.durationSeconds
@@ -576,7 +596,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       _q.restore(restoredQueue, restoredIndex);
       _currentTrack = restoredTrack;
-      _position = Duration(milliseconds: posMs);
+      _setPosition(Duration(milliseconds: posMs));
       _duration = Duration(
           seconds: restoredTrack.durationSeconds > 0
               ? restoredTrack.durationSeconds
@@ -722,7 +742,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       _spotifySyncPosition = Duration(milliseconds: pos);
       _spotifySyncTime = DateTime.now();
-      _position = _spotifySyncPosition;
+      _setPosition(_spotifySyncPosition);
       if (dur > 0) _duration = Duration(milliseconds: dur);
       if (_isBuffering && !paused) {
         _isBuffering = false;
@@ -829,7 +849,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         final raw = _spotifySyncPosition + elapsed;
-        _position = _duration > Duration.zero && raw > _duration ? _duration : raw;
+        _setPosition(_duration > Duration.zero && raw > _duration ? _duration : raw);
         // When the App Remote is connected it reports the real end-of-track
         // via onStateChanged (paused=true), so don't race it with an
         // estimated position that can overshoot by a few seconds.  Only
@@ -847,7 +867,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           _maybePersistPosition();
           _checkListenedThreshold();
           _checkSpotifyCrossfade();
-          notifyListeners();
           final interval =
               pastEnd && _spotifyAhead.isNotEmpty ? 3 : pollInterval;
           if (_spotifyPollTick % interval == 0) {
@@ -930,7 +949,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (!_nativePlayer.isConnected) {
         _spotifySyncPosition = Duration(milliseconds: progressMs);
         _spotifySyncTime = DateTime.now();
-        _position = _spotifySyncPosition;
+        _setPosition(_spotifySyncPosition);
       }
 
       if (!isPlaying && _isPlaying) {
@@ -1038,7 +1057,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _crossfadeTriggered = false;
     _lastPlayStart = now;
     _lastPlayCommandTime = now;
-    _position = progress;
+    _setPosition(progress);
     _spotifySyncPosition = progress;
     _spotifySyncTime = now;
     _duration =
@@ -1111,7 +1130,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyAhead = const [];
     _isPlaying = true;
     _isBuffering = false;
-    _position = progress;
+    _setPosition(progress);
     _spotifySyncPosition = progress;
     _spotifySyncTime = now;
     _lastPlayCommandTime = now;
@@ -1228,13 +1247,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _initSubscriptions() {
     _posSub = _service.positionStream.listen((pos) {
       if (!_spotifyActive) {
-        _position = pos;
+        _setPosition(pos);
         _checkCrossfade(pos);
         if (_isPlaying) {
           _maybePersistPosition();
           _checkListenedThreshold();
         }
-        notifyListeners();
       }
     }, onError: (e) {
       debugPrint('[AudioProvider] positionStream error: $e');
@@ -1251,8 +1269,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     _bufSub = _service.bufferedPositionStream.listen((buf) {
       if (!_spotifyActive) {
-        _bufferedPosition = buf;
-        notifyListeners();
+        _setBufferedPosition(buf);
       }
     }, onError: (e) {
       debugPrint('[AudioProvider] bufferedPositionStream error: $e');
@@ -1395,7 +1412,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _retryTimer?.cancel();
     _retryCount = 0;
     _currentTrack = track;
-    _position = Duration.zero;
+    _setPosition(Duration.zero);
     _completionHandled = false;
     _crossfadeTriggered = false;
     _lastPlayStart = DateTime.now();
@@ -1514,7 +1531,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _spotifyFallbackActive = false;
         _isPlaying = false;
         _isBuffering = true;
-        _position = Duration.zero;
+        _setPosition(Duration.zero);
         _lastPlayCommandTime = DateTime.now();
         notifyListeners();
         _prefetchNextTrack();
@@ -1538,7 +1555,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         _spotifyFallbackActive = false;
         _isPlaying = false;
         _isBuffering = true;
-        _position = Duration.zero;
+        _setPosition(Duration.zero);
         _lastPlayCommandTime = DateTime.now();
         notifyListeners();
         _prefetchNextTrack();
@@ -1597,7 +1614,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyFallbackActive = false;
     _isPlaying = false;
     _isBuffering = true;
-    _position = Duration.zero;
+    _setPosition(Duration.zero);
     _lastPlayCommandTime = DateTime.now();
     notifyListeners();
     _prefetchNextTrack();
@@ -1621,7 +1638,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         // App Remote plays the single song: Spotify no longer has the list.
         _spotifyAhead = const [];
         final now = DateTime.now();
-        _position = Duration.zero;
+        _setPosition(Duration.zero);
         _spotifySyncPosition = Duration.zero;
         _spotifySyncTime = now;
         _lastPlayCommandTime = now;
@@ -1635,7 +1652,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _spotifyActive = false;
     _spotifyFallbackActive = true;
     _stopPositionTimer();
-    _position = Duration.zero;
+    _setPosition(Duration.zero);
     _isBuffering = true;
     notifyListeners();
     try {
@@ -1923,13 +1940,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _currentTrack = null;
     _isPlaying = false;
     _isBuffering = false;
-    _position = Duration.zero;
+    _setPosition(Duration.zero);
     _radioCtrl.radio = null;
     notifyListeners();
   }
 
   Future<void> seek(Duration pos) async {
-    _position = pos;
+    _setPosition(pos);
     _crossfadeTriggered = false;
     _syncMediaSession(force: true);
 
@@ -2166,7 +2183,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     final outgoing = _currentTrack;
     if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = nextTrack;
-    _position = Duration.zero;
+    _setPosition(Duration.zero);
     _duration = Duration(
         seconds: nextTrack.durationSeconds > 0 ? nextTrack.durationSeconds : 30);
     _lastPlayStart = DateTime.now();
@@ -2212,8 +2229,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _stopPositionTimer();
     _retryTimer?.cancel();
     _sleepCtrl.dispose();
+    _progress.dispose();
     _nativePlayer.dispose();
     _service.dispose();
     super.dispose();
   }
+}
+
+class _ProgressNotifier extends ChangeNotifier {
+  void tick() => notifyListeners();
 }
