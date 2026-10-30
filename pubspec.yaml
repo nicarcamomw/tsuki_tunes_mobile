@@ -83,6 +83,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/masks/
 
   fonts:
     - family: SystemOfADown

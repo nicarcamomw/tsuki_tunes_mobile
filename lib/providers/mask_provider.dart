@@ -8,11 +8,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/album.dart';
 import '../models/oni_mask.dart';
 import '../models/track.dart';
+import '../models/weekly_challenge.dart';
 import '../services/deezer_api_service.dart';
 import '../services/firebase_service.dart';
 import '../services/moon_calculator.dart';
 
 export '../models/oni_mask.dart';
+export '../models/weekly_challenge.dart';
 
 /// Achievement engine for the Oni mask collection.
 ///
@@ -80,6 +82,93 @@ class MaskProvider extends ChangeNotifier {
       _ => 0,
     };
     return (current.clamp(0, goal), goal);
+  }
+
+  // ── Weekly challenges ──
+
+  /// This week's three challenges.
+  List<WeeklyChallenge> get weeklyChallenges =>
+      WeeklyChallenge.forWeek(WeeklyChallenge.weekOf(_clock()));
+
+  /// How far [c] is this week (capped at its target).
+  int weeklyProgress(WeeklyChallenge c) {
+    _ensureWeek(_clock());
+    final w = _stats;
+    final value = switch (c.kind) {
+      ChallengeKind.newArtists =>
+        w.newArtistsSince(WeeklyChallenge.mondayOf(w.week)),
+      ChallengeKind.minutes => (w.wk['sec'] ?? 0) ~/ 60,
+      ChallengeKind.plays => w.wk['plays'] ?? 0,
+      ChallengeKind.days => w.wkDays.length,
+      ChallengeKind.night => w.wk['night'] ?? 0,
+      ChallengeKind.morning => w.wk['morning'] ?? 0,
+      ChallengeKind.rain => (w.wk['rain'] ?? 0) ~/ 60,
+      ChallengeKind.album => w.wkAlbums.length,
+      ChallengeKind.guess => w.wk['guess'] ?? 0,
+      ChallengeKind.oneArtist =>
+        w.wkArtists.values.fold<int>(0, (a, b) => b > a ? b : a),
+    };
+    return value.clamp(0, c.target);
+  }
+
+  bool weeklyDone(WeeklyChallenge c) => weeklyProgress(c) >= c.target;
+
+  int get weeklyDoneCount => weeklyChallenges.where(weeklyDone).length;
+
+  /// The mask this week's challenges give: the one already won this week,
+  /// or the next weekly mask not collected yet. Null when all are.
+  OniMask? get weeklyReward {
+    _ensureWeek(_clock());
+    final won = MaskCatalog.byId(_stats.wkRewardId);
+    if (won != null) return won;
+    final masks = MaskCatalog.weekly;
+    if (masks.isEmpty) return null;
+    final start = _stats.week % masks.length;
+    for (var i = 0; i < masks.length; i++) {
+      final m = masks[(start + i) % masks.length];
+      if (!isUnlocked(m.id)) return m;
+    }
+    return null;
+  }
+
+  /// Whether this week's reward has been won.
+  bool get weeklyRewardWon {
+    _ensureWeek(_clock());
+    return _stats.wkRewardId != null;
+  }
+
+  /// Time until the challenges change (next Monday, local midnight).
+  Duration get weekTimeLeft {
+    final now = _clock();
+    final monday = WeeklyChallenge.mondayOf(WeeklyChallenge.weekOf(now) + 1);
+    return DateTime(monday.year, monday.month, monday.day).difference(now);
+  }
+
+  /// A new week starts the counters over.
+  void _ensureWeek(DateTime now) {
+    final week = WeeklyChallenge.weekOf(now);
+    if (_stats.week == week) return;
+    _stats.week = week;
+    _stats.wk = {};
+    _stats.wkDays = {};
+    _stats.wkArtists = {};
+    _stats.wkAlbums = {};
+    _stats.wkRewardId = null;
+  }
+
+  void _countWeekly(String key, [int by = 1]) {
+    _ensureWeek(_clock());
+    _stats.wk[key] = (_stats.wk[key] ?? 0) + by;
+  }
+
+  /// Hands out the week's mask once its three challenges are done.
+  void _checkWeekly() {
+    if (_stats.wkRewardId != null) return;
+    if (!weeklyChallenges.every(weeklyDone)) return;
+    final reward = weeklyReward;
+    if (reward == null) return;
+    _stats.wkRewardId = reward.id;
+    unlock(reward.id);
   }
 
   /// Fraction 0..1 for the rain goal, which counts seconds.
@@ -219,9 +308,11 @@ class MaskProvider extends ChangeNotifier {
     if (_unlocked.containsKey(id) || MaskCatalog.byId(id) == null) return;
     final at = _clock();
     final newly = [id];
-    final allOthers = MaskCatalog.all.where((m) => m.id != 'oni');
+    // The legendary one asks for the achievement masks, not the weekly ones.
+    final allOthers = MaskCatalog.all.where((m) => m.id != 'oni' && !m.weekly);
     _unlocked[id] = at;
     if (id != 'oni' &&
+        !MaskCatalog.byId(id)!.weekly &&
         !_unlocked.containsKey('oni') &&
         allOthers.every((m) => _unlocked.containsKey(m.id))) {
       _unlocked['oni'] = at;
@@ -280,6 +371,14 @@ class MaskProvider extends ChangeNotifier {
     _stats.dayCounts[track.id] = todayCount;
     _stats.trimMaps();
 
+    _countWeekly('plays');
+    _stats.wkDays.add(_epochDay(now));
+    if (now.hour < 5) _countWeekly('night');
+    if (now.hour >= 5 && now.hour < 9) _countWeekly('morning');
+    if (artist.isNotEmpty) {
+      _stats.wkArtists[artist] = (_stats.wkArtists[artist] ?? 0) + 1;
+    }
+
     unlock('hajime');
     if (_stats.plays >= 250) unlock('hyaku');
     if (_stats.plays >= 2500) unlock('sen');
@@ -289,6 +388,7 @@ class MaskProvider extends ChangeNotifier {
     if (todayCount >= 15) unlock('shuchaku');
     if (MoonCalculator.snapshot(now).isFullMoonWindow) unlock('mangetsu');
     _checkMoments(now);
+    _checkWeekly();
     notifyListeners();
     unawaited(_saveLocal());
   }
@@ -313,6 +413,14 @@ class MaskProvider extends ChangeNotifier {
     _lastCompletedId = track.id;
     if (track.albumId.isEmpty || track.albumId != _runAlbum) return;
     _runTracks.add(track.id);
+    if (_runTracks.length == 5) {
+      _ensureWeek(_clock());
+      if (_stats.wkAlbums.add(track.albumId)) {
+        _checkWeekly();
+        notifyListeners();
+        unawaited(_saveLocal());
+      }
+    }
     if (_runTracks.length >= 5 && !isUnlocked('kanpeki')) {
       unawaited(_checkAlbumRun(track.albumId, _runTracks.length));
     }
@@ -330,6 +438,8 @@ class MaskProvider extends ChangeNotifier {
     _stats.guessStreak = streak;
     if (won && attempts == 1) unlock('mimi');
     if (streak >= 14) unlock('ren');
+    if (won) _countWeekly('guess');
+    _checkWeekly();
     notifyListeners();
     unawaited(_saveLocal());
   }
@@ -340,12 +450,21 @@ class MaskProvider extends ChangeNotifier {
   @visibleForTesting
   void tick(Duration elapsed) {
     if (!_loaded) return;
-    if (isRainPlaying?.call() ?? false) {
+    final rain = isRainPlaying?.call() ?? false;
+    final music = isMusicPlaying?.call() ?? false;
+    if (rain) {
       _stats.rainSeconds += elapsed.inSeconds;
       if (_stats.rainSeconds >= rainGoalSeconds) unlock('ame');
+      _countWeekly('rain', elapsed.inSeconds);
+    }
+    if (music) {
+      _checkMoments(_clock());
+      _countWeekly('sec', elapsed.inSeconds);
+    }
+    if (rain || music) {
+      _checkWeekly();
       unawaited(_saveLocal());
     }
-    if (isMusicPlaying?.call() ?? false) _checkMoments(_clock());
   }
 
   void _checkMoments(DateTime now) {
@@ -394,6 +513,14 @@ class _Stats {
   String dayKey = '';
   Map<String, int> dayCounts = {};
 
+  // This week's challenge counters (reset each Monday).
+  int week = -1;
+  Map<String, int> wk = {};
+  Set<int> wkDays = {};
+  Map<String, int> wkArtists = {};
+  Set<String> wkAlbums = {};
+  String? wkRewardId;
+
   int newArtistsSince(DateTime from) {
     final day = DateTime.utc(from.year, from.month, from.day).millisecondsSinceEpoch ~/ 86400000;
     return artistFirst.values.where((d) => d > 0 && d >= day).length;
@@ -417,6 +544,12 @@ class _Stats {
         'artistFirst': artistFirst,
         'dayKey': dayKey,
         'dayCounts': dayCounts,
+        'week': week,
+        'wk': wk,
+        'wkDays': wkDays.toList(),
+        'wkArtists': wkArtists,
+        'wkAlbums': wkAlbums.toList(),
+        'wkReward': wkRewardId,
       });
 
   static _Stats decode(String? raw) {
@@ -433,6 +566,12 @@ class _Stats {
       s.artistFirst = Map<String, int>.from(m['artistFirst'] ?? {});
       s.dayKey = m['dayKey'] ?? '';
       s.dayCounts = Map<String, int>.from(m['dayCounts'] ?? {});
+      s.week = m['week'] ?? -1;
+      s.wk = Map<String, int>.from(m['wk'] ?? {});
+      s.wkDays = {for (final d in (m['wkDays'] as List? ?? const [])) d as int};
+      s.wkArtists = Map<String, int>.from(m['wkArtists'] ?? {});
+      s.wkAlbums = {for (final a in (m['wkAlbums'] as List? ?? const [])) '$a'};
+      s.wkRewardId = m['wkReward'] as String?;
     } catch (_) {}
     return s;
   }

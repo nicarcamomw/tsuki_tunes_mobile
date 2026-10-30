@@ -31,6 +31,7 @@ import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
+import '../widgets/weekly_challenges_card.dart';
 import '../widgets/wrapped_picker_sheet.dart';
 import 'guess_song_screen.dart';
 import 'listening_clock_screen.dart';
@@ -656,6 +657,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
               SliverToBoxAdapter(child: _buildFeatureCards(locale)),
+
+              // A reason to come back: this week's challenges and their mask.
+              const SliverToBoxAdapter(child: WeeklyChallengesCard(compact: true)),
 
               if (isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(

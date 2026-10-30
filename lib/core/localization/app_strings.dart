@@ -3,6 +3,7 @@ import 'dart:ui' show Locale;
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../models/oni_mask.dart';
+import '../../models/weekly_challenge.dart';
 import '../../services/ambient_sound_generator.dart';
 import '../../services/bpm_flow.dart';
 import '../../services/cadence_detector.dart';
@@ -1828,6 +1829,96 @@ class AppStrings {
   String get wrappedViewYourWrapped => _l.wrappedViewYourWrapped;
 
   String get a11yWrapped => _l.a11yWrapped;
+
+  // --- Weekly challenges ---
+  String weeklyChallengeText(ChallengeKind kind, int n) => switch (language) {
+        AppLanguage.es => switch (kind) {
+            ChallengeKind.newArtists => 'Escucha $n artistas nuevos',
+            ChallengeKind.minutes => 'Escucha $n minutos de música',
+            ChallengeKind.plays => 'Escucha $n canciones',
+            ChallengeKind.days => 'Escucha música $n días distintos',
+            ChallengeKind.night => 'Escucha $n canciones después de medianoche',
+            ChallengeKind.morning => 'Escucha $n canciones antes de las 9 AM',
+            ChallengeKind.rain => 'Escucha $n minutos con lluvia de fondo',
+            ChallengeKind.album => n == 1 ? 'Escucha un álbum en orden (5+ canciones seguidas)' : 'Escucha $n álbumes en orden',
+            ChallengeKind.guess => 'Gana $n desafíos de Adivina la canción',
+            ChallengeKind.oneArtist => 'Escucha $n canciones de un mismo artista',
+          },
+        AppLanguage.en => switch (kind) {
+            ChallengeKind.newArtists => 'Listen to $n new artists',
+            ChallengeKind.minutes => 'Listen to $n minutes of music',
+            ChallengeKind.plays => 'Listen to $n songs',
+            ChallengeKind.days => 'Listen to music on $n different days',
+            ChallengeKind.night => 'Listen to $n songs after midnight',
+            ChallengeKind.morning => 'Listen to $n songs before 9 AM',
+            ChallengeKind.rain => 'Listen for $n minutes with rain ambience',
+            ChallengeKind.album => n == 1 ? 'Play an album in order (5+ songs in a row)' : 'Play $n albums in order',
+            ChallengeKind.guess => 'Win $n Guess the song challenges',
+            ChallengeKind.oneArtist => 'Listen to $n songs by one artist',
+          },
+        AppLanguage.ja => switch (kind) {
+            ChallengeKind.newArtists => '新しいアーティストを$n人聴く',
+            ChallengeKind.minutes => '音楽を$n分聴く',
+            ChallengeKind.plays => '$n曲聴く',
+            ChallengeKind.days => '$n日間音楽を聴く',
+            ChallengeKind.night => '深夜0時以降に$n曲聴く',
+            ChallengeKind.morning => '朝9時前に$n曲聴く',
+            ChallengeKind.rain => '雨の音と一緒に$n分聴く',
+            ChallengeKind.album => 'アルバムを順番に聴く（5曲以上連続）',
+            ChallengeKind.guess => '曲当てチャレンジに$n回勝つ',
+            ChallengeKind.oneArtist => '同じアーティストの曲を$n曲聴く',
+          },
+      };
+
+  String get weeklyTitle => switch (language) {
+        AppLanguage.es => 'DESAFÍOS DE LA SEMANA',
+        AppLanguage.en => "THIS WEEK'S CHALLENGES",
+        AppLanguage.ja => '今週のチャレンジ',
+      };
+
+  String weeklyTimeLeft(Duration left) {
+    final days = left.inDays;
+    final hours = left.inHours;
+    return switch (language) {
+      AppLanguage.es => days >= 1
+          ? 'Quedan $days ${days == 1 ? 'día' : 'días'}'
+          : 'Quedan $hours h',
+      AppLanguage.en => days >= 1
+          ? '$days ${days == 1 ? 'day' : 'days'} left'
+          : '$hours h left',
+      AppLanguage.ja => days >= 1 ? '残り$days日' : '残り$hours時間',
+    };
+  }
+
+  String weeklyRewardHint(String mask) => switch (language) {
+        AppLanguage.es => 'Completa los 3 y gana «$mask», una máscara que solo se consigue con los desafíos semanales.',
+        AppLanguage.en => 'Complete all 3 to win “$mask”, a mask you can only get from weekly challenges.',
+        AppLanguage.ja => '3つすべて達成で「$mask」を獲得。週間チャレンジ限定の面。',
+      };
+
+  String weeklyRewardWon(String mask) => switch (language) {
+        AppLanguage.es => '¡Ganaste «$mask» esta semana! El lunes llegan desafíos nuevos.',
+        AppLanguage.en => 'You won “$mask” this week! New challenges arrive on Monday.',
+        AppLanguage.ja => '今週は「$mask」を獲得！月曜日に新しいチャレンジ。',
+      };
+
+  String get weeklyAllCollected => switch (language) {
+        AppLanguage.es => 'Ya tienes todas las máscaras semanales. ¡Sigue jugando por diversión!',
+        AppLanguage.en => 'You have every weekly mask. Keep playing for fun!',
+        AppLanguage.ja => '週間の面をすべて集めた！',
+      };
+
+  String weeklyDoneCount(int done) => switch (language) {
+        AppLanguage.es => '$done de 3 completados',
+        AppLanguage.en => '$done of 3 done',
+        AppLanguage.ja => '3つ中$doneつ達成',
+      };
+
+  String get weeklyMaskTag => switch (language) {
+        AppLanguage.es => 'SEMANAL',
+        AppLanguage.en => 'WEEKLY',
+        AppLanguage.ja => '週間',
+      };
 
   // --- Wrapped: monthly recaps and the redesign ---
   String monthName(int month) {

@@ -8,6 +8,7 @@ import '../providers/locale_provider.dart';
 import '../providers/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/swipeable_sheet.dart';
+import '../widgets/weekly_challenges_card.dart';
 
 class MaskCollectionScreen extends StatelessWidget {
   const MaskCollectionScreen({super.key});
@@ -121,6 +122,12 @@ class MaskCollectionScreen extends StatelessWidget {
               ),
             ),
           ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 18),
+              child: WeeklyChallengesCard(),
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
             sliver: SliverGrid(
@@ -205,7 +212,11 @@ class _MaskTile extends StatelessWidget {
               _ProgressBar(current: progress.$1, goal: progress.$2, color: mask.rarityColor)
             else
               Text(
-                strings.maskRarity(mask.rarity),
+                mask.weekly
+                    ? '${strings.weeklyMaskTag} · ${strings.maskRarity(mask.rarity)}'
+                    : strings.maskRarity(mask.rarity),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
