@@ -76,6 +76,12 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
 
   void _triggerGlitchBurst() {
     if (!mounted) return;
+    // Timers aren't muted like tickers: skip the burst while this text is
+    // under another screen (or its animations are off) and try again later.
+    if (!TickerMode.valuesOf(context).enabled) {
+      _scheduleNextGlitch();
+      return;
+    }
     _burstTicker?.cancel();
 
     setState(() {
