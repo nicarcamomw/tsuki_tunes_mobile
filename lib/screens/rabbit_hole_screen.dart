@@ -1488,111 +1488,174 @@ class _FocusCard extends StatelessWidget {
     };
     final status = known ? '$state · ${strings.rabbitHoleKnown}' : state;
 
+    // Two tiers: who it is (full name, up to two lines), then what to do.
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.neonPurple.withValues(alpha: 0.35)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ClipOval(
-            child: node.artist.pictureUrl.isEmpty
-                ? Container(
-                    width: 44,
-                    height: 44,
-                    color: AppColors.bgMid,
-                    child: const Icon(Icons.person, color: AppColors.textMuted),
-                  )
-                : CachedNetworkImage(
-                    memCacheWidth: imageCacheSize(context, 44),
-                    imageUrl: node.artist.getBestImage(size: 'medium'),
-                    width: 44,
-                    height: 44,
-                    fit: BoxFit.cover,
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  node.artist.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textBright,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  status,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: strings.rabbitHoleListen,
-            icon: const Icon(Icons.play_circle_outline, size: 22),
-            visualDensity: VisualDensity.compact,
-            color: AppColors.neonGreen,
-            disabledColor: AppColors.textMuted,
-            onPressed: onListen,
-          ),
-          if (node.depth > 0)
-            IconButton(
-              tooltip: strings.rabbitHoleRestartHere,
-              icon: const Icon(Icons.filter_center_focus, size: 20),
-              visualDensity: VisualDensity.compact,
-              color: AppColors.neonCyan,
-              onPressed: onRestart,
-            ),
-          const SizedBox(width: 2),
-          Material(
-            color: AppColors.neonPurple.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(4),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(4),
-              onTap: onOpen,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                child: Row(
+          Row(
+            children: [
+              ClipOval(
+                child: node.artist.pictureUrl.isEmpty
+                    ? Container(
+                        width: 52,
+                        height: 52,
+                        color: AppColors.bgMid,
+                        child: const Icon(Icons.person, color: AppColors.textMuted),
+                      )
+                    : CachedNetworkImage(
+                        memCacheWidth: imageCacheSize(context, 52),
+                        imageUrl: node.artist.getBestImage(size: 'medium'),
+                        width: 52,
+                        height: 52,
+                        fit: BoxFit.cover,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      strings.rabbitHoleOpenArtist,
+                      node.artist.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
                         letterSpacing: 1,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.arrow_forward,
-                        size: 12, color: AppColors.neonPurple),
                   ],
                 ),
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _FocusAction(
+                  icon: Icons.play_circle_outline,
+                  label: strings.rabbitHoleListenShort,
+                  tooltip: strings.rabbitHoleListen,
+                  color: AppColors.neonGreen,
+                  locale: locale,
+                  onTap: onListen,
+                ),
+              ),
+              if (node.depth > 0) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FocusAction(
+                    icon: Icons.filter_center_focus,
+                    label: strings.rabbitHoleRestartHere,
+                    color: AppColors.neonCyan,
+                    locale: locale,
+                    onTap: onRestart,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: _FocusAction(
+                  icon: Icons.arrow_forward,
+                  label: strings.rabbitHoleOpenArtist,
+                  color: AppColors.neonPurple,
+                  locale: locale,
+                  onTap: onOpen,
+                  filled: true,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+}
+
+/// One of the focus card's actions: icon and label in a small button.
+class _FocusAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? tooltip;
+  final Color color;
+  final LocaleProvider locale;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  const _FocusAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.locale,
+    required this.onTap,
+    this.tooltip,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final tint = enabled ? color : AppColors.textMuted;
+    final button = Material(
+      color: filled ? tint.withValues(alpha: 0.18) : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+        side: BorderSide(color: tint.withValues(alpha: filled ? 0 : 0.4)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: onTap,
+        child: SizedBox(
+          height: 38,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 16, color: tint),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: locale.getTextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: enabled ? AppColors.textBright : AppColors.textMuted,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }
 

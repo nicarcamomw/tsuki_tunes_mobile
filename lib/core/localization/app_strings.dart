@@ -3963,6 +3963,12 @@ class AppStrings {
         AppLanguage.ja => '接続エラー · タップで再試行',
       };
 
+  String get rabbitHoleListenShort => switch (language) {
+        AppLanguage.es => 'ESCUCHAR',
+        AppLanguage.en => 'LISTEN',
+        AppLanguage.ja => '聴く',
+      };
+
   String get rabbitHoleListen => switch (language) {
         AppLanguage.es => 'Escuchar a este artista',
         AppLanguage.en => 'Listen to this artist',
