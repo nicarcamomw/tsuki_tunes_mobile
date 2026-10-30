@@ -1227,6 +1227,18 @@ class AppStrings {
   String get playNext => _l.playNext;
 
   String get addedPlayNext => _l.addedPlayNext;
+  String get queueNowPlaying => _l.queueNowPlaying;
+  String get queueComingUp => _l.queueComingUp;
+  String get queueShuffledTag => _l.queueShuffledTag;
+  String get queueGesturesHint => _l.queueGesturesHint;
+  String get queueSaveAsPlaylist => _l.queueSaveAsPlaylist;
+  String get queueNothingNext => _l.queueNothingNext;
+  String get queueRemovedSongs => _l.queueRemovedSongs;
+  String get a11yMoveUp => _l.a11yMoveUp;
+  String get a11yMoveDown => _l.a11yMoveDown;
+  String queuePlayedHeader(int count) => _l.queuePlayedHeader(count);
+  String queueMoreShuffled(int count) => _l.queueMoreShuffled(count);
+  String queueSummary(int count, int minutes) => _l.queueSummary(count, minutes);
 
   // --- Mini Player ---
   String get stoppedPlayback => _l.stoppedPlayback;

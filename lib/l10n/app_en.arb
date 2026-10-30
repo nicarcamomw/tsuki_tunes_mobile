@@ -618,5 +618,17 @@
   "autoRecent": "Recent",
   "autoFavorites": "Favorites",
   "autoPlaylists": "My playlists",
-  "autoTopChart": "Global top"
+  "autoTopChart": "Global top",
+  "queueNowPlaying": "NOW PLAYING",
+  "queueComingUp": "UP NEXT",
+  "queueShuffledTag": "SHUFFLED",
+  "queueGesturesHint": "Swipe → to play next · ← to remove · hold to move",
+  "queueSaveAsPlaylist": "Save as playlist",
+  "queueNothingNext": "Nothing after this song",
+  "queueRemovedSongs": "Songs removed",
+  "a11yMoveUp": "Move up",
+  "a11yMoveDown": "Move down",
+  "queuePlayedHeader": "PLAYED ({count})",
+  "queueMoreShuffled": "+{count} more, shuffled",
+  "queueSummary": "{count, plural, =1{1 song} other{{count} songs}} · {minutes} min"
 }

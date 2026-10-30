@@ -344,6 +344,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                       index: index,
                       queue: playlist.tracks,
                       showListenedCheckbox: false,
+                      swipeToQueue: false,
                     ),
                   ),
                 );

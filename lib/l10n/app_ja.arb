@@ -618,5 +618,17 @@
   "autoRecent": "最近再生",
   "autoFavorites": "お気に入り",
   "autoPlaylists": "マイプレイリスト",
-  "autoTopChart": "世界トップ"
+  "autoTopChart": "世界トップ",
+  "queueNowPlaying": "再生中",
+  "queueComingUp": "次に再生",
+  "queueShuffledTag": "シャッフル",
+  "queueGesturesHint": "→スワイプで次に再生・←で削除・長押しで移動",
+  "queueSaveAsPlaylist": "プレイリストとして保存",
+  "queueNothingNext": "この後の曲はありません",
+  "queueRemovedSongs": "曲を削除しました",
+  "a11yMoveUp": "上へ移動",
+  "a11yMoveDown": "下へ移動",
+  "queuePlayedHeader": "再生済み（{count}）",
+  "queueMoreShuffled": "ほか{count}曲（シャッフル）",
+  "queueSummary": "{count}曲・{minutes}分"
 }

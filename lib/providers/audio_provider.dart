@@ -28,6 +28,7 @@ import 'connectivity_provider.dart';
 
 export '../models/playback_error.dart';
 export '../models/repeat_mode.dart';
+export '../services/playback_queue.dart' show QueueSnapshot;
 export 'audio_radio_controller.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
@@ -100,6 +101,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // starts over with no gap instead of Tsuki playing it again. Null until
   // set this session.
   bool? _spotifyLoopsTrack;
+  // Queue edits wait a moment (several drags in a row) before Spotify gets
+  // the new list; while paused it gets it on resume instead.
+  Timer? _spotifyListTimer;
+  bool _spotifyListStale = false;
 
   late final SleepTimerController _sleepCtrl;
 
@@ -1125,23 +1130,86 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Hands Spotify a fresh list from the current song on, from where it is,
   /// so it never runs out of our queue. Only near a song's start, where the
   /// brief restart goes unnoticed; otherwise the next song boundary does it.
-  Future<void> _reissueSpotifyAhead() async {
+  /// [force] (the queue was edited) hands it anywhere in the song, whenever
+  /// the list differs from the one Spotify has. Returns whether it played.
+  Future<bool> _reissueSpotifyAhead({bool force = false}) async {
     final gen = _playGeneration;
     final uri = _currentSpotifyUri;
-    if (uri == null || !_spotifyActive) return;
+    if (uri == null || !_spotifyActive) return false;
     final ahead = await _resolveAhead();
-    if (gen != _playGeneration || !_spotifyActive) return;
-    if (ahead.length <= _spotifyAhead.length) return;
-    final pos =
-        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
-    if (pos > const Duration(seconds: 8)) return;
+    if (gen != _playGeneration || !_spotifyActive) return false;
+    if (force) {
+      final same = ahead.length == _spotifyAhead.length &&
+          [
+            for (var i = 0; i < ahead.length; i++)
+              ahead[i].trackId == _spotifyAhead[i].trackId
+          ].every((x) => x);
+      if (same) return false;
+    } else if (ahead.length <= _spotifyAhead.length) {
+      return false;
+    }
+    final pos = _isPlaying
+        ? _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime)
+        : _position;
+    if (!force && pos > const Duration(seconds: 8)) return false;
     final ok = await _spotify.play(
       trackUris: [uri, ...ahead.map((e) => e.uri)],
       positionMs: pos.inMilliseconds,
     );
-    if (gen != _playGeneration || !ok) return;
+    if (gen != _playGeneration || !ok) return false;
     _spotifyAhead = ahead;
     _lastPlayCommandTime = DateTime.now();
+    if (force) {
+      _spotifySyncPosition = pos;
+      _spotifySyncTime = DateTime.now();
+    }
+    return true;
+  }
+
+  /// The queue was edited: once the edits settle, give Spotify the songs
+  /// that now come next, or it would play the old ones after this song.
+  void _scheduleSpotifyListRefresh() {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    _spotifyListTimer?.cancel();
+    _spotifyListTimer = Timer(const Duration(milliseconds: 1500), () {
+      unawaited(_refreshSpotifyList());
+    });
+  }
+
+  /// Whether the songs Spotify has after this one aren't our next ones.
+  bool get _spotifyListOutdated {
+    // Spotify loops the song itself; leaving repeat-one hands the list.
+    if (_q.repeatMode == PlaybackRepeatMode.one) return false;
+    final expected = [
+      for (final i in _q.peekUpcoming(_spotifyAheadMax)) _q.tracks[i].id,
+    ];
+    final handed = [for (final e in _spotifyAhead) e.trackId];
+    if (handed.isEmpty) return expected.isNotEmpty;
+    if (handed.length > expected.length) return true;
+    for (var i = 0; i < handed.length; i++) {
+      if (handed[i] != expected[i]) return true;
+    }
+    return false;
+  }
+
+  Future<void> _refreshSpotifyList() async {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    if (_currentSpotifyUri == null || !_spotifyListOutdated) {
+      _spotifyListStale = false;
+      return;
+    }
+    if (!_isPlaying) {
+      _spotifyListStale = true;
+      return;
+    }
+    debugPrint('[AudioProvider] Queue edited, handing Spotify the new list');
+    await _reissueSpotifyAhead(force: true);
+  }
+
+  @visibleForTesting
+  Future<void> refreshSpotifyListForTesting() async {
+    _spotifyListTimer?.cancel();
+    await _refreshSpotifyList();
   }
 
   /// Tsuki was closed or killed while Spotify kept playing our queue: pick
@@ -1270,6 +1338,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _spotifyResume() async {
+    if (_spotifyListStale) {
+      _spotifyListStale = false;
+      // The queue changed while paused: resuming with the new list also
+      // gives Spotify the songs that now come next.
+      if (await _reissueSpotifyAhead(force: true)) return;
+    }
     if (_nativePlayer.isConnected) {
       try {
         await _nativePlayer.resume();
@@ -1457,6 +1531,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
     if (newQueue != null && newQueue.isNotEmpty) _prefetchUpcoming();
+    // A new play hands Spotify a fresh list.
+    _spotifyListTimer?.cancel();
+    _spotifyListStale = false;
 
     _retryTimer?.cancel();
     _retryCount = 0;
@@ -2072,6 +2149,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _retryTimer?.cancel();
     _retryCount = 0;
     _q.resetNavigation();
+    _spotifyListTimer?.cancel();
+    _spotifyListStale = false;
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
@@ -2143,9 +2222,40 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (oldIndex < 0 || oldIndex >= _q.length) return;
     if (newIndex < 0 || newIndex >= _q.length) return;
     _q.reorder(oldIndex, newIndex);
-    _prefetchNextTrack();
-    _persistPlaybackState();
-    notifyListeners();
+    _queueChanged();
+  }
+
+  /// Up to [max] upcoming queue indices, in the order they will play
+  /// (shuffle included: the songs [next] will pick, in that order).
+  List<int> upcomingOrder([int max = 60]) => _q.upcoming(max);
+
+  /// How many songs are still to come (all the others when shuffling).
+  int get upcomingCount => _q.upcomingCount;
+
+  /// Queue indices already played, oldest first.
+  List<int> get playedIndices => _q.played();
+
+  /// Moves the song at position [from] of [upcomingOrder] to [to]. Dropped
+  /// among the songs you queued, it joins them; past them, it leaves them.
+  void moveUpcoming(int from, int to) {
+    _q.moveUpcoming(from, to);
+    _queueChanged();
+  }
+
+  /// Moves the queue song at [index] to play right after the current one.
+  void playNextFromQueue(int index) {
+    if (index < 0 || index >= _q.length) return;
+    playNext(_q.tracks[index]);
+  }
+
+  /// The queue as it is now, to undo an edit with [restoreQueue].
+  QueueSnapshot queueSnapshot() => _q.snapshot();
+
+  /// Undoes edits made since [snapshot], keeping the song playing now.
+  bool restoreQueue(QueueSnapshot snapshot) {
+    if (!_q.restoreSnapshot(snapshot)) return false;
+    _queueChanged();
+    return true;
   }
   /// Spotify plays full songs on its own player, whose speed can't be set.
   bool get canChangeTempo => !_useSpotify || _spotifyFallbackActive;
@@ -2203,6 +2313,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     _prefetchNextTrack();
     _persistPlaybackState();
+    _scheduleSpotifyListRefresh();
     notifyListeners();
   }
   /// Removes the track at [index] from the playback queue.
@@ -2217,9 +2328,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (wasCurrent) {
       playTrack(_q.tracks[_q.currentIndex]);
+      _persistPlaybackState();
     } else {
-      _prefetchNextTrack();
-      notifyListeners();
+      _queueChanged();
     }
     _persistPlaybackState();
   }
@@ -2230,6 +2341,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     _q.clear(keep: _currentTrack);
     _persistPlaybackState();
+    _scheduleSpotifyListRefresh();
     notifyListeners();
     // A radio never runs dry: clearing it just means "fresh picks, please".
     unawaited(_radioCtrl.topUp());
@@ -2376,6 +2488,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
+    _spotifyListTimer?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

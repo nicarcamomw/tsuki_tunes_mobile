@@ -74,7 +74,7 @@ class _PlaylistSelectorContent extends StatelessWidget {
               ),
               onTap: () async {
                 unawaited(HapticFeedback.lightImpact());
-                final name = await _showCreateDialog(context);
+                final name = await showPlaylistNameDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
                   final provider = context.read<PlaylistProvider>();
                   // One write with the song in it: a second write right
@@ -237,73 +237,104 @@ class _PlaylistSelectorContent extends StatelessWidget {
       ),
     );
   }
+}
 
-  Future<String?> _showCreateDialog(BuildContext context) {
-    final strings = context.read<LocaleProvider>().strings;
-    final locale = context.read<LocaleProvider>();
-    final controller = TextEditingController();
+/// Asks for a new playlist's name. Null when cancelled.
+Future<String?> showPlaylistNameDialog(BuildContext context) {
+  final strings = context.read<LocaleProvider>().strings;
+  final locale = context.read<LocaleProvider>();
+  final controller = TextEditingController();
 
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
-          strings.newPlaylist,
-          style: locale.getTextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textBright,
-          ),
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.bgCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Text(
+        strings.newPlaylist,
+        style: locale.getTextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textBright,
         ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: PlaylistProvider.maxNameLength,
-          style: locale.getTextStyle(
-            fontSize: 14,
-            color: AppColors.textBright,
-          ),
-          decoration: InputDecoration(
-            hintText: strings.playlistNameHint,
-            hintStyle: locale.getTextStyle(
-              fontSize: 14,
-              color: AppColors.textMuted,
-            ),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.accent),
-            ),
-          ),
-          onSubmitted: (value) => Navigator.pop(ctx, value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              strings.cancel,
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(
-              strings.create,
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.accent,
-              ),
-            ),
-          ),
-        ],
       ),
-    );
-  }
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        maxLength: PlaylistProvider.maxNameLength,
+        style: locale.getTextStyle(
+          fontSize: 14,
+          color: AppColors.textBright,
+        ),
+        decoration: InputDecoration(
+          hintText: strings.playlistNameHint,
+          hintStyle: locale.getTextStyle(
+            fontSize: 14,
+            color: AppColors.textMuted,
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.accent),
+          ),
+        ),
+        onSubmitted: (value) => Navigator.pop(ctx, value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(
+            strings.cancel,
+            style: locale.getTextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, controller.text),
+          child: Text(
+            strings.create,
+            style: locale.getTextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.accent,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Creates a playlist named by the user with [tracks] (e.g. the queue) and
+/// says so. Returns whether it was created.
+Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) async {
+  if (tracks.isEmpty) return false;
+  final name = await showPlaylistNameDialog(context);
+  if (name == null || name.trim().isEmpty || !context.mounted) return false;
+  final created =
+      await context.read<PlaylistProvider>().createPlaylist(name, tracks: tracks);
+  if (created == null || !context.mounted) return created != null;
+  final strings = context.read<LocaleProvider>().strings;
+  final locale = context.read<LocaleProvider>();
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        strings.playlistCreated,
+        style: locale.getTextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textBright,
+        ),
+      ),
+      backgroundColor: AppColors.bgCard,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+  return true;
 }

@@ -864,6 +864,58 @@ void main() {
     });
   });
 
+  group('Editing the queue hands Spotify the new list', () {
+    Future<AudioProvider> playing(List<Track> tracks) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(20000, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      return provider;
+    }
+
+    test('while playing, from where the song is', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      provider.playNext(_track('t9'));
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.lastPlayedUris, [
+        'spotify:track:t1',
+        'spotify:track:t9',
+        'spotify:track:t2',
+        'spotify:track:t3',
+      ]);
+    });
+
+    test('nothing is sent when the list did not change', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      final plays = fakeSpotify.playCount;
+      provider.moveUpcoming(0, 1);
+      provider.moveUpcoming(1, 0);
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.playCount, plays);
+    });
+
+    test('while paused, on resume', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      await provider.togglePlay();
+      expect(provider.isPlaying, isFalse);
+      final plays = fakeSpotify.playCount;
+
+      provider.playNext(_track('t9'));
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.playCount, plays);
+
+      await provider.togglePlay();
+      expect(fakeSpotify.playCount, plays + 1);
+      expect(fakeSpotify.lastPlayedUris?[1], 'spotify:track:t9');
+    });
+  });
+
   group('Offline', () {
     test('plays the cached preview without asking Spotify', () async {
       AudioPrecacheService().clearCache();
