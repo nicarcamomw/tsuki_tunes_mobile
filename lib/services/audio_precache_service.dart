@@ -13,7 +13,8 @@ class AudioPrecacheService {
 
   final Map<String, String> _cachedPaths = {};
   final Set<String> _inFlight = {};
-  static const int _maxCachedFiles = 10;
+  // The next songs downloaded ahead plus the last ones played (~0.5 MB each).
+  static const int _maxCachedFiles = 25;
   final List<String> _cacheLruOrder = [];
 
   bool _diskIndexed = false;
@@ -90,7 +91,7 @@ class AudioPrecacheService {
     return null;
   }
 
-  /// Silently pre-downloads the ~450KB preview of the next track in the background.
+  /// Silently pre-downloads the ~450KB preview of an upcoming track in the background.
   Future<void> precacheTrack(Track track) async {
     if (kIsWeb) return;
     if (track.previewUrl.isEmpty) return;
@@ -104,7 +105,7 @@ class AudioPrecacheService {
       if (dir == null) return;
 
       final targetFile = File('${dir.path}/preview_${track.id}.mp3');
-      debugPrint('[AudioPrecache] Pre-caching next track audio: "${track.title}"...');
+      debugPrint('[AudioPrecache] Pre-caching upcoming track audio: "${track.title}"...');
 
       final response = await http
           .get(Uri.parse(track.previewUrl))

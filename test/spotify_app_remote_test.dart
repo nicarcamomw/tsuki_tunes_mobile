@@ -1,8 +1,14 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/providers/connectivity_provider.dart';
+import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
+import 'package:tsuki_tunes_mobile/services/audio_precache_service.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_web_player.dart';
 
@@ -210,6 +216,25 @@ class FakeNativePlayer extends SpotifyNativePlayer {
 
   @override
   Future<void> dispose() async => disconnect();
+}
+
+class _OfflineConnectivity extends ChangeNotifier
+    implements ConnectivityProvider {
+  @override
+  bool get isOnline => false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakePreviewPlayer extends AudioPlayerService {
+  final played = <String>[];
+
+  @override
+  Future<void> playTrack(Track track,
+      {Duration? initialPosition, int maxRetries = 3}) async {
+    played.add(track.id);
+  }
 }
 
 void main() {
@@ -749,6 +774,37 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.crossfadeTriggered, isFalse);
+    });
+  });
+
+  group('Offline', () {
+    test('plays the cached preview without asking Spotify', () async {
+      AudioPrecacheService().clearCache();
+      final dir =
+          Directory('${Directory.systemTemp.path}/tsuki_preview_cache')
+            ..createSync(recursive: true);
+      File('${dir.path}/preview_t1.mp3')
+          .writeAsBytesSync(List.filled(15000, 1));
+
+      fakeNative.setConnected(true);
+      final previews = _FakePreviewPlayer();
+      final provider = AudioProvider(
+        service: previews,
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        connectivityProvider: _OfflineConnectivity(),
+      );
+      await Future.delayed(Duration.zero);
+      final track = _track('t1');
+
+      await provider.playTrack(track, newQueue: [track, _track('t2')]);
+
+      expect(provider.useSpotify, isTrue);
+      expect(fakeSpotify.playCount, 0);
+      expect(fakeNative.lastTrackUri, isNull);
+      expect(previews.played, ['t1']);
+      expect(provider.spotifyFallbackActive, isTrue);
+      AudioPrecacheService().clearCache();
     });
   });
 

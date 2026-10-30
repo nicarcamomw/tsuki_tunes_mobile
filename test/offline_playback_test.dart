@@ -203,32 +203,106 @@ void main() {
       expect(fakePlayer.playCallCount, equals(0));
     });
 
-    test('_prefetchUpcoming precachea 3 tracks', () async {
+    test('precarga las 5 canciones siguientes', () async {
       final connectivity = MockConnectivityProvider(isOnline: true);
-      final fakePlayer = FakeAudioPlayerService();
-      final storage = StorageService();
       final audioProvider = AudioProvider(
-        service: fakePlayer,
-        storage: storage,
+        service: FakeAudioPlayerService(),
+        storage: StorageService(),
         connectivityProvider: connectivity,
       );
-
-      final t0 = createTestTrack('q0');
-      final t1 = createTestTrack('q1');
-      final t2 = createTestTrack('q2');
-      final t3 = createTestTrack('q3');
-      final t4 = createTestTrack('q4');
+      final queue = [for (var i = 0; i < 8; i++) createTestTrack('q$i')];
 
       final prefetchedIds = <String>[];
       audioProvider.onPrecacheTrackForTesting = (track) {
         prefetchedIds.add(track.id);
       };
 
-      await audioProvider.playTrack(t0, newQueue: [t0, t1, t2, t3, t4]);
+      await audioProvider.playTrack(queue[0], newQueue: queue);
 
-      // When newQueue is established at index 0, the next 3 tracks (q1, q2, q3) are precached
-      expect(prefetchedIds, equals(['q1', 'q2', 'q3']));
-      expect(prefetchedIds.length, equals(3));
+      expect(prefetchedIds.take(5), equals(['q1', 'q2', 'q3', 'q4', 'q5']));
+    });
+
+    test('la ventana de precarga avanza con cada canción', () async {
+      final connectivity = MockConnectivityProvider(isOnline: true);
+      final audioProvider = AudioProvider(
+        service: FakeAudioPlayerService(),
+        storage: StorageService(),
+        connectivityProvider: connectivity,
+      );
+      final queue = [for (var i = 0; i < 8; i++) createTestTrack('q$i')];
+      await audioProvider.playTrack(queue[0], newQueue: queue);
+
+      final prefetchedIds = <String>[];
+      audioProvider.onPrecacheTrackForTesting = (track) {
+        prefetchedIds.add(track.id);
+      };
+      await audioProvider.next();
+
+      expect(prefetchedIds.take(5), equals(['q2', 'q3', 'q4', 'q5', 'q6']));
+    });
+
+    test('al final de la lista sin repetir no precarga de más', () async {
+      final connectivity = MockConnectivityProvider(isOnline: true);
+      final audioProvider = AudioProvider(
+        service: FakeAudioPlayerService(),
+        storage: StorageService(),
+        connectivityProvider: connectivity,
+      );
+      final queue = [for (var i = 0; i < 3; i++) createTestTrack('q$i')];
+
+      final prefetchedIds = <String>[];
+      audioProvider.onPrecacheTrackForTesting = (track) {
+        prefetchedIds.add(track.id);
+      };
+      await audioProvider.playTrack(queue[0], newQueue: queue);
+
+      expect(prefetchedIds.toSet(), equals({'q1', 'q2'}));
+    });
+
+    test('en aleatorio precarga las canciones que next() tocará', () async {
+      final connectivity = MockConnectivityProvider(isOnline: true);
+      final audioProvider = AudioProvider(
+        service: FakeAudioPlayerService(),
+        storage: StorageService(),
+        connectivityProvider: connectivity,
+      );
+      final queue = [for (var i = 0; i < 10; i++) createTestTrack('q$i')];
+      await audioProvider.playTrack(queue[0], newQueue: queue);
+      audioProvider.toggleShuffle();
+
+      final prefetchedIds = <String>[];
+      audioProvider.onPrecacheTrackForTesting = (track) {
+        prefetchedIds.add(track.id);
+      };
+      audioProvider.prefetchUpcomingForTesting();
+      final expected = prefetchedIds.take(5).toList();
+      expect(expected.length, equals(5));
+
+      final played = <String>[];
+      for (var i = 0; i < 5; i++) {
+        await audioProvider.next();
+        played.add(audioProvider.currentTrack!.id);
+      }
+      expect(played, equals(expected));
+    });
+
+    test('sin conexión sigue con las canciones ya precargadas', () async {
+      final connectivity = MockConnectivityProvider(isOnline: false);
+      final audioProvider = AudioProvider(
+        service: FakeAudioPlayerService(),
+        storage: StorageService(),
+        connectivityProvider: connectivity,
+      );
+      for (var i = 0; i < 4; i++) {
+        mockCachedFile('c$i');
+      }
+      final queue = [for (var i = 0; i < 4; i++) createTestTrack('c$i')];
+      await audioProvider.playTrack(queue[0], newQueue: queue);
+
+      // Everything is already on disk: playback keeps going offline.
+      await audioProvider.next();
+      expect(audioProvider.currentTrack?.id, equals('c1'));
+      expect(audioProvider.lastPlaybackError, isNull);
     });
   });
 }

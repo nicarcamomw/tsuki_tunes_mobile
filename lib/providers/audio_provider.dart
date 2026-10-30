@@ -62,6 +62,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _prefetchedForTrackId;
   String? _prefetchedTargetTrackId;
   int _prefetchGeneration = 0;
+  // Previews downloaded ahead of the current song, so the next ones play
+  // without a connection (metro, plane) and without buffering.
+  static const int _precacheAhead = 5;
+  int _precacheGeneration = 0;
 
   bool _completionHandled = false;
   bool _crossfadeTriggered = false;
@@ -406,19 +410,28 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   bool canPlayOfflineForTesting(Track track) => _canPlayOffline(track);
 
-  void _prefetchUpcoming([int count = 3]) {
+  /// Downloads the previews of the next [count] songs in play order
+  /// (shuffle included), nearest first and one at a time, so the very next
+  /// song is ready soonest on a weak connection. A newer call (the song
+  /// changed) takes over from this one.
+  void _prefetchUpcoming([int count = _precacheAhead]) {
     if (_q.isEmpty) return;
-    for (var i = 1; i <= count; i++) {
-      final idx = (_q.currentIndex + i) % _q.length;
-      if (idx != _q.currentIndex) {
-        final track = _q.tracks[idx];
-        onPrecacheTrackForTesting?.call(track);
-        _precache(track);
-      }
+    final upcoming = [for (final i in _q.peekUpcoming(count)) _q.tracks[i]];
+    if (upcoming.isEmpty) return;
+    for (final track in upcoming) {
+      onPrecacheTrackForTesting?.call(track);
     }
+    final gen = ++_precacheGeneration;
+    unawaited(() async {
+      for (final track in upcoming) {
+        if (gen != _precacheGeneration) return;
+        await _precache(track);
+      }
+    }());
   }
   @visibleForTesting
-  void prefetchUpcomingForTesting([int count = 3]) => _prefetchUpcoming(count);
+  void prefetchUpcomingForTesting([int count = _precacheAhead]) =>
+      _prefetchUpcoming(count);
 
   AudioProvider({
     AudioPlayerService? service,
@@ -1498,6 +1511,25 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       await _service.stop();
     } catch (_) {}
 
+    if (!_online) {
+      // No connection (metro, plane): Spotify can't be searched or told to
+      // play, so play the preview downloaded ahead of time right away
+      // instead of waiting on requests that will time out.
+      debugPrint('Spotify: offline, playing the cached preview of "${track.title}"');
+      _spotifyActive = false;
+      _spotifyFallbackActive = true;
+      if (_nativePlayer.isConnected) {
+        try {
+          await _nativePlayer.pause();
+        } catch (_) {}
+      }
+      await _service.playTrack(track);
+      if (gen != _playGeneration) return;
+      _isBuffering = false;
+      notifyListeners();
+      return;
+    }
+
     String? uri;
     if (_prefetchedForTrackId == track.id && _prefetchedUri != null) {
       uri = _prefetchedUri;
@@ -1787,11 +1819,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void _precache(Track track) {
+  Future<void> _precache(Track track) async {
+    if (!_online) return;
     if (_precacheWifiOnly && (_connectivityProvider?.isMetered ?? false)) {
       return;
     }
-    _withFreshPreview(track).then(AudioPrecacheService().precacheTrack);
+    try {
+      await AudioPrecacheService().precacheTrack(await _withFreshPreview(track));
+    } catch (e) {
+      debugPrint('[AudioProvider] Precache non-fatal error: $e');
+    }
   }
 
   /// Returns [track] with a playable previewUrl, re-fetching it from Deezer
@@ -1840,8 +1877,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     final nextTrack = _q.tracks[nextIdx];
 
-    // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
-    _precache(nextTrack);
+    // 1. Previews of the next songs, also with Spotify: if the connection
+    // drops, they play instead of nothing.
+    _prefetchUpcoming();
 
     // 2. Predictive URI resolution for Spotify (Zero-latency track start)
     if (_useSpotify) {

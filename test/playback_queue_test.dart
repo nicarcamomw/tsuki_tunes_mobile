@@ -181,6 +181,26 @@ void main() {
         }
       });
 
+      test('selecting the track next() moved to keeps the picks ahead', () {
+        q.toggleShuffle();
+        final ahead = q.peekUpcoming(3);
+        for (final i in ahead) {
+          q.next(online: true, canPlay: _all);
+          // The player then plays it, selecting it again.
+          q.select(q.tracks[q.currentIndex]);
+          expect(q.currentIndex, i);
+        }
+      });
+
+      test('picking another song in the queue redoes the picks', () {
+        q.toggleShuffle();
+        final ahead = q.peekUpcoming(3);
+        final other = [for (var i = 0; i < q.length; i++) i]
+            .firstWhere((i) => i != q.currentIndex && i != ahead.first);
+        q.select(q.tracks[other]);
+        expect(q.nextShuffleIndex, isNull);
+      });
+
       test('queueing by hand redoes the picks with the queued song first', () {
         q.toggleShuffle();
         q.peekUpcoming(3);

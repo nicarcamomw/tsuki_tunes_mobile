@@ -108,6 +108,9 @@ class PlaybackQueue {
   /// Tracks still waiting in the user's queue stay up next either way.
   void select(Track track, {List<Track>? newQueue}) {
     final pending = _pendingUserQueue(except: track.id);
+    // Playing the track [next] just moved to: the shuffle picks made ahead
+    // (and the songs downloaded for them) still hold.
+    final keepPicks = newQueue == null && current?.id == track.id;
     if (newQueue != null && newQueue.isNotEmpty) {
       _tracks = List.of(newQueue);
       _currentIndex = _tracks.indexWhere((t) => t.id == track.id);
@@ -125,7 +128,7 @@ class PlaybackQueue {
         _currentIndex = idx;
       }
     }
-    _forgetShufflePicks();
+    if (!keepPicks) _forgetShufflePicks();
     _requeue(pending);
   }
 
