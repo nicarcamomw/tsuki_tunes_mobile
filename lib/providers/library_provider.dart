@@ -661,6 +661,9 @@ class LibraryProvider extends ChangeNotifier {
       for (final doc in snap.docs) {
         batch.delete(doc.reference);
       }
+      // The rules only accept subcollection writes stamped with the time.
+      batch.set(userDoc, {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
       await batch.commit();
     }).catchError((Object e) {
       debugPrint('[LibraryProvider] deletion log prune failed: $e');

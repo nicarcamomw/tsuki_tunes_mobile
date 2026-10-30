@@ -163,6 +163,10 @@ class PlaylistProvider extends ChangeNotifier {
         final docRef = col.doc();
         batch.set(docRef, p.copyWith(id: docRef.id).toFirestore());
       }
+      // The rules only accept subcollection writes stamped with the time.
+      batch.set(_firebase.db.collection('users').doc(uid),
+          {'lastSubWrite': FieldValue.serverTimestamp()},
+          SetOptions(merge: true));
       await batch.commit();
       await _storage.saveCachedPlaylists(guestUid, []);
       debugPrint('[PlaylistProvider] Imported ${guestPlaylists.length} guest playlists');
