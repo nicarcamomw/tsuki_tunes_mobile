@@ -1550,7 +1550,8 @@ class _GearProfileButtonState extends State<_GearProfileButton>
                 radius: 12,
                 backgroundColor: AppColors.bgCard,
                 backgroundImage: photoURL != null
-                    ? NetworkImage(photoURL)
+                    ? ResizeImage(CachedNetworkImageProvider(photoURL),
+                        width: imageCacheSize(context, 24))
                     : null,
                 child: photoURL == null
                     ? Icon(Icons.person,

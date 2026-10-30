@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/cyber_page_route.dart';
+import '../core/utils/image_cache_size.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
@@ -80,7 +82,10 @@ class ProfileBottomSheet {
                         if (auth.user?.photoURL != null)
                           CircleAvatar(
                             radius: 30,
-                            backgroundImage: NetworkImage(auth.user!.photoURL!),
+                            backgroundImage: ResizeImage(
+                              CachedNetworkImageProvider(auth.user!.photoURL!),
+                              width: imageCacheSize(context, 60),
+                            ),
                           )
                         else
                           const CircleAvatar(

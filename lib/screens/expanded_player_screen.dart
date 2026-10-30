@@ -901,6 +901,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                         child: track.coverUrl.isNotEmpty
                             ? CachedNetworkImage(
                                 imageUrl: track.coverUrl,
+                                memCacheWidth: imageCacheSize(context, 44),
                                 fit: BoxFit.cover,
                               )
                             : Container(color: AppColors.bgHover),
