@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Texts in lib/l10n/*.arb, compiled by `flutter gen-l10n`.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   # UI, Fonts and Icons
   cupertino_icons: ^1.0.8
@@ -74,6 +78,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Compiles lib/l10n/*.arb (see l10n.yaml) on pub get and build.
+  generate: true
 
   assets:
     - assets/images/

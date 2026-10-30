@@ -58,3 +58,6 @@ app.*.map.json
 **/google-services.json
 **/GoogleService-Info.plist
 lib/firebase_options.dart
+
+# Generated from lib/l10n/*.arb on pub get / build (flutter: generate: true)
+/lib/l10n/generated/

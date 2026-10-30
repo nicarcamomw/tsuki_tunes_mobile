@@ -1,0 +1,1007 @@
+{
+  "@@locale": "es",
+  "homeTelemetry": "◈ 軍事通信 // TSUKI.SYS.01",
+  "searchTelemetry": "◈ 探索 // FREQ.SCAN.02",
+  "libraryTelemetry": "◈ 保管庫 // DATA.VAULT.03",
+  "homeHeader": "INICIO // 01",
+  "statsTracks": "CANCIONES",
+  "statsArtists": "ARTISTAS",
+  "statsAlbums": "ÁLBUMES",
+  "statsTopArtist": "ARTISTA TOP",
+  "topArtistsTitle": "TOP ARTISTAS MÁS ESCUCHADOS",
+  "latestReleasesTitle": "ÚLTIMOS LANZAMIENTOS PARA TI",
+  "recommendedTitle": "RECOMENDACIONES DEL SISTEMA",
+  "searchTitle": "Buscar",
+  "searchSubtitle": "Artistas, álbumes y canciones",
+  "recentSearches": "BÚSQUEDAS RECIENTES",
+  "clearHistory": "LIMPIAR",
+  "searchHint": "¿Qué quieres escuchar?",
+  "tabAll": "Todo",
+  "tabArtists": "Artistas",
+  "tabAlbums": "Álbumes",
+  "tabTracks": "Canciones",
+  "tabFavorites": "Favoritos",
+  "emptyStateTitle": "EXPLORA LA BASE DE DATOS",
+  "emptyStateSubtitle": "Escribe el nombre de un artista, canción o álbum",
+  "noResultsFor": "No se encontraron resultados para \"{query}\"",
+  "@noResultsFor": {
+    "placeholders": {
+      "query": {
+        "type": "Object"
+      }
+    }
+  },
+  "noResults": "No se encontraron resultados",
+  "confirm": "CONFIRMAR",
+  "libraryTitle": "Mi Biblioteca",
+  "librarySubtitle": "Álbumes y canciones escuchadas",
+  "libraryStats": "{tracks} canciones en {albums} álbumes",
+  "@libraryStats": {
+    "placeholders": {
+      "tracks": {
+        "type": "Object"
+      },
+      "albums": {
+        "type": "Object"
+      }
+    }
+  },
+  "showMore": "VER MÁS ({remaining} restantes)",
+  "@showMore": {
+    "placeholders": {
+      "remaining": {
+        "type": "Object"
+      }
+    }
+  },
+  "filterHint": "Filtrar álbum o artista...",
+  "sortRecent": "Más recientes",
+  "sortAz": "A - Z",
+  "sortArtist": "Por Artista",
+  "listenedTracksLabel": "Temas Escuchados",
+  "albumsLabel": "Álbumes",
+  "followedArtistsTitle": "ARTISTAS SEGUIDOS",
+  "emptyLibraryTitle": "AÚN NO TIENES CANCIONES MARCADAS",
+  "emptyLibrarySubtitle": "Reproduce o marca canciones en el buscador o los álbumes para construir tu biblioteca personal.",
+  "playingFrom": "REPRODUCIENDO DESDE",
+  "queueTitle": "SIGUIENTES // COLA ({count})",
+  "@queueTitle": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "profileTitle": "PERFIL // SISTEMA",
+  "settingsPlaybackSection": "REPRODUCCIÓN",
+  "settingsStorageSection": "ALMACENAMIENTO",
+  "settingsGeneralSection": "GENERAL",
+  "normalizeTitle": "Normalizar volumen",
+  "normalizeSubtitle": "Iguala el volumen de las previews de Deezer. Spotify ya lo hace solo.",
+  "flowTitle": "FLOW · ORDENAR POR TEMPO",
+  "flowSubtitle": "Reordena lo que viene en tu cola según el BPM de cada canción.",
+  "flowAnalyzing": "Analizando el tempo… {done} de {total}",
+  "@flowAnalyzing": {
+    "placeholders": {
+      "done": {
+        "type": "Object"
+      },
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "flowLowCoverage": "Deezer no tiene el BPM de muchas de estas canciones. El orden será parcial: las que no lo tienen se quedan donde están.",
+  "flowNotEnough": "Muy pocas canciones de tu cola tienen BPM en Deezer, así que no se puede ordenar.",
+  "flowApplied": "Cola ordenada · {from} → {to} BPM",
+  "@flowApplied": {
+    "placeholders": {
+      "from": {
+        "type": "Object"
+      },
+      "to": {
+        "type": "Object"
+      }
+    }
+  },
+  "flowAppliedWave": "Cola ordenada · {from} → {peak} → {to} BPM",
+  "@flowAppliedWave": {
+    "placeholders": {
+      "from": {
+        "type": "Object"
+      },
+      "peak": {
+        "type": "Object"
+      },
+      "to": {
+        "type": "Object"
+      }
+    }
+  },
+  "flowHalfTimeNote": "Las canciones a mitad o al doble de tempo (70 y 140 BPM) se tratan como el mismo ritmo, igual que hacen los DJs.",
+  "runTitle": "MODO RUN",
+  "runCardSubtitle": "La música sigue tu paso",
+  "runIntro": "Mide tus pasos por minuto con el acelerómetro y pone canciones a ese BPM. Si aceleras, la música acelera contigo.",
+  "runStart": "INICIAR",
+  "runStop": "TERMINAR",
+  "runSpmUnit": "PASOS/MIN",
+  "runWaiting": "Empieza a caminar o trotar. En unos segundos detecto tu ritmo.",
+  "runSearching": "Buscando canciones a tu ritmo…",
+  "runNoMatches": "Aún no encuentro canciones a este ritmo. Vuelvo a buscar en cuanto cambies de paso.",
+  "runMusicAt": "Música a {bpm} BPM",
+  "@runMusicAt": {
+    "placeholders": {
+      "bpm": {
+        "type": "Object"
+      }
+    }
+  },
+  "runLock": "Fijar ritmo",
+  "runUnlock": "Seguir mis pasos",
+  "runLockedHint": "Ritmo fijo: la música no cambia aunque cambies de paso.",
+  "runSyncTitle": "Sincronizar tempo",
+  "runSyncSubtitle": "Ajusta la velocidad de la canción hasta ±8% para que el beat vaya con tus pasos. La voz no cambia de tono.",
+  "runSyncSpotify": "Spotify no permite cambiar la velocidad: elijo canciones a tu ritmo, pero suenan a su tempo original.",
+  "runUnknownTempo": "BPM desconocido",
+  "runStatTime": "TIEMPO",
+  "runStatSteps": "PASOS",
+  "runStatAverage": "PROMEDIO",
+  "runStatSongs": "CANCIONES",
+  "runNoSensor": "No pude leer el acelerómetro de este teléfono. Elige el ritmo a mano con − y +.",
+  "runBackgroundHint": "Puedes bloquear la pantalla: mientras suene la música sigo leyendo tus pasos. Si tu teléfono cierra apps en segundo plano, pon la batería de Tsuki en \"Sin restricciones\".",
+  "runHalfTimeNote": "Corriendo también valen canciones a medio tempo: 85 BPM = un beat cada 2 pasos a 170.",
+  "runSettingTitle": "Modo Run",
+  "runSettingSubtitle": "Muestra la tarjeta en el inicio. Apagado, se oculta y no usa el sensor.",
+  "beatSyncHint": "TOCA AL RITMO PARA SINCRONIZAR",
+  "beatSyncTempo": "TEMPO TUYO · {bpm} BPM",
+  "@beatSyncTempo": {
+    "placeholders": {
+      "bpm": {
+        "type": "Object"
+      }
+    }
+  },
+  "beatSyncNoTempo": "SIN BPM · TOCA 4 VECES",
+  "weatherTitle": "CLIMA",
+  "weatherSettingTitle": "Clima en el inicio",
+  "weatherSettingSubtitle": "El inicio cambia con el clima, la hora y la luna. Si llueve, te propone música para la lluvia.",
+  "weatherEnable": "Activar clima",
+  "weatherUseLocation": "Usar mi ubicación aproximada",
+  "weatherOrCity": "O elige una ciudad",
+  "weatherSearchHint": "Buscar ciudad…",
+  "weatherPrivacy": "Tsuki usa tu ubicación aproximada (unos 2 km) solo para el clima. Se envía redondeada a Open-Meteo, un servicio sin cuenta ni registro, y nunca en segundo plano.",
+  "weatherHere": "Tu ubicación",
+  "weatherDenied": "Sin permiso de ubicación. Puedes elegir tu ciudad abajo.",
+  "weatherDeniedForever": "El permiso está bloqueado. Actívalo en los ajustes de Android o elige tu ciudad.",
+  "weatherOpenSettings": "Abrir ajustes",
+  "weatherTurnOff": "Apagar clima",
+  "rainOfferQuestion": "¿Pongo algo para la lluvia?",
+  "rainOfferYes": "Sí, ponlo",
+  "rainOfferNo": "Ahora no",
+  "rainOfferAddRain": "Sumar lluvia de fondo",
+  "rainOfferPreparing": "Buscando tus canciones tranquilas…",
+  "shakeSkipTitle": "Agitar para saltar",
+  "shakeSkipSubtitle": "Agita el teléfono con firmeza para pasar a la siguiente canción. Funciona con la app abierta y se pausa en Modo Run.",
+  "masksTitle": "MÁSCARAS ONI",
+  "masksNoneYet": "Aún sin máscara",
+  "masksEquippedHint": "Tu máscara equipada marca tus canciones escuchadas y aparece en tu perfil.",
+  "maskSecretName": "???",
+  "maskSecretHint": "Máscara secreta. Nadie sabe cómo conseguirla… todavía.",
+  "maskEquip": "EQUIPAR",
+  "maskHowToUnlock": "CÓMO CONSEGUIRLA",
+  "maskLocked": "Aún bloqueada",
+  "maskEquipped": "EQUIPADA",
+  "maskUnequip": "DESEQUIPAR",
+  "maskUnlockedOn": "Desbloqueada el {date}",
+  "@maskUnlockedOn": {
+    "placeholders": {
+      "date": {
+        "type": "Object"
+      }
+    }
+  },
+  "maskUnlockedTitle": "MÁSCARA DESBLOQUEADA",
+  "masksProfileRow": "Colección de máscaras",
+  "moonIlluminated": "{percent}% iluminada",
+  "@moonIlluminated": {
+    "placeholders": {
+      "percent": {
+        "type": "Object"
+      }
+    }
+  },
+  "moonAge": "Día {day} del ciclo lunar",
+  "@moonAge": {
+    "placeholders": {
+      "day": {
+        "type": "Object"
+      }
+    }
+  },
+  "moonFullTonight": "Luna llena esta noche",
+  "moonCycleTitle": "CICLO LUNAR · 8 FASES",
+  "moonToday": "HOY",
+  "moonUpcomingTitle": "PRÓXIMAS FASES",
+  "moonMixTitle": "MIX DE LUNA LLENA",
+  "moonMixLocked": "Se desbloquea con la luna llena · {when}",
+  "@moonMixLocked": {
+    "placeholders": {
+      "when": {
+        "type": "Object"
+      }
+    }
+  },
+  "moonMixPlay": "REPRODUCIR",
+  "moonMixSave": "GUARDAR PLAYLIST",
+  "moonMixPlaylistName": "🌕 Luna llena · {date}",
+  "@moonMixPlaylistName": {
+    "placeholders": {
+      "date": {
+        "type": "Object"
+      }
+    }
+  },
+  "moonMixSaved": "Mix guardado en tus playlists",
+  "moonEclipseNow": "ECLIPSE LUNAR EN CURSO",
+  "birthdayTitle": "Cumpleaños",
+  "birthdayNotSet": "No configurado",
+  "moonAtmosphereTitle": "Atmósfera lunar",
+  "moonAtmosphereSubtitle": "La app cambia de luz con la luna real de cada noche",
+  "a11yMoon": "Fase lunar",
+  "ambientTitle": "AMBIENTE",
+  "ambientSubtitle": "Suena encima de tu música, también de Spotify",
+  "ambientAfterTimerTitle": "Cuando termine el temporizador",
+  "ambientStopsIn": "Se apaga en {time}",
+  "@ambientStopsIn": {
+    "placeholders": {
+      "time": {
+        "type": "Object"
+      }
+    }
+  },
+  "ambientStopAll": "APAGAR TODO",
+  "ambientPause": "PAUSAR",
+  "ambientResume": "REANUDAR",
+  "ambientHint": "Combínalo con el temporizador para dormir: la música se apaga suave y la lluvia sigue.",
+  "homeAmbientCardSubtitle": "Lluvia, olas, fogata…",
+  "ambientPlayingCount": "{count} sonando",
+  "@ambientPlayingCount": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "guessTitle": "ADIVINA LA CANCIÓN",
+  "guessModeDaily": "Reto diario",
+  "guessModeLibrary": "Mis canciones",
+  "guessModeArtist": "Artista",
+  "guessPickArtist": "Elige un artista y adivina su discografía",
+  "guessArtistSearchHint": "Busca un artista…",
+  "guessYourArtists": "TUS ARTISTAS",
+  "guessArtistChange": "CAMBIAR",
+  "guessModeChart": "Top mundial",
+  "guessHowTo": "Escucha el fragmento y adivina la canción. Cada fallo o salto desbloquea más segundos.",
+  "guessSearchHint": "Escribe tu respuesta…",
+  "guessGiveUp": "RENDIRSE",
+  "guessTapToPlay": "Reproducir fragmento",
+  "guessAttemptSkipped": "Saltado",
+  "guessRightArtist": "artista correcto",
+  "guessRightArtistHint": "¡Buen artista! Sigue intentando.",
+  "guessLost": "Era esta canción",
+  "guessListenFull": "ESCUCHAR",
+  "guessShare": "COPIAR RESULTADO",
+  "guessCopied": "Resultado copiado, ¡pégalo donde quieras!",
+  "guessNext": "SIGUIENTE",
+  "guessNextDailyIn": "Próximo reto en {time}",
+  "@guessNextDailyIn": {
+    "placeholders": {
+      "time": {
+        "type": "Object"
+      }
+    }
+  },
+  "guessStatsTitle": "ESTADÍSTICAS",
+  "guessStatsPlayed": "Jugados",
+  "guessStatsWinRate": "% Victorias",
+  "guessStatsStreak": "Racha",
+  "guessStatsMaxStreak": "Mejor racha",
+  "guessStatsDistribution": "INTENTOS PARA ADIVINAR",
+  "guessSessionStreak": "Racha {n} · Récord {best}",
+  "@guessSessionStreak": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      },
+      "best": {
+        "type": "Object"
+      }
+    }
+  },
+  "guessLibraryTooSmall": "Guarda o escucha más canciones para jugar con tu biblioteca. Por ahora juegas con el top mundial.",
+  "guessNoResults": "Sin resultados",
+  "guessShareHeader": "Tsuki Tunes 🌙 Reto #{day}",
+  "@guessShareHeader": {
+    "placeholders": {
+      "day": {
+        "type": "Object"
+      }
+    }
+  },
+  "crossfadeTitle": "Crossfade",
+  "crossfadeSubtitle": "Transición suave entre canciones. Spotify usa su propio crossfade.",
+  "autoMarkTitle": "Marcar al escuchar",
+  "autoMarkSubtitle": "Marca la canción al llegar al 80%",
+  "precacheWifiTitle": "Precarga solo con Wi-Fi",
+  "precacheWifiSubtitle": "Ahorra datos móviles",
+  "clearAudioCache": "Borrar caché de audio",
+  "audioCacheCleared": "Caché de audio borrada",
+  "crossfadeSecondsLabel": "{seconds} seg",
+  "@crossfadeSecondsLabel": {
+    "placeholders": {
+      "seconds": {
+        "type": "Object"
+      }
+    }
+  },
+  "languageOption": "IDIOMA DEL SISTEMA",
+  "languageSelectorTitle": "SISTEMA // IDIOMA DE INTERFAZ",
+  "languageSelectorSubtitle": "CAMBIA EL IDIOMA DE LA INTERFAZ",
+  "languageInfoNotice": "◈ Los títulos de canciones y artistas conservan su idioma original de catálogo.",
+  "activeStatus": "ACTIVO",
+  "tutorialOption": "VER TUTORIAL Y GUÍA",
+  "logoutOption": "CERRAR SESIÓN",
+  "spotifyConnect": "CONECTAR",
+  "spotifyDisconnect": "DESCONECTAR",
+  "spotifyConnected": "Conectado",
+  "spotifyNotConnected": "No conectado",
+  "spotifyConnecting": "Conectando...",
+  "spotifyDefaultUser": "Usuario Spotify",
+  "spotifyCanceledByUser": "Conexión cancelada por el usuario.",
+  "statsListened": "ESCUCHADAS",
+  "statsInSystem": "EN SISTEMA",
+  "statsAffinity": "AFINIDAD: {score}",
+  "@statsAffinity": {
+    "placeholders": {
+      "score": {
+        "type": "Object"
+      }
+    }
+  },
+  "emptyReleases": "Si no hay artistas con canciones guardadas, aquí aparecerán tus lanzamientos recientes recomendados",
+  "affinityScore": "Afinidad: {score}",
+  "@affinityScore": {
+    "placeholders": {
+      "score": {
+        "type": "Object"
+      }
+    }
+  },
+  "affinityInfoTitle": "¿Cómo se calcula la afinidad?",
+  "affinitySavedTitle": "Canciones escuchadas",
+  "affinitySavedBody": "Cada canción suya que marcas como escuchada.",
+  "affinityVisitsTitle": "Visitas al perfil",
+  "affinityFormulaLabel": "FÓRMULA",
+  "affinityFormula": "(escuchadas × 2) + visitas",
+  "affinityInfoClose": "Entendido",
+  "featured": "DESTACADO",
+  "spotifyActiveDevice": "Dispositivo activo: {device}",
+  "@spotifyActiveDevice": {
+    "placeholders": {
+      "device": {
+        "type": "Object"
+      }
+    }
+  },
+  "spotifyPremiumActive": "Reproducción completa Premium activa",
+  "spotifyStandardPreview": "Cuenta estándar: vista previa disponible",
+  "spotifySyncSuccess": "Spotify sincronizado exitosamente",
+  "spotifyConnectError": "No se pudo conectar. Verifica tu cuenta en el Dashboard de Spotify.",
+  "logoutConfirmTitle": "CERRAR SESIÓN",
+  "logoutConfirmMessage": "¿Estás seguro de que deseas cerrar sesión?",
+  "cancel": "CANCELAR",
+  "logout": "SALIR",
+  "albumDetailsTitle": "DETALLES DEL ÁLBUM",
+  "allListened": "TODO ESCUCHADO",
+  "markAll": "MARCAR TODO",
+  "play": "REPRODUCIR",
+  "playAll": "REPRODUCIR TODO",
+  "shuffle": "ALEATORIO",
+  "addToQueue": "Agregar a la cola",
+  "addedToQueue": "Agregado a la cola",
+  "syncing": "Sincronizando...",
+  "noTracksAvailable": "No hay canciones disponibles",
+  "artistFans": "{count} fanáticos",
+  "@artistFans": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "artistReleases": "{count} lanzamientos",
+  "@artistReleases": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "appearsOnCountLabel": "{count} aparece en",
+  "@appearsOnCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "popularTracks": "POPULARES",
+  "showMoreTracks": "Ver más",
+  "showLessTracks": "Ver menos",
+  "discography": "// DISCOGRAFÍA",
+  "seeMore": "Ver más",
+  "tabSingles": "Sencillos",
+  "tabEps": "EPs",
+  "tabAppearsOn": "Aparece en",
+  "storedContentTitle": "CONTENIDO ALMACENADO",
+  "noTracksFound": "No se encontraron canciones",
+  "loadingMoreAlbums": "Cargando más lanzamientos...",
+  "retryLoading": "Reintentar",
+  "allAlbumsLoaded": "// FIN DEL CATÁLOGO",
+  "lyrics": "LETRAS",
+  "lyricsLoading": "// SINCRONIZANDO LETRAS...",
+  "noLyricsFound": "// LETRAS NO DISPONIBLES //",
+  "instrumentalTrack": "// PISTA INSTRUMENTAL //",
+  "syncedTapToSeek": "Toca un verso para saltar",
+  "spotifyTokenExpired": "ENLACE EXPIRADO // Reconecta tu cuenta de Spotify en Inicio.",
+  "spotifyPremiumRequired": "PLAN STANDARD // Se requiere Spotify Premium para streaming completo.",
+  "spotifyNoActiveDevice": "DISPOSITIVO INACTIVO // Abre la app de Spotify para vincular.",
+  "spotifyNoConnection": "SIN CONEXIÓN // Reintentando enlace con el servidor de audio...",
+  "spotifyTrackUnavailablePreview": "Pista no disponible en Spotify, reproduciendo vista previa",
+  "spotifyOpenAppPrompt": "Abre la app de Spotify para activar la reproducción completa",
+  "audioStatusPrefix": "ESTADO AUDIO //",
+  "openSpotifyTooltip": "Abrir Spotify",
+  "errorPrefix": "Error",
+  "artistFansCompact": "{count} fans",
+  "@artistFansCompact": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "albumProgressListened": "{listened}/{total} escuchadas",
+  "@albumProgressListened": {
+    "placeholders": {
+      "listened": {
+        "type": "Object"
+      },
+      "total": {
+        "type": "Object"
+      }
+    }
+  },
+  "unknownAlbum": "Álbum desconocido",
+  "viewAlbum": "Ver álbum",
+  "queueUpNext": "SIGUIENTES EN LA COLA",
+  "queueClear": "LIMPIAR",
+  "queueClearLabel": "Limpiar cola",
+  "queueEmpty": "COLA VACÍA",
+  "queueEmptySubtitle": "Agrega canciones para continuar la sesión",
+  "queuedByYou": "EN COLA",
+  "queueRemoveLabel": "Eliminar de la cola",
+  "removedFromQueue": "Eliminado de la cola",
+  "lyricsFollowing": "SIGUIENDO CANCIÓN",
+  "lyricsRetry": "REINTENTAR",
+  "lyricsCardTitle": "Letras",
+  "lyricsShare": "Compartir",
+  "lyricsTranslate": "Traducir",
+  "lyricsOriginal": "Original",
+  "goToArtist": "Ir al artista",
+  "goToAlbum": "Ir al álbum",
+  "playNext": "Reproducir siguiente",
+  "addedPlayNext": "Se reproducirá a continuación",
+  "stoppedPlayback": "Reproducción detenida",
+  "undo": "DESHACER",
+  "swipeToRemoveHint": "Desliza para eliminar",
+  "markAsListened": "Marcar como escuchada",
+  "unmarkAsListened": "Desmarcar como escuchada",
+  "noTrackSelected": "No hay canción seleccionada",
+  "onboardingHeaderGlitch": "GUÍA",
+  "onboardingSkip": "SALTAR",
+  "onboardingNext": "SIGUIENTE",
+  "onboardingStart": "EMPEZAR A ESCUCHAR",
+  "onboardingSlide1Badge": "TU COLECCIÓN • BIBLIOTECA",
+  "onboardingSlide1Title": "GUARDA TODA TU MÚSICA",
+  "onboardingPillFavorites": "CANCIONES FAVORITAS",
+  "onboardingPillStorage": "GUARDADO EN TU CUENTA",
+  "onboardingPillAlbums": "COLECCIÓN POR ÁLBUMES",
+  "onboardingOniMaskHint": "Toca la máscara para marcar como escuchado",
+  "onboardingOniMaskNotListened": "SIN ESCUCHAR",
+  "onboardingOniMaskListened": "ESCUCHADO",
+  "onboardingAlbumProgressHint": "Las portadas ganan color a medida que escuchas más canciones del álbum",
+  "onboardingAlbumProgress0": "0%",
+  "onboardingAlbumProgress100": "100%",
+  "onboardingSlide2Badge": "EXPLORACIÓN • CATÁLOGO",
+  "onboardingSlide2Title": "DESCUBRE MILLONES DE TEMAS",
+  "onboardingPillSearch": "BÚSQUEDA INSTANTÁNEA",
+  "onboardingPillTracks": "MÁS DE 90M DE PISTAS",
+  "onboardingPillPreview": "VISTA PREVIA HI-FI",
+  "onboardingSlide3Badge": "EXPERIENCIA • REPRODUCTOR",
+  "onboardingSlide3Title": "REPRODUCTOR INMERSIVO",
+  "onboardingPillEqualizer": "ECUALIZADOR REACTIVO",
+  "onboardingPillFullscreen": "PANTALLA COMPLETA",
+  "onboardingPillCyberHUD": "INTERFAZ CYBER HUD",
+  "loginGuestExplore": "EXPLORAR CATÁLOGO",
+  "guestLibraryTitle": "BIBLIOTECA BLOQUEADA",
+  "guestLibraryDesc": "Inicia sesión con Google para guardar tu música, favoritos y historial de escucha.",
+  "guestLoginAction": "INICIAR SESIÓN",
+  "loginSubtitlePrefix": "TU BIBLIOTECA ",
+  "loginSubtitleGlitch": "MUSICAL",
+  "loginGoogle": "INGRESAR CON GOOGLE",
+  "loginLoading": "INGRESANDO...",
+  "loginGranted": "ACCESO CONCEDIDO",
+  "loginGoogleError": "Error al conectar con Google. Comprueba tu conexión e intenta de nuevo.",
+  "loginThrottled": "Demasiados intentos. Espera unos segundos antes de intentar de nuevo.",
+  "loadingStatus": "MOTOR DE AUDIO // INICIALIZANDO...",
+  "loadingSubtitle": "REPRODUCTOR DE AUDIO CYBER",
+  "searchError": "Error al buscar. Revisa tu conexión.",
+  "loadError": "No se pudieron cargar los datos. Revisa tu conexión.",
+  "retry": "REINTENTAR",
+  "offline": "Sin conexión a internet",
+  "playbackError": "Error al reproducir esta pista",
+  "playbackNoPreview": "Esta pista no tiene vista previa de audio disponible",
+  "playbackNetworkError": "Error de conexión al reproducir el audio. Revisa tu internet",
+  "playbackFormatUnsupported": "Formato de audio no compatible con este dispositivo",
+  "homeLoadError": "ERROR DE ENLACE // DATOS NO DISPONIBLES",
+  "homeLoadErrorSubtitle": "No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.",
+  "homeEmptyTitle": "SISTEMA EN ESPERA",
+  "homeEmptySubtitle": "Busca y reproduce canciones para que el sistema aprenda tus gustos y personalice tu inicio.",
+  "homeEmptyAction": "IR A BUSCAR",
+  "offlineNotice": "MODO OFFLINE // Conecta a internet para cargar datos",
+  "offlineNoCache": "Sin conexión y este track no está en caché",
+  "repeatOff": "Repetición desactivada",
+  "repeatAll": "Repetir toda la cola",
+  "repeatOne": "Repetir esta canción",
+  "sleepTimer": "TEMPORIZADOR",
+  "sleepTimerOff": "DESACTIVADO",
+  "sleepTimerEndOfTrack": "AL TERMINAR ESTA CANCIÓN",
+  "sleepTimerEndOfTrackShort": "ÚLTIMA CANCIÓN",
+  "a11yPlay": "Reproducir",
+  "a11yPause": "Pausar",
+  "a11yStop": "Detener reproducción",
+  "a11yPrevious": "Pista anterior",
+  "a11yNext": "Siguiente pista",
+  "a11yShuffleOn": "Aleatorio activado",
+  "a11yShuffleOff": "Aleatorio desactivado",
+  "a11yMarkListened": "Marcar como escuchado",
+  "a11yUnmarkListened": "Desmarcar como escuchado",
+  "a11yShowStats": "Mostrar estadísticas",
+  "a11yHideStats": "Ocultar estadísticas",
+  "a11yShowAllTracks": "Mostrar todas las canciones",
+  "a11yShowLessTracks": "Mostrar menos canciones",
+  "a11yViewDiscography": "Ver discografía completa",
+  "a11yExpandStoredContent": "Expandir contenido guardado",
+  "a11yCollapseStoredContent": "Colapsar contenido guardado",
+  "a11yLoginWithGoogle": "Iniciar sesión con Google",
+  "a11yContinueAsGuest": "Continuar como invitado",
+  "a11ySelectLanguage": "Seleccionar idioma",
+  "a11yRetryLyrics": "Reintentar carga de letra",
+  "a11yGoToSearch": "Ir a búsqueda",
+  "a11yCollapsePlayer": "Minimizar reproductor",
+  "a11yOpenInSpotify": "Abrir en Spotify",
+  "a11yPlaybackError": "Error de reproducción",
+  "syncError": "No se pudo guardar. Intenta de nuevo.",
+  "a11ySyncError": "Error de sincronización",
+  "a11ySleepTimer": "Temporizador de sueño",
+  "a11yQueue": "Cola de reproducción",
+  "a11yClearQueue": "Limpiar cola",
+  "a11yRemoveFromQueue": "Eliminar de la cola",
+  "a11yNowPlaying": "Reproduciendo ahora",
+  "a11yAlbumCover": "Portada del álbum",
+  "a11yReorder": "Reordenar",
+  "a11yLyrics": "Letras",
+  "a11yNoLyrics": "Sin letras disponibles",
+  "a11yVisualizer": "Visualizador de audio",
+  "a11ySyncingLyrics": "Sincronizando letras",
+  "a11yPlayTrack": "Reproducir pista",
+  "a11yArtistAvatar": "Foto del artista",
+  "a11ySeeAll": "Ver todo",
+  "a11yFilter": "Filtrar",
+  "a11yClearFilter": "Limpiar filtro",
+  "a11yPlayAll": "Reproducir todo",
+  "a11yShuffleAll": "Mezclar todo",
+  "a11yOffline": "Sin conexión",
+  "a11yEmptyLibrary": "Biblioteca vacía",
+  "a11yCreatePlaylist": "Crear playlist",
+  "a11yRemoveFromPlaylist": "Eliminar de playlist",
+  "a11yPlaylistCover": "Portada de playlist",
+  "a11yOpenPlaylist": "Abrir playlist",
+  "a11yClearSearch": "Limpiar búsqueda",
+  "a11ySearchEmpty": "Sin resultados",
+  "a11yClearHistory": "Borrar historial",
+  "a11ySearchHistory": "Historial de búsqueda",
+  "a11yFillSearch": "Rellenar búsqueda",
+  "a11yBack": "Volver",
+  "a11yMoreOptions": "Más opciones",
+  "a11yEditPlaylist": "Editar playlist",
+  "a11yDeletePlaylist": "Eliminar playlist",
+  "a11yEmptyPlaylist": "Playlist vacía",
+  "a11yRetry": "Reintentar",
+  "a11yLoginError": "Error de inicio de sesión",
+  "a11ySelected": "Seleccionado",
+  "a11yDeselect": "Deseleccionar",
+  "a11yUpdateInfo": "Información de actualización",
+  "a11yLoginRequired": "Inicio de sesión requerido",
+  "a11yRelatedArtists": "Artistas similares",
+  "a11yStoredContent": "Contenido almacenado",
+  "a11yPlayNext": "Siguiente en cola",
+  "a11yAddToQueue": "Agregar a la cola",
+  "a11yAddToPlaylist": "Agregar a playlist",
+  "a11yGoToArtist": "Ir al artista",
+  "a11yGoToAlbum": "Ir al álbum",
+  "a11yOpenExternal": "Abrir enlace externo",
+  "a11yCloudStatus": "Estado de sincronización",
+  "a11yClearCache": "Limpiar caché",
+  "a11yAbout": "Acerca de",
+  "a11yDebugInfo": "Información de depuración",
+  "a11yLogout": "Cerrar sesión",
+  "a11yDeleteAccount": "Eliminar cuenta",
+  "a11yClose": "Cerrar",
+  "a11yRepeatOff": "Repetir desactivado",
+  "a11yRepeatAll": "Repetir todo",
+  "a11yRepeatOne": "Repetir una",
+  "a11yEmptyQueue": "Cola vacía",
+  "a11yFollowArtist": "Seguir artista",
+  "a11yUnfollowArtist": "Dejar de seguir artista",
+  "a11yMusicNote": "Nota musical",
+  "playlistsTab": "Playlists",
+  "albumsTab": "Álbumes",
+  "createPlaylist": "CREAR PLAYLIST",
+  "newPlaylist": "Nueva Playlist",
+  "playlistName": "Nombre de la playlist",
+  "playlistNameHint": "Mi playlist...",
+  "create": "CREAR",
+  "renamePlaylist": "Renombrar playlist",
+  "rename": "RENOMBRAR",
+  "deletePlaylist": "Eliminar playlist",
+  "deletePlaylistConfirm": "¿Eliminar \"{name}\"? Esta acción no se puede deshacer.",
+  "@deletePlaylistConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "delete": "ELIMINAR",
+  "addToPlaylist": "Agregar a playlist",
+  "addedToPlaylist": "Agregado a \"{name}\"",
+  "@addedToPlaylist": {
+    "placeholders": {
+      "name": {
+        "type": "Object"
+      }
+    }
+  },
+  "trackAlreadyInPlaylist": "Esta canción ya está en la playlist",
+  "removedFromPlaylist": "Eliminado de la playlist",
+  "emptyPlaylistTitle": "PLAYLIST VACÍA",
+  "emptyPlaylistSubtitle": "Agrega canciones desde el buscador o los álbumes",
+  "noPlaylistsTitle": "AÚN NO TIENES PLAYLISTS",
+  "noPlaylistsSubtitle": "Crea tu primera playlist y organiza tu música a tu manera",
+  "playlistRenamed": "Playlist renombrada",
+  "playlistDeleted": "Playlist eliminada",
+  "playlistCreated": "Playlist creada",
+  "selectPlaylist": "SELECCIONAR PLAYLIST",
+  "translateButton": "訳",
+  "translateTooltip": "Traducir letras",
+  "translationHide": "Ocultar traducción",
+  "translating": "// TRADUCIENDO...",
+  "translationError": "Error al traducir. Reintenta.",
+  "downloadingModel": "// DESCARGANDO MODELO DE IDIOMA...",
+  "downloadModelTitle": "Descargar modelo de idioma",
+  "downloadModelDesc": "Se necesita descargar ~{size} MB de datos. Solo se hace una vez y después funciona sin internet.",
+  "@downloadModelDesc": {
+    "placeholders": {
+      "size": {
+        "type": "Object"
+      }
+    }
+  },
+  "downloadModelConfirm": "DESCARGAR",
+  "translatedTag": "TRADUCIDO OFFLINE",
+  "a11yTranslate": "Traducir letras",
+  "a11yHideTranslation": "Ocultar traducción",
+  "tabByLyrics": "Por Letra",
+  "lyricsSearchHint": "Escribe un fragmento de letra...",
+  "lyricsSearchEmpty": "BUSCA POR FRAGMENTO DE LETRA",
+  "lyricsSearchEmptySubtitle": "\"No me acuerdo del nombre pero dice...\"",
+  "lyricsSearchResults": "{count} resultados por letra",
+  "@lyricsSearchResults": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "lyricsSearchError": "Error al buscar por letra. Revisa tu conexión.",
+  "lyricsSearchNoResults": "No se encontraron canciones con esa letra",
+  "a11yLyricsSearch": "Buscar por letra",
+  "wrappedTitle": "TSUKI WRAPPED",
+  "wrappedIntroSlide": "¿Preparado para revivir tu año?",
+  "wrappedTopTracks": "TUS CANCIONES FAVORITAS",
+  "wrappedTopArtists": "TUS ARTISTAS FAVORITOS",
+  "wrappedListeningTime": "TIEMPO DE ESCUCHA",
+  "wrappedMinutes": "{minutes} minutos",
+  "@wrappedMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedHours": "{hours} horas",
+  "@wrappedHours": {
+    "placeholders": {
+      "hours": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedTotalTracks": "{count} reproducciones",
+  "@wrappedTotalTracks": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedUniqueCount": "{tracks} canciones únicas · {artists} artistas",
+  "@wrappedUniqueCount": {
+    "placeholders": {
+      "tracks": {
+        "type": "Object"
+      },
+      "artists": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedFavoriteHour": "TU HORA FAVORITA",
+  "wrappedFunFacts": "DATOS CURIOSOS",
+  "wrappedFactLateNight": "Tu canción del 3 AM fue \"{title}\" de {artist} 🌙",
+  "@wrappedFactLateNight": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      },
+      "artist": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedFactNightOwl": "El {pct}% de tu música fue de noche. ¿Dormiste bien? 😴",
+  "@wrappedFactNightOwl": {
+    "placeholders": {
+      "pct": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedFactEarlyBird": "El {pct}% de tu música fue tempranito. ¡Madrugador! 🐦",
+  "@wrappedFactEarlyBird": {
+    "placeholders": {
+      "pct": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedPlays": "{count} reproducciones",
+  "@wrappedPlays": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "wrappedOutro": "NOS VEMOS EL PRÓXIMO AÑO",
+  "wrappedOutroSubtitle": "Sigue escuchando. El sistema recuerda todo.",
+  "wrappedShare": "COMPARTIR",
+  "wrappedNoData": "No hay datos suficientes para este año",
+  "wrappedNoDataSubtitle": "Escucha más canciones para desbloquear tu Wrapped",
+  "wrappedViewYourWrapped": "VER TU WRAPPED",
+  "a11yWrapped": "Tsuki Wrapped resumen anual",
+  "a11yShareSlide": "Compartir esta diapositiva",
+  "a11yNextSlide": "Siguiente diapositiva",
+  "a11yPreviousSlide": "Diapositiva anterior",
+  "clockTitle": "RELOJ DE ESCUCHA",
+  "clockRadar": "RADAR DE ACTIVIDAD",
+  "clockDailyActivity": "ACTIVIDAD DIARIA",
+  "clockNoData": "Sin datos de escucha",
+  "clockNoDataSubtitle": "Escucha música para activar el radar",
+  "clockViewClock": "VER RADAR",
+  "a11yClock": "Reloj de escucha y radar de actividad",
+  "rabbitHoleTitle": "MADRIGUERA",
+  "rabbitHoleSubtitle": "Explora artistas relacionados",
+  "rabbitHoleLoading": "TEJIENDO LA RED...",
+  "rabbitHoleTapToExpand": "TOCA PARA EXPANDIR",
+  "rabbitHoleConnections": "{count} CONEXIONES",
+  "@rabbitHoleConnections": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "rabbitHoleDeadEnd": "CALLEJÓN SIN SALIDA · TOCA PARA REINTENTAR",
+  "rabbitHoleRestartHere": "REINICIAR AQUÍ",
+  "rabbitHoleOpenArtist": "VER ARTISTA",
+  "rabbitHoleFitAll": "Ver toda la red",
+  "rabbitHoleEmpty": "SIN CONEXIONES",
+  "rabbitHoleOffline": "SIN SEÑAL",
+  "rabbitHoleNodeError": "SIN SEÑAL · TOCA PARA REINTENTAR",
+  "rabbitHoleListenShort": "ESCUCHAR",
+  "rabbitHoleListen": "Escuchar a este artista",
+  "rabbitHoleKnown": "YA LO ESCUCHAS",
+  "rabbitHoleRecenter": "Recentrar",
+  "rabbitHoleNodes": "{count} NODOS",
+  "@rabbitHoleNodes": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "rabbitHoleDepth": "PROFUNDIDAD {count}",
+  "@rabbitHoleDepth": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "rabbitHoleViewGraph": "EXPLORAR",
+  "radarTitle": "RADAR DE LANZAMIENTOS",
+  "radarSectionNew": "NUEVO PARA TI",
+  "radarSectionRecent": "ÚLTIMOS 60 DÍAS",
+  "radarNotifyToggle": "Avisarme de lanzamientos",
+  "radarNotifyToggleSubtitle": "Una revisión al día en segundo plano",
+  "radarPermissionDenied": "Las notificaciones están desactivadas para Tsuki Tunes.",
+  "radarPermissionAction": "ACTIVAR",
+  "radarCheckNow": "Revisar ahora",
+  "radarChecking": "ESCANEANDO...",
+  "radarEmptyNoArtistsTitle": "SIGUE ARTISTAS",
+  "radarEmptyNoReleasesTitle": "SIN LANZAMIENTOS RECIENTES",
+  "radarNotifMany": "🔥 {count} lanzamientos nuevos",
+  "@radarNotifMany": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "radarChannelName": "Radar de lanzamientos",
+  "radarChannelDescription": "Avisos cuando los artistas que sigues sacan música nueva",
+  "a11yRadar": "Radar de lanzamientos de los artistas que sigues",
+  "radioStart": "Iniciar radio",
+  "radioStarted": "Radio de «{title}» en marcha",
+  "@radioStarted": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "radioLabel": "RADIO",
+  "radioBasedOn": "Basada en «{title}»",
+  "@radioBasedOn": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "radioReasonLastFm": "Parecida a «{title}»",
+  "@radioReasonLastFm": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "radioLoadingMore": "Buscando más canciones...",
+  "radioInfinite": "La radio sigue: siempre habrá otra canción",
+  "radioOffline": "Sin conexión: la radio seguirá cuando vuelva la red",
+  "radioExhausted": "Se acabaron las ideas por aquí. Prueba «Más como esta» o cambia el estilo.",
+  "radioModeTitle": "ESTILO DE RADIO",
+  "radioModeFamiliar": "Fiel",
+  "radioModeFamiliarDesc": "Se queda cerca de la canción original.",
+  "radioModeBalanced": "Equilibrada",
+  "radioModeBalancedDesc": "Mezcla canciones parecidas con descubrimientos.",
+  "radioModeAdventurous": "Aventurera",
+  "radioModeAdventurousDesc": "Se aleja canción a canción y descubre artistas nuevos.",
+  "radioMoreLikeThis": "Más como esta",
+  "radioLessLikeThis": "Menos de esto",
+  "radioMoreSnack": "La radio irá más por este lado",
+  "radioStop": "Detener radio",
+  "radioStopped": "Radio detenida. La cola se queda como está.",
+  "radioSourcesBoth": "Fuentes: Last.fm + Deezer",
+  "radioSourcesDeezerOnly": "Fuente: Deezer (Last.fm no está configurado)",
+  "radioTune": "AJUSTAR",
+  "a11yRadio": "Radio de la canción",
+  "wrappedTopDiscoveries": "DESCUBRIMIENTOS DEL AÑO",
+  "wrappedNewMusicTime": "MÚSICA NUEVA",
+  "timeMachineTitle": "MÁQUINA DEL TIEMPO",
+  "timeMachineYearAgo": "Hace 1 año",
+  "timeMachineSixMonthsAgo": "Hace 6 meses",
+  "timeMachineMonthAgo": "Hace 1 mes",
+  "timeMachineWeekAgo": "Hace 1 semana",
+  "timeMachineRandom": "Día al azar",
+  "timeMachineRewinding": "REBOBINANDO...",
+  "timeMachineKindPlays": "REPRODUCCIONES",
+  "timeMachineKindDiscoveries": "DESCUBRIMIENTOS",
+  "timeMachineExactDay": "ESE DÍA",
+  "timeMachineThatWeek": "ESA SEMANA",
+  "timeMachineHeadlinePlayed": "Esto estabas escuchando",
+  "timeMachineHeadlineDiscovered": "Esto descubriste",
+  "timeMachinePlay": "REPRODUCIR ESTE RECUERDO",
+  "timeMachinePlaying": "Reproduciendo tu recuerdo",
+  "timeMachineNothingTitle": "NADA POR AQUÍ",
+  "timeMachineNothing": "No hay historial de esos días. Prueba otra fecha o viaja a un día al azar.",
+  "timeMachineNoHistory": "Aún no hay días con historial para viajar.",
+  "timeMachineNotifyToggle": "Recuerdos ocasionales",
+  "timeMachineNotifyToggleSubtitle": "Como mucho uno por semana, solo de días memorables",
+  "timeMachineNotifRepeat": "Hace 1 año no parabas de escuchar «{title}» 👀",
+  "@timeMachineNotifRepeat": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "timeMachineNotifPlayed": "Hace 1 año sonaba «{title}» 👀",
+  "@timeMachineNotifPlayed": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "timeMachineNotifDiscovered": "Hace 1 año descubriste «{title}» 👀",
+  "@timeMachineNotifDiscovered": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "timeMachineChannelName": "Máquina del tiempo",
+  "timeMachineChannelDescription": "Recuerdos de lo que escuchabas hace un año",
+  "timeMachineCardEmpty": "¿Qué escuchabas hace un año?",
+  "timeMachineCardTeaser": "Hace 1 año: «{title}»",
+  "@timeMachineCardTeaser": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "timeMachineCardTeaserRepeat": "Hace 1 año: «{title}» en repeat",
+  "@timeMachineCardTeaserRepeat": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "a11yTimeMachine": "Máquina del tiempo: lo que escuchabas hace un año",
+  "similarArtists": "ARTISTAS SIMILARES",
+  "followArtist": "SEGUIR",
+  "unfollowArtist": "SIGUIENDO",
+  "artistFollowed": "Artista seguido",
+  "artistUnfollowed": "Dejaste de seguir",
+  "artistCompleteTooltip": "Discografía completada",
+  "artistIncompleteTooltip": "Discografía incompleta",
+  "a11yVoiceSearch": "Búsqueda por voz",
+  "voicePlaying": "Reproduciendo"
+}
