@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../core/utils/moon_phase.dart';
@@ -18,21 +18,31 @@ class HomeWidgetService {
 
   bool _initialized = false;
 
+  // Home screen widgets exist on Android and iOS only (Platform throws on web).
+  static bool get _supported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
   Future<void> initialize() async {
-    if (_initialized) return;
+    if (_initialized || !_supported) return;
     _initialized = true;
-    if (!Platform.isAndroid && !Platform.isIOS) return;
     unawaited(HomeWidget.setAppGroupId(appGroupId));
     await _updateMoonPhase();
   }
 
   Future<void> registerInteractivityCallback() async {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (!_supported) return;
     await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
   }
 
   Future<void> updateTrack(Track? track, {required bool isPlaying}) async {
     if (!_initialized) return;
+    try {
+      await _writeTrack(track, isPlaying: isPlaying);
+    } catch (e) {
+      debugPrint('[HomeWidget] update failed: $e');
+    }
+  }
+
+  Future<void> _writeTrack(Track? track, {required bool isPlaying}) async {
     await Future.wait([
       HomeWidget.saveWidgetData('track_title', track?.title ?? ''),
       HomeWidget.saveWidgetData(

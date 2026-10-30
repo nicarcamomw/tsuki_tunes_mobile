@@ -16,6 +16,7 @@ import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
+import '../services/home_widget_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
 import '../services/spotify_service.dart';
@@ -212,7 +213,22 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void notifyListeners() {
     _syncMediaSession();
+    _syncHomeWidget();
     super.notifyListeners();
+  }
+
+  // Last song / play state written to the home screen widget.
+  String? _widgetTrackKey;
+  bool? _widgetPlayingKey;
+
+  /// Keeps the player widget on the home screen showing the current song
+  /// and play/pause state; only writes when one of them changed.
+  void _syncHomeWidget() {
+    final trackKey = _currentTrack?.id;
+    if (trackKey == _widgetTrackKey && _isPlaying == _widgetPlayingKey) return;
+    _widgetTrackKey = trackKey;
+    _widgetPlayingKey = _isPlaying;
+    unawaited(HomeWidgetService().updateTrack(_currentTrack, isPlaying: _isPlaying));
   }
 
   bool get _showsAmbient => _currentTrack == null && _ambientTitle != null;
