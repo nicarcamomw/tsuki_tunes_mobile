@@ -1746,7 +1746,8 @@ class _ListeningClockEntryCard extends StatelessWidget {
                   border: Border.all(
                       color: AppColors.neonCyan.withValues(alpha: 0.5)),
                 ),
-                child: const Icon(Icons.radar,
+                // A clock, not the radar: that one is the release radar's.
+                child: const Icon(Icons.access_time_rounded,
                     color: AppColors.neonCyan, size: 20),
               ),
               const SizedBox(height: 10),
