@@ -1004,5 +1004,9 @@
   "artistIncompleteTooltip": "Discografía incompleta",
   "a11yVoiceSearch": "Búsqueda por voz",
   "voicePlaying": "Reproduciendo",
-  "playlistFull": "Playlist llena (máximo 1000 canciones)"
+  "playlistFull": "Playlist llena (máximo 1000 canciones)",
+  "autoRecent": "Recientes",
+  "autoFavorites": "Favoritos",
+  "autoPlaylists": "Mis playlists",
+  "autoTopChart": "Top mundial"
 }

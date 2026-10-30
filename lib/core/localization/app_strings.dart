@@ -1622,6 +1622,12 @@ class AppStrings {
   String get trackAlreadyInPlaylist => _l.trackAlreadyInPlaylist;
   String get playlistFull => _l.playlistFull;
 
+  // --- Android Auto ---
+  String get autoRecent => _l.autoRecent;
+  String get autoFavorites => _l.autoFavorites;
+  String get autoPlaylists => _l.autoPlaylists;
+  String get autoTopChart => _l.autoTopChart;
+
   String get removedFromPlaylist => _l.removedFromPlaylist;
 
   String get emptyPlaylistTitle => _l.emptyPlaylistTitle;

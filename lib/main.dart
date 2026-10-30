@@ -27,6 +27,7 @@ import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/auto_media_library.dart';
 import 'services/deezer_disk_cache.dart';
 import 'services/firebase_service.dart';
 import 'services/home_widget_service.dart';
@@ -60,9 +61,16 @@ void main() async {
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.
   await _initFirebaseCore();
+  // Built here, not in the widget tree: when Android Auto starts the app
+  // there is no screen, so no widgets (and no providers) get built, yet the
+  // car still needs the player.
+  _audio;
   runApp(const TsukiTunesApp());
   _deferredInit();
 }
+
+/// The app's one player; the widget tree gets it through its provider.
+final AudioProvider _audio = AudioProvider();
 
 /// Minimal pre-frame Firebase init: just Firebase.initializeApp() so
 /// AuthProvider (which calls FirebaseService().initialize()) can proceed.
@@ -77,18 +85,28 @@ Future<void> _initFirebaseCore() async {
 
 /// Everything that doesn't need to block the first frame.
 void _deferredInit() {
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
+  var started = false;
+  Future<void> start() async {
+    if (started) return;
+    started = true;
     final mediaFuture = _initMediaSession();
     await Future.wait([_initCrashReporting(), DeezerDiskCache().init(), mediaFuture]);
-    _deferredMediaHandler.value = await mediaFuture;
+    final handler = await mediaFuture;
+    if (handler != null) {
+      _audio.attachDeferredMediaHandler(handler);
+      handler.library = AutoMediaLibrary(
+        play: (track, queue) => _audio.playTrack(track, newQueue: queue),
+      );
+    }
     unawaited(ReleaseRadarService().initForeground());
     unawaited(HomeWidgetService().initialize());
     unawaited(HomeWidgetService().registerInteractivityCallback());
-  });
-}
+  }
 
-final ValueNotifier<TsukiAudioHandler?> _deferredMediaHandler =
-    ValueNotifier(null);
+  WidgetsBinding.instance.addPostFrameCallback((_) => start());
+  // No frame ever comes when Android Auto starts the app without a screen.
+  Timer(const Duration(seconds: 1), start);
+}
 
 /// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
 /// in debug builds so development crashes don't pollute the dashboard.
@@ -121,6 +139,12 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
         // ForegroundServiceStartNotAllowedException when resuming from the
         // background on Android 12+.
         androidStopForegroundOnPause: false,
+        // Android Auto: songs as a list, folders as a grid, voice search.
+        androidBrowsableRootExtras: {
+          'android.media.browse.SEARCH_SUPPORTED': true,
+          'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
+          'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
+        },
       ),
     );
   } catch (e) {
@@ -168,13 +192,7 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
         ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
             PlayHistory, MaskProvider, AudioProvider>(
-          create: (_) {
-            final audio = AudioProvider();
-            _deferredMediaHandler.addListener(() {
-              audio.attachDeferredMediaHandler(_deferredMediaHandler.value);
-            });
-            return audio;
-          },
+          create: (_) => _audio,
           update: (_, library, connectivity, ambient, history, masks, audio) {
             final player = audio ?? AudioProvider();
             player.setConnectivityProvider(connectivity);

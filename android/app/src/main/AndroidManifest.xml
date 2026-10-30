@@ -124,6 +124,11 @@
                 android:resource="@xml/widget_luna_info" />
         </receiver>
 
+        <!-- Android Auto: media app (browse tree served by AudioService) -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

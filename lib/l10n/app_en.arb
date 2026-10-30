@@ -613,5 +613,9 @@
   "artistIncompleteTooltip": "Discography incomplete",
   "a11yVoiceSearch": "Voice search",
   "voicePlaying": "Playing",
-  "playlistFull": "Playlist full (1000 songs max)"
+  "playlistFull": "Playlist full (1000 songs max)",
+  "autoRecent": "Recent",
+  "autoFavorites": "Favorites",
+  "autoPlaylists": "My playlists",
+  "autoTopChart": "Global top"
 }
