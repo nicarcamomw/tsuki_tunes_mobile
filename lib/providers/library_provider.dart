@@ -220,6 +220,7 @@ class LibraryProvider extends ChangeNotifier {
   @override
   void notifyListeners() {
     _indexesDirty = true;
+    _topArtists = null;
     super.notifyListeners();
   }
 
@@ -701,6 +702,7 @@ class LibraryProvider extends ChangeNotifier {
   void setListenedTracksForTesting(List<ListenedTrackData> tracks) {
     _listenedTracks = List.from(tracks);
     _indexesDirty = true;
+    _topArtists = null;
     _listenedTrackIds = tracks.map((t) => t.trackId).toSet();
     _totalTracksCount = tracks.length;
     _listenedTracksLoaded = true;
@@ -1144,7 +1146,16 @@ class LibraryProvider extends ChangeNotifier {
 
   // --- Top Artists calculation (like web) ---
 
+  // Full ranking, rebuilt after a mutation (notifyListeners clears it): the
+  // home screen asks for it on every library change.
+  List<TopArtistEntry>? _topArtists;
+
   List<TopArtistEntry> getTopArtists({int limit = 5}) {
+    final all = _topArtists ??= _rankArtists();
+    return all.take(limit).toList();
+  }
+
+  List<TopArtistEntry> _rankArtists() {
     final Map<String, int> savedCounts = {};
     for (final t in _listenedTracks) {
       final name = t.artistName;
@@ -1169,7 +1180,7 @@ class LibraryProvider extends ChangeNotifier {
     }
 
     entries.sort((a, b) => b.score.compareTo(a.score));
-    return entries.take(limit).toList();
+    return entries;
   }
 
   // --- Artist visits ---
