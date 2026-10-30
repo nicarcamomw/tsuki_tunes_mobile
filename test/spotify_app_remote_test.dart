@@ -887,7 +887,7 @@ void main() {
       expect(fakeNative.repeatTrack, isFalse);
     });
 
-    test('a song played alone gets the next ones once it is playing',
+    test('when the list play failed, the song is not restarted later',
         () async {
       fakeSpotify.playWillFail = true;
       final provider =
@@ -895,12 +895,13 @@ void main() {
       expect(fakeNative._playingUri, 'spotify:track:t1');
 
       fakeSpotify.playWillFail = false;
+      final plays = fakeSpotify.playCount;
       provider.afterSpotifyStartedForTesting();
-      await Future.delayed(Duration.zero);
-      await Future.delayed(Duration.zero);
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
 
-      expect(fakeSpotify.lastPlayedUris,
-          ['spotify:track:t1', 'spotify:track:t2', 'spotify:track:t3']);
+      expect(fakeSpotify.playCount, plays);
     });
   });
 

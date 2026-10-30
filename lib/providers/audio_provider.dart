@@ -67,7 +67,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Previews downloaded ahead of the current song, so the next ones play
   // without a connection (metro, plane) and without buffering.
   static const int _precacheAhead = 5;
-  // Downloads wait this long into a song so they don't slow its start.
+  // The songs after the next one wait this long into a song, so they
+  // don't slow its start; the next one downloads right away.
   static const _precacheStartDelay = Duration(seconds: 3);
   int _precacheGeneration = 0;
 
@@ -104,6 +105,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // starts over with no gap instead of Tsuki playing it again. Null until
   // set this session.
   bool? _spotifyLoopsTrack;
+  // The list play failed for this song (Web API unusable): sending it again
+  // a few seconds in would only restart the song.
+  bool _spotifyListPlayFailed = false;
   // Queue edits wait a moment (several drags in a row) before Spotify gets
   // the new list; while paused it gets it on resume instead.
   Timer? _spotifyListTimer;
@@ -446,12 +450,20 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           t
     ];
     if (missing.isEmpty) return;
+    // The very next song first and at once: skipping soon must find it
+    // ready, as before.
+    final next = identical(missing.first, upcoming.first) ? missing.first : null;
+    final later = next == null ? missing : missing.sublist(1);
     final sinceStart = DateTime.now().difference(_lastPlayStart);
     unawaited(() async {
-      if (sinceStart < _precacheStartDelay) {
-        await Future.delayed(_precacheStartDelay - sinceStart);
+      if (next != null) await _precache(next);
+      if (later.isEmpty) return;
+      final waited = DateTime.now().difference(_lastPlayStart);
+      if (gen != _precacheGeneration) return;
+      if (sinceStart < _precacheStartDelay && waited < _precacheStartDelay) {
+        await Future.delayed(_precacheStartDelay - waited);
       }
-      for (final track in missing) {
+      for (final track in later) {
         if (gen != _precacheGeneration) return;
         await _precache(track);
       }
@@ -1682,6 +1694,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     // the song starts right away; the rest follow once it plays.
     final ahead = await _resolveAhead(cachedOnly: true);
     if (gen != _playGeneration) return;
+    _spotifyListPlayFailed = false;
     if (ahead.isNotEmpty) {
       final ok =
           await _spotify.play(trackUris: [uri, ...ahead.map((e) => e.uri)]);
@@ -1702,6 +1715,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         return;
       }
       debugPrint('Spotify: list play failed, playing the single song');
+      _spotifyListPlayFailed = true;
     }
 
     // Fast path: App Remote is already connected (warm-up or previous play),
@@ -1914,7 +1928,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// by itself (with its crossfade) instead of stopping at the end.
   void _afterSpotifyStarted() {
     unawaited(_syncSpotifyRepeat());
-    if (_spotifyAhead.isEmpty) unawaited(_reissueSpotifyAhead());
+    if (_spotifyAhead.isEmpty && !_spotifyListPlayFailed) {
+      unawaited(_reissueSpotifyAhead());
+    }
   }
 
   @visibleForTesting
