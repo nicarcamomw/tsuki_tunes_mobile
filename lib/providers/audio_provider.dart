@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
@@ -66,6 +67,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Previews downloaded ahead of the current song, so the next ones play
   // without a connection (metro, plane) and without buffering.
   static const int _precacheAhead = 5;
+  // Downloads wait this long into a song so they don't slow its start.
+  static const _precacheStartDelay = Duration(seconds: 3);
   int _precacheGeneration = 0;
 
   bool _completionHandled = false;
@@ -95,8 +98,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<({String trackId, String uri})> _spotifyAhead = const [];
   // Long enough that the list rarely has to be handed again (a brief
   // restart of the song), so Spotify's own crossfade and gapless playback
-  // join song after song.
-  static const int _spotifyAheadMax = 20;
+  // join song after song; short enough to look the songs up quickly.
+  static const int _spotifyAheadMax = 12;
   // Whether Spotify loops the current song itself (our repeat-one), so it
   // starts over with no gap instead of Tsuki playing it again. Null until
   // set this session.
@@ -434,8 +437,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       onPrecacheTrackForTesting?.call(track);
     }
     final gen = ++_precacheGeneration;
+    final cache = AudioPrecacheService();
+    final missing = [
+      for (final t in upcoming)
+        if (!kIsWeb &&
+            t.previewUrl.isNotEmpty &&
+            cache.getCachedFilePath(t.id) == null)
+          t
+    ];
+    if (missing.isEmpty) return;
+    final sinceStart = DateTime.now().difference(_lastPlayStart);
     unawaited(() async {
-      for (final track in upcoming) {
+      if (sinceStart < _precacheStartDelay) {
+        await Future.delayed(_precacheStartDelay - sinceStart);
+      }
+      for (final track in missing) {
         if (gen != _precacheGeneration) return;
         await _precache(track);
       }
@@ -1050,18 +1066,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Spotify URIs for our next songs in play order, stopping at the first
   /// one Spotify doesn't have (URIs are cached, so repeats are instant).
-  /// With a [budget], stops resolving once it runs out.
+  /// [cachedOnly] makes no request: it stops at the first one not looked
+  /// up yet.
   Future<List<({String trackId, String uri})>> _resolveAhead(
-      {Duration? budget}) async {
+      {bool cachedOnly = false}) async {
     if (_sleepCtrl.stopAfterCurrentTrack) return const [];
-    final started = DateTime.now();
     final upcoming = [
       for (final i in _q.peekUpcoming(_spotifyAheadMax)) _q.tracks[i],
     ];
     final out = <({String trackId, String uri})>[];
     for (final t in upcoming) {
-      if (budget != null && DateTime.now().difference(started) > budget) break;
-      final uri = await _resolveSpotifyUri(t);
+      final uri = cachedOnly
+          ? await _spotify.cachedTrackUri(t.title, t.artistName, trackId: t.id)
+          : await _resolveSpotifyUri(t);
       if (uri == null) break;
       out.add((trackId: t.id, uri: uri));
     }
@@ -1530,7 +1547,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (newQueue != null) _radioCtrl.radio = null;
     _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
-    if (newQueue != null && newQueue.isNotEmpty) _prefetchUpcoming();
     // A new play hands Spotify a fresh list.
     _spotifyListTimer?.cancel();
     _spotifyListStale = false;
@@ -1661,9 +1677,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Preferred: hand Spotify the next songs of our queue along with this
     // one. It then plays them by itself, so the queue goes on even when
     // Android freezes or kills Tsuki in the background (otherwise Spotify
-    // falls into its own autoplay when the song ends).
-    final ahead =
-        await _resolveAhead(budget: const Duration(milliseconds: 1200));
+    // falls into its own autoplay when the song ends). Only the ones
+    // already looked up (the next one is, during the previous song), so
+    // the song starts right away; the rest follow once it plays.
+    final ahead = await _resolveAhead(cachedOnly: true);
     if (gen != _playGeneration) return;
     if (ahead.isNotEmpty) {
       final ok =

@@ -406,6 +406,14 @@ class SpotifyService {
   /// of the artists match, so a different song by the same artist is never
   /// played. [isrcResolver] is only called on a cache miss, so callers can
   /// fetch the ISRC lazily (Deezer only returns it from /track/{id}).
+  /// The Spotify URI of a track already looked up before, without any
+  /// request (null when it wasn't).
+  Future<String?> cachedTrackUri(String title, String artist,
+      {String? trackId}) async {
+    await _ensureUriCacheLoaded();
+    return _getFromCache(trackId, title, artist);
+  }
+
   Future<String?> searchTrack(
     String title,
     String artist, {

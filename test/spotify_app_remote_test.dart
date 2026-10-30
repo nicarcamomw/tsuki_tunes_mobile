@@ -61,6 +61,18 @@ class FakeSpotifyService extends SpotifyService {
   @override
   Future<void> loadSavedState() async {}
 
+  /// Track ids already looked up; null: every one is.
+  Set<String>? lookedUp;
+  final events = <String>[];
+
+  @override
+  Future<String?> cachedTrackUri(String title, String artist,
+      {String? trackId}) async {
+    final known = lookedUp;
+    if (known != null && !known.contains(trackId)) return null;
+    return 'spotify:track:$trackId';
+  }
+
   @override
   Future<String?> searchTrack(
     String title,
@@ -68,8 +80,11 @@ class FakeSpotifyService extends SpotifyService {
     String? trackId,
     String? isrc,
     Future<String?> Function()? isrcResolver,
-  }) async =>
-      'spotify:track:$trackId';
+  }) async {
+    events.add('search:$trackId');
+    lookedUp?.add(trackId!);
+    return 'spotify:track:$trackId';
+  }
 
   List<String>? lastPlayedUris;
   int playCount = 0;
@@ -82,6 +97,7 @@ class FakeSpotifyService extends SpotifyService {
     int? positionMs,
   }) async {
     if (playWillFail) return false;
+    events.add('play');
     playCount++;
     lastPlayedUris = trackUris ?? [if (trackUri != null) trackUri];
     _playbackUri = lastPlayedUris!.first;
@@ -558,6 +574,30 @@ void main() {
       provider.backdatePlayStartForTesting(const Duration(seconds: 15));
       return provider;
     }
+
+    test('a song starts without waiting to look up the next ones', () async {
+      fakeSpotify.lookedUp = {};
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final tracks = [_track('t1'), _track('t2'), _track('t3')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+
+      expect(fakeNative._playingUri, 'spotify:track:t1');
+      expect(fakeSpotify.events.first, 'search:t1');
+      expect(fakeSpotify.events, isNot(contains('search:t3')),
+          reason: 'only the next one is looked up, in the background');
+
+      // Once it plays, Spotify gets the rest.
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      provider.afterSpotifyStartedForTesting();
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
+      expect(fakeSpotify.lastPlayedUris,
+          ['spotify:track:t1', 'spotify:track:t2', 'spotify:track:t3']);
+    });
 
     test('the play hands Spotify the upcoming songs in order', () async {
       await playingList([_track('t1'), _track('t2'), _track('t3')]);
