@@ -2,53 +2,22 @@ package com.tsuki.tsuki_tunes_mobile
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.view.KeyEvent
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.concurrent.thread
 
 class TsukiPlayerWidgetProvider : HomeWidgetProvider() {
-
-    companion object {
-        private const val ACTION_PLAY_PAUSE = "com.tsuki.widget.PLAY_PAUSE"
-        private const val ACTION_NEXT = "com.tsuki.widget.NEXT"
-        private const val ACTION_PREV = "com.tsuki.widget.PREV"
-    }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        val keyCode = when (intent.action) {
-            ACTION_PLAY_PAUSE -> KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-            ACTION_NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT
-            ACTION_PREV -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
-            else -> return
-        }
-        sendMediaKey(context, keyCode)
-    }
-
-    private fun sendMediaKey(context: Context, keyCode: Int) {
-        val target = ComponentName(
-            context,
-            "com.ryanheise.audioservice.MediaButtonReceiver"
-        )
-        for (action in intArrayOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP)) {
-            val mediaIntent = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-                component = target
-                putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(action, keyCode))
-            }
-            context.sendBroadcast(mediaIntent)
-        }
-    }
 
     override fun onUpdate(
         context: Context,
@@ -99,15 +68,15 @@ class TsukiPlayerWidgetProvider : HomeWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.widget_player_root, launchIntent)
 
-        views.setOnClickPendingIntent(R.id.btn_prev, makeActionIntent(context, ACTION_PREV, 1))
-        views.setOnClickPendingIntent(R.id.btn_play_pause, makeActionIntent(context, ACTION_PLAY_PAUSE, 2))
-        views.setOnClickPendingIntent(R.id.btn_next, makeActionIntent(context, ACTION_NEXT, 3))
+        views.setOnClickPendingIntent(R.id.btn_prev, makeActionIntent(context, WidgetActionReceiver.ACTION_PREV, 1))
+        views.setOnClickPendingIntent(R.id.btn_play_pause, makeActionIntent(context, WidgetActionReceiver.ACTION_PLAY_PAUSE, 2))
+        views.setOnClickPendingIntent(R.id.btn_next, makeActionIntent(context, WidgetActionReceiver.ACTION_NEXT, 3))
 
         return views
     }
 
     private fun makeActionIntent(context: Context, action: String, requestCode: Int): PendingIntent {
-        val intent = Intent(context, TsukiPlayerWidgetProvider::class.java).apply {
+        val intent = Intent(context, WidgetActionReceiver::class.java).apply {
             this.action = action
         }
         return PendingIntent.getBroadcast(
@@ -126,24 +95,53 @@ class TsukiPlayerWidgetProvider : HomeWidgetProvider() {
             connection.readTimeout = 5000
             connection.doInput = true
             connection.connect()
-            val original = connection.inputStream.use { BitmapFactory.decodeStream(it) }
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
+            // Covers are small; refuse anything bigger than this rather
+            // than buffer it in the widget's process.
+            val bytes = connection.inputStream.use { readCapped(it, 4 * 1024 * 1024) }
                 ?: return null
 
-            val scale = maxSize.toFloat() / maxOf(original.width, original.height)
+            // Decode already downsampled, so a large image never lands in
+            // memory at full size.
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+            var sample = 1
+            while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSize) {
+                sample *= 2
+            }
+            val decoded = BitmapFactory.decodeByteArray(
+                bytes, 0, bytes.size,
+                BitmapFactory.Options().apply { inSampleSize = sample }
+            ) ?: return null
+
+            val scale = maxSize.toFloat() / maxOf(decoded.width, decoded.height)
             if (scale < 1f) {
                 Bitmap.createScaledBitmap(
-                    original,
-                    (original.width * scale).toInt(),
-                    (original.height * scale).toInt(),
+                    decoded,
+                    (decoded.width * scale).toInt(),
+                    (decoded.height * scale).toInt(),
                     true
                 )
             } else {
-                original
+                decoded
             }
         } catch (_: Exception) {
             null
         } finally {
             connection?.disconnect()
         }
+    }
+
+    private fun readCapped(input: InputStream, limit: Int): ByteArray? {
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(16 * 1024)
+        while (true) {
+            val n = input.read(buffer)
+            if (n < 0) break
+            if (out.size() + n > limit) return null
+            out.write(buffer, 0, n)
+        }
+        return out.toByteArray()
     }
 }
