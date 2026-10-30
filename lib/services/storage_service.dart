@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/artist.dart';
@@ -174,16 +178,59 @@ class StorageService implements StorageContract {
     await prefs.setInt(_lastFullSyncKey(uid), time.millisecondsSinceEpoch);
   }
 
+  // The whole listening library: thousands of tracks, megabytes of JSON.
+  // It lives in its own file, not in SharedPreferences (which Android reads
+  // whole at every launch), and is encoded/decoded off the UI thread when
+  // big. Where files aren't available (web) it stays in SharedPreferences.
+
+  // Lists longer than this are (de)serialized in a background isolate.
+  static const int _isolateThreshold = 300;
+  // Writes run one after another, so an older list never lands last.
+  static Future<void> _listenedWrites = Future.value();
+
+  static Future<File?> _listenedFile(String uid) async {
+    if (kIsWeb) return null;
+    try {
+      final dir = await getApplicationSupportDirectory();
+      final safe = uid.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+      return File('${dir.path}/listened_tracks_$safe.json');
+    } catch (_) {
+      return null; // no path provider (tests): fall back to prefs
+    }
+  }
+
+  static List<Map<String, dynamic>> _decodeTracks(String raw) {
+    final List decoded = json.decode(raw);
+    return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  static String _encodeTracks(List<Map<String, dynamic>> tracks) => json.encode(tracks);
+
   @override
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid) async {
     if (uid.isEmpty) return [];
-    final prefs = await SharedPreferences.getInstance();
-    final String? raw = prefs.getString(_cachedTracksKey(uid));
-    if (raw == null || raw.isEmpty) return [];
-
     try {
-      final List decoded = json.decode(raw);
-      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final file = await _listenedFile(uid);
+      if (file != null && await file.exists()) {
+        final raw = await file.readAsString();
+        if (raw.isEmpty) return [];
+        return raw.length > 64 * 1024
+            ? await compute(_decodeTracks, raw)
+            : _decodeTracks(raw);
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final String? raw = prefs.getString(_cachedTracksKey(uid));
+      if (raw == null || raw.isEmpty) return [];
+      final tracks = raw.length > 64 * 1024
+          ? await compute(_decodeTracks, raw)
+          : _decodeTracks(raw);
+      if (file != null) {
+        // One-time move out of SharedPreferences.
+        await _writeListened(file, raw);
+        await prefs.remove(_cachedTracksKey(uid));
+      }
+      return tracks;
     } catch (_) {
       return [];
     }
@@ -191,10 +238,34 @@ class StorageService implements StorageContract {
 
   @override
   Future<void> saveCachedListenedTracks(
-      String uid, List<Map<String, dynamic>> tracks) async {
-    if (uid.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cachedTracksKey(uid), json.encode(tracks));
+      String uid, List<Map<String, dynamic>> tracks) {
+    if (uid.isEmpty) return Future.value();
+    final write = _listenedWrites.then((_) async {
+      try {
+        final raw = tracks.length > _isolateThreshold
+            ? await compute(_encodeTracks, tracks)
+            : _encodeTracks(tracks);
+        final file = await _listenedFile(uid);
+        if (file != null) {
+          await _writeListened(file, raw);
+        } else {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_cachedTracksKey(uid), raw);
+        }
+      } catch (e) {
+        debugPrint('[Storage] listened tracks save failed: $e');
+      }
+    });
+    _listenedWrites = write;
+    return write;
+  }
+
+  /// Writes to a temp file and renames it over the old one, so a crash
+  /// mid-write never leaves a truncated library behind.
+  static Future<void> _writeListened(File file, String raw) async {
+    final tmp = File('${file.path}.tmp');
+    await tmp.writeAsString(raw, flush: true);
+    await tmp.rename(file.path);
   }
 
   // --- Onboarding Persistence ---
