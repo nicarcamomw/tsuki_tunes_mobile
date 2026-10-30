@@ -1227,6 +1227,8 @@ class AppStrings {
   String get playNext => _l.playNext;
 
   String get addedPlayNext => _l.addedPlayNext;
+  String get autoplaySimilarTitle => _l.autoplaySimilarTitle;
+  String get autoplaySimilarSubtitle => _l.autoplaySimilarSubtitle;
   String get playlistEdit => _l.playlistEdit;
   String get playlistEditDone => _l.playlistEditDone;
   String get playlistEditHint => _l.playlistEditHint;

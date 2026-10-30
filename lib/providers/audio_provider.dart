@@ -17,6 +17,7 @@ import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
+import '../services/headphones_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
@@ -108,6 +109,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // The list play failed for this song (Web API unusable): sending it again
   // a few seconds in would only restart the song.
   bool _spotifyListPlayFailed = false;
+  // Our queue grew past the list Spotify has: hand it the longer one at
+  // the next song's start.
+  bool _spotifyExtendAtNextSong = false;
   // Queue edits wait a moment (several drags in a row) before Spotify gets
   // the new list; while paused it gets it on resume instead.
   Timer? _spotifyListTimer;
@@ -497,6 +501,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       onStateChanged: notifyListeners,
       persistPlaybackState: () async => _persistPlaybackState(),
       isOnline: () => _online,
+      onQueueGrew: _onQueueGrew,
     );
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
@@ -703,9 +708,72 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
       final prefs = await SharedPreferences.getInstance();
       _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
+      _autoplaySimilar = prefs.getBool(_autoplayKey) ?? true;
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+    }
+  }
+
+  // ── Similar songs after the end ──
+
+  static const _autoplayKey = 'tsuki_autoplay_similar';
+  bool _autoplaySimilar = true;
+  bool get autoplaySimilar => _autoplaySimilar;
+  // The song a continuation was already tried for (it found nothing).
+  String? _continueTriedFor;
+
+  Future<void> setAutoplaySimilar(bool enabled) async {
+    _autoplaySimilar = enabled;
+    _continueTriedFor = null;
+    notifyListeners();
+    if (enabled) _maybeContinueWithSimilar();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_autoplayKey, enabled);
+    } catch (_) {}
+  }
+
+  /// Whether the music may go on with similar songs once the queue ends.
+  bool get _mayContinueWithSimilar =>
+      _autoplaySimilar &&
+      !_radioCtrl.isActive &&
+      _q.repeatMode == PlaybackRepeatMode.off &&
+      !_sleepCtrl.stopAfterCurrentTrack &&
+      _online &&
+      // Running mode picks the songs itself.
+      _service.speedFor == null;
+
+  /// What's playing is about to run out: add similar songs after it (a
+  /// radio seeded with the song playing now). With Spotify this happens
+  /// before the list handed to it reaches our last song, so it never gets
+  /// to the end and starts its own autoplay: Tsuki stays in charge.
+  void _maybeContinueWithSimilar() {
+    final track = _currentTrack;
+    if (track == null || !_mayContinueWithSimilar) return;
+    if (_continueTriedFor == track.id) return;
+    final left = _q.isShuffle
+        ? _q.length - 1 - _q.played().length
+        : _q.upcomingCount;
+    final spotify = _useSpotify && _spotifyActive && !_spotifyFallbackActive;
+    if (left > (spotify ? _spotifyAheadMax : 3)) return;
+    _continueTriedFor = track.id;
+    debugPrint('[AudioProvider] Queue ending, adding similar songs');
+    unawaited(_radioCtrl.continueFrom(track));
+  }
+
+  /// Songs were added at the end (similar songs, radio): Spotify gets them
+  /// before its list runs out, quietly at a song's start when it can.
+  void _onQueueGrew() {
+    _prefetchNextTrack();
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    if (_spotifyAhead.length >= _spotifyAheadMax) return;
+    if (_spotifyAhead.length < 2) {
+      // About to run out: now, even if the song restarts for a moment.
+      unawaited(_reissueSpotifyAhead(force: true));
+    } else {
+      _spotifyExtendAtNextSong = true;
+      unawaited(_reissueSpotifyAhead());
     }
   }
 
@@ -780,18 +848,36 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
           }
         }
       });
-      session.becomingNoisyEventStream.listen((_) {
-        if (_spotifyActive && _isPlaying) {
-          _spotifyPause();
-          _isPlaying = false;
-          _stopPositionTimer();
-          notifyListeners();
-        }
-      });
+      session.becomingNoisyEventStream.listen((_) => _onHeadphonesUnplugged());
     } catch (e) {
       debugPrint('[AudioProvider] AudioSession config error: $e');
     }
+    // Also while Spotify plays (Tsuki then has no audio focus, so the
+    // session above doesn't hear it).
+    _unplugSub = HeadphonesService.unplugged.listen((_) => _onHeadphonesUnplugged());
   }
+
+  StreamSubscription<void>? _unplugSub;
+
+  /// Headphones out: pause, and stay paused (an interruption ending later
+  /// must not resume it out of the speaker).
+  void _onHeadphonesUnplugged() {
+    _spotifyInterrupted = false;
+    if (!_isPlaying) return;
+    debugPrint('[AudioProvider] Headphones unplugged, pausing');
+    if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
+      unawaited(_spotifyPause());
+      _isPlaying = false;
+      _stopPositionTimer();
+      notifyListeners();
+      _persistPlaybackState();
+    } else {
+      unawaited(_service.pause());
+    }
+  }
+
+  @visibleForTesting
+  void headphonesUnpluggedForTesting() => _onHeadphonesUnplugged();
 
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
@@ -1153,7 +1239,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     _prefetchNextTrack();
     unawaited(_radioCtrl.topUp());
-    if (_spotifyAhead.length < 2) unawaited(_reissueSpotifyAhead());
+    if (_spotifyAhead.length < 2 || _spotifyExtendAtNextSong) {
+      _spotifyExtendAtNextSong = false;
+      unawaited(_reissueSpotifyAhead());
+    }
+    _keepMediaSessionOnTop();
   }
 
   /// Hands Spotify a fresh list from the current song on, from where it is,
@@ -1562,6 +1652,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     // A new play hands Spotify a fresh list.
     _spotifyListTimer?.cancel();
     _spotifyListStale = false;
+    _spotifyExtendAtNextSong = false;
 
     _retryTimer?.cancel();
     _retryCount = 0;
@@ -1927,6 +2018,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// it only got this one song, hand it the next ones too, so it moves on
   /// by itself (with its crossfade) instead of stopping at the end.
   void _afterSpotifyStarted() {
+    _keepMediaSessionOnTop();
     unawaited(_syncSpotifyRepeat());
     if (_spotifyAhead.isEmpty && !_spotifyListPlayFailed) {
       unawaited(_reissueSpotifyAhead());
@@ -1935,6 +2027,20 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @visibleForTesting
   void afterSpotifyStartedForTesting() => _afterSpotifyStarted();
+
+  Timer? _mediaTopTimer;
+
+  /// With Spotify, Android also shows Spotify's own player and puts first
+  /// the one that updated last. Posting Tsuki's state again just after
+  /// Spotify updates its own (at each song start) keeps Tsuki's on top.
+  void _keepMediaSessionOnTop() {
+    _mediaTopTimer?.cancel();
+    _mediaTopTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (_useSpotify && _spotifyActive && _isPlaying) {
+        _syncMediaSession(force: true);
+      }
+    });
+  }
 
   bool get _spotifyLoopsOurTrack =>
       _useSpotify &&
@@ -2073,6 +2179,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   int? peekNextIndex() => _q.peekNext();
 
   void _prefetchNextTrack() {
+    _maybeContinueWithSimilar();
     final nextIdx = _q.peekNext();
     if (nextIdx == null || nextIdx < 0 || nextIdx >= _q.length) return;
 
@@ -2405,6 +2512,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (_radioCtrl.isActive) {
         unawaited(
             _radioCtrl.topUp(force: true).then((added) => added ? next() : stop()));
+      } else if (finished != null && _mayContinueWithSimilar) {
+        // Nothing queued in time: go on with similar songs now.
+        unawaited(_radioCtrl
+            .continueFrom(finished)
+            .then((added) => added ? next() : stop()));
       } else {
         stop();
       }
@@ -2522,6 +2634,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
     _spotifyListTimer?.cancel();
+    _mediaTopTimer?.cancel();
+    _unplugSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

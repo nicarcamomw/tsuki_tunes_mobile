@@ -9,6 +9,7 @@ import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/services/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/services/song_radio.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_web_player.dart';
 
@@ -955,6 +956,76 @@ void main() {
       expect(fakeSpotify.playCount, plays + 1);
       expect(fakeSpotify.lastPlayedUris?[1], 'spotify:track:t9');
     });
+  });
+
+  group('When the list ends, Tsuki keeps the music going', () {
+    setUp(() {
+      AudioRadioController.radioFactory = (seed, mode) => SongRadio(
+            seed: seed,
+            mode: mode,
+            similar: (_, __) async => const [],
+            // The radio only takes songs with a preview.
+            artistRadio: (_) async => [
+              for (var i = 1; i <= 10; i++)
+                _track('s$i').copyWith(previewUrl: 'https://x/s$i.mp3'),
+            ],
+            search: (_) async => const [],
+            useLastFm: false,
+          );
+    });
+    tearDown(() {
+      AudioRadioController.radioFactory =
+          (seed, mode) => SongRadio(seed: seed, mode: mode);
+    });
+
+    Future<void> settle() =>
+        Future.delayed(const Duration(milliseconds: 100));
+
+    test('similar songs are added and handed to Spotify before it ends',
+        () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await Future.delayed(Duration.zero);
+      final tracks = [_track('t1'), _track('t2')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await settle();
+
+      expect(provider.queue.length, greaterThan(2));
+      expect(provider.isRadioActive, isTrue);
+      // Spotify's list goes past our last song: it never reaches its own
+      // autoplay.
+      final handed = fakeSpotify.lastPlayedUris!;
+      expect(handed.take(2), ['spotify:track:t1', 'spotify:track:t2']);
+      expect(handed.length, greaterThan(2));
+    });
+
+    test('with it turned off, nothing is added', () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await Future.delayed(Duration.zero);
+      await provider.setAutoplaySimilar(false);
+      final tracks = [_track('t1'), _track('t2')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await settle();
+      expect(provider.queue.length, 2);
+      expect(provider.isRadioActive, isFalse);
+    });
+  });
+
+  test('unplugging the headphones pauses Spotify', () async {
+    fakeNative.setConnected(true);
+    final provider = createProvider();
+    await provider.playTrack(_track('t1'), newQueue: [_track('t1')]);
+    await Future.delayed(Duration.zero);
+    fakeNative.simulateStateChanged(1000, 180000, false,
+        uri: 'spotify:track:t1');
+    await Future.delayed(Duration.zero);
+    expect(provider.isPlaying, isTrue);
+
+    provider.headphonesUnpluggedForTesting();
+    await Future.delayed(Duration.zero);
+    expect(provider.isPlaying, isFalse);
+    expect(fakeNative.pauseCount, 1);
   });
 
   group('Offline', () {

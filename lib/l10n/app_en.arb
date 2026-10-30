@@ -634,5 +634,7 @@
   "playlistEdit": "Edit playlist",
   "playlistEditDone": "DONE",
   "playlistEditHint": "Drag ≡ to reorder · tap ⊖ to remove",
-  "playlistRemoveFromThis": "Remove from this playlist"
+  "playlistRemoveFromThis": "Remove from this playlist",
+  "autoplaySimilarTitle": "Keep going with similar songs",
+  "autoplaySimilarSubtitle": "When what you're playing ends, similar music follows (instead of Spotify's own)"
 }

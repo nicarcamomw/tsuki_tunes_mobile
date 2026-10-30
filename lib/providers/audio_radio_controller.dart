@@ -16,6 +16,7 @@ class AudioRadioController {
   final VoidCallback _onStateChanged;
   final Future<void> Function() _persistPlaybackState;
   final bool Function() _isOnline;
+  final VoidCallback? _onQueueGrew;
 
   SongRadio? radio;
   RadioStatus _status = RadioStatus.ready;
@@ -30,10 +31,17 @@ class AudioRadioController {
     required VoidCallback onStateChanged,
     required Future<void> Function() persistPlaybackState,
     required bool Function() isOnline,
+    VoidCallback? onQueueGrew,
   })  : _q = queue,
         _onStateChanged = onStateChanged,
         _persistPlaybackState = persistPlaybackState,
-        _isOnline = isOnline;
+        _isOnline = isOnline,
+        _onQueueGrew = onQueueGrew;
+
+  /// Makes the radios (tests use fake song sources).
+  @visibleForTesting
+  static SongRadio Function(Track seed, RadioMode mode) radioFactory =
+      (seed, mode) => SongRadio(seed: seed, mode: mode);
 
   bool get isActive => radio != null;
   Track? get seed => radio?.seed;
@@ -63,7 +71,7 @@ class AudioRadioController {
     required void Function() clearQueue,
   }) async {
     await _loadModePref();
-    final newRadio = SongRadio(seed: seed, mode: _modePref);
+    final newRadio = radioFactory(seed, _modePref);
     _topUpFuture = null;
     _status = RadioStatus.loading;
 
@@ -79,6 +87,25 @@ class AudioRadioController {
 
     final added = await topUp(force: true, count: 10);
     if (!added && identical(radio, newRadio)) {
+      radio = null;
+      unawaited(_persistPlaybackState());
+      _onStateChanged();
+    }
+    return added;
+  }
+
+  /// Keeps the music going past the end of what's playing: a radio seeded
+  /// with [seed] that adds similar songs after the current list, which
+  /// stays as it is. Returns whether any were added.
+  Future<bool> continueFrom(Track seed) async {
+    if (radio != null) return topUp(force: true);
+    await _loadModePref();
+    if (radio != null) return topUp(force: true);
+    final r = radioFactory(seed, _modePref)..markQueued(_q.tracks);
+    radio = r;
+    _topUpFuture = null;
+    final added = await topUp(force: true, count: 10);
+    if (!added && identical(radio, r)) {
       radio = null;
       unawaited(_persistPlaybackState());
       _onStateChanged();
@@ -181,6 +208,7 @@ class AudioRadioController {
       unawaited(_persistPlaybackState());
     }
     _onStateChanged();
+    if (added > 0) _onQueueGrew?.call();
     return added > 0;
   }
 

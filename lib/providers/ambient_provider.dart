@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/ambient_sound_generator.dart';
+import '../services/headphones_service.dart';
 
 export '../services/ambient_sound_generator.dart' show AmbientSound;
 
@@ -36,6 +37,7 @@ class AmbientProvider extends ChangeNotifier {
   Timer? _stopTimer;
   Timer? _fadeTimer;
   StreamSubscription? _noisySub;
+  StreamSubscription<void>? _unplugSub;
 
   /// Pushes ambient-only state to the system media notification, so Android
   /// keeps the app alive when only the rain is playing with the screen off.
@@ -93,6 +95,10 @@ class AmbientProvider extends ChangeNotifier {
     // Headphones unplugged: don't blast rain out of the speaker at night.
     AudioSession.instance.then((session) {
       _noisySub = session.becomingNoisyEventStream.listen((_) {
+        if (isPlaying) pauseAll();
+      });
+      // Heard even when another app (Spotify) has the audio focus.
+      _unplugSub = HeadphonesService.unplugged.listen((_) {
         if (isPlaying) pauseAll();
       });
     }).catchError((e) {
@@ -290,6 +296,7 @@ class AmbientProvider extends ChangeNotifier {
     _cancelFade();
     _clearStopTimer();
     _noisySub?.cancel();
+    _unplugSub?.cancel();
     for (final p in _players.values) {
       p.dispose();
     }

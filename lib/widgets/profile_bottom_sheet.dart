@@ -552,6 +552,19 @@ class ProfileBottomSheet {
                           },
                         ),
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        _settingSwitch(
+                          locale: locale,
+                          icon: Icons.all_inclusive,
+                          title: strings.autoplaySimilarTitle,
+                          subtitle: strings.autoplaySimilarSubtitle,
+                          value: audioProvider.autoplaySimilar,
+                          onChanged: (v) {
+                            HapticFeedback.selectionClick();
+                            audioProvider.setAutoplaySimilar(v);
+                            setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
                         InkWell(
                           borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
                           onTap: () {

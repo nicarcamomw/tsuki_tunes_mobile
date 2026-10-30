@@ -634,5 +634,7 @@
   "playlistEdit": "プレイリストを編集",
   "playlistEditDone": "完了",
   "playlistEditHint": "≡をドラッグで並べ替え・⊖で削除",
-  "playlistRemoveFromThis": "このプレイリストから削除"
+  "playlistRemoveFromThis": "このプレイリストから削除",
+  "autoplaySimilarTitle": "似た曲で再生を続ける",
+  "autoplaySimilarSubtitle": "再生が終わったら似た曲を続けて再生（Spotifyの自動再生の代わりに）"
 }

@@ -1028,5 +1028,7 @@
   "playlistEdit": "Editar playlist",
   "playlistEditDone": "LISTO",
   "playlistEditHint": "Arrastra ≡ para ordenar · toca ⊖ para quitar",
-  "playlistRemoveFromThis": "Quitar de esta playlist"
+  "playlistRemoveFromThis": "Quitar de esta playlist",
+  "autoplaySimilarTitle": "Seguir con canciones similares",
+  "autoplaySimilarSubtitle": "Cuando se acaba lo que escuchas, sigue con música parecida (y Spotify no pone la suya)"
 }
