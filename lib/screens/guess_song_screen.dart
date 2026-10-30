@@ -200,7 +200,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
         } else {
           final pool = await _chartPool();
           if (pool.isEmpty) throw StateError('empty chart');
-          final pick = pool[GuessGame.dailyIndex(_today, pool.length)];
+          final pick = GuessGame.dailyPick(_today, pool, (t) => t.id);
           target = await _api.getTrack(pick.id, forceRefresh: true) ?? pick;
           await _prefs?.setString(
             GuessSongScreen.dailyStateKey,

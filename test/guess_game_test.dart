@@ -70,22 +70,27 @@ void main() {
   });
 
   group('daily challenge', () {
+    test('the daily pick survives the chart reordering', () {
+      final pool = [for (var i = 0; i < 100; i++) _track('$i', 'Song $i', 'A')];
+      for (var day = 1; day < 50; day++) {
+        final pick = GuessGame.dailyPick(day, pool, (t) => t.id);
+        final shuffled = [...pool.reversed];
+        expect(GuessGame.dailyPick(day, shuffled, (t) => t.id).id, pick.id);
+        // Another song leaving the chart doesn't change it either.
+        final smaller = pool.where((t) => t.id != pick.id).toList()..removeAt(0);
+        smaller.add(pick);
+        expect(GuessGame.dailyPick(day, smaller, (t) => t.id).id, pick.id);
+      }
+      final picks = {for (var d = 1; d < 30; d++) GuessGame.dailyPick(d, pool, (t) => t.id).id};
+      expect(picks.length, greaterThan(20), reason: 'different songs on different days');
+    });
+
     test('day number starts at 1 on launch day and is stable within the day', () {
       expect(GuessGame.dayNumber(DateTime(2026, 10, 26, 0, 5)), 1);
       expect(GuessGame.dayNumber(DateTime(2026, 10, 26, 23, 59)), 1);
       expect(GuessGame.dayNumber(DateTime(2026, 10, 27, 0, 0)), 2);
     });
 
-    test('daily index is deterministic, in range and varies across days', () {
-      final picks = <int>{};
-      for (var day = 1; day <= 60; day++) {
-        final i = GuessGame.dailyIndex(day, 100);
-        expect(i, inInclusiveRange(0, 99));
-        expect(GuessGame.dailyIndex(day, 100), i);
-        picks.add(i);
-      }
-      expect(picks.length, greaterThan(30));
-    });
   });
 
   group('results', () {

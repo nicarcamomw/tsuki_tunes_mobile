@@ -22,13 +22,33 @@ class GuessGame {
   static Duration untilNextDay(DateTime now) =>
       DateTime(now.year, now.month, now.day + 1).difference(now);
 
-  /// Same pool + same day → same song, on every phone.
-  static int dailyIndex(int day, int poolLength) {
-    var x = (day * 0x9E3779B1) & 0xFFFFFFFF;
-    x = ((x ^ (x >> 16)) * 0x85EBCA6B) & 0xFFFFFFFF;
-    x = ((x ^ (x >> 13)) * 0xC2B2AE35) & 0xFFFFFFFF;
-    x ^= x >> 16;
-    return x % poolLength;
+  /// Today's song from [pool], chosen by highest hash of (day, track id)
+  /// rather than by position. The chart reorders through the day and differs
+  /// a little between regions; by position any shift changes the song, while
+  /// here it only changes if today's winner leaves the pool (or a newcomer
+  /// out-hashes it), so phones agree far more often.
+  static T dailyPick<T>(int day, List<T> pool, String Function(T) idOf) {
+    var best = pool.first;
+    var bestScore = -1;
+    for (final item in pool) {
+      final score = _mix(day, idOf(item));
+      if (score > bestScore) {
+        bestScore = score;
+        best = item;
+      }
+    }
+    return best;
+  }
+
+  // FNV-1a over the day and id, then a murmur-style finalizer.
+  static int _mix(int day, String id) {
+    var h = 0x811C9DC5;
+    for (final unit in '$day:$id'.codeUnits) {
+      h = ((h ^ unit) * 0x01000193) & 0xFFFFFFFF;
+    }
+    h = ((h ^ (h >> 16)) * 0x85EBCA6B) & 0xFFFFFFFF;
+    h = ((h ^ (h >> 13)) * 0xC2B2AE35) & 0xFFFFFFFF;
+    return h ^ (h >> 16);
   }
 
   static const Map<String, String> _accents = {
