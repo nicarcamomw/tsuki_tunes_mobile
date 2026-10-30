@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/models/play_day.dart';
+import 'package:tsuki_tunes_mobile/models/wrapped_data.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
 import 'package:tsuki_tunes_mobile/services/wrapped_service.dart';
 
@@ -84,5 +85,83 @@ void main() {
     // Highlights: first discovery per top artist, in artist order.
     expect(w.topTracks.map((t) => t.trackId), ['1', '3']);
     expect(w.funFacts.map((f) => f.key), isNot(contains('one_hit_wonder')));
+  });
+
+  group('monthly', () {
+    final days = [
+      _day('2026-09-10', {'a': 10, 'c': 10}, meta),
+      _day('2026-10-02', {'a': 8, 'b': 4}, meta),
+      _day('2026-10-05', {'c': 6}, meta),
+    ];
+
+    test('only counts that month, and needs fewer plays', () {
+      final w = WrappedService().generate(
+          days: days, listened: const [], year: 2026, month: 10, now: DateTime(2026, 10, 20));
+      expect(w.basedOnPlays, isTrue);
+      expect(w.isMonthly, isTrue);
+      expect(w.totalTracksPlayed, 18);
+      expect(w.topTracks.first.trackId, 'a');
+      expect(w.activeDays, 2);
+      // October so far: 1st to 20th.
+      expect(w.periodDays, 20);
+    });
+
+    test('a finished month counts all its days', () {
+      final w = WrappedService().generate(
+          days: days, listened: const [], year: 2026, month: 9, now: DateTime(2026, 10, 20));
+      expect(w.periodDays, 30);
+      expect(w.activeDays, 1);
+    });
+
+    test('minutes of the month before, to compare', () {
+      expect(WrappedService().minutesIn(days, 2026, month: 9), 20 * 200 ~/ 60);
+    });
+
+    test('discoveries of only that month', () {
+      final listened = [
+        _listened('x', 'A', DateTime(2026, 10, 3)),
+        _listened('y', 'B', DateTime(2026, 9, 3)),
+      ];
+      final w = WrappedService().generate(
+          days: const [], listened: listened, year: 2026, month: 10);
+      expect(w.basedOnPlays, isFalse);
+      expect(w.totalTracksPlayed, 1);
+      expect(w.activeDays, 1);
+    });
+  });
+
+  group('aura', () {
+    WrappedData data({Map<int, int> hours = const {14: 10}, int plays = 100,
+            int artists = 10, int topArtistPlays = 10, int activeDays = 10}) =>
+        WrappedData(
+          year: 2026,
+          topTracks: const [],
+          topArtists: [
+            WrappedArtistEntry(name: 'X', playCount: topArtistPlays, totalSeconds: 0),
+          ],
+          totalMinutesListened: 0,
+          totalTracksPlayed: plays,
+          uniqueTracksCount: plays,
+          uniqueArtistsCount: artists,
+          favoriteHour: 0,
+          hourDistribution: hours,
+          funFacts: const [],
+          generatedAt: DateTime(2026),
+          activeDays: activeDays,
+        );
+
+    test('each profile', () {
+      expect(WrappedService.auraOf(data(hours: {23: 8, 14: 2})), 'night');
+      expect(WrappedService.auraOf(data(hours: {7: 5, 14: 5})), 'dawn');
+      expect(WrappedService.auraOf(data(topArtistPlays: 50)), 'loyal');
+      expect(WrappedService.auraOf(data(plays: 300, activeDays: 5)), 'marathon');
+      expect(WrappedService.auraOf(data(artists: 60)), 'explorer');
+      expect(WrappedService.auraOf(data()), 'balance');
+    });
+
+    test('day parts add up', () {
+      final parts = WrappedService.dayParts({2: 1, 8: 1, 15: 1, 21: 1});
+      expect(parts, [0.25, 0.25, 0.25, 0.25]);
+    });
   });
 }

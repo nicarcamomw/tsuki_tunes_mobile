@@ -8,19 +8,109 @@ class WrappedService {
   WrappedService._internal();
 
   /// Below this many logged plays, counts are too thin to rank anything and
-  /// the recap falls back to discoveries (first listens).
+  /// the recap falls back to discoveries (first listens). A month needs
+  /// fewer.
   static const int minPlaysForPlayBased = 30;
+  static const int minPlaysForMonthly = 12;
 
+  /// The recap of [year], or of one [month] (1–12) of it. [now] bounds the
+  /// days the period has had so far.
   WrappedData generate({
     required List<PlayDay> days,
     required List<ListenedTrackData> listened,
     required int year,
+    int? month,
+    DateTime? now,
   }) {
-    final yearDays = days.where((d) => d.date.startsWith('$year-')).toList()
+    final prefix = month == null
+        ? '$year-'
+        : '$year-${month.toString().padLeft(2, '0')}-';
+    final periodDays = days.where((d) => d.date.startsWith(prefix)).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
-    final plays = yearDays.fold<int>(0, (s, d) => s + d.totalPlays);
-    if (plays >= minPlaysForPlayBased) return _fromPlays(yearDays, year);
-    return generateFromDiscoveries(listened, year);
+    final plays = periodDays.fold<int>(0, (s, d) => s + d.totalPlays);
+    final min = month == null ? minPlaysForPlayBased : minPlaysForMonthly;
+    final data = plays >= min
+        ? _fromPlays(periodDays, year)
+        : generateFromDiscoveries(listened, year, month: month);
+    return _withDays(data, periodDays, year, month, now ?? DateTime.now());
+  }
+
+  /// The listening profile of a recap: 'night', 'dawn', 'loyal',
+  /// 'marathon', 'explorer' or 'balance'.
+  static String auraOf(WrappedData d) {
+    final total = d.hourDistribution.values.fold<int>(0, (s, v) => s + v);
+    double share(List<int> hours) => total == 0
+        ? 0
+        : hours.fold<int>(0, (s, h) => s + (d.hourDistribution[h] ?? 0)) /
+            total;
+    final plays = d.totalTracksPlayed;
+    if (share(const [22, 23, 0, 1, 2, 3, 4]) >= 0.35) return 'night';
+    if (share(const [5, 6, 7, 8, 9]) >= 0.30) return 'dawn';
+    if (d.topArtists.isNotEmpty &&
+        plays > 0 &&
+        d.topArtists.first.playCount / plays >= 0.3) {
+      return 'loyal';
+    }
+    if (d.activeDays > 0 && plays / d.activeDays >= 25) return 'marathon';
+    if (plays >= 20 && d.uniqueArtistsCount / plays >= 0.4) return 'explorer';
+    return 'balance';
+  }
+
+  /// Share of plays in each part of the day: late night (0–5), morning
+  /// (6–11), afternoon (12–18), evening (19–23).
+  static List<double> dayParts(Map<int, int> hours) {
+    final total = hours.values.fold<int>(0, (s, v) => s + v);
+    if (total == 0) return const [0, 0, 0, 0];
+    double sum(int from, int to) {
+      var n = 0;
+      for (var h = from; h <= to; h++) {
+        n += hours[h] ?? 0;
+      }
+      return n / total;
+    }
+
+    return [sum(0, 5), sum(6, 11), sum(12, 18), sum(19, 23)];
+  }
+
+  /// Total minutes listened in a period (for comparisons).
+  int minutesIn(List<PlayDay> days, int year, {int? month}) {
+    final prefix = month == null
+        ? '$year-'
+        : '$year-${month.toString().padLeft(2, '0')}-';
+    return days
+            .where((d) => d.date.startsWith(prefix))
+            .fold<int>(0, (s, d) => s + d.seconds) ~/
+        60;
+  }
+
+  WrappedData _withDays(WrappedData data, List<PlayDay> days, int year,
+      int? month, DateTime now) {
+    final start = DateTime(year, month ?? 1, 1);
+    final end = month == null ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+    final today = DateTime(now.year, now.month, now.day + 1);
+    final until = today.isBefore(end) ? today : end;
+    final total = until.isAfter(start) ? until.difference(start).inDays : 0;
+    final active = data.basedOnPlays
+        ? days.where((d) => d.totalPlays > 0).length
+        : data.activeDays;
+    return WrappedData(
+      year: year,
+      month: month,
+      activeDays: active,
+      periodDays: total,
+      topTracks: data.topTracks,
+      topArtists: data.topArtists,
+      totalMinutesListened: data.totalMinutesListened,
+      totalTracksPlayed: data.totalTracksPlayed,
+      uniqueTracksCount: data.uniqueTracksCount,
+      uniqueArtistsCount: data.uniqueArtistsCount,
+      favoriteHour: data.favoriteHour,
+      hourDistribution: data.hourDistribution,
+      funFacts: data.funFacts,
+      generatedAt: data.generatedAt,
+      basedOnPlays: data.basedOnPlays,
+      playsSince: data.playsSince,
+    );
   }
 
   WrappedData _empty(int year) => WrappedData(
@@ -152,9 +242,13 @@ class WrappedService {
   // From first listens only: "what you discovered", never fake play counts
   // ---------------------------------------------------------------------------
 
-  WrappedData generateFromDiscoveries(List<ListenedTrackData> tracks, int year) {
+  WrappedData generateFromDiscoveries(List<ListenedTrackData> tracks, int year,
+      {int? month}) {
     final yearTracks = tracks
-        .where((t) => t.listenedAt != null && t.listenedAt!.year == year)
+        .where((t) =>
+            t.listenedAt != null &&
+            t.listenedAt!.year == year &&
+            (month == null || t.listenedAt!.month == month))
         .toList()
       ..sort((a, b) => a.listenedAt!.compareTo(b.listenedAt!));
     if (yearTracks.isEmpty) return _empty(year);
@@ -235,6 +329,9 @@ class WrappedService {
       funFacts: facts,
       generatedAt: DateTime.now(),
       basedOnPlays: false,
+      activeDays: {
+        for (final t in yearTracks) PlayDay.keyFor(t.listenedAt!)
+      }.length,
     );
   }
 

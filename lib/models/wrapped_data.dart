@@ -94,6 +94,17 @@ class WrappedFunFact {
 
 class WrappedData {
   final int year;
+
+  /// 1–12 for a monthly recap; null for the whole year.
+  final int? month;
+
+  /// Days with music in the period, and how many days it has had so far.
+  final int activeDays;
+  final int periodDays;
+
+  /// Minutes in the period before (last month or last year), to compare;
+  /// null when unknown.
+  final int? previousMinutes;
   final List<WrappedTrackEntry> topTracks;
   final List<WrappedArtistEntry> topArtists;
   final int totalMinutesListened;
@@ -115,6 +126,10 @@ class WrappedData {
 
   const WrappedData({
     required this.year,
+    this.month,
+    this.activeDays = 0,
+    this.periodDays = 0,
+    this.previousMinutes,
     required this.topTracks,
     required this.topArtists,
     required this.totalMinutesListened,
@@ -130,10 +145,35 @@ class WrappedData {
   });
 
   bool get isEmpty => totalTracksPlayed == 0;
+  bool get isMonthly => month != null;
+
+  WrappedData withPreviousMinutes(int? minutes) => WrappedData(
+        year: year,
+        month: month,
+        activeDays: activeDays,
+        periodDays: periodDays,
+        previousMinutes: minutes,
+        topTracks: topTracks,
+        topArtists: topArtists,
+        totalMinutesListened: totalMinutesListened,
+        totalTracksPlayed: totalTracksPlayed,
+        uniqueTracksCount: uniqueTracksCount,
+        uniqueArtistsCount: uniqueArtistsCount,
+        favoriteHour: favoriteHour,
+        hourDistribution: hourDistribution,
+        funFacts: funFacts,
+        generatedAt: generatedAt,
+        basedOnPlays: basedOnPlays,
+        playsSince: playsSince,
+      );
 
   factory WrappedData.fromJson(Map<String, dynamic> json) {
     return WrappedData(
       year: json['year'] as int? ?? 0,
+      month: json['month'] as int?,
+      activeDays: json['activeDays'] as int? ?? 0,
+      periodDays: json['periodDays'] as int? ?? 0,
+      previousMinutes: json['previousMinutes'] as int?,
       topTracks: (json['topTracks'] as List?)
               ?.map((e) =>
                   WrappedTrackEntry.fromJson(Map<String, dynamic>.from(e)))
@@ -169,6 +209,10 @@ class WrappedData {
 
   Map<String, dynamic> toJson() => {
         'year': year,
+        if (month != null) 'month': month,
+        'activeDays': activeDays,
+        'periodDays': periodDays,
+        if (previousMinutes != null) 'previousMinutes': previousMinutes,
         'topTracks': topTracks.map((e) => e.toJson()).toList(),
         'topArtists': topArtists.map((e) => e.toJson()).toList(),
         'totalMinutesListened': totalMinutesListened,

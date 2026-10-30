@@ -31,6 +31,7 @@ import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
+import '../widgets/wrapped_picker_sheet.dart';
 import 'guess_song_screen.dart';
 import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
@@ -38,7 +39,6 @@ import 'rabbit_hole_screen.dart';
 import 'release_radar_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
-import 'wrapped_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1644,16 +1644,12 @@ class _WrappedEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final year = DateTime.now().year;
     return Semantics(
       button: true,
       label: strings.a11yWrapped,
       child: GestureDetector(
-        onTap: () {
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(builder: (_) => WrappedScreen(year: year)),
-          );
-        },
+        // Pick this month, an earlier one or the whole year.
+        onTap: () => showWrappedPicker(context),
         child: GlassCard(
           color: AppColors.accent,
           highlightAlpha: 0.12,
@@ -1684,7 +1680,7 @@ class _WrappedEntryCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'WRAPPED $year',
+                'WRAPPED',
                 style: locale.getTextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -1695,7 +1691,7 @@ class _WrappedEntryCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                strings.wrappedViewYourWrapped,
+                strings.wrappedHomeSubtitle,
                 style: locale.getTextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,

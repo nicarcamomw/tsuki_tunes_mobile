@@ -1829,6 +1829,199 @@ class AppStrings {
 
   String get a11yWrapped => _l.a11yWrapped;
 
+  // --- Wrapped: monthly recaps and the redesign ---
+  String monthName(int month) {
+    const es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+        'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const en = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+        'August', 'September', 'October', 'November', 'December'];
+    return switch (language) {
+      AppLanguage.es => es[month - 1],
+      AppLanguage.en => en[month - 1],
+      AppLanguage.ja => '$month月',
+    };
+  }
+
+  /// "OCTUBRE 2026" / "2026" for the period of a recap.
+  String wrappedPeriod(int year, int? month) {
+    if (month == null) return '$year';
+    return switch (language) {
+      AppLanguage.ja => '$year年$month月',
+      _ => '${monthName(month).toUpperCase()} $year',
+    };
+  }
+
+  String wrappedIntro({required bool monthly}) => switch (language) {
+        AppLanguage.es => monthly ? '¿Listo para revivir tu mes?' : '¿Listo para revivir tu año?',
+        AppLanguage.en => monthly ? 'Ready to relive your month?' : 'Ready to relive your year?',
+        AppLanguage.ja => monthly ? '今月を振り返ろう' : '今年を振り返ろう',
+      };
+
+  String wrappedReportTag({required bool monthly}) =>
+      monthly ? '月報 // MONTHLY.REPORT' : '年間報告 // ANNUAL.REPORT.SYS';
+
+  String get wrappedMinutesLabel => switch (language) {
+        AppLanguage.es => 'MINUTOS ESCUCHADOS',
+        AppLanguage.en => 'MINUTES LISTENED',
+        AppLanguage.ja => '再生時間（分）',
+      };
+
+  String wrappedHoursOfMusic(int hours) => switch (language) {
+        AppLanguage.es => hours == 1 ? 'Eso es 1 hora de música' : 'Eso son $hours horas de música',
+        AppLanguage.en => hours == 1 ? "That's 1 hour of music" : "That's $hours hours of music",
+        AppLanguage.ja => '$hours時間分の音楽',
+      };
+
+  String wrappedActiveDays(int active, int total) => switch (language) {
+        AppLanguage.es => 'Hubo música $active de $total días',
+        AppLanguage.en => 'Music on $active of $total days',
+        AppLanguage.ja => '$total日中$active日音楽を聴いた',
+      };
+
+  /// "23% more than in September" / "12% less than in 2025".
+  String wrappedVsPrevious(int pct, String previous) {
+    final up = pct >= 0;
+    final n = pct.abs();
+    return switch (language) {
+      AppLanguage.es => '$n% ${up ? 'más' : 'menos'} que en $previous',
+      AppLanguage.en => '$n% ${up ? 'more' : 'less'} than in $previous',
+      AppLanguage.ja => '$previousより$n%${up ? '多い' : '少ない'}',
+    };
+  }
+
+  String get wrappedPlaysLabel => switch (language) {
+        AppLanguage.es => 'REPRODUCCIONES',
+        AppLanguage.en => 'PLAYS',
+        AppLanguage.ja => '再生回数',
+      };
+  String get wrappedSongsLabel => switch (language) {
+        AppLanguage.es => 'CANCIONES',
+        AppLanguage.en => 'SONGS',
+        AppLanguage.ja => '曲',
+      };
+  String get wrappedArtistsLabel => switch (language) {
+        AppLanguage.es => 'ARTISTAS',
+        AppLanguage.en => 'ARTISTS',
+        AppLanguage.ja => 'アーティスト',
+      };
+
+  String get wrappedTopSongLabel => switch (language) {
+        AppLanguage.es => 'TU CANCIÓN #1',
+        AppLanguage.en => 'YOUR #1 SONG',
+        AppLanguage.ja => 'あなたの1位の曲',
+      };
+  String get wrappedTopArtistLabel => switch (language) {
+        AppLanguage.es => 'TU ARTISTA #1',
+        AppLanguage.en => 'YOUR #1 ARTIST',
+        AppLanguage.ja => 'あなたの1位のアーティスト',
+      };
+  String get wrappedRunnersUp => switch (language) {
+        AppLanguage.es => 'LE SIGUEN',
+        AppLanguage.en => 'RUNNERS-UP',
+        AppLanguage.ja => '続いて',
+      };
+
+  String wrappedDayPart(int part) => switch (language) {
+        AppLanguage.es => const ['Madrugada', 'Mañana', 'Tarde', 'Noche'][part],
+        AppLanguage.en => const ['Late night', 'Morning', 'Afternoon', 'Evening'][part],
+        AppLanguage.ja => const ['深夜', '朝', '午後', '夜'][part],
+      };
+
+  String get wrappedAuraTitle => switch (language) {
+        AppLanguage.es => 'TU AURA MUSICAL',
+        AppLanguage.en => 'YOUR MUSIC AURA',
+        AppLanguage.ja => 'あなたの音楽オーラ',
+      };
+
+  /// Name and description of each listening profile (see WrappedAura).
+  (String, String) wrappedAura(String key) => switch (language) {
+        AppLanguage.es => switch (key) {
+            'night' => ('Criatura nocturna', 'La luna es tu mejor oyente: tu música suena cuando el resto duerme.'),
+            'dawn' => ('Madrugador', 'Empiezas el día con banda sonora antes que nadie.'),
+            'loyal' => ('Alma fiel', 'Cuando un artista te atrapa, no lo sueltas.'),
+            'explorer' => ('Explorador', 'Siempre buscando algo nuevo: muchísimos artistas distintos.'),
+            'marathon' => ('Maratonista', 'Días enteros con música sin parar.'),
+            _ => ('Equilibrio', 'Un poco de todo, a cualquier hora: tu música fluye contigo.'),
+          },
+        AppLanguage.en => switch (key) {
+            'night' => ('Night creature', 'The moon is your best listener: your music plays while others sleep.'),
+            'dawn' => ('Early riser', 'You start the day with a soundtrack before anyone else.'),
+            'loyal' => ('Loyal soul', 'Once an artist hooks you, you never let go.'),
+            'explorer' => ('Explorer', 'Always after something new: so many different artists.'),
+            'marathon' => ('Marathoner', 'Whole days of music, non-stop.'),
+            _ => ('Balance', 'A bit of everything, any time: your music flows with you.'),
+          },
+        AppLanguage.ja => switch (key) {
+            'night' => ('夜の住人', '月が一番のリスナー。みんなが眠る頃にあなたの音楽が流れる。'),
+            'dawn' => ('早起き', '誰よりも早く、音楽とともに一日を始める。'),
+            'loyal' => ('一途な魂', '一度ハマったアーティストは離さない。'),
+            'explorer' => ('探検家', 'いつも新しい音を探している。たくさんのアーティスト。'),
+            'marathon' => ('マラソンランナー', '一日中ずっと音楽。'),
+            _ => ('調和', '何でも、いつでも。音楽があなたと一緒に流れる。'),
+          },
+      };
+
+  String get wrappedSummaryTitle => switch (language) {
+        AppLanguage.es => 'TU RESUMEN',
+        AppLanguage.en => 'YOUR RECAP',
+        AppLanguage.ja => 'まとめ',
+      };
+  String get wrappedTopSongsShort => switch (language) {
+        AppLanguage.es => 'CANCIONES',
+        AppLanguage.en => 'TOP SONGS',
+        AppLanguage.ja => 'トップ曲',
+      };
+  String get wrappedTopArtistsShort => switch (language) {
+        AppLanguage.es => 'ARTISTAS',
+        AppLanguage.en => 'TOP ARTISTS',
+        AppLanguage.ja => 'トップアーティスト',
+      };
+  String wrappedOutroFor({required bool monthly}) => switch (language) {
+        AppLanguage.es => monthly ? 'NOS VEMOS EL PRÓXIMO MES' : 'NOS VEMOS EL PRÓXIMO AÑO',
+        AppLanguage.en => monthly ? 'SEE YOU NEXT MONTH' : 'SEE YOU NEXT YEAR',
+        AppLanguage.ja => monthly ? 'また来月' : 'また来年',
+      };
+  String get wrappedShareCta => switch (language) {
+        AppLanguage.es => 'COMPARTIR RESUMEN',
+        AppLanguage.en => 'SHARE RECAP',
+        AppLanguage.ja => 'まとめをシェア',
+      };
+  String wrappedNoDataFor({required bool monthly}) => switch (language) {
+        AppLanguage.es => monthly ? 'No hay datos suficientes para este mes' : 'No hay datos suficientes para este año',
+        AppLanguage.en => monthly ? 'Not enough data for this month' : 'Not enough data for this year',
+        AppLanguage.ja => monthly ? '今月はデータが足りません' : '今年はデータが足りません',
+      };
+  String get wrappedPickerSubtitle => switch (language) {
+        AppLanguage.es => 'Tu resumen de cada mes y del año',
+        AppLanguage.en => 'Your recap for every month and the year',
+        AppLanguage.ja => '毎月と一年のまとめ',
+      };
+  String get wrappedThisMonth => switch (language) {
+        AppLanguage.es => 'este mes',
+        AppLanguage.en => 'this month',
+        AppLanguage.ja => '今月',
+      };
+  String wrappedWholeYear(int year) => switch (language) {
+        AppLanguage.es => 'Año $year completo',
+        AppLanguage.en => 'All of $year',
+        AppLanguage.ja => '$year年の一年',
+      };
+  String get wrappedMonthlyLabel => switch (language) {
+        AppLanguage.es => 'MENSUAL',
+        AppLanguage.en => 'MONTHLY',
+        AppLanguage.ja => '月間',
+      };
+  String get wrappedYearlyLabel => switch (language) {
+        AppLanguage.es => 'ANUAL',
+        AppLanguage.en => 'YEARLY',
+        AppLanguage.ja => '年間',
+      };
+  String get wrappedHomeSubtitle => switch (language) {
+        AppLanguage.es => 'MES Y AÑO',
+        AppLanguage.en => 'MONTH & YEAR',
+        AppLanguage.ja => '月と年',
+      };
+
   String get a11yShareSlide => _l.a11yShareSlide;
 
   String get a11yNextSlide => _l.a11yNextSlide;

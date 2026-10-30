@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,135 +14,166 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_strings.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/wrapped_data.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/wrapped_service.dart';
 
+/// Tsuki Wrapped as stories: the recap of a [year], or of one [month] of
+/// it. Tap the sides to move, hold to pause, swipe down to close.
 class WrappedScreen extends StatefulWidget {
   final int year;
-  const WrappedScreen({super.key, required this.year});
+
+  /// 1–12 for a monthly recap; null for the whole year.
+  final int? month;
+
+  /// Shown as is instead of reading the play log (tests and previews).
+  @visibleForTesting
+  final WrappedData? previewData;
+
+  const WrappedScreen(
+      {super.key, required this.year, this.month, this.previewData});
+
+  /// Opens full screen, over the bottom bar and the mini player.
+  static Future<void> open(BuildContext context, {required int year, int? month}) {
+    return Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 420),
+        reverseTransitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) => WrappedScreen(year: year, month: month),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.96, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   State<WrappedScreen> createState() => _WrappedScreenState();
 }
 
+typedef _SlideBuilder = Widget Function(GlobalKey shareKey);
+
 class _WrappedScreenState extends State<WrappedScreen>
     with TickerProviderStateMixin {
   late final PageController _pageController;
-  late final AnimationController _progressController;
+  late final AnimationController _progress;
   WrappedData? _data;
-  int _currentPage = 0;
-  int _totalPages = 0;
-  bool _isSharing = false;
-  final Map<int, GlobalKey> _slideKeys = {};
+  List<_SlideBuilder> _slides = const [];
+  int _page = 0;
+  bool _sharing = false;
+  double _dragDown = 0;
+  final Map<int, GlobalKey> _shareKeys = {};
+
+  bool get _monthly => widget.month != null;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    );
-    _generateWrapped();
+    _progress = AnimationController(vsync: this, duration: const Duration(seconds: 8));
+    _generate();
   }
 
-  Future<void> _generateWrapped() async {
+  Future<void> _generate() async {
+    final preview = widget.previewData;
+    if (preview != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final slides = _buildSlides(preview);
+        setState(() {
+          _data = preview;
+          _slides = slides;
+          for (var i = 0; i < slides.length; i++) {
+            _shareKeys[i] = GlobalKey();
+          }
+        });
+      });
+      return;
+    }
     final library = context.read<LibraryProvider>();
-    final days = await library.loadPlayDays(
-      DateTime(widget.year, 1, 1),
-      DateTime(widget.year, 12, 31),
-    );
+    final y = widget.year;
+    final m = widget.month;
+    // The period and the one before it, to compare.
+    final from = m == null ? DateTime(y - 1, 1, 1) : DateTime(y, m - 1, 1);
+    final to = m == null ? DateTime(y, 12, 31) : DateTime(y, m + 1, 0);
+    final days = await library.loadPlayDays(from, to);
     if (!mounted) return;
-    final data = WrappedService().generate(
+    final service = WrappedService();
+    var data = service.generate(
       days: days,
       listened: library.listenedTracks,
-      year: widget.year,
+      year: y,
+      month: m,
     );
+    if (data.basedOnPlays) {
+      final prev = m == null
+          ? service.minutesIn(days, y - 1)
+          : service.minutesIn(days, from.year, month: from.month);
+      data = data.withPreviousMinutes(prev > 0 ? prev : null);
+    }
+    final slides = _buildSlides(data);
     setState(() {
       _data = data;
-      _totalPages = _computePageCount(data);
-      for (int i = 0; i < _totalPages; i++) {
-        _slideKeys[i] = GlobalKey();
+      _slides = slides;
+      for (var i = 0; i < slides.length; i++) {
+        _shareKeys[i] = GlobalKey();
       }
     });
-    _startProgress();
-  }
-
-  int _computePageCount(WrappedData data) {
-    if (data.isEmpty) return 1;
-    int count = 1; // intro
-    if (data.topTracks.isNotEmpty) count++;
-    if (data.topArtists.isNotEmpty) count++;
-    count++; // listening time
-    count++; // favorite hour
-    if (data.funFacts.isNotEmpty) count++;
-    count++; // outro
-    return count;
+    if (!data.isEmpty) _startProgress();
   }
 
   void _startProgress() {
-    _progressController.forward(from: 0).then((_) {
-      if (mounted && _currentPage < _totalPages - 1) {
-        _goToPage(_currentPage + 1);
-      }
+    _progress.forward(from: 0).then((_) {
+      if (mounted && _page < _slides.length - 1) _goTo(_page + 1);
     });
   }
 
-  void _goToPage(int page) {
-    if (page < 0 || page >= _totalPages) return;
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOutCubic,
-    );
-    setState(() => _currentPage = page);
-    _startProgress();
-  }
-
-  void _onTapLeft() {
-    if (_currentPage > 0) _goToPage(_currentPage - 1);
-  }
-
-  void _onTapRight() {
-    if (_currentPage < _totalPages - 1) {
-      _goToPage(_currentPage + 1);
+  void _goTo(int page) {
+    if (page < 0 || page >= _slides.length) return;
+    _pageController.animateToPage(page,
+        duration: const Duration(milliseconds: 380), curve: Curves.easeInOutCubic);
+    setState(() => _page = page);
+    if (page == _slides.length - 1) {
+      // The last slide (the recap to share) stays until closed.
+      _progress.value = 1;
+    } else {
+      _startProgress();
     }
   }
 
-  Future<void> _shareSlide() async {
-    final key = _slideKeys[_currentPage];
-    if (key == null) return;
-
-    setState(() => _isSharing = true);
-    _progressController.stop();
-
+  Future<void> _share() async {
+    final key = _shareKeys[_page];
+    final boundary = key?.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return;
+    unawaited(HapticFeedback.lightImpact());
+    setState(() => _sharing = true);
+    _progress.stop();
     try {
-      final boundary =
-          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-
-      final tempDir = await getTemporaryDirectory();
-      final file = File(
-          '${tempDir.path}/tsuki_wrapped_${widget.year}_$_currentPage.png');
-      await file.writeAsBytes(byteData.buffer.asUint8List());
-
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Tsuki Wrapped ${widget.year}',
-      );
+      final image = await boundary.toImage(pixelRatio: 3);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) return;
+      final dir = await getTemporaryDirectory();
+      final tag = _monthly ? '${widget.year}_${widget.month}' : '${widget.year}';
+      final file = File('${dir.path}/tsuki_wrapped_${tag}_$_page.png');
+      await file.writeAsBytes(bytes.buffer.asUint8List());
+      if (!mounted) return;
+      final strings = context.read<LocaleProvider>().strings;
+      await Share.shareXFiles([XFile(file.path)],
+          text: 'Tsuki Wrapped · ${strings.wrappedPeriod(widget.year, widget.month)}');
     } catch (e) {
-      debugPrint('[WrappedScreen] share error: $e');
+      debugPrint('[Wrapped] share error: $e');
     } finally {
       if (mounted) {
-        setState(() => _isSharing = false);
-        _startProgress();
+        setState(() => _sharing = false);
+        if (_page < _slides.length - 1) _progress.forward();
       }
     }
   }
@@ -147,8 +181,42 @@ class _WrappedScreenState extends State<WrappedScreen>
   @override
   void dispose() {
     _pageController.dispose();
-    _progressController.dispose();
+    _progress.dispose();
     super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+
+  List<_SlideBuilder> _buildSlides(WrappedData d) {
+    final locale = context.read<LocaleProvider>();
+    final strings = locale.strings;
+    final since = d.playsSince;
+    final start = DateTime(widget.year, widget.month ?? 1, 1);
+    final note = !d.basedOnPlays
+        ? strings.wrappedBasedOnDiscoveries
+        : (since != null && since.difference(start).inDays > (_monthly ? 3 : 14))
+            ? strings.wrappedPlaysSince(strings.longDate(since))
+            : null;
+    final ctx = _SlideContext(
+      data: d,
+      locale: locale,
+      strings: strings,
+      period: strings.wrappedPeriod(widget.year, widget.month),
+      monthly: _monthly,
+      previousLabel: _monthly
+          ? strings.monthName(widget.month == 1 ? 12 : widget.month! - 1)
+          : '${widget.year - 1}',
+    );
+    return [
+      (k) => _IntroSlide(c: ctx, note: note, shareKey: k),
+      (k) => _MinutesSlide(c: ctx, shareKey: k),
+      if (d.topTracks.isNotEmpty) (k) => _TopSongSlide(c: ctx, shareKey: k),
+      if (d.topArtists.isNotEmpty) (k) => _TopArtistSlide(c: ctx, shareKey: k),
+      if (d.hourDistribution.isNotEmpty) (k) => _HourSlide(c: ctx, shareKey: k),
+      (k) => _AuraSlide(c: ctx, shareKey: k),
+      if (d.funFacts.isNotEmpty) (k) => _FactsSlide(c: ctx, shareKey: k),
+      (k) => _SummarySlide(c: ctx, shareKey: k, onShare: _share),
+    ];
   }
 
   @override
@@ -156,19 +224,1343 @@ class _WrappedScreenState extends State<WrappedScreen>
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final data = _data;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: data == null
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.accent))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : data.isEmpty
-              ? _buildEmptyState(locale, strings)
-              : _buildStoryView(locale, strings, data),
+              ? _Empty(locale: locale, strings: strings, monthly: _monthly)
+              : _buildStories(strings),
     );
   }
 
-  Widget _buildEmptyState(LocaleProvider locale, dynamic strings) {
+  Widget _buildStories(AppStrings strings) {
+    final size = MediaQuery.sizeOf(context);
+    return GestureDetector(
+      onTapUp: (d) {
+        final x = d.globalPosition.dx;
+        if (x < size.width / 3) {
+          _goTo(_page - 1);
+        } else if (x > size.width * 2 / 3) {
+          _goTo(_page + 1);
+        }
+      },
+      onLongPressStart: (_) => _progress.stop(),
+      onLongPressEnd: (_) {
+        if (_page < _slides.length - 1) _progress.forward();
+      },
+      onVerticalDragUpdate: (d) => setState(() => _dragDown = math.max(0, _dragDown + d.delta.dy)),
+      onVerticalDragEnd: (d) {
+        if (_dragDown > 120 || (d.primaryVelocity ?? 0) > 900) {
+          Navigator.of(context).pop();
+        } else {
+          setState(() => _dragDown = 0);
+        }
+      },
+      child: Transform.translate(
+        offset: Offset(0, _dragDown),
+        child: Transform.scale(
+          scale: 1 - math.min(_dragDown / size.height, 0.1),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(_dragDown > 0 ? 24 : 0),
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _slides.length,
+                  itemBuilder: (_, i) => _slides[i](_shareKeys[i]!),
+                ),
+                _buildTopBar(strings),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(AppStrings strings) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: Row(
+              children: List.generate(_slides.length, (i) {
+                return Expanded(
+                  child: Container(
+                    height: 3,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: i < _page
+                        ? const _BarFill(value: 1)
+                        : i == _page
+                            ? AnimatedBuilder(
+                                animation: _progress,
+                                builder: (_, __) => _BarFill(value: _progress.value),
+                              )
+                            : null,
+                  ),
+                );
+              }),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                  tooltip: strings.a11yClose,
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: _sharing ? null : _share,
+                  icon: _sharing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.ios_share_rounded, color: Colors.white, size: 22),
+                  tooltip: strings.wrappedShare,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BarFill extends StatelessWidget {
+  final double value;
+  const _BarFill({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      alignment: Alignment.centerLeft,
+      widthFactor: value.clamp(0.0, 1.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.accent,
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 6)],
+        ),
+      ),
+    );
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Shared pieces
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class _SlideContext {
+  final WrappedData data;
+  final LocaleProvider locale;
+  final AppStrings strings;
+  final String period;
+  final bool monthly;
+  final String previousLabel;
+
+  const _SlideContext({
+    required this.data,
+    required this.locale,
+    required this.strings,
+    required this.period,
+    required this.monthly,
+    required this.previousLabel,
+  });
+
+  TextStyle text(double size,
+          {FontWeight weight = FontWeight.w600,
+          Color color = AppColors.textBright,
+          double? spacing,
+          double? height}) =>
+      locale.getTextStyle(
+          fontSize: size, fontWeight: weight, color: color, letterSpacing: spacing, height: height);
+
+  TextStyle kanji(double size, Color color) =>
+      GoogleFonts.notoSansJp(fontSize: size, fontWeight: FontWeight.w900, color: color);
+}
+
+/// The look every slide shares: night background with a tint, an optional
+/// blurred cover, a giant faint kanji, scanlines and room for the top bar.
+class _Backdrop extends StatelessWidget {
+  final GlobalKey shareKey;
+  final Color tint;
+  final String? coverUrl;
+  final String? kanji;
+  final Widget child;
+  final bool center;
+
+  const _Backdrop({
+    required this.shareKey,
+    required this.tint,
+    required this.child,
+    this.coverUrl,
+    this.kanji,
+    this.center = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      key: shareKey,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color.lerp(tint, Colors.black, 0.55)!, const Color(0xFF0B0D13), Colors.black],
+                stops: const [0, 0.55, 1],
+              ),
+            ),
+          ),
+          if (coverUrl != null && coverUrl!.isNotEmpty)
+            Opacity(
+              opacity: 0.35,
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: CachedNetworkImage(
+                  imageUrl: coverUrl!,
+                  fit: BoxFit.cover,
+                  memCacheWidth: imageCacheSize(context, 120),
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          if (kanji != null)
+            Positioned(
+              right: -40,
+              bottom: 40,
+              child: Text(
+                kanji!,
+                style: GoogleFonts.notoSansJp(
+                  fontSize: 320,
+                  fontWeight: FontWeight.w900,
+                  color: tint.withValues(alpha: 0.07),
+                  height: 1,
+                ),
+              ),
+            ),
+          const CustomPaint(painter: _Scanlines()),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 76, 24, 28),
+              child: center ? Center(child: child) : child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Scanlines extends CustomPainter {
+  const _Scanlines();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.12);
+    for (double y = 0; y < size.height; y += 3) {
+      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _Scanlines oldDelegate) => false;
+}
+
+/// Small spaced-out label with a red diamond.
+class _Tag extends StatelessWidget {
+  final _SlideContext c;
+  final String text;
+  final Color color;
+  const _Tag(this.c, this.text, {this.color = AppColors.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('◈', style: c.text(11, color: color)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: c.text(12, weight: FontWeight.w800, color: color, spacing: 2.4)),
+        ),
+      ],
+    );
+  }
+}
+
+/// A number that counts up when the slide appears.
+class _CountUp extends StatelessWidget {
+  final int value;
+  final TextStyle style;
+  const _CountUp({required this.value, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value.toDouble()),
+      duration: const Duration(milliseconds: 1600),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, __) => Text(_thousands(v.round()), style: style),
+    );
+  }
+}
+
+String _thousands(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write('.');
+    b.write(s[i]);
+  }
+  return b.toString();
+}
+
+class _Cover extends StatelessWidget {
+  final String url;
+  final double size;
+  final double radius;
+  final bool glow;
+  const _Cover(this.url, {required this.size, this.radius = 8, this.glow = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: glow
+            ? [
+                BoxShadow(color: AppColors.accent.withValues(alpha: 0.55), blurRadius: 40, spreadRadius: 2),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: url.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                memCacheWidth: imageCacheSize(context, size),
+                placeholder: (_, __) => Container(color: AppColors.bgHover),
+                errorWidget: (_, __, ___) => _placeholder(),
+              )
+            : _placeholder(),
+      ),
+    );
+  }
+
+  Widget _placeholder() => Container(
+        color: AppColors.bgHover,
+        child: Icon(Icons.music_note_rounded, color: AppColors.accent, size: size * 0.4),
+      );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Slides
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class _IntroSlide extends StatelessWidget {
+  final _SlideContext c;
+  final String? note;
+  final GlobalKey shareKey;
+  const _IntroSlide({required this.c, required this.note, required this.shareKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = c.strings;
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.accent,
+      kanji: c.monthly ? '月' : '年',
+      center: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('T S U K I', style: c.text(15, weight: FontWeight.w800, color: AppColors.accent, spacing: 6))
+              .animate()
+              .fadeIn(duration: 500.ms),
+          const SizedBox(height: 14),
+          // One line whatever the screen: it scales down instead of wrapping.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'WRAPPED',
+              maxLines: 1,
+              style: c.text(72, weight: FontWeight.w900, spacing: 4, height: 1).copyWith(
+                shadows: [Shadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 30)],
+              ),
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 700.ms, delay: 150.ms)
+              .scaleXY(begin: 0.85, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
+          const SizedBox(height: 22),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.accent, width: 1.4),
+              color: AppColors.accent.withValues(alpha: 0.08),
+              boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.3), blurRadius: 18)],
+            ),
+            child: Text(c.period,
+                style: c.text(c.monthly ? 22 : 34, weight: FontWeight.w900, color: AppColors.accent, spacing: 5)),
+          ).animate().fadeIn(duration: 600.ms, delay: 450.ms).slideY(begin: 0.3, end: 0),
+          const SizedBox(height: 26),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(c.monthly ? strings.wrappedMonthlyLabel : strings.wrappedYearlyLabel,
+                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+          ).animate().fadeIn(delay: 600.ms),
+          const SizedBox(height: 18),
+          Text(strings.wrappedIntro(monthly: c.monthly),
+                  textAlign: TextAlign.center, style: c.text(19, weight: FontWeight.w700))
+              .animate()
+              .fadeIn(duration: 600.ms, delay: 750.ms),
+          if (note != null) ...[
+            const SizedBox(height: 12),
+            Text(note!,
+                textAlign: TextAlign.center,
+                style: c.text(12, weight: FontWeight.w500, color: AppColors.textMuted, height: 1.45))
+                .animate()
+                .fadeIn(delay: 950.ms),
+          ],
+          const SizedBox(height: 36),
+          Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
+              style: GoogleFonts.notoSansJp(
+                  fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MinutesSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _MinutesSlide({required this.c, required this.shareKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final prev = d.previousMinutes;
+    final pct = prev == null || prev == 0
+        ? null
+        : (((d.totalMinutesListened - prev) / prev) * 100).round();
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.neonCyan,
+      kanji: '時',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, d.basedOnPlays ? strings.wrappedListeningTime : strings.wrappedNewMusicTime,
+              color: AppColors.neonCyan),
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: _CountUp(
+              value: d.totalMinutesListened,
+              style: c.text(110, weight: FontWeight.w900, height: 1).copyWith(
+                shadows: [Shadow(color: AppColors.neonCyan.withValues(alpha: 0.5), blurRadius: 30)],
+              ),
+            ),
+          ),
+          Text(strings.wrappedMinutesLabel,
+              style: c.text(16, weight: FontWeight.w800, color: AppColors.neonCyan, spacing: 3)),
+          const SizedBox(height: 10),
+          Text(strings.wrappedHoursOfMusic(d.totalMinutesListened ~/ 60),
+              style: c.text(16, weight: FontWeight.w500, color: AppColors.textSecondary)),
+          if (pct != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: (pct >= 0 ? AppColors.neonGreen : AppColors.sakura).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: (pct >= 0 ? AppColors.neonGreen : AppColors.sakura).withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(pct >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      size: 16, color: pct >= 0 ? AppColors.neonGreen : AppColors.sakura),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(strings.wrappedVsPrevious(pct, c.previousLabel),
+                        style: c.text(12, weight: FontWeight.w700, color: pct >= 0 ? AppColors.neonGreen : AppColors.sakura)),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 1400.ms).slideX(begin: -0.2, end: 0),
+          ],
+          const Spacer(),
+          Row(
+            children: [
+              _Stat(c, d.totalTracksPlayed, d.basedOnPlays ? strings.wrappedPlaysLabel : strings.wrappedSongsLabel),
+              _Stat(c, d.uniqueTracksCount, strings.wrappedSongsLabel),
+              _Stat(c, d.uniqueArtistsCount, strings.wrappedArtistsLabel),
+            ],
+          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.3, end: 0),
+          if (d.periodDays > 0) ...[
+            const SizedBox(height: 18),
+            Text(strings.wrappedActiveDays(d.activeDays, d.periodDays),
+                style: c.text(12, weight: FontWeight.w600, color: AppColors.textMuted)),
+            const SizedBox(height: 8),
+            _DaysBar(active: d.activeDays, total: d.periodDays),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  final _SlideContext c;
+  final int value;
+  final String label;
+  const _Stat(this.c, this.value, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          border: Border(left: BorderSide(color: AppColors.accent.withValues(alpha: 0.8), width: 2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _CountUp(value: value, style: c.text(24, weight: FontWeight.w900)),
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(label,
+                  maxLines: 1,
+                  style: c.text(9, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DaysBar extends StatelessWidget {
+  final int active;
+  final int total;
+  const _DaysBar({required this.active, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(3),
+      child: SizedBox(
+        height: 6,
+        child: Stack(
+          children: [
+            Container(color: Colors.white.withValues(alpha: 0.08)),
+            FractionallySizedBox(
+              widthFactor: total == 0 ? 0 : (active / total).clamp(0.0, 1.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(colors: [AppColors.accent, AppColors.sakura]),
+                ),
+              ),
+            ).animate().scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft, duration: 1200.ms, delay: 900.ms),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopSongSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _TopSongSlide({required this.c, required this.shareKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final top = d.topTracks.first;
+    final rest = d.topTracks.skip(1).take(4).toList();
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.accent,
+      coverUrl: top.coverUrl,
+      kanji: '歌',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, d.basedOnPlays ? strings.wrappedTopSongLabel : strings.wrappedTopDiscoveries),
+          const SizedBox(height: 22),
+          Center(
+            child: LayoutBuilder(builder: (context, box) {
+              final size = math.min(box.maxWidth * 0.62, 240.0);
+              return _Cover(top.coverUrl, size: size, radius: 6, glow: true);
+            }),
+          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
+          const SizedBox(height: 20),
+          Center(
+            child: Text(top.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: c.text(26, weight: FontWeight.w900, height: 1.15)),
+          ).animate().fadeIn(delay: 300.ms),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(top.artistName,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: c.text(15, weight: FontWeight.w600, color: AppColors.textSecondary)),
+          ),
+          if (d.basedOnPlays) ...[
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.5), blurRadius: 14)],
+                ),
+                child: Text(strings.wrappedPlays(top.playCount),
+                    style: c.text(12, weight: FontWeight.w800, color: Colors.white)),
+              ),
+            ).animate().fadeIn(delay: 500.ms),
+          ],
+          const Spacer(),
+          if (rest.isNotEmpty) ...[
+            Text(strings.wrappedRunnersUp,
+                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+            const SizedBox(height: 8),
+            for (var i = 0; i < rest.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 26,
+                      child: Text('${i + 2}', style: c.text(16, weight: FontWeight.w900, color: AppColors.accent)),
+                    ),
+                    _Cover(rest[i].coverUrl, size: 38, radius: 4),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(rest[i].title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: c.text(13, weight: FontWeight.w700)),
+                          Text(rest[i].artistName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: c.text(11, weight: FontWeight.w500, color: AppColors.textMuted)),
+                        ],
+                      ),
+                    ),
+                    if (d.basedOnPlays)
+                      Text('${rest[i].playCount}', style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TopArtistSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _TopArtistSlide({required this.c, required this.shareKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final top = d.topArtists.first;
+    final rest = d.topArtists.skip(1).take(4).toList();
+    final maxCount = d.topArtists.first.playCount.clamp(1, 1 << 30);
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.neonPurple,
+      coverUrl: top.coverUrl,
+      kanji: '星',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, strings.wrappedTopArtistLabel, color: AppColors.neonPurple),
+          const SizedBox(height: 26),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.neonPurple, width: 2),
+                boxShadow: [BoxShadow(color: AppColors.neonPurple.withValues(alpha: 0.5), blurRadius: 36)],
+              ),
+              child: ClipOval(child: _Cover(top.coverUrl ?? '', size: 170, radius: 0)),
+            ),
+          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack, duration: 800.ms),
+          const SizedBox(height: 22),
+          Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(top.name.toUpperCase(),
+                  maxLines: 1,
+                  style: c.text(34, weight: FontWeight.w900, spacing: 1.5).copyWith(
+                    shadows: [Shadow(color: AppColors.neonPurple.withValues(alpha: 0.6), blurRadius: 24)],
+                  )),
+            ),
+          ).animate().fadeIn(delay: 300.ms),
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              d.basedOnPlays
+                  ? '${strings.wrappedPlays(top.playCount)} · ${strings.wrappedMinutes(top.totalSeconds ~/ 60)}'
+                  : strings.wrappedDiscoveredSongs(top.playCount),
+              style: c.text(13, weight: FontWeight.w600, color: AppColors.textSecondary),
+            ),
+          ),
+          const Spacer(),
+          if (rest.isNotEmpty) ...[
+            Text(strings.wrappedRunnersUp,
+                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+            const SizedBox(height: 10),
+            for (var i = 0; i < rest.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 26,
+                      child: Text('${i + 2}',
+                          style: c.text(16, weight: FontWeight.w900, color: AppColors.neonPurple)),
+                    ),
+                    ClipOval(child: _Cover(rest[i].coverUrl ?? '', size: 34, radius: 0)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(rest[i].name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: c.text(13, weight: FontWeight.w700)),
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: SizedBox(
+                              height: 4,
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: (rest[i].playCount / maxCount).clamp(0.05, 1.0),
+                                child: Container(color: AppColors.neonPurple.withValues(alpha: 0.8)),
+                              ),
+                            ),
+                          ).animate().scaleX(
+                              begin: 0,
+                              end: 1,
+                              alignment: Alignment.centerLeft,
+                              delay: Duration(milliseconds: 800 + i * 120),
+                              duration: 700.ms),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('${rest[i].playCount}',
+                        style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HourSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _HourSlide({required this.c, required this.shareKey});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final parts = WrappedService.dayParts(d.hourDistribution);
+    final maxCount = d.hourDistribution.values.fold<int>(1, math.max);
+    const partColors = [AppColors.neonPurple, AppColors.warning, AppColors.accent, AppColors.neonCyan];
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.warning,
+      kanji: '刻',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, strings.wrappedFavoriteHour, color: AppColors.warning),
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(strings.wrappedHourLabel(d.favoriteHour),
+                style: c.text(84, weight: FontWeight.w900, height: 1).copyWith(
+                  shadows: [Shadow(color: AppColors.warning.withValues(alpha: 0.5), blurRadius: 30)],
+                )),
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+          const SizedBox(height: 26),
+          SizedBox(
+            height: 130,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(24, (h) {
+                final count = d.hourDistribution[h] ?? 0;
+                final fav = h == d.favoriteHour;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1.2),
+                    child: FractionallySizedBox(
+                      heightFactor: math.max(count / maxCount, 0.03),
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: fav ? AppColors.warning : partColors[_partOf(h)].withValues(alpha: 0.55),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+                          boxShadow: fav
+                              ? [BoxShadow(color: AppColors.warning.withValues(alpha: 0.7), blurRadius: 10)]
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ).animate().scaleY(
+                    begin: 0,
+                    end: 1,
+                    alignment: Alignment.bottomCenter,
+                    delay: Duration(milliseconds: 300 + h * 25),
+                    duration: 500.ms);
+              }),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final h in const [0, 6, 12, 18, 23])
+                Text(strings.wrappedHourLabel(h), style: c.text(9, color: AppColors.textMuted)),
+            ],
+          ),
+          const Spacer(),
+          for (var p = 0; p < 4; p++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(width: 8, height: 8, decoration: BoxDecoration(color: partColors[p], shape: BoxShape.circle)),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 96,
+                    child: Text(strings.wrappedDayPart(p), style: c.text(13, weight: FontWeight.w700)),
+                  ),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: SizedBox(
+                        height: 6,
+                        child: Stack(
+                          children: [
+                            Container(color: Colors.white.withValues(alpha: 0.06)),
+                            FractionallySizedBox(
+                              widthFactor: parts[p],
+                              child: Container(color: partColors[p]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 46,
+                    child: Text('${(parts[p] * 100).round()}%',
+                        textAlign: TextAlign.right,
+                        style: c.text(12, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: Duration(milliseconds: 900 + p * 120)),
+        ],
+      ),
+    );
+  }
+
+  static int _partOf(int hour) => hour < 6 ? 0 : hour < 12 ? 1 : hour < 19 ? 2 : 3;
+}
+
+class _AuraSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _AuraSlide({required this.c, required this.shareKey});
+
+  static const kanjiFor = {
+    'night': '夜',
+    'dawn': '朝',
+    'loyal': '忠',
+    'explorer': '探',
+    'marathon': '走',
+    'balance': '和',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = c.strings;
+    final aura = WrappedService.auraOf(c.data);
+    final (name, description) = strings.wrappedAura(aura);
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.sakura,
+      center: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Tag(c, strings.wrappedAuraTitle, color: AppColors.sakura),
+          const SizedBox(height: 30),
+          Container(
+            width: 190,
+            height: 190,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [
+                AppColors.sakura.withValues(alpha: 0.35),
+                AppColors.accent.withValues(alpha: 0.08),
+                Colors.transparent,
+              ]),
+              border: Border.all(color: AppColors.sakura.withValues(alpha: 0.6), width: 1.5),
+            ),
+            child: Text(kanjiFor[aura] ?? '和',
+                style: c.kanji(104, Colors.white).copyWith(
+                  shadows: [
+                    Shadow(color: AppColors.sakura.withValues(alpha: 0.9), blurRadius: 24),
+                    Shadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 48),
+                  ],
+                )),
+          )
+              .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
+              .scaleXY(begin: 0.97, end: 1.03, duration: 2.seconds, curve: Curves.easeInOut),
+          const SizedBox(height: 30),
+          Text(name.toUpperCase(),
+                  textAlign: TextAlign.center, style: c.text(28, weight: FontWeight.w900, spacing: 2))
+              .animate()
+              .fadeIn(delay: 400.ms)
+              .slideY(begin: 0.2, end: 0),
+          const SizedBox(height: 12),
+          Text(description,
+                  textAlign: TextAlign.center,
+                  style: c.text(15, weight: FontWeight.w500, color: AppColors.textSecondary, height: 1.5))
+              .animate()
+              .fadeIn(delay: 700.ms),
+        ],
+      ),
+    );
+  }
+}
+
+class _FactsSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _FactsSlide({required this.c, required this.shareKey});
+
+  static const _icons = {
+    'late_night_song': Icons.nightlight_round,
+    'marathon_day': Icons.local_fire_department_rounded,
+    'loyal_artist': Icons.favorite_rounded,
+    'dawn_listener': Icons.wb_twilight_rounded,
+    'one_hit_wonder': Icons.repeat_one_rounded,
+    'night_owl': Icons.dark_mode_rounded,
+    'early_bird': Icons.wb_sunny_rounded,
+    'weekend_warrior': Icons.celebration_rounded,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final facts = c.data.funFacts.take(4).toList();
+    const colors = [AppColors.sakura, AppColors.neonCyan, AppColors.warning, AppColors.neonGreen];
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: AppColors.neonGreen,
+      kanji: '話',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, c.strings.wrappedFunFacts, color: AppColors.neonGreen),
+          const Spacer(),
+          for (var i = 0; i < facts.length; i++)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors[i % colors.length].withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors[i % colors.length].withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors[i % colors.length].withValues(alpha: 0.15),
+                    ),
+                    child: Icon(_icons[facts[i].key] ?? Icons.auto_awesome,
+                        color: colors[i % colors.length], size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(_factText(facts[i]), style: c.text(14, weight: FontWeight.w600, height: 1.45)),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: Duration(milliseconds: 300 + i * 180)).slideX(begin: 0.12, end: 0),
+          const Spacer(flex: 2),
+        ],
+      ),
+    );
+  }
+
+  String _factText(WrappedFunFact fact) {
+    final strings = c.strings;
+    final d = fact.data;
+    final count = (d['count'] as num?)?.toInt() ?? 0;
+    final date = DateTime.tryParse('${d['date'] ?? ''}');
+    final dateLabel = date == null ? '${d['date'] ?? ''}' : strings.longDate(date);
+    final plays = c.data.basedOnPlays;
+    return switch (fact.key) {
+      'late_night_song' => strings.wrappedFactLateNight('${d['title'] ?? ''}', '${d['artistName'] ?? ''}'),
+      'marathon_day' => plays
+          ? strings.wrappedFactMarathon(dateLabel, count)
+          : strings.wrappedFactMarathonDiscovery(dateLabel, count),
+      'loyal_artist' => plays
+          ? strings.wrappedFactLoyal('${d['name'] ?? ''}', count)
+          : strings.wrappedFactLoyalDiscovery('${d['name'] ?? ''}', count),
+      'dawn_listener' => strings.wrappedFactDawn(count),
+      'one_hit_wonder' => strings.wrappedFactOneHit('${d['title'] ?? ''}', '${d['artistName'] ?? ''}', count),
+      'night_owl' => strings.wrappedFactNightOwl((d['percentage'] as num?)?.toInt() ?? 0),
+      'early_bird' => strings.wrappedFactEarlyBird((d['percentage'] as num?)?.toInt() ?? 0),
+      'weekend_warrior' => strings.wrappedFactWeekend(
+          (d['weekendAvg'] as num?)?.toInt() ?? 0, (d['weekdayAvg'] as num?)?.toInt() ?? 0),
+      _ => '',
+    };
+  }
+}
+
+/// The last slide: a card with the whole recap, made to be shared.
+class _SummarySlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  final VoidCallback onShare;
+  const _SummarySlide({required this.c, required this.shareKey, required this.onShare});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final aura = WrappedService.auraOf(d);
+    final (auraName, _) = strings.wrappedAura(aura);
+    final topCover = d.topTracks.isNotEmpty ? d.topTracks.first.coverUrl : null;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: Colors.black),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 70, 18, 18),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: RepaintBoundary(
+                    key: shareKey,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.8), width: 1.4),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF2A0A0F), Color(0xFF12141C), Color(0xFF0A0B10)],
+                        ),
+                        boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.25), blurRadius: 30)],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -30,
+                            child: Text(c.monthly ? '月' : '年',
+                                style: c.kanji(200, AppColors.accent.withValues(alpha: 0.08))),
+                          ),
+                          const Positioned.fill(child: CustomPaint(painter: _Scanlines())),
+                          Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    if (topCover != null) _Cover(topCover, size: 64, radius: 6, glow: true),
+                                    if (topCover != null) const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('TSUKI WRAPPED',
+                                              style: c.text(11, weight: FontWeight.w800, color: AppColors.accent, spacing: 3)),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(c.period,
+                                                maxLines: 1, style: c.text(26, weight: FontWeight.w900, spacing: 1)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _SummaryList(
+                                        c: c,
+                                        title: strings.wrappedTopArtistsShort,
+                                        items: [for (final a in d.topArtists.take(5)) a.name],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: _SummaryList(
+                                        c: c,
+                                        title: strings.wrappedTopSongsShort,
+                                        items: [for (final t in d.topTracks.take(5)) t.title],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(color: AppColors.border, height: 26),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _SummaryNumber(
+                                          c: c, label: strings.wrappedMinutesLabel, value: _thousands(d.totalMinutesListened)),
+                                    ),
+                                    Expanded(
+                                      child: _SummaryNumber(
+                                          c: c,
+                                          label: d.basedOnPlays ? strings.wrappedPlaysLabel : strings.wrappedSongsLabel,
+                                          value: _thousands(d.totalTracksPlayed)),
+                                    ),
+                                    Expanded(
+                                      child: _SummaryNumber(
+                                          c: c,
+                                          label: strings.wrappedFavoriteHour,
+                                          value: strings.wrappedHourLabel(d.favoriteHour)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sakura.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: AppColors.sakura.withValues(alpha: 0.35)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(_AuraSlide.kanjiFor[aura] ?? '和',
+                                          style: c.kanji(26, Colors.white).copyWith(shadows: [
+                                            Shadow(color: AppColors.sakura.withValues(alpha: 0.9), blurRadius: 12),
+                                          ])),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(strings.wrappedAuraTitle,
+                                                style: c.text(8.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+                                            Text(auraName, style: c.text(16, weight: FontWeight.w900)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
+                                    style: GoogleFonts.notoSansJp(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.accent.withValues(alpha: 0.6),
+                                        letterSpacing: 2)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.94, end: 1, curve: Curves.easeOutCubic),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(strings.wrappedOutroFor(monthly: c.monthly),
+                    style: c.text(12, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onShare,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.ios_share_rounded, size: 18, color: Colors.white),
+                    label: Text(strings.wrappedShareCta,
+                        style: c.text(13, weight: FontWeight.w900, color: Colors.white, spacing: 1.5)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryList extends StatelessWidget {
+  final _SlideContext c;
+  final String title;
+  final List<String> items;
+  const _SummaryList({required this.c, required this.title, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: c.text(9.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.6)),
+        const SizedBox(height: 8),
+        for (var i = 0; i < items.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 7),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 16,
+                  child: Text('${i + 1}', style: c.text(12, weight: FontWeight.w900, color: AppColors.accent)),
+                ),
+                Expanded(
+                  child: Text(items[i],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: c.text(12, weight: i == 0 ? FontWeight.w800 : FontWeight.w600, height: 1.25)),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SummaryNumber extends StatelessWidget {
+  final _SlideContext c;
+  final String label;
+  final String value;
+  const _SummaryNumber({required this.c, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(label,
+              maxLines: 1,
+              style: c.text(8.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(value, maxLines: 1, style: c.text(20, weight: FontWeight.w900)),
+        ),
+      ],
+    );
+  }
+}
+
+class _Empty extends StatelessWidget {
+  final LocaleProvider locale;
+  final AppStrings strings;
+  final bool monthly;
+  const _Empty({required this.locale, required this.strings, required this.monthly});
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Center(
         child: Padding(
@@ -176,1301 +1568,24 @@ class _WrappedScreenState extends State<WrappedScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accent.withValues(alpha: 0.1),
-                  border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.3)),
-                ),
-                child: const Icon(Icons.music_off_rounded,
-                    color: AppColors.accent, size: 36),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                strings.wrappedNoData,
-                textAlign: TextAlign.center,
-                style: locale.getTextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textBright,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                strings.wrappedNoDataSubtitle,
-                textAlign: TextAlign.center,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: AppColors.accent.withValues(alpha: 0.6)),
-                    borderRadius: BorderRadius.circular(2),
-                    color: AppColors.accent.withValues(alpha: 0.08),
-                  ),
-                  child: Text(
-                    strings.a11yBack,
-                    style: locale.getTextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStoryView(
-      LocaleProvider locale, dynamic strings, WrappedData data) {
-    final slides = _buildSlides(locale, strings, data);
-
-    return Stack(
-      children: [
-        GestureDetector(
-          onTapUp: (details) {
-            final w = MediaQuery.sizeOf(context).width;
-            if (details.globalPosition.dx < w / 3) {
-              _onTapLeft();
-            } else if (details.globalPosition.dx > w * 2 / 3) {
-              _onTapRight();
-            }
-          },
-          onLongPressStart: (_) => _progressController.stop(),
-          onLongPressEnd: (_) => _progressController.forward(),
-          child: PageView.builder(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _totalPages,
-            itemBuilder: (context, index) {
-              return RepaintBoundary(
-                key: _slideKeys[index],
-                child: slides[index],
-              );
-            },
-          ),
-        ),
-        // Progress bars
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Row(
-              children: List.generate(_totalPages, (i) {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: SizedBox(
-                        height: 3,
-                        child: i < _currentPage
-                            ? Container(color: AppColors.accent)
-                            : i == _currentPage
-                                ? AnimatedBuilder(
-                                    animation: _progressController,
-                                    builder: (_, __) {
-                                      return LinearProgressIndicator(
-                                        value: _progressController.value,
-                                        backgroundColor:
-                                            Colors.white.withValues(alpha: 0.2),
-                                        valueColor:
-                                            const AlwaysStoppedAnimation(
-                                                AppColors.accent),
-                                        minHeight: 3,
-                                      );
-                                    },
-                                  )
-                                : Container(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.2)),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ),
-        // Top actions
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 20, 8, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close, color: Colors.white, size: 24),
-                  tooltip: strings.a11yClose,
-                ),
-                IconButton(
-                  onPressed: _isSharing ? null : _shareSlide,
-                  icon: _isSharing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.share_outlined,
-                          color: Colors.white, size: 22),
-                  tooltip: strings.wrappedShare,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _buildSlides(
-      LocaleProvider locale, dynamic strings, WrappedData data) {
-    final slides = <Widget>[];
-
-    final since = data.playsSince;
-    final String? sourceNote = !data.basedOnPlays
-        ? strings.wrappedBasedOnDiscoveries
-        : (since != null && since.isAfter(DateTime(widget.year, 1, 15)))
-            ? strings.wrappedPlaysSince(strings.longDate(since))
-            : null;
-    slides.add(_IntroSlide(
-        year: widget.year,
-        locale: locale,
-        strings: strings,
-        note: sourceNote));
-
-    if (data.topTracks.isNotEmpty) {
-      slides.add(_TopTracksSlide(
-          tracks: data.topTracks,
-          basedOnPlays: data.basedOnPlays,
-          locale: locale,
-          strings: strings));
-    }
-
-    if (data.topArtists.isNotEmpty) {
-      slides.add(_TopArtistsSlide(
-          artists: data.topArtists,
-          basedOnPlays: data.basedOnPlays,
-          locale: locale,
-          strings: strings));
-    }
-
-    slides.add(_ListeningTimeSlide(data: data, locale: locale, strings: strings));
-
-    slides.add(_FavoriteHourSlide(data: data, locale: locale, strings: strings));
-
-    if (data.funFacts.isNotEmpty) {
-      slides.add(
-          _FunFactsSlide(data: data, locale: locale, strings: strings));
-    }
-
-    slides.add(
-        _OutroSlide(year: widget.year, locale: locale, strings: strings));
-
-    return slides;
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: INTRO
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _IntroSlide extends StatelessWidget {
-  final int year;
-  final LocaleProvider locale;
-  final dynamic strings;
-  final String? note;
-  const _IntroSlide(
-      {required this.year,
-      required this.locale,
-      required this.strings,
-      this.note});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0A0A), Color(0xFF0A0A1A), Colors.black],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Decorative grid lines
-          ..._buildGridLines(),
-          // Diagonal accent line
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Transform.rotate(
-              angle: -0.4,
-              child: Container(
-                width: 300,
-                height: 4,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    AppColors.accent.withValues(alpha: 0),
-                    AppColors.accent.withValues(alpha: 0.8),
-                    AppColors.accent.withValues(alpha: 0),
-                  ]),
-                ),
-              ),
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 800.ms, delay: 200.ms)
-              .slideX(begin: 0.3, end: 0, duration: 1200.ms),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Logo / Title
-                  Text(
-                    '◈ TSUKI',
-                    style: GoogleFonts.notoSansJp(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent.withValues(alpha: 0.8),
-                      letterSpacing: 6,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: 100.ms)
-                      .slideY(begin: -0.3, end: 0),
-                  const SizedBox(height: 16),
-                  Text(
-                    'WRAPPED',
-                    style: locale.getTextStyle(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textBright,
-                      letterSpacing: 8,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 300.ms)
-                      .scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.5)),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: Text(
-                      '$year',
-                      style: locale.getTextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.accent,
-                        letterSpacing: 6,
-                      ),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: 600.ms)
-                      .slideY(begin: 0.3, end: 0),
-                  const SizedBox(height: 32),
-                  Text(
-                    strings.wrappedIntroSlide,
-                    textAlign: TextAlign.center,
-                    style: locale.getTextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 900.ms),
-                  if (note != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      note!,
-                      textAlign: TextAlign.center,
-                      style: locale.getTextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                        height: 1.4,
-                      ),
-                    ).animate().fadeIn(duration: 800.ms, delay: 1100.ms),
-                  ],
-                  const SizedBox(height: 48),
-                  // Telemetry decoration
-                  Text(
-                    '◈ 年間報告 // ANNUAL.REPORT.SYS',
-                    style: GoogleFonts.notoSansJp(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accent.withValues(alpha: 0.5),
-                      letterSpacing: 2,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 600.ms, delay: 1200.ms),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildGridLines() {
-    return List.generate(5, (i) {
-      final top = 100.0 + i * 160;
-      return Positioned(
-        top: top,
-        left: 0,
-        right: 0,
-        child: Container(
-          height: 0.5,
-          color: AppColors.accent.withValues(alpha: 0.05 + i * 0.01),
-        ),
-      );
-    });
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: TOP TRACKS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _TopTracksSlide extends StatelessWidget {
-  final List<WrappedTrackEntry> tracks;
-  final bool basedOnPlays;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _TopTracksSlide(
-      {required this.tracks,
-      required this.basedOnPlays,
-      required this.locale,
-      required this.strings});
-
-  // Without a play log every song was "played" once: show the album instead
-  // of a meaningless "1 play".
-  String _caption(WrappedTrackEntry t) =>
-      basedOnPlays ? strings.wrappedPlays(t.playCount) : t.albumTitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A0505), Color(0xFF0A0A12), Colors.black],
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                basedOnPlays
-                    ? strings.wrappedTopTracks
-                    : strings.wrappedTopDiscoveries,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(duration: 500.ms).slideX(begin: -0.2, end: 0),
-              const SizedBox(height: 4),
-              Container(
-                width: 40,
-                height: 2,
-                color: AppColors.accent,
-              ).animate().scaleX(begin: 0, end: 1, duration: 600.ms, delay: 200.ms, alignment: Alignment.centerLeft),
-              const SizedBox(height: 24),
-              // #1 Track — featured large
-              if (tracks.isNotEmpty)
-                _buildFeaturedTrack(context, tracks.first)
-                    .animate()
-                    .fadeIn(duration: 600.ms, delay: 300.ms)
-                    .slideY(begin: 0.15, end: 0),
-              const SizedBox(height: 20),
-              // #2-5 Tracks
-              ...tracks.skip(1).take(4).toList().asMap().entries.map((entry) {
-                final i = entry.key;
-                final track = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _buildTrackRow(context, track, i + 2),
-                )
-                    .animate()
-                    .fadeIn(
-                        duration: 500.ms,
-                        delay: Duration(milliseconds: 500 + i * 120))
-                    .slideX(begin: 0.1, end: 0);
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturedTrack(BuildContext context, WrappedTrackEntry track) {
-    return Row(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.2),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: track.coverUrl.isNotEmpty
-                ? CachedNetworkImage(
-                    memCacheWidth: imageCacheSize(context, 100),
-                    imageUrl: track.coverUrl,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: 100,
-                    height: 100,
-                    color: AppColors.bgCard,
-                    child: const Icon(Icons.music_note,
-                        color: AppColors.accent, size: 40),
-                  ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '#1',
-                style: locale.getTextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.accent,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                track.title,
-                style: locale.getTextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textBright,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                track.artistName,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _caption(track),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: locale.getTextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.accent.withValues(alpha: 0.8),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrackRow(BuildContext context, WrappedTrackEntry track, int rank) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.bgCard.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '#$rank',
-              style: locale.getTextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accent.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: track.coverUrl.isNotEmpty
-                ? CachedNetworkImage(
-                    memCacheWidth: imageCacheSize(context, 40),
-                    imageUrl: track.coverUrl,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: 40,
-                    height: 40,
-                    color: AppColors.bgCard,
-                    child: const Icon(Icons.music_note,
-                        color: AppColors.accent, size: 18),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  track.title,
-                  style: locale.getTextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textBright,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  track.artistName,
-                  style: locale.getTextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          if (basedOnPlays)
-            Text(
-              strings.wrappedPlays(track.playCount),
-              style: locale.getTextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: TOP ARTISTS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _TopArtistsSlide extends StatelessWidget {
-  final List<WrappedArtistEntry> artists;
-  final bool basedOnPlays;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _TopArtistsSlide(
-      {required this.artists,
-      required this.basedOnPlays,
-      required this.locale,
-      required this.strings});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [Color(0xFF0A0A1A), Color(0xFF1A050A), Colors.black],
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.wrappedTopArtists,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.neonCyan,
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(duration: 500.ms).slideX(begin: -0.2, end: 0),
-              const SizedBox(height: 4),
-              Container(
-                width: 40,
-                height: 2,
-                color: AppColors.neonCyan,
-              ).animate().scaleX(begin: 0, end: 1, duration: 600.ms, delay: 200.ms, alignment: Alignment.centerLeft),
+              Text(monthly ? '月' : '年',
+                  style: GoogleFonts.notoSansJp(
+                      fontSize: 72, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
+              const SizedBox(height: 18),
+              Text(strings.wrappedNoDataFor(monthly: monthly),
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+              const SizedBox(height: 10),
+              Text(strings.wrappedNoDataSubtitle,
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary)),
               const SizedBox(height: 28),
-              ...artists.asMap().entries.map((entry) {
-                final i = entry.key;
-                final artist = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _buildArtistRow(context, artist, i + 1),
-                )
-                    .animate()
-                    .fadeIn(
-                        duration: 500.ms,
-                        delay: Duration(milliseconds: 300 + i * 150))
-                    .slideX(begin: 0.15, end: 0);
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildArtistRow(BuildContext context, WrappedArtistEntry artist, int rank) {
-    final isFirst = rank == 1;
-    final accentColor = isFirst ? AppColors.neonCyan : AppColors.textSecondary;
-
-    return Container(
-      padding: EdgeInsets.all(isFirst ? 14 : 10),
-      decoration: BoxDecoration(
-        color: isFirst
-            ? AppColors.neonCyan.withValues(alpha: 0.06)
-            : AppColors.bgCard.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: isFirst
-              ? AppColors.neonCyan.withValues(alpha: 0.3)
-              : AppColors.border.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 28,
-            child: Text(
-              '#$rank',
-              style: locale.getTextStyle(
-                fontSize: isFirst ? 20 : 14,
-                fontWeight: FontWeight.w900,
-                color: accentColor,
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
+                child: Text(strings.a11yBack,
+                    style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.accent)),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ClipOval(
-            child: artist.coverUrl != null && artist.coverUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    memCacheWidth: imageCacheSize(context, (isFirst ? 56.0 : 40.0)),
-                    imageUrl: artist.coverUrl!,
-                    width: isFirst ? 56 : 40,
-                    height: isFirst ? 56 : 40,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: isFirst ? 56 : 40,
-                    height: isFirst ? 56 : 40,
-                    color: AppColors.bgCard,
-                    child: Icon(Icons.person,
-                        color: accentColor, size: isFirst ? 28 : 20),
-                  ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  artist.name,
-                  style: locale.getTextStyle(
-                    fontSize: isFirst ? 17 : 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textBright,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  basedOnPlays
-                      ? strings.wrappedPlays(artist.playCount)
-                      : strings.wrappedDiscoveredSongs(artist.playCount),
-                  style: locale.getTextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: LISTENING TIME
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _ListeningTimeSlide extends StatelessWidget {
-  final WrappedData data;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _ListeningTimeSlide(
-      {required this.data, required this.locale, required this.strings});
-
-  @override
-  Widget build(BuildContext context) {
-    final hours = data.totalMinutesListened ~/ 60;
-    final mins = data.totalMinutesListened % 60;
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF050A1A), Color(0xFF0A0510), Colors.black],
-        ),
-      ),
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  data.basedOnPlays
-                      ? strings.wrappedListeningTime
-                      : strings.wrappedNewMusicTime,
-                  style: locale.getTextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.neonPurple,
-                    letterSpacing: 2,
-                  ),
-                ).animate().fadeIn(duration: 500.ms),
-                const SizedBox(height: 4),
-                Container(
-                  width: 40,
-                  height: 2,
-                  color: AppColors.neonPurple,
-                ).animate().scaleX(begin: 0, end: 1, duration: 600.ms, delay: 200.ms),
-                const SizedBox(height: 40),
-                if (hours > 0) ...[
-                  Text(
-                    '$hours',
-                    style: locale.getTextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textBright,
-                      height: 1,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 400.ms)
-                      .scaleXY(begin: 0.5, end: 1, curve: Curves.easeOutBack),
-                  Text(
-                    strings.wrappedHours(hours),
-                    style: locale.getTextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.neonPurple,
-                    ),
-                  ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
-                  if (mins > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '+ ${strings.wrappedMinutes(mins)}',
-                      style: locale.getTextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ).animate().fadeIn(duration: 600.ms, delay: 800.ms),
-                  ],
-                ] else ...[
-                  Text(
-                    '${data.totalMinutesListened}',
-                    style: locale.getTextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textBright,
-                      height: 1,
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 400.ms)
-                      .scaleXY(begin: 0.5, end: 1, curve: Curves.easeOutBack),
-                  Text(
-                    strings.wrappedMinutes(data.totalMinutesListened),
-                    style: locale.getTextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.neonPurple,
-                    ),
-                  ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
-                ],
-                const SizedBox(height: 32),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.neonPurple.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                        color: AppColors.neonPurple.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    data.basedOnPlays
-                        ? strings.wrappedTotalTracks(data.totalTracksPlayed)
-                        : strings.wrappedDiscoveredSongs(data.totalTracksPlayed),
-                    style: locale.getTextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textBright,
-                    ),
-                  ),
-                ).animate().fadeIn(duration: 600.ms, delay: 1000.ms),
-                const SizedBox(height: 12),
-                Text(
-                  strings.wrappedUniqueCount(
-                      data.uniqueTracksCount, data.uniqueArtistsCount),
-                  style: locale.getTextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ).animate().fadeIn(duration: 600.ms, delay: 1200.ms),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: FAVORITE HOUR
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _FavoriteHourSlide extends StatelessWidget {
-  final WrappedData data;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _FavoriteHourSlide(
-      {required this.data, required this.locale, required this.strings});
-
-  @override
-  Widget build(BuildContext context) {
-    final maxCount =
-        data.hourDistribution.values.fold(0, (a, b) => a > b ? a : b);
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0A1A0A), Color(0xFF0A0A14), Colors.black],
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.wrappedFavoriteHour,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.neonGreen,
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(duration: 500.ms),
-              const SizedBox(height: 4),
-              Container(
-                width: 40,
-                height: 2,
-                color: AppColors.neonGreen,
-              ).animate().scaleX(begin: 0, end: 1, duration: 600.ms, delay: 200.ms, alignment: Alignment.centerLeft),
-              const SizedBox(height: 32),
-              // Big hour display
-              Center(
-                child: Text(
-                  strings.wrappedHourLabel(data.favoriteHour),
-                  style: locale.getTextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.neonGreen,
-                  ),
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 800.ms, delay: 400.ms)
-                  .scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack),
-              const SizedBox(height: 32),
-              // Hour distribution chart
-              Expanded(
-                child: _buildHourChart(maxCount),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHourChart(int maxCount) {
-    if (maxCount == 0) return const SizedBox.shrink();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(24, (hour) {
-                  final count = data.hourDistribution[hour] ?? 0;
-                  final ratio = count / maxCount;
-                  final isFav = hour == data.favoriteHour;
-
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 1),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Flexible(
-                            child: FractionallySizedBox(
-                              heightFactor: ratio.clamp(0.02, 1.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isFav
-                                      ? AppColors.neonGreen
-                                      : AppColors.neonGreen
-                                          .withValues(alpha: 0.15 + ratio * 0.35),
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(2)),
-                                ),
-                              ),
-                            ),
-                          )
-                              .animate()
-                              .scaleY(
-                                  begin: 0,
-                                  end: 1,
-                                  duration: 600.ms,
-                                  delay: Duration(
-                                      milliseconds: 600 + hour * 30),
-                                  alignment: Alignment.bottomCenter),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('0h',
-                    style: locale.getTextStyle(
-                        fontSize: 9, color: AppColors.textMuted)),
-                Text('6h',
-                    style: locale.getTextStyle(
-                        fontSize: 9, color: AppColors.textMuted)),
-                Text('12h',
-                    style: locale.getTextStyle(
-                        fontSize: 9, color: AppColors.textMuted)),
-                Text('18h',
-                    style: locale.getTextStyle(
-                        fontSize: 9, color: AppColors.textMuted)),
-                Text('24h',
-                    style: locale.getTextStyle(
-                        fontSize: 9, color: AppColors.textMuted)),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: FUN FACTS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _FunFactsSlide extends StatelessWidget {
-  final WrappedData data;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _FunFactsSlide(
-      {required this.data, required this.locale, required this.strings});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [Color(0xFF1A0A14), Color(0xFF0A0A1A), Colors.black],
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.wrappedFunFacts,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.sakura,
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(duration: 500.ms),
-              const SizedBox(height: 4),
-              Container(
-                width: 40,
-                height: 2,
-                color: AppColors.sakura,
-              ).animate().scaleX(begin: 0, end: 1, duration: 600.ms, delay: 200.ms, alignment: Alignment.centerLeft),
-              const SizedBox(height: 24),
-              ...data.funFacts.take(5).toList().asMap().entries.map((entry) {
-                final i = entry.key;
-                final fact = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildFactCard(fact, i),
-                )
-                    .animate()
-                    .fadeIn(
-                        duration: 500.ms,
-                        delay: Duration(milliseconds: 400 + i * 200))
-                    .slideY(begin: 0.1, end: 0);
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFactCard(WrappedFunFact fact, int index) {
-    final text = _factToText(fact);
-    final colors = [
-      AppColors.sakura,
-      AppColors.neonCyan,
-      AppColors.neonPurple,
-      AppColors.neonGreen,
-      AppColors.accent,
-    ];
-    final color = colors[index % colors.length];
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              text,
-              style: locale.getTextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBright,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _factToText(WrappedFunFact fact) {
-    final d = fact.data;
-    final count = (d['count'] as num?)?.toInt() ?? 0;
-    final date = DateTime.tryParse('${d['date'] ?? ''}');
-    final dateLabel = date == null ? '${d['date'] ?? ''}' : strings.longDate(date);
-    final plays = data.basedOnPlays;
-    return switch (fact.key) {
-      'late_night_song' => strings.wrappedFactLateNight(
-          d['title'] ?? '', d['artistName'] ?? ''),
-      'marathon_day' => plays
-          ? strings.wrappedFactMarathon(dateLabel, count)
-          : strings.wrappedFactMarathonDiscovery(dateLabel, count),
-      'loyal_artist' => plays
-          ? strings.wrappedFactLoyal(d['name'] ?? '', count)
-          : strings.wrappedFactLoyalDiscovery(d['name'] ?? '', count),
-      'dawn_listener' => strings.wrappedFactDawn(
-          (d['count'] as num?)?.toInt() ?? 0),
-      'one_hit_wonder' => strings.wrappedFactOneHit(
-          d['title'] ?? '', d['artistName'] ?? '', (d['count'] as num?)?.toInt() ?? 0),
-      'night_owl' => strings.wrappedFactNightOwl(
-          (d['percentage'] as num?)?.toInt() ?? 0),
-      'early_bird' => strings.wrappedFactEarlyBird(
-          (d['percentage'] as num?)?.toInt() ?? 0),
-      'weekend_warrior' => strings.wrappedFactWeekend(
-          (d['weekendAvg'] as num?)?.toInt() ?? 0,
-          (d['weekdayAvg'] as num?)?.toInt() ?? 0),
-      _ => '',
-    };
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SLIDE: OUTRO
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _OutroSlide extends StatelessWidget {
-  final int year;
-  final LocaleProvider locale;
-  final dynamic strings;
-  const _OutroSlide(
-      {required this.year, required this.locale, required this.strings});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A0505), Color(0xFF0A0A14), Colors.black],
-        ),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.5), width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    '月',
-                    style: GoogleFonts.notoSansJp(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 800.ms)
-                  .scaleXY(begin: 0.5, end: 1, curve: Curves.easeOutBack),
-              const SizedBox(height: 28),
-              Text(
-                strings.wrappedOutro,
-                style: locale.getTextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textBright,
-                  letterSpacing: 3,
-                ),
-              ).animate().fadeIn(duration: 800.ms, delay: 400.ms),
-              const SizedBox(height: 12),
-              Text(
-                strings.wrappedOutroSubtitle,
-                textAlign: TextAlign.center,
-                style: locale.getTextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ).animate().fadeIn(duration: 800.ms, delay: 700.ms),
-              const SizedBox(height: 40),
-              Text(
-                '◈ TSUKI WRAPPED $year // END.TRANSMISSION',
-                style: GoogleFonts.notoSansJp(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.accent.withValues(alpha: 0.4),
-                  letterSpacing: 2,
-                ),
-              ).animate().fadeIn(duration: 600.ms, delay: 1000.ms),
             ],
           ),
         ),
