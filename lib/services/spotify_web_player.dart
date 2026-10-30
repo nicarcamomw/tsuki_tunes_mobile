@@ -176,6 +176,19 @@ class SpotifyNativePlayer {
     }
   }
 
+  /// Makes the Spotify app loop the current track ([on]) or stop repeating.
+  Future<bool> setRepeatTrack(bool on) async {
+    if (!_isConnected) return false;
+    try {
+      await SpotifySdk.setRepeatMode(
+          repeatMode: on ? SpotifyRepeatMode.track : SpotifyRepeatMode.off);
+      return true;
+    } catch (e) {
+      debugPrint('SpotifyNative: repeat error: $e');
+      return false;
+    }
+  }
+
   Future<void> disconnect() async {
     final stateSub = _stateSub;
     final connectionSub = _connectionSub;

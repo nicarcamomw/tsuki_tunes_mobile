@@ -112,6 +112,14 @@ class FakeSpotifyService extends SpotifyService {
     return true;
   }
 
+  String? repeatState;
+
+  @override
+  Future<bool> setRepeat(String state) async {
+    repeatState = state;
+    return true;
+  }
+
   @override
   Future<String?> ensureActiveDevice() async => 'fake-device';
 
@@ -205,6 +213,15 @@ class FakeNativePlayer extends SpotifyNativePlayer {
   Future<void> seekTo(int positionMs) async {
     seekCount++;
     lastSeekMs = positionMs;
+  }
+
+  bool? repeatTrack;
+
+  @override
+  Future<bool> setRepeatTrack(bool on) async {
+    if (!_connected) return false;
+    repeatTrack = on;
+    return true;
   }
 
   @override
@@ -774,6 +791,76 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.crossfadeTriggered, isFalse);
+    });
+  });
+
+  group('Spotify joins the songs by itself', () {
+    Future<AudioProvider> playing(List<Track> tracks) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      return provider;
+    }
+
+    test('repeat is turned off in Spotify once our song plays', () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      provider.afterSpotifyStartedForTesting();
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isFalse);
+    });
+
+    test('repeat-one makes Spotify loop the song, with no new play',
+        () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      var starts = 0;
+      provider.onTrackStarted = (_) => starts++;
+
+      provider.setRepeatMode(PlaybackRepeatMode.one);
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isTrue);
+
+      final plays = fakeSpotify.playCount;
+      fakeNative.simulateStateChanged(178000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(300, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(fakeSpotify.playCount, plays);
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isTrue);
+      expect(starts, 1);
+    });
+
+    test('leaving repeat-one stops Spotify looping', () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      provider.setRepeatMode(PlaybackRepeatMode.one);
+      await Future.delayed(Duration.zero);
+      provider.setRepeatMode(PlaybackRepeatMode.off);
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isFalse);
+    });
+
+    test('a song played alone gets the next ones once it is playing',
+        () async {
+      fakeSpotify.playWillFail = true;
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      expect(fakeNative._playingUri, 'spotify:track:t1');
+
+      fakeSpotify.playWillFail = false;
+      provider.afterSpotifyStartedForTesting();
+      await Future.delayed(Duration.zero);
+      await Future.delayed(Duration.zero);
+
+      expect(fakeSpotify.lastPlayedUris,
+          ['spotify:track:t1', 'spotify:track:t2', 'spotify:track:t3']);
     });
   });
 

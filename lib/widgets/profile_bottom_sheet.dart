@@ -394,7 +394,9 @@ class ProfileBottomSheet {
                           locale: locale,
                           icon: Icons.graphic_eq_rounded,
                           title: strings.crossfadeTitle,
-                          subtitle: strings.crossfadeSubtitle,
+                          subtitle: audioProvider.useSpotify
+                              ? strings.crossfadeSpotifySubtitle
+                              : strings.crossfadeSubtitle,
                           value: audioProvider.crossfadeSeconds > 0,
                           onChanged: (v) {
                             HapticFeedback.selectionClick();

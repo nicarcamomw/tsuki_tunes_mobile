@@ -330,6 +330,7 @@
   },
   "crossfadeTitle": "Crossfade",
   "crossfadeSubtitle": "Transición suave entre canciones. Spotify usa su propio crossfade.",
+  "crossfadeSpotifySubtitle": "Con Spotify, Spotify une las canciones: activa Crossfade y Reproducción sin pausas en Spotify › Configuración › Reproducción. Este ajuste se usa en las vistas previas.",
   "autoMarkTitle": "Marcar al escuchar",
   "autoMarkSubtitle": "Marca la canción al llegar al 80%",
   "precacheWifiTitle": "Precarga solo con Wi-Fi",

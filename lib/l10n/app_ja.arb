@@ -179,6 +179,7 @@
   "guessShareHeader": "Tsuki Tunes 🌙 チャレンジ #{day}",
   "crossfadeTitle": "クロスフェード",
   "crossfadeSubtitle": "曲間をスムーズにつなぐ。Spotifyは独自のクロスフェードを使用。",
+  "crossfadeSpotifySubtitle": "Spotify使用中は曲のつなぎをSpotifyが行います。Spotify › 設定 › 再生 でクロスフェードとギャップレス再生をオンにしてください。この設定はプレビューに適用されます。",
   "autoMarkTitle": "再生で既聴にする",
   "autoMarkSubtitle": "80%再生で既聴マーク",
   "precacheWifiTitle": "Wi-Fi時のみ先読み",

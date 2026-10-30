@@ -179,6 +179,7 @@
   "guessShareHeader": "Tsuki Tunes 🌙 Challenge #{day}",
   "crossfadeTitle": "Crossfade",
   "crossfadeSubtitle": "Smooth transition between songs. Spotify uses its own crossfade.",
+  "crossfadeSpotifySubtitle": "With Spotify, Spotify joins the songs: turn on Crossfade and Gapless playback in Spotify › Settings › Playback. This setting applies to previews.",
   "autoMarkTitle": "Mark when listened",
   "autoMarkSubtitle": "Marks the track at 80% played",
   "precacheWifiTitle": "Preload on Wi-Fi only",

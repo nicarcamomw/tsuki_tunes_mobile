@@ -888,6 +888,7 @@ class AppStrings {
   String get crossfadeTitle => _l.crossfadeTitle;
 
   String get crossfadeSubtitle => _l.crossfadeSubtitle;
+  String get crossfadeSpotifySubtitle => _l.crossfadeSpotifySubtitle;
 
   String get autoMarkTitle => _l.autoMarkTitle;
 

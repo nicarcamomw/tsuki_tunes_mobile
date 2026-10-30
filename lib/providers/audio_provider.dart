@@ -92,7 +92,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // order. Spotify plays them by itself, so the queue goes on even when
   // Android freezes or kills Tsuki in the background.
   List<({String trackId, String uri})> _spotifyAhead = const [];
-  static const int _spotifyAheadMax = 8;
+  // Long enough that the list rarely has to be handed again (a brief
+  // restart of the song), so Spotify's own crossfade and gapless playback
+  // join song after song.
+  static const int _spotifyAheadMax = 20;
+  // Whether Spotify loops the current song itself (our repeat-one), so it
+  // starts over with no gap instead of Tsuki playing it again. Null until
+  // set this session.
+  bool? _spotifyLoopsTrack;
 
   late final SleepTimerController _sleepCtrl;
 
@@ -494,8 +501,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _checkBackgroundCompletion() {
     if (_currentTrack == null) return;
     if (_useSpotify && _spotifyActive) {
-      // Spotify knows our next songs: the state sync on resume follows it.
-      if (_nativePlayer.isConnected || _spotifyAhead.isNotEmpty) return;
+      // Spotify knows our next songs (or loops this one): the state sync on
+      // resume follows it.
+      if (_nativePlayer.isConnected ||
+          _spotifyAhead.isNotEmpty ||
+          _spotifyLoopsOurTrack) {
+        return;
+      }
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
       if (estimatedPos >= _duration + const Duration(seconds: 3) &&
@@ -756,6 +768,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
         return;
       }
+      _checkSpotifyLoop(Duration(milliseconds: pos));
       // A single track that ends without autoplay leaves Spotify paused:
       // that is the end of our track, not the user pausing.
       if (paused && _isPlaying && !_isBuffering && _duration > Duration.zero) {
@@ -877,7 +890,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
-        final raw = _spotifySyncPosition + elapsed;
+        var raw = _spotifySyncPosition + elapsed;
+        if (_spotifyLoopsOurTrack &&
+            _duration > Duration.zero &&
+            raw >= _duration) {
+          _onSpotifyLooped(raw - _duration);
+          raw = _spotifySyncPosition;
+        }
         _setPosition(_duration > Duration.zero && raw > _duration ? _duration : raw);
         // When the App Remote is connected it reports the real end-of-track
         // via onStateChanged (paused=true), so don't race it with an
@@ -976,6 +995,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       if (!_nativePlayer.isConnected) {
+        _checkSpotifyLoop(Duration(milliseconds: progressMs));
         _spotifySyncPosition = Duration(milliseconds: progressMs);
         _spotifySyncTime = DateTime.now();
         _setPosition(_spotifySyncPosition);
@@ -1764,6 +1784,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_nativePlayer.isPlayingUri(uri)) {
       debugPrint('[SpotifyCheck] Playing (App Remote)');
       _onSpotifyConfirmed(0);
+      _afterSpotifyStarted();
       return true;
     }
     final state = await _spotify.getPlaybackState();
@@ -1789,8 +1810,78 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final durationMs = item?['duration_ms'] as int? ?? 0;
       if (durationMs > 0) _duration = Duration(milliseconds: durationMs);
       _onSpotifyConfirmed(progressMs);
+      _afterSpotifyStarted();
     }
     return confirmed;
+  }
+
+  /// Once our song is playing in Spotify: match its repeat to ours and, if
+  /// it only got this one song, hand it the next ones too, so it moves on
+  /// by itself (with its crossfade) instead of stopping at the end.
+  void _afterSpotifyStarted() {
+    unawaited(_syncSpotifyRepeat());
+    if (_spotifyAhead.isEmpty) unawaited(_reissueSpotifyAhead());
+  }
+
+  @visibleForTesting
+  void afterSpotifyStartedForTesting() => _afterSpotifyStarted();
+
+  bool get _spotifyLoopsOurTrack =>
+      _useSpotify &&
+      _spotifyActive &&
+      !_spotifyFallbackActive &&
+      _spotifyLoopsTrack == true &&
+      _q.repeatMode == PlaybackRepeatMode.one;
+
+  /// Tells Spotify to loop the song with our repeat-one, and to stop
+  /// repeating otherwise (it may be left on from the Spotify app).
+  Future<void> _syncSpotifyRepeat() async {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    final want = _q.repeatMode == PlaybackRepeatMode.one;
+    if (_spotifyLoopsTrack == want) return;
+    _spotifyLoopsTrack = want;
+    var ok = await _nativePlayer.setRepeatTrack(want);
+    if (!ok) ok = await _spotify.setRepeat(want ? 'track' : 'off');
+    if (!ok) {
+      // Try again next time; meanwhile Tsuki replays the song itself.
+      _spotifyLoopsTrack = null;
+      return;
+    }
+    debugPrint('[AudioProvider] Spotify repeat ${want ? 'track' : 'off'}');
+  }
+
+  /// Spotify reported [reported] for our song: if it just started over
+  /// while looping it, count the new play.
+  void _checkSpotifyLoop(Duration reported) {
+    if (!_spotifyLoopsOurTrack || !_isPlaying || _duration <= Duration.zero) {
+      return;
+    }
+    final estimated =
+        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+    if (estimated < _duration - const Duration(seconds: 10) ||
+        reported > const Duration(seconds: 10)) {
+      return;
+    }
+    _onSpotifyLooped(reported);
+  }
+
+  /// Spotify looped our song (repeat-one) and is [pos] into it again: the
+  /// same bookkeeping as Tsuki playing it again, with no new play.
+  void _onSpotifyLooped(Duration pos) {
+    final track = _currentTrack;
+    if (track == null) return;
+    debugPrint('[AudioProvider] Spotify looped "${track.title}"');
+    onTrackCompleted?.call(track);
+    final now = DateTime.now();
+    _spotifySyncPosition = pos;
+    _spotifySyncTime = now;
+    _setPosition(pos);
+    if (_sleepCtrl.handleTrackEnd()) return;
+    _playGeneration++;
+    _completionHandled = false;
+    _lastPlayStart = now.subtract(pos);
+    onTrackStarted?.call(track);
+    notifyListeners();
   }
 
   void _onSpotifyConfirmed(int progressMs) {
@@ -2027,6 +2118,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void toggleRepeat() {
     _q.cycleRepeatMode();
     if (_q.isAtEnd) _prefetchNextTrack();
+    _onRepeatChanged();
     notifyListeners();
   }
   void toggleLoop() => toggleRepeat();
@@ -2035,7 +2127,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_q.repeatMode == mode) return;
     _q.setRepeatMode(mode);
     if (_q.isAtEnd) _prefetchNextTrack();
+    _onRepeatChanged();
     notifyListeners();
+  }
+
+  /// With Spotify, repeat-one is Spotify looping the song; leaving it,
+  /// Spotify needs our next songs to go on.
+  void _onRepeatChanged() {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    unawaited(_syncSpotifyRepeat());
+    if (_spotifyAhead.isEmpty) unawaited(_reissueSpotifyAhead());
   }
   /// Reorders the playback queue from [oldIndex] to [newIndex].
   void reorderQueue(int oldIndex, int newIndex) {
