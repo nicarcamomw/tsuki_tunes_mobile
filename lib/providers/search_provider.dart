@@ -54,7 +54,24 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // When the last entry was saved, to tell a query still being typed from
+  // a new search.
+  DateTime? _lastSavedAt;
+
   Future<void> _saveToHistory(String query) async {
+    // Results arrive as the user types (400 ms debounce), so a slow typist
+    // saved "bad", then "bad bun", then "bad bunny". Within a short while,
+    // a query that extends or trims the last entry replaces it.
+    final now = DateTime.now();
+    final last = _lastSavedAt;
+    if (last != null &&
+        now.difference(last) < const Duration(seconds: 30) &&
+        _searchHistory.isNotEmpty) {
+      final top = _searchHistory.first.toLowerCase();
+      final q = query.toLowerCase();
+      if (q.startsWith(top) || top.startsWith(q)) _searchHistory.removeAt(0);
+    }
+    _lastSavedAt = now;
     _searchHistory.remove(query);
     _searchHistory.insert(0, query);
     if (_searchHistory.length > _maxHistory) {
