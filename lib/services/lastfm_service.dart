@@ -56,11 +56,16 @@ class LastFmService {
   }
 
   static Future<List<String>> getArtistTags(String artistName) async {
+    if (!isConfigured) return [];
     try {
-      final uri = Uri.parse(
-        'https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${Uri.encodeComponent(artistName)}&api_key=$_apiKey&format=json&lang=es',
-      );
-      final response = await http.get(uri);
+      final uri = Uri.https('ws.audioscrobbler.com', '/2.0/', {
+        'method': 'artist.getinfo',
+        'artist': artistName,
+        'api_key': _apiKey,
+        'format': 'json',
+        'lang': 'es',
+      });
+      final response = await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final tagData = data['artist']?['tags']?['tag'];

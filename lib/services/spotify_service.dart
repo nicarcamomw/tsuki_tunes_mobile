@@ -13,6 +13,21 @@ import 'package:url_launcher/url_launcher.dart';
 import 'storage_service.dart';
 
 class SpotifyService {
+  // Every Spotify request is bounded: a stalled connection must fail (and
+  // let playback fall back) instead of leaving play or login waiting forever.
+  static const _apiTimeout = Duration(seconds: 10);
+  static const _authTimeout = Duration(seconds: 15);
+
+  static Future<http.Response> _get(Uri url, {Map<String, String>? headers}) =>
+      http.get(url, headers: headers).timeout(_apiTimeout);
+
+  static Future<http.Response> _put(Uri url, {Map<String, String>? headers, Object? body}) =>
+      http.put(url, headers: headers, body: body).timeout(_apiTimeout);
+
+  static Future<http.Response> _post(Uri url,
+          {Map<String, String>? headers, Object? body, Duration timeout = _apiTimeout}) =>
+      http.post(url, headers: headers, body: body).timeout(timeout);
+
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
   static const _redirectUri = 'com.tsuki.tsukitunesmobile://spotify-callback';
   static const _scopes =
@@ -251,7 +266,7 @@ class SpotifyService {
 
   Future<bool> _exchangeCode(String code, String codeVerifier) async {
     try {
-      final response = await http.post(
+      final response = await _post(
         Uri.parse('https://accounts.spotify.com/api/token'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
@@ -261,6 +276,7 @@ class SpotifyService {
           'redirect_uri': _redirectUri,
           'code_verifier': codeVerifier,
         },
+        timeout: _authTimeout,
       );
 
       if (response.statusCode != 200) {
@@ -294,7 +310,7 @@ class SpotifyService {
     if (_refreshToken == null) return;
 
     try {
-      final response = await http.post(
+      final response = await _post(
         Uri.parse('https://accounts.spotify.com/api/token'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
@@ -302,6 +318,7 @@ class SpotifyService {
           'grant_type': 'refresh_token',
           'refresh_token': _refreshToken!,
         },
+        timeout: _authTimeout,
       );
 
       if (response.statusCode == 200) {
@@ -353,7 +370,7 @@ class SpotifyService {
     if (_accessToken == null) return;
 
     try {
-      final response = await http.get(
+      final response = await _get(
         Uri.parse('https://api.spotify.com/v1/me'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -469,11 +486,11 @@ class SpotifyService {
 
   Future<List<dynamic>?> _searchItems(String query, {required int limit}) async {
     for (var attempt = 0; attempt < 2; attempt++) {
-      final response = await http.get(
+      final response = await _get(
         Uri.parse('https://api.spotify.com/v1/search'
             '?q=${Uri.encodeComponent(query)}&type=track&limit=$limit'),
         headers: {'Authorization': 'Bearer $_accessToken'},
-      ).timeout(const Duration(seconds: 10));
+      );
 
       if (response.statusCode == 401 && attempt == 0) {
         _tokenExpiry = DateTime.fromMillisecondsSinceEpoch(0);
@@ -527,7 +544,7 @@ class SpotifyService {
     if (_accessToken == null) return null;
 
     try {
-      final response = await http.get(
+      final response = await _get(
         Uri.parse('https://api.spotify.com/v1/me/player/devices'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -568,7 +585,7 @@ class SpotifyService {
     if (_accessToken == null) return [];
 
     try {
-      final response = await http.get(
+      final response = await _get(
         Uri.parse('https://api.spotify.com/v1/me/player/devices'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -587,7 +604,7 @@ class SpotifyService {
   @visibleForTesting
   Future<bool> transferPlayback(String deviceId) async {
     try {
-      final response = await http.put(
+      final response = await _put(
         Uri.parse('https://api.spotify.com/v1/me/player'),
         headers: {
           'Authorization': 'Bearer $_accessToken',
@@ -675,7 +692,7 @@ class SpotifyService {
 
       final url =
           'https://api.spotify.com/v1/me/player/play?device_id=$targetDevice';
-      final response = await http.put(
+      final response = await _put(
         Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $_accessToken',
@@ -693,7 +710,7 @@ class SpotifyService {
       if (response.statusCode == 401) {
         await _ensureValidToken();
         if (_accessToken == null) return false;
-        final retry401 = await http.put(
+        final retry401 = await _put(
           Uri.parse(url),
           headers: {
             'Authorization': 'Bearer $_accessToken',
@@ -711,7 +728,7 @@ class SpotifyService {
       await transferPlayback(targetDevice);
       await Future.delayed(const Duration(milliseconds: 800));
 
-      final retry = await http.put(
+      final retry = await _put(
         Uri.parse('https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'),
         headers: {
           'Authorization': 'Bearer $_accessToken',
@@ -732,7 +749,7 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final response = await http.put(
+      final response = await _put(
         Uri.parse('https://api.spotify.com/v1/me/player/pause'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -755,7 +772,7 @@ class SpotifyService {
       }
       final url =
           'https://api.spotify.com/v1/me/player/play?device_id=$deviceId';
-      final response = await http.put(
+      final response = await _put(
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -772,7 +789,7 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final response = await http.put(
+      final response = await _put(
         Uri.parse(
             'https://api.spotify.com/v1/me/player/seek?position_ms=$positionMs'),
         headers: {'Authorization': 'Bearer $_accessToken'},
@@ -789,7 +806,7 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final response = await http.post(
+      final response = await _post(
         Uri.parse('https://api.spotify.com/v1/me/player/next'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -804,7 +821,7 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final response = await http.post(
+      final response = await _post(
         Uri.parse('https://api.spotify.com/v1/me/player/previous'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
@@ -827,7 +844,7 @@ class SpotifyService {
     if (_accessToken == null) return null;
 
     try {
-      final response = await http.get(
+      final response = await _get(
         Uri.parse('https://api.spotify.com/v1/me/player'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
