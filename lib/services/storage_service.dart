@@ -209,6 +209,8 @@ class StorageService implements StorageContract {
   @override
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid) async {
     if (uid.isEmpty) return [];
+    // A save may still be encoding in the background: read what it writes.
+    await _listenedWrites;
     try {
       final file = await _listenedFile(uid);
       if (file != null && await file.exists()) {
