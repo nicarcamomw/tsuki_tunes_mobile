@@ -1073,11 +1073,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           // Same height for numbers and names, so the line under them sits
-          // level across every card.
+          // level across every card. Bottom-aligned so a name sits on the
+          // same line as the numbers instead of floating above them.
           SizedBox(
             height: 30,
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.bottomLeft,
               child: numValue != null
                   ? TweenAnimationBuilder<int>(
                       tween: IntTween(begin: 0, end: numValue),
