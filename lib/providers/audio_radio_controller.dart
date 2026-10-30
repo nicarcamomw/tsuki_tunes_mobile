@@ -38,8 +38,8 @@ class AudioRadioController {
         _isOnline = isOnline,
         _onQueueGrew = onQueueGrew;
 
-  /// Makes the radios (tests use fake song sources).
-  @visibleForTesting
+  /// Makes the radios (and smart shuffle's recommendations); tests swap
+  /// it for fake song sources.
   static SongRadio Function(Track seed, RadioMode mode) radioFactory =
       (seed, mode) => SongRadio(seed: seed, mode: mode);
 

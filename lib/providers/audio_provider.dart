@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/utils/deezer_preview.dart';
 import '../models/playback_error.dart';
 import '../models/repeat_mode.dart';
+import '../models/smart_shuffle.dart';
 import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
@@ -21,6 +22,7 @@ import '../services/headphones_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
+import '../services/song_radio.dart' show SongRadio;
 import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
@@ -30,6 +32,7 @@ import 'connectivity_provider.dart';
 
 export '../models/playback_error.dart';
 export '../models/repeat_mode.dart';
+export '../models/smart_shuffle.dart';
 export '../services/playback_queue.dart' show QueueSnapshot;
 export 'audio_radio_controller.dart';
 
@@ -709,6 +712,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       final prefs = await SharedPreferences.getInstance();
       _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
       _autoplaySimilar = prefs.getBool(_autoplayKey) ?? true;
+      await _loadShuffleSettings();
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
@@ -1649,6 +1653,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (newQueue != null) _radioCtrl.radio = null;
     _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
+    if (newQueue != null) {
+      _recoRadio = null;
+      _recoSteeredBy = null;
+      if (_q.isShuffle) unawaited(_learnShuffleTempos());
+    }
     // A new play hands Spotify a fresh list.
     _spotifyListTimer?.cancel();
     _spotifyListStale = false;
@@ -2180,6 +2189,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   void _prefetchNextTrack() {
     _maybeContinueWithSimilar();
+    if (_smartShuffle) unawaited(_topUpRecommendations());
     final nextIdx = _q.peekNext();
     if (nextIdx == null || nextIdx < 0 || nextIdx >= _q.length) return;
 
@@ -2328,10 +2338,212 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void toggleShuffle() {
     _q.toggleShuffle();
     _prefetchedTargetTrackId = null;
+    if (_q.isShuffle) {
+      unawaited(_learnShuffleTempos());
+    } else {
+      _smartShuffle = false;
+      _applyShuffleSettings();
+      if (_q.dropRecommendations()) _persistPlaybackState();
+    }
     if (_currentTrack != null) {
       _prefetchNextTrack();
     }
+    // Spotify gets the songs in their new order.
+    _scheduleSpotifyListRefresh();
     notifyListeners();
+  }
+
+  // ── Smart shuffle ──
+
+  static const _avoidArtistKey = 'tsuki_shuffle_avoid_artist';
+  static const _energyKey = 'tsuki_shuffle_energy';
+  static const _recoEveryKey = 'tsuki_shuffle_reco_every';
+
+  /// Recommendations are slipped in (the shuffle button's third state).
+  bool _smartShuffle = false;
+  ShuffleEnergy _energy = ShuffleEnergy.alternate;
+  int _recoEvery = 3;
+  // Middle tempo of the queue, splitting "fast" from "calm" songs.
+  double? _bpmMedian;
+  int _tempoGeneration = 0;
+  SongRadio? _recoRadio;
+  String? _recoSteeredBy;
+  bool _recoLoading = false;
+
+  /// Whether a song is the user's (listened, favourite, in a playlist):
+  /// those are never recommended.
+  bool Function(String trackId)? isInLibrary;
+
+  ShuffleMode get shuffleMode => !_q.isShuffle
+      ? ShuffleMode.off
+      : (_smartShuffle ? ShuffleMode.smart : ShuffleMode.on);
+  bool get avoidSameArtist => _q.avoidSameArtist;
+  ShuffleEnergy get shuffleEnergy => _energy;
+
+  /// One recommended song after every this many of the user's.
+  int get recommendEvery => _recoEvery;
+  bool isRecommended(String trackId) => _q.isRecommended(trackId);
+
+  /// Why a recommended song is there ("because you're playing X").
+  RadioReason? recommendationReasonFor(String trackId) =>
+      _q.isRecommended(trackId) ? _recoRadio?.reasonFor(trackId) : null;
+
+  /// The shuffle button: off, shuffle, shuffle with recommendations.
+  ShuffleMode cycleShuffle() {
+    setShuffleMode(switch (shuffleMode) {
+      ShuffleMode.off => ShuffleMode.on,
+      ShuffleMode.on => ShuffleMode.smart,
+      ShuffleMode.smart => ShuffleMode.off,
+    });
+    return shuffleMode;
+  }
+
+  void setShuffleMode(ShuffleMode mode) {
+    if (mode == shuffleMode) return;
+    if ((mode != ShuffleMode.off) != _q.isShuffle) toggleShuffle();
+    if (mode == ShuffleMode.off) return;
+    _smartShuffle = mode == ShuffleMode.smart;
+    _applyShuffleSettings();
+    if (_smartShuffle) {
+      unawaited(_topUpRecommendations(reshuffle: true));
+    } else if (_q.dropRecommendations()) {
+      _recoRadio = null;
+      _queueChanged();
+    }
+    notifyListeners();
+  }
+
+  Future<void> setAvoidSameArtist(bool value) async {
+    _q.avoidSameArtist = value;
+    _reshuffleForNewSettings();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_avoidArtistKey, value);
+    } catch (_) {}
+  }
+
+  Future<void> setShuffleEnergy(ShuffleEnergy value) async {
+    _energy = value;
+    _applyShuffleSettings();
+    _reshuffleForNewSettings();
+    unawaited(_learnShuffleTempos());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_energyKey, value.index);
+    } catch (_) {}
+  }
+
+  Future<void> setRecommendEvery(int value) async {
+    _recoEvery = value.clamp(1, 10);
+    _applyShuffleSettings();
+    _reshuffleForNewSettings();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_recoEveryKey, _recoEvery);
+    } catch (_) {}
+  }
+
+  Future<void> _loadShuffleSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _q.avoidSameArtist = prefs.getBool(_avoidArtistKey) ?? true;
+      final e = prefs.getInt(_energyKey);
+      if (e != null && e >= 0 && e < ShuffleEnergy.values.length) {
+        _energy = ShuffleEnergy.values[e];
+      }
+      _recoEvery = (prefs.getInt(_recoEveryKey) ?? 3).clamp(1, 10);
+    } catch (_) {}
+    _applyShuffleSettings();
+  }
+
+  void _applyShuffleSettings() {
+    _q.flowScore = _energy == ShuffleEnergy.free ? null : _flowScore;
+    _q.recommendEvery = _smartShuffle ? _recoEvery : 0;
+  }
+
+  /// Settings changed: what comes after the next song follows them now.
+  void _reshuffleForNewSettings() {
+    _q.reshuffleAhead();
+    _queueChanged();
+  }
+
+  /// Extra score for [next] following [prev], by tempo (folded into one
+  /// octave, like running mode: 70 and 140 BPM feel the same).
+  double _flowScore(Track prev, Track next) {
+    final a = BpmService.shared.cached(prev.id);
+    final b = BpmService.shared.cached(next.id);
+    if (a == null || b == null || a <= 0 || b <= 0) return 0;
+    final from = BpmFlow.feel(a);
+    final to = BpmFlow.feel(b);
+    switch (_energy) {
+      case ShuffleEnergy.free:
+        return 0;
+      case ShuffleEnergy.smooth:
+        return 0.8 * (1 - ((from - to).abs() / 25).clamp(0.0, 1.0));
+      case ShuffleEnergy.alternate:
+        final mid = _bpmMedian ?? 120;
+        final crosses = from >= mid ? to < mid : to >= mid;
+        if (!crosses) return -0.3;
+        return 0.5 + 0.3 * ((to - mid).abs() / 25).clamp(0.0, 1.0);
+    }
+  }
+
+  /// Looks up the queue's tempos (cached after the first time) for the
+  /// energy flow, then reorders the songs not yet handed on.
+  Future<void> _learnShuffleTempos() async {
+    if (!_q.isShuffle || _energy == ShuffleEnergy.free || !_online) return;
+    final gen = ++_tempoGeneration;
+    final tracks = _q.tracks.take(300).toList();
+    final Map<String, double> bpms;
+    try {
+      bpms = await BpmService.shared.lookup(tracks, concurrency: 2);
+    } catch (e) {
+      debugPrint('[AudioProvider] Tempo lookup failed: $e');
+      return;
+    }
+    if (gen != _tempoGeneration || !_q.isShuffle) return;
+    final feels = [for (final b in bpms.values) if (b > 0) BpmFlow.feel(b)]
+      ..sort();
+    if (feels.isEmpty) return;
+    _bpmMedian = feels[feels.length ~/ 2];
+    // Keep what Spotify already has (no restart); reorder the rest.
+    final spotify = _useSpotify && _spotifyActive && !_spotifyFallbackActive;
+    _q.reshuffleAhead(keep: spotify ? _spotifyAhead.length + 1 : 1);
+    _prefetchNextTrack();
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
+  /// Keeps a few recommended songs waiting: like what's playing, and never
+  /// one the user already has.
+  Future<void> _topUpRecommendations({bool reshuffle = false}) async {
+    final seed = _currentTrack;
+    if (!_smartShuffle || !_q.isShuffle || seed == null || !_online) return;
+    if (_recoLoading || _q.recommendationsLeft >= 3) return;
+    _recoLoading = true;
+    try {
+      final radio = _recoRadio ??=
+          AudioRadioController.radioFactory(seed, RadioMode.balanced)
+            ..markQueued(_q.tracks);
+      if (_recoSteeredBy != seed.id) {
+        _recoSteeredBy = seed.id;
+        if (seed.id != radio.seed.id) radio.moreLikeThis(seed);
+      }
+      final batch = await radio.nextBatch(count: 6);
+      if (!identical(radio, _recoRadio) || !_smartShuffle) return;
+      final fresh = [
+        for (final t in batch)
+          if (!(isInLibrary?.call(t.id) ?? false)) t
+      ];
+      if (_q.addRecommendations(fresh) == 0) return;
+      debugPrint('[AudioProvider] ${fresh.length} recommended songs ready');
+      if (reshuffle) _q.reshuffleAhead();
+      _queueChanged();
+    } catch (e) {
+      debugPrint('[AudioProvider] Recommendations failed: $e');
+    } finally {
+      _recoLoading = false;
+    }
   }
 
   void toggleRepeat() {

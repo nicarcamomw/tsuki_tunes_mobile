@@ -26,7 +26,10 @@ import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
+import '../widgets/shuffle_mode_icon.dart';
+import '../widgets/smart_shuffle_sheet.dart';
 import '../widgets/tap_scale.dart';
+import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
 import 'artist_detail_screen.dart';
 import 'lyrics_screen.dart';
@@ -208,9 +211,10 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final audio = context.read<AudioProvider>();
-    final (track, isPlaying, isBuffering, isShuffle, repeatMode, useSpotify, radioActive, playbackError) =
-        context.select<AudioProvider, (Track?, bool, bool, bool, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
-            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.isShuffle, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
+    final (track, isPlaying, isBuffering, shuffleMode, repeatMode, useSpotify, radioActive, playbackError) =
+        context.select<AudioProvider, (Track?, bool, bool, ShuffleMode, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.shuffleMode, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
+    final isShuffle = shuffleMode != ShuffleMode.off;
     // Only this track's listened flag: watching the whole library would rebuild
     // the player on every sync and history update.
     final isListened = context.select<LibraryProvider, bool>(
@@ -476,16 +480,37 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     children: [
                       // Shuffle
                       TapScale(
-                        semanticLabel: isShuffle ? strings.a11yShuffleOn : strings.a11yShuffleOff,
-                        onTap: audio.toggleShuffle,
+                        semanticLabel: switch (shuffleMode) {
+                          ShuffleMode.off => strings.a11yShuffleOff,
+                          ShuffleMode.on => strings.a11yShuffleOn,
+                          ShuffleMode.smart => strings.a11yShuffleSmart,
+                        },
+                        // Off → shuffle → shuffle with recommendations.
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          final mode = audio.cycleShuffle();
+                          showTrackSnack(
+                            context,
+                            switch (mode) {
+                              ShuffleMode.off => strings.shuffleOffToast,
+                              ShuffleMode.on => strings.shuffleOnToast,
+                              ShuffleMode.smart => strings.shuffleSmartToast,
+                            },
+                            bottom: MediaQuery.paddingOf(context).bottom + 12,
+                          );
+                        },
+                        onLongPress: () {
+                          HapticFeedback.mediumImpact();
+                          showSmartShuffleSheet(context);
+                        },
                         scaleDown: 0.8,
                         child: Padding(
                           padding: const EdgeInsets.all(8),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.shuffle,
+                              ShuffleModeIcon(
+                                mode: shuffleMode,
                                 size: 22,
                                 color: isShuffle
                                     ? AppColors.accent

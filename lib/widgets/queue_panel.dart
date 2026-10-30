@@ -14,6 +14,7 @@ import '../services/bpm_flow.dart';
 import 'flow_sheet.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
+import 'shuffle_mode_icon.dart';
 import 'track_tile.dart';
 
 /// The play queue: what already played (folded away), the song playing now
@@ -126,7 +127,7 @@ class _QueuePanelState extends State<QueuePanel> {
           Object.hashAll(upcoming),
           Object.hashAll(upcoming.map((i) => a.isUserQueued(a.queue[i].id))),
           a.currentIndex,
-          a.isShuffle,
+          a.shuffleMode,
           a.currentTrack?.id,
         );
       },
@@ -230,7 +231,11 @@ class _QueuePanelState extends State<QueuePanel> {
                 SliverToBoxAdapter(
                   child: _sectionLabel(
                     strings.queueComingUp,
-                    tag: audio.isShuffle ? strings.queueShuffledTag : null,
+                    tag: switch (audio.shuffleMode) {
+                      ShuffleMode.off => null,
+                      ShuffleMode.on => strings.queueShuffledTag,
+                      ShuffleMode.smart => strings.queueSmartShuffleTag,
+                    },
                   ),
                 ),
                 if (upcoming.isEmpty)
@@ -520,6 +525,7 @@ class _QueuePanelState extends State<QueuePanel> {
     final queueIndex = upcoming[k];
     final t = queue[queueIndex];
     final queuedByUser = _audio.isUserQueued(t.id);
+    final recommended = !queuedByUser && _audio.isRecommended(t.id);
     // Keyed by the song (and which copy of it), not its position, so rows
     // keep their identity while being dragged around.
     var copy = 0;
@@ -531,10 +537,16 @@ class _QueuePanelState extends State<QueuePanel> {
     final row = _row(
       t,
       queuedByUser: queuedByUser,
+      recommended: recommended,
       leading: queuedByUser
           ? Icon(Icons.queue_music,
               color: AppColors.neonCyan, size: 16, semanticLabel: strings.queuedByYou)
-          : _number(k + 1),
+          : recommended
+              ? SparkleIcon(
+                  color: AppColors.accent,
+                  size: 14,
+                  semanticLabel: strings.recommendedTag)
+              : _number(k + 1),
       onTap: () => _play(t),
       trailing: [
         _iconButton(
@@ -685,12 +697,14 @@ class _QueuePanelState extends State<QueuePanel> {
     required Widget leading,
     bool isCurrent = false,
     bool queuedByUser = false,
+    bool recommended = false,
     VoidCallback? onTap,
     List<Widget> trailing = const [],
   }) {
     final locale = _locale;
     final strings = locale.strings;
-    final why = radioReasonLabel(strings, _audio.radioReasonFor(t.id));
+    final why = radioReasonLabel(strings,
+        _audio.radioReasonFor(t.id) ?? _audio.recommendationReasonFor(t.id));
     final bpm = BpmService.shared.cached(t.id);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 3),
@@ -704,7 +718,9 @@ class _QueuePanelState extends State<QueuePanel> {
               ? AppColors.accent.withValues(alpha: 0.5)
               : queuedByUser
                   ? AppColors.neonCyan.withValues(alpha: 0.35)
-                  : AppColors.border.withValues(alpha: 0.4),
+                  : recommended
+                      ? AppColors.accent.withValues(alpha: 0.35)
+                      : AppColors.border.withValues(alpha: 0.4),
           width: isCurrent ? 1.2 : 0.8,
         ),
       ),
@@ -759,11 +775,15 @@ class _QueuePanelState extends State<QueuePanel> {
                       Text(
                         queuedByUser
                             ? '${strings.queuedByYou} · ${t.fullArtistName}'
-                            : t.fullArtistName,
+                            : recommended
+                                ? '${strings.recommendedTag} · ${t.fullArtistName}'
+                                : t.fullArtistName,
                         style: locale.getTextStyle(
                           color: queuedByUser
                               ? AppColors.neonCyan.withValues(alpha: 0.85)
-                              : AppColors.textSecondary,
+                              : recommended
+                                  ? AppColors.accent.withValues(alpha: 0.9)
+                                  : AppColors.textSecondary,
                           fontSize: 10.5,
                         ),
                         maxLines: 1,

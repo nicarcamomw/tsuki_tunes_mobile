@@ -25,6 +25,8 @@ import '../services/audio_precache_service.dart';
 import '../services/storage_service.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
+import 'shuffle_mode_icon.dart';
+import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
 
@@ -562,6 +564,39 @@ class ProfileBottomSheet {
                             HapticFeedback.selectionClick();
                             audioProvider.setAutoplaySimilar(v);
                             setModalState(() {});
+                          },
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
+                        ListTile(
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          leading: const SizedBox(
+                            width: 24,
+                            child: Center(
+                              child: ShuffleModeIcon(
+                                  mode: ShuffleMode.smart,
+                                  color: AppColors.accent,
+                                  size: 17),
+                            ),
+                          ),
+                          title: Text(
+                            strings.smartShuffleTitle,
+                            style: locale.getTextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textBright,
+                            ),
+                          ),
+                          subtitle: Text(
+                            strings.smartShuffleSubtitle,
+                            style: locale.getTextStyle(
+                                fontSize: 10, color: AppColors.textMuted),
+                          ),
+                          trailing: const Icon(Icons.chevron_right,
+                              color: AppColors.textMuted, size: 18),
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            showSmartShuffleSheet(context);
                           },
                         ),
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.6)),
