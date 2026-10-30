@@ -26,6 +26,15 @@ class PlaylistProvider extends ChangeNotifier {
   static const _maxWritesPerMinute = 30;
 
   StreamSubscription? _playlistsSubscription;
+  // Names being created right now: a double tap makes one playlist.
+  final Set<String> _creating = {};
+
+  /// One entry per id, keeping the first (newest) one. Older versions of
+  /// the app could save the same playlist twice.
+  static List<Playlist> _unique(Iterable<Playlist> list) {
+    final seen = <String>{};
+    return [for (final p in list) if (seen.add(p.id)) p];
+  }
 
   List<Playlist> get playlists => List.unmodifiable(_playlists);
   bool get syncing => _syncing;
@@ -67,7 +76,7 @@ class PlaylistProvider extends ChangeNotifier {
     try {
       final cached = await _storage.getCachedPlaylists(uid);
       if (cached.isNotEmpty && _currentUid == uid) {
-        _playlists = cached.map((e) => Playlist.fromJson(e)).toList();
+        _playlists = _unique(cached.map((e) => Playlist.fromJson(e)));
         notifyListeners();
       }
     } catch (e) {
@@ -91,7 +100,7 @@ class PlaylistProvider extends ChangeNotifier {
     try {
       final cached = await _storage.getCachedPlaylists(uid);
       if (cached.isNotEmpty && _currentUid == uid) {
-        _playlists = cached.map((e) => Playlist.fromJson(e)).toList();
+        _playlists = _unique(cached.map((e) => Playlist.fromJson(e)));
         notifyListeners();
       }
     } catch (e) {
@@ -104,9 +113,8 @@ class PlaylistProvider extends ChangeNotifier {
           await playlistsCol.orderBy('updatedAt', descending: true).get();
       if (_currentUid != uid) return;
 
-      _playlists = snapshot.docs
-          .map((doc) => Playlist.fromFirestore(doc.data(), docId: doc.id))
-          .toList();
+      _playlists = _unique(snapshot.docs
+          .map((doc) => Playlist.fromFirestore(doc.data(), docId: doc.id)));
       notifyListeners();
 
       _persistCache(uid);
@@ -221,16 +229,42 @@ class PlaylistProvider extends ChangeNotifier {
 
   /// [tracks] are included in the same write, so seeding a playlist costs one
   /// write instead of one per track.
+  ///
+  /// Returns at once with the new playlist; the upload goes on in the
+  /// background (and takes it back out if the server refuses it).
   Future<Playlist?> createPlaylist(String name, {List<Track> tracks = const []}) async {
     final uid = _currentUid;
-    if (uid == null || name.trim().isEmpty || _isWriteThrottled()) return null;
+    if (uid == null || name.trim().isEmpty) return null;
+    final cleanName = _cleanName(name);
+    // Same name already on its way (a double tap): don't make another.
+    if (!_creating.add(cleanName)) return null;
+    if (_isWriteThrottled()) {
+      _creating.remove(cleanName);
+      return null;
+    }
+    final (playlist, saved) = _create(uid, cleanName, tracks);
+    unawaited(saved.whenComplete(() => _creating.remove(cleanName)));
+    return playlist;
+  }
 
+  /// Waits until the playlists being created have been uploaded.
+  @visibleForTesting
+  Future<void> get pendingCreations => Future.wait(_pendingCreations);
+  final List<Future<void>> _pendingCreations = [];
+
+  (Playlist, Future<void>) _create(String uid, String name, List<Track> tracks) {
     final now = DateTime.now();
-    final tempId = 'local_${now.millisecondsSinceEpoch}';
+    final synced = !_isGuest && _canSyncToFirestore(uid);
+    // The document's id is made here, before writing: the listener then
+    // reports this same playlist, which replaces it instead of adding a
+    // second copy.
+    final docRef = synced
+        ? _firebase.db.collection('users').doc(uid).collection('playlists').doc()
+        : null;
     final seen = <String>{};
     final playlist = Playlist(
-      id: tempId,
-      name: _cleanName(name),
+      id: docRef?.id ?? 'local_${now.microsecondsSinceEpoch}',
+      name: name,
       tracks: tracks.where((t) => seen.add(t.id)).take(maxTracks).toList(),
       createdAt: now,
       updatedAt: now,
@@ -241,39 +275,32 @@ class PlaylistProvider extends ChangeNotifier {
     notifyListeners();
     _persistCache(uid);
 
-    if (!_isGuest && _canSyncToFirestore(uid)) {
-      _startSync();
+    if (docRef == null) return (playlist, Future.value());
+
+    _startSync();
+    Future<void> upload() async {
       try {
         final db = _firebase.db;
-        final docRef =
-            db.collection('users').doc(uid).collection('playlists').doc();
         final batch = db.batch();
-        batch.set(docRef, playlist.copyWith(id: docRef.id).toFirestore());
+        batch.set(docRef, playlist.toFirestore());
         batch.set(db.collection('users').doc(uid),
             {'lastSubWrite': FieldValue.serverTimestamp()},
             SetOptions(merge: true));
         await SubWriteQueue.instance.run(batch.commit);
-
-        final idx = _playlists.indexWhere((p) => p.id == tempId);
-        if (idx != -1) {
-          _playlists[idx] = playlist.copyWith(id: docRef.id);
-          notifyListeners();
-          _persistCache(uid);
-        }
-        return _playlists.firstWhere((p) => p.id == docRef.id,
-            orElse: () => playlist.copyWith(id: docRef.id));
       } catch (e) {
         debugPrint('[PlaylistProvider] createPlaylist rollback: $e');
-        _playlists.removeWhere((p) => p.id == tempId);
+        _playlists.removeWhere((p) => p.id == playlist.id);
         notifyListeners();
         _persistCache(uid);
-        return null;
       } finally {
         _endSync();
       }
     }
 
-    return playlist;
+    final saved = upload();
+    _pendingCreations.add(saved);
+    unawaited(saved.whenComplete(() => _pendingCreations.remove(saved)));
+    return (playlist, saved);
   }
 
   Future<void> renamePlaylist(String playlistId, String newName) async {

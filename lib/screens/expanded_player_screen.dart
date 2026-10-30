@@ -22,6 +22,7 @@ import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
@@ -867,12 +868,16 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.bgMid,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -944,6 +949,17 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                     trailing: '${bpm.round()}',
                     locale: locale,
                   ),
+                // Save the song to a playlist
+                _songOptionTile(
+                  icon: Icons.playlist_add,
+                  label: strings.addToPlaylist,
+                  locale: locale,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.selectionClick();
+                    showPlaylistSelector(context, track);
+                  },
+                ),
                 // Queue
                 _songOptionTile(
                   icon: Icons.queue_music,

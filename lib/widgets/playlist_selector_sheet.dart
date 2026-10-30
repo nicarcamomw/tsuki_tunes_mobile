@@ -191,24 +191,27 @@ class _PlaylistSelectorContent extends StatelessWidget {
                                 ),
                               );
                             }
-                          : () async {
+                          : () {
                               unawaited(HapticFeedback.lightImpact());
                               final provider =
                                   context.read<PlaylistProvider>();
-                              final added = await provider
-                                  .addTrackToPlaylist(playlist.id, track);
-                              if (context.mounted) {
+                              final full = playlist.tracks.length >=
+                                  PlaylistProvider.maxTracks;
+                              // It shows in the playlist at once; the upload
+                              // goes on in the background.
+                              if (!full) {
+                                unawaited(provider.addTrackToPlaylist(
+                                    playlist.id, track));
+                              }
+                              {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      added
-                                          ? strings
-                                              .addedToPlaylist(playlist.name)
-                                          : playlist.tracks.length >=
-                                                  PlaylistProvider.maxTracks
-                                              ? strings.playlistFull
-                                              : strings.trackAlreadyInPlaylist,
+                                      full
+                                          ? strings.playlistFull
+                                          : strings
+                                              .addedToPlaylist(playlist.name),
                                       style: locale.getTextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,

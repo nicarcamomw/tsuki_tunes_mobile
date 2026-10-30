@@ -706,7 +706,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
                     child: Row(
                       children: [
-                        Flexible(
+                        // The title takes all the room left by the (?)
+                        // button: a Spacer here would take half of it.
+                        Expanded(
                           child: Semantics(
                             header: true,
                             child: ShaderMask(
@@ -716,7 +718,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ).createShader(bounds),
                               child: Text(
                                 strings.topArtistsTitle,
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: locale.getTextStyle(
                                   fontSize: 13,
@@ -728,7 +730,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         // Flush right, vertically centred on the title; the
                         // glyph is an icon so it sits dead centre in the ring.
                         GestureDetector(

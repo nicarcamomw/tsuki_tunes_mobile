@@ -143,6 +143,49 @@ void main() {
   });
 
   group('playlists', () {
+    test('a new playlist shows up once, not twice', () async {
+      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      await phone.connectToFirestore(uid);
+      final created = await phone.createPlaylist('metal', tracks: [_track('a')]);
+      await phone.pendingCreations;
+      await _settle();
+      expect(phone.playlists.map((p) => p.id), [created!.id]);
+      final docs = await db
+          .collection('users')
+          .doc(uid)
+          .collection('playlists')
+          .get();
+      expect(docs.docs.length, 1);
+    });
+
+    test('creating the same playlist twice in a row makes only one',
+        () async {
+      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      await phone.connectToFirestore(uid);
+      await Future.wait([
+        phone.createPlaylist('metal'),
+        phone.createPlaylist('metal'),
+      ]);
+      await phone.pendingCreations;
+      await _settle();
+      expect(phone.playlists.length, 1);
+    });
+
+    test('duplicates saved earlier in the cache are dropped', () async {
+      final storage = StorageService();
+      final p = {
+        'id': 'p1',
+        'name': 'metal',
+        'tracks': <Map<String, dynamic>>[],
+        'createdAt': DateTime(2026).toIso8601String(),
+        'updatedAt': DateTime(2026).toIso8601String(),
+      };
+      await storage.saveCachedPlaylists('guest_x', [p, p]);
+      final phone = PlaylistProvider(storage: storage);
+      await phone.initLocalOnly('guest_x');
+      expect(phone.playlists.length, 1);
+    });
+
     // fake_cloud_firestore runs transactions without conflict detection, so
     // truly simultaneous writes can't be simulated (real Firestore retries
     // them). What this checks is that each write merges into the server copy
@@ -151,6 +194,7 @@ void main() {
       final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       final created = await phone.createPlaylist('Mix');
+      await phone.pendingCreations;
       await _settle();
       final id = phone.playlists.first.id;
       expect(created, isNotNull);
@@ -188,6 +232,7 @@ void main() {
       final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       await phone.createPlaylist('Mix');
+      await phone.pendingCreations;
       await _settle();
       final id = phone.playlists.first.id;
       await phone.addTrackToPlaylist(id, _track('a'));

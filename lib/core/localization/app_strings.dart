@@ -1652,8 +1652,8 @@ class AppStrings {
   String get noPlaylistsSubtitle => _l.noPlaylistsSubtitle;
 
   String playlistMeta(int count, String duration) => switch (language) {
-        AppLanguage.es => '$count canciones  ·  $duration',
-        AppLanguage.en => '$count tracks  ·  $duration',
+        AppLanguage.es => '${trackCountLabel(count)}  ·  $duration',
+        AppLanguage.en => '${trackCountLabel(count)}  ·  $duration',
         AppLanguage.ja => '$count曲  ·  $duration',
       };
 
