@@ -1,8 +1,5 @@
 import 'dart:async';
-import 'dart:math' as math;
-import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -135,85 +132,6 @@ class LyricsController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     super.dispose();
-  }
-}
-
-/// A deep color taken from the album cover, for lyrics backgrounds that
-/// match the record (white text stays readable on it).
-class AlbumTint {
-  AlbumTint._();
-
-  static const Color fallback = Color(0xFF4A0E16);
-  static final Map<String, Color> _cache = {};
-
-  static Color? cached(String url) => _cache[url];
-
-  static Future<Color> of(String url) async {
-    if (url.isEmpty) return fallback;
-    final hit = _cache[url];
-    if (hit != null) return hit;
-    try {
-      final image = await _decodeSmall(url);
-      final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-      image.dispose();
-      final color =
-          data == null ? fallback : fromPixels(data.buffer.asUint8List());
-      return _cache[url] = color;
-    } catch (e) {
-      debugPrint('[AlbumTint] $e');
-      return fallback;
-    }
-  }
-
-  static Future<ui.Image> _decodeSmall(String url) {
-    final completer = Completer<ui.Image>();
-    final stream = ResizeImage(
-      CachedNetworkImageProvider(url),
-      width: 24,
-      height: 24,
-    ).resolve(ImageConfiguration.empty);
-    late final ImageStreamListener listener;
-    listener = ImageStreamListener(
-      (info, _) {
-        if (!completer.isCompleted) completer.complete(info.image.clone());
-        info.dispose();
-        stream.removeListener(listener);
-      },
-      onError: (error, _) {
-        if (!completer.isCompleted) completer.completeError(error);
-        stream.removeListener(listener);
-      },
-    );
-    stream.addListener(listener);
-    return completer.future.timeout(const Duration(seconds: 8));
-  }
-
-  /// The cover's most vivid color, darkened enough for white text. Grey or
-  /// near-black covers fall back to Tsuki's crimson.
-  @visibleForTesting
-  static Color fromPixels(Uint8List rgba) {
-    double r = 0, g = 0, b = 0, weight = 0;
-    for (var i = 0; i + 3 < rgba.length; i += 4) {
-      if (rgba[i + 3] < 128) continue;
-      final hsv = HSVColor.fromColor(
-          Color.fromARGB(255, rgba[i], rgba[i + 1], rgba[i + 2]));
-      if (hsv.value < 0.12) continue;
-      // Favour saturated, reasonably bright pixels: the cover's accent.
-      final w = math.pow(hsv.saturation * hsv.value, 2).toDouble();
-      r += rgba[i] * w;
-      g += rgba[i + 1] * w;
-      b += rgba[i + 2] * w;
-      weight += w;
-    }
-    if (weight < 0.5) return fallback;
-    final vivid =
-        Color.fromARGB(255, r ~/ weight, g ~/ weight, b ~/ weight);
-    final hsl = HSLColor.fromColor(vivid);
-    if (hsl.saturation < 0.15) return fallback;
-    return hsl
-        .withSaturation(hsl.saturation.clamp(0.45, 0.85))
-        .withLightness(0.24)
-        .toColor();
   }
 }
 
@@ -424,22 +342,26 @@ class _LyricLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = state == _LineState.current;
+    // Neon red: the line being sung glows, the rest stay dimmer.
     final color = switch (state) {
-      _LineState.current => Colors.white,
-      _LineState.sung => Colors.white.withValues(alpha: 0.6),
-      _LineState.upcoming => Colors.white.withValues(alpha: 0.3),
-      _LineState.plain => Colors.white.withValues(alpha: 0.88),
+      _LineState.current => const Color(0xFFFF4D4D),
+      _LineState.sung => AppColors.accent.withValues(alpha: 0.55),
+      _LineState.upcoming => AppColors.accent.withValues(alpha: 0.32),
+      _LineState.plain => const Color(0xFFFF4D4D).withValues(alpha: 0.9),
     };
     final style = base.copyWith(
       color: color,
-      shadows: current
-          ? [
-              Shadow(
-                color: AppColors.accent.withValues(alpha: 0.55),
-                blurRadius: 18,
-              ),
-            ]
-          : const [],
+      shadows: [
+        Shadow(
+          color: AppColors.accent.withValues(alpha: current ? 0.9 : 0.35),
+          blurRadius: current ? 16 : 8,
+        ),
+        if (current)
+          Shadow(
+            color: AppColors.accent.withValues(alpha: 0.5),
+            blurRadius: 32,
+          ),
+      ],
     );
 
     return GestureDetector(
@@ -526,35 +448,28 @@ class _FollowPill extends StatelessWidget {
   }
 }
 
-/// Background shared by the card and the full view: the album's color
-/// fading into the app's night, with faint scanlines.
+/// Background shared by the card and the full view: lead grey fading into
+/// the app's night, with faint scanlines, under neon red words.
 class LyricsBackdrop extends StatelessWidget {
-  final Color tint;
   final BorderRadius? borderRadius;
   final Widget child;
 
   const LyricsBackdrop({
     super.key,
-    required this.tint,
     required this.child,
     this.borderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 600),
+    return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(tint, Colors.white, 0.04)!,
-            tint,
-            Color.lerp(tint, AppColors.bgDeep, 0.55)!,
-          ],
-          stops: const [0, 0.45, 1],
+          colors: [Color(0xFF353A47), Color(0xFF2A2E39), AppColors.bgMid],
+          stops: [0, 0.45, 1],
         ),
       ),
       child: ClipRRect(
@@ -621,14 +536,12 @@ class LyricsEdgeFade extends StatelessWidget {
 class LyricsCard extends StatelessWidget {
   final LyricsController controller;
   final Track track;
-  final Color tint;
   final VoidCallback onOpen;
 
   const LyricsCard({
     super.key,
     required this.controller,
     required this.track,
-    required this.tint,
     required this.onOpen,
   });
 
@@ -674,18 +587,18 @@ class LyricsCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: radius,
                 border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.28),
+                  color: AppColors.accent.withValues(alpha: 0.85),
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: tint.withValues(alpha: 0.45),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    color: AppColors.accent.withValues(alpha: 0.28),
+                    blurRadius: 22,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: LyricsBackdrop(
-                tint: tint,
                 borderRadius: radius,
                 child: SizedBox(
                   height: hasText ? 360 : 150,

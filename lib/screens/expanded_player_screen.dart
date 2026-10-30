@@ -53,8 +53,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   late Animation<double> _snapAnimation;
 
   final LyricsController _lyrics = LyricsController();
-  Color _tint = AlbumTint.fallback;
-  String? _tintUrl;
 
   @override
   void initState() {
@@ -89,23 +87,12 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
         if (mounted) _lyrics.ensureFor(track);
       });
     }
-    if (_tintUrl != track.coverUrl) {
-      _tintUrl = track.coverUrl;
-      final cached = AlbumTint.cached(track.coverUrl);
-      if (cached != null) {
-        _tint = cached;
-      } else {
-        AlbumTint.of(track.coverUrl).then((c) {
-          if (mounted && _tintUrl == track.coverUrl) setState(() => _tint = c);
-        });
-      }
-    }
   }
 
   void _openLyrics() {
     HapticFeedback.selectionClick();
     Navigator.of(context).push(
-      LyricsScreen.route(controller: _lyrics, tint: _tint),
+      LyricsScreen.route(controller: _lyrics),
     );
   }
 
@@ -149,7 +136,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 LyricsCard(
                   controller: _lyrics,
                   track: track,
-                  tint: _tint,
                   onOpen: _openLyrics,
                 ),
                 SizedBox(height: 24 + bottom),
