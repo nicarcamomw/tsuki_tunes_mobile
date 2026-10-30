@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older. Only the app's settings and local library
+     (shared_preferences) are backed up. The encrypted storage (Spotify
+     tokens) is left out on purpose: its keys stay in the old phone's
+     keystore, so a restored copy can't be decrypted and breaks reads.
+     Caches rebuild themselves. -->
+<full-backup-content>
+    <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
+</full-backup-content>
