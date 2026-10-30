@@ -1,0 +1,62 @@
+name: Deploy Firestore rules
+
+# Publishes firestore.rules to the tsuki-tunes-web project, only after the
+# emulator tests in tool/firestore_rules_test pass. Runs when the rules
+# change on main, or by hand from the Actions tab.
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT: the JSON key of a
+# service account with the "Firebase Rules Admin" role (Google Cloud
+# console > IAM > Service accounts). Without it the deploy is skipped.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - firestore.rules
+      - tool/firestore_rules_test/**
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tool/firestore_rules_test/package-lock.json
+
+      # The Firestore emulator runs on the JVM.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install tools
+        working-directory: tool/firestore_rules_test
+        run: npm ci
+
+      - name: Test security rules
+        working-directory: tool/firestore_rules_test
+        run: npm test
+
+      - name: Deploy rules
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT is not set; rules tested but not deployed."
+            exit 0
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          tool/firestore_rules_test/node_modules/.bin/firebase deploy \
+            --only firestore:rules --project tsuki-tunes-web --non-interactive
+          rm "$RUNNER_TEMP/sa.json"
