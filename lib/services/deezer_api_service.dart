@@ -285,8 +285,19 @@ class DeezerApiService implements MusicApiContract {
 
   /// Throws [DeezerApiException] on failure so search() can propagate errors.
   @override
-  Future<List<Track>> searchTracks(String query, {int limit = 25}) async {
-    final cacheKey = 'search_tracks_$query';
+  Future<List<Track>> searchTracks(String query, {int limit = 25}) =>
+      _searchTracks(query, limit: limit, dropUnpopular: true);
+
+  /// Like [searchTracks] but keeps low-rank tracks, for when the user is
+  /// looking for one specific song (e.g. a guess in the guess-the-song game).
+  Future<List<Track>> searchTracksUnfiltered(String query, {int limit = 25}) =>
+      _searchTracks(query, limit: limit, dropUnpopular: false);
+
+  Future<List<Track>> _searchTracks(String query,
+      {required int limit, required bool dropUnpopular}) async {
+    // The limit and filter are part of the key: a 6-result lookup must not
+    // be served to a caller asking for 25.
+    final cacheKey = 'search_tracks_${limit}_${dropUnpopular ? 'f' : 'u'}_$query';
     final cached = await _getFromCache<List<Track>>(cacheKey);
     if (cached != null) return cached;
 
@@ -297,8 +308,11 @@ class DeezerApiService implements MusicApiContract {
     if (data is Map<String, dynamic>) {
       final List items = data['data'] ?? [];
       final all = items.map((item) => Track.fromJson(item)).toList();
-      final filtered = all.where((t) => t.rank == null || t.rank! >= _minTrackRank).toList();
-      final tracks = filtered.isNotEmpty ? filtered : all;
+      var tracks = all;
+      if (dropUnpopular) {
+        final filtered = all.where((t) => t.rank == null || t.rank! >= _minTrackRank).toList();
+        if (filtered.isNotEmpty) tracks = filtered;
+      }
       _setCache(cacheKey, tracks, isSearch: true);
       return tracks;
     }

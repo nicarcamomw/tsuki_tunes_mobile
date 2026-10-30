@@ -57,6 +57,18 @@ void main() {
     });
   });
 
+  group('GuessGame.uniqueSongs', () {
+    test('keeps one version per song, in order', () {
+      final songs = GuessGame.uniqueSongs([
+        _track('1', 'Toxicity', 'System Of A Down'),
+        _track('2', 'Toxicity (Live)', 'System of a Down'),
+        _track('3', 'Aerials', 'System Of A Down'),
+        _track('4', 'Toxicity', 'Another Band'),
+      ]);
+      expect(songs.map((t) => t.id), ['1', '3', '4']);
+    });
+  });
+
   group('daily challenge', () {
     test('day number starts at 1 on launch day and is stable within the day', () {
       expect(GuessGame.dayNumber(DateTime(2026, 10, 26, 0, 5)), 1);
@@ -153,6 +165,18 @@ void main() {
     expect(back.trackId, '123');
     expect(back.outcomes, state.outcomes);
     expect(back.guessLabels, state.guessLabels);
+    expect(back.scope, '');
     expect(DailyRoundState.decode(null), isNull);
+  });
+
+  test('a free round keeps its artist scope', () {
+    final state = DailyRoundState(
+      day: 4,
+      trackId: '9',
+      outcomes: [GuessOutcome.wrong],
+      guessLabels: ['Song'],
+      scope: '458',
+    );
+    expect(DailyRoundState.decode(state.encode())!.scope, '458');
   });
 }

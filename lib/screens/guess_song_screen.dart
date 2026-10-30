@@ -45,6 +45,8 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   static const _statsKey = 'guess_daily_stats';
   static const _bestStreakKey = 'guess_free_best_streak';
   static const _lastArtistKey = 'guess_last_artist';
+  static const _lastModeKey = 'guess_last_mode';
+  static const _sessionStreakKey = 'guess_free_streak';
   static const _minArtistPool = 6;
   static const _minLibrarySize = 5;
   static const _revealSeconds = 30;
@@ -122,10 +124,14 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _prefs = await SharedPreferences.getInstance();
       _stats = GuessStats.decode(_prefs!.getString(_statsKey));
       _bestStreak = _prefs!.getInt(_bestStreakKey) ?? 0;
+      _sessionStreak = _prefs!.getInt(_sessionStreakKey) ?? 0;
       final rawArtist = _prefs!.getString(_lastArtistKey);
       if (rawArtist != null) {
         _artist = Artist.fromJson(jsonDecode(rawArtist) as Map<String, dynamic>);
       }
+      // Reopen on the mode the user was playing.
+      final lastMode = _prefs!.getString(_lastModeKey);
+      _mode = GuessMode.values.firstWhere((m) => m.name == lastMode, orElse: () => _mode);
     } catch (_) {}
     await _startRound();
   }
@@ -220,23 +226,38 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           fallback = true;
           pool = [];
         }
-        if (pool.isEmpty) pool = await _chartPool();
-        if (pool.isEmpty) throw StateError('empty pool');
-        var fresh = pool.where((t) => !_playedIds.contains(t.id)).toList();
-        if (fresh.isEmpty) {
-          _playedIds.clear();
-          fresh = pool;
-        }
-        fresh.shuffle(_rng);
-        // Library tracks can have stale or missing previews; try a few.
-        for (final candidate in fresh.take(5)) {
-          final t = await _api.getTrack(candidate.id, forceRefresh: true);
+        // Pick up the round left half-played in this mode, if any.
+        final saved = _savedRound();
+        if (saved != null) {
+          final t = await _api.getTrack(saved.trackId, forceRefresh: true);
           if (t != null && t.previewUrl.isNotEmpty) {
             target = t;
-            break;
+            outcomes = saved.outcomes;
+            labels = saved.guessLabels;
           }
         }
-        if (target != null) _playedIds.add(target.id);
+        if (target == null) {
+          if (pool.isEmpty) pool = await _chartPool();
+          if (pool.isEmpty) throw StateError('empty pool');
+          var fresh = pool.where((t) => !_playedIds.contains(t.id)).toList();
+          if (fresh.isEmpty) {
+            _playedIds.clear();
+            fresh = pool;
+          }
+          fresh.shuffle(_rng);
+          // Library tracks can have stale or missing previews; try a few.
+          for (final candidate in fresh.take(5)) {
+            final t = await _api.getTrack(candidate.id, forceRefresh: true);
+            if (t != null && t.previewUrl.isNotEmpty) {
+              target = t;
+              break;
+            }
+          }
+        }
+        if (target != null) {
+          _playedIds.add(target.id);
+          _saveRound(target, outcomes, labels);
+        }
       }
 
       if (target == null || target.previewUrl.isEmpty) throw StateError('no preview');
@@ -273,6 +294,37 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     return _artistPool;
   }
 
+  String _roundKey(GuessMode mode) => 'guess_round_${mode.name}';
+
+  String get _roundScope => _mode == GuessMode.artist ? (_artist?.id ?? '') : '';
+
+  /// This mode's unfinished round from an earlier visit (artist mode: only
+  /// for the same artist).
+  DailyRoundState? _savedRound() {
+    final s = DailyRoundState.decode(_prefs?.getString(_roundKey(_mode)));
+    if (s == null || s.scope != _roundScope || GuessGame.isFinished(s.outcomes)) return null;
+    return s;
+  }
+
+  void _saveRound(Track target, List<GuessOutcome> outcomes, List<String> labels) {
+    if (_mode == GuessMode.daily) return; // the daily round has its own key
+    _prefs?.setString(
+      _roundKey(_mode),
+      DailyRoundState(
+        day: _today,
+        trackId: target.id,
+        outcomes: outcomes,
+        guessLabels: labels,
+        scope: _roundScope,
+      ).encode(),
+    );
+  }
+
+  void _setSessionStreak(int value) {
+    _sessionStreak = value;
+    _prefs?.setInt(_sessionStreakKey, value);
+  }
+
   Future<void> _pickArtist(Artist artist) async {
     unawaited(HapticFeedback.selectionClick());
     FocusScope.of(context).unfocus();
@@ -283,7 +335,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _artistResults = [];
       _artistSearchCtrl.clear();
       _playedIds.clear();
-      _sessionStreak = 0;
+      _setSessionStreak(0);
     });
     unawaited(_prefs?.setString(
       _lastArtistKey,
@@ -343,6 +395,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
     if (mode == _mode) return;
     HapticFeedback.selectionClick();
     setState(() => _mode = mode);
+    _prefs?.setString(_lastModeKey, mode.name);
     _startRound();
   }
 
@@ -395,40 +448,46 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   void _onSearchChanged(String q) {
     _debounce?.cancel();
     if (q.trim().length < 2) {
+      _searchGen++; // drop a lookup still in flight for the old text
       setState(() {
         _suggestions = [];
         _searching = false;
       });
       return;
     }
-    if (_mode == GuessMode.artist) {
-      // Only this artist's songs are valid answers: filter locally, instantly.
+    final artist = _mode == GuessMode.artist ? _artist : null;
+    var local = <Track>[];
+    if (artist != null) {
+      // The round's pool answers instantly; the rest of the artist's catalog
+      // (songs outside their top 50) is looked up below and appended.
       final needle = GuessGame.normalize(q);
-      setState(() {
-        _suggestions = _artistPool
-            .where((t) {
-              final normTitle = GuessGame.normalize(t.title);
-              final normAlbum = GuessGame.normalize(t.albumTitle);
-              return normTitle.contains(needle) || normAlbum.contains(needle);
-            })
-            .take(8)
-            .toList();
-        _searching = false;
-      });
-      return;
+      local = GuessGame.uniqueSongs(_artistPool.where((t) =>
+          GuessGame.normalize(t.title).contains(needle) ||
+          GuessGame.normalize(t.albumTitle).contains(needle)));
+      setState(() => _suggestions = local);
     }
     _debounce = Timer(const Duration(milliseconds: 250), () async {
       final gen = ++_searchGen;
       setState(() => _searching = true);
       List<Track> results;
       try {
-        results = await _api.searchTracks(q.trim(), limit: 12);
+        if (artist != null) {
+          final artistKey = GuessGame.normalize(artist.name);
+          final found = await _api.searchTracksUnfiltered('${artist.name} ${q.trim()}', limit: 50);
+          results = found
+              .where((t) =>
+                  t.artistId == artist.id ||
+                  GuessGame.normalize(t.artistName.split(',').first) == artistKey)
+              .toList();
+        } else {
+          results = await _api.searchTracksUnfiltered(q.trim(), limit: 40);
+        }
       } catch (_) {
         results = [];
       }
       if (!mounted || gen != _searchGen) return;
       setState(() {
-        _suggestions = results;
+        _suggestions = GuessGame.uniqueSongs([...local, ...results]);
         _searching = false;
       });
     });
@@ -481,6 +540,8 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
         DailyRoundState(day: _today, trackId: _target!.id, outcomes: _outcomes, guessLabels: _labels)
             .encode(),
       );
+    } else {
+      _saveRound(_target!, _outcomes, _labels);
     }
     if (!_finished) return;
 
@@ -494,7 +555,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
           );
       _startCountdown();
     } else {
-      _sessionStreak = _won ? _sessionStreak + 1 : 0;
+      _setSessionStreak(_won ? _sessionStreak + 1 : 0);
       if (_sessionStreak > _bestStreak) {
         _bestStreak = _sessionStreak;
         _prefs?.setInt(_bestStreakKey, _bestStreak);

@@ -55,6 +55,17 @@ class GuessGame {
     return stripped.isEmpty ? s.toLowerCase().trim() : stripped;
   }
 
+  /// One entry per song: drops later tracks with the same normalized title
+  /// and main artist (remasters, live cuts, re-releases), keeping order.
+  /// Safe for guesses, since [judge] treats those versions as the same song.
+  static List<Track> uniqueSongs(Iterable<Track> tracks) {
+    final seen = <String>{};
+    return tracks
+        .where((t) =>
+            seen.add('${normalize(t.title)}|${normalize(t.artistName.split(',').first)}'))
+        .toList();
+  }
+
   static bool _sameArtist(Track a, Track b) {
     if (a.artistId.isNotEmpty && a.artistId == b.artistId) return true;
     final na = normalize(a.artistName.split(',').first);
@@ -172,18 +183,23 @@ class GuessStats {
   }
 }
 
-/// Today's daily round, so leaving and reopening the game keeps progress.
+/// A round in progress (today's daily one, or the last one of a free mode),
+/// so leaving and reopening the game keeps progress.
 class DailyRoundState {
   final int day;
   final String trackId;
   final List<GuessOutcome> outcomes;
   final List<String> guessLabels;
+  /// What the round belongs to beyond its mode: the artist's id in artist
+  /// mode, empty otherwise.
+  final String scope;
 
   DailyRoundState({
     required this.day,
     required this.trackId,
     required this.outcomes,
     required this.guessLabels,
+    this.scope = '',
   });
 
   String encode() => jsonEncode({
@@ -191,6 +207,7 @@ class DailyRoundState {
         'trackId': trackId,
         'outcomes': outcomes.map((o) => o.name).toList(),
         'labels': guessLabels,
+        if (scope.isNotEmpty) 'scope': scope,
       });
 
   static DailyRoundState? decode(String? raw) {
@@ -204,6 +221,7 @@ class DailyRoundState {
             .map((n) => GuessOutcome.values.firstWhere((o) => o.name == n))
             .toList(),
         guessLabels: (m['labels'] as List).map((e) => e as String).toList(),
+        scope: m['scope'] as String? ?? '',
       );
     } catch (_) {
       return null;
