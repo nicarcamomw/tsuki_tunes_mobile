@@ -204,9 +204,16 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         await launchUrl(uri,
                             mode: LaunchMode.externalApplication);
                       } else if (albumData.link != null) {
-                        final uri = Uri.parse(albumData.link!);
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
+                        // The link comes from the API: only ever open a
+                        // Deezer web page, never another scheme or site.
+                        final uri = Uri.tryParse(albumData.link!);
+                        final host = uri?.host.toLowerCase() ?? '';
+                        if (uri != null &&
+                            uri.scheme == 'https' &&
+                            (host == 'deezer.com' || host.endsWith('.deezer.com'))) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        }
                       }
                     } catch (e) {
                       debugPrint('Could not launch external album URL: $e');
