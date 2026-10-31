@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -7,7 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ConsumerState, ConsumerStatefulWidget, ProviderContainer, UncontrolledProviderScope;
+    show ProviderContainer, UncontrolledProviderScope;
+import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
@@ -17,19 +17,14 @@ import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/release_radar_service.dart';
-import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
 import 'domain/usecases/playback/play_track.dart';
-import 'presentation/screens/login_screen.dart';
-import 'presentation/screens/main_navigation_screen.dart';
+import 'presentation/navigation/app_router.dart';
 import 'presentation/screens/mask_collection_screen.dart';
-import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/state/app_providers.dart';
 import 'presentation/state/audio_provider.dart';
 import 'presentation/widgets/mask_unlock_banner.dart';
 import 'presentation/widgets/moon_atmosphere.dart';
-
-final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   // debugPrint also writes to the system log in release builds, where any
@@ -65,6 +60,9 @@ void main() async {
 /// runApp so the player exists even when Android Auto starts the app with
 /// no screen and no widget tree.
 final appContainer = ProviderContainer();
+
+/// The routes; the session decides the first screen (see app_router.dart).
+final GoRouter appRouter = createAppRouter(appContainer.read(sessionGateProvider));
 
 /// The app's one player.
 AudioProvider get _audio => appContainer.read(audioProvider);
@@ -162,8 +160,8 @@ class TsukiTunesApp extends StatelessWidget {
     c.read(shakeSkipProvider);
     return UncontrolledProviderScope(
       container: c,
-      child: MaterialApp(
-        navigatorKey: rootNavigatorKey,
+      child: MaterialApp.router(
+        routerConfig: appRouter,
         title: 'Tsuki Tunes',
         debugShowCheckedModeBanner: false,
         theme: CyberTheme.darkTheme,
@@ -185,7 +183,6 @@ class TsukiTunesApp extends StatelessWidget {
             ),
           );
         },
-        home: const _AuthGate(),
       ),
     );
   }
@@ -197,91 +194,5 @@ class _SmoothScrollBehavior extends ScrollBehavior {
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
     return const BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.fast);
-  }
-}
-
-class _AuthGate extends ConsumerStatefulWidget {
-  const _AuthGate();
-
-  @override
-  ConsumerState<_AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends ConsumerState<_AuthGate> {
-  String? _connectedUid;
-  bool? _hasCompletedOnboarding;
-  bool _onboardingChecked = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = ref.watch(authProvider);
-
-    if (auth.loading) {
-      return const _CyberLoadingScreen();
-    }
-
-    if (auth.isLoggedIn) {
-      final uid = auth.uid;
-      if (uid != null && _connectedUid != uid) {
-        _connectedUid = uid;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            if (!auth.isGuest) {
-              ref.read(libraryProvider).connectToFirestore(uid);
-              final playlists = ref.read(playlistProvider);
-              final guestUid = auth.takeGuestUidToMigrate();
-              playlists.connectToFirestore(uid).then((_) {
-                if (guestUid != null) playlists.importGuestPlaylists(guestUid);
-              });
-            } else {
-              ref.read(playlistProvider).initLocalOnly(uid);
-            }
-          }
-        });
-      }
-
-      if (!_onboardingChecked) {
-        _onboardingChecked = true;
-        StorageService().hasCompletedOnboarding().then((completed) {
-          if (mounted) {
-            setState(() => _hasCompletedOnboarding = completed);
-          }
-        });
-        return const _CyberLoadingScreen();
-      }
-
-      if (_hasCompletedOnboarding == null) {
-        return const _CyberLoadingScreen();
-      }
-
-      if (!_hasCompletedOnboarding!) {
-        return const OnboardingScreen();
-      }
-
-      return const MainNavigationScreen();
-    }
-
-    if (_connectedUid != null) {
-      _connectedUid = null;
-      _onboardingChecked = false;
-      _hasCompletedOnboarding = null;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ref.read(libraryProvider).disconnectFirestore();
-          ref.read(playlistProvider).disconnectFirestore();
-        }
-      });
-    }
-
-    return const LoginScreen();
-  }
-}
-
-class _CyberLoadingScreen extends StatelessWidget {
-  const _CyberLoadingScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(backgroundColor: Color(0xFF181B22));
   }
 }

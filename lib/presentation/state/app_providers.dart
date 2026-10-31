@@ -14,6 +14,7 @@ import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
+import '../navigation/session_gate.dart';
 import 'ambient_provider.dart';
 import 'audio_provider.dart';
 import 'auth_provider.dart';
@@ -185,6 +186,17 @@ final isOnlineProvider = Provider<bool>(
 final isTrackListenedProvider = Provider.autoDispose.family<bool, String>(
   (ref, id) => ref.watch(libraryProvider.select((l) => l.isTrackListened(id))),
 );
+
+/// Sign-in state for the router: connects the library and playlists to the
+/// account and knows whether the tutorial was seen.
+final sessionGateProvider = ChangeNotifierProvider<SessionGate>((ref) {
+  return SessionGate(
+    auth: ref.read(authProvider),
+    library: ref.read(libraryProvider),
+    playlists: ref.read(playlistProvider),
+    storage: getIt<StorageService>(),
+  );
+});
 
 /// Calls [onChange] whenever [source] notifies (and right away unless [now]
 /// is false), until the provider holding [ref] is disposed.

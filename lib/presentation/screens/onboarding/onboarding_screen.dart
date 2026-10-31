@@ -14,8 +14,6 @@ import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_nav_icon.dart';
-import '../login_screen.dart';
-import '../main_navigation_screen.dart';
 
 part 'painters.dart';
 part 'slide_identity.dart';
@@ -105,20 +103,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       return;
     }
 
-    final auth = ref.read(authProvider);
-    final destination = auth.isLoggedIn
-        ? const MainNavigationScreen()
-        : const LoginScreen();
-
-    rootNav.pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => destination,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 350),
-      ),
-    );
+    // First run: the router moves on to the main screen.
+    ref.read(sessionGateProvider).onboardingCompleted();
   }
 
   void _nextPage() {

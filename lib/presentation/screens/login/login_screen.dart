@@ -9,18 +9,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
-import '../../../data/datasources/storage_service.dart';
+import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_orb.dart';
 import '../../widgets/spectrum_wave_visualizer.dart';
-import '../main_navigation_screen.dart';
-import '../onboarding_screen.dart';
 
 part 'google_button.dart';
 part 'painters.dart';
@@ -41,7 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final ValueNotifier<double> _timeNotifier = ValueNotifier<double>(0.0);
   bool _isLoading = false;
   bool _loginSuccess = false;
-  bool? _cachedNeedsOnboarding;
 
   final List<_CyberParticle> _particles = _generateParticles();
 
@@ -106,54 +104,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
   }
 
-  Future<void> _navigateAfterLogin() async {
-    final needsOnboarding = _cachedNeedsOnboarding ??
-        !await StorageService().hasCompletedOnboarding();
-    if (!mounted) return;
-
-    final Widget destination = needsOnboarding
-        ? const OnboardingScreen()
-        : const MainNavigationScreen();
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => destination,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutQuart,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.03),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+  /// The router takes it from here: the tutorial for a new account, the
+  /// main screen otherwise (or the page a link pointed to).
+  void _navigateAfterLogin() {
+    if (mounted) context.go(AppPaths.home);
   }
 
   Future<void> _handleGuestExplore() async {
     final auth = ref.read(authProvider);
     await auth.loginAsGuest();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const MainNavigationScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 350),
-      ),
-    );
+    context.go(AppPaths.home);
   }
+
 
   @override
   void dispose() {
@@ -165,10 +128,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
-    final onboardingFuture = StorageService().hasCompletedOnboarding();
     final auth = ref.read(authProvider);
     final success = await auth.loginWithGoogle();
-    _cachedNeedsOnboarding = !await onboardingFuture;
     if (mounted) {
       if (success) {
         _cachedOrbCenter = _getOrbCenter(MediaQuery.sizeOf(context));

@@ -21,7 +21,6 @@ const _presentationToDataDebt = {
   'presentation/screens/guess_song_screen.dart',
   'presentation/screens/home_screen.dart',
   'presentation/screens/library_screen.dart',
-  'presentation/screens/login/login_screen.dart',
   'presentation/screens/main_navigation_screen.dart',
   'presentation/screens/onboarding/onboarding_screen.dart',
   'presentation/screens/playlist_detail_screen.dart',

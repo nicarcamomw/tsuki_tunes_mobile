@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/datasources/battery_guide.dart';
+import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
@@ -36,8 +37,13 @@ class NavigationEvents {
   static final ValueNotifier<bool> isPlayerExpanded = ValueNotifier<bool>(false);
 }
 
+/// The main shell: the bottom bar, the mini player and the expanded
+/// player around [child], the shell navigator go_router builds (the tabs
+/// first, detail pages pushed over them).
 class MainNavigationScreen extends ConsumerStatefulWidget {
-  const MainNavigationScreen({super.key});
+  const MainNavigationScreen({super.key, required this.child});
+
+  final Widget child;
 
   @override
   ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -59,8 +65,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   // Manejo reactivo de Predictive Back para Android 13+ (inicializados inline para sobrevivir a hot-reloads)
   final ValueNotifier<bool> _canPopNotifier = ValueNotifier<bool>(true);
-  late final _NestedNavigatorObserver _navigatorObserver =
-      _NestedNavigatorObserver(onNavigationChanged: _updateCanPop);
 
   // Compatibility getter to prevent hot-reload lookup failure from previous state
   // ignore: unused_element
@@ -70,6 +74,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   void initState() {
     super.initState();
     _tabNotifier.addListener(_updateCanPop);
+    shellNavigatorObserver.onNavigationChanged = _updateCanPop;
     NavigationEvents.switchTab = _switchToTab;
     unawaited(BatteryGuide.instance.load());
   }
@@ -103,6 +108,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   void dispose() {
     if (NavigationEvents.switchTab == _switchToTab) {
       NavigationEvents.switchTab = null;
+    }
+    if (shellNavigatorObserver.onNavigationChanged == _updateCanPop) {
+      shellNavigatorObserver.onNavigationChanged = null;
     }
     _tabNotifier.removeListener(_updateCanPop);
     _tabNotifier.dispose();
@@ -310,37 +318,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               right: 0,
               top: 0,
               bottom: isKeyboardOpen ? 0 : bottomBarHeight,
-              child: Navigator(
-                key: appNavigatorKey,
-                observers: [_navigatorObserver],
-                onGenerateRoute: (_) => MaterialPageRoute(
-                  builder: (_) => ValueListenableBuilder<int>(
-                    valueListenable: _tabNotifier,
-                    builder: (context, activeIndex, _) {
-                      _loadedTabs.add(activeIndex);
-
-                      return FocusTraversalGroup(
-                        child: FadeIndexedStack(
-                        index: activeIndex,
-                        duration: const Duration(milliseconds: 150),
-                        children: [
-                          const RepaintBoundary(child: HomeScreen()),
-                          RepaintBoundary(
-                            child: _loadedTabs.contains(1)
-                                ? const SearchScreen()
-                                : const SizedBox.shrink(),
-                          ),
-                          RepaintBoundary(
-                            child: _loadedTabs.contains(2)
-                                ? const AuthGuard(child: LibraryScreen())
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      ),
-                      );
-                    },
-                  ),
-                ),
+              child: MainTabsScope(
+                tab: _tabNotifier,
+                loadedTabs: _loadedTabs,
+                child: widget.child,
               ),
             ),
             // Mini Player animado + Bottom Nav
@@ -689,34 +670,59 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 }
 
-/// Observer para sincronizar el estado de Predictive Back cuando se apilan o desapilan
-/// pantallas de detalle (artistas, álbumes, discografía) dentro de appNavigatorKey.
-class _NestedNavigatorObserver extends NavigatorObserver {
-  final VoidCallback onNavigationChanged;
-  _NestedNavigatorObserver({required this.onNavigationChanged});
+/// Hands the tab state to [MainTabsView], which go_router builds inside the
+/// shell navigator, below the main screen that owns it.
+class MainTabsScope extends InheritedWidget {
+  const MainTabsScope({
+    super.key,
+    required this.tab,
+    required this.loadedTabs,
+    required super.child,
+  });
+
+  final ValueNotifier<int> tab;
+
+  /// Search and Library are built the first time they're shown.
+  final Set<int> loadedTabs;
+
+  static MainTabsScope of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<MainTabsScope>()!;
 
   @override
-  void didPush(Route route, Route? previousRoute) {
-    super.didPush(route, previousRoute);
-    onNavigationChanged();
-  }
-
-  @override
-  void didPop(Route route, Route? previousRoute) {
-    super.didPop(route, previousRoute);
-    onNavigationChanged();
-  }
-
-  @override
-  void didRemove(Route route, Route? previousRoute) {
-    super.didRemove(route, previousRoute);
-    onNavigationChanged();
-  }
-
-  @override
-  void didReplace({Route? newRoute, Route? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    onNavigationChanged();
-  }
+  bool updateShouldNotify(MainTabsScope oldWidget) =>
+      tab != oldWidget.tab || loadedTabs != oldWidget.loadedTabs;
 }
 
+/// The three tabs (Home, Search, Library), the first page of the shell
+/// navigator; detail pages are pushed over them.
+class MainTabsView extends StatelessWidget {
+  const MainTabsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = MainTabsScope.of(context);
+    return ValueListenableBuilder<int>(
+      valueListenable: scope.tab,
+      builder: (context, activeIndex, _) {
+        scope.loadedTabs.add(activeIndex);
+        return FocusTraversalGroup(
+          child: FadeIndexedStack(
+            index: activeIndex,
+            duration: const Duration(milliseconds: 150),
+            children: [
+              const RepaintBoundary(child: HomeScreen()),
+              RepaintBoundary(
+                child: scope.loadedTabs.contains(1) ? const SearchScreen() : const SizedBox.shrink(),
+              ),
+              RepaintBoundary(
+                child: scope.loadedTabs.contains(2)
+                    ? const AuthGuard(child: LibraryScreen())
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
