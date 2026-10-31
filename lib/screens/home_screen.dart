@@ -14,10 +14,8 @@ import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/radar_release.dart';
-import '../providers/ambient_provider.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/run_provider.dart';
@@ -116,7 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void openProfile() {
-    final auth = context.read<AuthProvider>();
+    final auth = ref.read(authProvider);
     ProfileBottomSheet.show(context, auth);
   }
 
@@ -299,7 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         top.isNotEmpty ? top.first.score.toString() : '0',
       );
     });
-    final isLoggedIn = context.select<AuthProvider, bool>((a) => a.isLoggedIn);
+    final isLoggedIn = ref.watch(authProvider.select((a) => a.isLoggedIn));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final hasArtists =
@@ -699,8 +697,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildFeatureCards(LocaleProvider locale) {
     final strings = locale.strings;
-    final ambientCount = context.select<AmbientProvider, int>(
-        (a) => a.isPlaying ? a.activeSounds.length : 0);
+    final ambientCount = ref.watch(ambientProvider.select(
+        (a) => a.isPlaying ? a.activeSounds.length : 0));
     final run = context.select<RunProvider, (bool, int?, bool)>(
         (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled));
     return Padding(

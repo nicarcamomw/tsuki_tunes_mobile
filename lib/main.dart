@@ -7,14 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ProviderContainer, UncontrolledProviderScope;
+    show ConsumerState, ConsumerStatefulWidget, ProviderContainer, UncontrolledProviderScope;
 import 'package:provider/provider.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
 import 'providers/app_providers.dart';
 import 'providers/audio_provider.dart';
-import 'providers/auth_provider.dart';
 import 'providers/library_provider.dart';
 import 'providers/playlist_provider.dart';
 import 'screens/login_screen.dart';
@@ -220,21 +219,21 @@ class _SmoothScrollBehavior extends ScrollBehavior {
   }
 }
 
-class _AuthGate extends StatefulWidget {
+class _AuthGate extends ConsumerStatefulWidget {
   const _AuthGate();
 
   @override
-  State<_AuthGate> createState() => _AuthGateState();
+  ConsumerState<_AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<_AuthGate> {
+class _AuthGateState extends ConsumerState<_AuthGate> {
   String? _connectedUid;
   bool? _hasCompletedOnboarding;
   bool _onboardingChecked = false;
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
+    final auth = ref.watch(authProvider);
 
     if (auth.loading) {
       return const _CyberLoadingScreen();

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -61,7 +60,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
     final gen = ++_gen;
     setState(() => _searching = true);
     final lang = ref.read(localeProvider).currentLanguage.name;
-    final found = await context.read<WeatherProvider>().searchPlaces(q, language: lang);
+    final found = await ref.read(weatherProvider).searchPlaces(q, language: lang);
     if (!mounted || gen != _gen) return;
     setState(() {
       _searching = false;
@@ -80,7 +79,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final weather = context.watch<WeatherProvider>();
+    final weather = ref.watch(weatherProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final now = weather.enabled ? weather.current : null;

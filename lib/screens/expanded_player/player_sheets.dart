@@ -1,15 +1,15 @@
 part of '../expanded_player_screen.dart';
 
 /// Water drop opening the ambient mixer, with how many sounds are on.
-class _AmbientButton extends StatelessWidget {
+class _AmbientButton extends ConsumerWidget {
   final LocaleProvider locale;
 
   const _AmbientButton({required this.locale});
 
   @override
-  Widget build(BuildContext context) {
-    final count = context.select<AmbientProvider, int>(
-        (a) => a.isPlaying ? a.activeSounds.length : 0);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(ambientProvider.select(
+        (a) => a.isPlaying ? a.activeSounds.length : 0));
     final active = count > 0;
     return TapScale(
       semanticLabel: locale.strings.ambientTitle,

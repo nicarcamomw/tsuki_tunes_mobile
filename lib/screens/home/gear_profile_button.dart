@@ -1,14 +1,14 @@
 part of '../home_screen.dart';
 
-class _GearProfileButton extends StatefulWidget {
+class _GearProfileButton extends ConsumerStatefulWidget {
   final String label;
   const _GearProfileButton({required this.label});
 
   @override
-  State<_GearProfileButton> createState() => _GearProfileButtonState();
+  ConsumerState<_GearProfileButton> createState() => _GearProfileButtonState();
 }
 
-class _GearProfileButtonState extends State<_GearProfileButton>
+class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _reduceMotion = false;
@@ -37,12 +37,12 @@ class _GearProfileButtonState extends State<_GearProfileButton>
 
   void _onTap() {
     if (!_reduceMotion) _controller.forward(from: 0.0);
-    ProfileBottomSheet.show(context, context.read<AuthProvider>());
+    ProfileBottomSheet.show(context, ref.read(authProvider));
   }
 
   @override
   Widget build(BuildContext context) {
-    final photoURL = context.select<AuthProvider, String?>((a) => a.user?.photoURL);
+    final photoURL = ref.watch(authProvider.select((a) => a.user?.photoURL));
     return Semantics(
       button: true,
       label: widget.label,

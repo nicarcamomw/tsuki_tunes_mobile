@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
@@ -12,7 +11,7 @@ import '../providers/mask_provider.dart';
 import 'oni_mask_art.dart';
 
 /// App-wide layer that announces newly unlocked masks, one at a time.
-class MaskUnlockLayer extends StatelessWidget {
+class MaskUnlockLayer extends ConsumerWidget {
   final Widget child;
   /// Opens the collection when the banner is tapped.
   final VoidCallback? onOpenCollection;
@@ -20,8 +19,8 @@ class MaskUnlockLayer extends StatelessWidget {
   const MaskUnlockLayer({super.key, required this.child, this.onOpenCollection});
 
   @override
-  Widget build(BuildContext context) {
-    final pending = context.select<MaskProvider, String?>((m) => m.pendingCelebration);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(maskProvider.select((m) => m.pendingCelebration));
     final mask = MaskCatalog.byId(pending);
     return Stack(
       fit: StackFit.expand,
@@ -84,7 +83,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
     _closing = true;
     _autoClose?.cancel();
     await _enter.reverse();
-    if (mounted) context.read<MaskProvider>().dismissCelebration();
+    if (mounted) ref.read(maskProvider).dismissCelebration();
   }
 
   @override

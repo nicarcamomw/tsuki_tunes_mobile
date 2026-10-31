@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../providers/app_providers.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/playlist_provider.dart';
@@ -74,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
     _shockwaveController.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        final auth = context.read<AuthProvider>();
+        final auth = ref.read(authProvider);
         if (auth.uid != null && !auth.isGuest) {
           final uid = auth.uid!;
           context.read<LibraryProvider>().connectToFirestore(uid);
@@ -144,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _handleGuestExplore() async {
-    final auth = context.read<AuthProvider>();
+    final auth = ref.read(authProvider);
     await auth.loginAsGuest();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -170,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     final onboardingFuture = StorageService().hasCompletedOnboarding();
-    final auth = context.read<AuthProvider>();
+    final auth = ref.read(authProvider);
     final success = await auth.loginWithGoogle();
     _cachedNeedsOnboarding = !await onboardingFuture;
     if (mounted) {

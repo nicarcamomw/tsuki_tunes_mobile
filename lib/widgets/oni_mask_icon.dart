@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
+import '../providers/app_providers.dart';
 import '../providers/mask_provider.dart';
 import 'oni_mask_art.dart';
 
-class OniMaskIcon extends StatefulWidget {
+class OniMaskIcon extends ConsumerStatefulWidget {
   final bool isActive;
   final double size;
   final bool showContainer;
@@ -19,10 +20,10 @@ class OniMaskIcon extends StatefulWidget {
   });
 
   @override
-  State<OniMaskIcon> createState() => _OniMaskIconState();
+  ConsumerState<OniMaskIcon> createState() => _OniMaskIconState();
 }
 
-class _OniMaskIconState extends State<OniMaskIcon>
+class _OniMaskIconState extends ConsumerState<OniMaskIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _glowAnimation;
@@ -92,13 +93,8 @@ class _OniMaskIconState extends State<OniMaskIcon>
     );
   }
 
-  OniMask? _equipped(BuildContext context) {
-    try {
-      return context.select<MaskProvider, OniMask?>((m) => m.equipped);
-    } on ProviderNotFoundException {
-      return null;
-    }
-  }
+  OniMask? _equipped(BuildContext context) =>
+      ref.watch(maskProvider.select((m) => m.equipped));
 
   @override
   Widget build(BuildContext context) {

@@ -14,7 +14,6 @@ import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -57,7 +56,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
-    final isOnline = context.read<ConnectivityProvider>().isOnline;
+    final isOnline = ref.read(connectivityProvider).isOnline;
     if (!isOnline) {
       if (mounted) {
         setState(() {

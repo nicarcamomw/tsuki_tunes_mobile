@@ -17,7 +17,6 @@ import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/mask_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/guess_game.dart';
 
@@ -550,7 +549,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     if (_mode == GuessMode.daily) {
       _stats.record(_today, _outcomes);
       _prefs?.setString(_statsKey, _stats.encode());
-      context.read<MaskProvider>().onDailyGuessFinished(
+      ref.read(maskProvider).onDailyGuessFinished(
             won: _won,
             attempts: _outcomes.length,
             streak: _stats.currentStreak(_today),

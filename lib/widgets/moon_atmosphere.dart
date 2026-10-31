@@ -3,9 +3,9 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/moon_provider.dart';
+import '../providers/app_providers.dart';
 import 'sakura_overlay.dart';
 import 'witching_hour_overlay.dart';
 
@@ -13,14 +13,14 @@ import 'witching_hour_overlay.dart';
 /// and intimate at new moon, silver glow at full moon) and, during a real
 /// lunar eclipse, blood-moon light with occasional glitches. Only light is
 /// added on top: the app keeps its own colors.
-class MoonAtmosphere extends StatelessWidget {
+class MoonAtmosphere extends ConsumerWidget {
   final Widget child;
 
   const MoonAtmosphere({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    final moon = context.watch<MoonProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final moon = ref.watch(moonProvider);
     final eclipse = moon.eclipseActive;
     final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 

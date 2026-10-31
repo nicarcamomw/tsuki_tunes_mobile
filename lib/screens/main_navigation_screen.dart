@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/battery_guide.dart';
@@ -119,7 +118,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError));
     final syncError =
         context.select<LibraryProvider, String?>((l) => l.lastSyncError);
-    final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
+    final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
@@ -354,7 +353,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               top: 0,
               child: Builder(
                 builder: (context) {
-                  final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
+                  final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));
                   return AnimatedSlide(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOutCubic,

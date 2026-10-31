@@ -14,7 +14,6 @@ import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
-import '../providers/ambient_provider.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';

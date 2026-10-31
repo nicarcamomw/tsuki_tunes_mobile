@@ -13,7 +13,6 @@ import '../providers/ambient_provider.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/moon_provider.dart';
 import '../providers/weather_provider.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
@@ -91,14 +90,14 @@ class _SkyLineState extends ConsumerState<SkyLine> {
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final (enabled, weather, loading) =
-        context.select<WeatherProvider, (bool, WeatherNow?, bool)>(
-            (w) => (w.enabled, w.current, w.loading));
+        ref.watch(weatherProvider.select(
+            (w) => (w.enabled, w.current, w.loading)));
     final (
       moon,
       lit,
       waxing
-    ) = context.select<MoonProvider, (MoonPhaseName, double, bool)>(
-        (m) => (m.snapshot.name, m.snapshot.illumination, m.snapshot.waxing));
+    ) = ref.watch(moonProvider.select(
+        (m) => (m.snapshot.name, m.snapshot.illumination, m.snapshot.waxing)));
 
     final part = WeatherService.dayPart((widget.clock ?? DateTime.now)());
     final w = enabled ? weather : null;
@@ -197,14 +196,14 @@ enum _Fall { none, drizzle, rain, storm, snow }
 
 /// Puts falling rain (or snow) behind the home header while it is raining
 /// where the listener is. Faint, and it fades out towards the bottom.
-class SkyBackdrop extends StatelessWidget {
+class SkyBackdrop extends ConsumerWidget {
   final Widget child;
   const SkyBackdrop({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    final sky = context.select<WeatherProvider, Sky?>(
-        (w) => w.enabled ? w.current?.sky : null);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sky = ref.watch(weatherProvider.select(
+        (w) => w.enabled ? w.current?.sky : null));
     final fall = switch (sky) {
       Sky.drizzle => _Fall.drizzle,
       Sky.rain => _Fall.rain,
@@ -414,8 +413,8 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     setState(() => _state = _OfferState.preparing);
     final library = context.read<LibraryProvider>();
     final audio = context.read<AudioProvider>();
-    final ambient = context.read<AmbientProvider>();
-    final weather = context.read<WeatherProvider>();
+    final ambient = ref.read(ambientProvider);
+    final weather = ref.read(weatherProvider);
     final strings = ref.read(stringsProvider);
     final messenger = ScaffoldMessenger.maybeOf(context);
 
@@ -445,9 +444,9 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
 
   @override
   Widget build(BuildContext context) {
-    final offer = context.select<WeatherProvider, bool>((w) => w.rainOffer);
-    final place = context.select<WeatherProvider, String?>(
-        (w) => w.source == WeatherSource.place ? w.place?.name : null);
+    final offer = ref.watch(weatherProvider.select((w) => w.rainOffer));
+    final place = ref.watch(weatherProvider.select(
+        (w) => w.source == WeatherSource.place ? w.place?.name : null));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
@@ -538,8 +537,8 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                           TextButton(
                             onPressed: () {
                               HapticFeedback.selectionClick();
-                              unawaited(context
-                                  .read<WeatherProvider>()
+                              unawaited(ref
+                                  .read(weatherProvider)
                                   .dismissRainOffer());
                             },
                             child: Text(
@@ -585,7 +584,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                 child: TextButton(
                   onPressed: () {
                     setState(() => _state = _OfferState.asking);
-                    context.read<WeatherProvider>().dismissRainOffer();
+                    ref.read(weatherProvider).dismissRainOffer();
                   },
                   child: Text(
                     MaterialLocalizations.of(context).closeButtonLabel,

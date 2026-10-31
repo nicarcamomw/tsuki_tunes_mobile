@@ -6,12 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../providers/app_providers.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/cyber_glitch_text.dart';
@@ -107,7 +105,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       return;
     }
 
-    final auth = context.read<AuthProvider>();
+    final auth = ref.read(authProvider);
     final destination = auth.isLoggedIn
         ? const MainNavigationScreen()
         : const LoginScreen();

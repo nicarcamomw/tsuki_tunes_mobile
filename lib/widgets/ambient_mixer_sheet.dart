@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/ambient_provider.dart';
@@ -46,7 +45,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
     super.initState();
     // Refreshes the "stops in" countdown.
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && context.read<AmbientProvider>().stopRemaining != null) {
+      if (mounted && ref.read(ambientProvider).stopRemaining != null) {
         setState(() {});
       }
     });
@@ -66,7 +65,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final ambient = context.watch<AmbientProvider>();
+    final ambient = ref.watch(ambientProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final remaining = ambient.stopRemaining;

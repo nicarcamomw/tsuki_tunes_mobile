@@ -26,8 +26,8 @@ class MoonSheet extends ConsumerWidget {
   const MoonSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    context.read<MoonProvider>().refresh();
-    context.read<PlayHistory>().load();
+    context.readState(moonProvider).refresh();
+    context.readState(playHistoryProvider).load();
     return SwipeableSheet.show(
       context,
       initialChildSize: 0.75,
@@ -65,8 +65,8 @@ class MoonSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final moon = context.watch<MoonProvider>();
-    final history = context.watch<PlayHistory>();
+    final moon = ref.watch(moonProvider);
+    final history = ref.watch(playHistoryProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final s = moon.snapshot;

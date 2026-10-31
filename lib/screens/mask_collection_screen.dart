@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
@@ -19,7 +18,7 @@ class MaskCollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = context.watch<MaskProvider>();
+    final masks = ref.watch(maskProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final equipped = masks.equipped;
@@ -157,7 +156,7 @@ class _MaskTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = context.watch<MaskProvider>();
+    final masks = ref.watch(maskProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final unlocked = masks.isUnlocked(mask.id);
@@ -281,7 +280,7 @@ class _MaskDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = context.watch<MaskProvider>();
+    final masks = ref.watch(maskProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;

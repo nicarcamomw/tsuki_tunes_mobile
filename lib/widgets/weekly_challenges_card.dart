@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
@@ -31,7 +30,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = context.watch<MaskProvider>();
+    final masks = ref.watch(maskProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final challenges = masks.weeklyChallenges;
@@ -159,7 +158,7 @@ class _ChallengeRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = context.watch<MaskProvider>();
+    final masks = ref.watch(maskProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final progress = masks.weeklyProgress(challenge);

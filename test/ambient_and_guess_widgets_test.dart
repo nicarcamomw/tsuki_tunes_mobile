@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
 import 'package:tsuki_tunes_mobile/widgets/ambient_mixer_sheet.dart';
+
 import 'helpers/test_scope.dart';
 
 void main() {
@@ -16,9 +18,11 @@ void main() {
 
   Widget wrap(Widget child, {AmbientProvider? ambient}) {
     return TestScope(
+        overrides: [
+          ambientProvider.overrideWith((ref) => ambient ?? AmbientProvider()),
+        ],
         child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ambient ?? AmbientProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: MaterialApp(home: child),
@@ -87,9 +91,11 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(TestScope(
+        overrides: [
+          ambientProvider.overrideWith((ref) => AmbientProvider()),
+        ],
         child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AmbientProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
       ],

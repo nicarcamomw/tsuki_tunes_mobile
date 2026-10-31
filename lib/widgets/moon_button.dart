@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../providers/app_providers.dart';
-import '../providers/moon_provider.dart';
 import 'moon_glyph.dart';
 import 'moon_sheet.dart';
 
@@ -17,7 +15,7 @@ class MoonButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final moon = context.watch<MoonProvider>();
+    final moon = ref.watch(moonProvider);
     final strings = ref.read(stringsProvider);
     final s = moon.snapshot;
 

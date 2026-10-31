@@ -257,7 +257,7 @@ class _StorageSettingsState extends State<_StorageSettings> {
   }
 }
 
-class _GeneralSettings extends StatefulWidget {
+class _GeneralSettings extends ConsumerStatefulWidget {
   final BuildContext hostContext;
   final LocaleProvider locale;
 
@@ -271,17 +271,17 @@ class _GeneralSettings extends StatefulWidget {
   });
 
   @override
-  State<_GeneralSettings> createState() => _GeneralSettingsState();
+  ConsumerState<_GeneralSettings> createState() => _GeneralSettingsState();
 }
 
-class _GeneralSettingsState extends State<_GeneralSettings> {
+class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
   @override
   Widget build(BuildContext context) {
     final locale = widget.locale;
     final strings = locale.strings;
     final host = widget.hostContext;
-    final moon = host.read<MoonProvider>();
-    final weather = host.read<WeatherProvider>();
+    final moon = ref.read(moonProvider);
+    final weather = ref.read(weatherProvider);
 
     return _SettingsCard(rows: [
       _BirthdayRow(

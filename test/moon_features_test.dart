@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/moon_provider.dart';
@@ -13,6 +14,7 @@ import 'package:tsuki_tunes_mobile/services/play_history.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_atmosphere.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_button.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_sheet.dart';
+
 import 'helpers/test_scope.dart';
 
 Track _t(String id, {int duration = 200}) => Track(
@@ -107,8 +109,8 @@ void main() {
 
   testWidgets('eclipse mode keeps the app state underneath', (tester) async {
     final moon = MoonProvider(clock: DateTime.now);
-    await tester.pumpWidget(ChangeNotifierProvider.value(
-      value: moon,
+    await tester.pumpWidget(TestScope(
+      overrides: [moonProvider.overrideWith((ref) => moon, disposeNotifier: false)],
       child: const MaterialApp(home: MoonAtmosphere(child: _Counter())),
     ));
     await tester.tap(find.text('0'));
@@ -147,10 +149,12 @@ void main() {
     final moon = MoonProvider(clock: () => at, southernHemisphere: true);
 
     await tester.pumpWidget(TestScope(
+        overrides: [
+          moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
+          playHistoryProvider.overrideWith((ref) => history, disposeNotifier: false),
+        ],
         child: MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: moon),
-        ChangeNotifierProvider.value(value: history),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ChangeNotifierProvider(create: (_) => PlaylistProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),

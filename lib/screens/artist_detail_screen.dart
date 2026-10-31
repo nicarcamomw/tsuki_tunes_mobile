@@ -17,8 +17,6 @@ import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/auth_provider.dart';
-import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
@@ -118,7 +116,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       _isLoading = true;
       _hasError = false;
     });
-    final isOnline = context.read<ConnectivityProvider>().isOnline;
+    final isOnline = ref.read(connectivityProvider).isOnline;
     if (!isOnline) {
       if (mounted) {
         setState(() {
@@ -203,7 +201,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         releaseGroups.isNotEmpty &&
         completedReleases == releaseGroups.length;
     final isFollowed = library.isArtistFollowed(_artist.id);
-    final isGuest = context.select<AuthProvider, bool>((a) => a.isGuest);
+    final isGuest = ref.watch(authProvider.select((a) => a.isGuest));
 
     final cats = _categorizedAlbums;
 

@@ -15,11 +15,8 @@ import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/mask_provider.dart';
-import '../providers/moon_provider.dart';
 import '../providers/run_provider.dart';
 import '../providers/shake_skip_provider.dart';
-import '../providers/weather_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
@@ -156,7 +153,7 @@ class _ProfileSheet extends ConsumerWidget {
   /// Avatar with the equipped mask, name, email and the masks shortcut.
   Widget _buildHeader(
       BuildContext context, LocaleProvider locale, AppStrings strings) {
-    final masks = hostContext.read<MaskProvider>();
+    final masks = context.readState(maskProvider);
     final equipped = masks.equipped;
     return Column(
       mainAxisSize: MainAxisSize.min,

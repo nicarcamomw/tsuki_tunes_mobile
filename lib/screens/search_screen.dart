@@ -69,7 +69,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   /// Limpia la búsqueda actual y re-enfoca el teclado (Long-Press en Search)
   void clearAndFocus() {
     _controller.clear();
-    context.read<SearchProvider>().clear();
+    ref.read(searchProvider).clear();
     focusNode.requestFocus();
   }
 
@@ -89,7 +89,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     FocusScope.of(context).unfocus();
     final locale = ref.read(localeProvider);
     final audio = context.read<AudioProvider>();
-    final search = context.read<SearchProvider>();
+    final search = ref.read(searchProvider);
     final messenger = ScaffoldMessenger.of(context);
     final strings = locale.strings;
 
@@ -146,7 +146,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final search = context.watch<SearchProvider>();
+    final search = ref.watch(searchProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final hasResults = search.artists.isNotEmpty || search.albums.isNotEmpty || search.tracks.isNotEmpty;
@@ -303,7 +303,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         if (index == 4 && prev != 4) {
                           final q = _controller.text.trim();
                           if (q.length >= 3) {
-                            context.read<SearchProvider>().searchLyrics(q);
+                            ref.read(searchProvider).searchLyrics(q);
                           }
                         }
                       },
@@ -358,7 +358,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildEmptyState(AppStrings strings, LocaleProvider locale) {
-    final search = context.read<SearchProvider>();
+    final search = ref.read(searchProvider);
     final history = search.searchHistory;
 
     if (history.isEmpty) {
@@ -701,7 +701,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           final tracks = deezerResults['tracks'];
           if (tracks != null && tracks.isNotEmpty) {
             if (!mounted) return;
-            final provider = context.read<SearchProvider>();
+            final provider = ref.read(searchProvider);
             _controller.text = '${result.trackName} ${result.artistName}';
             unawaited(provider.search('${result.trackName} ${result.artistName}'));
             setState(() => _selectedTabIndex = 3);

@@ -14,7 +14,6 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
@@ -305,7 +304,7 @@ class TrackTile extends ConsumerWidget {
               const SizedBox(width: 10),
 
               // Listened checkbox (mark/unmark) — disabled for guests
-              if (showListenedCheckbox && !context.read<AuthProvider>().isGuest)
+              if (showListenedCheckbox && !ref.read(authProvider).isGuest)
                 Tooltip(
                   message: isListened
                       ? ref.read(stringsProvider).unmarkAsListened
