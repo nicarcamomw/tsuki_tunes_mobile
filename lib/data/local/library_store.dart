@@ -324,7 +324,14 @@ class LibraryStore {
         return [for (final r in rows) Map<String, dynamic>.from(json.decode(r.json) as Map)];
       });
 
-  Future<void> saveFollowed(String uid, List<Map<String, dynamic>> artists) => _queued(() async {
+  /// Saves the followed artists; [alsoInTransaction] (an outbox entry)
+  /// is written with them, so both are kept or neither.
+  Future<void> saveFollowed(
+    String uid,
+    List<Map<String, dynamic>> artists, {
+    Future<void> Function()? alsoInTransaction,
+  }) =>
+      _queued(() => _db.transaction(() async {
         final before = _followed[uid] ??
             {
               for (final r in await (_db.select(_db.followedArtists)..where((t) => t.uid.equals(uid))).get())
@@ -345,6 +352,7 @@ class LibraryStore {
                     uid: uid, artistId: e.key, position: e.value.$1, json: e.value.$2),
           ]);
         });
+        await alsoInTransaction?.call();
         _followed[uid] = after;
-      });
+      }));
 }

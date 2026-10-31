@@ -76,11 +76,13 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
       listenedLoaded: () => _listened.loaded,
       onChanged: notifyListeners,
     );
+    final localStore = store ?? LibraryStore(db!);
+    final localOutbox = outbox ?? Outbox(db!);
     _listened = ListenedTracksRepository(
       firebase: _firebase,
       storage: _storage,
-      store: store ?? LibraryStore(db!),
-      outbox: outbox ?? Outbox(db!),
+      store: localStore,
+      outbox: localOutbox,
       albums: _albums,
       onChanged: notifyListeners,
       tracked: _tracked,
@@ -88,6 +90,8 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     _followed = FollowedArtistsRepository(
       firebase: _firebase,
       storage: _storage,
+      store: localStore,
+      outbox: localOutbox,
       onChanged: notifyListeners,
       tracked: _tracked,
     );
@@ -213,6 +217,10 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     if (!await _listened.connect(uid, userDoc, isCurrent)) return;
     await _followed.connect(uid, userDoc, isCurrent);
   }
+
+  @visibleForTesting
+  set followSendHandlerForTesting(Future<void> Function(OutboxEntry entry)? handler) =>
+      _followed.sendHandlerForTesting = handler;
 
   /// Completes once the writes in flight to the server are done.
   @visibleForTesting
