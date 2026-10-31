@@ -443,7 +443,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     unawaited(HapticFeedback.lightImpact());
     final name = strings.moonMixPlaylistName(
         strings.longDate(widget.snapshot.nearestFull.toLocal()));
-    final created = await ref.read(playlistProvider).createPlaylist(name, tracks: mix);
+    final created = await ref.read(createPlaylistProvider)(name, tracks: mix);
     if (!mounted) return;
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(

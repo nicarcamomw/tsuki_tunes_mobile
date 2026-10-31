@@ -753,8 +753,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
-      final provider = ref.read(playlistProvider);
-      await provider.createPlaylist(name);
+      await ref.read(createPlaylistProvider)(name);
       if (context.mounted) {
         unawaited(SemanticsService.sendAnnouncement(View.of(context), strings.playlistCreated, TextDirection.ltr));
         ScaffoldMessenger.of(context).showSnackBar(

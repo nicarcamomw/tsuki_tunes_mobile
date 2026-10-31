@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/library_repository.dart';
 import '../../domain/repositories/playback_controller.dart';
+import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../../domain/usecases/library/toggle_album_listened.dart';
 import '../../domain/usecases/library/toggle_follow_artist.dart';
@@ -12,6 +13,12 @@ import '../../domain/usecases/playback/play_next.dart';
 import '../../domain/usecases/playback/play_track.dart';
 import '../../domain/usecases/playback/play_tracks.dart';
 import '../../domain/usecases/playback/start_radio.dart';
+import '../../domain/usecases/playlists/add_track_to_playlist.dart';
+import '../../domain/usecases/playlists/create_playlist.dart';
+import '../../domain/usecases/playlists/delete_playlist.dart';
+import '../../domain/usecases/playlists/remove_track_from_playlist.dart';
+import '../../domain/usecases/playlists/rename_playlist.dart';
+import '../../domain/usecases/playlists/reorder_playlist.dart';
 import 'app_providers.dart';
 
 // The use cases, built on the repositories the app owns. Screens call
@@ -53,3 +60,26 @@ final playNextProvider = Provider((ref) => PlayNext(ref.watch(playbackController
 final addToQueueProvider = Provider((ref) => AddToQueue(ref.watch(playbackControllerProvider)));
 
 final startRadioProvider = Provider((ref) => StartRadio(ref.watch(playbackControllerProvider)));
+
+// --- Playlists
+
+final playlistRepositoryProvider =
+    Provider<PlaylistRepository>((ref) => ref.watch(playlistProvider.notifier));
+
+final createPlaylistProvider =
+    Provider((ref) => CreatePlaylist(ref.watch(playlistRepositoryProvider)));
+
+final addTrackToPlaylistProvider =
+    Provider((ref) => AddTrackToPlaylist(ref.watch(playlistRepositoryProvider)));
+
+final removeTrackFromPlaylistProvider =
+    Provider((ref) => RemoveTrackFromPlaylist(ref.watch(playlistRepositoryProvider)));
+
+final renamePlaylistProvider =
+    Provider((ref) => RenamePlaylist(ref.watch(playlistRepositoryProvider)));
+
+final deletePlaylistProvider =
+    Provider((ref) => DeletePlaylist(ref.watch(playlistRepositoryProvider)));
+
+final reorderPlaylistProvider =
+    Provider((ref) => ReorderPlaylist(ref.watch(playlistRepositoryProvider)));

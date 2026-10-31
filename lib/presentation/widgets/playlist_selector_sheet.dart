@@ -9,7 +9,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/usecases/playlists/add_track_to_playlist.dart';
 import '../state/app_providers.dart';
+import '../state/use_cases.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
   return showModalBottomSheet(
@@ -76,12 +78,8 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                 unawaited(HapticFeedback.lightImpact());
                 final name = await showPlaylistNameDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
-                  final provider = ref.read(playlistProvider);
-                  // One write with the song in it: a second write right
-                  // after would hit the database's one-write-per-second
-                  // limit and leave the new playlist empty.
                   final created =
-                      await provider.createPlaylist(name, tracks: [track]);
+                      await ref.read(createPlaylistProvider)(name, tracks: [track]);
                   if (created != null && context.mounted) {
                     final added = created.tracks.any((t) => t.id == track.id);
                     if (context.mounted) {
@@ -193,16 +191,12 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                             }
                           : () {
                               unawaited(HapticFeedback.lightImpact());
-                              final provider =
-                                  ref.read(playlistProvider);
-                              final full = playlist.tracks.length >=
-                                  PlaylistRepositoryImpl.maxTracks;
+                              final add = ref.read(addTrackToPlaylistProvider);
+                              final full = add.check(playlist, track) ==
+                                  AddToPlaylistResult.full;
                               // It shows in the playlist at once; the upload
                               // goes on in the background.
-                              if (!full) {
-                                unawaited(provider.addTrackToPlaylist(
-                                    playlist.id, track));
-                              }
+                              if (!full) unawaited(add(playlist, track));
                               {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -319,7 +313,7 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
   final name = await showPlaylistNameDialog(context);
   if (name == null || name.trim().isEmpty || !context.mounted) return false;
   final created =
-      await context.readState(playlistProvider).createPlaylist(name, tracks: tracks);
+      await context.readState(createPlaylistProvider)(name, tracks: tracks);
   if (created == null || !context.mounted) return created != null;
   final strings = context.readState(stringsProvider);
   final locale = context.readState(localeProvider);

@@ -52,7 +52,6 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   /// (firestore.rules); checking here gives a clear no instead of a silent
   /// rollback.
   static const int maxNameLength = 100;
-  static const int maxTracks = 1000;
 
   static String _cleanName(String name) {
     final trimmed = name.trim();
@@ -269,7 +268,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
     final playlist = Playlist(
       id: docRef?.id ?? 'local_${now.microsecondsSinceEpoch}',
       name: name,
-      tracks: tracks.where((t) => seen.add(t.id)).take(maxTracks).toList(),
+      tracks: tracks.where((t) => seen.add(t.id)).take(Playlist.maxTracks).toList(),
       createdAt: now,
       updatedAt: now,
     );
@@ -397,7 +396,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
 
     final playlist = _playlists[idx];
     if (playlist.tracks.any((t) => t.id == track.id)) return false;
-    if (playlist.tracks.length >= maxTracks) return false;
+    if (playlist.isFull) return false;
 
     final prev = playlist;
     final updatedTracks = [...playlist.tracks, track];
@@ -442,7 +441,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
 
     final prev = _playlists[idx];
     if (prev.tracks.any((t) => t.id == track.id)) return false;
-    if (prev.tracks.length >= maxTracks) return false;
+    if (prev.isFull) return false;
     final tracks = List<Track>.from(prev.tracks)
       ..insert(index.clamp(0, prev.tracks.length), track);
     final updated = prev.copyWith(tracks: tracks, updatedAt: DateTime.now());

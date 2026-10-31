@@ -22,6 +22,13 @@ abstract class Playlist with _$Playlist {
   factory Playlist.fromJson(Map<String, dynamic> json) =>
       _$PlaylistFromJson(json);
 
+  /// The most songs a playlist holds (the Firestore document has to fit
+  /// in its 1 MiB limit).
+  static const int maxTracks = 1000;
+
+  bool get isFull => tracks.length >= maxTracks;
+  bool contains(String trackId) => tracks.any((t) => t.id == trackId);
+
   String get coverUrl => tracks.isNotEmpty ? tracks.first.coverUrl : '';
   int get trackCount => tracks.length;
   int get totalDurationSeconds =>

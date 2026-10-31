@@ -40,16 +40,15 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   /// the same place.
   void _remove(Track track, int index) {
     final strings = ref.read(stringsProvider);
-    final playlists = ref.read(playlistProvider);
     HapticFeedback.lightImpact();
-    playlists.removeTrackFromPlaylist(playlistId, track.id);
+    final undo = ref.read(removeTrackFromPlaylistProvider)(playlistId, track, index);
     showTrackSnack(
       context,
       strings.removedFromPlaylist,
       action: SnackBarAction(
         label: strings.undo,
         textColor: AppColors.accent,
-        onPressed: () => playlists.insertTrackAt(playlistId, track, index),
+        onPressed: undo,
       ),
     );
   }
@@ -406,9 +405,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               itemCount: playlist.tracks.length,
               onReorderItem: (oldIndex, newIndex) {
                 HapticFeedback.selectionClick();
-                ref
-                    .read(playlistProvider)
-                    .reorderTrack(playlistId, oldIndex, newIndex);
+                ref.read(reorderPlaylistProvider)(playlistId, oldIndex, newIndex);
               },
               proxyDecorator: (child, _, __) => Material(
                 color: AppColors.bgCard,
@@ -512,7 +509,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     );
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
-      unawaited(ref.read(playlistProvider).renamePlaylist(playlistId, name));
+      unawaited(ref.read(renamePlaylistProvider)(playlistId, name));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -587,7 +584,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     );
 
     if (confirmed == true && context.mounted) {
-      unawaited(ref.read(playlistProvider).deletePlaylist(playlistId));
+      unawaited(ref.read(deletePlaylistProvider)(playlistId));
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
