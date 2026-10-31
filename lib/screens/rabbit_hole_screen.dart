@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
@@ -15,7 +14,6 @@ import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'artist_detail_screen.dart';
@@ -333,7 +331,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   Future<void> _listen(_GraphNode node) async {
     if (_startingPlayback) return;
     unawaited(HapticFeedback.lightImpact());
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final messenger = ScaffoldMessenger.of(context);
     final strings = ref.read(stringsProvider);
     setState(() => _startingPlayback = true);

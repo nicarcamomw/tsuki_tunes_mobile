@@ -74,12 +74,12 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
 
 Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
   try {
-    final audioProvider = context.read<AudioProvider>();
-    await audioProvider.stop();
+    final audio = context.readState(audioProvider);
+    await audio.stop();
     // The Spotify link belongs to the person, not the device: the next
     // account on this phone must not control their Spotify.
-    await audioProvider.spotify.disconnect();
-    await audioProvider.updateSpotifyState();
+    await audio.spotify.disconnect();
+    await audio.updateSpotifyState();
 
     if (context.mounted) {
       context.readState(libraryProvider).disconnectFirestore();

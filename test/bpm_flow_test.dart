@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
 import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
 import 'package:tsuki_tunes_mobile/services/playback_queue.dart';
 import 'package:tsuki_tunes_mobile/widgets/flow_sheet.dart';
+
 import 'helpers/test_scope.dart';
 
 Track _t(String id) => Track(
@@ -205,12 +206,10 @@ void main() {
       } catch (_) {}
     });
     await tester.pumpWidget(TestScope(
-        child: MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: audio),
-      ],
-      child: MaterialApp(home: Scaffold(body: FlowSheet(service: service))),
-    )));
+        overrides: [
+          audioProvider.overrideWith((ref) => audio, disposeNotifier: false),
+        ],
+        child: MaterialApp(home: Scaffold(body: FlowSheet(service: service)))));
     // The fake lookup resolves in microtasks; a few frames are enough.
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 10));

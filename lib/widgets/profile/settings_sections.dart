@@ -3,24 +3,24 @@ part of '../profile_bottom_sheet.dart';
 // Each section rebuilds itself after a change: the values live in providers
 // the sheet only reads.
 
-class _PlaybackSettings extends StatefulWidget {
+class _PlaybackSettings extends ConsumerStatefulWidget {
   final BuildContext hostContext;
   final LocaleProvider locale;
 
   const _PlaybackSettings({required this.hostContext, required this.locale});
 
   @override
-  State<_PlaybackSettings> createState() => _PlaybackSettingsState();
+  ConsumerState<_PlaybackSettings> createState() => _PlaybackSettingsState();
 }
 
-class _PlaybackSettingsState extends State<_PlaybackSettings> {
+class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
   @override
   Widget build(BuildContext context) {
     final locale = widget.locale;
     final strings = locale.strings;
-    final audio = widget.hostContext.read<AudioProvider>();
-    final shakeSkip = widget.hostContext.read<ShakeSkipProvider>();
-    final run = widget.hostContext.read<RunProvider>();
+    final audio = ref.read(audioProvider);
+    final shakeSkip = ref.read(shakeSkipProvider);
+    final run = ref.read(runProvider);
 
     return _SettingsCard(rows: [
       Column(
@@ -163,22 +163,22 @@ class _PlaybackSettingsState extends State<_PlaybackSettings> {
   }
 }
 
-class _StorageSettings extends StatefulWidget {
+class _StorageSettings extends ConsumerStatefulWidget {
   final BuildContext hostContext;
   final LocaleProvider locale;
 
   const _StorageSettings({required this.hostContext, required this.locale});
 
   @override
-  State<_StorageSettings> createState() => _StorageSettingsState();
+  ConsumerState<_StorageSettings> createState() => _StorageSettingsState();
 }
 
-class _StorageSettingsState extends State<_StorageSettings> {
+class _StorageSettingsState extends ConsumerState<_StorageSettings> {
   @override
   Widget build(BuildContext context) {
     final locale = widget.locale;
     final strings = locale.strings;
-    final audio = widget.hostContext.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
 
     return _SettingsCard(rows: [
       _SettingSwitch(

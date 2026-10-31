@@ -5,14 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
-import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/run_provider.dart';
 import '../services/cadence_detector.dart';
 import '../services/pace_matcher.dart';
@@ -27,7 +24,7 @@ class RunModeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final run = context.watch<RunProvider>();
+    final run = ref.watch(runProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -401,7 +398,7 @@ class _MusicPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
-    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
+    final track = ref.watch(audioProvider.select((a) => a.currentTrack));
     final target = run.target;
     final bpm = run.currentBpm;
     final rate = run.currentRate;
@@ -595,7 +592,7 @@ class _SyncRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
-    final canSync = context.select<AudioProvider, bool>((a) => a.canChangeTempo);
+    final canSync = ref.watch(audioProvider.select((a) => a.canChangeTempo));
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       decoration: BoxDecoration(

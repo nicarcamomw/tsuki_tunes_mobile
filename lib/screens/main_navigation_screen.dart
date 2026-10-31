@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
@@ -113,8 +112,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final (hasTrack, spotifyError, playbackError) =
-        context.select<AudioProvider, (bool, SpotifyFallbackReason?, PlaybackError?)>(
-            (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError));
+        ref.watch(audioProvider.select(
+            (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError)));
     final syncError =
         ref.watch(libraryProvider.select((l) => l.lastSyncError));
     final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));

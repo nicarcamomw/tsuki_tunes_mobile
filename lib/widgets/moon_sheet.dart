@@ -4,13 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/moon_provider.dart';
 import '../services/play_history.dart';
@@ -561,7 +559,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      context.read<AudioProvider>().playTrack(mix.first, newQueue: mix);
+                      ref.read(audioProvider).playTrack(mix.first, newQueue: mix);
                       Navigator.of(context).pop();
                     },
                     icon: const Icon(Icons.play_arrow_rounded, size: 18),

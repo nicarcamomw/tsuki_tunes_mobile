@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
@@ -45,7 +44,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
 
   bool _showPlayed = false;
 
-  AudioProvider get _audio => context.read<AudioProvider>();
+  AudioProvider get _audio => ref.read(audioProvider);
   LocaleProvider get _locale => ref.read(localeProvider);
 
   double get _snackBottom => MediaQuery.of(context).padding.bottom + 12;
@@ -121,20 +120,18 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   Widget build(BuildContext context) {
     // Rebuild when what's listed changes: the songs, their order (shuffle
     // picks too), the current one and which ones you queued.
-    return Selector<AudioProvider, int>(
-      selector: (_, a) {
-        final upcoming = a.upcomingOrder(_maxShown);
-        return Object.hash(
-          Object.hashAll(a.queue.map((t) => t.id)),
-          Object.hashAll(upcoming),
-          Object.hashAll(upcoming.map((i) => a.isUserQueued(a.queue[i].id))),
-          a.currentIndex,
-          a.shuffleMode,
-          a.currentTrack?.id,
-        );
-      },
-      builder: (context, _, __) => _buildPanel(),
-    );
+    ref.watch(audioProvider.select((a) {
+      final upcoming = a.upcomingOrder(_maxShown);
+      return Object.hash(
+        Object.hashAll(a.queue.map((t) => t.id)),
+        Object.hashAll(upcoming),
+        Object.hashAll(upcoming.map((i) => a.isUserQueued(a.queue[i].id))),
+        a.currentIndex,
+        a.shuffleMode,
+        a.currentTrack?.id,
+      );
+    }));
+    return _buildPanel();
   }
 
   Widget _buildPanel() {

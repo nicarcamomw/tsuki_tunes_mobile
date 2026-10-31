@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants/app_colors.dart';
@@ -13,7 +12,6 @@ import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -146,8 +144,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final tracks = albumData.tracks;
     // Select only what the screen shows: watching the whole provider would
     // rebuild the album on every playback position tick.
-    final audio = context.read<AudioProvider>();
-    final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
+    final audio = ref.read(audioProvider);
+    final useSpotify = ref.watch(audioProvider.select((a) => a.useSpotify));
     final library = ref.watch(libraryProvider);
 
     final trackIds = tracks.map((t) => t.id).toList();

@@ -94,13 +94,13 @@ class _TitleMarqueeState extends State<_TitleMarquee> {
   }
 }
 
-class _IsolatedProgressBar extends StatelessWidget {
+class _IsolatedProgressBar extends ConsumerWidget {
   const _IsolatedProgressBar({required this.locale});
 
   final LocaleProvider locale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AudioProgressSelector<(Duration, Duration, Duration)>(
       selector: (a) => (a.position, a.duration, a.bufferedPosition),
       builder: (context, p) => _bar(context, p.$1, p.$2, p.$3),
@@ -114,7 +114,7 @@ class _IsolatedProgressBar extends StatelessWidget {
         progress: position,
         total: duration,
         buffered: buffered,
-        onSeek: context.read<AudioProvider>().seek,
+        onSeek: context.readState(audioProvider).seek,
         progressBarColor: AppColors.accent,
         baseBarColor: AppColors.border,
         bufferedBarColor: AppColors.borderGlow,

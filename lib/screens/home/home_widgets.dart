@@ -108,10 +108,10 @@ class _SourceBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<AudioProvider, bool>(
-      selector: (_, audio) =>
-          audio.useSpotify || audio.spotify.isConnected,
-      builder: (context, isSpotify, _) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final isSpotify = ref.watch(
+            audioProvider.select((a) => a.useSpotify || a.spotify.isConnected));
         final badgeColor = AppColors.accent;
         final badgeBg = AppColors.accentDim;
         final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';

@@ -49,19 +49,19 @@ class _AmbientButton extends ConsumerWidget {
 }
 
 /// Moon button with the time left; opens the sleep timer choices.
-class _SleepTimerButton extends StatelessWidget {
+class _SleepTimerButton extends ConsumerWidget {
   final AudioProvider audio;
   final LocaleProvider locale;
 
   const _SleepTimerButton({required this.audio, required this.locale});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = locale.strings;
-    final isActive = context.select<AudioProvider, bool>((a) => a.isSleepTimerActive);
+    final isActive = ref.watch(audioProvider.select((a) => a.isSleepTimerActive));
     // Whole seconds: the label shows nothing finer, so no rebuild per tick.
     final remainingSeconds =
-        context.select<AudioProvider, int?>((a) => a.sleepTimerRemaining?.inSeconds);
+        ref.watch(audioProvider.select((a) => a.sleepTimerRemaining?.inSeconds));
     final remaining = remainingSeconds == null ? null : Duration(seconds: remainingSeconds);
 
     String label = '';

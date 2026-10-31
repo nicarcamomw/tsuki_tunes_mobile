@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
@@ -30,7 +29,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audio = context.watch<AudioProvider>();
+    final audio = ref.watch(audioProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final mode = audio.shuffleMode;

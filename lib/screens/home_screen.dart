@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
@@ -15,10 +14,8 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/radar_release.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/run_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
@@ -699,8 +696,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final strings = locale.strings;
     final ambientCount = ref.watch(ambientProvider.select(
         (a) => a.isPlaying ? a.activeSounds.length : 0));
-    final run = context.select<RunProvider, (bool, int?, bool)>(
-        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled));
+    final run = ref.watch(runProvider.select(
+        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled)));
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(

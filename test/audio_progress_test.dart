@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/widgets/audio_progress_selector.dart';
+import 'helpers/test_scope.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -50,8 +51,8 @@ void main() {
   testWidgets('AudioProgressSelector rebuilds only when its value changes', (tester) async {
     final audio = AudioProvider();
     var builds = 0;
-    await tester.pumpWidget(ChangeNotifierProvider.value(
-      value: audio,
+    await tester.pumpWidget(TestScope(
+      overrides: [audioProvider.overrideWith((ref) => audio, disposeNotifier: false)],
       child: MaterialApp(
         home: AudioProgressSelector<int>(
           selector: (a) => a.position.inSeconds,

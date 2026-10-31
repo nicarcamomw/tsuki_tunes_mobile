@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../services/bpm_flow.dart';
 import 'swipeable_sheet.dart';
 
@@ -45,7 +43,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
   }
 
   Future<void> _analyze() async {
-    final upcoming = context.read<AudioProvider>().upcomingTracks;
+    final upcoming = ref.read(audioProvider).upcomingTracks;
     _total = upcoming.length;
     final bpms = await _service.lookup(
       upcoming,
@@ -67,7 +65,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
   }
 
   void _apply(FlowMode mode) {
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final strings = ref.read(stringsProvider);
     // The queue may have moved on while the sheet was open: arrange what is
     // upcoming right now.
@@ -204,7 +202,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                   _ModeTile(
                     mode: mode,
                     preview: BpmFlow.arrange(
-                        context.read<AudioProvider>().upcomingTracks, _bpms, mode),
+                        ref.read(audioProvider).upcomingTracks, _bpms, mode),
                     bpms: _bpms,
                     onTap: () => _apply(mode),
                   ),

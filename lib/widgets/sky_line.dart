@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
 import '../providers/ambient_provider.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/weather_provider.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
@@ -411,7 +409,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     unawaited(HapticFeedback.lightImpact());
     setState(() => _state = _OfferState.preparing);
     final library = ref.read(libraryProvider);
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final ambient = ref.read(ambientProvider);
     final weather = ref.read(weatherProvider);
     final strings = ref.read(stringsProvider);

@@ -7,14 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/guess_game.dart';
@@ -102,7 +100,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   void initState() {
     super.initState();
     // The clips would be inaudible over the music.
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     if (audio.isPlaying) audio.togglePlay();
 
     _posSub = _player.positionStream.listen((p) {
@@ -599,7 +597,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final target = _target;
     if (target == null) return;
     _stopClip();
-    context.read<AudioProvider>().playTrack(target, newQueue: [target]);
+    ref.read(audioProvider).playTrack(target, newQueue: [target]);
   }
 
   // ── UI ──

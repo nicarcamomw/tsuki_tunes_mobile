@@ -5,14 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
@@ -103,7 +101,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _starting = true);
     final strings = ref.read(stringsProvider);
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
 
     // History may lack a preview URL (older entries): fetch those fresh.
     final api = DeezerApiService();

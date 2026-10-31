@@ -2,23 +2,23 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/audio_provider.dart';
+import '../providers/app_providers.dart';
 
 const _kWitchingHour = 3;
 const _kWitchingMinute = 33;
 
 const _kKanji = ['鬼', '魂', '闇', '呪', '死', '影', '夢', '幽'];
 
-class WitchingHourOverlay extends StatefulWidget {
+class WitchingHourOverlay extends ConsumerStatefulWidget {
   const WitchingHourOverlay({super.key});
 
   @override
-  State<WitchingHourOverlay> createState() => _WitchingHourOverlayState();
+  ConsumerState<WitchingHourOverlay> createState() => _WitchingHourOverlayState();
 }
 
-class _WitchingHourOverlayState extends State<WitchingHourOverlay>
+class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay>
     with SingleTickerProviderStateMixin {
   final _rng = Random();
   Timer? _pollTimer;
@@ -66,7 +66,7 @@ class _WitchingHourOverlayState extends State<WitchingHourOverlay>
         now.hour == _kWitchingHour && now.minute == _kWitchingMinute;
 
     if (isWitchingMinute && !_triggered) {
-      final audio = context.read<AudioProvider>();
+      final audio = ref.read(audioProvider);
       if (audio.isPlaying) {
         _triggered = true;
         _startEffect();

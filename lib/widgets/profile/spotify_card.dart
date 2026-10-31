@@ -2,20 +2,20 @@ part of '../profile_bottom_sheet.dart';
 
 /// Spotify account card: connect, disconnect and open the app, with the
 /// playback mode the connection gives underneath.
-class _SpotifyCard extends StatefulWidget {
+class _SpotifyCard extends ConsumerStatefulWidget {
   final BuildContext hostContext;
   final LocaleProvider locale;
 
   const _SpotifyCard({required this.hostContext, required this.locale});
 
   @override
-  State<_SpotifyCard> createState() => _SpotifyCardState();
+  ConsumerState<_SpotifyCard> createState() => _SpotifyCardState();
 }
 
-class _SpotifyCardState extends State<_SpotifyCard> {
+class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
   bool _isConnecting = false;
 
-  AudioProvider get _audio => widget.hostContext.read<AudioProvider>();
+  AudioProvider get _audio => ref.read(audioProvider);
   SpotifyService get _spotify => _audio.spotify;
 
   void _showSnack(SnackBar snackBar) {

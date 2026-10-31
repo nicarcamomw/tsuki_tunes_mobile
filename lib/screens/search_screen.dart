@@ -6,13 +6,11 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../models/lyrics_search_result.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/search_provider.dart';
 import '../services/deezer_api_service.dart';
@@ -88,7 +86,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     unawaited(HapticFeedback.lightImpact());
     FocusScope.of(context).unfocus();
     final locale = ref.read(localeProvider);
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final search = ref.read(searchProvider);
     final messenger = ScaffoldMessenger.of(context);
     final strings = locale.strings;

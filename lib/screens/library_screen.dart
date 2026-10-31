@@ -6,7 +6,6 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -18,7 +17,6 @@ import '../models/artist.dart';
 import '../models/playlist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/playlist_provider.dart';
@@ -381,7 +379,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     onPressed: () {
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
-                        final audio = context.read<AudioProvider>();
+                        final audio = ref.read(audioProvider);
                         audio.playTrack(allTracks.first, newQueue: allTracks);
                       }
                     },
@@ -408,7 +406,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
                         final shuffled = List<Track>.from(allTracks)..shuffle();
-                        final audio = context.read<AudioProvider>();
+                        final audio = ref.read(audioProvider);
                         audio.playTrack(shuffled.first, newQueue: shuffled);
                       }
                     },
@@ -912,9 +910,9 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final currentTrackId =
-        context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
+        ref.watch(audioProvider.select((a) => a.currentTrack?.id));
     final library = ref.read(libraryProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;

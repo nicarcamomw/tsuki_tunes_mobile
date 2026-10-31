@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -23,7 +22,7 @@ Future<void> startRadioWithFeedback(
   double bottomMargin = 12,
 }) async {
   unawaited(HapticFeedback.mediumImpact());
-  final audio = context.read<AudioProvider>();
+  final audio = context.readState(audioProvider);
   final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
   final ok = await audio.startRadio(track);
@@ -102,11 +101,11 @@ class _RadioControlSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final seed = context.select<AudioProvider, Track?>((a) => a.radioSeed);
-    final current = context.select<AudioProvider, Track?>((a) => a.currentTrack);
+    final seed = ref.watch(audioProvider.select((a) => a.radioSeed));
+    final current = ref.watch(audioProvider.select((a) => a.currentTrack));
 
     if (seed == null) {
       // Radio ended while the sheet was open.
@@ -116,9 +115,9 @@ class _RadioControlSheet extends ConsumerWidget {
       return const SizedBox(height: 120);
     }
 
-    final status = context.select<AudioProvider, RadioStatus>((a) => a.radioStatus);
-    final mode = context.select<AudioProvider, RadioMode>((a) => a.radioMode);
-    final usesLastFm = context.select<AudioProvider, bool>((a) => a.radioUsesLastFm);
+    final status = ref.watch(audioProvider.select((a) => a.radioStatus));
+    final mode = ref.watch(audioProvider.select((a) => a.radioMode));
+    final usesLastFm = ref.watch(audioProvider.select((a) => a.radioUsesLastFm));
     final modeDesc = switch (mode) {
       RadioMode.familiar => strings.radioModeFamiliarDesc,
       RadioMode.balanced => strings.radioModeBalancedDesc,

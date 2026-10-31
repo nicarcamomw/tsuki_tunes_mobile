@@ -19,13 +19,15 @@ class _QueueView extends StatelessWidget {
   Widget build(BuildContext context) {
     // The panel follows the songs itself; this only follows the radio.
     return Expanded(
-      child: Selector<AudioProvider, (bool, RadioStatus, RadioMode)>(
-        selector: (_, a) => (a.isRadioActive, a.radioStatus, a.radioMode),
-        builder: (context, _, __) => QueuePanel(
-          banner: audio.isRadioActive ? _buildRadioBanner(context) : null,
-          footer: audio.isRadioActive ? _buildRadioFooter() : null,
-          onPlay: onPlay,
-        ),
+      child: Consumer(
+        builder: (context, ref, _) {
+          ref.watch(audioProvider.select((a) => (a.isRadioActive, a.radioStatus, a.radioMode)));
+          return QueuePanel(
+            banner: audio.isRadioActive ? _buildRadioBanner(context) : null,
+            footer: audio.isRadioActive ? _buildRadioFooter() : null,
+            onPlay: onPlay,
+          );
+        },
       ),
     );
   }

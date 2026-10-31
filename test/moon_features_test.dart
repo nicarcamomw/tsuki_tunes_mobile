@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
@@ -150,17 +149,13 @@ void main() {
 
     await tester.pumpWidget(TestScope(
         overrides: [
+          audioProvider.overrideWith((ref) => AudioProvider()),
           playlistProvider.overrideWith((ref) => PlaylistProvider()),
           libraryProvider.overrideWith((ref) => LibraryProvider()),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           playHistoryProvider.overrideWith((ref) => history, disposeNotifier: false),
         ],
-        child: MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AudioProvider()),
-      ],
-      child: const MaterialApp(home: Scaffold(body: Center(child: MoonButton()))),
-    )));
+        child: const MaterialApp(home: Scaffold(body: Center(child: MoonButton())))));
 
     await tester.tap(find.byType(MoonButton));
     await tester.pumpAndSettle();

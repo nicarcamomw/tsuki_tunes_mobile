@@ -5,13 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/lyrics_view.dart';
@@ -130,7 +128,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
 
   void _share(Track track) {
     final lyrics = widget.controller.lyrics;
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     String? line;
     if (lyrics != null && lyrics.isSynced) {
       final i = lyrics.activeIndexAt(audio.position);
@@ -146,7 +144,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
+    final track = ref.watch(audioProvider.select((a) => a.currentTrack));
     if (track == null) {
       return const Scaffold(backgroundColor: AppColors.bgDeep);
     }
@@ -398,12 +396,12 @@ class _Chip extends ConsumerWidget {
   }
 }
 
-class _Progress extends StatelessWidget {
+class _Progress extends ConsumerWidget {
   final LocaleProvider locale;
   const _Progress({required this.locale});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AudioProgressSelector<(Duration, Duration)>(
       selector: (a) => (a.position, a.duration),
       builder: (context, p) => _bar(context, p.$1, p.$2),
@@ -416,7 +414,7 @@ class _Progress extends StatelessWidget {
       child: ProgressBar(
         progress: position,
         total: duration,
-        onSeek: context.read<AudioProvider>().seek,
+        onSeek: context.readState(audioProvider).seek,
         barHeight: 4,
         progressBarColor: Colors.white,
         baseBarColor: Colors.white.withValues(alpha: 0.22),
@@ -438,9 +436,9 @@ class _Controls extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.read(stringsProvider);
-    final audio = context.read<AudioProvider>();
-    final (isPlaying, isBuffering) = context.select<AudioProvider, (bool, bool)>(
-        (a) => (a.isPlaying, a.isBuffering));
+    final audio = ref.read(audioProvider);
+    final (isPlaying, isBuffering) = ref.watch(audioProvider.select(
+        (a) => (a.isPlaying, a.isBuffering)));
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

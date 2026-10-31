@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
@@ -12,7 +11,6 @@ import '../core/utils/image_cache_size.dart';
 import '../models/playlist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../widgets/track_tile.dart';
 
@@ -293,7 +291,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          final audio = context.read<AudioProvider>();
+                          final audio = ref.read(audioProvider);
                           audio.playTrack(playlist.tracks.first,
                               newQueue: playlist.tracks);
                         },
@@ -322,7 +320,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         onPressed: () {
                           final shuffled =
                               List.of(playlist.tracks)..shuffle();
-                          final audio = context.read<AudioProvider>();
+                          final audio = ref.read(audioProvider);
                           audio.playTrack(shuffled.first,
                               newQueue: shuffled);
                         },

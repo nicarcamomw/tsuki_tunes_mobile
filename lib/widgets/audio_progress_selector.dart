@@ -1,14 +1,15 @@
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 
-/// Like `context.select<AudioProvider, T>`, but also follows the playback
+/// Like `ref.watch(audioProvider.select(...))`, but also follows the playback
 /// position, which the provider reports on its own [AudioProvider.progressListenable]
 /// instead of through notifyListeners. Rebuilds only when the selected value
 /// changes, so a selector that rounds (a line index, whole seconds) rebuilds
 /// as rarely as it can.
-class AudioProgressSelector<T> extends StatefulWidget {
+class AudioProgressSelector<T> extends ConsumerStatefulWidget {
   final T Function(AudioProvider audio) selector;
   final Widget Function(BuildContext context, T value) builder;
 
@@ -19,10 +20,10 @@ class AudioProgressSelector<T> extends StatefulWidget {
   });
 
   @override
-  State<AudioProgressSelector<T>> createState() => _AudioProgressSelectorState<T>();
+  ConsumerState<AudioProgressSelector<T>> createState() => _AudioProgressSelectorState<T>();
 }
 
-class _AudioProgressSelectorState<T> extends State<AudioProgressSelector<T>> {
+class _AudioProgressSelectorState<T> extends ConsumerState<AudioProgressSelector<T>> {
   AudioProvider? _audio;
   Listenable? _listenable;
   late T _value;
@@ -30,7 +31,7 @@ class _AudioProgressSelectorState<T> extends State<AudioProgressSelector<T>> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     if (!identical(audio, _audio)) {
       _listenable?.removeListener(_onChange);
       _audio = audio;

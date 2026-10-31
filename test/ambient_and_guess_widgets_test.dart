@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
@@ -19,14 +18,10 @@ void main() {
   Widget wrap(Widget child, {AmbientProvider? ambient}) {
     return TestScope(
         overrides: [
+          audioProvider.overrideWith((ref) => AudioProvider()),
           ambientProvider.overrideWith((ref) => ambient ?? AmbientProvider()),
         ],
-        child: MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AudioProvider()),
-      ],
-      child: MaterialApp(home: child),
-    ));
+        child: MaterialApp(home: child));
   }
 
   testWidgets('ambient mixer sheet lists every sound and the timer options',
@@ -92,15 +87,11 @@ void main() {
 
     await tester.pumpWidget(TestScope(
         overrides: [
+          audioProvider.overrideWith((ref) => AudioProvider()),
           libraryProvider.overrideWith((ref) => LibraryProvider()),
           ambientProvider.overrideWith((ref) => AmbientProvider()),
         ],
-        child: MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AudioProvider()),
-      ],
-      child: const MaterialApp(home: GuessSongScreen()),
-    )));
+        child: const MaterialApp(home: GuessSongScreen())));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/widgets/queue_panel.dart';
+
 import 'helpers/test_scope.dart';
 
 Track _t(String id) => Track(
@@ -49,12 +50,10 @@ void main() {
       } catch (_) {}
     });
     await tester.pumpWidget(TestScope(
-        child: MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: audio),
-      ],
-      child: const MaterialApp(home: Scaffold(body: QueuePanel())),
-    )));
+        overrides: [
+          audioProvider.overrideWith((ref) => audio, disposeNotifier: false),
+        ],
+        child: const MaterialApp(home: Scaffold(body: QueuePanel()))));
     await tester.pump();
     return audio;
   }

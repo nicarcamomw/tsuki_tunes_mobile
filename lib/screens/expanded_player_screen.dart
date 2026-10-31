@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
@@ -210,10 +209,10 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final (track, isPlaying, isBuffering, shuffleMode, repeatMode, useSpotify, radioActive, playbackError) =
-        context.select<AudioProvider, (Track?, bool, bool, ShuffleMode, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
-            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.shuffleMode, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
+        ref.watch(audioProvider.select(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.shuffleMode, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError)));
     // Only this track's listened flag: watching the whole library would rebuild
     // the player on every sync and history update.
     final isListened = ref.watch(libraryProvider.select(
@@ -281,7 +280,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         imageUrl: track.coverUrl,
                         size: MediaQuery.of(context).size.width * 0.72,
                         trackId: track.id,
-                        fullSong: !context.select<AudioProvider, bool>((a) => a.canChangeTempo),
+                        fullSong: !ref.watch(audioProvider.select((a) => a.canChangeTempo)),
                         position: () => audio.position,
                         speed: () => audio.playbackSpeed,
                       ),

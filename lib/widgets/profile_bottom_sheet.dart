@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -14,8 +13,6 @@ import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
-import '../providers/run_provider.dart';
-import '../providers/shake_skip_provider.dart';
 import '../screens/login_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';

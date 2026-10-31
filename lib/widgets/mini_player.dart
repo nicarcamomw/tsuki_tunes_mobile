@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
-import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../screens/expanded_player_screen.dart';
@@ -125,10 +123,10 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
 
   @override
   Widget build(BuildContext context) {
-    final audio = context.read<AudioProvider>();
+    final audio = ref.read(audioProvider);
     final (track, isPlaying, isBuffering, spotifyFallbackActive) =
-        context.select<AudioProvider, (Track?, bool, bool, bool)>(
-            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.spotifyFallbackActive));
+        ref.watch(audioProvider.select(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.spotifyFallbackActive)));
 
     // Only this track's flag: the mini player is always on screen, and the
     // library notifies on every sync and history change.

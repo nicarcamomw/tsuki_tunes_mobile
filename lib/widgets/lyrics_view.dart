@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../models/synced_lyrics.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../services/lyrics_service.dart';
 import '../services/translation_service.dart';
 import 'audio_progress_selector.dart';
@@ -289,7 +287,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
               onTap: widget.interactive && synced
                   ? () {
                       HapticFeedback.selectionClick();
-                      context.read<AudioProvider>().seek(lyrics.lines[i].time);
+                      ref.read(audioProvider).seek(lyrics.lines[i].time);
                       _resumeFollow();
                     }
                   : null,

@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
@@ -142,14 +141,10 @@ void main() {
 
   Widget app({Key? key}) => TestScope(
         overrides: [
+          audioProvider.overrideWith((ref) => AudioProvider()),
           libraryProvider.overrideWith((ref) => LibraryProvider()),
         ],
-        child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => AudioProvider()),
-        ],
-        child: MaterialApp(home: GuessSongScreen(key: key)),
-      ));
+        child: MaterialApp(home: GuessSongScreen(key: key)));
 
   // The API's disk cache does real file I/O, which only completes outside
   // the fake clock; alternate real waits with frames.

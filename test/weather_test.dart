@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
@@ -351,10 +350,9 @@ void main() {
           weatherProvider.overrideWith((ref) => weather, disposeNotifier: false),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           ambientProvider.overrideWith((ref) => AmbientProvider()),
+          if (audio != null) audioProvider.overrideWith((ref) => audio, disposeNotifier: false),
         ],
-        child: audio == null
-            ? app
-            : ChangeNotifierProvider<AudioProvider>.value(value: audio, child: app),
+        child: app,
       ));
     }
 

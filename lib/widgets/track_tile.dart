@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
@@ -13,7 +12,6 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
-import '../providers/audio_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -139,14 +137,14 @@ class TrackTile extends ConsumerWidget {
 
   void _addToQueue(BuildContext context) {
     HapticFeedback.mediumImpact();
-    context.read<AudioProvider>().addToQueue(track);
+    context.readState(audioProvider).addToQueue(track);
     showTrackSnack(context, context.readState(stringsProvider).addedToQueue);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (currentTrackId, isAudioPlaying) = context.select<AudioProvider, (String?, bool)>(
-        (a) => (a.currentTrack?.id, a.isPlaying));
+    final (currentTrackId, isAudioPlaying) = ref.watch(audioProvider.select(
+        (a) => (a.currentTrack?.id, a.isPlaying)));
     final isListened = ref.watch(libraryProvider.select((l) => l.isTrackListened(track.id)));
     final locale = ref.read(localeProvider);
     final isCurrent = currentTrackId == track.id;
@@ -164,7 +162,7 @@ class TrackTile extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           FocusScope.of(context).unfocus();
-          context.read<AudioProvider>().playTrack(track, newQueue: queue);
+          ref.read(audioProvider).playTrack(track, newQueue: queue);
         },
         onLongPress: () {
           HapticFeedback.mediumImpact();
@@ -378,7 +376,7 @@ class TrackTile extends ConsumerWidget {
 void showTrackSnack(BuildContext context, String message,
     {SnackBarAction? action, double? bottom}) {
   final locale = context.readState(localeProvider);
-  final hasTrack = context.read<AudioProvider>().currentTrack != null;
+  final hasTrack = context.readState(audioProvider).currentTrack != null;
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
   messenger.showSnackBar(
@@ -417,7 +415,7 @@ void showTrackActions(BuildContext context, Track track,
     {List<TrackMenuAction> extra = const []}) {
   final strings = context.readState(stringsProvider);
   final locale = context.readState(localeProvider);
-  final hasTrack = context.read<AudioProvider>().currentTrack != null;
+  final hasTrack = context.readState(audioProvider).currentTrack != null;
 
   void showConfirmation(String message) => showTrackSnack(context, message);
 
@@ -563,7 +561,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.a11yPlayNext,
               onTap: () {
                 Navigator.pop(ctx);
-                context.read<AudioProvider>().playNext(track);
+                context.readState(audioProvider).playNext(track);
                 showConfirmation(strings.addedPlayNext);
               },
             ),
@@ -573,7 +571,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.a11yAddToQueue,
               onTap: () {
                 Navigator.pop(ctx);
-                context.read<AudioProvider>().addToQueue(track);
+                context.readState(audioProvider).addToQueue(track);
                 showConfirmation(strings.addedToQueue);
               },
             ),
