@@ -1694,5 +1694,37 @@
         "type": "int"
       }
     }
-  }
+  },
+  "batteryGuideSnack": "Spotify no pudo sonar: tu teléfono lo detiene en segundo plano.",
+  "batteryGuideAction": "CÓMO ARREGLARLO",
+  "batteryGuideTitle": "Deja que Spotify funcione en segundo plano",
+  "batteryGuideIntro": "Los teléfonos {maker} cierran apps para ahorrar batería, y así Spotify no puede sonar desde Tsuki. Se arregla una sola vez:",
+  "@batteryGuideIntro": {
+    "placeholders": {
+      "maker": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryGuideStepOpen": "Abre los ajustes de Spotify con el botón de abajo.",
+  "batteryGuideStepBattery": "{family, select, honor{Entra en «Batería» › «Inicio de aplicaciones» y cambia Spotify a «Gestionar manualmente».} xiaomi{Entra en «Ahorro de batería» y elige «Sin restricciones».} other{Entra en «Uso de la batería» y activa «Permitir actividad en segundo plano».}}",
+  "@batteryGuideStepBattery": {
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryGuideStepAutostart": "{family, select, honor{Deja activadas las tres opciones: inicio automático, inicio secundario y ejecución en segundo plano.} xiaomi{Activa «Inicio automático».} other{Activa también «Permitir inicio automático».}}",
+  "@batteryGuideStepAutostart": {
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryGuideStepRetry": "Vuelve a Tsuki y dale play otra vez.",
+  "batteryGuideOpenSettings": "ABRIR AJUSTES DE SPOTIFY",
+  "batteryGuideDontShow": "No volver a mostrar",
+  "batteryGuideOpenFailed": "No pude abrir los ajustes. Búscalos en Ajustes › Aplicaciones › Spotify."
 }

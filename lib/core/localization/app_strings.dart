@@ -4,6 +4,7 @@ import 'dart:ui' show Locale;
 import '../../l10n/generated/app_localizations.dart';
 import '../../models/oni_mask.dart';
 import '../../services/ambient_sound_generator.dart';
+import '../../services/battery_guide.dart';
 import '../../services/bpm_flow.dart';
 import '../../services/cadence_detector.dart';
 import '../../services/moon_calculator.dart';
@@ -1613,4 +1614,29 @@ class AppStrings {
   String get a11yVoiceSearch => _l.a11yVoiceSearch;
 
   String get voicePlaying => _l.voicePlaying;
+
+  // --- Battery guide (Spotify frozen by the phone) ---
+  String get batteryGuideSnack => _l.batteryGuideSnack;
+
+  String get batteryGuideAction => _l.batteryGuideAction;
+
+  String get batteryGuideTitle => _l.batteryGuideTitle;
+
+  String batteryGuideIntro(String maker) => _l.batteryGuideIntro(maker);
+
+  String get batteryGuideStepOpen => _l.batteryGuideStepOpen;
+
+  String batteryGuideStepBattery(BatteryFamily family) =>
+      _l.batteryGuideStepBattery(family.name);
+
+  String batteryGuideStepAutostart(BatteryFamily family) =>
+      _l.batteryGuideStepAutostart(family.name);
+
+  String get batteryGuideStepRetry => _l.batteryGuideStepRetry;
+
+  String get batteryGuideOpenSettings => _l.batteryGuideOpenSettings;
+
+  String get batteryGuideDontShow => _l.batteryGuideDontShow;
+
+  String get batteryGuideOpenFailed => _l.batteryGuideOpenFailed;
 }

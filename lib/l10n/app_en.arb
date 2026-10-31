@@ -729,5 +729,16 @@
   "timeMachinePlayFailed": "Couldn't load these songs. Check your connection.",
   "timeMachineCountingSince": "Tsuki has counted every play since {date}. From then on, memories show what you had on repeat.",
   "timeMachineCountingStarts": "From today Tsuki counts every play: over time you’ll see what you had on repeat, not just what you discovered.",
-  "timeMachineNotifRepeatBody": "{artist} · {count} plays"
+  "timeMachineNotifRepeatBody": "{artist} · {count} plays",
+  "batteryGuideSnack": "Spotify couldn't play: your phone stops it in the background.",
+  "batteryGuideAction": "HOW TO FIX IT",
+  "batteryGuideTitle": "Let Spotify run in the background",
+  "batteryGuideIntro": "{maker} phones close apps to save battery, so Spotify can't play from Tsuki. It takes one change:",
+  "batteryGuideStepOpen": "Open Spotify's settings with the button below.",
+  "batteryGuideStepBattery": "{family, select, honor{Go to \"Battery\" › \"App launch\" and set Spotify to \"Manage manually\".} xiaomi{Go to \"Battery saver\" and choose \"No restrictions\".} other{Go to \"Battery usage\" and turn on \"Allow background activity\".}}",
+  "batteryGuideStepAutostart": "{family, select, honor{Leave all three options on: auto-launch, secondary launch and run in background.} xiaomi{Turn on \"Autostart\".} other{Also turn on \"Allow auto launch\".}}",
+  "batteryGuideStepRetry": "Come back to Tsuki and press play again.",
+  "batteryGuideOpenSettings": "OPEN SPOTIFY SETTINGS",
+  "batteryGuideDontShow": "Don't show again",
+  "batteryGuideOpenFailed": "Couldn't open the settings. Find them in Settings › Apps › Spotify."
 }

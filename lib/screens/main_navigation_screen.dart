@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +10,9 @@ import '../providers/audio_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
+import '../services/battery_guide.dart';
 import '../widgets/auth_guard.dart';
+import '../widgets/battery_guide_sheet.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
@@ -67,6 +71,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     super.initState();
     _tabNotifier.addListener(_updateCanPop);
     NavigationEvents.switchTab = _switchToTab;
+    unawaited(BatteryGuide.instance.load());
   }
 
   void _switchToTab(int index) {
@@ -124,17 +129,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       _lastShownError = null;
     } else if (spotifyError != _lastShownError) {
       _lastShownError = spotifyError;
+      // On phones known to freeze Spotify, a failed start comes with a guide
+      // to let it run in the background.
+      final offerBatteryGuide = BatteryGuide.instance.offerFor(spotifyError);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              action: offerBatteryGuide
+                  ? SnackBarAction(
+                      label: strings.batteryGuideAction,
+                      textColor: AppColors.accent,
+                      onPressed: () => BatteryGuideSheet.show(context),
+                    )
+                  : null,
               content: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yPlaybackError),
+                  Icon(offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
+                      color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yPlaybackError),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      spotifyError.message(strings),
+                      offerBatteryGuide
+                          ? strings.batteryGuideSnack
+                          : spotifyError.message(strings),
                       style: locale.getTextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -154,7 +172,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
               ),
-              duration: const Duration(seconds: 4),
+              duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
             ),
           );
         }
