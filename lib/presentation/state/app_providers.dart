@@ -13,6 +13,7 @@ import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../navigation/session_gate.dart';
 import 'ambient_provider.dart';
@@ -22,6 +23,7 @@ import 'connectivity_provider.dart';
 import 'locale_provider.dart';
 import 'mask_provider.dart';
 import 'moon_provider.dart';
+import 'profile_controller.dart';
 import 'run_provider.dart';
 import 'search_provider.dart';
 import 'shake_skip_provider.dart';
@@ -194,6 +196,27 @@ final isOnlineProvider = Provider<bool>(
 final isTrackListenedProvider = Provider.autoDispose.family<bool, String>(
   (ref, id) => ref.watch(libraryProvider.select((l) => l.isTrackListened(id))),
 );
+
+/// The signed-in user's public profile, kept published as their library,
+/// mask and account change. Built at launch (see main.dart).
+final profileControllerProvider = ChangeNotifierProvider<ProfileController>((ref) {
+  final auth = ref.read(authProvider);
+  final library = ref.read(libraryProvider);
+  final masks = ref.read(maskProvider);
+  return ProfileController(
+    repository: getIt<ProfileRepository>(),
+    changes: Listenable.merge([auth, library, masks]),
+    // Guests have no profile.
+    uid: () => auth.isAuthenticated ? auth.uid : null,
+    displayName: () => auth.user?.displayName ?? '',
+    photoUrl: () => auth.user?.photoURL,
+    maskId: () => masks.equipped?.id,
+    libraryLoaded: () => library.listenedTracksLoaded,
+    listenedArtistNames: () => library.listenedTracks.map((t) => t.artistName),
+    albumsCompleted: () => library.completedAlbumsCount,
+    knownArtists: () => [...library.followedArtists, ...library.favoriteArtists],
+  );
+});
 
 /// Sign-in state for the router: connects the library and playlists to the
 /// account and knows whether the tutorial was seen.

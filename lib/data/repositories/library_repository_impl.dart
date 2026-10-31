@@ -164,6 +164,9 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0}) =>
       _albums.isCompleted(albumId, albumTracksCount: albumTracksCount);
   int get uniqueAlbumsCount => _albums.listenedAlbumsCount;
+
+  /// Albums with every song listened.
+  int get completedAlbumsCount => _albums.completedAlbumsCount;
   int get uniqueArtistsCount => _listened.uniqueArtistsCount;
 
   @override

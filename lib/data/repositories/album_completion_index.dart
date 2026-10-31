@@ -149,6 +149,16 @@ class AlbumCompletionIndex {
     });
   }
 
+  /// Albums with every song listened (those whose song count is known).
+  int get completedAlbumsCount {
+    _ensureListenedByAlbum();
+    var n = 0;
+    _trackCounts.forEach((albumId, total) {
+      if (total > 0 && (_listenedByAlbum[albumId] ?? 0) >= total) n++;
+    });
+    return n;
+  }
+
   bool isCompleted(String albumId, {int albumTracksCount = 0}) {
     if (albumId.isEmpty) return false;
     final listenedCount = listenedCountForAlbum(albumId);

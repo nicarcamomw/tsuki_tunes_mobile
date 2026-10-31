@@ -161,6 +161,7 @@ class TsukiTunesApp extends StatelessWidget {
     // rest of the app, and shake-to-skip listens from the start.
     c.read(playbackWiringProvider);
     c.read(shakeSkipProvider);
+    c.read(profileControllerProvider);
     return UncontrolledProviderScope(
       container: c,
       child: MaterialApp.router(
