@@ -26,7 +26,9 @@ import 'search_provider.dart';
 import 'shake_skip_provider.dart';
 import 'weather_provider.dart';
 
-// The app's state, owned by Riverpod. Each provider builds its object once
+// The app's state, owned by Riverpod. The library, playlists and player
+// come from get_it (di/injection.dart), which owns their lifetime; the rest
+// are built here. Each provider builds its object once
 // and wires it to the others it needs, so a test can build the whole graph
 // (or override a piece) with a ProviderContainer, no widgets involved.
 // Widgets read them with ref.watch / ref.read, narrowing with .select so
@@ -42,15 +44,21 @@ final connectivityProvider = ChangeNotifierProvider<ConnectivityProvider>(
 
 final authProvider = ChangeNotifierProvider<AuthProvider>((ref) => AuthProvider());
 
-final libraryProvider = ChangeNotifierProvider<LibraryRepositoryImpl>((ref) {
-  final library = LibraryRepositoryImpl();
-  _follow(ref, library, () {
-    ReleaseRadarService().watchArtists(library.followedArtists);
-  }, now: false);
-  return library;
-});
+final libraryProvider = ChangeNotifierProvider<LibraryRepositoryImpl>(
+  disposeNotifier: false,
+  (ref) {
+    final library = getIt<LibraryRepositoryImpl>();
+    _follow(ref, library, () {
+      ReleaseRadarService().watchArtists(library.followedArtists);
+    }, now: false);
+    return library;
+  },
+);
 
-final playlistProvider = ChangeNotifierProvider<PlaylistRepositoryImpl>((ref) => PlaylistRepositoryImpl());
+final playlistProvider = ChangeNotifierProvider<PlaylistRepositoryImpl>(
+  disposeNotifier: false,
+  (ref) => getIt<PlaylistRepositoryImpl>(),
+);
 
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 
@@ -95,7 +103,10 @@ final weatherProvider = ChangeNotifierProvider<WeatherProvider>((ref) => Weather
 /// Android Auto starts the app there is no screen, and the car only needs
 /// the player. [playbackWiringProvider] adds the links once the app's tree
 /// is built.
-final audioProvider = ChangeNotifierProvider<AudioProvider>((ref) => AudioProvider());
+final audioProvider = ChangeNotifierProvider<AudioProvider>(
+  disposeNotifier: false,
+  (ref) => getIt<AudioProvider>(),
+);
 
 /// Connects the player to the library, masks, ambient sounds and history.
 /// Read once when the app's tree is built.
