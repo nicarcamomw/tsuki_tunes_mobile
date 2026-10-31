@@ -1,0 +1,179 @@
+part of '../artist_detail_screen.dart';
+
+/// The artist's popular tracks: five, or up to ten when expanded. Shows the
+/// skeleton while loading and a retry when they couldn't be fetched.
+class _TopTracksSliver extends StatelessWidget {
+  final List<Track> tracks;
+  final LocaleProvider locale;
+  final bool isLoading;
+  final bool hasError;
+  final VoidCallback onRetry;
+  final bool showAll;
+  final VoidCallback onToggleShowAll;
+  final bool reduceMotion;
+
+  const _TopTracksSliver({
+    required this.tracks,
+    required this.locale,
+    required this.isLoading,
+    required this.hasError,
+    required this.onRetry,
+    required this.showAll,
+    required this.onToggleShowAll,
+    required this.reduceMotion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = locale.strings;
+    if (isLoading) return const ArtistDetailSkeletonLoader();
+    if (hasError && tracks.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
+                const SizedBox(height: 10),
+                Text(
+                  strings.loadError,
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                Semantics(
+                  button: true,
+                  label: strings.retry,
+                  child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onRetry();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      strings.retry,
+                      style: locale.getTextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    if (tracks.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            strings.noTracksFound,
+            style: locale.getTextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+    return SliverToBoxAdapter(
+      child: Column(
+        children: [
+          for (int i = 0; i < (tracks.length > 5 ? 5 : tracks.length); i++)
+            TrackTile(
+              track: tracks[i],
+              index: i,
+              queue: tracks,
+            ),
+          if (tracks.length > 5) ...[
+            AnimatedSize(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: Column(
+                children: showAll
+                    ? [
+                        for (int i = 5; i < tracks.take(10).length; i++)
+                          TrackTile(
+                            track: tracks[i],
+                            index: i,
+                            queue: tracks,
+                          ),
+                      ]
+                    : const [],
+              ),
+            ),
+            _buildShowMoreButton(strings),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShowMoreButton(AppStrings strings) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 4),
+        child: Semantics(
+          button: true,
+          label: showAll ? strings.a11yShowLessTracks : strings.a11yShowAllTracks,
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onToggleShowAll();
+            },
+            child: AnimatedContainer(
+            duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.textBright.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.textBright.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  showAll ? strings.showLessTracks : strings.showMoreTracks,
+                  style: locale.getTextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AnimatedRotation(
+                  turns: showAll ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ),
+        ),
+      ),
+    );
+  }
+}

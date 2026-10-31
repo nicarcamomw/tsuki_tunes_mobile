@@ -32,6 +32,9 @@ import 'artist_discography_screen.dart';
 import 'main_navigation_screen.dart';
 import 'rabbit_hole_screen.dart';
 
+part 'artist_detail/artist_header.dart';
+part 'artist_detail/top_tracks.dart';
+
 class ArtistDetailScreen extends StatefulWidget {
   final Artist artist;
 
@@ -214,552 +217,55 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
         child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // Hero with parallax
-          SliverAppBar(
-            expandedHeight: 270,
-            pinned: true,
-            backgroundColor: AppColors.bgDeep,
-            title: AnimatedOpacity(
-              opacity: _showTitleInAppBar ? 1.0 : 0.0,
-              duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-              child: Text(
-                _artist.name,
-                style: locale.getTextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textBright,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            centerTitle: true,
-            leading: IconButton(
-              tooltip: strings.a11yBack,
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.bgDeep.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(Icons.chevron_left,
-                    color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Tooltip(
-                  triggerMode: TooltipTriggerMode.tap,
-                  message: isArtistComplete
-                      ? strings.artistCompleteTooltip
-                      : strings.artistDiscographyProgress(
-                          completedReleases, releaseGroups.length),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgDeep.withValues(alpha: 0.7),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isArtistComplete
-                            ? AppColors.accent
-                            : AppColors.accent.withValues(alpha: 0.4),
-                        width: isArtistComplete ? 1.5 : 1,
-                      ),
-                      boxShadow: isArtistComplete
-                          ? [
-                              const BoxShadow(
-                                color: AppColors.accentGlow,
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: OniMaskIcon(
-                      isActive: isArtistComplete,
-                      size: 22,
-                      showContainer: false,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (_artist.pictureUrl.isNotEmpty)
-                    ExcludeSemantics(
-                      child: CachedNetworkImage(
-                        memCacheWidth: imageCacheSize(context, (420).toDouble()),
-                        imageUrl: _artist.getBestImage(size: 'xl'),
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0.0, 0.45, 0.80, 1.0],
-                        colors: [
-                          Colors.transparent,
-                          Colors.transparent,
-                          Color(0x990B0D13),
-                          AppColors.bgDeep,
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Name rendered directly on top of the photo with room for descenders
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 22,
-                    child: Semantics(
-                      header: true,
-                      child: DistortedArtistName(
-                        name: _artist.name,
-                        artistId: _artist.id,
-                        fontSize: 30,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _ArtistHeroAppBar(
+            artist: _artist,
+            locale: locale,
+            showTitle: _showTitleInAppBar,
+            reduceMotion: _reduceMotion,
+            isComplete: isArtistComplete,
+            completedReleases: completedReleases,
+            totalReleases: releaseGroups.length,
           ),
 
-          // Info section
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Stats row
-                  Row(
-                    children: [
-                      if (_artist.fansCount > 0) ...[
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppCustomIcons.persona(
-                              size: 16,
-                              color: AppColors.accent,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              strings.artistFans(Formatters.formatNumber(_artist.fansCount)),
-                              style: locale.getTextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                      if (_artist.albumsCount > 0)
-                        Semantics(
-                          button: true,
-                          label: _showStats ? strings.a11yHideStats : strings.a11yShowStats,
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() => _showStats = !_showStats);
-                            },
-                            behavior: HitTestBehavior.opaque,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AppCustomIcons.cd(
-                                size: 16,
-                                color: AppColors.accent,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                strings.artistReleases(_artist.albumsCount),
-                                style: locale.getTextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                  decoration: _showStats
-                                      ? TextDecoration.underline
-                                      : TextDecoration.none,
-                                  decorationColor: AppColors.accent,
-                                  decorationThickness: 2,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              AnimatedRotation(
-                                turns: _showStats ? 0.25 : 0.0,
-                                duration: const Duration(milliseconds: 250),
-                                child: const Icon(
-                                  Icons.chevron_right,
-                                  size: 16,
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            ],
-                          ),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  // Follow button
-                  if (!isGuest) ...[
-                    const SizedBox(height: 14),
-                    Semantics(
-                      button: true,
-                      label: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
-                      child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        if (isFollowed) {
-                          library.unfollowArtist(_artist.id);
-                        } else {
-                          library.followArtist(_artist);
-                          _announceRadar(strings);
-                        }
-                      },
-                      child: AnimatedContainer(
-                        duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: isFollowed
-                              ? AppColors.accent.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: isFollowed
-                                ? AppColors.accent
-                                : AppColors.accent.withValues(alpha: 0.5),
-                            width: 1.2,
-                          ),
-                          boxShadow: isFollowed
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.accentGlow.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isFollowed ? Icons.check : Icons.add,
-                              size: 14,
-                              color: AppColors.accent,
-                              semanticLabel: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              isFollowed
-                                  ? strings.unfollowArtist
-                                  : strings.followArtist,
-                              style: locale.getTextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.accent,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    ),
-                  ],
-
-                  // Animated Glass Capsule Breakdown
-                  AnimatedCrossFade(
-                    firstChild: const SizedBox(width: double.infinity),
-                    secondChild: Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(top: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0x730C0C12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.45),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceEvenly,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 16,
-                        runSpacing: 8,
-                        children: [
-                          if (cats['album']!.isNotEmpty)
-                            _buildBreakdownItem(
-                              AppCustomIcons.libreria(
-                                  size: 15, color: AppColors.accent),
-                              strings.albumCountLabel(cats['album']!.length),
-                              locale,
-                            ),
-                          if (cats['ep']!.isNotEmpty)
-                            _buildBreakdownItem(
-                              AppCustomIcons.ep(
-                                  size: 15, color: AppColors.accent),
-                              strings.epCountLabel(cats['ep']!.length),
-                              locale,
-                            ),
-                          if (cats['single']!.isNotEmpty)
-                            _buildBreakdownItem(
-                              AppCustomIcons.nota(
-                                  size: 15, color: AppColors.accent),
-                              strings.singleCountLabel(cats['single']!.length),
-                              locale,
-                            ),
-                          if (cats['appears_on']!.isNotEmpty)
-                            _buildBreakdownItem(
-                              AppCustomIcons.grupo(
-                                  size: 15, color: AppColors.accent),
-                              strings.appearsOnCountLabel(cats['appears_on']!.length),
-                              locale,
-                            ),
-                        ],
-                      ),
-                    ),
-                    crossFadeState: _showStats
-                        ? CrossFadeState.showSecond
-                        : CrossFadeState.showFirst,
-                    duration: const Duration(milliseconds: 250),
-                  ),
-
-                  // Artist Category/Genre Tags
-                  if (_artistTags.isNotEmpty) ...[
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _artistTags.map((tag) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.1),
-                            border:
-                                Border.all(color: AppColors.accent, width: 1),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: Text(
-                            tag.toUpperCase(),
-                            style: locale.getTextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // Top Tracks header
-                  Row(
-                    children: [
-                      AppCustomIcons.fuego(
-                        size: 18,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        strings.popularTracks,
-                        style: locale.getTextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textBright,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            child: _ArtistInfoSection(
+              artist: _artist,
+              locale: locale,
+              categories: cats,
+              tags: _artistTags,
+              showStats: _showStats,
+              onToggleStats: () => setState(() => _showStats = !_showStats),
+              canFollow: !isGuest,
+              isFollowed: isFollowed,
+              onToggleFollow: () {
+                if (isFollowed) {
+                  library.unfollowArtist(_artist.id);
+                } else {
+                  library.followArtist(_artist);
+                  _announceRadar(strings);
+                }
+              },
+              reduceMotion: _reduceMotion,
             ),
           ),
 
-          // Top Tracks
-          if (_isLoading)
-            const ArtistDetailSkeletonLoader()
-          else if (_hasError && _topTracks.isEmpty)
-            SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-                      const SizedBox(height: 10),
-                      Text(
-                        strings.loadError,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-                      Semantics(
-                        button: true,
-                        label: strings.retry,
-                        child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _loadArtistData();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            strings.retry,
-                            style: locale.getTextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else if (_topTracks.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  strings.noTracksFound,
-                  style: locale.getTextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            )
-          else ...[
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  for (int i = 0; i < (_topTracks.length > 5 ? 5 : _topTracks.length); i++)
-                    TrackTile(
-                      track: _topTracks[i],
-                      index: i,
-                      queue: _topTracks,
-                    ),
-                  if (_topTracks.length > 5)
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeOutCubic,
-                      alignment: Alignment.topCenter,
-                      child: Column(
-                        children: _showAllTracks
-                            ? [
-                                for (int i = 5; i < _topTracks.take(10).length; i++)
-                                  TrackTile(
-                                    track: _topTracks[i],
-                                    index: i,
-                                    queue: _topTracks,
-                                  ),
-                              ]
-                            : const [],
-                      ),
-                    ),
-                  if (_topTracks.length > 5)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 6, bottom: 4),
-                        child: Semantics(
-                          button: true,
-                          label: _showAllTracks ? strings.a11yShowLessTracks : strings.a11yShowAllTracks,
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() => _showAllTracks = !_showAllTracks);
-                            },
-                            child: AnimatedContainer(
-                            duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
-                            curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.textBright.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.textBright.withValues(alpha: 0.08),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _showAllTracks ? strings.showLessTracks : strings.showMoreTracks,
-                                  style: locale.getTextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                AnimatedRotation(
-                                  turns: _showAllTracks ? 0.5 : 0,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                  child: const Icon(
-                                    Icons.keyboard_arrow_down,
-                                    size: 16,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+          _TopTracksSliver(
+            tracks: _topTracks,
+            locale: locale,
+            isLoading: _isLoading,
+            hasError: _hasError,
+            onRetry: _loadArtistData,
+            showAll: _showAllTracks,
+            onToggleShowAll: () =>
+                setState(() => _showAllTracks = !_showAllTracks),
+            reduceMotion: _reduceMotion,
+          ),
 
-          // Discography by category
           // Stored content section
-          if (!_isLoading) ...[
+          if (!_isLoading)
             SliverToBoxAdapter(
               child: _buildStoredContentSection(library, locale, strings),
             ),
-          ],
 
           // Similar Artists
           if (!_isLoading && _relatedArtists.isNotEmpty)
@@ -767,45 +273,8 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
               child: _buildRelatedArtistsSection(locale, strings),
             ),
 
-          if (!_isLoading && _albums.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '// ',
-                        style: locale.getTextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      TextSpan(
-                        text: strings.discography.replaceAll('// ', ''),
-                        style: locale.getTextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textBright,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (cats['album']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings, icon: Icons.album_rounded),
-            if (cats['ep']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabEps, cats['ep']!, 'ep', library, locale, strings, icon: Icons.album_outlined),
-            if (cats['single']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabSingles, cats['single']!, 'single', library, locale, strings, icon: Icons.music_note_rounded),
-            if (cats['appears_on']!.isNotEmpty)
-              ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded, isAppearsOn: true),
-          ],
+          if (!_isLoading && _albums.isNotEmpty)
+            ..._buildDiscographySlivers(cats, library, locale, strings),
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
@@ -814,6 +283,50 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
       ),
       ),
     );
+  }
+
+  /// Discography heading, then one section per release type.
+  List<Widget> _buildDiscographySlivers(Map<String, List<Album>> cats,
+      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '// ',
+                  style: locale.getTextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.accent,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                TextSpan(
+                  text: strings.discography.replaceAll('// ', ''),
+                  style: locale.getTextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textBright,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      if (cats['album']!.isNotEmpty)
+        ..._buildCategorySection(strings.tabAlbums, cats['album']!, 'album', library, locale, strings, icon: Icons.album_rounded),
+      if (cats['ep']!.isNotEmpty)
+        ..._buildCategorySection(strings.tabEps, cats['ep']!, 'ep', library, locale, strings, icon: Icons.album_outlined),
+      if (cats['single']!.isNotEmpty)
+        ..._buildCategorySection(strings.tabSingles, cats['single']!, 'single', library, locale, strings, icon: Icons.music_note_rounded),
+      if (cats['appears_on']!.isNotEmpty)
+        ..._buildCategorySection(strings.tabAppearsOn, cats['appears_on']!, 'appears_on', library, locale, strings, icon: Icons.groups_rounded, isAppearsOn: true),
+    ];
   }
 
   List<Widget> _buildCategorySection(
@@ -1459,24 +972,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBreakdownItem(Widget icon, String label, LocaleProvider locale) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        icon,
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: locale.getTextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }
