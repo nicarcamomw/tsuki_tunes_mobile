@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsuki_tunes_mobile/data/mappers/playlist_firestore.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/playlist.dart';
@@ -286,7 +287,7 @@ void main() {
       expect(fs['createdAt'], Timestamp.fromDate(created));
       expect(fs.containsKey('id'), isFalse);
 
-      final back = Playlist.fromFirestore({
+      final back = playlistFromFirestore({
         'name': 'Mix',
         'tracks': [_track().toJson()],
         'createdAt': Timestamp.fromDate(created),

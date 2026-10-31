@@ -11,9 +11,9 @@ import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../state/app_providers.dart';
-import '../state/library_provider.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
@@ -113,7 +113,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     }
   }
 
-  void _toggleAll(Album albumData, LibraryProvider library) {
+  void _toggleAll(Album albumData, LibraryRepositoryImpl library) {
     HapticFeedback.mediumImpact();
     final tracks = albumData.tracks;
     final trackIds = tracks.map((t) => t.id).toList();

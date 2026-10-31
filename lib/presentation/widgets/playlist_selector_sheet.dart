@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
+import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
-import '../state/playlist_provider.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
   return showModalBottomSheet(
@@ -196,7 +196,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                               final provider =
                                   ref.read(playlistProvider);
                               final full = playlist.tracks.length >=
-                                  PlaylistProvider.maxTracks;
+                                  PlaylistRepositoryImpl.maxTracks;
                               // It shows in the playlist at once; the upload
                               // goes on in the background.
                               if (!full) {
@@ -264,7 +264,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
       content: TextField(
         controller: controller,
         autofocus: true,
-        maxLength: PlaylistProvider.maxNameLength,
+        maxLength: PlaylistRepositoryImpl.maxNameLength,
         style: locale.getTextStyle(
           fontSize: 14,
           color: AppColors.textBright,

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/app_strings.dart';
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
-import '../../presentation/state/library_provider.dart';
+import '../repositories/library_repository_impl.dart';
 import 'release_radar_service.dart';
 
 enum TimeMachineKind {
@@ -191,7 +191,7 @@ class TimeMachineService {
   // Foreground: load data and refresh the notification schedule
   // ---------------------------------------------------------------------------
 
-  Future<TimeMachineMoment?> load(LibraryProvider library, DateTime anchor) async {
+  Future<TimeMachineMoment?> load(LibraryRepositoryImpl library, DateTime anchor) async {
     final day = _dateOnly(anchor);
     final days = await library.loadPlayDays(
       day.subtract(const Duration(days: windowDays)),
@@ -202,7 +202,7 @@ class TimeMachineService {
 
   /// Precomputes anniversaries for the next few weeks (at most once a day),
   /// so the background job can notify without Firebase.
-  Future<void> refreshSchedule(LibraryProvider library) async {
+  Future<void> refreshSchedule(LibraryRepositoryImpl library) async {
     if (!ReleaseRadarService.isSupported || !library.listenedTracksLoaded) return;
     try {
       final prefs = await SharedPreferences.getInstance();

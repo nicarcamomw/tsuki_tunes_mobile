@@ -36,7 +36,7 @@ class AlbumCompletionIndex {
   bool _dirty = true;
   Map<String, int> _listenedByAlbum = {};
 
-  // Test hook, reached through LibraryProvider.
+  // Test hook, reached through LibraryRepositoryImpl.
   Map<String, int> get trackCounts => _trackCounts;
 
   Future<void> load() async {
@@ -145,7 +145,7 @@ class AlbumCompletionIndex {
       }
       registerAll(counts);
     }).catchError((Object e) {
-      debugPrint('[LibraryProvider] ensureAlbumTrackCounts error: $e');
+      debugPrint('[LibraryRepositoryImpl] ensureAlbumTrackCounts error: $e');
     });
   }
 
@@ -176,7 +176,7 @@ class AlbumCompletionIndex {
       _storage.saveAlbumTrackCounts(_trackCounts);
       if (_trackCounts.length < before) {
         debugPrint(
-            '[LibraryProvider] Pruned ${before - _trackCounts.length} orphaned albumTrackCounts');
+            '[LibraryRepositoryImpl] Pruned ${before - _trackCounts.length} orphaned albumTrackCounts');
       }
     }
   }

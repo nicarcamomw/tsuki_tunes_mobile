@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 
 ListenedTrackData _t(String id, String artist) => ListenedTrackData(
       trackId: id,
@@ -18,7 +18,7 @@ void main() {
 
   test('the artist ranking is reused until the library changes', () async {
     SharedPreferences.setMockInitialValues({});
-    final library = LibraryProvider();
+    final library = LibraryRepositoryImpl();
     await Future<void>.delayed(const Duration(milliseconds: 50));
     library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'A'), _t('3', 'B')]);
 
@@ -37,7 +37,7 @@ void main() {
     // The library screen regroups thousands of tracks only when this
     // object changes.
     SharedPreferences.setMockInitialValues({});
-    final library = LibraryProvider();
+    final library = LibraryRepositoryImpl();
     await Future<void>.delayed(const Duration(milliseconds: 50));
     library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'B')]);
 

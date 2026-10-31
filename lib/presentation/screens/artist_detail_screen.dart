@@ -14,12 +14,12 @@ import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/lastfm_service.dart';
 import '../../data/datasources/release_radar_service.dart';
+import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
-import '../state/library_provider.dart';
 import '../state/locale_provider.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
@@ -286,7 +286,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   /// Discography heading, then one section per release type.
   List<Widget> _buildDiscographySlivers(Map<String, List<Album>> cats,
-      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
     return [
       SliverToBoxAdapter(
         child: Padding(
@@ -329,7 +329,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   }
 
   List<Widget> _buildCategorySection(
-      String title, List<Album> albums, String filterKey, LibraryProvider library, LocaleProvider locale, AppStrings strings, {IconData? icon, bool isAppearsOn = false}) {
+      String title, List<Album> albums, String filterKey, LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings, {IconData? icon, bool isAppearsOn = false}) {
     const maxVisible = 8;
     final visible = albums.take(maxVisible).toList();
     final hasMore = albums.length > maxVisible;
@@ -431,7 +431,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   }
 
   Widget _buildDiscographyItem(
-      BuildContext context, Album album, LibraryProvider library, LocaleProvider locale, AppStrings strings,
+      BuildContext context, Album album, LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
@@ -705,7 +705,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   }
 
   Widget _buildStoredContentSection(
-      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
     final artistName = _artist.name;
     final artistNameLower = artistName.toLowerCase().trim();
     final albumIds = _albums.map((a) => a.id).toSet();
@@ -906,7 +906,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     IconData icon,
     String label,
     List<Album> albums,
-    LibraryProvider library,
+    LibraryRepositoryImpl library,
     LocaleProvider locale, {
     String? semanticLabel,
   }) {

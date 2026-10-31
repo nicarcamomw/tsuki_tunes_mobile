@@ -8,11 +8,11 @@ import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/motion_sensor.dart';
 import '../../data/datasources/run_catalog.dart';
+import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/pace_matcher.dart';
 import 'audio_provider.dart';
-import 'library_provider.dart';
 
 enum RunPhase {
   /// Waiting for a steady rhythm before choosing music.
@@ -46,7 +46,7 @@ class RunProvider extends ChangeNotifier {
   DateTime Function() _now;
 
   AudioProvider? _audio;
-  LibraryProvider? _library;
+  LibraryRepositoryImpl? _library;
 
   RunProvider({
     MotionSource? sensor,
@@ -113,7 +113,7 @@ class RunProvider extends ChangeNotifier {
     return PaceMatcher.playbackRate(bpm, pace);
   }
 
-  void attach(AudioProvider audio, LibraryProvider library) {
+  void attach(AudioProvider audio, LibraryRepositoryImpl library) {
     _library = library;
     if (identical(_audio, audio)) return;
     _audio?.removeListener(_onAudio);

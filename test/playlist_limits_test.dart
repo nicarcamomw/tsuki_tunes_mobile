@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 Track _t(String id) => Track(
       id: id,
@@ -18,10 +18,10 @@ Track _t(String id) => Track(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late PlaylistProvider playlists;
+  late PlaylistRepositoryImpl playlists;
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    playlists = PlaylistProvider();
+    playlists = PlaylistRepositoryImpl();
     await playlists.initLocalOnly('guest_test');
   });
 

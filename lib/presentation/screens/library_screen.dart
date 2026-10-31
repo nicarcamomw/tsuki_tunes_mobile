@@ -12,14 +12,14 @@ import '../../core/localization/app_strings.dart';
 import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
+import '../../data/repositories/library_repository_impl.dart';
+import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
-import '../state/library_provider.dart';
 import '../state/locale_provider.dart';
-import '../state/playlist_provider.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
@@ -707,7 +707,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         content: TextField(
           controller: controller,
           autofocus: true,
-          maxLength: PlaylistProvider.maxNameLength,
+          maxLength: PlaylistRepositoryImpl.maxNameLength,
           style: locale.getTextStyle(
             fontSize: 14,
             color: AppColors.textBright,

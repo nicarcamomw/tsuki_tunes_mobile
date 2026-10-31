@@ -145,7 +145,7 @@ class ReleaseRadarService {
     unawaited(Future.delayed(const Duration(seconds: 8), maybeCheck));
   }
 
-  /// Called with every LibraryProvider change; only writes when the set of
+  /// Called with every LibraryRepositoryImpl change; only writes when the set of
   /// followed artists actually changed.
   Future<void> watchArtists(List<Artist> artists) async {
     final ids = artists.map((a) => a.id).toSet();

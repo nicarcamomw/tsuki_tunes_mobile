@@ -1,6 +1,6 @@
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/wrapped_data.dart';
-import '../../presentation/state/library_provider.dart';
+import '../repositories/library_repository_impl.dart';
 
 class WrappedService {
   static final WrappedService _instance = WrappedService._internal();

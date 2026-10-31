@@ -10,6 +10,7 @@ import 'package:tsuki_tunes_mobile/data/datasources/bpm_flow.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/motion_sensor.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/run_catalog.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/cadence_detector.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/pace_matcher.dart';
@@ -17,7 +18,6 @@ import 'package:tsuki_tunes_mobile/domain/logic/shake_detector.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/run_mode_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/run_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/shake_skip_provider.dart';
 
@@ -274,7 +274,7 @@ void main() {
           },
         ),
       );
-      run.attach(audio, LibraryProvider());
+      run.attach(audio, LibraryRepositoryImpl());
       await Future<void>.delayed(const Duration(milliseconds: 20));
     });
 
@@ -364,7 +364,7 @@ void main() {
           bpm: BpmService(fetch: (id) async => TrackAudioInfo(bpm: tempos[id] ?? 0), gap: Duration.zero),
           search: (_) async => [_t('w2', artist: 'x')],
         ),
-      )..attach(audio, LibraryProvider());
+      )..attach(audio, LibraryRepositoryImpl());
       await failing.start();
       await Future<void>.delayed(const Duration(milliseconds: 50));
       expect(failing.sensorAvailable, isFalse);
@@ -432,7 +432,7 @@ void main() {
         bpm: BpmService(fetch: (_) async => const TrackAudioInfo(bpm: 121), gap: Duration.zero),
         search: (_) async => const [],
       ),
-    )..attach(audio, LibraryProvider());
+    )..attach(audio, LibraryRepositoryImpl());
 
     await tester.pumpWidget(TestScope(
         overrides: [

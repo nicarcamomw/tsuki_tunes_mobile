@@ -3,9 +3,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 import 'helpers/fake_firebase_service.dart';
 
@@ -47,8 +47,8 @@ void main() {
     db = FakeFirebaseFirestore();
   });
 
-  LibraryProvider newDevice() =>
-      LibraryProvider(firebase: FakeFirebaseService(db));
+  LibraryRepositoryImpl newDevice() =>
+      LibraryRepositoryImpl(firebase: FakeFirebaseService(db));
 
   group('listened tracks sync', () {
     test('first connect does a full fetch and fixes the stats counter',
@@ -144,7 +144,7 @@ void main() {
 
   group('playlists', () {
     test('a new playlist shows up once, not twice', () async {
-      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      final phone = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       final created = await phone.createPlaylist('metal', tracks: [_track('a')]);
       await phone.pendingCreations;
@@ -160,7 +160,7 @@ void main() {
 
     test('creating the same playlist twice in a row makes only one',
         () async {
-      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      final phone = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       await Future.wait([
         phone.createPlaylist('metal'),
@@ -181,7 +181,7 @@ void main() {
         'updatedAt': DateTime(2026).toIso8601String(),
       };
       await storage.saveCachedPlaylists('guest_x', [p, p]);
-      final phone = PlaylistProvider(storage: storage);
+      final phone = PlaylistRepositoryImpl(storage: storage);
       await phone.initLocalOnly('guest_x');
       expect(phone.playlists.length, 1);
     });
@@ -191,7 +191,7 @@ void main() {
     // them). What this checks is that each write merges into the server copy
     // instead of overwriting it with the device's own list.
     test('adds from two devices are both kept', () async {
-      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      final phone = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       final created = await phone.createPlaylist('Mix');
       await phone.pendingCreations;
@@ -199,7 +199,7 @@ void main() {
       final id = phone.playlists.first.id;
       expect(created, isNotNull);
 
-      final tablet = PlaylistProvider(firebase: FakeFirebaseService(db));
+      final tablet = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
       await tablet.connectToFirestore(uid);
       await _settle();
 
@@ -229,7 +229,7 @@ void main() {
 
     test('removing on one device keeps a track added on the other',
         () async {
-      final phone = PlaylistProvider(firebase: FakeFirebaseService(db));
+      final phone = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
       await phone.connectToFirestore(uid);
       await phone.createPlaylist('Mix');
       await phone.pendingCreations;

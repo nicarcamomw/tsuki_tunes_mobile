@@ -3,17 +3,19 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../data/datasources/firebase_service.dart';
-import '../../data/datasources/storage_service.dart';
-import '../../data/datasources/sub_write_queue.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/playlist_repository.dart';
+import '../datasources/firebase_service.dart';
+import '../datasources/storage_service.dart';
+import '../datasources/sub_write_queue.dart';
+import '../mappers/playlist_firestore.dart';
 
-class PlaylistProvider extends ChangeNotifier {
+class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepository {
   final StorageService _storage;
   final FirebaseService _firebase;
 
-  PlaylistProvider({FirebaseService? firebase, StorageService? storage})
+  PlaylistRepositoryImpl({FirebaseService? firebase, StorageService? storage})
       : _firebase = firebase ?? FirebaseService(),
         _storage = storage ?? StorageService();
 
@@ -36,6 +38,7 @@ class PlaylistProvider extends ChangeNotifier {
     return [for (final p in list) if (seen.add(p.id)) p];
   }
 
+  @override
   List<Playlist> get playlists => List.unmodifiable(_playlists);
   bool get syncing => _syncing;
   String? get currentUid => _currentUid;
@@ -80,7 +83,7 @@ class PlaylistProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[PlaylistProvider] Error restoring local playlists: $e');
+      debugPrint('[PlaylistRepositoryImpl] Error restoring local playlists: $e');
     }
   }
 
@@ -104,7 +107,7 @@ class PlaylistProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[PlaylistProvider] Error restoring cached playlists: $e');
+      debugPrint('[PlaylistRepositoryImpl] Error restoring cached playlists: $e');
     }
 
     // Phase 2: One-time full fetch
@@ -114,12 +117,12 @@ class PlaylistProvider extends ChangeNotifier {
       if (_currentUid != uid) return;
 
       _playlists = _unique(snapshot.docs
-          .map((doc) => Playlist.fromFirestore(doc.data(), docId: doc.id)));
+          .map((doc) => playlistFromFirestore(doc.data(), docId: doc.id)));
       notifyListeners();
 
       _persistCache(uid);
     } catch (e) {
-      debugPrint('[PlaylistProvider] Initial Firestore fetch error: $e');
+      debugPrint('[PlaylistRepositoryImpl] Initial Firestore fetch error: $e');
     }
 
     // Phase 3: Real-time delta listener
@@ -135,7 +138,7 @@ class PlaylistProvider extends ChangeNotifier {
         if (docData == null) continue;
 
         final playlist =
-            Playlist.fromFirestore(docData, docId: change.doc.id);
+            playlistFromFirestore(docData, docId: change.doc.id);
 
         if (change.type == DocumentChangeType.removed) {
           final removed = _playlists.indexWhere((p) => p.id == playlist.id);
@@ -159,7 +162,7 @@ class PlaylistProvider extends ChangeNotifier {
         _persistCache(uid);
       }
     }, onError: (e) {
-      debugPrint('[PlaylistProvider] Firestore playlist sync error: $e');
+      debugPrint('[PlaylistRepositoryImpl] Firestore playlist sync error: $e');
     });
   }
 
@@ -189,9 +192,9 @@ class PlaylistProvider extends ChangeNotifier {
           SetOptions(merge: true));
       await SubWriteQueue.instance.run(batch.commit);
       await _storage.saveCachedPlaylists(guestUid, []);
-      debugPrint('[PlaylistProvider] Imported ${guestPlaylists.length} guest playlists');
+      debugPrint('[PlaylistRepositoryImpl] Imported ${guestPlaylists.length} guest playlists');
     } catch (e) {
-      debugPrint('[PlaylistProvider] Guest playlist import failed: $e');
+      debugPrint('[PlaylistRepositoryImpl] Guest playlist import failed: $e');
     }
   }
 
@@ -232,6 +235,7 @@ class PlaylistProvider extends ChangeNotifier {
   ///
   /// Returns at once with the new playlist; the upload goes on in the
   /// background (and takes it back out if the server refuses it).
+  @override
   Future<Playlist?> createPlaylist(String name, {List<Track> tracks = const []}) async {
     final uid = _currentUid;
     if (uid == null || name.trim().isEmpty) return null;
@@ -288,7 +292,7 @@ class PlaylistProvider extends ChangeNotifier {
             SetOptions(merge: true));
         await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
-        debugPrint('[PlaylistProvider] createPlaylist rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] createPlaylist rollback: $e');
         _playlists.removeWhere((p) => p.id == playlist.id);
         notifyListeners();
         _persistCache(uid);
@@ -303,6 +307,7 @@ class PlaylistProvider extends ChangeNotifier {
     return (playlist, saved);
   }
 
+  @override
   Future<void> renamePlaylist(String playlistId, String newName) async {
     final uid = _currentUid;
     if (uid == null || newName.trim().isEmpty || _isWriteThrottled()) return;
@@ -332,7 +337,7 @@ class PlaylistProvider extends ChangeNotifier {
             SetOptions(merge: true));
         await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
-        debugPrint('[PlaylistProvider] renamePlaylist rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] renamePlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
         if (rollIdx != -1) {
           _playlists[rollIdx] = prev;
@@ -345,6 +350,7 @@ class PlaylistProvider extends ChangeNotifier {
     }
   }
 
+  @override
   Future<void> deletePlaylist(String playlistId) async {
     final uid = _currentUid;
     if (uid == null || _isWriteThrottled()) return;
@@ -371,7 +377,7 @@ class PlaylistProvider extends ChangeNotifier {
             SetOptions(merge: true));
         await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
-        debugPrint('[PlaylistProvider] deletePlaylist rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] deletePlaylist rollback: $e');
         _playlists.insert(idx.clamp(0, _playlists.length), prev);
         notifyListeners();
         _persistCache(uid);
@@ -381,6 +387,7 @@ class PlaylistProvider extends ChangeNotifier {
     }
   }
 
+  @override
   Future<bool> addTrackToPlaylist(String playlistId, Track track) async {
     final uid = _currentUid;
     if (uid == null || _isWriteThrottled()) return false;
@@ -408,7 +415,7 @@ class PlaylistProvider extends ChangeNotifier {
         await _commitTracks(uid, updated,
             (server) => mergePlaylistTracks(server, add: track.toJson()));
       } catch (e) {
-        debugPrint('[PlaylistProvider] addTrackToPlaylist rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] addTrackToPlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
         if (rollIdx != -1) {
           _playlists[rollIdx] = prev;
@@ -425,6 +432,7 @@ class PlaylistProvider extends ChangeNotifier {
   }
 
   /// Puts [track] back at [index] (undoing a removal), in one write.
+  @override
   Future<bool> insertTrackAt(String playlistId, Track track, int index) async {
     final uid = _currentUid;
     if (uid == null || _isWriteThrottled()) return false;
@@ -454,7 +462,7 @@ class PlaylistProvider extends ChangeNotifier {
             (server) => mergePlaylistTracks(server,
                 add: track.toJson(), order: order));
       } catch (e) {
-        debugPrint('[PlaylistProvider] insertTrackAt rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] insertTrackAt rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
         if (rollIdx != -1) {
           _playlists[rollIdx] = prev;
@@ -469,6 +477,7 @@ class PlaylistProvider extends ChangeNotifier {
     return true;
   }
 
+  @override
   Future<void> removeTrackFromPlaylist(
       String playlistId, String trackId) async {
     final uid = _currentUid;
@@ -494,7 +503,7 @@ class PlaylistProvider extends ChangeNotifier {
         await _commitTracks(uid, updated,
             (server) => mergePlaylistTracks(server, removeId: trackId));
       } catch (e) {
-        debugPrint('[PlaylistProvider] removeTrackFromPlaylist rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] removeTrackFromPlaylist rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
         if (rollIdx != -1) {
           _playlists[rollIdx] = prev;
@@ -507,6 +516,7 @@ class PlaylistProvider extends ChangeNotifier {
     }
   }
 
+  @override
   Future<void> reorderTrack(
       String playlistId, int oldIndex, int newIndex) async {
     final uid = _currentUid;
@@ -542,7 +552,7 @@ class PlaylistProvider extends ChangeNotifier {
         await _commitTracks(uid, updated,
             (server) => mergePlaylistTracks(server, order: order));
       } catch (e) {
-        debugPrint('[PlaylistProvider] reorderTrack rollback: $e');
+        debugPrint('[PlaylistRepositoryImpl] reorderTrack rollback: $e');
         final rollIdx = _playlists.indexWhere((p) => p.id == playlistId);
         if (rollIdx != -1) {
           _playlists[rollIdx] = prev;

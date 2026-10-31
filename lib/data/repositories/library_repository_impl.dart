@@ -3,18 +3,19 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
-import '../../data/datasources/firebase_service.dart';
-import '../../data/datasources/play_history_service.dart';
-import '../../data/datasources/storage_service.dart';
-import '../../data/repositories/album_completion_index.dart';
-import '../../data/repositories/followed_artists_repository.dart';
-import '../../data/repositories/listened_tracks_repository.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/library_repository.dart';
+import '../datasources/firebase_service.dart';
+import '../datasources/play_history_service.dart';
+import '../datasources/storage_service.dart';
+import 'album_completion_index.dart';
+import 'followed_artists_repository.dart';
+import 'listened_tracks_repository.dart';
 
-export '../../data/repositories/listened_tracks_repository.dart' show ListenedTrackData;
+export 'listened_tracks_repository.dart' show ListenedTrackData;
 
 class TopArtistEntry {
   final String name;
@@ -34,7 +35,7 @@ class TopArtistEntry {
 /// artists and album completion live in their own classes; this one wires
 /// them to the signed-in user, adds the local favorites, recents and artist
 /// visits, and notifies the UI.
-class LibraryProvider extends ChangeNotifier {
+class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository {
   final StorageService _storage;
   final FirebaseService _firebase;
 
@@ -54,7 +55,7 @@ class LibraryProvider extends ChangeNotifier {
   // Artist visits
   Map<String, int> _artistVisits = {};
 
-  LibraryProvider({FirebaseService? firebase, StorageService? storage})
+  LibraryRepositoryImpl({FirebaseService? firebase, StorageService? storage})
       : _firebase = firebase ?? FirebaseService(),
         _storage = storage ?? StorageService() {
     _albums = AlbumCompletionIndex(
@@ -99,6 +100,7 @@ class LibraryProvider extends ChangeNotifier {
   Map<String, int> get artistVisits => UnmodifiableMapView(_artistVisits);
   List<Artist> get followedArtists => _followed.artists;
   Set<String> get followedArtistIds => _followed.ids;
+  @override
   bool isArtistFollowed(String artistId) => _followed.isFollowed(artistId);
 
   @override
@@ -140,11 +142,13 @@ class LibraryProvider extends ChangeNotifier {
   int getAlbumTracksCount(String albumId) => _albums.trackCount(albumId);
   int listenedCountForAlbum(String albumId) =>
       _albums.listenedCountForAlbum(albumId);
+  @override
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0}) =>
       _albums.isCompleted(albumId, albumTracksCount: albumTracksCount);
   int get uniqueAlbumsCount => _albums.listenedAlbumsCount;
   int get uniqueArtistsCount => _listened.uniqueArtistsCount;
 
+  @override
   void registerAlbumTrackCount(String albumId, int count) =>
       _albums.register(albumId, count);
 
@@ -206,20 +210,24 @@ class LibraryProvider extends ChangeNotifier {
 
   // --- Listened tracks (Firestore) ---
 
+  @override
   bool isTrackListened(String trackId) => _listened.contains(trackId);
 
+  @override
   Future<void> markTrack(Track track) async {
     final uid = _writeUid;
     if (uid == null) return;
     await _listened.mark(uid, track);
   }
 
+  @override
   Future<void> unmarkTrack(String trackId) async {
     final uid = _writeUid;
     if (uid == null) return;
     await _listened.unmark(uid, trackId);
   }
 
+  @override
   Future<void> markAlbumTracks(List<Track> tracks,
       {String? albumId, int? totalTracks}) async {
     final uid = _writeUid;
@@ -233,6 +241,7 @@ class LibraryProvider extends ChangeNotifier {
     await _listened.markAll(uid, tracks);
   }
 
+  @override
   Future<void> unmarkAlbumTracks(List<String> trackIds) async {
     final uid = _writeUid;
     if (uid == null) return;
@@ -295,13 +304,14 @@ class LibraryProvider extends ChangeNotifier {
 
   /// Counts one real play (the player calls this once per play, past the
   /// listen threshold). Fire-and-forget: offline writes sync later.
+  @override
   Future<void> recordPlay(Track track) async {
     final uid = _writeUid;
     if (uid == null || track.id.isEmpty) return;
     try {
       await _history.recordPlay(uid, track);
     } catch (e) {
-      debugPrint('[LibraryProvider] recordPlay failed: $e');
+      debugPrint('[LibraryRepositoryImpl] recordPlay failed: $e');
     }
   }
 
@@ -311,7 +321,7 @@ class LibraryProvider extends ChangeNotifier {
     try {
       return await _history.loadRange(uid, from, to);
     } catch (e) {
-      debugPrint('[LibraryProvider] loadPlayDays failed: $e');
+      debugPrint('[LibraryRepositoryImpl] loadPlayDays failed: $e');
       return const [];
     }
   }
@@ -390,10 +400,12 @@ class LibraryProvider extends ChangeNotifier {
 
   // --- Favorites (local, same as before) ---
 
+  @override
   bool isFavoriteTrack(String trackId) {
     return _favoriteTracks.any((t) => t.id == trackId);
   }
 
+  @override
   Future<void> toggleFavoriteTrack(Track track) async {
     final index = _favoriteTracks.indexWhere((t) => t.id == track.id);
     if (index >= 0) {
@@ -405,6 +417,7 @@ class LibraryProvider extends ChangeNotifier {
     await _storage.saveFavoriteTracks(_favoriteTracks);
   }
 
+  @override
   Future<void> addRecentTrack(Track track) async {
     _recentTracks.removeWhere((t) => t.id == track.id);
     _recentTracks.insert(0, track);
@@ -415,10 +428,12 @@ class LibraryProvider extends ChangeNotifier {
     await _storage.saveRecentTracks(_recentTracks);
   }
 
+  @override
   bool isFavoriteArtist(String artistId) {
     return _favoriteArtists.any((a) => a.id == artistId);
   }
 
+  @override
   Future<void> toggleFavoriteArtist(Artist artist) async {
     final index = _favoriteArtists.indexWhere((a) => a.id == artist.id);
     if (index >= 0) {
@@ -432,12 +447,14 @@ class LibraryProvider extends ChangeNotifier {
 
   // --- Followed artists (Firestore-synced) ---
 
+  @override
   Future<void> followArtist(Artist artist) async {
     final uid = _writeUid;
     if (uid == null) return;
     await _followed.follow(uid, artist);
   }
 
+  @override
   Future<void> unfollowArtist(String artistId) async {
     final uid = _writeUid;
     if (uid == null) return;

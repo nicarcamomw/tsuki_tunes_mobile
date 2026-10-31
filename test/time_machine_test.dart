@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/time_machine_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/play_day.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 PlayDay _day(String date, Map<String, int> plays) => PlayDay(
       date: date,

@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/utils/deezer_preview.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 ListenedTrackData _listened(String id, String albumId, {String artist = 'A'}) =>
     ListenedTrackData(
@@ -99,9 +99,9 @@ void main() {
     });
   });
 
-  group('LibraryProvider album index', () {
+  group('LibraryRepositoryImpl album index', () {
     test('isAlbumCompleted and counters follow listened tracks', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       library.setListenedTracksForTesting([
@@ -123,7 +123,7 @@ void main() {
     });
 
     test('ensureAlbumTrackCounts fetches each listened album once', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
       library.setListenedTracksForTesting([
         _listened('1', 'alb1'),

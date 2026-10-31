@@ -7,11 +7,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/guess_game.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/guess_song_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 import 'helpers/test_scope.dart';
 
@@ -143,7 +143,7 @@ void main() {
   Widget app({Key? key}) => TestScope(
         overrides: [
           audioProvider.overrideWith((ref) => AudioProvider()),
-          libraryProvider.overrideWith((ref) => LibraryProvider()),
+          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
         ],
         child: MaterialApp(home: GuessSongScreen(key: key)));
 

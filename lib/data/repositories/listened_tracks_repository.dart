@@ -172,11 +172,11 @@ class ListenedTracksRepository {
   static const Duration _fullSyncInterval = Duration(hours: 4);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
-  // Test hook, reached through LibraryProvider.
+  // Test hook, reached through LibraryRepositoryImpl.
   Future<void> Function(List<ListenedTrackData> chunk, String uid)?
       markChunkHandlerForTesting;
 
-  // Test hook, reached through LibraryProvider.
+  // Test hook, reached through LibraryRepositoryImpl.
   Future<void> Function(List<String> chunkIds, String uid)?
       unmarkChunkHandlerForTesting;
 
@@ -239,7 +239,7 @@ class ListenedTracksRepository {
         _changed();
       }
     } catch (e) {
-      debugPrint('[LibraryProvider] Error restoring cached tracks: $e');
+      debugPrint('[LibraryRepositoryImpl] Error restoring cached tracks: $e');
     }
 
     // 2. Full fetch only when there is no cache or the last full sync is
@@ -281,7 +281,7 @@ class ListenedTracksRepository {
         _reconcileServerStats(userDoc, _tracks.length);
         _pruneDeletionLog(userDoc);
       } catch (e) {
-        debugPrint('[LibraryProvider] Initial Firestore fetch error: $e');
+        debugPrint('[LibraryRepositoryImpl] Initial Firestore fetch error: $e');
       }
     }
 
@@ -349,7 +349,7 @@ class ListenedTracksRepository {
         _saveCache(uid);
       }
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Firestore delta sync error: $e');
+      debugPrint('[LibraryRepositoryImpl] Firestore delta sync error: $e');
     });
 
     // 4. Deletion log — unmarks of tracks older than the delta boundary never
@@ -379,7 +379,7 @@ class ListenedTracksRepository {
         _saveCache(uid);
       }
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Firestore deletions sync error: $e');
+      debugPrint('[LibraryRepositoryImpl] Firestore deletions sync error: $e');
     });
     return true;
   }
@@ -425,7 +425,7 @@ class ListenedTracksRepository {
     userDoc.set({
       'stats': {'totalTracks': count},
     }, SetOptions(merge: true)).catchError((Object e) {
-      debugPrint('[LibraryProvider] stats reconcile failed: $e');
+      debugPrint('[LibraryRepositoryImpl] stats reconcile failed: $e');
     });
   }
 
@@ -449,14 +449,14 @@ class ListenedTracksRepository {
           SetOptions(merge: true));
       await SubWriteQueue.instance.run(batch.commit);
     }).catchError((Object e) {
-      debugPrint('[LibraryProvider] deletion log prune failed: $e');
+      debugPrint('[LibraryRepositoryImpl] deletion log prune failed: $e');
     });
   }
 
-  // Test hook, reached through LibraryProvider.
+  // Test hook, reached through LibraryRepositoryImpl.
   void setLoadedForTesting(bool loaded) => _loaded = loaded;
 
-  // Test hook, reached through LibraryProvider.
+  // Test hook, reached through LibraryRepositoryImpl.
   void setTracksForTesting(List<ListenedTrackData> tracks) {
     _tracks = List.from(tracks);
     _ids = tracks.map((t) => t.trackId).toSet();
@@ -506,7 +506,7 @@ class ListenedTracksRepository {
           await Future.delayed(const Duration(milliseconds: 1500));
           await _commitMarkBatch(uid, track.id, data);
         } catch (retryError) {
-          debugPrint('[LibraryProvider] markTrack rollback — Firestore failed after retry: $retryError');
+          debugPrint('[LibraryRepositoryImpl] markTrack rollback — Firestore failed after retry: $retryError');
           _rollback(uid, prevTracks, prevIds, 'mark_failed');
         }
       }
@@ -561,7 +561,7 @@ class ListenedTracksRepository {
           await Future.delayed(const Duration(milliseconds: 1500));
           await _commitUnmarkBatch(uid, trackId);
         } catch (retryError) {
-          debugPrint('[LibraryProvider] unmarkTrack rollback — Firestore failed after retry: $retryError');
+          debugPrint('[LibraryRepositoryImpl] unmarkTrack rollback — Firestore failed after retry: $retryError');
           _rollback(uid, prevTracks, prevIds, 'unmark_failed');
         }
       }
@@ -651,7 +651,7 @@ class ListenedTracksRepository {
           committedData.addAll(chunk);
         }
       } catch (e) {
-        debugPrint('[LibraryProvider] markAlbumTracks rollback — Firestore failed: $e');
+        debugPrint('[LibraryRepositoryImpl] markAlbumTracks rollback — Firestore failed: $e');
         _lastSyncError = 'mark_album_failed';
         if (committedData.isEmpty) {
           _tracks = prevTracks;
@@ -729,7 +729,7 @@ class ListenedTracksRepository {
           committedUnmarkedIds.addAll(chunk);
         }
       } catch (e) {
-        debugPrint('[LibraryProvider] unmarkAlbumTracks rollback — Firestore failed: $e');
+        debugPrint('[LibraryRepositoryImpl] unmarkAlbumTracks rollback — Firestore failed: $e');
         _lastSyncError = 'unmark_album_failed';
         if (committedUnmarkedIds.isEmpty) {
           _tracks = prevTracks;

@@ -4,12 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/play_history.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/moon_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/moon_atmosphere.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/moon_button.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/moon_sheet.dart';
@@ -150,8 +150,8 @@ void main() {
     await tester.pumpWidget(TestScope(
         overrides: [
           audioProvider.overrideWith((ref) => AudioProvider()),
-          playlistProvider.overrideWith((ref) => PlaylistProvider()),
-          libraryProvider.overrideWith((ref) => LibraryProvider()),
+          playlistProvider.overrideWith((ref) => PlaylistRepositoryImpl()),
+          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           playHistoryProvider.overrideWith((ref) => history, disposeNotifier: false),
         ],
@@ -175,7 +175,7 @@ void main() {
     final history = PlayHistory();
     await history.record(_t('recent'), at: at.subtract(const Duration(days: 5)));
     await history.record(_t('lastCycle'), at: at.subtract(const Duration(days: 40)));
-    final library = LibraryProvider();
+    final library = LibraryRepositoryImpl();
 
     final mix = MoonSheet.buildMix(MoonCalculator.snapshot(at), history, library);
     expect(mix.first.id, 'recent');

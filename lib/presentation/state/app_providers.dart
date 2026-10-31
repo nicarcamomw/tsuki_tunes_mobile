@@ -9,16 +9,16 @@ import '../../data/datasources/play_history.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
+import '../../data/repositories/library_repository_impl.dart';
+import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import 'ambient_provider.dart';
 import 'audio_provider.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
-import 'library_provider.dart';
 import 'locale_provider.dart';
 import 'mask_provider.dart';
 import 'moon_provider.dart';
-import 'playlist_provider.dart';
 import 'run_provider.dart';
 import 'search_provider.dart';
 import 'shake_skip_provider.dart';
@@ -40,15 +40,15 @@ final connectivityProvider = ChangeNotifierProvider<ConnectivityProvider>(
 
 final authProvider = ChangeNotifierProvider<AuthProvider>((ref) => AuthProvider());
 
-final libraryProvider = ChangeNotifierProvider<LibraryProvider>((ref) {
-  final library = LibraryProvider();
+final libraryProvider = ChangeNotifierProvider<LibraryRepositoryImpl>((ref) {
+  final library = LibraryRepositoryImpl();
   _follow(ref, library, () {
     ReleaseRadarService().watchArtists(library.followedArtists);
   }, now: false);
   return library;
 });
 
-final playlistProvider = ChangeNotifierProvider<PlaylistProvider>((ref) => PlaylistProvider());
+final playlistProvider = ChangeNotifierProvider<PlaylistRepositoryImpl>((ref) => PlaylistRepositoryImpl());
 
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 

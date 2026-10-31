@@ -8,9 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/datasources/play_history.dart';
+import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
-import '../state/library_provider.dart';
 import '../state/moon_provider.dart';
 import 'cyber_glitch_text.dart';
 import 'moon_glyph.dart';
@@ -45,7 +45,7 @@ class MoonSheet extends ConsumerWidget {
 
   /// The tracks of the mix: most played this lunar cycle, topped up with
   /// favorites and recents when the cycle was quiet.
-  static List<Track> buildMix(MoonSnapshot s, PlayHistory history, LibraryProvider library) {
+  static List<Track> buildMix(MoonSnapshot s, PlayHistory history, LibraryRepositoryImpl library) {
     final from = s.isFullMoonWindow
         ? s.nearestFull.subtract(Duration(
             minutes: (MoonCalculator.synodicMonth * 1440).round()))

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +13,7 @@ void main() {
   group('AlbumTrackCounts Pruning & Bounded Storage Tests', () {
     test('registerAlbumTrackCount does not persist unlistened albums to storage', () async {
       final storage = StorageService();
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       library.setListenedTracksLoadedForTesting(true);
@@ -31,7 +31,7 @@ void main() {
 
     test('pruneAlbumTrackCounts removes orphaned albums and preserves active ones', () async {
       final storage = StorageService();
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       // Pre-seed storage with orphaned albums
@@ -76,7 +76,7 @@ void main() {
     });
 
     test('pruneAlbumTrackCounts does nothing if listened tracks are not loaded yet', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       library.registerAlbumTrackCount('some_album', 10);
@@ -89,7 +89,7 @@ void main() {
 
     test('registerAlbumTrackCount persists when album already has listened tracks', () async {
       final storage = StorageService();
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       library.setListenedTracksForTesting([

@@ -13,11 +13,11 @@ import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/device_location.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/rain_mix.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/weather_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/moon_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/weather_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/sky_line.dart';
@@ -346,7 +346,7 @@ void main() {
       final app = MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
       await tester.pumpWidget(TestScope(
         overrides: [
-          libraryProvider.overrideWith((ref) => LibraryProvider()),
+          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
           weatherProvider.overrideWith((ref) => weather, disposeNotifier: false),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           ambientProvider.overrideWith((ref) => AmbientProvider()),

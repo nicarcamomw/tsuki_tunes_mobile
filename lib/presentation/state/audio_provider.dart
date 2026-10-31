@@ -26,6 +26,7 @@ import '../../domain/entities/smart_shuffle.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart' show SongRadio;
+import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
 import 'audio_sleep_timer.dart';
 import 'connectivity_provider.dart';
@@ -41,7 +42,7 @@ part 'audio_playback_errors.dart';
 part 'audio_playback_state.dart';
 part 'audio_spotify_playback.dart';
 
-class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
+class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implements PlaybackController {
   final AudioPlayerService _service;
   final SpotifyService _spotify;
   final SpotifyNativePlayer _nativePlayer;
@@ -161,9 +162,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get radioUsesLastFm => _radioCtrl.usesLastFm;
   RadioReason? radioReasonFor(String trackId) => _radioCtrl.reasonFor(trackId);
 
+  @override
   Track? get currentTrack => _currentTrack;
   List<Track> get queue => _q.tracks;
   int get currentIndex => _q.currentIndex;
+  @override
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
   bool get isShuffle => _q.isShuffle;
@@ -735,6 +738,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   PlaybackError classifyPlaybackError(Object error, [Track? track]) =>
       _classifyPlaybackError(error, track);
 
+  @override
   Future<void> playTrack(Track track, {List<Track>? newQueue}) async {
     // Playing an album/playlist replaces the radio; picking within the
     // queue keeps it and teaches it whether the last song was skipped.
@@ -903,6 +907,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  @override
   Future<void> togglePlay() async {
     if (_currentTrack == null && !_q.isEmpty) {
       await playTrack(_q.tracks.first);
@@ -1331,6 +1336,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Plays [track] right after the current one. [userQueued] false is for
   /// tracks the app picks itself (running mode).
+  @override
   void playNext(Track track, {bool userQueued = true}) {
     if (!_q.insertNext(track, userQueued: userQueued)) return;
     _queueChanged();
@@ -1338,7 +1344,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Queues tracks after the current one and anything queued before them,
   /// ahead of the rest of the album or playlist, like Spotify's queue.
+  @override
   void addToQueue(Track track) => addAllToQueue([track]);
+  @override
   void addAllToQueue(List<Track> tracks) {
     if (_q.enqueue(tracks) == 0) return;
     _queueChanged();
@@ -1352,6 +1360,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
   /// Removes the track at [index] from the playback queue.
+  @override
   void removeFromQueue(int index) {
     if (index < 0 || index >= _q.length) return;
     final wasCurrent = _q.removeAt(index);
@@ -1424,6 +1433,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Song radio (delegated to AudioRadioController)
   // ---------------------------------------------------------------------------
 
+  @override
   Future<bool> startRadio(Track seed) => _radioCtrl.start(
         seed,
         currentTrack: _currentTrack,

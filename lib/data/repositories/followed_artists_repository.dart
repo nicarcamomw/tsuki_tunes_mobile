@@ -56,7 +56,7 @@ class FollowedArtistsRepository {
         _onChanged();
       }
     } catch (e) {
-      debugPrint('[LibraryProvider] Error restoring cached followed artists: $e');
+      debugPrint('[LibraryRepositoryImpl] Error restoring cached followed artists: $e');
     }
 
     final followedCol = userDoc.collection('followedArtists');
@@ -70,7 +70,7 @@ class FollowedArtistsRepository {
       _onChanged();
       unawaited(_saveCache(uid));
     } catch (e) {
-      debugPrint('[LibraryProvider] Followed artists fetch error: $e');
+      debugPrint('[LibraryRepositoryImpl] Followed artists fetch error: $e');
     }
 
     _subscription = followedCol.snapshots().listen((snapshot) {
@@ -98,7 +98,7 @@ class FollowedArtistsRepository {
         _saveCache(uid);
       }
     }, onError: (e) {
-      debugPrint('[LibraryProvider] Followed artists sync error: $e');
+      debugPrint('[LibraryRepositoryImpl] Followed artists sync error: $e');
     });
   }
 
@@ -162,7 +162,7 @@ class FollowedArtistsRepository {
             SetOptions(merge: true));
         await SubWriteQueue.instance.run(batch.commit);
       } catch (e) {
-        debugPrint('[LibraryProvider] $label rollback: $e');
+        debugPrint('[LibraryRepositoryImpl] $label rollback: $e');
         _artists = prevArtists;
         _ids = prevIds;
         _onChanged();

@@ -9,9 +9,9 @@ import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../state/app_providers.dart';
-import '../state/library_provider.dart';
 import '../state/locale_provider.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
@@ -411,7 +411,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
   }
 
   List<Widget> _buildAllSections(Map<String, List<Album>> cats,
-      LibraryProvider library, LocaleProvider locale, AppStrings strings) {
+      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
     final sections = <Widget>[];
     final order = [
       ('album', strings.tabAlbums, Icons.album_rounded, false),
@@ -457,7 +457,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
   }
 
   List<Widget> _buildFilteredGrid(List<Album> albums,
-      LibraryProvider library, LocaleProvider locale, AppStrings strings,
+      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     return [
       SliverPadding(
@@ -480,7 +480,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
     ];
   }
 
-  Widget _buildItem(BuildContext context, Album album, LibraryProvider library,
+  Widget _buildItem(BuildContext context, Album album, LibraryRepositoryImpl library,
       LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     final isCompleted =

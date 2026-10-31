@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/play_history.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 import 'helpers/fake_firebase_service.dart';
 
@@ -31,7 +31,7 @@ void main() {
 
   late ProviderContainer container;
   late AudioProvider player;
-  late LibraryProvider library;
+  late LibraryRepositoryImpl library;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -41,7 +41,7 @@ void main() {
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'), (_) async => null);
     player = AudioProvider();
-    library = LibraryProvider(firebase: FakeFirebaseService(FakeFirebaseFirestore()));
+    library = LibraryRepositoryImpl(firebase: FakeFirebaseService(FakeFirebaseFirestore()));
     await library.connectToFirestore('u1');
     await pumpEventQueue();
     // The whole graph without a single widget: only the pieces that would
@@ -49,7 +49,7 @@ void main() {
     container = ProviderContainer(overrides: [
       audioProvider.overrideWith((ref) => player),
       libraryProvider.overrideWith((ref) => library),
-      playlistProvider.overrideWith((ref) => PlaylistProvider()),
+      playlistProvider.overrideWith((ref) => PlaylistRepositoryImpl()),
       ambientProvider.overrideWith((ref) => AmbientProvider()),
       playHistoryProvider.overrideWith((ref) => PlayHistory()),
       maskProvider.overrideWith((ref) => MaskProvider()),

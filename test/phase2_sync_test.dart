@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
 
 Map<String, dynamic> _t(String id) => {'id': id, 'title': 'Track $id'};
 List<String> _ids(List<Map<String, dynamic>> tracks) =>
@@ -26,16 +26,16 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('PlaylistProvider.mergePlaylistTracks', () {
+  group('PlaylistRepositoryImpl.mergePlaylistTracks', () {
     test('add keeps tracks added on another device', () {
       final server = [_t('1'), _t('2'), _t('remote')];
       final merged =
-          PlaylistProvider.mergePlaylistTracks(server, add: _t('3'));
+          PlaylistRepositoryImpl.mergePlaylistTracks(server, add: _t('3'));
       expect(_ids(merged), ['1', '2', 'remote', '3']);
     });
 
     test('add is a no-op when the track is already there', () {
-      final merged = PlaylistProvider.mergePlaylistTracks([_t('1')],
+      final merged = PlaylistRepositoryImpl.mergePlaylistTracks([_t('1')],
           add: {'id': '1', 'title': 'different map'});
       expect(merged.length, 1);
     });
@@ -43,22 +43,22 @@ void main() {
     test('remove only drops that track', () {
       final server = [_t('1'), _t('2'), _t('remote')];
       final merged =
-          PlaylistProvider.mergePlaylistTracks(server, removeId: '2');
+          PlaylistRepositoryImpl.mergePlaylistTracks(server, removeId: '2');
       expect(_ids(merged), ['1', 'remote']);
     });
 
     test('reorder applies local order and keeps unknown tracks at the end',
         () {
       final server = [_t('1'), _t('2'), _t('3'), _t('remote')];
-      final merged = PlaylistProvider.mergePlaylistTracks(server,
+      final merged = PlaylistRepositoryImpl.mergePlaylistTracks(server,
           order: ['3', '1', '2', 'removed-elsewhere']);
       expect(_ids(merged), ['3', '1', '2', 'remote']);
     });
   });
 
-  group('LibraryProvider.applyRemoteDeletion', () {
+  group('LibraryRepositoryImpl.applyRemoteDeletion', () {
     test('removes a track listened before the deletion', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
       final deletedAt = DateTime(2026, 10, 20);
       library.setListenedTracksForTesting([
@@ -73,7 +73,7 @@ void main() {
     });
 
     test('keeps a track re-marked after the deletion', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
       library.setListenedTracksForTesting([
         _listened('remarked', DateTime(2026, 10, 21)),
@@ -86,7 +86,7 @@ void main() {
     });
 
     test('ignores tracks that are not listened', () async {
-      final library = LibraryProvider();
+      final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
       expect(library.applyRemoteDeletion('missing', DateTime.now()), isFalse);
     });

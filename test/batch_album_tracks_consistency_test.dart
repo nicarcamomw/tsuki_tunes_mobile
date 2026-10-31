@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 List<Track> generateTracks(int count, {String albumId = 'album_1'}) {
   return List.generate(
@@ -30,12 +30,12 @@ void main() {
 
   group('Firestore Batch Album Tracks Consistency Tests', () {
     late StorageService storage;
-    late LibraryProvider library;
+    late LibraryRepositoryImpl library;
     const testUid = 'user_test_123';
 
     setUp(() async {
       storage = StorageService();
-      library = LibraryProvider();
+      library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
       library.bypassAuthForTesting = true;

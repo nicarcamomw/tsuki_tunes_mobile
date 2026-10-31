@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
+import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
-import '../state/playlist_provider.dart';
 import '../widgets/track_tile.dart';
 
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
@@ -469,7 +469,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          maxLength: PlaylistProvider.maxNameLength,
+          maxLength: PlaylistRepositoryImpl.maxNameLength,
           style: locale.getTextStyle(
             fontSize: 14,
             color: AppColors.textBright,
