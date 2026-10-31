@@ -640,7 +640,7 @@ void main() {
       await provider.togglePlay();
 
       expect(fakeNative.resumeCount, 0);
-      expect(fakeSpotify.lastPlayedUris?.first, 'spotify:track:t1');
+      expect(fakeNative._playingUri, 'spotify:track:t1');
       expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
     });
   });
@@ -654,6 +654,10 @@ void main() {
       fakeNative.simulateStateChanged(1000, 180000, false,
           uri: 'spotify:track:${tracks.first.id}');
       await Future.delayed(Duration.zero);
+      provider.afterSpotifyStartedForTesting();
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
       provider.backdatePlayStartForTesting(const Duration(seconds: 15));
       return provider;
     }
@@ -972,12 +976,11 @@ void main() {
 
     test('when the list play failed, the song is not restarted later',
         () async {
-      fakeSpotify.playWillFail = true;
       final provider =
           await playing([_track('t1'), _track('t2'), _track('t3')]);
       expect(fakeNative._playingUri, 'spotify:track:t1');
 
-      fakeSpotify.playWillFail = false;
+      fakeSpotify.playWillFail = true;
       final plays = fakeSpotify.playCount;
       provider.afterSpotifyStartedForTesting();
       for (var i = 0; i < 5; i++) {
@@ -994,6 +997,13 @@ void main() {
       final provider = createProvider();
       await provider.playTrack(tracks.first, newQueue: tracks);
       await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      provider.afterSpotifyStartedForTesting();
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
       fakeNative.simulateStateChanged(20000, 180000, false,
           uri: 'spotify:track:${tracks.first.id}');
       await Future.delayed(Duration.zero);

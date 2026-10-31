@@ -657,7 +657,7 @@ class SpotifyService {
       if (phoneId != null) {
         debugPrint('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
         await transferPlayback(phoneId);
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 200));
       }
       return phoneId;
     }
@@ -734,7 +734,7 @@ class SpotifyService {
       // Play failed — try transfer + retry once
       debugPrint('Spotify play failed, forcing transfer and retry');
       await transferPlayback(targetDevice);
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 300));
 
       final retry = await _put(
         Uri.parse('https://api.spotify.com/v1/me/player/play?device_id=$targetDevice'),
@@ -773,19 +773,30 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
-      final deviceId = await ensureActiveDevice();
-      if (deviceId == null) {
-        debugPrint('Spotify resume: no smartphone device, skipping Web API');
-        return false;
-      }
-      final url =
-          'https://api.spotify.com/v1/me/player/play?device_id=$deviceId';
+      // Try resuming on the current device first (no device lookup needed:
+      // the device from the last play should still be active).
       final response = await _put(
-        Uri.parse(url),
+        Uri.parse('https://api.spotify.com/v1/me/player/play'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
       debugPrint('Spotify resume response: ${response.statusCode}');
-      return response.statusCode == 204 || response.statusCode == 200;
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        return true;
+      }
+
+      // Device lost: resolve and retry.
+      final deviceId = await ensureActiveDevice();
+      if (deviceId == null) {
+        debugPrint('Spotify resume: no smartphone device');
+        return false;
+      }
+      final retry = await _put(
+        Uri.parse(
+            'https://api.spotify.com/v1/me/player/play?device_id=$deviceId'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+      debugPrint('Spotify resume retry: ${retry.statusCode}');
+      return retry.statusCode == 204 || retry.statusCode == 200;
     } catch (e) {
       debugPrint('Spotify resume error: $e');
       return false;
