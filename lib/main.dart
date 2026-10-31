@@ -193,9 +193,15 @@ class TsukiTunesApp extends StatelessWidget {
         ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
             PlayHistory, MaskProvider, AudioProvider>(
           create: (_) => _audio,
-          update: (_, library, connectivity, ambient, history, masks, audio) {
+          update: (ctx, library, connectivity, ambient, history, masks, audio) {
             final player = audio ?? AudioProvider();
             player.setConnectivityProvider(connectivity);
+            final playlists = ctx.read<PlaylistProvider>();
+            // Smart shuffle only recommends songs the user doesn't have.
+            player.isInLibrary = (id) =>
+                library.isTrackListened(id) ||
+                library.isFavoriteTrack(id) ||
+                playlists.playlists.any((p) => p.tracks.any((t) => t.id == id));
             player.onPlayCounted = (track) {
               history.record(track);
               masks.onPlayCounted(track);

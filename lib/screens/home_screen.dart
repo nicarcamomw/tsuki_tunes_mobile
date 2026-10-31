@@ -31,6 +31,8 @@ import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
+import '../widgets/weekly_challenges_card.dart';
+import '../widgets/wrapped_picker_sheet.dart';
 import 'guess_song_screen.dart';
 import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
@@ -38,7 +40,6 @@ import 'rabbit_hole_screen.dart';
 import 'release_radar_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
-import 'wrapped_screen.dart';
 
 part 'home/affinity_sheet.dart';
 part 'home/entry_cards.dart';
@@ -365,6 +366,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SliverToBoxAdapter(child: _buildFeatureCards(locale)),
 
+              // A reason to come back: this week's challenges and their mask.
+              const SliverToBoxAdapter(child: WeeklyChallengesCard(compact: true)),
+
               if (isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -485,14 +489,16 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
             child: Row(
               children: [
-                Flexible(
+                // The title takes all the room left by the (?)
+                // button: a Spacer here would take half of it.
+                Expanded(
                   child: _SectionTitle(
                     locale: locale,
                     text: strings.topArtistsTitle,
-                    singleLine: true,
+                    maxLines: 2,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 // Flush right, vertically centred on the title; the
                 // glyph is an icon so it sits dead centre in the ring.
                 GestureDetector(

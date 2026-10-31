@@ -19,19 +19,17 @@ import '../widgets/tap_scale.dart';
 /// progress and play controls at the bottom.
 class LyricsScreen extends StatefulWidget {
   final LyricsController controller;
-  final Color tint;
 
-  const LyricsScreen({super.key, required this.controller, required this.tint});
+  const LyricsScreen({super.key, required this.controller});
 
   static Route<void> route({
     required LyricsController controller,
-    required Color tint,
   }) {
     return PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 380),
       reverseTransitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (_, __, ___) =>
-          LyricsScreen(controller: controller, tint: tint),
+          LyricsScreen(controller: controller),
       transitionsBuilder: (_, animation, __, child) {
         final curved =
             CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
@@ -52,19 +50,11 @@ class LyricsScreen extends StatefulWidget {
 }
 
 class _LyricsScreenState extends State<LyricsScreen> {
-  late Color _tint = widget.tint;
-  String? _tintUrl;
 
   void _syncTrack(Track track) {
     if (widget.controller.trackId != track.id) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) widget.controller.ensureFor(track);
-      });
-    }
-    if (_tintUrl != track.coverUrl) {
-      _tintUrl = track.coverUrl;
-      AlbumTint.of(track.coverUrl).then((c) {
-        if (mounted && _tintUrl == track.coverUrl) setState(() => _tint = c);
       });
     }
   }
@@ -163,7 +153,6 @@ class _LyricsScreenState extends State<LyricsScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       body: LyricsBackdrop(
-        tint: _tint,
         child: Stack(
           children: [
             // The cover, blurred into a faint glow behind the words.

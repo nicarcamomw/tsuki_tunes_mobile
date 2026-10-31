@@ -125,25 +125,37 @@ void main() {
     expect(q.shouldStopAtEnd(), isTrue);
   });
 
-  test('smart shuffle avoids the artist just played', () {
+  test('smart shuffle never plays the same artist twice in a row', () {
     final mixed = [
       _t('x0', artist: 'x'),
       _t('x1', artist: 'x'),
       _t('y0', artist: 'y'),
     ];
-    var checked = 0;
     for (var seed = 0; seed < 50; seed++) {
       final sq = PlaybackQueue(random: Random(seed));
       sq.select(mixed[0], newQueue: mixed);
       sq.toggleShuffle();
       sq.next(online: true, canPlay: _all);
-      // Just heard artist 'x' (x1): the -3 penalty must rule out x0.
-      if (sq.current!.id != 'x1') continue;
-      checked++;
-      sq.next(online: true, canPlay: _all);
+      // Just heard artist 'x' (x0): y0 comes before x1.
       expect(sq.current!.id, 'y0');
     }
-    expect(checked, greaterThan(0));
+  });
+
+  test('with it off, the same artist may follow', () {
+    final mixed = [
+      _t('x0', artist: 'x'),
+      _t('x1', artist: 'x'),
+      _t('y0', artist: 'y'),
+    ];
+    final next = <String>{};
+    for (var seed = 0; seed < 50; seed++) {
+      final sq = PlaybackQueue(random: Random(seed))..avoidSameArtist = false;
+      sq.select(mixed[0], newQueue: mixed);
+      sq.toggleShuffle();
+      sq.next(online: true, canPlay: _all);
+      next.add(sq.current!.id);
+    }
+    expect(next, containsAll(['x1', 'y0']));
   });
 
   group('editing', () {
@@ -179,6 +191,26 @@ void main() {
           q.next(online: true, canPlay: _all);
           expect(q.currentIndex, i);
         }
+      });
+
+      test('selecting the track next() moved to keeps the picks ahead', () {
+        q.toggleShuffle();
+        final ahead = q.peekUpcoming(3);
+        for (final i in ahead) {
+          q.next(online: true, canPlay: _all);
+          // The player then plays it, selecting it again.
+          q.select(q.tracks[q.currentIndex]);
+          expect(q.currentIndex, i);
+        }
+      });
+
+      test('picking another song in the queue redoes the picks', () {
+        q.toggleShuffle();
+        final ahead = q.peekUpcoming(3);
+        final other = [for (var i = 0; i < q.length; i++) i]
+            .firstWhere((i) => i != q.currentIndex && i != ahead.first);
+        q.select(q.tracks[other]);
+        expect(q.nextShuffleIndex, isNull);
       });
 
       test('queueing by hand redoes the picks with the queued song first', () {

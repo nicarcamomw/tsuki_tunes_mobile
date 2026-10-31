@@ -1366,7 +1366,7 @@
       }
     }
   },
-  "playlistMeta": "{count} canciones  ·  {duration}",
+  "playlistMeta": "{count, plural, =1{1 canción} other{{count} canciones}}  ·  {duration}",
   "@playlistMeta": {
     "placeholders": {
       "count": {
@@ -1726,5 +1726,80 @@
   "batteryGuideStepRetry": "Vuelve a Tsuki y dale play otra vez.",
   "batteryGuideOpenSettings": "ABRIR AJUSTES DE SPOTIFY",
   "batteryGuideDontShow": "No volver a mostrar",
-  "batteryGuideOpenFailed": "No pude abrir los ajustes. Búscalos en Ajustes › Aplicaciones › Spotify."
+  "batteryGuideOpenFailed": "No pude abrir los ajustes. Búscalos en Ajustes › Aplicaciones › Spotify.",
+  "crossfadeSpotifySubtitle": "Con Spotify, Spotify une las canciones: activa Crossfade y Reproducción sin pausas en Spotify › Configuración › Reproducción. Este ajuste se usa en las vistas previas.",
+  "queueNowPlaying": "SONANDO AHORA",
+  "queueComingUp": "A CONTINUACIÓN",
+  "queueShuffledTag": "ALEATORIO",
+  "queueGesturesHint": "Desliza → para que suene después · ← para quitar · mantén pulsado para mover",
+  "queueSaveAsPlaylist": "Guardar como playlist",
+  "queueNothingNext": "No hay más canciones después de esta",
+  "queueRemovedSongs": "Canciones quitadas",
+  "a11yMoveUp": "Subir",
+  "a11yMoveDown": "Bajar",
+  "queuePlayedHeader": "YA SONARON ({count})",
+  "@queuePlayedHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueMoreShuffled": "+{count} más, en orden aleatorio",
+  "@queueMoreShuffled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueSummary": "{count, plural, =1{1 canción} other{{count} canciones}} · {minutes} min",
+  "@queueSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "playlistEdit": "Editar playlist",
+  "playlistEditDone": "LISTO",
+  "playlistEditHint": "Arrastra ≡ para ordenar · toca ⊖ para quitar",
+  "playlistRemoveFromThis": "Quitar de esta playlist",
+  "autoplaySimilarTitle": "Seguir con canciones similares",
+  "autoplaySimilarSubtitle": "Cuando se acaba lo que escuchas, sigue con música parecida (y Spotify no pone la suya)",
+  "shuffleOffToast": "Aleatorio desactivado",
+  "shuffleOnToast": "Aleatorio inteligente",
+  "shuffleSmartToast": "Mezcla inteligente: con recomendaciones",
+  "smartShuffleTitle": "Mezcla inteligente",
+  "smartShuffleSubtitle": "Cómo se ordena el aleatorio",
+  "shuffleAvoidArtistTitle": "No repetir artista seguido",
+  "shuffleAvoidArtistSubtitle": "Siempre otro artista entre dos canciones del mismo",
+  "shuffleEnergyTitle": "Energía (BPM)",
+  "shuffleEnergyFree": "Libre",
+  "shuffleEnergyFreeHint": "Al azar",
+  "shuffleEnergyAlternate": "Alternar",
+  "shuffleEnergyAlternateHint": "Una movida, una tranquila",
+  "shuffleEnergySmooth": "Suave",
+  "shuffleEnergySmoothHint": "Tempo parecido de una a otra",
+  "shuffleRecoTitle": "Recomendaciones",
+  "shuffleRecoSubtitle": "Canciones que no tienes guardadas, parecidas a lo que escuchas, entre las tuyas",
+  "shuffleRecoSwitch": "Agregar recomendaciones",
+  "shuffleRecoFew": "Pocas",
+  "shuffleRecoNormal": "Normal",
+  "shuffleRecoMany": "Muchas",
+  "recommendedTag": "RECOMENDADA",
+  "queueSmartShuffleTag": "MEZCLA INTELIGENTE",
+  "shuffleHoldHint": "Mantén pulsado el botón aleatorio para configurarlo",
+  "a11yShuffleSmart": "Aleatorio con recomendaciones",
+  "shuffleRecoEvery": "1 cada {count} canciones",
+  "@shuffleRecoEvery": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

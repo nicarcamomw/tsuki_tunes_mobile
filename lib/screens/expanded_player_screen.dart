@@ -20,12 +20,16 @@ import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
-import '../widgets/flow_sheet.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/playlist_selector_sheet.dart';
+import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/rinnegan_visualizer.dart';
+import '../widgets/shuffle_mode_icon.dart';
+import '../widgets/smart_shuffle_sheet.dart';
 import '../widgets/tap_scale.dart';
+import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
 import 'artist_detail_screen.dart';
 import 'lyrics_screen.dart';
@@ -57,8 +61,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
   late Animation<double> _snapAnimation;
 
   final LyricsController _lyrics = LyricsController();
-  Color _tint = AlbumTint.fallback;
-  String? _tintUrl;
 
   @override
   void initState() {
@@ -86,30 +88,19 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     super.dispose();
   }
 
-  /// Keeps the lyrics and the album color in step with the playing track.
+  /// Keeps the lyrics in step with the playing track.
   void _syncLyrics(Track track) {
     if (_lyrics.trackId != track.id) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _lyrics.ensureFor(track);
       });
     }
-    if (_tintUrl != track.coverUrl) {
-      _tintUrl = track.coverUrl;
-      final cached = AlbumTint.cached(track.coverUrl);
-      if (cached != null) {
-        _tint = cached;
-      } else {
-        AlbumTint.of(track.coverUrl).then((c) {
-          if (mounted && _tintUrl == track.coverUrl) setState(() => _tint = c);
-        });
-      }
-    }
   }
 
   void _openLyrics() {
     HapticFeedback.selectionClick();
     Navigator.of(context).push(
-      LyricsScreen.route(controller: _lyrics, tint: _tint),
+      LyricsScreen.route(controller: _lyrics),
     );
   }
 
@@ -153,7 +144,6 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                 LyricsCard(
                   controller: _lyrics,
                   track: track,
-                  tint: _tint,
                   onOpen: _openLyrics,
                 ),
                 SizedBox(height: 24 + bottom),
@@ -221,9 +211,9 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
     final locale = context.watch<LocaleProvider>();
     final strings = locale.strings;
     final audio = context.read<AudioProvider>();
-    final (track, isPlaying, isBuffering, isShuffle, repeatMode, useSpotify, radioActive, playbackError) =
-        context.select<AudioProvider, (Track?, bool, bool, bool, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
-            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.isShuffle, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
+    final (track, isPlaying, isBuffering, shuffleMode, repeatMode, useSpotify, radioActive, playbackError) =
+        context.select<AudioProvider, (Track?, bool, bool, ShuffleMode, PlaybackRepeatMode, bool, bool, PlaybackError?)>(
+            (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.shuffleMode, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
     // Only this track's listened flag: watching the whole library would rebuild
     // the player on every sync and history update.
     final isListened = context.select<LibraryProvider, bool>(
@@ -275,17 +265,11 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
                   // Art or Queue (lyrics live in a card below the player)
                   if (_viewMode == _CenterViewMode.queue)
-                    Selector<AudioProvider, (int, int)>(
-                      selector: (_, a) =>
-                          (Object.hashAll(a.queue.map((t) => t.id)), a.currentIndex),
-                      builder: (context, _, __) => _QueueView(
-                        audio: audio,
-                        locale: locale,
-                        onPlay: (t) {
-                          audio.playTrack(t);
-                          setState(() => _viewMode = _CenterViewMode.artwork);
-                        },
-                      ),
+                    _QueueView(
+                      audio: audio,
+                      locale: locale,
+                      onPlay: () =>
+                          setState(() => _viewMode = _CenterViewMode.artwork),
                     )
                   else ...[
                     const Spacer(),
@@ -342,7 +326,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
                   locale: locale,
                   isPlaying: isPlaying,
                   isBuffering: isBuffering,
-                  isShuffle: isShuffle,
+                  shuffleMode: shuffleMode,
                   repeatMode: repeatMode,
                 ),
 

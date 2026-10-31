@@ -268,13 +268,14 @@ class _SectionTitle extends StatelessWidget {
   final LocaleProvider locale;
   final String text;
 
-  /// Cut to one line, for headings that share their row.
-  final bool singleLine;
+  /// Lines it may take before it is cut, for headings that share their
+  /// row; unlimited when null.
+  final int? maxLines;
 
   const _SectionTitle({
     required this.locale,
     required this.text,
-    this.singleLine = false,
+    this.maxLines,
   });
 
   @override
@@ -288,8 +289,8 @@ class _SectionTitle extends StatelessWidget {
         ).createShader(bounds),
         child: Text(
           text,
-          maxLines: singleLine ? 1 : null,
-          overflow: singleLine ? TextOverflow.ellipsis : null,
+          maxLines: maxLines,
+          overflow: maxLines != null ? TextOverflow.ellipsis : null,
           style: locale.getTextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
@@ -11,14 +12,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/utils/deezer_preview.dart';
 import '../models/playback_error.dart';
 import '../models/repeat_mode.dart';
+import '../models/smart_shuffle.dart';
 import '../models/track.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_precache_service.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
+import '../services/headphones_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/media_session_handler.dart';
 import '../services/playback_queue.dart';
+import '../services/song_radio.dart' show SongRadio;
 import '../services/spotify_service.dart';
 import '../services/spotify_web_player.dart';
 import '../services/storage_service.dart';
@@ -28,6 +32,8 @@ import 'connectivity_provider.dart';
 
 export '../models/playback_error.dart';
 export '../models/repeat_mode.dart';
+export '../models/smart_shuffle.dart';
+export '../services/playback_queue.dart' show QueueSnapshot;
 export 'audio_radio_controller.dart';
 
 part 'audio_media_session.dart';
@@ -67,6 +73,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   String? _prefetchedForTrackId;
   String? _prefetchedTargetTrackId;
   int _prefetchGeneration = 0;
+  // Previews downloaded ahead of the current song, so the next ones play
+  // without a connection (metro, plane) and without buffering.
+  static const int _precacheAhead = 5;
+  // The songs after the next one wait this long into a song, so they
+  // don't slow its start; the next one downloads right away.
+  static const _precacheStartDelay = Duration(seconds: 3);
+  int _precacheGeneration = 0;
 
   bool _completionHandled = false;
   bool _crossfadeTriggered = false;
@@ -93,10 +106,24 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   // order. Spotify plays them by itself, so the queue goes on even when
   // Android freezes or kills Tsuki in the background.
   List<({String trackId, String uri})> _spotifyAhead = const [];
-  // Paused by an audio interruption (a call); resumes when it ends.
-  bool _spotifyInterrupted = false;
-  bool _warmingUpSpotify = false;
-  int _spotifyPollTick = 0;
+  // Long enough that the list rarely has to be handed again (a brief
+  // restart of the song), so Spotify's own crossfade and gapless playback
+  // join song after song; short enough to look the songs up quickly.
+  static const int _spotifyAheadMax = 12;
+  // Whether Spotify loops the current song itself (our repeat-one), so it
+  // starts over with no gap instead of Tsuki playing it again. Null until
+  // set this session.
+  bool? _spotifyLoopsTrack;
+  // The list play failed for this song (Web API unusable): sending it again
+  // a few seconds in would only restart the song.
+  bool _spotifyListPlayFailed = false;
+  // Our queue grew past the list Spotify has: hand it the longer one at
+  // the next song's start.
+  bool _spotifyExtendAtNextSong = false;
+  // Queue edits wait a moment (several drags in a row) before Spotify gets
+  // the new list; while paused it gets it on resume instead.
+  Timer? _spotifyListTimer;
+  bool _spotifyListStale = false;
 
   late final SleepTimerController _sleepCtrl;
 
@@ -302,19 +329,49 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   bool canPlayOfflineForTesting(Track track) => _canPlayOffline(track);
 
-  void _prefetchUpcoming([int count = 3]) {
+  /// Downloads the previews of the next [count] songs in play order
+  /// (shuffle included), nearest first and one at a time, so the very next
+  /// song is ready soonest on a weak connection. A newer call (the song
+  /// changed) takes over from this one.
+  void _prefetchUpcoming([int count = _precacheAhead]) {
     if (_q.isEmpty) return;
-    for (var i = 1; i <= count; i++) {
-      final idx = (_q.currentIndex + i) % _q.length;
-      if (idx != _q.currentIndex) {
-        final track = _q.tracks[idx];
-        onPrecacheTrackForTesting?.call(track);
-        _precache(track);
-      }
+    final upcoming = [for (final i in _q.peekUpcoming(count)) _q.tracks[i]];
+    if (upcoming.isEmpty) return;
+    for (final track in upcoming) {
+      onPrecacheTrackForTesting?.call(track);
     }
+    final gen = ++_precacheGeneration;
+    final cache = AudioPrecacheService();
+    final missing = [
+      for (final t in upcoming)
+        if (!kIsWeb &&
+            t.previewUrl.isNotEmpty &&
+            cache.getCachedFilePath(t.id) == null)
+          t
+    ];
+    if (missing.isEmpty) return;
+    // The very next song first and at once: skipping soon must find it
+    // ready, as before.
+    final next = identical(missing.first, upcoming.first) ? missing.first : null;
+    final later = next == null ? missing : missing.sublist(1);
+    final sinceStart = DateTime.now().difference(_lastPlayStart);
+    unawaited(() async {
+      if (next != null) await _precache(next);
+      if (later.isEmpty) return;
+      final waited = DateTime.now().difference(_lastPlayStart);
+      if (gen != _precacheGeneration) return;
+      if (sinceStart < _precacheStartDelay && waited < _precacheStartDelay) {
+        await Future.delayed(_precacheStartDelay - waited);
+      }
+      for (final track in later) {
+        if (gen != _precacheGeneration) return;
+        await _precache(track);
+      }
+    }());
   }
   @visibleForTesting
-  void prefetchUpcomingForTesting([int count = 3]) => _prefetchUpcoming(count);
+  void prefetchUpcomingForTesting([int count = _precacheAhead]) =>
+      _prefetchUpcoming(count);
 
   AudioProvider({
     AudioPlayerService? service,
@@ -340,6 +397,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       onStateChanged: notifyListeners,
       persistPlaybackState: () async => _persistPlaybackState(),
       isOnline: () => _online,
+      onQueueGrew: _onQueueGrew,
     );
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
@@ -377,8 +435,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _checkBackgroundCompletion() {
     if (_currentTrack == null) return;
     if (_useSpotify && _spotifyActive) {
-      // Spotify knows our next songs: the state sync on resume follows it.
-      if (_nativePlayer.isConnected || _spotifyAhead.isNotEmpty) return;
+      // Spotify knows our next songs (or loops this one): the state sync on
+      // resume follows it.
+      if (_nativePlayer.isConnected ||
+          _spotifyAhead.isNotEmpty ||
+          _spotifyLoopsOurTrack) {
+        return;
+      }
       final elapsed = DateTime.now().difference(_spotifySyncTime);
       final estimatedPos = _spotifySyncPosition + elapsed;
       if (estimatedPos >= _duration + const Duration(seconds: 3) &&
@@ -425,9 +488,73 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
       final prefs = await SharedPreferences.getInstance();
       _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
+      _autoplaySimilar = prefs.getBool(_autoplayKey) ?? true;
+      await _loadShuffleSettings();
       notifyListeners();
     } catch (e) {
       debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+    }
+  }
+
+  // ── Similar songs after the end ──
+
+  static const _autoplayKey = 'tsuki_autoplay_similar';
+  bool _autoplaySimilar = true;
+  bool get autoplaySimilar => _autoplaySimilar;
+  // The song a continuation was already tried for (it found nothing).
+  String? _continueTriedFor;
+
+  Future<void> setAutoplaySimilar(bool enabled) async {
+    _autoplaySimilar = enabled;
+    _continueTriedFor = null;
+    notifyListeners();
+    if (enabled) _maybeContinueWithSimilar();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_autoplayKey, enabled);
+    } catch (_) {}
+  }
+
+  /// Whether the music may go on with similar songs once the queue ends.
+  bool get _mayContinueWithSimilar =>
+      _autoplaySimilar &&
+      !_radioCtrl.isActive &&
+      _q.repeatMode == PlaybackRepeatMode.off &&
+      !_sleepCtrl.stopAfterCurrentTrack &&
+      _online &&
+      // Running mode picks the songs itself.
+      _service.speedFor == null;
+
+  /// What's playing is about to run out: add similar songs after it (a
+  /// radio seeded with the song playing now). With Spotify this happens
+  /// before the list handed to it reaches our last song, so it never gets
+  /// to the end and starts its own autoplay: Tsuki stays in charge.
+  void _maybeContinueWithSimilar() {
+    final track = _currentTrack;
+    if (track == null || !_mayContinueWithSimilar) return;
+    if (_continueTriedFor == track.id) return;
+    final left = _q.isShuffle
+        ? _q.length - 1 - _q.played().length
+        : _q.upcomingCount;
+    final spotify = _useSpotify && _spotifyActive && !_spotifyFallbackActive;
+    if (left > (spotify ? _spotifyAheadMax : 3)) return;
+    _continueTriedFor = track.id;
+    debugPrint('[AudioProvider] Queue ending, adding similar songs');
+    unawaited(_radioCtrl.continueFrom(track));
+  }
+
+  /// Songs were added at the end (similar songs, radio): Spotify gets them
+  /// before its list runs out, quietly at a song's start when it can.
+  void _onQueueGrew() {
+    _prefetchNextTrack();
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    if (_spotifyAhead.length >= _spotifyAheadMax) return;
+    if (_spotifyAhead.length < 2) {
+      // About to run out: now, even if the song restarts for a moment.
+      unawaited(_reissueSpotifyAhead(force: true));
+    } else {
+      _spotifyExtendAtNextSong = true;
+      unawaited(_reissueSpotifyAhead());
     }
   }
 
@@ -469,6 +596,33 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  bool _spotifyInterrupted = false;
+
+  StreamSubscription<void>? _unplugSub;
+
+  /// Headphones out: pause, and stay paused (an interruption ending later
+  /// must not resume it out of the speaker).
+  void _onHeadphonesUnplugged() {
+    _spotifyInterrupted = false;
+    if (!_isPlaying) return;
+    debugPrint('[AudioProvider] Headphones unplugged, pausing');
+    if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
+      unawaited(_spotifyPause());
+      _isPlaying = false;
+      _stopPositionTimer();
+      notifyListeners();
+      _persistPlaybackState();
+    } else {
+      unawaited(_service.pause());
+    }
+  }
+
+  @visibleForTesting
+  void headphonesUnpluggedForTesting() => _onHeadphonesUnplugged();
+
+  bool _warmingUpSpotify = false;
+
+
   Future<void> updateSpotifyState() async {
     final wasSpotify = _useSpotify;
     _useSpotify = _spotify.isConnected && _spotify.isPremium;
@@ -483,6 +637,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     notifyListeners();
+  }
+
+  int _spotifyPollTick = 0;
+
+  @visibleForTesting
+  Future<void> refreshSpotifyListForTesting() async {
+    _spotifyListTimer?.cancel();
+    await _refreshSpotifyList();
   }
 
   /// Index of the queue track that is [title] by one of [artists], looking
@@ -579,7 +741,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (newQueue != null) _radioCtrl.radio = null;
     _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
-    if (newQueue != null && newQueue.isNotEmpty) _prefetchUpcoming();
+    if (newQueue != null) {
+      _recoRadio = null;
+      _recoSteeredBy = null;
+      if (_q.isShuffle) unawaited(_learnShuffleTempos());
+    }
+    // A new play hands Spotify a fresh list.
+    _spotifyListTimer?.cancel();
+    _spotifyListStale = false;
+    _spotifyExtendAtNextSong = false;
 
     _retryTimer?.cancel();
     _retryCount = 0;
@@ -642,12 +812,33 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// Once our song is playing in Spotify: match its repeat to ours and, if
+  /// it only got this one song, hand it the next ones too, so it moves on
+  /// by itself (with its crossfade) instead of stopping at the end.
+  void _afterSpotifyStarted() {
+    _keepMediaSessionOnTop();
+    unawaited(_syncSpotifyRepeat());
+    if (_spotifyAhead.isEmpty && !_spotifyListPlayFailed) {
+      unawaited(_reissueSpotifyAhead());
+    }
+  }
 
-  void _precache(Track track) {
+  @visibleForTesting
+  void afterSpotifyStartedForTesting() => _afterSpotifyStarted();
+
+  Timer? _mediaTopTimer;
+
+
+  Future<void> _precache(Track track) async {
+    if (!_online) return;
     if (_precacheWifiOnly && (_connectivityProvider?.isMetered ?? false)) {
       return;
     }
-    _withFreshPreview(track).then(AudioPrecacheService().precacheTrack);
+    try {
+      await AudioPrecacheService().precacheTrack(await _withFreshPreview(track));
+    } catch (e) {
+      debugPrint('[AudioProvider] Precache non-fatal error: $e');
+    }
   }
 
   /// Returns [track] with a playable previewUrl, re-fetching it from Deezer
@@ -680,13 +871,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   int? peekNextIndex() => _q.peekNext();
 
   void _prefetchNextTrack() {
+    _maybeContinueWithSimilar();
+    if (_smartShuffle) unawaited(_topUpRecommendations());
     final nextIdx = _q.peekNext();
     if (nextIdx == null || nextIdx < 0 || nextIdx >= _q.length) return;
 
     final nextTrack = _q.tracks[nextIdx];
 
-    // 1. Predictive Audio Pre-caching for Deezer (Zero-latency playback)
-    _precache(nextTrack);
+    // 1. Previews of the next songs, also with Spotify: if the connection
+    // drops, they play instead of nothing.
+    _prefetchUpcoming();
 
     // 2. Predictive URI resolution for Spotify (Zero-latency track start)
     if (_useSpotify) {
@@ -788,6 +982,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _retryTimer?.cancel();
     _retryCount = 0;
     _q.resetNavigation();
+    _spotifyListTimer?.cancel();
+    _spotifyListStale = false;
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
     _prefetchedTargetTrackId = null;
@@ -825,15 +1021,218 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void toggleShuffle() {
     _q.toggleShuffle();
     _prefetchedTargetTrackId = null;
+    if (_q.isShuffle) {
+      unawaited(_learnShuffleTempos());
+    } else {
+      _smartShuffle = false;
+      _applyShuffleSettings();
+      if (_q.dropRecommendations()) _persistPlaybackState();
+    }
     if (_currentTrack != null) {
       _prefetchNextTrack();
     }
+    // Spotify gets the songs in their new order.
+    _scheduleSpotifyListRefresh();
     notifyListeners();
+  }
+
+  // ── Smart shuffle ──
+
+  static const _avoidArtistKey = 'tsuki_shuffle_avoid_artist';
+  static const _energyKey = 'tsuki_shuffle_energy';
+  static const _recoEveryKey = 'tsuki_shuffle_reco_every';
+
+  /// Recommendations are slipped in (the shuffle button's third state).
+  bool _smartShuffle = false;
+  ShuffleEnergy _energy = ShuffleEnergy.alternate;
+  int _recoEvery = 3;
+  // Middle tempo of the queue, splitting "fast" from "calm" songs.
+  double? _bpmMedian;
+  int _tempoGeneration = 0;
+  SongRadio? _recoRadio;
+  String? _recoSteeredBy;
+  bool _recoLoading = false;
+
+  /// Whether a song is the user's (listened, favourite, in a playlist):
+  /// those are never recommended.
+  bool Function(String trackId)? isInLibrary;
+
+  ShuffleMode get shuffleMode => !_q.isShuffle
+      ? ShuffleMode.off
+      : (_smartShuffle ? ShuffleMode.smart : ShuffleMode.on);
+  bool get avoidSameArtist => _q.avoidSameArtist;
+  ShuffleEnergy get shuffleEnergy => _energy;
+
+  /// One recommended song after every this many of the user's.
+  int get recommendEvery => _recoEvery;
+  bool isRecommended(String trackId) => _q.isRecommended(trackId);
+
+  /// Why a recommended song is there ("because you're playing X").
+  RadioReason? recommendationReasonFor(String trackId) =>
+      _q.isRecommended(trackId) ? _recoRadio?.reasonFor(trackId) : null;
+
+  /// The shuffle button: off, shuffle, shuffle with recommendations.
+  ShuffleMode cycleShuffle() {
+    setShuffleMode(switch (shuffleMode) {
+      ShuffleMode.off => ShuffleMode.on,
+      ShuffleMode.on => ShuffleMode.smart,
+      ShuffleMode.smart => ShuffleMode.off,
+    });
+    return shuffleMode;
+  }
+
+  void setShuffleMode(ShuffleMode mode) {
+    if (mode == shuffleMode) return;
+    if ((mode != ShuffleMode.off) != _q.isShuffle) toggleShuffle();
+    if (mode == ShuffleMode.off) return;
+    _smartShuffle = mode == ShuffleMode.smart;
+    _applyShuffleSettings();
+    if (_smartShuffle) {
+      unawaited(_topUpRecommendations(reshuffle: true));
+    } else if (_q.dropRecommendations()) {
+      _recoRadio = null;
+      _queueChanged();
+    }
+    notifyListeners();
+  }
+
+  Future<void> setAvoidSameArtist(bool value) async {
+    _q.avoidSameArtist = value;
+    _reshuffleForNewSettings();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_avoidArtistKey, value);
+    } catch (_) {}
+  }
+
+  Future<void> setShuffleEnergy(ShuffleEnergy value) async {
+    _energy = value;
+    _applyShuffleSettings();
+    _reshuffleForNewSettings();
+    unawaited(_learnShuffleTempos());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_energyKey, value.index);
+    } catch (_) {}
+  }
+
+  Future<void> setRecommendEvery(int value) async {
+    _recoEvery = value.clamp(1, 10);
+    _applyShuffleSettings();
+    _reshuffleForNewSettings();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_recoEveryKey, _recoEvery);
+    } catch (_) {}
+  }
+
+  Future<void> _loadShuffleSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _q.avoidSameArtist = prefs.getBool(_avoidArtistKey) ?? true;
+      final e = prefs.getInt(_energyKey);
+      if (e != null && e >= 0 && e < ShuffleEnergy.values.length) {
+        _energy = ShuffleEnergy.values[e];
+      }
+      _recoEvery = (prefs.getInt(_recoEveryKey) ?? 3).clamp(1, 10);
+    } catch (_) {}
+    _applyShuffleSettings();
+  }
+
+  void _applyShuffleSettings() {
+    _q.flowScore = _energy == ShuffleEnergy.free ? null : _flowScore;
+    _q.recommendEvery = _smartShuffle ? _recoEvery : 0;
+  }
+
+  /// Settings changed: what comes after the next song follows them now.
+  void _reshuffleForNewSettings() {
+    _q.reshuffleAhead();
+    _queueChanged();
+  }
+
+  /// Extra score for [next] following [prev], by tempo (folded into one
+  /// octave, like running mode: 70 and 140 BPM feel the same).
+  double _flowScore(Track prev, Track next) {
+    final a = BpmService.shared.cached(prev.id);
+    final b = BpmService.shared.cached(next.id);
+    if (a == null || b == null || a <= 0 || b <= 0) return 0;
+    final from = BpmFlow.feel(a);
+    final to = BpmFlow.feel(b);
+    switch (_energy) {
+      case ShuffleEnergy.free:
+        return 0;
+      case ShuffleEnergy.smooth:
+        return 0.8 * (1 - ((from - to).abs() / 25).clamp(0.0, 1.0));
+      case ShuffleEnergy.alternate:
+        final mid = _bpmMedian ?? 120;
+        final crosses = from >= mid ? to < mid : to >= mid;
+        if (!crosses) return -0.3;
+        return 0.5 + 0.3 * ((to - mid).abs() / 25).clamp(0.0, 1.0);
+    }
+  }
+
+  /// Looks up the queue's tempos (cached after the first time) for the
+  /// energy flow, then reorders the songs not yet handed on.
+  Future<void> _learnShuffleTempos() async {
+    if (!_q.isShuffle || _energy == ShuffleEnergy.free || !_online) return;
+    final gen = ++_tempoGeneration;
+    final tracks = _q.tracks.take(300).toList();
+    final Map<String, double> bpms;
+    try {
+      bpms = await BpmService.shared.lookup(tracks, concurrency: 2);
+    } catch (e) {
+      debugPrint('[AudioProvider] Tempo lookup failed: $e');
+      return;
+    }
+    if (gen != _tempoGeneration || !_q.isShuffle) return;
+    final feels = [for (final b in bpms.values) if (b > 0) BpmFlow.feel(b)]
+      ..sort();
+    if (feels.isEmpty) return;
+    _bpmMedian = feels[feels.length ~/ 2];
+    // Keep what Spotify already has (no restart); reorder the rest.
+    final spotify = _useSpotify && _spotifyActive && !_spotifyFallbackActive;
+    _q.reshuffleAhead(keep: spotify ? _spotifyAhead.length + 1 : 1);
+    _prefetchNextTrack();
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
+  /// Keeps a few recommended songs waiting: like what's playing, and never
+  /// one the user already has.
+  Future<void> _topUpRecommendations({bool reshuffle = false}) async {
+    final seed = _currentTrack;
+    if (!_smartShuffle || !_q.isShuffle || seed == null || !_online) return;
+    if (_recoLoading || _q.recommendationsLeft >= 3) return;
+    _recoLoading = true;
+    try {
+      final radio = _recoRadio ??=
+          AudioRadioController.radioFactory(seed, RadioMode.balanced)
+            ..markQueued(_q.tracks);
+      if (_recoSteeredBy != seed.id) {
+        _recoSteeredBy = seed.id;
+        if (seed.id != radio.seed.id) radio.moreLikeThis(seed);
+      }
+      final batch = await radio.nextBatch(count: 6);
+      if (!identical(radio, _recoRadio) || !_smartShuffle) return;
+      final fresh = [
+        for (final t in batch)
+          if (!(isInLibrary?.call(t.id) ?? false)) t
+      ];
+      if (_q.addRecommendations(fresh) == 0) return;
+      debugPrint('[AudioProvider] ${fresh.length} recommended songs ready');
+      if (reshuffle) _q.reshuffleAhead();
+      _queueChanged();
+    } catch (e) {
+      debugPrint('[AudioProvider] Recommendations failed: $e');
+    } finally {
+      _recoLoading = false;
+    }
   }
 
   void toggleRepeat() {
     _q.cycleRepeatMode();
     if (_q.isAtEnd) _prefetchNextTrack();
+    _onRepeatChanged();
     notifyListeners();
   }
   void toggleLoop() => toggleRepeat();
@@ -842,16 +1241,56 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_q.repeatMode == mode) return;
     _q.setRepeatMode(mode);
     if (_q.isAtEnd) _prefetchNextTrack();
+    _onRepeatChanged();
     notifyListeners();
+  }
+
+  /// With Spotify, repeat-one is Spotify looping the song; leaving it,
+  /// Spotify needs our next songs to go on.
+  void _onRepeatChanged() {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    unawaited(_syncSpotifyRepeat());
+    if (_spotifyAhead.isEmpty) unawaited(_reissueSpotifyAhead());
   }
   /// Reorders the playback queue from [oldIndex] to [newIndex].
   void reorderQueue(int oldIndex, int newIndex) {
     if (oldIndex < 0 || oldIndex >= _q.length) return;
     if (newIndex < 0 || newIndex >= _q.length) return;
     _q.reorder(oldIndex, newIndex);
-    _prefetchNextTrack();
-    _persistPlaybackState();
-    notifyListeners();
+    _queueChanged();
+  }
+
+  /// Up to [max] upcoming queue indices, in the order they will play
+  /// (shuffle included: the songs [next] will pick, in that order).
+  List<int> upcomingOrder([int max = 60]) => _q.upcoming(max);
+
+  /// How many songs are still to come (all the others when shuffling).
+  int get upcomingCount => _q.upcomingCount;
+
+  /// Queue indices already played, oldest first.
+  List<int> get playedIndices => _q.played();
+
+  /// Moves the song at position [from] of [upcomingOrder] to [to]. Dropped
+  /// among the songs you queued, it joins them; past them, it leaves them.
+  void moveUpcoming(int from, int to) {
+    _q.moveUpcoming(from, to);
+    _queueChanged();
+  }
+
+  /// Moves the queue song at [index] to play right after the current one.
+  void playNextFromQueue(int index) {
+    if (index < 0 || index >= _q.length) return;
+    playNext(_q.tracks[index]);
+  }
+
+  /// The queue as it is now, to undo an edit with [restoreQueue].
+  QueueSnapshot queueSnapshot() => _q.snapshot();
+
+  /// Undoes edits made since [snapshot], keeping the song playing now.
+  bool restoreQueue(QueueSnapshot snapshot) {
+    if (!_q.restoreSnapshot(snapshot)) return false;
+    _queueChanged();
+    return true;
   }
   /// Spotify plays full songs on its own player, whose speed can't be set.
   bool get canChangeTempo => !_useSpotify || _spotifyFallbackActive;
@@ -909,6 +1348,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     _prefetchNextTrack();
     _persistPlaybackState();
+    _scheduleSpotifyListRefresh();
     notifyListeners();
   }
   /// Removes the track at [index] from the playback queue.
@@ -923,9 +1363,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     if (wasCurrent) {
       playTrack(_q.tracks[_q.currentIndex]);
+      _persistPlaybackState();
     } else {
-      _prefetchNextTrack();
-      notifyListeners();
+      _queueChanged();
     }
     _persistPlaybackState();
   }
@@ -936,6 +1376,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     _prefetchedTargetTrackId = null;
     _q.clear(keep: _currentTrack);
     _persistPlaybackState();
+    _scheduleSpotifyListRefresh();
     notifyListeners();
     // A radio never runs dry: clearing it just means "fresh picks, please".
     unawaited(_radioCtrl.topUp());
@@ -966,6 +1407,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (_radioCtrl.isActive) {
         unawaited(
             _radioCtrl.topUp(force: true).then((added) => added ? next() : stop()));
+      } else if (finished != null && _mayContinueWithSimilar) {
+        // Nothing queued in time: go on with similar songs now.
+        unawaited(_radioCtrl
+            .continueFrom(finished)
+            .then((added) => added ? next() : stop()));
       } else {
         stop();
       }
@@ -1082,6 +1528,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
+    _spotifyListTimer?.cancel();
+    _mediaTopTimer?.cancel();
+    _unplugSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

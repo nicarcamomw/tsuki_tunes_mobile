@@ -7,16 +7,12 @@ class _WrappedEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final year = DateTime.now().year;
     return Semantics(
       button: true,
       label: strings.a11yWrapped,
       child: GestureDetector(
-        onTap: () {
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(builder: (_) => WrappedScreen(year: year)),
-          );
-        },
+        // Pick this month, an earlier one or the whole year.
+        onTap: () => showWrappedPicker(context),
         child: GlassCard(
           color: AppColors.accent,
           highlightAlpha: 0.12,
@@ -47,7 +43,7 @@ class _WrappedEntryCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'WRAPPED $year',
+                'WRAPPED',
                 style: locale.getTextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -58,7 +54,7 @@ class _WrappedEntryCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                strings.wrappedViewYourWrapped,
+                strings.wrappedHomeSubtitle,
                 style: locale.getTextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -109,7 +105,8 @@ class _ListeningClockEntryCard extends StatelessWidget {
                   border: Border.all(
                       color: AppColors.neonCyan.withValues(alpha: 0.5)),
                 ),
-                child: const Icon(Icons.radar,
+                // A clock, not the radar: that one is the release radar's.
+                child: const Icon(Icons.access_time_rounded,
                     color: AppColors.neonCyan, size: 20),
               ),
               const SizedBox(height: 10),

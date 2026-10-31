@@ -1,8 +1,15 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/providers/connectivity_provider.dart';
+import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
+import 'package:tsuki_tunes_mobile/services/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/services/song_radio.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/services/spotify_web_player.dart';
 
@@ -61,6 +68,18 @@ class FakeSpotifyService extends SpotifyService {
   @override
   Future<void> loadSavedState() async {}
 
+  /// Track ids already looked up; null: every one is.
+  Set<String>? lookedUp;
+  final events = <String>[];
+
+  @override
+  Future<String?> cachedTrackUri(String title, String artist,
+      {String? trackId}) async {
+    final known = lookedUp;
+    if (known != null && !known.contains(trackId)) return null;
+    return 'spotify:track:$trackId';
+  }
+
   @override
   Future<String?> searchTrack(
     String title,
@@ -68,8 +87,11 @@ class FakeSpotifyService extends SpotifyService {
     String? trackId,
     String? isrc,
     Future<String?> Function()? isrcResolver,
-  }) async =>
-      'spotify:track:$trackId';
+  }) async {
+    events.add('search:$trackId');
+    lookedUp?.add(trackId!);
+    return 'spotify:track:$trackId';
+  }
 
   List<String>? lastPlayedUris;
   int playCount = 0;
@@ -82,6 +104,7 @@ class FakeSpotifyService extends SpotifyService {
     int? positionMs,
   }) async {
     if (playWillFail) return false;
+    events.add('play');
     playCount++;
     lastPlayedUris = trackUris ?? [if (trackUri != null) trackUri];
     _playbackUri = lastPlayedUris!.first;
@@ -109,6 +132,14 @@ class FakeSpotifyService extends SpotifyService {
     seekCount++;
     lastSeekMs = positionMs;
     _progressMs = positionMs;
+    return true;
+  }
+
+  String? repeatState;
+
+  @override
+  Future<bool> setRepeat(String state) async {
+    repeatState = state;
     return true;
   }
 
@@ -207,6 +238,15 @@ class FakeNativePlayer extends SpotifyNativePlayer {
     lastSeekMs = positionMs;
   }
 
+  bool? repeatTrack;
+
+  @override
+  Future<bool> setRepeatTrack(bool on) async {
+    if (!_connected) return false;
+    repeatTrack = on;
+    return true;
+  }
+
   @override
   Future<void> disconnect() async {
     _connected = false;
@@ -216,6 +256,25 @@ class FakeNativePlayer extends SpotifyNativePlayer {
 
   @override
   Future<void> dispose() async => disconnect();
+}
+
+class _OfflineConnectivity extends ChangeNotifier
+    implements ConnectivityProvider {
+  @override
+  bool get isOnline => false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakePreviewPlayer extends AudioPlayerService {
+  final played = <String>[];
+
+  @override
+  Future<void> playTrack(Track track,
+      {Duration? initialPosition, int maxRetries = 3}) async {
+    played.add(track.id);
+  }
 }
 
 void main() {
@@ -599,6 +658,30 @@ void main() {
       return provider;
     }
 
+    test('a song starts without waiting to look up the next ones', () async {
+      fakeSpotify.lookedUp = {};
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final tracks = [_track('t1'), _track('t2'), _track('t3')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+
+      expect(fakeNative._playingUri, 'spotify:track:t1');
+      expect(fakeSpotify.events.first, 'search:t1');
+      expect(fakeSpotify.events, isNot(contains('search:t3')),
+          reason: 'only the next one is looked up, in the background');
+
+      // Once it plays, Spotify gets the rest.
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      provider.afterSpotifyStartedForTesting();
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
+      expect(fakeSpotify.lastPlayedUris,
+          ['spotify:track:t1', 'spotify:track:t2', 'spotify:track:t3']);
+    });
+
     test('the play hands Spotify the upcoming songs in order', () async {
       await playingList([_track('t1'), _track('t2'), _track('t3')]);
       expect(fakeSpotify.lastPlayedUris,
@@ -831,6 +914,230 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.crossfadeTriggered, isFalse);
+    });
+  });
+
+  group('Spotify joins the songs by itself', () {
+    Future<AudioProvider> playing(List<Track> tracks) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      return provider;
+    }
+
+    test('repeat is turned off in Spotify once our song plays', () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      provider.afterSpotifyStartedForTesting();
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isFalse);
+    });
+
+    test('repeat-one makes Spotify loop the song, with no new play',
+        () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      var starts = 0;
+      provider.onTrackStarted = (_) => starts++;
+
+      provider.setRepeatMode(PlaybackRepeatMode.one);
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isTrue);
+
+      final plays = fakeSpotify.playCount;
+      fakeNative.simulateStateChanged(178000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(300, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(fakeSpotify.playCount, plays);
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isTrue);
+      expect(starts, 1);
+    });
+
+    test('leaving repeat-one stops Spotify looping', () async {
+      final provider = await playing([_track('t1'), _track('t2')]);
+      provider.setRepeatMode(PlaybackRepeatMode.one);
+      await Future.delayed(Duration.zero);
+      provider.setRepeatMode(PlaybackRepeatMode.off);
+      await Future.delayed(Duration.zero);
+      expect(fakeNative.repeatTrack, isFalse);
+    });
+
+    test('when the list play failed, the song is not restarted later',
+        () async {
+      fakeSpotify.playWillFail = true;
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      expect(fakeNative._playingUri, 'spotify:track:t1');
+
+      fakeSpotify.playWillFail = false;
+      final plays = fakeSpotify.playCount;
+      provider.afterSpotifyStartedForTesting();
+      for (var i = 0; i < 5; i++) {
+        await Future.delayed(Duration.zero);
+      }
+
+      expect(fakeSpotify.playCount, plays);
+    });
+  });
+
+  group('Editing the queue hands Spotify the new list', () {
+    Future<AudioProvider> playing(List<Track> tracks) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(20000, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      return provider;
+    }
+
+    test('while playing, from where the song is', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      provider.playNext(_track('t9'));
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.lastPlayedUris, [
+        'spotify:track:t1',
+        'spotify:track:t9',
+        'spotify:track:t2',
+        'spotify:track:t3',
+      ]);
+    });
+
+    test('nothing is sent when the list did not change', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      final plays = fakeSpotify.playCount;
+      provider.moveUpcoming(0, 1);
+      provider.moveUpcoming(1, 0);
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.playCount, plays);
+    });
+
+    test('while paused, on resume', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2'), _track('t3')]);
+      await provider.togglePlay();
+      expect(provider.isPlaying, isFalse);
+      final plays = fakeSpotify.playCount;
+
+      provider.playNext(_track('t9'));
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.playCount, plays);
+
+      await provider.togglePlay();
+      expect(fakeSpotify.playCount, plays + 1);
+      expect(fakeSpotify.lastPlayedUris?[1], 'spotify:track:t9');
+    });
+  });
+
+  group('When the list ends, Tsuki keeps the music going', () {
+    setUp(() {
+      AudioRadioController.radioFactory = (seed, mode) => SongRadio(
+            seed: seed,
+            mode: mode,
+            similar: (_, __) async => const [],
+            // The radio only takes songs with a preview.
+            artistRadio: (_) async => [
+              for (var i = 1; i <= 10; i++)
+                _track('s$i').copyWith(previewUrl: 'https://x/s$i.mp3'),
+            ],
+            search: (_) async => const [],
+            useLastFm: false,
+          );
+    });
+    tearDown(() {
+      AudioRadioController.radioFactory =
+          (seed, mode) => SongRadio(seed: seed, mode: mode);
+    });
+
+    Future<void> settle() =>
+        Future.delayed(const Duration(milliseconds: 100));
+
+    test('similar songs are added and handed to Spotify before it ends',
+        () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await Future.delayed(Duration.zero);
+      final tracks = [_track('t1'), _track('t2')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await settle();
+
+      expect(provider.queue.length, greaterThan(2));
+      expect(provider.isRadioActive, isTrue);
+      // Spotify's list goes past our last song: it never reaches its own
+      // autoplay.
+      final handed = fakeSpotify.lastPlayedUris!;
+      expect(handed.take(2), ['spotify:track:t1', 'spotify:track:t2']);
+      expect(handed.length, greaterThan(2));
+    });
+
+    test('with it turned off, nothing is added', () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await Future.delayed(Duration.zero);
+      await provider.setAutoplaySimilar(false);
+      final tracks = [_track('t1'), _track('t2')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await settle();
+      expect(provider.queue.length, 2);
+      expect(provider.isRadioActive, isFalse);
+    });
+  });
+
+  test('unplugging the headphones pauses Spotify', () async {
+    fakeNative.setConnected(true);
+    final provider = createProvider();
+    await provider.playTrack(_track('t1'), newQueue: [_track('t1')]);
+    await Future.delayed(Duration.zero);
+    fakeNative.simulateStateChanged(1000, 180000, false,
+        uri: 'spotify:track:t1');
+    await Future.delayed(Duration.zero);
+    expect(provider.isPlaying, isTrue);
+
+    provider.headphonesUnpluggedForTesting();
+    await Future.delayed(Duration.zero);
+    expect(provider.isPlaying, isFalse);
+    expect(fakeNative.pauseCount, 1);
+  });
+
+  group('Offline', () {
+    test('plays the cached preview without asking Spotify', () async {
+      AudioPrecacheService().clearCache();
+      final dir =
+          Directory('${Directory.systemTemp.path}/tsuki_preview_cache')
+            ..createSync(recursive: true);
+      File('${dir.path}/preview_t1.mp3')
+          .writeAsBytesSync(List.filled(15000, 1));
+
+      fakeNative.setConnected(true);
+      final previews = _FakePreviewPlayer();
+      final provider = AudioProvider(
+        service: previews,
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        connectivityProvider: _OfflineConnectivity(),
+      );
+      await Future.delayed(Duration.zero);
+      final track = _track('t1');
+
+      await provider.playTrack(track, newQueue: [track, _track('t2')]);
+
+      expect(provider.useSpotify, isTrue);
+      expect(fakeSpotify.playCount, 0);
+      expect(fakeNative.lastTrackUri, isNull);
+      expect(previews.played, ['t1']);
+      expect(provider.spotifyFallbackActive, isTrue);
+      AudioPrecacheService().clearCache();
     });
   });
 

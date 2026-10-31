@@ -29,7 +29,9 @@ class _PlaybackSettingsState extends State<_PlaybackSettings> {
             locale: locale,
             icon: Icons.graphic_eq_rounded,
             title: strings.crossfadeTitle,
-            subtitle: strings.crossfadeSubtitle,
+            subtitle: audio.useSpotify
+                ? strings.crossfadeSpotifySubtitle
+                : strings.crossfadeSubtitle,
             value: audio.crossfadeSeconds > 0,
             onChanged: (v) {
               HapticFeedback.selectionClick();
@@ -189,6 +191,50 @@ class _StorageSettingsState extends State<_StorageSettings> {
           HapticFeedback.selectionClick();
           audio.setPrecacheWifiOnly(v);
           setState(() {});
+        },
+      ),
+      _SettingSwitch(
+        locale: locale,
+        icon: Icons.all_inclusive,
+        title: strings.autoplaySimilarTitle,
+        subtitle: strings.autoplaySimilarSubtitle,
+        value: audio.autoplaySimilar,
+        onChanged: (v) {
+          HapticFeedback.selectionClick();
+          audio.setAutoplaySimilar(v);
+          setState(() {});
+        },
+      ),
+      ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        leading: const SizedBox(
+          width: 24,
+          child: Center(
+            child: ShuffleModeIcon(
+                mode: ShuffleMode.smart,
+                color: AppColors.accent,
+                size: 17),
+          ),
+        ),
+        title: Text(
+          strings.smartShuffleTitle,
+          style: locale.getTextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textBright,
+          ),
+        ),
+        subtitle: Text(
+          strings.smartShuffleSubtitle,
+          style: locale.getTextStyle(
+              fontSize: 10, color: AppColors.textMuted),
+        ),
+        trailing: const Icon(Icons.chevron_right,
+            color: AppColors.textMuted, size: 18),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          showSmartShuffleSheet(widget.hostContext);
         },
       ),
       _SettingLink(

@@ -23,6 +23,7 @@ import '../providers/playlist_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/playlist_detail_screen.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 
 class _AlbumGroupData {
@@ -1086,21 +1087,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
                     previewUrl: trackData.previewUrl,
                     durationSeconds: trackData.duration,
                   );
-                  audio.addToQueue(track);
-                  final hasTrack = context.read<AudioProvider>().currentTrack != null;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        strings.addedToQueue,
-                        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-                      ),
-                      backgroundColor: AppColors.bgCard,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      margin: EdgeInsets.only(bottom: hasTrack ? 152 : 12, left: 16, right: 16),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  showTrackActions(context, track);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(

@@ -244,4 +244,77 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(masks.isUnlocked('hajime'), isTrue);
   });
+
+  group('weekly challenges', () {
+    test('three a week, the same all week, new on Monday', () {
+      final week = WeeklyChallenge.weekOf(DateTime(2026, 11, 12));
+      final a = WeeklyChallenge.forWeek(week);
+      expect(a.length, 3);
+      expect(a.map((c) => c.kind).toSet().length, 3);
+      expect(WeeklyChallenge.forWeek(week).map((c) => c.kind), a.map((c) => c.kind));
+      // Thursday and Sunday share the week; Monday starts the next.
+      expect(WeeklyChallenge.weekOf(DateTime(2026, 11, 15)), week);
+      expect(WeeklyChallenge.weekOf(DateTime(2026, 11, 16)), week + 1);
+      const timeOfDay = {ChallengeKind.night, ChallengeKind.morning};
+      for (var w = 0; w < 200; w++) {
+        expect(WeeklyChallenge.forWeek(w).where((c) => timeOfDay.contains(c.kind)).length,
+            lessThanOrEqualTo(1));
+      }
+    });
+
+    test('plays, days and new artists count this week only', () {
+      masks.seedKnownArtists(['Old Band']);
+      masks.onPlayCounted(_t('1', artist: 'Old Band'));
+      masks.onPlayCounted(_t('2', artist: 'New A'));
+      now = now.add(const Duration(days: 1));
+      masks.onPlayCounted(_t('3', artist: 'New B'));
+      expect(masks.weeklyProgress(const WeeklyChallenge(ChallengeKind.plays, 40)), 3);
+      expect(masks.weeklyProgress(const WeeklyChallenge(ChallengeKind.days, 4)), 2);
+      expect(masks.weeklyProgress(const WeeklyChallenge(ChallengeKind.newArtists, 3)), 2);
+
+      // Next Monday it all starts over.
+      now = DateTime(2026, 11, 16, 12);
+      expect(masks.weeklyProgress(const WeeklyChallenge(ChallengeKind.plays, 40)), 0);
+    });
+
+    test('completing the three gives the week\'s mask, once', () {
+      final challenges = masks.weeklyChallenges;
+      final reward = masks.weeklyReward!;
+      expect(reward.weekly, isTrue);
+      expect(masks.isUnlocked(reward.id), isFalse);
+
+      // Do whatever this week asks, generously.
+      masks.seedKnownArtists(const []);
+      masks.isMusicPlaying = () => true;
+      masks.isRainPlaying = () => true;
+      for (var d = 0; d < 6 && !masks.weeklyRewardWon; d++) {
+        final day = DateTime(2026, 11, 9 + d);
+        for (final hour in [3, 7, 15]) {
+          now = DateTime(day.year, day.month, day.day, hour);
+          for (var i = 0; i < 8; i++) {
+            masks.onPlayCounted(_t('$d-$hour-$i', artist: 'Artist $d-$hour-$i'));
+            masks.onPlayCounted(_t('fav-$d-$hour-$i', artist: 'Fav'));
+          }
+          masks.tick(const Duration(minutes: 40));
+          masks.onDailyGuessFinished(won: true, attempts: 3, streak: 1);
+          for (var i = 0; i < 5; i++) {
+            final t = _t('al-$d-$hour-$i', albumId: 'album-$d-$hour');
+            masks.onTrackStarted(t);
+            masks.onTrackCompleted(t);
+          }
+        }
+      }
+      expect(challenges.every(masks.weeklyDone), isTrue);
+      expect(masks.isUnlocked(reward.id), isTrue);
+      expect(masks.weeklyRewardWon, isTrue);
+      expect(masks.weeklyReward?.id, reward.id);
+    });
+
+    test('the legendary Oni does not need the weekly masks', () {
+      for (final m in MaskCatalog.all.where((m) => m.id != 'oni' && !m.weekly)) {
+        masks.unlock(m.id);
+      }
+      expect(masks.isUnlocked('oni'), isTrue);
+    });
+  });
 }

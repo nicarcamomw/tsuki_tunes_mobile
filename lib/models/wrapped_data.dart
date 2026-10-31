@@ -52,6 +52,17 @@ abstract class WrappedData with _$WrappedData {
 
   const factory WrappedData({
     @JsonKey(defaultValue: 0) required int year,
+
+    /// 1–12 for a monthly recap; null for the whole year.
+    @JsonKey(includeIfNull: false) int? month,
+
+    /// Days with music in the period, and how many days it has had so far.
+    @Default(0) int activeDays,
+    @Default(0) int periodDays,
+
+    /// Minutes in the period before (last month or last year), to compare;
+    /// null when unknown.
+    @JsonKey(includeIfNull: false) int? previousMinutes,
     @JsonKey(defaultValue: <WrappedTrackEntry>[])
     required List<WrappedTrackEntry> topTracks,
     @JsonKey(defaultValue: <WrappedArtistEntry>[])
@@ -81,4 +92,8 @@ abstract class WrappedData with _$WrappedData {
       _$WrappedDataFromJson(json);
 
   bool get isEmpty => totalTracksPlayed == 0;
+  bool get isMonthly => month != null;
+
+  WrappedData withPreviousMinutes(int? minutes) =>
+      copyWith(previousMinutes: minutes);
 }

@@ -289,12 +289,16 @@ void _showSongOptionsSheet(
   showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.bgMid,
+    isScrollControlled: true,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.85,
+    ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (_) {
       return SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -365,6 +369,16 @@ void _showSongOptionsSheet(
                   label: 'BPM',
                   trailing: '${bpm.round()}',
                 ),
+              // Save the song to a playlist
+              optionTile(
+                icon: Icons.playlist_add,
+                label: strings.addToPlaylist,
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticFeedback.selectionClick();
+                  showPlaylistSelector(context, track);
+                },
+              ),
               // Queue
               optionTile(
                 icon: Icons.queue_music,

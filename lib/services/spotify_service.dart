@@ -406,6 +406,14 @@ class SpotifyService {
   /// of the artists match, so a different song by the same artist is never
   /// played. [isrcResolver] is only called on a cache miss, so callers can
   /// fetch the ISRC lazily (Deezer only returns it from /track/{id}).
+  /// The Spotify URI of a track already looked up before, without any
+  /// request (null when it wasn't).
+  Future<String?> cachedTrackUri(String title, String artist,
+      {String? trackId}) async {
+    await _ensureUriCacheLoaded();
+    return _getFromCache(trackId, title, artist);
+  }
+
   Future<String?> searchTrack(
     String title,
     String artist, {
@@ -797,6 +805,23 @@ class SpotifyService {
       return response.statusCode == 204;
     } catch (e) {
       debugPrint('Spotify seek error: $e');
+      return false;
+    }
+  }
+
+  /// Sets Spotify's repeat mode: 'track', 'context' or 'off'.
+  Future<bool> setRepeat(String state) async {
+    await _ensureValidToken();
+    if (_accessToken == null) return false;
+
+    try {
+      final response = await _put(
+        Uri.parse('https://api.spotify.com/v1/me/player/repeat?state=$state'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+      return response.statusCode == 204 || response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Spotify repeat error: $e');
       return false;
     }
   }

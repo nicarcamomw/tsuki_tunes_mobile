@@ -53,6 +53,10 @@ Map<String, dynamic> _$WrappedFunFactToJson(_WrappedFunFact instance) =>
 
 _WrappedData _$WrappedDataFromJson(Map json) => _WrappedData(
   year: (json['year'] as num?)?.toInt() ?? 0,
+  month: (json['month'] as num?)?.toInt(),
+  activeDays: (json['activeDays'] as num?)?.toInt() ?? 0,
+  periodDays: (json['periodDays'] as num?)?.toInt() ?? 0,
+  previousMinutes: (json['previousMinutes'] as num?)?.toInt(),
   topTracks:
       (json['topTracks'] as List<dynamic>?)
           ?.map(
@@ -97,6 +101,10 @@ _WrappedData _$WrappedDataFromJson(Map json) => _WrappedData(
 Map<String, dynamic> _$WrappedDataToJson(_WrappedData instance) =>
     <String, dynamic>{
       'year': instance.year,
+      'month': ?instance.month,
+      'activeDays': instance.activeDays,
+      'periodDays': instance.periodDays,
+      'previousMinutes': ?instance.previousMinutes,
       'topTracks': instance.topTracks.map((e) => e.toJson()).toList(),
       'topArtists': instance.topArtists.map((e) => e.toJson()).toList(),
       'totalMinutesListened': instance.totalMinutesListened,

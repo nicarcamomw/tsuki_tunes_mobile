@@ -37,7 +37,7 @@ void main() {
     expect(find.text('3:33'), findsOneWidget, reason: 'unlocked secret is revealed');
     expect(find.text('Noche de Hannya'), findsNothing, reason: 'locked secret stays hidden');
     expect(find.text('???'), findsNWidgets(4));
-    expect(find.text('2 / 16'), findsOneWidget);
+    expect(find.text('2 / ${MaskCatalog.all.length}'), findsOneWidget);
 
     await tester.tap(find.text('Cien Voces'));
     await tester.pumpAndSettle();

@@ -372,6 +372,8 @@ void main() {
     test('stores and loads back', () {
       expect(data.toJson(), {
         'year': 2026,
+        'activeDays': 0,
+        'periodDays': 0,
         'topTracks': [
           {
             'trackId': '1',

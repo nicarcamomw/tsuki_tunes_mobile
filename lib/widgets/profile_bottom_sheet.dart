@@ -26,6 +26,8 @@ import '../services/spotify_service.dart';
 import '../services/storage_service.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
+import 'shuffle_mode_icon.dart';
+import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
 

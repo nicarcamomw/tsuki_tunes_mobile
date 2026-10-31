@@ -4,8 +4,6 @@ part of 'audio_provider.dart';
 // following Spotify through the queue it was handed, keeping position in sync,
 // and falling back to the Deezer preview when it cannot play.
 extension _SpotifyPlayback on AudioProvider {
-  static const int _aheadMax = 8;
-
   Future<void> _initAudioSession() async {
     try {
       final session = await AudioSession.instance;
@@ -37,17 +35,13 @@ extension _SpotifyPlayback on AudioProvider {
           }
         }
       });
-      session.becomingNoisyEventStream.listen((_) {
-        if (_spotifyActive && _isPlaying) {
-          _spotifyPause();
-          _isPlaying = false;
-          _stopPositionTimer();
-          notifyListeners();
-        }
-      });
+      session.becomingNoisyEventStream.listen((_) => _onHeadphonesUnplugged());
     } catch (e) {
       debugPrint('[AudioProvider] AudioSession config error: $e');
     }
+    // Also while Spotify plays (Tsuki then has no audio focus, so the
+    // session above doesn't hear it).
+    _unplugSub = HeadphonesService.unplugged.listen((_) => _onHeadphonesUnplugged());
   }
 
   Future<void> _initSpotify() async {
@@ -58,6 +52,7 @@ extension _SpotifyPlayback on AudioProvider {
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
         return;
       }
+      _checkSpotifyLoop(Duration(milliseconds: pos));
       if (paused && _isPlaying && !_isBuffering && _spotifyPausedAtEnd(pos, dur)) {
         debugPrint('[AudioProvider] Spotify stopped at the end of the track, advancing');
         _stopPositionTimer();
@@ -165,7 +160,13 @@ extension _SpotifyPlayback on AudioProvider {
 
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
-        final raw = _spotifySyncPosition + elapsed;
+        var raw = _spotifySyncPosition + elapsed;
+        if (_spotifyLoopsOurTrack &&
+            _duration > Duration.zero &&
+            raw >= _duration) {
+          _onSpotifyLooped(raw - _duration);
+          raw = _spotifySyncPosition;
+        }
         _setPosition(_duration > Duration.zero && raw > _duration ? _duration : raw);
         // When the App Remote is connected it reports the real end-of-track
         // via onStateChanged (paused=true), so don't race it with an
@@ -269,6 +270,7 @@ extension _SpotifyPlayback on AudioProvider {
           !isPlaying && _spotifyPausedAtEnd(progressMs, durationMs);
 
       if (!_nativePlayer.isConnected) {
+        _checkSpotifyLoop(Duration(milliseconds: progressMs));
         _spotifySyncPosition = Duration(milliseconds: progressMs);
         _spotifySyncTime = DateTime.now();
         _setPosition(_spotifySyncPosition);
@@ -318,18 +320,19 @@ extension _SpotifyPlayback on AudioProvider {
 
   /// Spotify URIs for our next songs in play order, stopping at the first
   /// one Spotify doesn't have (URIs are cached, so repeats are instant).
-  /// With a [budget], stops resolving once it runs out.
+  /// [cachedOnly] makes no request: it stops at the first one not looked
+  /// up yet.
   Future<List<({String trackId, String uri})>> _resolveAhead(
-      {Duration? budget}) async {
+      {bool cachedOnly = false}) async {
     if (_sleepCtrl.stopAfterCurrentTrack) return const [];
-    final started = DateTime.now();
     final upcoming = [
-      for (final i in _q.peekUpcoming(_aheadMax)) _q.tracks[i],
+      for (final i in _q.peekUpcoming(AudioProvider._spotifyAheadMax)) _q.tracks[i],
     ];
     final out = <({String trackId, String uri})>[];
     for (final t in upcoming) {
-      if (budget != null && DateTime.now().difference(started) > budget) break;
-      final uri = await _resolveSpotifyUri(t);
+      final uri = cachedOnly
+          ? await _spotify.cachedTrackUri(t.title, t.artistName, trackId: t.id)
+          : await _resolveSpotifyUri(t);
       if (uri == null) break;
       out.add((trackId: t.id, uri: uri));
     }
@@ -392,29 +395,90 @@ extension _SpotifyPlayback on AudioProvider {
     notifyListeners();
     _prefetchNextTrack();
     unawaited(_radioCtrl.topUp());
-    if (_spotifyAhead.length < 2) unawaited(_reissueSpotifyAhead());
+    if (_spotifyAhead.length < 2 || _spotifyExtendAtNextSong) {
+      _spotifyExtendAtNextSong = false;
+      unawaited(_reissueSpotifyAhead());
+    }
+    _keepMediaSessionOnTop();
   }
 
   /// Hands Spotify a fresh list from the current song on, from where it is,
   /// so it never runs out of our queue. Only near a song's start, where the
   /// brief restart goes unnoticed; otherwise the next song boundary does it.
-  Future<void> _reissueSpotifyAhead() async {
+  /// [force] (the queue was edited) hands it anywhere in the song, whenever
+  /// the list differs from the one Spotify has. Returns whether it played.
+  Future<bool> _reissueSpotifyAhead({bool force = false}) async {
     final gen = _playGeneration;
     final uri = _currentSpotifyUri;
-    if (uri == null || !_spotifyActive) return;
+    if (uri == null || !_spotifyActive) return false;
     final ahead = await _resolveAhead();
-    if (gen != _playGeneration || !_spotifyActive) return;
-    if (ahead.length <= _spotifyAhead.length) return;
-    final pos =
-        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
-    if (pos > const Duration(seconds: 8)) return;
+    if (gen != _playGeneration || !_spotifyActive) return false;
+    if (force) {
+      final same = ahead.length == _spotifyAhead.length &&
+          [
+            for (var i = 0; i < ahead.length; i++)
+              ahead[i].trackId == _spotifyAhead[i].trackId
+          ].every((x) => x);
+      if (same) return false;
+    } else if (ahead.length <= _spotifyAhead.length) {
+      return false;
+    }
+    final pos = _isPlaying
+        ? _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime)
+        : _position;
+    if (!force && pos > const Duration(seconds: 8)) return false;
     final ok = await _spotify.play(
       trackUris: [uri, ...ahead.map((e) => e.uri)],
       positionMs: pos.inMilliseconds,
     );
-    if (gen != _playGeneration || !ok) return;
+    if (gen != _playGeneration || !ok) return false;
     _spotifyAhead = ahead;
     _lastPlayCommandTime = DateTime.now();
+    if (force) {
+      _spotifySyncPosition = pos;
+      _spotifySyncTime = DateTime.now();
+    }
+    return true;
+  }
+
+  /// The queue was edited: once the edits settle, give Spotify the songs
+  /// that now come next, or it would play the old ones after this song.
+  void _scheduleSpotifyListRefresh() {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    _spotifyListTimer?.cancel();
+    _spotifyListTimer = Timer(const Duration(milliseconds: 1500), () {
+      unawaited(_refreshSpotifyList());
+    });
+  }
+
+  /// Whether the songs Spotify has after this one aren't our next ones.
+  bool get _spotifyListOutdated {
+    // Spotify loops the song itself; leaving repeat-one hands the list.
+    if (_q.repeatMode == PlaybackRepeatMode.one) return false;
+    final expected = [
+      for (final i in _q.peekUpcoming(AudioProvider._spotifyAheadMax)) _q.tracks[i].id,
+    ];
+    final handed = [for (final e in _spotifyAhead) e.trackId];
+    if (handed.isEmpty) return expected.isNotEmpty;
+    if (handed.length > expected.length) return true;
+    for (var i = 0; i < handed.length; i++) {
+      if (handed[i] != expected[i]) return true;
+    }
+    return false;
+  }
+
+  Future<void> _refreshSpotifyList() async {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    if (_currentSpotifyUri == null || !_spotifyListOutdated) {
+      _spotifyListStale = false;
+      return;
+    }
+    if (!_isPlaying) {
+      _spotifyListStale = true;
+      return;
+    }
+    debugPrint('[AudioProvider] Queue edited, handing Spotify the new list');
+    await _reissueSpotifyAhead(force: true);
   }
 
   /// Tsuki was closed or killed while Spotify kept playing our queue: pick
@@ -515,6 +579,12 @@ extension _SpotifyPlayback on AudioProvider {
   }
 
   Future<void> _spotifyResume() async {
+    if (_spotifyListStale) {
+      _spotifyListStale = false;
+      // The queue changed while paused: resuming with the new list also
+      // gives Spotify the songs that now come next.
+      if (await _reissueSpotifyAhead(force: true)) return;
+    }
     if (_nativePlayer.isConnected) {
       try {
         await _nativePlayer.resume();
@@ -550,6 +620,25 @@ extension _SpotifyPlayback on AudioProvider {
       await _service.stop();
     } catch (_) {}
 
+    if (!_online) {
+      // No connection (metro, plane): Spotify can't be searched or told to
+      // play, so play the preview downloaded ahead of time right away
+      // instead of waiting on requests that will time out.
+      debugPrint('Spotify: offline, playing the cached preview of "${track.title}"');
+      _spotifyActive = false;
+      _spotifyFallbackActive = true;
+      if (_nativePlayer.isConnected) {
+        try {
+          await _nativePlayer.pause();
+        } catch (_) {}
+      }
+      await _service.playTrack(track);
+      if (gen != _playGeneration) return;
+      _isBuffering = false;
+      notifyListeners();
+      return;
+    }
+
     String? uri;
     if (_prefetchedForTrackId == track.id && _prefetchedUri != null) {
       uri = _prefetchedUri;
@@ -584,10 +673,12 @@ extension _SpotifyPlayback on AudioProvider {
     // Preferred: hand Spotify the next songs of our queue along with this
     // one. It then plays them by itself, so the queue goes on even when
     // Android freezes or kills Tsuki in the background (otherwise Spotify
-    // falls into its own autoplay when the song ends).
-    final ahead =
-        await _resolveAhead(budget: const Duration(milliseconds: 1200));
+    // falls into its own autoplay when the song ends). Only the ones
+    // already looked up (the next one is, during the previous song), so
+    // the song starts right away; the rest follow once it plays.
+    final ahead = await _resolveAhead(cachedOnly: true);
     if (gen != _playGeneration) return;
+    _spotifyListPlayFailed = false;
     if (ahead.isNotEmpty) {
       final ok =
           await _spotify.play(trackUris: [uri, ...ahead.map((e) => e.uri)]);
@@ -608,6 +699,7 @@ extension _SpotifyPlayback on AudioProvider {
         return;
       }
       debugPrint('Spotify: list play failed, playing the single song');
+      _spotifyListPlayFailed = true;
     }
 
     // Fast path: App Remote is already connected (warm-up or previous play),
@@ -784,6 +876,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (_nativePlayer.isPlayingUri(uri)) {
       debugPrint('[SpotifyCheck] Playing (App Remote)');
       _onSpotifyConfirmed(0);
+      _afterSpotifyStarted();
       return true;
     }
     final state = await _spotify.getPlaybackState();
@@ -809,8 +902,67 @@ extension _SpotifyPlayback on AudioProvider {
       final durationMs = item?['duration_ms'] as int? ?? 0;
       if (durationMs > 0) _duration = Duration(milliseconds: durationMs);
       _onSpotifyConfirmed(progressMs);
+      _afterSpotifyStarted();
     }
     return confirmed;
+  }
+
+  bool get _spotifyLoopsOurTrack =>
+      _useSpotify &&
+      _spotifyActive &&
+      !_spotifyFallbackActive &&
+      _spotifyLoopsTrack == true &&
+      _q.repeatMode == PlaybackRepeatMode.one;
+
+  /// Tells Spotify to loop the song with our repeat-one, and to stop
+  /// repeating otherwise (it may be left on from the Spotify app).
+  Future<void> _syncSpotifyRepeat() async {
+    if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+    final want = _q.repeatMode == PlaybackRepeatMode.one;
+    if (_spotifyLoopsTrack == want) return;
+    _spotifyLoopsTrack = want;
+    var ok = await _nativePlayer.setRepeatTrack(want);
+    if (!ok) ok = await _spotify.setRepeat(want ? 'track' : 'off');
+    if (!ok) {
+      // Try again next time; meanwhile Tsuki replays the song itself.
+      _spotifyLoopsTrack = null;
+      return;
+    }
+    debugPrint('[AudioProvider] Spotify repeat ${want ? 'track' : 'off'}');
+  }
+
+  /// Spotify reported [reported] for our song: if it just started over
+  /// while looping it, count the new play.
+  void _checkSpotifyLoop(Duration reported) {
+    if (!_spotifyLoopsOurTrack || !_isPlaying || _duration <= Duration.zero) {
+      return;
+    }
+    final estimated =
+        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+    if (estimated < _duration - const Duration(seconds: 10) ||
+        reported > const Duration(seconds: 10)) {
+      return;
+    }
+    _onSpotifyLooped(reported);
+  }
+
+  /// Spotify looped our song (repeat-one) and is [pos] into it again: the
+  /// same bookkeeping as Tsuki playing it again, with no new play.
+  void _onSpotifyLooped(Duration pos) {
+    final track = _currentTrack;
+    if (track == null) return;
+    debugPrint('[AudioProvider] Spotify looped "${track.title}"');
+    onTrackCompleted?.call(track);
+    final now = DateTime.now();
+    _spotifySyncPosition = pos;
+    _spotifySyncTime = now;
+    _setPosition(pos);
+    if (_sleepCtrl.handleTrackEnd()) return;
+    _playGeneration++;
+    _completionHandled = false;
+    _lastPlayStart = now.subtract(pos);
+    onTrackStarted?.call(track);
+    notifyListeners();
   }
 
   void _onSpotifyConfirmed(int progressMs) {

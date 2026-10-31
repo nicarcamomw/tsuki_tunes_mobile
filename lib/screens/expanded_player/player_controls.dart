@@ -6,7 +6,7 @@ class _PlayerControls extends StatelessWidget {
   final LocaleProvider locale;
   final bool isPlaying;
   final bool isBuffering;
-  final bool isShuffle;
+  final ShuffleMode shuffleMode;
   final PlaybackRepeatMode repeatMode;
 
   const _PlayerControls({
@@ -14,13 +14,14 @@ class _PlayerControls extends StatelessWidget {
     required this.locale,
     required this.isPlaying,
     required this.isBuffering,
-    required this.isShuffle,
+    required this.shuffleMode,
     required this.repeatMode,
   });
 
   @override
   Widget build(BuildContext context) {
     final strings = locale.strings;
+    final isShuffle = shuffleMode != ShuffleMode.off;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -28,10 +29,38 @@ class _PlayerControls extends StatelessWidget {
         children: [
           // Shuffle
           TapScale(
-            semanticLabel: isShuffle ? strings.a11yShuffleOn : strings.a11yShuffleOff,
-            onTap: audio.toggleShuffle,
+            semanticLabel: switch (shuffleMode) {
+              ShuffleMode.off => strings.a11yShuffleOff,
+              ShuffleMode.on => strings.a11yShuffleOn,
+              ShuffleMode.smart => strings.a11yShuffleSmart,
+            },
+            // Off → shuffle → shuffle with recommendations.
+            onTap: () {
+              HapticFeedback.selectionClick();
+              final mode = audio.cycleShuffle();
+              showTrackSnack(
+                context,
+                switch (mode) {
+                  ShuffleMode.off => strings.shuffleOffToast,
+                  ShuffleMode.on => strings.shuffleOnToast,
+                  ShuffleMode.smart => strings.shuffleSmartToast,
+                },
+                bottom: MediaQuery.paddingOf(context).bottom + 12,
+              );
+            },
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              showSmartShuffleSheet(context);
+            },
             scaleDown: 0.8,
-            child: _ModeIcon(icon: Icons.shuffle, on: isShuffle),
+            child: _ModeIcon(
+              icon: ShuffleModeIcon(
+                mode: shuffleMode,
+                size: 22,
+                color: isShuffle ? AppColors.accent : AppColors.textSecondary,
+              ),
+              on: isShuffle,
+            ),
           ),
 
           // Previous
@@ -79,9 +108,15 @@ class _PlayerControls extends StatelessWidget {
             onTap: audio.toggleRepeat,
             scaleDown: 0.8,
             child: _ModeIcon(
-              icon: repeatMode == PlaybackRepeatMode.one
-                  ? Icons.repeat_one
-                  : Icons.repeat,
+              icon: Icon(
+                repeatMode == PlaybackRepeatMode.one
+                    ? Icons.repeat_one
+                    : Icons.repeat,
+                size: 22,
+                color: repeatMode != PlaybackRepeatMode.off
+                    ? AppColors.accent
+                    : AppColors.textSecondary,
+              ),
               on: repeatMode != PlaybackRepeatMode.off,
             ),
           ),
@@ -91,9 +126,9 @@ class _PlayerControls extends StatelessWidget {
   }
 }
 
-/// Shuffle / repeat icon, lit with a dot under it while on.
+/// Shuffle / repeat icon, with a dot under it while on.
 class _ModeIcon extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final bool on;
 
   const _ModeIcon({required this.icon, required this.on});
@@ -105,11 +140,7 @@ class _ModeIcon extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 22,
-            color: on ? AppColors.accent : AppColors.textSecondary,
-          ),
+          icon,
           if (on)
             Container(
               margin: const EdgeInsets.only(top: 4),

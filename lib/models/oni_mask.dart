@@ -4,7 +4,34 @@ import '../core/localization/app_language.dart';
 
 enum MaskRarity { common, rare, epic, secret, legendary }
 
-enum MaskArt { tengu, kabuki, hannya, cyberOni }
+enum MaskArt {
+  tengu,
+  kabuki,
+  hannya,
+  cyberOni,
+  // Redrawn in other techniques (tool/mask_styles.py).
+  kintsugi,
+  hologram,
+  sumie,
+  glitch,
+  pixel,
+  neon,
+  duo,
+  gold,
+  ice,
+  sakura,
+  // Oni types: new elements and materials.
+  akaoni,
+  raijin,
+  namahage,
+  kijo,
+  kurohannya,
+  kibori,
+  ishi,
+  seidou,
+  yurei,
+  chinoame,
+}
 
 /// A collectible mask: one of the four illustrations, dyed with a color
 /// matrix, unlocked by an achievement.
@@ -19,6 +46,8 @@ class OniMask {
   final List<double>? dye;
   /// For counted goals (e.g. 100 plays), the target shown as progress.
   final int? goal;
+  /// Won by completing a week's three challenges, not by an achievement.
+  final bool weekly;
   final Map<AppLanguage, String> names;
   final Map<AppLanguage, String> descriptions;
 
@@ -32,6 +61,7 @@ class OniMask {
     this.secret = false,
     this.dye,
     this.goal,
+    this.weekly = false,
   });
 
   String asset() => switch (art) {
@@ -39,6 +69,7 @@ class OniMask {
         MaskArt.kabuki => 'assets/images/oni.png',
         MaskArt.hannya => 'assets/images/hannya.png',
         MaskArt.cyberOni => 'assets/images/cyber_oni_mask.png',
+        _ => 'assets/images/masks/${art.name}.webp',
       };
 
   String name(AppLanguage l) => names[l] ?? names[AppLanguage.es]!;
@@ -357,12 +388,283 @@ class MaskCatalog {
         AppLanguage.ja: '鬼',
       },
       descriptions: const {
-        AppLanguage.es: 'Reuniste todas las demás máscaras.',
-        AppLanguage.en: 'You collected every other mask.',
-        AppLanguage.ja: '他のすべての面を集めた。',
+        AppLanguage.es: 'Reuniste todas las máscaras de logros.',
+        AppLanguage.en: 'You collected every achievement mask.',
+        AppLanguage.ja: '実績の面をすべて集めた。',
       },
     ),
+    // Weekly challenge rewards, in the order they're handed out.
+    const OniMask(
+      id: 'sumi',
+      kanji: '墨',
+      art: MaskArt.sumie,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Tinta',
+        AppLanguage.en: 'Ink',
+        AppLanguage.ja: '墨',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'hachi',
+      kanji: '点',
+      art: MaskArt.pixel,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: '8 Bits',
+        AppLanguage.en: '8-Bit',
+        AppLanguage.ja: '八ビット',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'ranpa',
+      kanji: '乱',
+      art: MaskArt.glitch,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Señal Rota',
+        AppLanguage.en: 'Broken Signal',
+        AppLanguage.ja: '乱波',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'kori',
+      kanji: '氷',
+      art: MaskArt.ice,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Hielo Eterno',
+        AppLanguage.en: 'Eternal Ice',
+        AppLanguage.ja: '永久氷',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'hanami',
+      kanji: '桜',
+      art: MaskArt.sakura,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Hanami',
+        AppLanguage.en: 'Hanami',
+        AppLanguage.ja: '花見',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'maboroshi',
+      kanji: '幻',
+      art: MaskArt.hologram,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Fantasma Digital',
+        AppLanguage.en: 'Digital Ghost',
+        AppLanguage.ja: '幻影',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'hikari',
+      kanji: '光',
+      art: MaskArt.neon,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Neón Nocturno',
+        AppLanguage.en: 'Night Neon',
+        AppLanguage.ja: '夜の光',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'futaomote',
+      kanji: '双',
+      art: MaskArt.duo,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Dos Caras',
+        AppLanguage.en: 'Two Faces',
+        AppLanguage.ja: '二つの顔',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'kintsugi',
+      kanji: '継',
+      art: MaskArt.kintsugi,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Kintsugi',
+        AppLanguage.en: 'Kintsugi',
+        AppLanguage.ja: '金継ぎ',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'ougon',
+      kanji: '輝',
+      art: MaskArt.gold,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Oro Puro',
+        AppLanguage.en: 'Pure Gold',
+        AppLanguage.ja: '黄金',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    // Oni types.
+    const OniMask(
+      id: 'akaoni',
+      kanji: '赤',
+      art: MaskArt.akaoni,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Aka Oni',
+        AppLanguage.en: 'Red Oni',
+        AppLanguage.ja: '赤鬼',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'kijo',
+      kanji: '女',
+      art: MaskArt.kijo,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Kijo',
+        AppLanguage.en: 'Demon Woman',
+        AppLanguage.ja: '鬼女',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'kibori',
+      kanji: '木',
+      art: MaskArt.kibori,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Talla de Madera',
+        AppLanguage.en: 'Woodcarving',
+        AppLanguage.ja: '木彫り',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'ishi',
+      kanji: '石',
+      art: MaskArt.ishi,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Yasha de Piedra',
+        AppLanguage.en: 'Stone Yasha',
+        AppLanguage.ja: '石の夜叉',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'seidou',
+      kanji: '銅',
+      art: MaskArt.seidou,
+      rarity: MaskRarity.rare,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Bronce Antiguo',
+        AppLanguage.en: 'Old Bronze',
+        AppLanguage.ja: '青銅',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'raijin',
+      kanji: '雷',
+      art: MaskArt.raijin,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Raijin',
+        AppLanguage.en: 'Raijin',
+        AppLanguage.ja: '雷神',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'namahage',
+      kanji: '剥',
+      art: MaskArt.namahage,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Namahage',
+        AppLanguage.en: 'Namahage',
+        AppLanguage.ja: 'なまはげ',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'kurohannya',
+      kanji: '黒',
+      art: MaskArt.kurohannya,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Hannya Negra',
+        AppLanguage.en: 'Black Hannya',
+        AppLanguage.ja: '黒般若',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'yurei',
+      kanji: '霊',
+      art: MaskArt.yurei,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Yūrei',
+        AppLanguage.en: 'Yūrei',
+        AppLanguage.ja: '幽霊',
+      },
+      descriptions: _weeklyDescription,
+    ),
+    const OniMask(
+      id: 'chinoame',
+      kanji: '血',
+      art: MaskArt.chinoame,
+      rarity: MaskRarity.epic,
+      weekly: true,
+      names: {
+        AppLanguage.es: 'Luna de Sangre',
+        AppLanguage.en: 'Blood Moon',
+        AppLanguage.ja: '血の月',
+      },
+      descriptions: _weeklyDescription,
+    ),
   ];
+
+  static const _weeklyDescription = {
+    AppLanguage.es: 'Completa los 3 desafíos de una semana.',
+    AppLanguage.en: "Complete a week's 3 challenges.",
+    AppLanguage.ja: '1週間の3つのチャレンジを達成する。',
+  };
+
+  /// The masks won with weekly challenges, in rotation order.
+  static final List<OniMask> weekly = [for (final m in all) if (m.weekly) m];
 
   static OniMask? byId(String? id) {
     if (id == null) return null;
