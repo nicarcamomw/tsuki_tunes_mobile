@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../services/battery_guide.dart';
 import 'swipeable_sheet.dart';
 
 /// Step by step, for this phone's maker, how to stop it from freezing
 /// Spotify in the background, with a shortcut to Spotify's settings.
-class BatteryGuideSheet extends StatelessWidget {
+class BatteryGuideSheet extends ConsumerWidget {
   final BatteryFamily family;
   final String makerName;
   final ScrollController controller;
@@ -41,7 +41,7 @@ class BatteryGuideSheet extends StatelessWidget {
   Future<void> _openSettings(BuildContext context) async {
     unawaited(HapticFeedback.selectionClick());
     final messenger = ScaffoldMessenger.of(context);
-    final failedText = context.read<LocaleProvider>().strings.batteryGuideOpenFailed;
+    final failedText = context.readState(stringsProvider).batteryGuideOpenFailed;
     final opened = await BatteryGuide.instance.openSpotifySettings();
     if (!opened) {
       messenger.showSnackBar(SnackBar(content: Text(failedText)));
@@ -49,8 +49,8 @@ class BatteryGuideSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final steps = [
       strings.batteryGuideStepOpen,

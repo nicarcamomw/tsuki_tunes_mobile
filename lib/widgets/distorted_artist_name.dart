@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/utils/artist_fonts.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 
-class DistortedArtistName extends StatelessWidget {
+class DistortedArtistName extends ConsumerWidget {
   final String name;
   final String artistId;
   final double fontSize;
@@ -21,8 +22,8 @@ class DistortedArtistName extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final customFont = ArtistFonts.getFontFamily(artistId, name);
 
     if (customFont == null) {

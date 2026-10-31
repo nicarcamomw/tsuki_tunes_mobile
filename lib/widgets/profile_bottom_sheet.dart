@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
@@ -56,7 +58,7 @@ class ProfileBottomSheet {
 /// The sheet's content. [hostContext] is the screen that opened it: it
 /// outlives the sheet, so navigation and snack bars that follow closing the
 /// sheet go through it.
-class _ProfileSheet extends StatelessWidget {
+class _ProfileSheet extends ConsumerWidget {
   final BuildContext hostContext;
   final AuthProvider auth;
 
@@ -71,8 +73,8 @@ class _ProfileSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final locale = hostContext.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
     return SafeArea(

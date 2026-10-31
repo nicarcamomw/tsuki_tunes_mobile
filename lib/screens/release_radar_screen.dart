@@ -6,23 +6,24 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../models/radar_release.dart';
+import '../providers/app_providers.dart';
 import '../providers/locale_provider.dart';
 import '../services/release_radar_service.dart';
 import 'album_detail_screen.dart';
 
-class ReleaseRadarScreen extends StatefulWidget {
+class ReleaseRadarScreen extends ConsumerStatefulWidget {
   const ReleaseRadarScreen({super.key});
 
   @override
-  State<ReleaseRadarScreen> createState() => _ReleaseRadarScreenState();
+  ConsumerState<ReleaseRadarScreen> createState() => _ReleaseRadarScreenState();
 }
 
-class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
+class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
     with WidgetsBindingObserver {
   final ReleaseRadarService _radar = ReleaseRadarService();
   bool? _permission;
@@ -62,7 +63,7 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
     if (!mounted) return;
     setState(() => _permission = granted);
     if (!granted) {
-      final strings = context.read<LocaleProvider>().strings;
+      final strings = ref.read(stringsProvider);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.bgCard,
@@ -96,7 +97,7 @@ class _ReleaseRadarScreenState extends State<ReleaseRadarScreen>
 
   @override
   Widget build(BuildContext context) {
-    final locale = Provider.of<LocaleProvider>(context);
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     return Scaffold(

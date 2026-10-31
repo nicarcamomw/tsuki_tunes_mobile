@@ -19,6 +19,14 @@ class AppStrings {
 
   static AppStrings of(AppLanguage language) => AppStrings(language);
 
+  // Same texts for the same language, so a derived provider only notifies
+  // when the language changes.
+  @override
+  bool operator ==(Object other) => other is AppStrings && other.language == language;
+
+  @override
+  int get hashCode => language.hashCode;
+
   // Every translated text lives in lib/l10n/app_<code>.arb (plurals and
   // per-value variants as ICU plural/select), compiled to lib/l10n/generated
   // by `flutter gen-l10n`. This class keeps the API the screens use and

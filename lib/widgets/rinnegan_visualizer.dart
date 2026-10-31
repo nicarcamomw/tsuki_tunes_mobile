@@ -5,12 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../services/beat_clock.dart';
 import '../services/bpm_flow.dart';
 
@@ -22,7 +22,7 @@ import '../services/bpm_flow.dart';
 /// Tapping it on the beat three times lines the pulses up exactly with the
 /// song; four taps also set the tempo of a song Deezer doesn't know. A long
 /// press goes back to Deezer's tempo.
-class RinneganVisualizer extends StatefulWidget {
+class RinneganVisualizer extends ConsumerStatefulWidget {
   final bool isPlaying;
   final String? imageUrl;
   final double size;
@@ -50,7 +50,7 @@ class RinneganVisualizer extends StatefulWidget {
   });
 
   @override
-  State<RinneganVisualizer> createState() => _RinneganVisualizerState();
+  ConsumerState<RinneganVisualizer> createState() => _RinneganVisualizerState();
 }
 
 /// Everything the painters need for one frame.
@@ -72,7 +72,7 @@ class _Frame extends ChangeNotifier {
   void emit() => notifyListeners();
 }
 
-class _RinneganVisualizerState extends State<RinneganVisualizer>
+class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     with SingleTickerProviderStateMixin {
   static const _hintKey = 'beat_sync_hint_shown';
   static const double _idleTurnSeconds = 12;
@@ -293,7 +293,7 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
 
     final deezer = _gridFromTaps ? _tempo.cached(widget.trackId!) : _grid?.bpm;
     final result = _taps.tap(t, wall, bpm: deezer);
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     if (result == null) {
       _showChip(strings.beatSyncTapping(_taps.count), hold: true);
       return;
@@ -315,7 +315,7 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
     if (key == null) return;
     _taps.clear();
     HapticFeedback.mediumImpact();
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     unawaited(BeatSyncStore.shared.remove(key));
     final bpm = _tempo.cached(widget.trackId!);
     _grid = bpm == null ? null : BeatGrid(bpm);
@@ -336,7 +336,7 @@ class _RinneganVisualizerState extends State<RinneganVisualizer>
   void _showHint() {
     if (!mounted || _reduceMotion) return;
     _hintPending = false;
-    _showChip(context.read<LocaleProvider>().strings.beatSyncHint, seconds: 5);
+    _showChip(ref.read(stringsProvider).beatSyncHint, seconds: 5);
     _markHintSeen();
   }
 
@@ -467,13 +467,13 @@ class _CoverPlaceholder extends StatelessWidget {
       );
 }
 
-class _SyncChip extends StatelessWidget {
+class _SyncChip extends ConsumerWidget {
   final String text;
   const _SyncChip({super.key, required this.text});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

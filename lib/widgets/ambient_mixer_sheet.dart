@@ -2,14 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/ambient_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/locale_provider.dart';
 import 'swipeable_sheet.dart';
 
-class AmbientMixerSheet extends StatefulWidget {
+class AmbientMixerSheet extends ConsumerStatefulWidget {
   const AmbientMixerSheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -32,10 +34,10 @@ class AmbientMixerSheet extends StatefulWidget {
       };
 
   @override
-  State<AmbientMixerSheet> createState() => _AmbientMixerSheetState();
+  ConsumerState<AmbientMixerSheet> createState() => _AmbientMixerSheetState();
 }
 
-class _AmbientMixerSheetState extends State<AmbientMixerSheet> {
+class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
   static const _color = AppColors.neonCyan;
   Timer? _tick;
 
@@ -65,7 +67,7 @@ class _AmbientMixerSheetState extends State<AmbientMixerSheet> {
   @override
   Widget build(BuildContext context) {
     final ambient = context.watch<AmbientProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final remaining = ambient.stopRemaining;
 

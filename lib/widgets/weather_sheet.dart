@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/weather_provider.dart';
 import '../services/device_location.dart';
 import '../services/weather_service.dart';
@@ -15,7 +16,7 @@ import 'swipeable_sheet.dart';
 
 /// Weather status and setup: where it comes from (approximate location or a
 /// chosen city), with the privacy note right where the choice is made.
-class WeatherSheet extends StatefulWidget {
+class WeatherSheet extends ConsumerStatefulWidget {
   const WeatherSheet({super.key});
 
   static Future<void> show(BuildContext context) => SwipeableSheet.show(
@@ -26,10 +27,10 @@ class WeatherSheet extends StatefulWidget {
       );
 
   @override
-  State<WeatherSheet> createState() => _WeatherSheetState();
+  ConsumerState<WeatherSheet> createState() => _WeatherSheetState();
 }
 
-class _WeatherSheetState extends State<WeatherSheet> {
+class _WeatherSheetState extends ConsumerState<WeatherSheet> {
   final _query = TextEditingController();
   Timer? _debounce;
   List<Place>? _results;
@@ -59,7 +60,7 @@ class _WeatherSheetState extends State<WeatherSheet> {
   Future<void> _search(String q) async {
     final gen = ++_gen;
     setState(() => _searching = true);
-    final lang = context.read<LocaleProvider>().currentLanguage.name;
+    final lang = ref.read(localeProvider).currentLanguage.name;
     final found = await context.read<WeatherProvider>().searchPlaces(q, language: lang);
     if (!mounted || gen != _gen) return;
     setState(() {
@@ -80,7 +81,7 @@ class _WeatherSheetState extends State<WeatherSheet> {
   @override
   Widget build(BuildContext context) {
     final weather = context.watch<WeatherProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final now = weather.enabled ? weather.current : null;
     final problem = _problemText(weather.locationProblem, strings);

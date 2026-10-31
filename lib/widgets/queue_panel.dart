@@ -2,12 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
@@ -21,7 +23,7 @@ import 'track_tile.dart';
 /// and what comes next in the order it will really play, shuffle included.
 /// Drag to reorder (hold anywhere, or the handle), swipe right to play a
 /// song next, swipe left to remove it; every removal can be undone.
-class QueuePanel extends StatefulWidget {
+class QueuePanel extends ConsumerStatefulWidget {
   /// Shown under the header (the radio banner).
   final Widget? banner;
 
@@ -34,17 +36,17 @@ class QueuePanel extends StatefulWidget {
   const QueuePanel({super.key, this.banner, this.footer, this.onPlay});
 
   @override
-  State<QueuePanel> createState() => _QueuePanelState();
+  ConsumerState<QueuePanel> createState() => _QueuePanelState();
 }
 
-class _QueuePanelState extends State<QueuePanel> {
+class _QueuePanelState extends ConsumerState<QueuePanel> {
   // Songs listed at once; with shuffle the rest are summed up below.
   static const _maxShown = 60;
 
   bool _showPlayed = false;
 
   AudioProvider get _audio => context.read<AudioProvider>();
-  LocaleProvider get _locale => context.read<LocaleProvider>();
+  LocaleProvider get _locale => ref.read(localeProvider);
 
   double get _snackBottom => MediaQuery.of(context).padding.bottom + 12;
 

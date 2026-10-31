@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,10 +12,10 @@ import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../services/deezer_api_service.dart';
@@ -23,16 +24,16 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
 
-class AlbumDetailScreen extends StatefulWidget {
+class AlbumDetailScreen extends ConsumerStatefulWidget {
   final Album album;
 
   const AlbumDetailScreen({super.key, required this.album});
 
   @override
-  State<AlbumDetailScreen> createState() => _AlbumDetailScreenState();
+  ConsumerState<AlbumDetailScreen> createState() => _AlbumDetailScreenState();
 }
 
-class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
+class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   final ScrollController _scroll = ScrollController();
   Album? _fullAlbum;
@@ -140,7 +141,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final albumData = _fullAlbum ?? widget.album;
     final tracks = albumData.tracks;

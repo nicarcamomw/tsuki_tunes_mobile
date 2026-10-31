@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/mask_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/mask_collection_screen.dart';
 import 'package:tsuki_tunes_mobile/widgets/mask_unlock_banner.dart';
+import 'helpers/test_scope.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Widget wrap(MaskProvider masks, Widget child) => MultiProvider(
+  Widget wrap(MaskProvider masks, Widget child) => TestScope(
+        child: MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider.value(value: masks),
         ],
         child: MaterialApp(home: child),
-      );
+      ));
 
   testWidgets('collection hides secret masks until they are unlocked', (tester) async {
     tester.view.physicalSize = const Size(360 * 3, 2400 * 3);

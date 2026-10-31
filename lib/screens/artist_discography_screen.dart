@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -9,13 +10,14 @@ import '../core/utils/album_categorizer.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
+import '../providers/app_providers.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
 
-class ArtistDiscographyScreen extends StatefulWidget {
+class ArtistDiscographyScreen extends ConsumerStatefulWidget {
   final String? artistId;
   final String artistName;
   final List<Album> albums;
@@ -32,11 +34,11 @@ class ArtistDiscographyScreen extends StatefulWidget {
   });
 
   @override
-  State<ArtistDiscographyScreen> createState() =>
+  ConsumerState<ArtistDiscographyScreen> createState() =>
       _ArtistDiscographyScreenState();
 }
 
-class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
+class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScreen> {
   final DeezerApiService _api = DeezerApiService();
   late String _filter;
   late final ScrollController _scrollController;
@@ -187,7 +189,7 @@ class _ArtistDiscographyScreenState extends State<ArtistDiscographyScreen> {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     library.ensureAlbumTrackCounts(_allAlbums, _api.getAlbum);
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final cats = _categories;
 

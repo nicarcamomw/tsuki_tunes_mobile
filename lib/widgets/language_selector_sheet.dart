@@ -1,17 +1,18 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../services/storage_service.dart';
 import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
 
-class LanguageSelectorSheet extends StatelessWidget {
+class LanguageSelectorSheet extends ConsumerWidget {
   const LanguageSelectorSheet({super.key});
 
   static void show(BuildContext context) {
@@ -28,8 +29,8 @@ class LanguageSelectorSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final currentLang = locale.currentLanguage;
 
@@ -119,7 +120,7 @@ class LanguageSelectorSheet extends StatelessWidget {
                   onTap: () async {
                     unawaited(HapticFeedback.selectionClick());
                     if (!isSelected) {
-                      await context.read<LocaleProvider>().setLanguage(
+                      await ref.read(localeProvider).setLanguage(
                             lang,
                             StorageService(),
                           );

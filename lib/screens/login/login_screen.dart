@@ -8,11 +8,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../providers/app_providers.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/locale_provider.dart';
@@ -27,14 +29,14 @@ import '../onboarding_screen.dart';
 part 'google_button.dart';
 part 'painters.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with TickerProviderStateMixin {
   late final Ticker _ticker;
   late final AnimationController _shockwaveController;
@@ -182,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen>
       } else {
         setState(() => _isLoading = false);
         if (!auth.wasCancelled) {
-          final locale = context.read<LocaleProvider>();
+          final locale = ref.read(localeProvider);
           final strings = locale.strings;
           final msg = auth.authError == 'login_throttled'
               ? strings.loginThrottled
@@ -247,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     return Scaffold(

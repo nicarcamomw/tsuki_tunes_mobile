@@ -4,12 +4,14 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -21,14 +23,14 @@ import 'main_navigation_screen.dart';
 
 enum _Period { year, sixMonths, month, week, random }
 
-class TimeMachineScreen extends StatefulWidget {
+class TimeMachineScreen extends ConsumerStatefulWidget {
   const TimeMachineScreen({super.key});
 
   @override
-  State<TimeMachineScreen> createState() => _TimeMachineScreenState();
+  ConsumerState<TimeMachineScreen> createState() => _TimeMachineScreenState();
 }
 
-class _TimeMachineScreenState extends State<TimeMachineScreen> {
+class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   final TimeMachineService _service = TimeMachineService();
   final Random _rng = Random();
 
@@ -84,7 +86,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
           now.subtract(const Duration(days: 7)),
         );
         if (dates.isEmpty) {
-          _snack(context.read<LocaleProvider>().strings.timeMachineNoHistory);
+          _snack(ref.read(stringsProvider).timeMachineNoHistory);
           return;
         }
         anchor = dates[_rng.nextInt(dates.length)];
@@ -101,7 +103,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
     if (moment == null || _starting) return;
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _starting = true);
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final audio = context.read<AudioProvider>();
 
     // History may lack a preview URL (older entries): fetch those fresh.
@@ -145,7 +147,7 @@ class _TimeMachineScreenState extends State<TimeMachineScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final moment = _moment;
 
@@ -713,14 +715,14 @@ class _Nothing extends StatelessWidget {
 // Home entry card: teases today's anniversary and refreshes the schedule
 // ---------------------------------------------------------------------------
 
-class TimeMachineEntryCard extends StatefulWidget {
+class TimeMachineEntryCard extends ConsumerStatefulWidget {
   const TimeMachineEntryCard({super.key});
 
   @override
-  State<TimeMachineEntryCard> createState() => _TimeMachineEntryCardState();
+  ConsumerState<TimeMachineEntryCard> createState() => _TimeMachineEntryCardState();
 }
 
-class _TimeMachineEntryCardState extends State<TimeMachineEntryCard> {
+class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
   TimeMachineMoment? _moment;
   bool _requested = false;
 
@@ -742,7 +744,7 @@ class _TimeMachineEntryCardState extends State<TimeMachineEntryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final s = locale.strings;
     final m = _moment;
     final teaser = m == null

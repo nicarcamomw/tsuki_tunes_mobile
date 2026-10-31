@@ -1,7 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
+import '../core/localization/app_language.dart';
+import '../core/localization/app_strings.dart';
 import '../services/play_history.dart';
 import '../services/release_radar_service.dart';
 import '../services/storage_service.dart';
@@ -54,8 +57,21 @@ final localeProvider = ChangeNotifierProvider<LocaleProvider>(
   (ref) => LocaleProvider(storage: StorageService()),
 );
 
+/// The app's language. Changes only when the user picks another one (or the
+/// saved choice loads), unlike [localeProvider], which also notifies once
+/// it has loaded.
+final appLanguageProvider = Provider<AppLanguage>(
+  (ref) => ref.watch(localeProvider).currentLanguage,
+);
+
+/// The texts in the app's language; widgets watching it rebuild only when
+/// the language changes.
+final stringsProvider = Provider<AppStrings>(
+  (ref) => AppStrings.of(ref.watch(appLanguageProvider)),
+);
+
 final ambientProvider = ChangeNotifierProvider<AmbientProvider>((ref) {
-  return AmbientProvider(labelFor: (sound) => ref.read(localeProvider).strings.ambientName(sound));
+  return AmbientProvider(labelFor: (sound) => ref.read(stringsProvider).ambientName(sound));
 });
 
 /// Masks belong to the signed-in account (null while signed out or guest).
@@ -149,4 +165,12 @@ void _follow(Ref ref, Listenable source, VoidCallback onChange, {bool now = true
   if (now) onChange();
   source.addListener(onChange);
   ref.onDispose(() => source.removeListener(onChange));
+}
+
+/// For helpers outside widgets that only get a BuildContext (snack bars,
+/// dialogs, sheets): reads a provider once, without listening. Widgets use
+/// ref.read / ref.watch instead.
+extension ReadAppState on BuildContext {
+  T readState<T>(ProviderListenable<T> provider) =>
+      ProviderScope.containerOf(this, listen: false).read(provider);
 }

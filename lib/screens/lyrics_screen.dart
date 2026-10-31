@@ -4,11 +4,13 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../widgets/audio_progress_selector.dart';
@@ -17,7 +19,7 @@ import '../widgets/tap_scale.dart';
 
 /// Full-screen synced lyrics over the album's color, with the song's
 /// progress and play controls at the bottom.
-class LyricsScreen extends StatefulWidget {
+class LyricsScreen extends ConsumerStatefulWidget {
   final LyricsController controller;
 
   const LyricsScreen({super.key, required this.controller});
@@ -46,10 +48,10 @@ class LyricsScreen extends StatefulWidget {
   }
 
   @override
-  State<LyricsScreen> createState() => _LyricsScreenState();
+  ConsumerState<LyricsScreen> createState() => _LyricsScreenState();
 }
 
-class _LyricsScreenState extends State<LyricsScreen> {
+class _LyricsScreenState extends ConsumerState<LyricsScreen> {
 
   void _syncTrack(Track track) {
     if (widget.controller.trackId != track.id) {
@@ -60,7 +62,7 @@ class _LyricsScreenState extends State<LyricsScreen> {
   }
 
   Future<bool> _confirmDownload(int models) async {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     return await showDialog<bool>(
           context: context,
@@ -112,7 +114,7 @@ class _LyricsScreenState extends State<LyricsScreen> {
   }
 
   Future<void> _toggleTranslation() async {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final messenger = ScaffoldMessenger.of(context);
     final ok = await widget.controller.toggleTranslation(
       locale.currentLanguage,
@@ -142,7 +144,7 @@ class _LyricsScreenState extends State<LyricsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
     if (track == null) {
@@ -327,7 +329,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
+class _Chip extends ConsumerWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
@@ -343,8 +345,8 @@ class _Chip extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return TapScale(
       semanticLabel: label,
       onTap: onTap == null
@@ -430,12 +432,12 @@ class _Progress extends StatelessWidget {
   }
 }
 
-class _Controls extends StatelessWidget {
+class _Controls extends ConsumerWidget {
   const _Controls();
 
   @override
-  Widget build(BuildContext context) {
-    final strings = context.read<LocaleProvider>().strings;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.read(stringsProvider);
     final audio = context.read<AudioProvider>();
     final (isPlaying, isBuffering) = context.select<AudioProvider, (bool, bool)>(
         (a) => (a.isPlaying, a.isBuffering));
@@ -495,7 +497,7 @@ class _Controls extends StatelessWidget {
   }
 }
 
-class _Message extends StatelessWidget {
+class _Message extends ConsumerWidget {
   final String text;
   final bool loading;
   final IconData? icon;
@@ -511,8 +513,8 @@ class _Message extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

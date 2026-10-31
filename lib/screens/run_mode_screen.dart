@@ -4,27 +4,28 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/locale_provider.dart';
 import '../providers/run_provider.dart';
 import '../services/cadence_detector.dart';
 import '../services/pace_matcher.dart';
 
-class RunModeScreen extends StatelessWidget {
+class RunModeScreen extends ConsumerWidget {
   const RunModeScreen({super.key});
 
   static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
       .push(CyberPageRoute(builder: (_) => const RunModeScreen()));
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final run = context.watch<RunProvider>();
 
@@ -118,13 +119,13 @@ Color _stateColor(MotionState state) => switch (state) {
 
 /// Cadence dial: 60–200 steps/min around a ring, with a pulse on every step
 /// and a marker at the tempo the music follows.
-class _CadenceGauge extends StatelessWidget {
+class _CadenceGauge extends ConsumerWidget {
   final RunProvider run;
   const _CadenceGauge({required this.run});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final reading = run.reading;
     final spm = run.active ? reading.spm : null;
@@ -352,13 +353,13 @@ class _StepPulseState extends State<_StepPulse> with SingleTickerProviderStateMi
   }
 }
 
-class _StatusLine extends StatelessWidget {
+class _StatusLine extends ConsumerWidget {
   final RunProvider run;
   const _StatusLine({required this.run});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final String text;
     var color = AppColors.textMuted;
@@ -392,13 +393,13 @@ class _StatusLine extends StatelessWidget {
   }
 }
 
-class _MusicPanel extends StatelessWidget {
+class _MusicPanel extends ConsumerWidget {
   final RunProvider run;
   const _MusicPanel({required this.run});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final track = context.select<AudioProvider, Track?>((a) => a.currentTrack);
     final target = run.target;
@@ -519,15 +520,15 @@ class _MusicPanel extends StatelessWidget {
   }
 }
 
-class _TempoChip extends StatelessWidget {
+class _TempoChip extends ConsumerWidget {
   final double? bpm;
   final double rate;
   final double? target;
   const _TempoChip({required this.bpm, required this.rate, required this.target});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final b = bpm;
     final t = target;
     final Color color;
@@ -586,13 +587,13 @@ class _RoundButton extends StatelessWidget {
   }
 }
 
-class _SyncRow extends StatelessWidget {
+class _SyncRow extends ConsumerWidget {
   final RunProvider run;
   const _SyncRow({required this.run});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final canSync = context.select<AudioProvider, bool>((a) => a.canChangeTempo);
     return Container(
@@ -644,15 +645,15 @@ class _SyncRow extends StatelessWidget {
 
 /// Session numbers and the cadence over time. Ticks every second for the
 /// clock without rebuilding the rest of the screen.
-class _SessionStats extends StatefulWidget {
+class _SessionStats extends ConsumerStatefulWidget {
   final RunProvider run;
   const _SessionStats({required this.run});
 
   @override
-  State<_SessionStats> createState() => _SessionStatsState();
+  ConsumerState<_SessionStats> createState() => _SessionStatsState();
 }
 
-class _SessionStatsState extends State<_SessionStats> {
+class _SessionStatsState extends ConsumerState<_SessionStats> {
   late final Timer _clock;
 
   @override
@@ -678,7 +679,7 @@ class _SessionStatsState extends State<_SessionStats> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final run = widget.run;
     final avg = run.averageCadence;
@@ -789,14 +790,14 @@ class _HistoryPainter extends CustomPainter {
       old.values.length != values.length || old.values.last != values.last;
 }
 
-class _Hint extends StatelessWidget {
+class _Hint extends ConsumerWidget {
   final IconData icon;
   final String text;
   const _Hint({required this.icon, required this.text});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

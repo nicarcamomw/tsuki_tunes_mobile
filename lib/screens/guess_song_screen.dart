@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -19,7 +21,7 @@ import '../providers/mask_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/guess_game.dart';
 
-class GuessSongScreen extends StatefulWidget {
+class GuessSongScreen extends ConsumerStatefulWidget {
   const GuessSongScreen({super.key});
 
   static const dailyStateKey = 'guess_daily_state';
@@ -38,10 +40,10 @@ class GuessSongScreen extends StatefulWidget {
   }
 
   @override
-  State<GuessSongScreen> createState() => _GuessSongScreenState();
+  ConsumerState<GuessSongScreen> createState() => _GuessSongScreenState();
 }
 
-class _GuessSongScreenState extends State<GuessSongScreen> {
+class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   static const _statsKey = 'guess_daily_stats';
   static const _bestStreakKey = 'guess_free_best_streak';
   static const _lastArtistKey = 'guess_last_artist';
@@ -566,7 +568,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   }
 
   String _modeLabel(GuessMode mode) {
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     return switch (mode) {
       GuessMode.daily => strings.guessModeDaily,
       GuessMode.library => strings.guessModeLibrary,
@@ -576,7 +578,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
   }
 
   void _share() {
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final header = _mode == GuessMode.daily
         ? strings.guessShareHeader(_today)
         : _mode == GuessMode.artist
@@ -606,7 +608,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     return Scaffold(

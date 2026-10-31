@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +14,7 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -85,15 +87,15 @@ class _GraphEdge {
       (a == x && b == y) || (a == y && b == x);
 }
 
-class RabbitHoleScreen extends StatefulWidget {
+class RabbitHoleScreen extends ConsumerStatefulWidget {
   final Artist seedArtist;
   const RabbitHoleScreen({super.key, required this.seedArtist});
 
   @override
-  State<RabbitHoleScreen> createState() => _RabbitHoleScreenState();
+  ConsumerState<RabbitHoleScreen> createState() => _RabbitHoleScreenState();
 }
 
-class _RabbitHoleScreenState extends State<RabbitHoleScreen>
+class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     with TickerProviderStateMixin {
   static const String _hintPrefKey = 'rabbit_hole_hint_seen';
 
@@ -334,7 +336,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
     unawaited(HapticFeedback.lightImpact());
     final audio = context.read<AudioProvider>();
     final messenger = ScaffoldMessenger.of(context);
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     setState(() => _startingPlayback = true);
     try {
       final tracks = await _api.getArtistTopTracks(node.id);
@@ -369,7 +371,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
   void _notifyMaxReached() {
     if (_maxNotified || !mounted) return;
     _maxNotified = true;
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final focused = _focusedId == null ? null : _nodes[_focusedId!];
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -670,7 +672,7 @@ class _RabbitHoleScreenState extends State<RabbitHoleScreen>
 
   @override
   Widget build(BuildContext context) {
-    final locale = Provider.of<LocaleProvider>(context);
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final media = MediaQuery.of(context);
     _topInset = media.padding.top + kToolbarHeight;

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/wrapped_data.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/wrapped_screen.dart';
+import 'helpers/test_scope.dart';
 
 WrappedData _data({int? month}) => WrappedData(
       year: 2026,
@@ -46,9 +45,8 @@ void main() {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.7;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ChangeNotifierProvider(
-      create: (_) => LocaleProvider(),
-      child: MaterialApp(
+    await tester.pumpWidget(TestScope(
+        child: MaterialApp(
         home: WrappedScreen(year: data.year, month: data.month, previewData: data),
       ),
     ));

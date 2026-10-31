@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/playlist_provider.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
@@ -24,15 +25,15 @@ Future<void> showPlaylistSelector(BuildContext context, Track track) {
   );
 }
 
-class _PlaylistSelectorContent extends StatelessWidget {
+class _PlaylistSelectorContent extends ConsumerWidget {
   final Track track;
 
   const _PlaylistSelectorContent({required this.track});
 
   @override
-  Widget build(BuildContext context) {
-    final strings = context.read<LocaleProvider>().strings;
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.read(stringsProvider);
+    final locale = ref.read(localeProvider);
     final playlists = context.watch<PlaylistProvider>().playlists;
 
     return SafeArea(
@@ -244,8 +245,8 @@ class _PlaylistSelectorContent extends StatelessWidget {
 
 /// Asks for a new playlist's name. Null when cancelled.
 Future<String?> showPlaylistNameDialog(BuildContext context) {
-  final strings = context.read<LocaleProvider>().strings;
-  final locale = context.read<LocaleProvider>();
+  final strings = context.readState(stringsProvider);
+  final locale = context.readState(localeProvider);
   final controller = TextEditingController();
 
   return showDialog<String>(
@@ -321,8 +322,8 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
   final created =
       await context.read<PlaylistProvider>().createPlaylist(name, tracks: tracks);
   if (created == null || !context.mounted) return created != null;
-  final strings = context.read<LocaleProvider>().strings;
-  final locale = context.read<LocaleProvider>();
+  final strings = context.readState(stringsProvider);
+  final locale = context.readState(localeProvider);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(

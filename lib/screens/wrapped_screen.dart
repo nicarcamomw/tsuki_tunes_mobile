@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -17,13 +18,14 @@ import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/wrapped_data.dart';
+import '../providers/app_providers.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/wrapped_service.dart';
 
 /// Tsuki Wrapped as stories: the recap of a [year], or of one [month] of
 /// it. Tap the sides to move, hold to pause, swipe down to close.
-class WrappedScreen extends StatefulWidget {
+class WrappedScreen extends ConsumerStatefulWidget {
   final int year;
 
   /// 1–12 for a monthly recap; null for the whole year.
@@ -56,12 +58,12 @@ class WrappedScreen extends StatefulWidget {
   }
 
   @override
-  State<WrappedScreen> createState() => _WrappedScreenState();
+  ConsumerState<WrappedScreen> createState() => _WrappedScreenState();
 }
 
 typedef _SlideBuilder = Widget Function(GlobalKey shareKey);
 
-class _WrappedScreenState extends State<WrappedScreen>
+class _WrappedScreenState extends ConsumerState<WrappedScreen>
     with TickerProviderStateMixin {
   late final PageController _pageController;
   late final AnimationController _progress;
@@ -165,7 +167,7 @@ class _WrappedScreenState extends State<WrappedScreen>
       final file = File('${dir.path}/tsuki_wrapped_${tag}_$_page.png');
       await file.writeAsBytes(bytes.buffer.asUint8List());
       if (!mounted) return;
-      final strings = context.read<LocaleProvider>().strings;
+      final strings = ref.read(stringsProvider);
       await Share.shareXFiles([XFile(file.path)],
           text: 'Tsuki Wrapped · ${strings.wrappedPeriod(widget.year, widget.month)}');
     } catch (e) {
@@ -188,7 +190,7 @@ class _WrappedScreenState extends State<WrappedScreen>
   // ---------------------------------------------------------------------------
 
   List<_SlideBuilder> _buildSlides(WrappedData d) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final since = d.playsSince;
     final start = DateTime(widget.year, widget.month ?? 1, 1);
@@ -221,7 +223,7 @@ class _WrappedScreenState extends State<WrappedScreen>
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final data = _data;
     return Scaffold(

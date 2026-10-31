@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -14,6 +15,7 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/ambient_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -45,14 +47,14 @@ enum _CenterViewMode { artwork, queue }
 // How much of the lyrics card peeks below the player, hinting it's there.
 const double _kLyricsPeek = 44;
 
-class ExpandedPlayerScreen extends StatefulWidget {
+class ExpandedPlayerScreen extends ConsumerStatefulWidget {
   const ExpandedPlayerScreen({super.key});
 
   @override
-  State<ExpandedPlayerScreen> createState() => _ExpandedPlayerScreenState();
+  ConsumerState<ExpandedPlayerScreen> createState() => _ExpandedPlayerScreenState();
 }
 
-class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
+class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     with SingleTickerProviderStateMixin {
   double _dragDy = 0;
   bool _reduceMotion = false;
@@ -187,7 +189,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
           builder: (_) => AlbumDetailScreen(
             album: Album(
               id: track.albumId,
-              title: track.albumTitle.isNotEmpty ? track.albumTitle : context.read<LocaleProvider>().strings.unknownAlbum,
+              title: track.albumTitle.isNotEmpty ? track.albumTitle : ref.read(stringsProvider).unknownAlbum,
               coverUrl: track.coverUrl,
               artistId: track.artistId,
               artistName: track.artistName,
@@ -208,7 +210,7 @@ class _ExpandedPlayerScreenState extends State<ExpandedPlayerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final audio = context.read<AudioProvider>();
     final (track, isPlaying, isBuffering, shuffleMode, repeatMode, useSpotify, radioActive, playbackError) =

@@ -2,21 +2,23 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 
-class ListeningClockScreen extends StatefulWidget {
+class ListeningClockScreen extends ConsumerStatefulWidget {
   const ListeningClockScreen({super.key});
 
   @override
-  State<ListeningClockScreen> createState() => _ListeningClockScreenState();
+  ConsumerState<ListeningClockScreen> createState() => _ListeningClockScreenState();
 }
 
-class _ListeningClockScreenState extends State<ListeningClockScreen> {
+class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
   Map<int, int> _hourCounts = {};
   Map<int, int> _dayCounts = {};
   int _totalTracks = 0;
@@ -80,7 +82,7 @@ class _ListeningClockScreenState extends State<ListeningClockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     return Scaffold(

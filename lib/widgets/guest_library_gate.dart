@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../screens/login_screen.dart';
 
-class GuestLibraryGate extends StatelessWidget {
+class GuestLibraryGate extends ConsumerWidget {
   const GuestLibraryGate({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     return Center(

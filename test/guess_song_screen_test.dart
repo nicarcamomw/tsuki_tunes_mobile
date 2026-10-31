@@ -10,9 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
 import 'package:tsuki_tunes_mobile/services/guess_game.dart';
+import 'helpers/test_scope.dart';
 
 /// Clips load and "play" without a real audio backend.
 class _FakeAudio extends JustAudioPlatform {
@@ -139,14 +139,14 @@ void main() {
     });
   });
 
-  Widget app({Key? key}) => MultiProvider(
+  Widget app({Key? key}) => TestScope(
+        child: MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => AudioProvider()),
           ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ],
         child: MaterialApp(home: GuessSongScreen(key: key)),
-      );
+      ));
 
   // The API's disk cache does real file I/O, which only completes outside
   // the fake clock; alternate real waits with frames.

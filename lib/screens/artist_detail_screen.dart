@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -15,6 +16,7 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/artist_albums_page.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/auth_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
@@ -35,16 +37,16 @@ import 'rabbit_hole_screen.dart';
 part 'artist_detail/artist_header.dart';
 part 'artist_detail/top_tracks.dart';
 
-class ArtistDetailScreen extends StatefulWidget {
+class ArtistDetailScreen extends ConsumerStatefulWidget {
   final Artist artist;
 
   const ArtistDetailScreen({super.key, required this.artist});
 
   @override
-  State<ArtistDetailScreen> createState() => _ArtistDetailScreenState();
+  ConsumerState<ArtistDetailScreen> createState() => _ArtistDetailScreenState();
 }
 
-class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
+class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   final DeezerApiService _api = DeezerApiService();
   final ScrollController _scrollController = ScrollController();
   // Entry points like the track menu only know the artist's id and name, so
@@ -183,7 +185,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
 

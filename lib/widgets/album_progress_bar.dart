@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../core/constants/app_colors.dart';
-import '../providers/locale_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AlbumProgressBar extends StatelessWidget {
+import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
+
+class AlbumProgressBar extends ConsumerWidget {
   final int listened;
   final int total;
 
@@ -18,8 +19,8 @@ class AlbumProgressBar extends StatelessWidget {
   bool get isCompleted => listened >= total && total > 0;
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
 
     return Semantics(
       label: '${locale.strings.albumProgressListened(listened, total)}, $percentage%',

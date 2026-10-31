@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../models/synced_lyrics.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/locale_provider.dart';
 import '../services/lyrics_service.dart';
 import '../services/translation_service.dart';
 import 'audio_progress_selector.dart';
@@ -138,7 +139,7 @@ class LyricsController extends ChangeNotifier {
 /// Synced lyrics that follow the song: the line being sung is bright, sung
 /// lines fade back, upcoming ones wait dimmed. [interactive] lets the user
 /// scroll (auto-follow pauses a moment) and tap a line to jump there.
-class LyricsLines extends StatefulWidget {
+class LyricsLines extends ConsumerStatefulWidget {
   final LyricsController controller;
   final bool compact;
   final bool interactive;
@@ -151,10 +152,10 @@ class LyricsLines extends StatefulWidget {
   });
 
   @override
-  State<LyricsLines> createState() => _LyricsLinesState();
+  ConsumerState<LyricsLines> createState() => _LyricsLinesState();
 }
 
-class _LyricsLinesState extends State<LyricsLines> {
+class _LyricsLinesState extends ConsumerState<LyricsLines> {
   final ScrollController _scroll = ScrollController();
   final List<GlobalKey> _keys = [];
   int _lastActive = -2;
@@ -243,7 +244,7 @@ class _LyricsLinesState extends State<LyricsLines> {
   }
 
   Widget _buildLines(SyncedLyrics lyrics, int active, {required bool synced}) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final texts = widget.controller.lineTexts;
     final translation = widget.controller.translation;
     while (_keys.length < texts.length) {
@@ -405,13 +406,13 @@ class _LyricLine extends StatelessWidget {
   }
 }
 
-class _FollowPill extends StatelessWidget {
+class _FollowPill extends ConsumerWidget {
   final VoidCallback onTap;
   const _FollowPill({required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -533,7 +534,7 @@ class LyricsEdgeFade extends StatelessWidget {
 
 /// The lyrics card under the player: a live preview of the synced lyrics
 /// that opens the full view.
-class LyricsCard extends StatelessWidget {
+class LyricsCard extends ConsumerWidget {
   final LyricsController controller;
   final Track track;
   final VoidCallback onOpen;
@@ -546,8 +547,8 @@ class LyricsCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     return ListenableBuilder(
       listenable: controller,
@@ -658,7 +659,7 @@ class LyricsCard extends StatelessWidget {
   }
 }
 
-class _CardMessage extends StatelessWidget {
+class _CardMessage extends ConsumerWidget {
   final String text;
   final bool loading;
   final IconData? icon;
@@ -674,8 +675,8 @@ class _CardMessage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return Center(
       child: Row(
         mainAxisSize: MainAxisSize.min,

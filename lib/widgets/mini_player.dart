@@ -2,28 +2,29 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'audio_progress_selector.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
 
-class MiniPlayer extends StatefulWidget {
+class MiniPlayer extends ConsumerStatefulWidget {
   const MiniPlayer({super.key});
 
   @override
-  State<MiniPlayer> createState() => _MiniPlayerState();
+  ConsumerState<MiniPlayer> createState() => _MiniPlayerState();
 }
 
-class _MiniPlayerState extends State<MiniPlayer>
+class _MiniPlayerState extends ConsumerState<MiniPlayer>
     with SingleTickerProviderStateMixin {
   double _swipeDx = 0;
   bool _swipeLocked = false;
@@ -138,7 +139,7 @@ class _MiniPlayerState extends State<MiniPlayer>
     if (track == null) return const SizedBox.shrink();
 
     final library = context.read<LibraryProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
     return Semantics(

@@ -3,10 +3,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/mask_provider.dart';
 import 'oni_mask_art.dart';
 
@@ -42,17 +43,17 @@ class MaskUnlockLayer extends StatelessWidget {
   }
 }
 
-class _UnlockBanner extends StatefulWidget {
+class _UnlockBanner extends ConsumerStatefulWidget {
   final OniMask mask;
   final VoidCallback? onTap;
 
   const _UnlockBanner({super.key, required this.mask, this.onTap});
 
   @override
-  State<_UnlockBanner> createState() => _UnlockBannerState();
+  ConsumerState<_UnlockBanner> createState() => _UnlockBannerState();
 }
 
-class _UnlockBannerState extends State<_UnlockBanner> with TickerProviderStateMixin {
+class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProviderStateMixin {
   late final AnimationController _enter =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
   late final AnimationController _burst =
@@ -96,7 +97,7 @@ class _UnlockBannerState extends State<_UnlockBanner> with TickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final mask = widget.mask;
     final color = mask.rarityColor;

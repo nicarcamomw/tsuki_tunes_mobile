@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/playback_error.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/services/battery_guide.dart';
 import 'package:tsuki_tunes_mobile/widgets/battery_guide_sheet.dart';
+import 'helpers/test_scope.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -59,8 +58,7 @@ void main() {
   group('the guide', () {
     Future<void> pumpGuide(WidgetTester tester, BatteryFamily family) async {
       SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(ChangeNotifierProvider(
-        create: (_) => LocaleProvider(),
+      await tester.pumpWidget(TestScope(
         child: MaterialApp(
           home: Scaffold(
             body: BatteryGuideSheet(

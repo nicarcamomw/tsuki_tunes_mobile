@@ -1,17 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'tap_scale.dart';
 
-class AlbumCard extends StatelessWidget {
+class AlbumCard extends ConsumerWidget {
   final Album album;
   final double width;
 
@@ -22,8 +22,8 @@ class AlbumCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
 
     return TapScale(
       semanticLabel: '${album.title}, ${album.artistName}',

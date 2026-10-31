@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/swipeable_sheet.dart';
 import '../widgets/weekly_challenges_card.dart';
 
-class MaskCollectionScreen extends StatelessWidget {
+class MaskCollectionScreen extends ConsumerWidget {
   const MaskCollectionScreen({super.key});
 
   static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
       .push(CyberPageRoute(builder: (_) => const MaskCollectionScreen()));
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final equipped = masks.equipped;
 
@@ -149,15 +150,15 @@ class MaskCollectionScreen extends StatelessWidget {
   }
 }
 
-class _MaskTile extends StatelessWidget {
+class _MaskTile extends ConsumerWidget {
   final OniMask mask;
 
   const _MaskTile({required this.mask});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final unlocked = masks.isUnlocked(mask.id);
     final isEquipped = masks.equipped?.id == mask.id;
@@ -231,7 +232,7 @@ class _MaskTile extends StatelessWidget {
   }
 }
 
-class _ProgressBar extends StatelessWidget {
+class _ProgressBar extends ConsumerWidget {
   final int current;
   final int goal;
   final Color color;
@@ -239,8 +240,8 @@ class _ProgressBar extends StatelessWidget {
   const _ProgressBar({required this.current, required this.goal, required this.color});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     return Row(
       children: [
         Expanded(
@@ -273,15 +274,15 @@ void _showDetail(BuildContext context, OniMask mask) {
   );
 }
 
-class _MaskDetail extends StatelessWidget {
+class _MaskDetail extends ConsumerWidget {
   final OniMask mask;
 
   const _MaskDetail({required this.mask});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;
     final unlocked = masks.isUnlocked(mask.id);

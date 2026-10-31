@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,7 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/playlist.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
@@ -43,14 +45,14 @@ class _AlbumGroupData {
   });
 }
 
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
+  ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen>
+class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with TickerProviderStateMixin {
   final ScrollController scrollController = ScrollController();
   final TextEditingController _filterController = TextEditingController();
@@ -116,7 +118,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final library = context.watch<LibraryProvider>();
     final listenedTracks = library.listenedTracks;
@@ -687,8 +689,8 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Future<void> _showCreatePlaylistDialog(BuildContext context) async {
-    final strings = context.read<LocaleProvider>().strings;
-    final locale = context.read<LocaleProvider>();
+    final strings = ref.read(stringsProvider);
+    final locale = ref.read(localeProvider);
     final controller = TextEditingController();
 
     final name = await showDialog<String>(
@@ -887,7 +889,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
-class _AlbumGroupTile extends StatefulWidget {
+class _AlbumGroupTile extends ConsumerStatefulWidget {
   final _AlbumGroupData group;
   final bool isExpanded;
   final VoidCallback onToggle;
@@ -899,10 +901,10 @@ class _AlbumGroupTile extends StatefulWidget {
   });
 
   @override
-  State<_AlbumGroupTile> createState() => _AlbumGroupTileState();
+  ConsumerState<_AlbumGroupTile> createState() => _AlbumGroupTileState();
 }
 
-class _AlbumGroupTileState extends State<_AlbumGroupTile>
+class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     with SingleTickerProviderStateMixin {
   _AlbumGroupData get group => widget.group;
   bool get isExpanded => widget.isExpanded;
@@ -914,7 +916,7 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
     final currentTrackId =
         context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
     final library = context.read<LibraryProvider>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
     return Container(
@@ -1167,14 +1169,14 @@ class _AlbumGroupTileState extends State<_AlbumGroupTile>
   }
 }
 
-class _PlaylistListTile extends StatelessWidget {
+class _PlaylistListTile extends ConsumerWidget {
   final Playlist playlist;
 
   const _PlaylistListTile({required this.playlist});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
     return Container(

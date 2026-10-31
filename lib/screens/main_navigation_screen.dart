@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/library_provider.dart';
@@ -36,14 +38,14 @@ class NavigationEvents {
   static final ValueNotifier<bool> isPlayerExpanded = ValueNotifier<bool>(false);
 }
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
   SpotifyFallbackReason? _lastShownError;
   PlaybackError? _lastShownPlaybackError;
@@ -118,7 +120,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final syncError =
         context.select<LibraryProvider, String?>((l) => l.lastSyncError);
     final isOnline = context.select<ConnectivityProvider, bool>((c) => c.isOnline);
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
@@ -443,7 +445,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context, selectedIndex, _) {
         final currentLibraryCount =
             context.select<LibraryProvider, int>((l) => l.listenedCount);
-        final locale = context.read<LocaleProvider>();
+        final locale = ref.read(localeProvider);
         final strings = locale.strings;
         _lastSeenLibraryCount ??= currentLibraryCount;
 

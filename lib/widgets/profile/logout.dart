@@ -1,7 +1,7 @@
 part of '../profile_bottom_sheet.dart';
 
 Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
-  final locale = context.read<LocaleProvider>();
+  final locale = context.readState(localeProvider);
   final strings = locale.strings;
   final shouldLogout = await showDialog<bool>(
     context: context,

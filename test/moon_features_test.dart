@@ -7,13 +7,13 @@ import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/moon_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/playlist_provider.dart';
 import 'package:tsuki_tunes_mobile/services/play_history.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_atmosphere.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_button.dart';
 import 'package:tsuki_tunes_mobile/widgets/moon_sheet.dart';
+import 'helpers/test_scope.dart';
 
 Track _t(String id, {int duration = 200}) => Track(
       id: id,
@@ -146,9 +146,9 @@ void main() {
 
     final moon = MoonProvider(clock: () => at, southernHemisphere: true);
 
-    await tester.pumpWidget(MultiProvider(
+    await tester.pumpWidget(TestScope(
+        child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider.value(value: moon),
         ChangeNotifierProvider.value(value: history),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
@@ -156,7 +156,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: const MaterialApp(home: Scaffold(body: Center(child: MoonButton()))),
-    ));
+    )));
 
     await tester.tap(find.byType(MoonButton));
     await tester.pumpAndSettle();

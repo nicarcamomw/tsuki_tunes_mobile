@@ -4,14 +4,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/track.dart';
 import '../providers/ambient_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../providers/moon_provider.dart';
 import '../providers/weather_provider.dart';
 import '../services/bpm_flow.dart';
@@ -57,17 +58,17 @@ Color skyColor(Sky? sky, {required bool isDay}) => switch (sky) {
 
 /// One quiet line under the home title that changes with the time of day,
 /// the weather and the moon: "Tarde lluviosa · 14° · Luna menguante".
-class SkyLine extends StatefulWidget {
+class SkyLine extends ConsumerStatefulWidget {
   @visibleForTesting
   final DateTime Function()? clock;
 
   const SkyLine({super.key, this.clock});
 
   @override
-  State<SkyLine> createState() => _SkyLineState();
+  ConsumerState<SkyLine> createState() => _SkyLineState();
 }
 
-class _SkyLineState extends State<SkyLine> {
+class _SkyLineState extends ConsumerState<SkyLine> {
   Timer? _minute;
 
   @override
@@ -87,7 +88,7 @@ class _SkyLineState extends State<SkyLine> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final (enabled, weather, loading) =
         context.select<WeatherProvider, (bool, WeatherNow?, bool)>(
@@ -388,7 +389,7 @@ class _FallPainter extends CustomPainter {
 
 /// "It's raining where you are: play something for the rain?" Shown once per
 /// rain, only with the weather on.
-class RainOfferCard extends StatefulWidget {
+class RainOfferCard extends ConsumerStatefulWidget {
   @visibleForTesting
   final BpmService? tempo;
   @visibleForTesting
@@ -399,12 +400,12 @@ class RainOfferCard extends StatefulWidget {
   const RainOfferCard({super.key, this.tempo, this.search, this.library});
 
   @override
-  State<RainOfferCard> createState() => _RainOfferCardState();
+  ConsumerState<RainOfferCard> createState() => _RainOfferCardState();
 }
 
 enum _OfferState { asking, preparing, empty }
 
-class _RainOfferCardState extends State<RainOfferCard> {
+class _RainOfferCardState extends ConsumerState<RainOfferCard> {
   _OfferState _state = _OfferState.asking;
   bool _addRain = false;
 
@@ -415,7 +416,7 @@ class _RainOfferCardState extends State<RainOfferCard> {
     final audio = context.read<AudioProvider>();
     final ambient = context.read<AmbientProvider>();
     final weather = context.read<WeatherProvider>();
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final messenger = ScaffoldMessenger.maybeOf(context);
 
     final tracks =
@@ -447,7 +448,7 @@ class _RainOfferCardState extends State<RainOfferCard> {
     final offer = context.select<WeatherProvider, bool>((w) => w.rainOffer);
     final place = context.select<WeatherProvider, String?>(
         (w) => w.source == WeatherSource.place ? w.place?.name : null);
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
     final Widget body;

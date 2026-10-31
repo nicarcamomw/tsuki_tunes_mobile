@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../providers/moon_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../services/play_history.dart';
@@ -21,7 +22,7 @@ import 'swipeable_sheet.dart';
 const _silver = Color(0xFFD6E0F5);
 const _blood = Color(0xFFE0452B);
 
-class MoonSheet extends StatelessWidget {
+class MoonSheet extends ConsumerWidget {
   const MoonSheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -63,10 +64,10 @@ class MoonSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final moon = context.watch<MoonProvider>();
     final history = context.watch<PlayHistory>();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final s = moon.snapshot;
     final eclipse = moon.eclipseActive;
@@ -245,7 +246,7 @@ class MoonSheet extends StatelessWidget {
   }
 }
 
-class _CycleStrip extends StatefulWidget {
+class _CycleStrip extends ConsumerStatefulWidget {
   final List<CyclePhase> phases;
   final MoonPhaseName currentName;
   final bool southern;
@@ -254,10 +255,10 @@ class _CycleStrip extends StatefulWidget {
   const _CycleStrip({required this.phases, required this.currentName, required this.southern, required this.accent});
 
   @override
-  State<_CycleStrip> createState() => _CycleStripState();
+  ConsumerState<_CycleStrip> createState() => _CycleStripState();
 }
 
-class _CycleStripState extends State<_CycleStrip> {
+class _CycleStripState extends ConsumerState<_CycleStrip> {
   static const double _itemWidth = 74;
   ScrollController? _scroll;
 
@@ -269,7 +270,7 @@ class _CycleStripState extends State<_CycleStrip> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final phases = widget.phases;
     final current = phases.indexWhere((p) => p.name == widget.currentName);
@@ -366,15 +367,15 @@ class _CycleStripState extends State<_CycleStrip> {
   }
 }
 
-class _PhaseTile extends StatelessWidget {
+class _PhaseTile extends ConsumerWidget {
   final MoonEvent event;
   final bool southern;
 
   const _PhaseTile({required this.event, required this.southern});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final local = event.time.toLocal();
     final (ill, waxing) = switch (event.kind) {
@@ -426,17 +427,17 @@ class _PhaseTile extends StatelessWidget {
   }
 }
 
-class _FullMoonMixCard extends StatefulWidget {
+class _FullMoonMixCard extends ConsumerStatefulWidget {
   final MoonSnapshot snapshot;
   final PlayHistory history;
 
   const _FullMoonMixCard({required this.snapshot, required this.history});
 
   @override
-  State<_FullMoonMixCard> createState() => _FullMoonMixCardState();
+  ConsumerState<_FullMoonMixCard> createState() => _FullMoonMixCardState();
 }
 
-class _FullMoonMixCardState extends State<_FullMoonMixCard> {
+class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
   bool _saving = false;
 
   Future<void> _save(List<Track> mix, AppStrings strings) async {
@@ -458,7 +459,7 @@ class _FullMoonMixCardState extends State<_FullMoonMixCard> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final s = widget.snapshot;
     final unlocked = s.isFullMoonWindow;

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -11,10 +12,10 @@ import '../core/utils/image_cache_size.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -115,7 +116,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
   }
 }
 
-class TrackTile extends StatelessWidget {
+class TrackTile extends ConsumerWidget {
   final Track track;
   final int? index;
   final List<Track>? queue;
@@ -141,15 +142,15 @@ class TrackTile extends StatelessWidget {
   void _addToQueue(BuildContext context) {
     HapticFeedback.mediumImpact();
     context.read<AudioProvider>().addToQueue(track);
-    showTrackSnack(context, context.read<LocaleProvider>().strings.addedToQueue);
+    showTrackSnack(context, context.readState(stringsProvider).addedToQueue);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final (currentTrackId, isAudioPlaying) = context.select<AudioProvider, (String?, bool)>(
         (a) => (a.currentTrack?.id, a.isPlaying));
     final isListened = context.select<LibraryProvider, bool>((l) => l.isTrackListened(track.id));
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final isCurrent = currentTrackId == track.id;
     final isPlaying = isCurrent && isAudioPlaying;
     final strings = locale.strings;
@@ -307,12 +308,12 @@ class TrackTile extends StatelessWidget {
               if (showListenedCheckbox && !context.read<AuthProvider>().isGuest)
                 Tooltip(
                   message: isListened
-                      ? context.read<LocaleProvider>().strings.unmarkAsListened
-                      : context.read<LocaleProvider>().strings.markAsListened,
+                      ? ref.read(stringsProvider).unmarkAsListened
+                      : ref.read(stringsProvider).markAsListened,
                   child: TapScale(
                     semanticLabel: isListened
-                        ? context.read<LocaleProvider>().strings.unmarkAsListened
-                        : context.read<LocaleProvider>().strings.markAsListened,
+                        ? ref.read(stringsProvider).unmarkAsListened
+                        : ref.read(stringsProvider).markAsListened,
                     onTap: () {
                       HapticFeedback.lightImpact();
                       final lib = context.read<LibraryProvider>();
@@ -378,7 +379,7 @@ class TrackTile extends StatelessWidget {
 /// [bottom] from the screen's edge), with an optional undo-like [action].
 void showTrackSnack(BuildContext context, String message,
     {SnackBarAction? action, double? bottom}) {
-  final locale = context.read<LocaleProvider>();
+  final locale = context.readState(localeProvider);
   final hasTrack = context.read<AudioProvider>().currentTrack != null;
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
@@ -416,8 +417,8 @@ class TrackMenuAction {
 /// album) for any song in the app, with [extra] entries on top.
 void showTrackActions(BuildContext context, Track track,
     {List<TrackMenuAction> extra = const []}) {
-  final strings = context.read<LocaleProvider>().strings;
-  final locale = context.read<LocaleProvider>();
+  final strings = context.readState(stringsProvider);
+  final locale = context.readState(localeProvider);
   final hasTrack = context.read<AudioProvider>().currentTrack != null;
 
   void showConfirmation(String message) => showTrackSnack(context, message);

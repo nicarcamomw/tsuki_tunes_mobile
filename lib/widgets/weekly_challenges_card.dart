@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/mask_provider.dart';
 import '../screens/mask_collection_screen.dart';
 import 'oni_mask_art.dart';
@@ -23,15 +24,15 @@ IconData _iconFor(ChallengeKind kind) => switch (kind) {
 
 /// This week's three challenges and the mask they give. [compact] is the
 /// one-line version for Home, which opens the mask collection.
-class WeeklyChallengesCard extends StatelessWidget {
+class WeeklyChallengesCard extends ConsumerWidget {
   final bool compact;
 
   const WeeklyChallengesCard({super.key, this.compact = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final challenges = masks.weeklyChallenges;
     final reward = masks.weeklyReward;
@@ -152,14 +153,14 @@ class WeeklyChallengesCard extends StatelessWidget {
   }
 }
 
-class _ChallengeRow extends StatelessWidget {
+class _ChallengeRow extends ConsumerWidget {
   final WeeklyChallenge challenge;
   const _ChallengeRow({required this.challenge});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final masks = context.watch<MaskProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final progress = masks.weeklyProgress(challenge);
     final done = progress >= challenge.target;

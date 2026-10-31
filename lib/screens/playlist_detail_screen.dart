@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -10,21 +11,21 @@ import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/playlist.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/locale_provider.dart';
 import '../providers/playlist_provider.dart';
 import '../widgets/track_tile.dart';
 
-class PlaylistDetailScreen extends StatefulWidget {
+class PlaylistDetailScreen extends ConsumerStatefulWidget {
   final String playlistId;
 
   const PlaylistDetailScreen({super.key, required this.playlistId});
 
   @override
-  State<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState();
+  ConsumerState<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState();
 }
 
-class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
+class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   // Songs only move or go away in edit mode (from the ⋮ menu), so a stray
   // touch while scrolling never reorders the playlist.
   bool _editing = false;
@@ -39,7 +40,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
   /// Takes [track] out of the playlist, with an undo that puts it back in
   /// the same place.
   void _remove(Track track, int index) {
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final playlists = context.read<PlaylistProvider>();
     HapticFeedback.lightImpact();
     playlists.removeTrackFromPlaylist(playlistId, track.id);
@@ -56,7 +57,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final playlist = context.watch<PlaylistProvider>().getPlaylist(playlistId);
 
@@ -449,8 +450,8 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
   Future<void> _showRenameDialog(
       BuildContext context, Playlist playlist) async {
-    final strings = context.read<LocaleProvider>().strings;
-    final locale = context.read<LocaleProvider>();
+    final strings = ref.read(stringsProvider);
+    final locale = ref.read(localeProvider);
     final controller = TextEditingController(text: playlist.name);
 
     final name = await showDialog<String>(
@@ -541,8 +542,8 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
   Future<void> _showDeleteDialog(
       BuildContext context, Playlist playlist) async {
-    final strings = context.read<LocaleProvider>().strings;
-    final locale = context.read<LocaleProvider>();
+    final strings = ref.read(stringsProvider);
+    final locale = ref.read(localeProvider);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -618,7 +619,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
 /// A song in edit mode: remove on the left, drag handle on the right. The
 /// row itself doesn't react to touches, so scrolling can't move anything.
-class _EditRow extends StatelessWidget {
+class _EditRow extends ConsumerWidget {
   final Track track;
   final int index;
   final VoidCallback onRemove;
@@ -631,8 +632,8 @@ class _EditRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
 import 'swipeable_sheet.dart';
 
 /// Reads the tempo of the upcoming tracks, shows how many Deezer knows, and
 /// reorders the queue in the chosen flow.
-class FlowSheet extends StatefulWidget {
+class FlowSheet extends ConsumerStatefulWidget {
   final BpmService? service;
 
   const FlowSheet({super.key, this.service});
@@ -23,10 +24,10 @@ class FlowSheet extends StatefulWidget {
       );
 
   @override
-  State<FlowSheet> createState() => _FlowSheetState();
+  ConsumerState<FlowSheet> createState() => _FlowSheetState();
 }
 
-class _FlowSheetState extends State<FlowSheet> {
+class _FlowSheetState extends ConsumerState<FlowSheet> {
   static const _color = AppColors.neonCyan;
 
   late final BpmService _service = widget.service ?? BpmService.shared;
@@ -67,7 +68,7 @@ class _FlowSheetState extends State<FlowSheet> {
 
   void _apply(FlowMode mode) {
     final audio = context.read<AudioProvider>();
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     // The queue may have moved on while the sheet was open: arrange what is
     // upcoming right now.
     final result = BpmFlow.arrange(audio.upcomingTracks, _bpms, mode);
@@ -88,7 +89,7 @@ class _FlowSheetState extends State<FlowSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final known = _bpms.length;
     final coverage = _total == 0 ? 0.0 : known / _total;
@@ -221,7 +222,7 @@ class _FlowSheetState extends State<FlowSheet> {
   }
 }
 
-class _ModeTile extends StatelessWidget {
+class _ModeTile extends ConsumerWidget {
   final FlowMode mode;
   final FlowResult preview;
   final Map<String, double> bpms;
@@ -235,8 +236,8 @@ class _ModeTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final curve = [
       for (final t in preview.order)

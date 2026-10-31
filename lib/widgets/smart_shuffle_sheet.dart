@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/locale_provider.dart';
 import 'shuffle_mode_icon.dart';
 import 'swipeable_sheet.dart';
 
@@ -22,15 +23,15 @@ Future<void> showSmartShuffleSheet(BuildContext context) {
 /// How often a recommended song comes: one every this many of yours.
 const _recoChoices = [5, 3, 2];
 
-class _SmartShuffleSheet extends StatelessWidget {
+class _SmartShuffleSheet extends ConsumerWidget {
   final ScrollController controller;
 
   const _SmartShuffleSheet({required this.controller});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final audio = context.watch<AudioProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final mode = audio.shuffleMode;
     final energy = audio.shuffleEnergy;

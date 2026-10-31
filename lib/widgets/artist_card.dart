@@ -1,18 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/cyber_page_route.dart';
 import '../core/utils/formatters.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../widgets/tap_scale.dart';
 
-class ArtistCard extends StatelessWidget {
+class ArtistCard extends ConsumerWidget {
   final Artist artist;
   final double size;
 
@@ -23,8 +23,8 @@ class ArtistCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.read<LocaleProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.read(localeProvider);
 
     return TapScale(
       semanticLabel: '${artist.name}, ${locale.strings.tabArtists}',

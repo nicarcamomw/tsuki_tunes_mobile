@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
 import 'package:tsuki_tunes_mobile/widgets/ambient_mixer_sheet.dart';
+import 'helpers/test_scope.dart';
 
 void main() {
   setUp(() {
@@ -15,14 +15,14 @@ void main() {
   });
 
   Widget wrap(Widget child, {AmbientProvider? ambient}) {
-    return MultiProvider(
+    return TestScope(
+        child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ambient ?? AmbientProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: MaterialApp(home: child),
-    );
+    ));
   }
 
   testWidgets('ambient mixer sheet lists every sound and the timer options',
@@ -86,15 +86,15 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(MultiProvider(
+    await tester.pumpWidget(TestScope(
+        child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => AmbientProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
       ],
       child: const MaterialApp(home: GuessSongScreen()),
-    ));
+    )));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }

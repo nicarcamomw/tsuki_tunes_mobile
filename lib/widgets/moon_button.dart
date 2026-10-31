@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/locale_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/moon_provider.dart';
 import 'moon_glyph.dart';
 import 'moon_sheet.dart';
 
 /// Tonight's moon in the header. Tap: moon details and the full-moon mix.
 /// Long press: a secret preview of the eclipse mode.
-class MoonButton extends StatelessWidget {
+class MoonButton extends ConsumerWidget {
   final double size;
 
   const MoonButton({super.key, this.size = 24});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final moon = context.watch<MoonProvider>();
-    final strings = context.read<LocaleProvider>().strings;
+    final strings = ref.read(stringsProvider);
     final s = moon.snapshot;
 
     return Semantics(

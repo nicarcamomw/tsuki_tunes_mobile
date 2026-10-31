@@ -3,13 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/services/beat_clock.dart';
 import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
 import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
 import 'package:tsuki_tunes_mobile/widgets/rinnegan_visualizer.dart';
+import 'helpers/test_scope.dart';
 
 Duration _s(double s) => Duration(microseconds: (s * 1e6).round());
 
@@ -186,8 +185,7 @@ void main() {
     var position = Duration.zero;
     final tempo = BpmService(fetch: (_) async => const TrackAudioInfo(bpm: 120), gap: Duration.zero);
 
-    Widget eye(bool playing) => MultiProvider(
-          providers: [ChangeNotifierProvider(create: (_) => LocaleProvider())],
+    Widget eye(bool playing) => TestScope(
           child: MaterialApp(
             home: Scaffold(
               body: Center(
@@ -201,8 +199,7 @@ void main() {
                 ),
               ),
             ),
-          ),
-        );
+          ));
 
     await tester.pumpWidget(eye(true));
     for (var i = 0; i < 30; i++) {

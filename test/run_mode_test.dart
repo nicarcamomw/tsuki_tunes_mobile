@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/run_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/shake_skip_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/run_mode_screen.dart';
@@ -21,6 +20,7 @@ import 'package:tsuki_tunes_mobile/services/motion_sensor.dart';
 import 'package:tsuki_tunes_mobile/services/pace_matcher.dart';
 import 'package:tsuki_tunes_mobile/services/run_catalog.dart';
 import 'package:tsuki_tunes_mobile/services/shake_detector.dart';
+import 'helpers/test_scope.dart';
 
 const _g = 9.81;
 
@@ -433,14 +433,14 @@ void main() {
       ),
     )..attach(audio, LibraryProvider());
 
-    await tester.pumpWidget(MultiProvider(
+    await tester.pumpWidget(TestScope(
+        child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider.value(value: audio),
         ChangeNotifierProvider.value(value: run),
       ],
       child: const MaterialApp(home: RunModeScreen()),
-    ));
+    )));
     await tester.pump();
     expect(find.text('INICIAR'), findsOneWidget);
     expect(find.text('- - -'), findsOneWidget);

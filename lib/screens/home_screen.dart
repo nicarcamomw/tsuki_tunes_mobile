@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -14,6 +15,7 @@ import '../models/album.dart';
 import '../models/artist.dart';
 import '../models/radar_release.dart';
 import '../providers/ambient_provider.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/library_provider.dart';
@@ -46,14 +48,14 @@ part 'home/entry_cards.dart';
 part 'home/gear_profile_button.dart';
 part 'home/home_widgets.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController scrollController = ScrollController();
   final DeezerApiService _api = DeezerApiService();
   List<Artist> _featuredArtists = [];
@@ -298,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     });
     final isLoggedIn = context.select<AuthProvider, bool>((a) => a.isLoggedIn);
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final hasArtists =
         _topArtistsDisplay.isNotEmpty || _featuredArtists.isNotEmpty;

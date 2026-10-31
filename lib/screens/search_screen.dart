@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../models/lyrics_search_result.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/search_provider.dart';
@@ -21,14 +23,14 @@ import '../widgets/track_tile.dart';
 import '../widgets/voice_search_sheet.dart';
 import 'main_navigation_screen.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode focusNode = FocusNode();
   Timer? _debounce;
@@ -85,7 +87,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _startVoiceSearch() async {
     unawaited(HapticFeedback.lightImpact());
     FocusScope.of(context).unfocus();
-    final locale = context.read<LocaleProvider>();
+    final locale = ref.read(localeProvider);
     final audio = context.read<AudioProvider>();
     final search = context.read<SearchProvider>();
     final messenger = ScaffoldMessenger.of(context);
@@ -145,7 +147,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final search = context.watch<SearchProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final hasResults = search.artists.isNotEmpty || search.albums.isNotEmpty || search.tracks.isNotEmpty;
     if (!search.isLoading && search.query.isNotEmpty && !search.hasError && _lastAnnouncedQuery != search.query) {

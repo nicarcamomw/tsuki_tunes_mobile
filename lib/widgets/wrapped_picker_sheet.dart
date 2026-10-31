@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/app_providers.dart';
 import '../providers/library_provider.dart';
-import '../providers/locale_provider.dart';
 import '../screens/wrapped_screen.dart';
 import '../services/wrapped_service.dart';
 import 'swipeable_sheet.dart';
@@ -21,15 +22,15 @@ Future<void> showWrappedPicker(BuildContext context) {
   );
 }
 
-class _WrappedPicker extends StatefulWidget {
+class _WrappedPicker extends ConsumerStatefulWidget {
   final ScrollController controller;
   const _WrappedPicker({required this.controller});
 
   @override
-  State<_WrappedPicker> createState() => _WrappedPickerState();
+  ConsumerState<_WrappedPicker> createState() => _WrappedPickerState();
 }
 
-class _WrappedPickerState extends State<_WrappedPicker> {
+class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
   // Minutes per month ("yyyy-mm"), from the play log.
   Map<String, int>? _minutes;
   late final DateTime _now = DateTime.now();
@@ -68,7 +69,7 @@ class _WrappedPickerState extends State<_WrappedPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final minutes = _minutes;
     final maxMinutes = minutes == null || minutes.isEmpty

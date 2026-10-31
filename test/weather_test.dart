@@ -13,7 +13,6 @@ import 'package:tsuki_tunes_mobile/models/track.dart';
 import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/moon_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/weather_provider.dart';
 import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
@@ -23,6 +22,7 @@ import 'package:tsuki_tunes_mobile/services/rain_mix.dart';
 import 'package:tsuki_tunes_mobile/services/weather_service.dart';
 import 'package:tsuki_tunes_mobile/widgets/sky_line.dart';
 import 'package:tsuki_tunes_mobile/widgets/weather_sheet.dart';
+import 'helpers/test_scope.dart';
 
 String _forecast({int code = 61, double temp = 14.3, int isDay = 1, String time = '2026-10-26T17:15'}) =>
     jsonEncode({
@@ -342,9 +342,9 @@ void main() {
       tester.view.physicalSize = const Size(360 * 3, 760 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MultiProvider(
+      await tester.pumpWidget(TestScope(
+        child: MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider.value(value: weather),
           ChangeNotifierProvider.value(value: moon),
           ChangeNotifierProvider(create: (_) => LibraryProvider()),
@@ -352,7 +352,7 @@ void main() {
           if (audio != null) ChangeNotifierProvider<AudioProvider>.value(value: audio),
         ],
         child: MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child))),
-      ));
+      )));
     }
 
     setUp(() {

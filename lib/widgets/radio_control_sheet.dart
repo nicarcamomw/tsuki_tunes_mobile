@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
+import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/song_radio.dart';
@@ -22,7 +24,7 @@ Future<void> startRadioWithFeedback(
 }) async {
   unawaited(HapticFeedback.mediumImpact());
   final audio = context.read<AudioProvider>();
-  final locale = context.read<LocaleProvider>();
+  final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
   final ok = await audio.startRadio(track);
   _snack(
@@ -95,13 +97,13 @@ void _snack(
     ));
 }
 
-class _RadioControlSheet extends StatelessWidget {
+class _RadioControlSheet extends ConsumerWidget {
   const _RadioControlSheet();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final audio = context.read<AudioProvider>();
-    final locale = context.watch<LocaleProvider>();
+    final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final seed = context.select<AudioProvider, Track?>((a) => a.radioSeed);
     final current = context.select<AudioProvider, Track?>((a) => a.currentTrack);
