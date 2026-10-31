@@ -14,8 +14,6 @@ import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
 import 'providers/app_providers.dart';
 import 'providers/audio_provider.dart';
-import 'providers/library_provider.dart';
-import 'providers/playlist_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
@@ -246,14 +244,14 @@ class _AuthGateState extends ConsumerState<_AuthGate> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             if (!auth.isGuest) {
-              context.read<LibraryProvider>().connectToFirestore(uid);
-              final playlists = context.read<PlaylistProvider>();
+              ref.read(libraryProvider).connectToFirestore(uid);
+              final playlists = ref.read(playlistProvider);
               final guestUid = auth.takeGuestUidToMigrate();
               playlists.connectToFirestore(uid).then((_) {
                 if (guestUid != null) playlists.importGuestPlaylists(guestUid);
               });
             } else {
-              context.read<PlaylistProvider>().initLocalOnly(uid);
+              ref.read(playlistProvider).initLocalOnly(uid);
             }
           }
         });
@@ -286,8 +284,8 @@ class _AuthGateState extends ConsumerState<_AuthGate> {
       _hasCompletedOnboarding = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          context.read<LibraryProvider>().disconnectFirestore();
-          context.read<PlaylistProvider>().disconnectFirestore();
+          ref.read(libraryProvider).disconnectFirestore();
+          ref.read(playlistProvider).disconnectFirestore();
         }
       });
     }

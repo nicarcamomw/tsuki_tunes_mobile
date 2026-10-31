@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
-import '../providers/library_provider.dart';
 import '../screens/wrapped_screen.dart';
 import '../services/wrapped_service.dart';
 import 'swipeable_sheet.dart';
@@ -46,7 +44,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
   }
 
   Future<void> _load() async {
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final from = _months.last;
     final days = await library.loadPlayDays(from, _now);
     if (!mounted) return;

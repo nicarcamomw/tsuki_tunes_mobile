@@ -73,7 +73,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         final totalTracks =
             res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
         if (totalTracks > 0) {
-          context.read<LibraryProvider>().registerAlbumTrackCount(
+          ref.read(libraryProvider).registerAlbumTrackCount(
                 res.id,
                 totalTracks,
               );
@@ -148,7 +148,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     // rebuild the album on every playback position tick.
     final audio = context.read<AudioProvider>();
     final useSpotify = context.select<AudioProvider, bool>((a) => a.useSpotify);
-    final library = context.watch<LibraryProvider>();
+    final library = ref.watch(libraryProvider);
 
     final trackIds = tracks.map((t) => t.id).toList();
     final listenedCount =

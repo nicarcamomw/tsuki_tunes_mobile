@@ -12,7 +12,6 @@ import '../models/track.dart';
 import '../providers/ambient_provider.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/weather_provider.dart';
 import '../services/bpm_flow.dart';
 import '../services/deezer_api_service.dart';
@@ -411,7 +410,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
   Future<void> _accept() async {
     unawaited(HapticFeedback.lightImpact());
     setState(() => _state = _OfferState.preparing);
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final audio = context.read<AudioProvider>();
     final ambient = ref.read(ambientProvider);
     final weather = ref.read(weatherProvider);

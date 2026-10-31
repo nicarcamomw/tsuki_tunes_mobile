@@ -92,12 +92,12 @@ void main() {
 
     await tester.pumpWidget(TestScope(
         overrides: [
+          libraryProvider.overrideWith((ref) => LibraryProvider()),
           ambientProvider.overrideWith((ref) => AmbientProvider()),
         ],
         child: MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AudioProvider()),
-        ChangeNotifierProvider(create: (_) => LibraryProvider()),
       ],
       child: const MaterialApp(home: GuessSongScreen()),
     )));

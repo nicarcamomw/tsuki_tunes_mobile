@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -187,7 +186,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
 
   @override
   Widget build(BuildContext context) {
-    final library = context.watch<LibraryProvider>();
+    final library = ref.watch(libraryProvider);
     library.ensureAlbumTrackCounts(_allAlbums, _api.getAlbum);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;

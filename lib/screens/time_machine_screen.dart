@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
@@ -13,7 +13,6 @@ import '../core/utils/cyber_page_route.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/release_radar_service.dart';
@@ -51,7 +50,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
     _service.notificationsEnabled().then((v) {
       if (mounted) setState(() => _notify = v);
     });
-    context.read<LibraryProvider>().firstRecordedPlayDay().then((d) {
+    ref.read(libraryProvider).firstRecordedPlayDay().then((d) {
       if (mounted) setState(() => _firstPlayDay = d);
     });
   }
@@ -59,7 +58,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   Future<void> _load() async {
     final id = ++_request;
     setState(() => _loading = true);
-    final moment = await _service.load(context.read<LibraryProvider>(), _anchor);
+    final moment = await _service.load(ref.read(libraryProvider), _anchor);
     if (!mounted || id != _request) return;
     setState(() {
       _moment = moment;
@@ -82,7 +81,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         anchor = now.subtract(const Duration(days: 7));
       case _Period.random:
         final dates = TimeMachineService.datesWithHistory(
-          context.read<LibraryProvider>().listenedTracks,
+          ref.read(libraryProvider).listenedTracks,
           now.subtract(const Duration(days: 7)),
         );
         if (dates.isEmpty) {
@@ -727,12 +726,22 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
   bool _requested = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Re-runs when the library notifies, until the history has loaded.
-    final library = Provider.of<LibraryProvider>(context);
-    if (_requested || !library.listenedTracksLoaded) return;
+  void initState() {
+    super.initState();
+    // Waits for the listening history, then loads once.
+    ref.listenManual<bool>(
+      libraryProvider.select((l) => l.listenedTracksLoaded),
+      (_, loaded) {
+        if (loaded) _load();
+      },
+      fireImmediately: true,
+    );
+  }
+
+  void _load() {
+    if (_requested) return;
     _requested = true;
+    final library = ref.read(libraryProvider);
     final service = TimeMachineService();
     service
         .load(library, TimeMachineService.yearsAgo(DateTime.now(), 1))

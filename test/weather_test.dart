@@ -344,19 +344,18 @@ void main() {
       tester.view.physicalSize = const Size(360 * 3, 760 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
+      final app = MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
       await tester.pumpWidget(TestScope(
         overrides: [
+          libraryProvider.overrideWith((ref) => LibraryProvider()),
           weatherProvider.overrideWith((ref) => weather, disposeNotifier: false),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           ambientProvider.overrideWith((ref) => AmbientProvider()),
         ],
-        child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => LibraryProvider()),
-          if (audio != null) ChangeNotifierProvider<AudioProvider>.value(value: audio),
-        ],
-        child: MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child))),
-      )));
+        child: audio == null
+            ? app
+            : ChangeNotifierProvider<AudioProvider>.value(value: audio, child: app),
+      ));
     }
 
     setUp(() {

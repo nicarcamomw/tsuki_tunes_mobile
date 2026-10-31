@@ -8,6 +8,7 @@ import 'package:http/testing.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
 import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
 import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
@@ -140,10 +141,12 @@ void main() {
   });
 
   Widget app({Key? key}) => TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => LibraryProvider()),
+        ],
         child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => AudioProvider()),
-          ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ],
         child: MaterialApp(home: GuessSongScreen(key: key)),
       ));

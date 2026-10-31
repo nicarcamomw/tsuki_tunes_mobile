@@ -15,7 +15,6 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import '../services/guess_game.dart';
@@ -159,7 +158,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   }
 
   List<Track> _libraryPool() {
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final seen = <String>{};
     return [...library.favoriteTracks, ...library.recentTracks]
         .where((t) => t.id.isNotEmpty && seen.add(t.id))
@@ -745,7 +744,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
   Widget _artistPicker(LocaleProvider locale) {
     final strings = locale.strings;
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final favorites = library.favoriteArtists;
     final favoriteNames = favorites.map((a) => a.name.toLowerCase()).toSet();
     final topNames = library

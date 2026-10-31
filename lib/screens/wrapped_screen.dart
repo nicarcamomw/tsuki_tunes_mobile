@@ -11,7 +11,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/constants/app_colors.dart';
@@ -19,7 +18,6 @@ import '../core/localization/app_strings.dart';
 import '../core/utils/image_cache_size.dart';
 import '../models/wrapped_data.dart';
 import '../providers/app_providers.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/wrapped_service.dart';
 
@@ -100,7 +98,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       });
       return;
     }
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final y = widget.year;
     final m = widget.month;
     // The period and the one before it, to compare.

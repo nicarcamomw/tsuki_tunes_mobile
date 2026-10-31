@@ -16,7 +16,6 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/bpm_flow.dart';
 import '../widgets/ambient_mixer_sheet.dart';
@@ -217,8 +216,8 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
             (a) => (a.currentTrack, a.isPlaying, a.isBuffering, a.shuffleMode, a.repeatMode, a.useSpotify, a.isRadioActive, a.lastPlaybackError));
     // Only this track's listened flag: watching the whole library would rebuild
     // the player on every sync and history update.
-    final isListened = context.select<LibraryProvider, bool>(
-        (l) => track != null && l.isTrackListened(track.id));
+    final isListened = ref.watch(libraryProvider.select(
+        (l) => track != null && l.isTrackListened(track.id)));
 
     if (track == null) {
       return PopScope(
@@ -448,7 +447,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   Widget _buildTrackInfo(Track track, LocaleProvider locale,
       {required bool isListened}) {
     final strings = locale.strings;
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(

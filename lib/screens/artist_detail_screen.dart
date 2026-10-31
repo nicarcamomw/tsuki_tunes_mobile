@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_strings.dart';
@@ -95,7 +94,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   void _trackVisit() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LibraryProvider>().trackArtistVisit(_artist.name);
+      ref.read(libraryProvider).trackArtistVisit(_artist.name);
     });
   }
 
@@ -185,7 +184,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final library = context.watch<LibraryProvider>();
+    final library = ref.watch(libraryProvider);
 
     library.ensureAlbumTrackCounts(_albums, _api.getAlbum);
 

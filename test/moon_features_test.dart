@@ -150,13 +150,13 @@ void main() {
 
     await tester.pumpWidget(TestScope(
         overrides: [
+          playlistProvider.overrideWith((ref) => PlaylistProvider()),
+          libraryProvider.overrideWith((ref) => LibraryProvider()),
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           playHistoryProvider.overrideWith((ref) => history, disposeNotifier: false),
         ],
         child: MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LibraryProvider()),
-        ChangeNotifierProvider(create: (_) => PlaylistProvider()),
         ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: const MaterialApp(home: Scaffold(body: Center(child: MoonButton()))),

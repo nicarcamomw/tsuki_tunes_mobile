@@ -107,7 +107,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Future<void> _refreshData() async {
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     try {
       await library.refreshData();
       setState(() => _hasError = false);
@@ -120,7 +120,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final library = context.watch<LibraryProvider>();
+    final library = ref.watch(libraryProvider);
     final listenedTracks = library.listenedTracks;
 
     // Rebuild the album grouping only when the source list changes.
@@ -308,7 +308,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     int totalTracks,
   ) {
     final filterText = _filterController.text.toLowerCase();
-    final allFollowed = context.watch<LibraryProvider>().followedArtists;
+    final allFollowed = ref.watch(libraryProvider).followedArtists;
     final followedArtists = filterText.isEmpty
         ? allFollowed
         : allFollowed
@@ -610,7 +610,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     LocaleProvider locale,
     AppStrings strings,
   ) {
-    final playlists = context.watch<PlaylistProvider>().playlists;
+    final playlists = ref.watch(playlistProvider).playlists;
 
     return Column(
       children: [
@@ -757,7 +757,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
-      final provider = context.read<PlaylistProvider>();
+      final provider = ref.read(playlistProvider);
       await provider.createPlaylist(name);
       if (context.mounted) {
         unawaited(SemanticsService.sendAnnouncement(View.of(context), strings.playlistCreated, TextDirection.ltr));
@@ -915,7 +915,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     final audio = context.read<AudioProvider>();
     final currentTrackId =
         context.select<AudioProvider, String?>((a) => a.currentTrack?.id);
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
 

@@ -128,7 +128,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final featured = await _api.getFeaturedArtists();
       if (!mounted) return;
 
-      final library = context.read<LibraryProvider>();
+      final library = ref.read(libraryProvider);
       final topEntries = library.getTopArtists(limit: 5);
 
       List<_TopArtistDisplay> topDisplay = [];
@@ -286,7 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final (statsLoaded, listenedCount, artistsCount, albumsCount, topArtistName, topArtistScore) =
-        context.select<LibraryProvider, (bool, int, int, int, String, String)>((l) {
+        ref.watch(libraryProvider.select((l) {
       final top = l.getTopArtists(limit: 1);
       return (
         l.listenedTracksLoaded,
@@ -296,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         top.isNotEmpty ? top.first.name : '---',
         top.isNotEmpty ? top.first.score.toString() : '0',
       );
-    });
+    }));
     final isLoggedIn = ref.watch(authProvider.select((a) => a.isLoggedIn));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;

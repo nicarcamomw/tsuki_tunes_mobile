@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/utils/image_cache_size.dart';
@@ -34,7 +33,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.read(stringsProvider);
     final locale = ref.read(localeProvider);
-    final playlists = context.watch<PlaylistProvider>().playlists;
+    final playlists = ref.watch(playlistProvider).playlists;
 
     return SafeArea(
       child: ConstrainedBox(
@@ -77,7 +76,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                 unawaited(HapticFeedback.lightImpact());
                 final name = await showPlaylistNameDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
-                  final provider = context.read<PlaylistProvider>();
+                  final provider = ref.read(playlistProvider);
                   // One write with the song in it: a second write right
                   // after would hit the database's one-write-per-second
                   // limit and leave the new playlist empty.
@@ -195,7 +194,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                           : () {
                               unawaited(HapticFeedback.lightImpact());
                               final provider =
-                                  context.read<PlaylistProvider>();
+                                  ref.read(playlistProvider);
                               final full = playlist.tracks.length >=
                                   PlaylistProvider.maxTracks;
                               // It shows in the playlist at once; the upload
@@ -320,7 +319,7 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
   final name = await showPlaylistNameDialog(context);
   if (name == null || name.trim().isEmpty || !context.mounted) return false;
   final created =
-      await context.read<PlaylistProvider>().createPlaylist(name, tracks: tracks);
+      await context.readState(playlistProvider).createPlaylist(name, tracks: tracks);
   if (created == null || !context.mounted) return created != null;
   final strings = context.readState(stringsProvider);
   final locale = context.readState(localeProvider);

@@ -14,7 +14,6 @@ import '../models/artist.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -148,7 +147,7 @@ class TrackTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final (currentTrackId, isAudioPlaying) = context.select<AudioProvider, (String?, bool)>(
         (a) => (a.currentTrack?.id, a.isPlaying));
-    final isListened = context.select<LibraryProvider, bool>((l) => l.isTrackListened(track.id));
+    final isListened = ref.watch(libraryProvider.select((l) => l.isTrackListened(track.id)));
     final locale = ref.read(localeProvider);
     final isCurrent = currentTrackId == track.id;
     final isPlaying = isCurrent && isAudioPlaying;
@@ -315,7 +314,7 @@ class TrackTile extends ConsumerWidget {
                         : ref.read(stringsProvider).markAsListened,
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      final lib = context.read<LibraryProvider>();
+                      final lib = ref.read(libraryProvider);
                       if (isListened) {
                         if (onUnmark != null) {
                           onUnmark!();

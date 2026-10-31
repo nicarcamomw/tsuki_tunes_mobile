@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 
 class ListeningClockScreen extends ConsumerStatefulWidget {
@@ -35,7 +33,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
   }
 
   void _computeData() {
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final year = DateTime.now().year;
     final yearTracks = library.listenedTracks
         .where((t) => t.listenedAt != null && t.listenedAt!.year == year)

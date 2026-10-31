@@ -10,7 +10,6 @@ import '../core/utils/image_cache_size.dart';
 import '../models/track.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import 'audio_progress_selector.dart';
@@ -133,12 +132,12 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
 
     // Only this track's flag: the mini player is always on screen, and the
     // library notifies on every sync and history change.
-    final isListened = context.select<LibraryProvider, bool>(
-        (l) => track != null && l.isTrackListened(track.id));
+    final isListened = ref.watch(libraryProvider.select(
+        (l) => track != null && l.isTrackListened(track.id)));
 
     if (track == null) return const SizedBox.shrink();
 
-    final library = context.read<LibraryProvider>();
+    final library = ref.read(libraryProvider);
     final locale = ref.read(localeProvider);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 

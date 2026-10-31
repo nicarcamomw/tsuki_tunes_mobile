@@ -13,7 +13,6 @@ import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/moon_provider.dart';
-import '../providers/playlist_provider.dart';
 import '../services/play_history.dart';
 import 'cyber_glitch_text.dart';
 import 'moon_glyph.dart';
@@ -445,7 +444,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     unawaited(HapticFeedback.lightImpact());
     final name = strings.moonMixPlaylistName(
         strings.longDate(widget.snapshot.nearestFull.toLocal()));
-    final created = await context.read<PlaylistProvider>().createPlaylist(name, tracks: mix);
+    final created = await ref.read(playlistProvider).createPlaylist(name, tracks: mix);
     if (!mounted) return;
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -464,7 +463,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     final s = widget.snapshot;
     final unlocked = s.isFullMoonWindow;
     final mix = unlocked
-        ? MoonSheet.buildMix(s, widget.history, context.read<LibraryProvider>())
+        ? MoonSheet.buildMix(s, widget.history, ref.read(libraryProvider))
         : const <Track>[];
     final cycleCount = unlocked
         ? 0

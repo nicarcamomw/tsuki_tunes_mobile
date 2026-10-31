@@ -16,7 +16,6 @@ import '../core/utils/image_cache_size.dart';
 import '../models/artist.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/deezer_api_service.dart';
 import 'artist_detail_screen.dart';
@@ -140,7 +139,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     super.initState();
     _knownArtists = {
       for (final e
-          in context.read<LibraryProvider>().getTopArtists(limit: 1 << 20))
+          in ref.read(libraryProvider).getTopArtists(limit: 1 << 20))
         if (e.savedCount > 0) e.name.toLowerCase(),
     };
     _physics = createTicker(_onTick);

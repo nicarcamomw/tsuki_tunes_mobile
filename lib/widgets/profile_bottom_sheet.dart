@@ -13,7 +13,6 @@ import '../core/utils/image_cache_size.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/run_provider.dart';
 import '../providers/shake_skip_provider.dart';

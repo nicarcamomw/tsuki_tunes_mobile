@@ -82,7 +82,7 @@ Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
     await audioProvider.updateSpotifyState();
 
     if (context.mounted) {
-      context.read<LibraryProvider>().disconnectFirestore();
+      context.readState(libraryProvider).disconnectFirestore();
     }
 
     await auth.logout();

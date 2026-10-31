@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/app_providers.dart';
 import '../providers/audio_provider.dart';
-import '../providers/library_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/battery_guide.dart';
 import '../widgets/auth_guard.dart';
@@ -117,7 +116,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         context.select<AudioProvider, (bool, SpotifyFallbackReason?, PlaybackError?)>(
             (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError));
     final syncError =
-        context.select<LibraryProvider, String?>((l) => l.lastSyncError);
+        ref.watch(libraryProvider.select((l) => l.lastSyncError));
     final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
@@ -443,7 +442,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       valueListenable: _tabNotifier,
       builder: (context, selectedIndex, _) {
         final currentLibraryCount =
-            context.select<LibraryProvider, int>((l) => l.listenedCount);
+            ref.watch(libraryProvider.select((l) => l.listenedCount));
         final locale = ref.read(localeProvider);
         final strings = locale.strings;
         _lastSeenLibraryCount ??= currentLibraryCount;
@@ -529,7 +528,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _loadedTabs.add(index);
       _tabNotifier.value = index;
       if (index == 2) {
-        final lib = context.read<LibraryProvider>();
+        final lib = ref.read(libraryProvider);
         _lastSeenLibraryCount = lib.listenedCount;
       }
     } else {
@@ -539,7 +538,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       } else if (index == 1) {
         NavigationEvents.onSearchFocus?.call();
       } else if (index == 2) {
-        final lib = context.read<LibraryProvider>();
+        final lib = ref.read(libraryProvider);
         if (_lastSeenLibraryCount != lib.listenedCount) {
           _lastSeenLibraryCount = lib.listenedCount;
         }
@@ -590,7 +589,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       if (_tabNotifier.value != 2) {
         _loadedTabs.add(2);
         _tabNotifier.value = 2;
-        final lib = context.read<LibraryProvider>();
+        final lib = ref.read(libraryProvider);
         _lastSeenLibraryCount = lib.listenedCount;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           NavigationEvents.onLibraryScrollToTop?.call();

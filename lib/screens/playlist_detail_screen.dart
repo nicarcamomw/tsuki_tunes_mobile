@@ -41,7 +41,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   /// the same place.
   void _remove(Track track, int index) {
     final strings = ref.read(stringsProvider);
-    final playlists = context.read<PlaylistProvider>();
+    final playlists = ref.read(playlistProvider);
     HapticFeedback.lightImpact();
     playlists.removeTrackFromPlaylist(playlistId, track.id);
     showTrackSnack(
@@ -59,7 +59,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final playlist = context.watch<PlaylistProvider>().getPlaylist(playlistId);
+    final playlist = ref.watch(playlistProvider).getPlaylist(playlistId);
 
     if (playlist == null) {
       return Scaffold(
@@ -413,8 +413,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               itemCount: playlist.tracks.length,
               onReorderItem: (oldIndex, newIndex) {
                 HapticFeedback.selectionClick();
-                context
-                    .read<PlaylistProvider>()
+                ref
+                    .read(playlistProvider)
                     .reorderTrack(playlistId, oldIndex, newIndex);
               },
               proxyDecorator: (child, _, __) => Material(
@@ -519,7 +519,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     );
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
-      unawaited(context.read<PlaylistProvider>().renamePlaylist(playlistId, name));
+      unawaited(ref.read(playlistProvider).renamePlaylist(playlistId, name));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -594,7 +594,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     );
 
     if (confirmed == true && context.mounted) {
-      unawaited(context.read<PlaylistProvider>().deletePlaylist(playlistId));
+      unawaited(ref.read(playlistProvider).deletePlaylist(playlistId));
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
