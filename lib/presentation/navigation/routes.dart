@@ -19,6 +19,7 @@ import '../screens/rabbit_hole_screen.dart';
 import '../screens/release_radar_screen.dart';
 import '../screens/run_mode_screen.dart';
 import '../screens/time_machine_screen.dart';
+import '../screens/user_profile_screen.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/use_cases.dart';
 import '../widgets/load_by_id.dart';
@@ -78,6 +79,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         ),
         TypedGoRoute<PlaylistRoute>(path: 'playlist/:id'),
         TypedGoRoute<TrackRoute>(path: 'track/:id'),
+        TypedGoRoute<UserProfileRoute>(path: 'user/:uid'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -243,6 +245,17 @@ class _PlayingTrackAlbumState extends ConsumerState<_PlayingTrackAlbum> {
       ),
     );
   }
+}
+
+/// A user's public profile (`tsukitunes://user/<uid>`).
+class UserProfileRoute extends GoRouteData with $UserProfileRoute {
+  const UserProfileRoute({required this.uid});
+
+  final String uid;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) =>
+      cyberPage(state, UserProfileScreen(uid: uid));
 }
 
 class PlaylistRoute extends GoRouteData with $PlaylistRoute {

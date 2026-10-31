@@ -785,5 +785,18 @@
   "queueSmartShuffleTag": "スマートシャッフル",
   "shuffleHoldHint": "シャッフルボタン長押しで設定",
   "a11yShuffleSmart": "おすすめ入りシャッフル",
-  "shuffleRecoEvery": "{count}曲ごとに1曲"
+  "shuffleRecoEvery": "{count}曲ごとに1曲",
+  "profileViewMine": "マイプロフィール",
+  "profileSongs": "曲",
+  "profileAlbums": "完走アルバム",
+  "profileArtists": "アーティスト",
+  "profileTopArtists": "トップアーティスト",
+  "profileArtistSongs": "{count}曲",
+  "profilePublic": "公開プロフィール",
+  "profilePublicHint": "リンクを知っている人なら誰でも見られます",
+  "profilePrivateHint": "あなただけが見られます",
+  "profileShare": "プロフィールを共有",
+  "profileShareText": "Tsuki Tunesのプロフィール 🌙 {link}",
+  "profileUnavailable": "このプロフィールは非公開か存在しません",
+  "profileMakePublicFirst": "共有するには公開にしてください"
 }

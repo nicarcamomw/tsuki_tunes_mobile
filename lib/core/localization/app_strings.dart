@@ -944,6 +944,22 @@ class AppStrings {
 
   String get retry => _l.retry;
 
+  // --- Public profile ---
+  String get profileViewMine => _l.profileViewMine;
+  String get profileSongs => _l.profileSongs;
+  String get profileAlbums => _l.profileAlbums;
+  String get profileArtists => _l.profileArtists;
+  String get profileTopArtists => _l.profileTopArtists;
+  String profileArtistSongs(int count) => _l.profileArtistSongs(count);
+  String get profilePublic => _l.profilePublic;
+  String get profilePublicHint => _l.profilePublicHint;
+  String get profilePrivateHint => _l.profilePrivateHint;
+  String get profileShare => _l.profileShare;
+  String profileShareText(String link) => _l.profileShareText(link);
+  String get profileUnavailable => _l.profileUnavailable;
+  String get profileMakePublicFirst => _l.profileMakePublicFirst;
+
+
   /// A link (or a page opened by id) whose album or artist doesn't exist.
   String get linkNotFound => _l.linkNotFound;
 

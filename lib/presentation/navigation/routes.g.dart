@@ -135,6 +135,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $TrackRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'user/:uid',
+          hasOverriddenOnExit: false,
+          factory: $UserProfileRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -359,6 +364,30 @@ mixin $TrackRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/track/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $UserProfileRoute on GoRouteData {
+  static UserProfileRoute _fromState(GoRouterState state) =>
+      UserProfileRoute(uid: state.pathParameters['uid']!);
+
+  UserProfileRoute get _self => this as UserProfileRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/user/${Uri.encodeComponent(_self.uid)}');
 
   @override
   void go(BuildContext context) => context.go(location);

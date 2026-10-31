@@ -1802,5 +1802,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "profileViewMine": "MI PERFIL",
+  "profileSongs": "CANCIONES",
+  "profileAlbums": "ÁLBUMES COMPLETOS",
+  "profileArtists": "ARTISTAS",
+  "profileTopArtists": "TOP ARTISTAS",
+  "profileArtistSongs": "{count, plural, =1{1 canción} other{{count} canciones}}",
+  "@profileArtistSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profilePublic": "PERFIL PÚBLICO",
+  "profilePublicHint": "Cualquiera con el enlace puede verlo",
+  "profilePrivateHint": "Solo tú lo ves",
+  "profileShare": "COMPARTIR PERFIL",
+  "profileShareText": "Mi perfil en Tsuki Tunes 🌙 {link}",
+  "@profileShareText": {
+    "placeholders": {
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "profileUnavailable": "ESTE PERFIL ES PRIVADO O NO EXISTE",
+  "profileMakePublicFirst": "Hazlo público para poder compartirlo"
 }

@@ -785,5 +785,18 @@
   "queueSmartShuffleTag": "SMART SHUFFLE",
   "shuffleHoldHint": "Hold the shuffle button to set it up",
   "a11yShuffleSmart": "Shuffle with recommendations",
-  "shuffleRecoEvery": "1 every {count} songs"
+  "shuffleRecoEvery": "1 every {count} songs",
+  "profileViewMine": "MY PROFILE",
+  "profileSongs": "SONGS",
+  "profileAlbums": "ALBUMS COMPLETED",
+  "profileArtists": "ARTISTS",
+  "profileTopArtists": "TOP ARTISTS",
+  "profileArtistSongs": "{count, plural, =1{1 song} other{{count} songs}}",
+  "profilePublic": "PUBLIC PROFILE",
+  "profilePublicHint": "Anyone with the link can see it",
+  "profilePrivateHint": "Only you can see it",
+  "profileShare": "SHARE PROFILE",
+  "profileShareText": "My Tsuki Tunes profile 🌙 {link}",
+  "profileUnavailable": "THIS PROFILE IS PRIVATE OR DOESN'T EXIST",
+  "profileMakePublicFirst": "Make it public to share it"
 }
