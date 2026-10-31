@@ -43,6 +43,12 @@ class FakeSpotifyService extends SpotifyService {
     _progressMs = progressMs;
   }
 
+  void setPaused(String uri, {int progressMs = 0}) {
+    _playbackUri = uri;
+    _isPlaying = false;
+    _progressMs = progressMs;
+  }
+
   @override
   bool get isConnected => _connected;
 
@@ -482,6 +488,82 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('Spotify stopping right at the end of the track advances our queue',
+        () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 179000);
+
+      fakeNative.simulateStateChanged(179200, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('a pause a couple of seconds before the end is just a pause',
+        () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 178000);
+
+      fakeNative.simulateStateChanged(178000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isFalse);
+    });
+
+    test('a pause mid-song with an unknown duration is just a pause',
+        () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 60000);
+
+      fakeNative.simulateStateChanged(60000, 0, true, uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isFalse);
+    });
+
+    test('a pause mid-song is a pause even when our clock thinks it ended',
+        () async {
+      // Out of touch for a while, our estimate ran on to the end; Spotify
+      // says where it really paused.
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 179000);
+
+      fakeNative.simulateStateChanged(60000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't1');
+      expect(provider.isPlaying, isFalse);
+    });
+
+    test('the Web API seeing our track rewound and paused after the end '
+        'advances our queue', () async {
+      final provider =
+          await playing([_track('t1'), _track('t2')], atMs: 179500);
+      await Future.delayed(const Duration(seconds: 4));
+      fakeSpotify.setPaused('spotify:track:t1');
+
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('a missed end-of-track event is caught within seconds', () async {
+      // A single song: Spotify has nothing after it to move on to.
+      final provider = await playing([_track('t1')], atMs: 179500);
+      fakeSpotify.setPaused('spotify:track:t1');
+
+      await Future.delayed(const Duration(seconds: 8));
+
+      expect(provider.currentTrack, isNull);
     });
 
     test('another track picked in Spotify mid-song: paused, play replays ours',

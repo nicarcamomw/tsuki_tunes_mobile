@@ -58,18 +58,11 @@ extension _SpotifyPlayback on AudioProvider {
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
         return;
       }
-      // A single track that ends without autoplay leaves Spotify paused:
-      // that is the end of our track, not the user pausing.
-      if (paused && _isPlaying && !_isBuffering && _duration > Duration.zero) {
-        final estimated =
-            _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
-        if (pos >= dur - 1500 ||
-            estimated >= _duration - const Duration(seconds: 3)) {
-          debugPrint('[AudioProvider] Spotify stopped at the end of the track, advancing');
-          _stopPositionTimer();
-          _handleTrackCompleted();
-          return;
-        }
+      if (paused && _isPlaying && !_isBuffering && _spotifyPausedAtEnd(pos, dur)) {
+        debugPrint('[AudioProvider] Spotify stopped at the end of the track, advancing');
+        _stopPositionTimer();
+        _handleTrackCompleted();
+        return;
       }
       _spotifySyncPosition = Duration(milliseconds: pos);
       _spotifySyncTime = DateTime.now();
@@ -106,6 +99,20 @@ extension _SpotifyPlayback on AudioProvider {
     if (_useSpotify) {
       _warmUpSpotifyDevice();
     }
+  }
+
+  /// Whether Spotify, found paused on our track at [positionMs] of
+  /// [durationMs] (0 when unknown) while we thought it was playing, reached
+  /// the end of it. A single track that ends without autoplay leaves Spotify
+  /// paused either right at the end or rewound to the start; a pause anywhere
+  /// else is someone pausing (headphones, the Spotify app or notification),
+  /// even when our estimate, out of touch for a while, says it ended.
+  bool _spotifyPausedAtEnd(int positionMs, int durationMs) {
+    if (durationMs > 0 && positionMs >= durationMs - 1500) return true;
+    if (positionMs > 1500 || _duration <= Duration.zero) return false;
+    final estimated =
+        _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime);
+    return estimated >= _duration - const Duration(seconds: 3);
   }
 
   /// Makes sure the Spotify app on this phone is running so playback works
@@ -177,8 +184,9 @@ extension _SpotifyPlayback on AudioProvider {
           _maybePersistPosition();
           _checkListenedThreshold();
           _checkSpotifyCrossfade();
-          final interval =
-              pastEnd && _spotifyAhead.isNotEmpty ? 3 : pollInterval;
+          // Past the end, check often: Spotify either moved on to the next
+          // song we handed it, or its end-of-track event may have been lost.
+          final interval = pastEnd ? 3 : pollInterval;
           if (_spotifyPollTick % interval == 0) {
             _syncSpotifyPlaybackState();
           }
@@ -255,6 +263,10 @@ extension _SpotifyPlayback on AudioProvider {
       if (durationMs > 0) {
         _duration = Duration(milliseconds: durationMs);
       }
+      // Before the position below replaces our estimate, which tells a
+      // rewind after the end from a pause at the start.
+      final pausedAtEnd =
+          !isPlaying && _spotifyPausedAtEnd(progressMs, durationMs);
 
       if (!_nativePlayer.isConnected) {
         _spotifySyncPosition = Duration(milliseconds: progressMs);
@@ -269,7 +281,7 @@ extension _SpotifyPlayback on AudioProvider {
           debugPrint('[AudioProvider] Spotify sync: ignoring stale pause (${sincePlayCommand.inMilliseconds}ms since play command)');
           return;
         }
-        if (durationMs > 0 && progressMs >= durationMs - 1000) {
+        if (pausedAtEnd) {
           _stopPositionTimer();
           _handleTrackCompleted();
           return;
