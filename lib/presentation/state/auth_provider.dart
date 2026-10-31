@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/storage_service.dart';
+import '../../di/injection.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
@@ -156,7 +157,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(_guestUidKey);
     await prefs.remove(_guestModeKey);
     // The guest's playlists can't be reached once its uid is gone.
-    if (leftGuestUid != null) await StorageService().clearCachedPlaylists(leftGuestUid);
+    if (leftGuestUid != null) await getIt<StorageService>().clearCachedPlaylists(leftGuestUid);
     await _firebase.signOut();
     notifyListeners();
   }

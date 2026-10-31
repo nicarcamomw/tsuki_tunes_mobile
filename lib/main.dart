@@ -17,6 +17,7 @@ import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/release_radar_service.dart';
+import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
 import 'domain/usecases/playback/play_track.dart';
 import 'presentation/navigation/app_router.dart';
@@ -90,6 +91,8 @@ void _deferredInit() {
     if (handler != null) {
       _audio.attachDeferredMediaHandler(handler);
       handler.library = AutoMediaLibrary(
+        // The app's storage: the library lives in its database.
+        storage: getIt<StorageService>(),
         play: (track, queue) => getIt<PlayTrack>()(track, queue: queue),
       );
     }

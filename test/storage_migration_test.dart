@@ -66,6 +66,34 @@ void main() {
     expect((await SharedPreferences.getInstance()).getString(legacyKey), isNotNull);
   });
 
+  test('playlists and followed artists move in once, and clearing reaches the database', () async {
+    SharedPreferences.setMockInitialValues({
+      'tsuki_cached_playlists_u1': jsonEncode([
+        {'id': 'p1', 'name': 'Noche'},
+        {'id': 'p2', 'name': 'Día'},
+      ]),
+      'tsuki_cached_followed_artists_u1': jsonEncode([
+        {'id': '27', 'name': 'SOAD'},
+      ]),
+    });
+
+    expect((await storage.getCachedPlaylists('u1')).map((p) => p['name']), ['Noche', 'Día']);
+    expect((await storage.getCachedFollowedArtists('u1')).single['name'], 'SOAD');
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('tsuki_cached_playlists_u1'), isNull);
+    expect(prefs.getString('tsuki_cached_followed_artists_u1'), isNull);
+    expect((await db.select(db.playlists).get()).length, 2);
+
+    await storage.saveCachedPlaylists('u1', [
+      {'id': 'p2', 'name': 'Día'},
+    ]);
+    expect((await StorageService(localStore: LibraryStore(db)).getCachedPlaylists('u1')).single['id'], 'p2');
+
+    // A guest leaving: their playlists go from the database too.
+    await storage.clearCachedPlaylists('u1');
+    expect(await db.select(db.playlists).get(), isEmpty);
+  });
+
   test('without the database (web) the library stays where it was', () async {
     SharedPreferences.setMockInitialValues({});
     final plain = StorageService();

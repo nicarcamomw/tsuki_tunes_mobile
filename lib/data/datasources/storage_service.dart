@@ -402,45 +402,92 @@ class StorageService implements StorageContract {
   static String _cachedPlaylistsKey(String uid) => 'tsuki_cached_playlists_$uid';
 
   @override
-  Future<List<Map<String, dynamic>>> getCachedPlaylists(String uid) async {
-    if (uid.isEmpty) return [];
-    final prefs = await SharedPreferences.getInstance();
-    final String? raw = prefs.getString(_cachedPlaylistsKey(uid));
-    if (raw == null || raw.isEmpty) return [];
+  Future<List<Map<String, dynamic>>> getCachedPlaylists(String uid) =>
+      _fromDatabase(uid, _cachedPlaylistsKey(uid), (l) => l.loadPlaylists(uid), (l, rows) => l.savePlaylists(uid, rows));
 
-    try {
-      final List decoded = json.decode(raw);
-      return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    } catch (_) {
-      return [];
-    }
-  }
 
   @override
-  Future<void> saveCachedPlaylists(
-      String uid, List<Map<String, dynamic>> playlists) async {
-    if (uid.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cachedPlaylistsKey(uid), json.encode(playlists));
-  }
+  Future<void> saveCachedPlaylists(String uid, List<Map<String, dynamic>> playlists) =>
+      _toDatabase(uid, _cachedPlaylistsKey(uid), playlists, (l) => l.savePlaylists(uid, playlists));
+
 
   // --- Cached Followed Artists (per-user) ---
 
   Future<void> clearCachedPlaylists(String uid) async {
     if (uid.isEmpty) return;
+    try {
+      await _local?.clearPlaylists(uid);
+    } catch (e) {
+      debugPrint('[Storage] clearing playlists in the database failed: $e');
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_cachedPlaylistsKey(uid));
   }
 
+
   static String _cachedFollowedArtistsKey(String uid) => 'tsuki_cached_followed_artists_$uid';
 
   @override
-  Future<List<Map<String, dynamic>>> getCachedFollowedArtists(String uid) async {
-    if (uid.isEmpty) return [];
-    final prefs = await SharedPreferences.getInstance();
-    final String? raw = prefs.getString(_cachedFollowedArtistsKey(uid));
-    if (raw == null || raw.isEmpty) return [];
+  Future<List<Map<String, dynamic>>> getCachedFollowedArtists(String uid) => _fromDatabase(
+      uid, _cachedFollowedArtistsKey(uid), (l) => l.loadFollowed(uid), (l, rows) => l.saveFollowed(uid, rows));
 
+
+  @override
+  Future<void> saveCachedFollowedArtists(String uid, List<Map<String, dynamic>> artists) =>
+      _toDatabase(uid, _cachedFollowedArtistsKey(uid), artists, (l) => l.saveFollowed(uid, artists));
+
+  /// Reads a list kept in the database. The first time it's empty there,
+  /// a copy left in SharedPreferences (under [legacyKey]) is moved in and
+  /// then removed; if the database fails, that copy is what's read.
+  Future<List<Map<String, dynamic>>> _fromDatabase(
+    String uid,
+    String legacyKey,
+    Future<List<Map<String, dynamic>>> Function(LibraryStore local) load,
+    Future<void> Function(LibraryStore local, List<Map<String, dynamic>> rows) save,
+  ) async {
+    if (uid.isEmpty) return [];
+    final local = _local;
+    if (local == null) return _legacyList(legacyKey);
+    try {
+      final rows = await load(local);
+      if (rows.isNotEmpty) return rows;
+      final legacy = await _legacyList(legacyKey);
+      if (legacy.isEmpty) return rows;
+      await save(local, legacy);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(legacyKey);
+      return legacy;
+    } catch (e) {
+      debugPrint('[Storage] $legacyKey from the database failed: $e');
+      return _legacyList(legacyKey);
+    }
+  }
+
+  /// Saves a list to the database (only the rows that changed), or to
+  /// SharedPreferences under [legacyKey] without one or if it fails.
+  Future<void> _toDatabase(
+    String uid,
+    String legacyKey,
+    List<Map<String, dynamic>> rows,
+    Future<void> Function(LibraryStore local) save,
+  ) async {
+    if (uid.isEmpty) return;
+    final local = _local;
+    if (local != null) {
+      try {
+        return await save(local);
+      } catch (e) {
+        debugPrint('[Storage] $legacyKey to the database failed: $e');
+      }
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(legacyKey, json.encode(rows));
+  }
+
+  Future<List<Map<String, dynamic>>> _legacyList(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+    if (raw == null || raw.isEmpty) return [];
     try {
       final List decoded = json.decode(raw);
       return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -449,13 +496,6 @@ class StorageService implements StorageContract {
     }
   }
 
-  @override
-  Future<void> saveCachedFollowedArtists(
-      String uid, List<Map<String, dynamic>> artists) async {
-    if (uid.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cachedFollowedArtistsKey(uid), json.encode(artists));
-  }
 
   // --- Birthday ---
   static const String _birthdayKey = 'tsuki_birthday';
