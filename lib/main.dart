@@ -18,6 +18,7 @@ import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
+import 'di/injection.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/main_navigation_screen.dart';
 import 'presentation/screens/mask_collection_screen.dart';
@@ -35,6 +36,8 @@ void main() async {
   // request URLs. Errors still reach Crashlytics.
   if (kReleaseMode) debugPrint = (String? message, {int? wrapWidth}) {};
   WidgetsFlutterBinding.ensureInitialized();
+  // Data sources, repositories and use cases (see di/injection.dart).
+  configureDependencies();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

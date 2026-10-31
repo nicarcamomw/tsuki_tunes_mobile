@@ -11,6 +11,7 @@ import '../../data/datasources/storage_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
+import '../../di/injection.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import 'ambient_provider.dart';
@@ -54,7 +55,7 @@ final playlistProvider = ChangeNotifierProvider<PlaylistRepositoryImpl>((ref) =>
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 
 final localeProvider = ChangeNotifierProvider<LocaleProvider>(
-  (ref) => LocaleProvider(storage: StorageService()),
+  (ref) => LocaleProvider(storage: getIt<StorageService>()),
 );
 
 /// The app's language. Changes only when the user picks another one (or the

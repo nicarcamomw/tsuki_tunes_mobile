@@ -69,6 +69,8 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
   flutter_riverpod: ^3.4.3
+  get_it: ^9.3.0
+  injectable: ^3.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -78,8 +80,12 @@ dev_dependencies:
   just_audio_platform_interface: ^4.6.0
   freezed: ^4.0.3
   json_serializable: ^6.15.2
-  build_runner: ^2.17.1
+  # injectable_generator still builds on build 4 / analyzer < 14.2, which
+  # build_runner 2.17.1 (build 5) left behind.
+  build_runner: ">=2.16.1 <2.17.1"
   path: ^1.9.1
+  # 3.1.3 needs an analyzer older than the one freezed uses.
+  injectable_generator: ">=3.1.1 <3.1.3"
 
 flutter:
   uses-material-design: true
