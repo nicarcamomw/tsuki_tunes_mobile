@@ -20,6 +20,7 @@ import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
 import 'album_detail_screen.dart';
@@ -913,7 +914,6 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     final audio = ref.read(audioProvider);
     final currentTrackId =
         ref.watch(audioProvider.select((a) => a.currentTrack?.id));
-    final library = ref.read(libraryProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
@@ -1139,7 +1139,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         icon: Icon(Icons.remove_circle_outline,
                             color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
                         onPressed: () =>
-                            library.unmarkTrack(trackData.trackId),
+                            ref.read(unmarkTrackListenedProvider)(trackData.trackId),
                       ),
                     ],
                   ),

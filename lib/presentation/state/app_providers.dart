@@ -12,6 +12,7 @@ import '../../data/datasources/tile_channel_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/usecases/library/mark_track_listened.dart';
 import 'ambient_provider.dart';
 import 'audio_provider.dart';
 import 'auth_provider.dart';
@@ -129,9 +130,8 @@ final playbackWiringProvider = Provider<void>((ref) {
     library.addRecentTrack(track);
     masks.onTrackStarted(track);
   };
-  player.onListenedThreshold = (track) {
-    if (!library.isTrackListened(track.id)) library.markTrack(track);
-  };
+  final markListened = MarkTrackListened(library);
+  player.onListenedThreshold = markListened.call;
 
   // The "new artist" mask needs the artists the user already knew, once
   // the library has loaded.

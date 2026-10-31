@@ -15,6 +15,7 @@ import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../state/app_providers.dart';
+import '../state/use_cases.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
@@ -312,15 +313,10 @@ class TrackTile extends ConsumerWidget {
                         : ref.read(stringsProvider).markAsListened,
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      final lib = ref.read(libraryProvider);
-                      if (isListened) {
-                        if (onUnmark != null) {
-                          onUnmark!();
-                        } else {
-                          lib.unmarkTrack(track.id);
-                        }
+                      if (isListened && onUnmark != null) {
+                        onUnmark!();
                       } else {
-                        lib.markTrack(track);
+                        ref.read(toggleTrackListenedProvider)(track);
                       }
                     },
                     scaleDown: 0.8,

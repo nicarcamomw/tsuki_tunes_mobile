@@ -10,6 +10,7 @@ import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
+import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
 import 'oni_mask_icon.dart';
 import 'tap_scale.dart';
@@ -135,7 +136,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
 
     if (track == null) return const SizedBox.shrink();
 
-    final library = ref.read(libraryProvider);
     final locale = ref.read(localeProvider);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
@@ -262,13 +262,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                               semanticLabel: isListened
                                   ? locale.strings.unmarkAsListened
                                   : locale.strings.markAsListened,
-                              onTap: () {
-                                if (isListened) {
-                                  library.unmarkTrack(track.id);
-                                } else {
-                                  library.markTrack(track);
-                                }
-                              },
+                              onTap: () =>
+                                  ref.read(toggleTrackListenedProvider)(track),
                               scaleDown: 0.8,
                               child: OniMaskIcon(
                                 isActive: isListened,

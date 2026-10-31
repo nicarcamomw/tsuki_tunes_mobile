@@ -21,6 +21,7 @@ import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -236,13 +237,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               onToggleStats: () => setState(() => _showStats = !_showStats),
               canFollow: !isGuest,
               isFollowed: isFollowed,
-              onToggleFollow: () {
-                if (isFollowed) {
-                  library.unfollowArtist(_artist.id);
-                } else {
-                  library.followArtist(_artist);
-                  _announceRadar(strings);
-                }
+              onToggleFollow: () async {
+                final followed = await ref.read(toggleFollowArtistProvider)(_artist);
+                if (followed) unawaited(_announceRadar(strings));
               },
               reduceMotion: _reduceMotion,
             ),
