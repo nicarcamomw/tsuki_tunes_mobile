@@ -287,7 +287,14 @@ class LibraryStore {
         return [for (final r in rows) Map<String, dynamic>.from(json.decode(r.json) as Map)];
       });
 
-  Future<void> savePlaylists(String uid, List<Map<String, dynamic>> playlists) => _queued(() async {
+  /// Saves the playlists; [alsoInTransaction] (an outbox entry) is
+  /// written with them, so both are kept or neither.
+  Future<void> savePlaylists(
+    String uid,
+    List<Map<String, dynamic>> playlists, {
+    Future<void> Function()? alsoInTransaction,
+  }) =>
+      _queued(() => _db.transaction(() async {
         final before = _playlists[uid] ??
             {
               for (final r in await (_db.select(_db.playlists)..where((t) => t.uid.equals(uid))).get())
@@ -307,8 +314,9 @@ class LibraryStore {
                 PlaylistsCompanion.insert(uid: uid, id: e.key, position: e.value.$1, json: e.value.$2),
           ]);
         });
+        await alsoInTransaction?.call();
         _playlists[uid] = after;
-      });
+      }));
 
   Future<void> clearPlaylists(String uid) => _queued(() async {
         await (_db.delete(_db.playlists)..where((t) => t.uid.equals(uid))).go();

@@ -29,8 +29,13 @@ abstract class RepositoryModule {
   LibraryRepository libraryRepository(LibraryRepositoryImpl library) => library;
 
   @lazySingleton
-  PlaylistRepositoryImpl playlists(FirebaseService firebase, StorageService storage) =>
-      PlaylistRepositoryImpl(firebase: firebase, storage: storage);
+  PlaylistRepositoryImpl playlists(
+    FirebaseService firebase,
+    StorageService storage,
+    LibraryStore store,
+    Outbox outbox,
+  ) =>
+      PlaylistRepositoryImpl(firebase: firebase, storage: storage, store: store, outbox: outbox);
 
   @lazySingleton
   PlaylistRepository playlistRepository(PlaylistRepositoryImpl playlists) => playlists;

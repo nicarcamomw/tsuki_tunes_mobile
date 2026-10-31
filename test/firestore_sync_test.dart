@@ -225,6 +225,8 @@ void main() {
       final tabletAdd = tablet.addTrackToPlaylist(id, _track('b'));
       expect(tablet.getPlaylist(id)!.tracks.map((t) => t.id), ['b']);
       await Future.wait([remoteWrite, tabletAdd]);
+      // The add goes up through the outbox.
+      await tablet.pendingCreations;
       await _settle();
 
       final doc = await db
@@ -248,6 +250,7 @@ void main() {
       await _settle();
       final id = phone.playlists.first.id;
       await phone.addTrackToPlaylist(id, _track('a'));
+      await phone.pendingCreations;
       await _settle();
 
       // Another device adds 'b' while the phone, not yet aware of it,
@@ -260,6 +263,7 @@ void main() {
       final phoneRemove = phone.removeTrackFromPlaylist(id, 'a');
       expect(phone.getPlaylist(id)!.tracks, isEmpty);
       await Future.wait([remoteAdd, phoneRemove]);
+      await phone.pendingCreations;
       await _settle();
 
       final doc = await docRef.get();
