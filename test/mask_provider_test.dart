@@ -123,7 +123,7 @@ void main() {
     final tracks = [for (var i = 0; i < 5; i++) _t('t$i', albumId: 'al')];
 
     setUp(() {
-      album = Album(
+      album = const Album(
         id: 'al',
         title: 'Album',
         coverUrl: '',
@@ -153,7 +153,7 @@ void main() {
     });
 
     test('singles and EPs do not count', () async {
-      album = Album(
+      album = const Album(
         id: 'al', title: 'EP', coverUrl: '', artistId: '', artistName: '',
         recordType: 'ep', tracksCount: 5,
       );

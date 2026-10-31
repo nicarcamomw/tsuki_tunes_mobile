@@ -1,45 +1,39 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import 'json_readers.dart';
 import 'track.dart';
 
-class Album {
-  final String id;
-  final String title;
-  final String coverUrl;
-  final String? coverXl;
-  final String artistId;
-  final String artistName;
-  final String releaseDate;
-  final String recordType;
-  final int fansCount;
-  final int tracksCount;
-  final String? link;
-  final List<Track> tracks;
+part 'album.freezed.dart';
+part 'album.g.dart';
 
-  Album({
-    required this.id,
-    required this.title,
-    required this.coverUrl,
-    this.coverXl,
-    required this.artistId,
-    required this.artistName,
-    this.releaseDate = '',
-    this.recordType = 'album',
-    this.fansCount = 0,
-    this.tracksCount = 0,
-    this.link,
-    this.tracks = const [],
-  });
+@freezed
+abstract class Album with _$Album {
+  const Album._();
 
-  String get year {
-    if (releaseDate.length >= 4) return releaseDate.substring(0, 4);
-    return '';
-  }
+  const factory Album({
+    @JsonKey(fromJson: jsonString) required String id,
+    @JsonKey(defaultValue: 'Unknown Album') required String title,
+    @JsonKey(defaultValue: '') required String coverUrl,
+    String? coverXl,
+    @JsonKey(fromJson: jsonString) required String artistId,
+    @JsonKey(defaultValue: 'Unknown Artist') required String artistName,
+    @Default('') String releaseDate,
+    @Default('album') String recordType,
+    @Default(0) int fansCount,
+    @Default(0) int tracksCount,
+    String? link,
+    // Left out of the stored JSON while empty.
+    @JsonKey(includeIfNull: false, toJson: _tracksToJson)
+    @Default([])
+    List<Track> tracks,
+  }) = _Album;
 
-  int get totalDurationSeconds {
-    if (tracks.isEmpty) return 0;
-    return tracks.fold(0, (sum, t) => sum + t.durationSeconds);
-  }
+  /// Reads the stored JSON written by [toJson].
+  factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
 
-  factory Album.fromJson(Map<String, dynamic> json) {
+  /// Reads an album from the Deezer API; its tracks get the album's cover,
+  /// title and artist, which Deezer leaves out of them.
+  factory Album.fromDeezer(Map<String, dynamic> json) {
     final artistJson =
         json['artist'] is Map<String, dynamic> ? json['artist'] : null;
 
@@ -53,7 +47,7 @@ class Album {
         trackMap['artist_name'] =
             trackMap['artist']?['name'] ?? artistJson?['name'];
         trackMap['album_id'] = json['id']?.toString();
-        return Track.fromJson(trackMap);
+        return Track.fromDeezer(trackMap);
       }).toList();
     }
 
@@ -74,73 +68,16 @@ class Album {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'coverUrl': coverUrl,
-      'coverXl': coverXl,
-      'artistId': artistId,
-      'artistName': artistName,
-      'releaseDate': releaseDate,
-      'recordType': recordType,
-      'fansCount': fansCount,
-      'tracksCount': tracksCount,
-      'link': link,
-      if (tracks.isNotEmpty) 'tracks': tracks.map((t) => t.toJson()).toList(),
-    };
+  String get year {
+    if (releaseDate.length >= 4) return releaseDate.substring(0, 4);
+    return '';
   }
 
-  factory Album.fromStorage(Map<String, dynamic> map) {
-    List<Track> tracks = [];
-    if (map['tracks'] is List) {
-      tracks = (map['tracks'] as List)
-          .map((t) => Track.fromStorage(Map<String, dynamic>.from(t)))
-          .toList();
-    }
-    return Album(
-      id: map['id']?.toString() ?? '',
-      title: map['title'] ?? 'Unknown Album',
-      coverUrl: map['coverUrl'] ?? '',
-      coverXl: map['coverXl'],
-      artistId: map['artistId']?.toString() ?? '',
-      artistName: map['artistName'] ?? 'Unknown Artist',
-      releaseDate: map['releaseDate'] ?? '',
-      recordType: map['recordType'] ?? 'album',
-      fansCount: map['fansCount'] ?? 0,
-      tracksCount: map['tracksCount'] ?? 0,
-      link: map['link'],
-      tracks: tracks,
-    );
-  }
-
-  Album copyWith({
-    String? id,
-    String? title,
-    String? coverUrl,
-    String? coverXl,
-    String? artistId,
-    String? artistName,
-    String? releaseDate,
-    String? recordType,
-    int? fansCount,
-    int? tracksCount,
-    String? link,
-    List<Track>? tracks,
-  }) {
-    return Album(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      coverUrl: coverUrl ?? this.coverUrl,
-      coverXl: coverXl ?? this.coverXl,
-      artistId: artistId ?? this.artistId,
-      artistName: artistName ?? this.artistName,
-      releaseDate: releaseDate ?? this.releaseDate,
-      recordType: recordType ?? this.recordType,
-      fansCount: fansCount ?? this.fansCount,
-      tracksCount: tracksCount ?? this.tracksCount,
-      link: link ?? this.link,
-      tracks: tracks ?? this.tracks,
-    );
+  int get totalDurationSeconds {
+    if (tracks.isEmpty) return 0;
+    return tracks.fold(0, (sum, t) => sum + t.durationSeconds);
   }
 }
+
+List<Map<String, dynamic>>? _tracksToJson(List<Track> tracks) =>
+    tracks.isEmpty ? null : [for (final t in tracks) t.toJson()];

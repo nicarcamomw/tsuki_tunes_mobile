@@ -1,37 +1,34 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'album.dart';
+import 'json_readers.dart';
+
+part 'radar_release.freezed.dart';
+part 'radar_release.g.dart';
 
 /// A recent release by a watched artist, as tracked by the release radar.
-class RadarRelease {
-  final String albumId;
-  final String title;
-  final String artistId;
-  final String artistName;
-  final String coverUrl;
-  final String releaseDate;
-  final String recordType;
-  final DateTime detectedAt;
+@freezed
+abstract class RadarRelease with _$RadarRelease {
+  const RadarRelease._();
 
-  /// True when it appeared after the artist's baseline (a genuinely new drop),
-  /// false for releases that already existed when the radar started watching.
-  final bool isNew;
-  final bool read;
+  const factory RadarRelease({
+    @JsonKey(fromJson: jsonString) required String albumId,
+    @JsonKey(defaultValue: '') required String title,
+    @JsonKey(fromJson: jsonString) required String artistId,
+    @JsonKey(defaultValue: '') required String artistName,
+    @JsonKey(defaultValue: '') required String coverUrl,
+    @JsonKey(defaultValue: '') required String releaseDate,
+    @JsonKey(defaultValue: 'album') required String recordType,
+    @JsonKey(fromJson: jsonDateOrEpoch) required DateTime detectedAt,
 
-  const RadarRelease({
-    required this.albumId,
-    required this.title,
-    required this.artistId,
-    required this.artistName,
-    required this.coverUrl,
-    required this.releaseDate,
-    required this.recordType,
-    required this.detectedAt,
-    required this.isNew,
-    required this.read,
-  });
+    /// True when it appeared after the artist's baseline (a genuinely new drop),
+    /// false for releases that already existed when the radar started watching.
+    @JsonKey(fromJson: jsonIsTrue) required bool isNew,
+    @JsonKey(fromJson: jsonIsNotFalse) required bool read,
+  }) = _RadarRelease;
 
-  bool get isUnread => isNew && !read;
-
-  DateTime? get releasedAt => DateTime.tryParse(releaseDate);
+  factory RadarRelease.fromJson(Map<String, dynamic> json) =>
+      _$RadarReleaseFromJson(json);
 
   factory RadarRelease.fromAlbum(
     Album album, {
@@ -54,6 +51,10 @@ class RadarRelease {
     );
   }
 
+  bool get isUnread => isNew && !read;
+
+  DateTime? get releasedAt => DateTime.tryParse(releaseDate);
+
   Album toAlbum() => Album(
         id: albumId,
         title: title,
@@ -63,44 +64,4 @@ class RadarRelease {
         releaseDate: releaseDate,
         recordType: recordType,
       );
-
-  RadarRelease copyWith({bool? read}) => RadarRelease(
-        albumId: albumId,
-        title: title,
-        artistId: artistId,
-        artistName: artistName,
-        coverUrl: coverUrl,
-        releaseDate: releaseDate,
-        recordType: recordType,
-        detectedAt: detectedAt,
-        isNew: isNew,
-        read: read ?? this.read,
-      );
-
-  factory RadarRelease.fromJson(Map<String, dynamic> json) => RadarRelease(
-        albumId: json['albumId']?.toString() ?? '',
-        title: json['title'] ?? '',
-        artistId: json['artistId']?.toString() ?? '',
-        artistName: json['artistName'] ?? '',
-        coverUrl: json['coverUrl'] ?? '',
-        releaseDate: json['releaseDate'] ?? '',
-        recordType: json['recordType'] ?? 'album',
-        detectedAt: DateTime.tryParse(json['detectedAt'] ?? '') ??
-            DateTime.fromMillisecondsSinceEpoch(0),
-        isNew: json['isNew'] == true,
-        read: json['read'] != false,
-      );
-
-  Map<String, dynamic> toJson() => {
-        'albumId': albumId,
-        'title': title,
-        'artistId': artistId,
-        'artistName': artistName,
-        'coverUrl': coverUrl,
-        'releaseDate': releaseDate,
-        'recordType': recordType,
-        'detectedAt': detectedAt.toIso8601String(),
-        'isNew': isNew,
-        'read': read,
-      };
 }

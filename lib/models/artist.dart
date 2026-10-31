@@ -1,42 +1,31 @@
-class Artist {
-  final String id;
-  final String name;
-  final String pictureUrl;
-  final String? pictureSmall;
-  final String? pictureMedium;
-  final String? pictureBig;
-  final String? pictureXl;
-  final int fansCount;
-  final int albumsCount;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  Artist({
-    required this.id,
-    required this.name,
-    required this.pictureUrl,
-    this.pictureSmall,
-    this.pictureMedium,
-    this.pictureBig,
-    this.pictureXl,
-    this.fansCount = 0,
-    this.albumsCount = 0,
-  });
+import 'json_readers.dart';
 
-  String getBestImage({String size = 'big'}) {
-    switch (size) {
-      case 'xl':
-        return pictureXl ?? pictureBig ?? pictureUrl;
-      case 'big':
-        return pictureBig ?? pictureUrl;
-      case 'medium':
-        return pictureMedium ?? pictureUrl;
-      case 'small':
-        return pictureSmall ?? pictureMedium ?? pictureUrl;
-      default:
-        return pictureUrl;
-    }
-  }
+part 'artist.freezed.dart';
+part 'artist.g.dart';
 
-  factory Artist.fromJson(Map<String, dynamic> json) {
+@freezed
+abstract class Artist with _$Artist {
+  const Artist._();
+
+  const factory Artist({
+    @JsonKey(fromJson: jsonString) required String id,
+    @JsonKey(defaultValue: 'Unknown Artist') required String name,
+    @JsonKey(defaultValue: '') required String pictureUrl,
+    String? pictureSmall,
+    String? pictureMedium,
+    String? pictureBig,
+    String? pictureXl,
+    @Default(0) int fansCount,
+    @Default(0) int albumsCount,
+  }) = _Artist;
+
+  /// Reads the stored JSON written by [toJson].
+  factory Artist.fromJson(Map<String, dynamic> json) => _$ArtistFromJson(json);
+
+  /// Reads an artist from the Deezer API.
+  factory Artist.fromDeezer(Map<String, dynamic> json) {
     return Artist(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? 'Unknown Artist',
@@ -53,31 +42,18 @@ class Artist {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'pictureUrl': pictureUrl,
-      'pictureSmall': pictureSmall,
-      'pictureMedium': pictureMedium,
-      'pictureBig': pictureBig,
-      'pictureXl': pictureXl,
-      'fansCount': fansCount,
-      'albumsCount': albumsCount,
-    };
-  }
-
-  factory Artist.fromStorage(Map<String, dynamic> map) {
-    return Artist(
-      id: map['id']?.toString() ?? '',
-      name: map['name'] ?? 'Unknown Artist',
-      pictureUrl: map['pictureUrl'] ?? '',
-      pictureSmall: map['pictureSmall'],
-      pictureMedium: map['pictureMedium'],
-      pictureBig: map['pictureBig'],
-      pictureXl: map['pictureXl'],
-      fansCount: map['fansCount'] ?? 0,
-      albumsCount: map['albumsCount'] ?? 0,
-    );
+  String getBestImage({String size = 'big'}) {
+    switch (size) {
+      case 'xl':
+        return pictureXl ?? pictureBig ?? pictureUrl;
+      case 'big':
+        return pictureBig ?? pictureUrl;
+      case 'medium':
+        return pictureMedium ?? pictureUrl;
+      case 'small':
+        return pictureSmall ?? pictureMedium ?? pictureUrl;
+      default:
+        return pictureUrl;
+    }
   }
 }

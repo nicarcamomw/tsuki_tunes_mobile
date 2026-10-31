@@ -127,7 +127,7 @@ class _GuessSongScreenState extends State<GuessSongScreen> {
       _sessionStreak = _prefs!.getInt(_sessionStreakKey) ?? 0;
       final rawArtist = _prefs!.getString(_lastArtistKey);
       if (rawArtist != null) {
-        _artist = Artist.fromJson(jsonDecode(rawArtist) as Map<String, dynamic>);
+        _artist = Artist.fromDeezer(jsonDecode(rawArtist) as Map<String, dynamic>);
       }
       // Reopen on the mode the user was playing.
       final lastMode = _prefs!.getString(_lastModeKey);

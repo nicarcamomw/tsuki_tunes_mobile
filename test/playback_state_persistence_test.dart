@@ -60,7 +60,7 @@ void main() {
       expect(retrieved['position'], equals(45000));
 
       final retrievedQueue = (retrieved['queue'] as List)
-          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .map((item) => Track.fromJson(Map<String, dynamic>.from(item)))
           .toList();
 
       expect(retrievedQueue.length, equals(2));

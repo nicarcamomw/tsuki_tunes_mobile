@@ -29,7 +29,7 @@ class StorageService implements StorageContract {
     try {
       final List decoded = json.decode(raw);
       return decoded
-          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .map((item) => Track.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
       return [];
@@ -52,7 +52,7 @@ class StorageService implements StorageContract {
     try {
       final List decoded = json.decode(raw);
       return decoded
-          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .map((item) => Track.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
       return [];
@@ -75,7 +75,7 @@ class StorageService implements StorageContract {
     try {
       final List decoded = json.decode(raw);
       return decoded
-          .map((item) => Artist.fromStorage(Map<String, dynamic>.from(item)))
+          .map((item) => Artist.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
       return [];

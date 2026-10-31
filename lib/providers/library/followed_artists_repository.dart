@@ -51,7 +51,7 @@ class FollowedArtistsRepository {
     try {
       final cached = await _storage.getCachedFollowedArtists(uid);
       if (cached.isNotEmpty && isCurrent()) {
-        _artists = cached.map((e) => Artist.fromStorage(e)).toList();
+        _artists = cached.map((e) => Artist.fromJson(e)).toList();
         _ids = _artists.map((a) => a.id).toSet();
         _onChanged();
       }
@@ -64,7 +64,7 @@ class FollowedArtistsRepository {
       final snapshot = await followedCol.get();
       if (!isCurrent()) return;
       _artists = snapshot.docs
-          .map((doc) => Artist.fromStorage(doc.data()))
+          .map((doc) => Artist.fromJson(doc.data()))
           .toList();
       _ids = _artists.map((a) => a.id).toSet();
       _onChanged();
@@ -79,7 +79,7 @@ class FollowedArtistsRepository {
       for (final change in snapshot.docChanges) {
         final docData = change.doc.data();
         if (docData == null) continue;
-        final artist = Artist.fromStorage(docData);
+        final artist = Artist.fromJson(docData);
         if (change.type == DocumentChangeType.removed) {
           if (_ids.remove(artist.id)) {
             _artists.removeWhere((a) => a.id == artist.id);

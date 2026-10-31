@@ -192,8 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
           final needsId = a.artistId.isEmpty;
           if (needsName || needsId) {
             return a.copyWith(
-              artistName: needsName ? top.entry.name : null,
-              artistId: needsId ? top.artist!.id : null,
+              artistName: needsName ? top.entry.name : a.artistName,
+              artistId: needsId ? top.artist!.id : a.artistId,
             );
           }
           return a;
@@ -233,8 +233,8 @@ class _HomeScreenState extends State<HomeScreen> {
           final needsId = a.artistId.isEmpty;
           if (needsName || needsId) {
             return a.copyWith(
-              artistName: needsName ? artist.name : null,
-              artistId: needsId ? artist.id : null,
+              artistName: needsName ? artist.name : a.artistName,
+              artistId: needsId ? artist.id : a.artistId,
             );
           }
           return a;

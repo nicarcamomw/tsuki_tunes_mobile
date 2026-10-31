@@ -11,7 +11,7 @@ void main() {
     });
 
     test('precacheTrack handles empty previewUrl without error', () async {
-      final track = Track(
+      final track = const Track(
         id: 'no_preview_track',
         title: 'Silent Song',
         artistId: 'art_123',

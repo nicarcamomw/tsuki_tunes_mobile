@@ -1,0 +1,17 @@
+# Code generation for the models (dart run build_runner build -d).
+# The generated *.freezed.dart / *.g.dart files are committed, so a plain
+# flutter build needs no extra step.
+targets:
+  $default:
+    builders:
+      freezed:
+        generate_for:
+          - lib/models/**
+      json_serializable:
+        generate_for:
+          - lib/models/**
+        options:
+          # Nested models stored as maps (Firestore can't store objects).
+          explicit_to_json: true
+          # Firestore and old caches may hand back Map<dynamic, dynamic>.
+          any_map: true

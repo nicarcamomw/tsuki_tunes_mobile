@@ -80,7 +80,7 @@ class RainMixService {
 
       final List decoded = json.decode(raw);
       return decoded
-          .map((item) => Track.fromStorage(Map<String, dynamic>.from(item)))
+          .map((item) => Track.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
       return null;

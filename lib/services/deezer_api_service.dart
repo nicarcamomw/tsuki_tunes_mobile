@@ -254,7 +254,7 @@ class DeezerApiService implements MusicApiContract {
     );
     if (data is Map<String, dynamic>) {
       final List items = data['data'] ?? [];
-      final all = items.map((item) => Artist.fromJson(item)).toList();
+      final all = items.map((item) => Artist.fromDeezer(item)).toList();
       final filtered = all.where((a) => a.fansCount >= _minArtistFans).toList();
       final artists = filtered.isNotEmpty ? filtered : all;
       _setCache(cacheKey, artists, isSearch: true);
@@ -276,7 +276,7 @@ class DeezerApiService implements MusicApiContract {
     );
     if (data is Map<String, dynamic>) {
       final List items = data['data'] ?? [];
-      final albums = items.map((item) => Album.fromJson(item)).toList();
+      final albums = items.map((item) => Album.fromDeezer(item)).toList();
       _setCache(cacheKey, albums, isSearch: true);
       return albums;
     }
@@ -307,7 +307,7 @@ class DeezerApiService implements MusicApiContract {
     );
     if (data is Map<String, dynamic>) {
       final List items = data['data'] ?? [];
-      final all = items.map((item) => Track.fromJson(item)).toList();
+      final all = items.map((item) => Track.fromDeezer(item)).toList();
       var tracks = all;
       if (dropUnpopular) {
         final filtered = all.where((t) => t.rank == null || t.rank! >= _minTrackRank).toList();
@@ -335,7 +335,7 @@ class DeezerApiService implements MusicApiContract {
       final data = await _fetchJson(ApiEndpoints.chartTracks);
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
+        final tracks = list.map((item) => Track.fromDeezer(item)).toList();
         _setCache(cacheKey, tracks, isChart: true);
         return tracks;
       }
@@ -376,7 +376,7 @@ class DeezerApiService implements MusicApiContract {
       final data = await _fetchJson(ApiEndpoints.chartTracksLarge);
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
+        final tracks = list.map((item) => Track.fromDeezer(item)).toList();
         _setCache(cacheKey, tracks, isChart: true);
         return tracks;
       }
@@ -396,7 +396,7 @@ class DeezerApiService implements MusicApiContract {
       final data = await _fetchJson(ApiEndpoints.chartArtists);
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
-        final artists = list.map((item) => Artist.fromJson(item)).toList();
+        final artists = list.map((item) => Artist.fromDeezer(item)).toList();
         _setCache(cacheKey, artists, isChart: true);
         return artists;
       }
@@ -440,7 +440,7 @@ class DeezerApiService implements MusicApiContract {
       try {
         final data = await _fetchJson(ApiEndpoints.artist(id));
         if (data is Map<String, dynamic>) {
-          final artist = Artist.fromJson(data);
+          final artist = Artist.fromDeezer(data);
           _setCache(cacheKey, artist);
           return artist;
         }
@@ -463,7 +463,7 @@ class DeezerApiService implements MusicApiContract {
           await _fetchJson(ApiEndpoints.artistTopTracks(artistId, limit: limit));
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
-        final tracks = list.map((item) => Track.fromJson(item)).toList();
+        final tracks = list.map((item) => Track.fromDeezer(item)).toList();
         _setCache(cacheKey, tracks);
         return tracks;
       }
@@ -490,7 +490,7 @@ class DeezerApiService implements MusicApiContract {
         if (data is Map<String, dynamic>) {
           final List list = data['data'] ?? [];
           final items = list.map((item) {
-            final album = Album.fromJson(item);
+            final album = Album.fromDeezer(item);
             if (album.artistId.isEmpty) {
               return album.copyWith(artistId: artistId);
             }
@@ -530,7 +530,7 @@ class DeezerApiService implements MusicApiContract {
         if (data is Map<String, dynamic>) {
           final List list = data['data'] ?? [];
           final items = list.map((item) {
-            final album = Album.fromJson(item);
+            final album = Album.fromDeezer(item);
             return album.copyWith(recordType: 'compile');
           }).toList();
           _setCache(cacheKey, items);
@@ -579,7 +579,7 @@ class DeezerApiService implements MusicApiContract {
       try {
         final data = await _fetchJson(ApiEndpoints.album(albumId));
         if (data is Map<String, dynamic>) {
-          final album = Album.fromJson(data);
+          final album = Album.fromDeezer(data);
           _setCache(cacheKey, album);
           return album;
         }
@@ -600,7 +600,7 @@ class DeezerApiService implements MusicApiContract {
       try {
         final data = await _fetchJson(ApiEndpoints.track(trackId));
         if (data is Map<String, dynamic>) {
-          final track = Track.fromJson(data);
+          final track = Track.fromDeezer(data);
           _setCache(cacheKey, track);
           return track;
         }
@@ -633,7 +633,7 @@ class DeezerApiService implements MusicApiContract {
         final List list =
             (data is Map<String, dynamic> ? data['data'] as List? : null) ?? [];
         final artists = list
-            .map((item) => Artist.fromJson(item))
+            .map((item) => Artist.fromDeezer(item))
             .where((a) => a.id.isNotEmpty && a.id != artistId)
             .toList();
         _setCache(cacheKey, artists);
@@ -664,7 +664,7 @@ class DeezerApiService implements MusicApiContract {
           await _fetchJson(ApiEndpoints.artistRadio(artistId, limit: limit));
       if (data is Map<String, dynamic>) {
         final List list = data['data'] ?? [];
-        return list.map((item) => Track.fromJson(item)).toList();
+        return list.map((item) => Track.fromDeezer(item)).toList();
       }
     } catch (e) {
       debugPrint('[DeezerAPI] getArtistRadio($artistId) error: $e');

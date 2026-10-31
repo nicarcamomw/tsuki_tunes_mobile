@@ -148,7 +148,7 @@ class SongRadio {
       if (seedRaw is! Map || json['v'] != _persistVersion) return null;
       final modeIndex = json['mode'];
       final radio = SongRadio(
-        seed: Track.fromStorage(Map<String, dynamic>.from(seedRaw)),
+        seed: Track.fromJson(Map<String, dynamic>.from(seedRaw)),
         mode: modeIndex is int && modeIndex >= 0 && modeIndex < RadioMode.values.length
             ? RadioMode.values[modeIndex]
             : RadioMode.balanced,
@@ -174,7 +174,7 @@ class SongRadio {
       if (liked is List) {
         for (final l in liked) {
           if (l is Map) {
-            radio._liked.add(Track.fromStorage(Map<String, dynamic>.from(l)));
+            radio._liked.add(Track.fromJson(Map<String, dynamic>.from(l)));
           }
         }
       }

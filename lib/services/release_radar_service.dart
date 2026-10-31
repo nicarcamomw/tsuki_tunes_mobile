@@ -419,7 +419,7 @@ class ReleaseRadarService {
         if (data is! List) return null;
         return data
             .whereType<Map>()
-            .map((m) => Album.fromJson(Map<String, dynamic>.from(m)))
+            .map((m) => Album.fromDeezer(Map<String, dynamic>.from(m)))
             .toList();
       } catch (_) {
         return null;

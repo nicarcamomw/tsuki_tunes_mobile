@@ -1,64 +1,52 @@
-class Contributor {
-  final String id;
-  final String name;
-  final String? role;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  Contributor({required this.id, required this.name, this.role});
+import 'json_readers.dart';
 
-  factory Contributor.fromJson(Map<String, dynamic> json) {
-    return Contributor(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
-      role: json['role'],
-    );
-  }
+part 'track.freezed.dart';
+part 'track.g.dart';
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'role': role};
+/// Someone credited on a track. Deezer and the stored JSON use the same
+/// keys, so [Contributor.fromJson] reads both.
+@freezed
+abstract class Contributor with _$Contributor {
+  const factory Contributor({
+    @JsonKey(fromJson: jsonString) required String id,
+    @JsonKey(defaultValue: '') required String name,
+    String? role,
+  }) = _Contributor;
+
+  factory Contributor.fromJson(Map<String, dynamic> json) =>
+      _$ContributorFromJson(json);
 }
 
-class Track {
-  final String id;
-  final String title;
-  final String artistId;
-  final String artistName;
-  final String albumId;
-  final String albumTitle;
-  final String coverUrl;
-  final String previewUrl;
-  final int durationSeconds;
-  final int? rank;
-  final bool isExplicit;
-  final List<Contributor> contributors;
-  final String? link;
-  // International Standard Recording Code. Deezer only returns it from
-  // /track/{id}, not from search or album listings.
-  final String? isrc;
+@freezed
+abstract class Track with _$Track {
+  const Track._();
 
-  Track({
-    required this.id,
-    required this.title,
-    required this.artistId,
-    required this.artistName,
-    required this.albumId,
-    required this.albumTitle,
-    required this.coverUrl,
-    required this.previewUrl,
-    required this.durationSeconds,
-    this.rank,
-    this.isExplicit = false,
-    this.contributors = const [],
-    this.link,
-    this.isrc,
-  });
+  const factory Track({
+    @JsonKey(fromJson: jsonString) required String id,
+    @JsonKey(defaultValue: 'Unknown Track') required String title,
+    @JsonKey(fromJson: jsonString) required String artistId,
+    @JsonKey(defaultValue: 'Unknown Artist') required String artistName,
+    @JsonKey(fromJson: jsonString) required String albumId,
+    @JsonKey(defaultValue: '') required String albumTitle,
+    @JsonKey(defaultValue: '') required String coverUrl,
+    @JsonKey(defaultValue: '') required String previewUrl,
+    @JsonKey(defaultValue: 30) required int durationSeconds,
+    int? rank,
+    @JsonKey(fromJson: jsonIsTrue) @Default(false) bool isExplicit,
+    @Default([]) List<Contributor> contributors,
+    String? link,
+    // International Standard Recording Code. Deezer only returns it from
+    // /track/{id}, not from search or album listings.
+    @JsonKey(fromJson: jsonStringOrNull) String? isrc,
+  }) = _Track;
 
-  String get fullArtistName {
-    if (contributors.length > 1) {
-      return contributors.map((c) => c.name).join(', ');
-    }
-    return artistName;
-  }
+  /// Reads the stored JSON written by [toJson].
+  factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
 
-  factory Track.fromJson(Map<String, dynamic> json) {
+  /// Reads a track from the Deezer API.
+  factory Track.fromDeezer(Map<String, dynamic> json) {
     final artistJson =
         json['artist'] is Map<String, dynamic> ? json['artist'] : null;
     final albumJson =
@@ -106,82 +94,10 @@ class Track {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'artistId': artistId,
-      'artistName': artistName,
-      'albumId': albumId,
-      'albumTitle': albumTitle,
-      'coverUrl': coverUrl,
-      'previewUrl': previewUrl,
-      'durationSeconds': durationSeconds,
-      'rank': rank,
-      'isExplicit': isExplicit,
-      'contributors': contributors.map((c) => c.toJson()).toList(),
-      'link': link,
-      'isrc': isrc,
-    };
-  }
-
-  factory Track.fromStorage(Map<String, dynamic> map) {
-    List<Contributor> contribs = [];
-    if (map['contributors'] is List) {
-      contribs = (map['contributors'] as List)
-          .map((c) => Contributor.fromJson(Map<String, dynamic>.from(c)))
-          .toList();
+  String get fullArtistName {
+    if (contributors.length > 1) {
+      return contributors.map((c) => c.name).join(', ');
     }
-
-    return Track(
-      id: map['id']?.toString() ?? '',
-      title: map['title'] ?? 'Unknown Track',
-      artistId: map['artistId']?.toString() ?? '',
-      artistName: map['artistName'] ?? 'Unknown Artist',
-      albumId: map['albumId']?.toString() ?? '',
-      albumTitle: map['albumTitle'] ?? '',
-      coverUrl: map['coverUrl'] ?? '',
-      previewUrl: map['previewUrl'] ?? '',
-      durationSeconds: map['durationSeconds'] ?? 30,
-      rank: map['rank'],
-      isExplicit: map['isExplicit'] == true,
-      contributors: contribs,
-      link: map['link'],
-      isrc: map['isrc']?.toString(),
-    );
-  }
-
-  Track copyWith({
-    String? id,
-    String? title,
-    String? artistId,
-    String? artistName,
-    String? albumId,
-    String? albumTitle,
-    String? coverUrl,
-    String? previewUrl,
-    int? durationSeconds,
-    int? rank,
-    bool? isExplicit,
-    List<Contributor>? contributors,
-    String? link,
-    String? isrc,
-  }) {
-    return Track(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      artistId: artistId ?? this.artistId,
-      artistName: artistName ?? this.artistName,
-      albumId: albumId ?? this.albumId,
-      albumTitle: albumTitle ?? this.albumTitle,
-      coverUrl: coverUrl ?? this.coverUrl,
-      previewUrl: previewUrl ?? this.previewUrl,
-      durationSeconds: durationSeconds ?? this.durationSeconds,
-      rank: rank ?? this.rank,
-      isExplicit: isExplicit ?? this.isExplicit,
-      contributors: contributors ?? this.contributors,
-      link: link ?? this.link,
-      isrc: isrc ?? this.isrc,
-    );
+    return artistName;
   }
 }

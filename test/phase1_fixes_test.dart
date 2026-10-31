@@ -82,7 +82,7 @@ void main() {
 
   group('Track ISRC', () {
     test('parses isrc from Deezer JSON and survives storage round-trip', () {
-      final track = Track.fromJson({
+      final track = Track.fromDeezer({
         'id': 1,
         'title': 'T',
         'isrc': 'USUM71703861',
@@ -90,12 +90,12 @@ void main() {
         'album': {'id': 3, 'title': 'Al'},
       });
       expect(track.isrc, 'USUM71703861');
-      expect(Track.fromStorage(track.toJson()).isrc, 'USUM71703861');
+      expect(Track.fromJson(track.toJson()).isrc, 'USUM71703861');
     });
 
     test('missing or empty isrc is null', () {
-      expect(Track.fromJson({'id': 1, 'title': 'T'}).isrc, isNull);
-      expect(Track.fromJson({'id': 1, 'title': 'T', 'isrc': ''}).isrc, isNull);
+      expect(Track.fromDeezer({'id': 1, 'title': 'T'}).isrc, isNull);
+      expect(Track.fromDeezer({'id': 1, 'title': 'T', 'isrc': ''}).isrc, isNull);
     });
   });
 

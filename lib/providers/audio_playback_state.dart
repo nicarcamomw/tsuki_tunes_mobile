@@ -48,7 +48,7 @@ extension _PlaybackState on AudioProvider {
       final restoredQueue = <Track>[];
       for (final item in rawQueue) {
         if (item is Map) {
-          restoredQueue.add(Track.fromStorage(Map<String, dynamic>.from(item)));
+          restoredQueue.add(Track.fromJson(Map<String, dynamic>.from(item)));
         }
       }
 

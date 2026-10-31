@@ -204,27 +204,27 @@ class DeezerDiskCache {
   static dynamic deserialize(String type, dynamic raw) {
     switch (type) {
       case 'artist':
-        return Artist.fromStorage(Map<String, dynamic>.from(raw as Map));
+        return Artist.fromJson(Map<String, dynamic>.from(raw as Map));
       case 'artists':
         return (raw as List)
-            .map((e) => Artist.fromStorage(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Artist.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
       case 'album':
-        return Album.fromStorage(Map<String, dynamic>.from(raw as Map));
+        return Album.fromJson(Map<String, dynamic>.from(raw as Map));
       case 'albums':
         return (raw as List)
-            .map((e) => Album.fromStorage(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Album.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
       case 'track':
-        return Track.fromStorage(Map<String, dynamic>.from(raw as Map));
+        return Track.fromJson(Map<String, dynamic>.from(raw as Map));
       case 'tracks':
         return (raw as List)
-            .map((e) => Track.fromStorage(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Track.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
       case 'albums_page':
         final map = Map<String, dynamic>.from(raw as Map);
         final items = (map['items'] as List)
-            .map((e) => Album.fromStorage(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Album.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         return ArtistAlbumsPage(
           items: items,
@@ -237,15 +237,15 @@ class DeezerDiskCache {
         return <String, dynamic>{
           'artists': (map['artists'] as List)
               .map(
-                  (e) => Artist.fromStorage(Map<String, dynamic>.from(e as Map)))
+                  (e) => Artist.fromJson(Map<String, dynamic>.from(e as Map)))
               .toList(),
           'albums': (map['albums'] as List)
               .map(
-                  (e) => Album.fromStorage(Map<String, dynamic>.from(e as Map)))
+                  (e) => Album.fromJson(Map<String, dynamic>.from(e as Map)))
               .toList(),
           'tracks': (map['tracks'] as List)
               .map(
-                  (e) => Track.fromStorage(Map<String, dynamic>.from(e as Map)))
+                  (e) => Track.fromJson(Map<String, dynamic>.from(e as Map)))
               .toList(),
         };
     }

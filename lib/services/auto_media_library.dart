@@ -156,7 +156,7 @@ class AutoMediaLibrary implements MediaLibrarySource {
     if (queue is List && queue.isNotEmpty) {
       final i = (state!['currentIndex'] as int? ?? 0).clamp(0, queue.length - 1);
       try {
-        return Track.fromJson(Map<String, dynamic>.from(queue[i] as Map));
+        return Track.fromDeezer(Map<String, dynamic>.from(queue[i] as Map));
       } catch (_) {}
     }
     final recent = await _storage.getRecentTracks();

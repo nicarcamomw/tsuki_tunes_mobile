@@ -36,7 +36,7 @@ class PlayHistory extends ChangeNotifier {
       if (rawTracks != null) {
         final m = jsonDecode(rawTracks) as Map<String, dynamic>;
         m.forEach((id, json) {
-          _tracks[id] = Track.fromStorage(Map<String, dynamic>.from(json as Map));
+          _tracks[id] = Track.fromJson(Map<String, dynamic>.from(json as Map));
         });
       }
       if (rawLog != null) {
