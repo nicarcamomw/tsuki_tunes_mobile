@@ -76,6 +76,8 @@ Clean Architecture en tres capas. Las dependencias apuntan hacia adentro:
 
 **Deep links:** `tsukitunes://album/123`, `tsukitunes://artist/27`, `tsukitunes://playlist/<id>` y `tsukitunes://track/<id>` (reproduce la canción y muestra su álbum). Si la sesión no está lista, el enlace espera detrás del login o del tutorial y se abre después. Para probar en Android: `adb shell am start -a android.intent.action.VIEW -d "tsukitunes://album/302127"`.
 
+**Offline-first:** la biblioteca vive en SQLite (Drift, `lib/data/local/`) y es la fuente de verdad. Marcar canciones, seguir artistas y editar playlists se guarda en el teléfono al instante junto con una entrada en la outbox (`lib/data/sync/outbox.dart`), en la misma transacción. La outbox envía en orden a Firestore y reintenta con espera creciente hasta que llega; sobrevive al cierre de la app y reintenta apenas vuelve la conexión. Un rechazo definitivo del servidor deshace el cambio. Lo que llega de otros dispositivos se mezcla sin pisar lo pendiente. Las escrituras son idempotentes (Firestore también reintenta por su cuenta). Las migraciones del esquema se verifican con las fotos de cada versión (`drift_schemas/`, `test/drift/`): al cambiar una tabla, subir `schemaVersion` y correr `dart run drift_dev make-migrations`.
+
 `test/architecture_test.dart` hace cumplir la regla: el dominio no importa Flutter, Firebase, `data` ni `presentation`; `data` no importa `presentation`.
 
 Documentación detallada por versión en `Documentos/`.
