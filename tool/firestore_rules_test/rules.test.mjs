@@ -163,6 +163,64 @@ test('play log accepts back-to-back writes and rejects bad day ids', async () =>
   await assertFails(setDoc(doc(db, 'users/alice/playDays/hello'), day));
 });
 
+// --- Public profiles
+
+const profile = (overrides = {}) => ({
+  displayName: 'Alice',
+  photoUrl: 'https://x/a.jpg',
+  maskId: 'hannya',
+  public: true,
+  stats: { tracks: 120, albums: 4, artists: 30 },
+  topArtists: [{ name: 'SOAD', count: 40, pictureUrl: 'https://x/s.jpg' }],
+  updatedAt: serverTimestamp(),
+  ...overrides,
+});
+
+test('the owner publishes a valid profile', async () => {
+  await assertSucceeds(setDoc(doc(alice(), 'profiles/alice'), profile()));
+});
+
+test('a profile with anything else in it is rejected (nothing private leaks)', async () => {
+  const db = alice();
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ email: 'a@x.com' })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ stats: { tracks: 1, albums: 1, artists: 1, secret: 1 } })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ topArtists: [{ name: 'A', count: 1, uid: 'bob' }] })));
+});
+
+test('bad numbers, too many artists or a made-up time are rejected', async () => {
+  const db = alice();
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ stats: { tracks: -1, albums: 0, artists: 0 } })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ stats: { tracks: 1.5, albums: 0, artists: 0 } })));
+  const six = Array.from({ length: 6 }, (_, i) => ({ name: `A${i}`, count: 1 }));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ topArtists: six })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ updatedAt: Timestamp.fromMillis(0) })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ displayName: 'x'.repeat(61) })));
+});
+
+test('a public profile is readable by others, a private one only by its owner', async () => {
+  await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.now() });
+  await assertSucceeds(getDoc(doc(bob(), 'profiles/alice')));
+
+  await seed('profiles/alice', { ...profile({ public: false }), updatedAt: Timestamp.now() });
+  await assertFails(getDoc(doc(bob(), 'profiles/alice')));
+  await assertSucceeds(getDoc(doc(alice(), 'profiles/alice')));
+  await assertFails(getDoc(doc(bob(), 'profiles/nobody')));
+});
+
+test('nobody writes someone else\'s profile', async () => {
+  await assertFails(setDoc(doc(bob(), 'profiles/alice'), profile()));
+  await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.now() });
+  await assertFails(deleteDoc(doc(bob(), 'profiles/alice')));
+});
+
+test('profile updates are at least 10 seconds apart', async () => {
+  await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.now() });
+  await assertFails(setDoc(doc(alice(), 'profiles/alice'), profile({ public: false })));
+
+  await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.fromMillis(Date.now() - 11_000) });
+  await assertSucceeds(setDoc(doc(alice(), 'profiles/alice'), profile({ public: false })));
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   await env.clearFirestore();

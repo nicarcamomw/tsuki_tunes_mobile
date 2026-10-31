@@ -51,6 +51,8 @@ import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart'
     as _i802;
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart'
     as _i128;
+import 'package:tsuki_tunes_mobile/domain/repositories/profile_repository.dart'
+    as _i834;
 import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_album.dart'
     as _i741;
 import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_artist.dart'
@@ -114,6 +116,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i957.RainMixService>(() => dataModule.rainMix);
     gh.lazySingleton<_i642.ReleaseRadarService>(() => dataModule.releaseRadar);
     gh.lazySingleton<_i887.HomeWidgetService>(() => dataModule.homeWidget);
+    gh.lazySingleton<_i834.ProfileRepository>(
+      () => repositoryModule.profiles(gh<_i186.FirebaseService>()),
+    );
     gh.lazySingleton<_i448.LibraryStore>(
       () => dataModule.libraryStore(gh<_i169.AppDatabase>()),
     );

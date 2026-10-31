@@ -143,6 +143,53 @@ service cloud.firestore {
       }
     }
 
+    // A non-negative whole number up to max.
+    function count(v, max) {
+      return v is int && v >= 0 && v <= max;
+    }
+
+    function validTopArtist(a) {
+      return a is map
+          && a.keys().hasOnly(['name', 'count', 'pictureUrl'])
+          && a.name is string && a.name.size() > 0 && a.name.size() <= 200
+          && count(a.count, 1000000)
+          && shortString(a, 'pictureUrl', 2000);
+    }
+
+    // The public profile: exactly these fields, each checked, so nothing
+    // private can end up readable by others.
+    function validProfile(d) {
+      return d.keys().hasOnly(['displayName', 'photoUrl', 'maskId', 'public', 'stats', 'topArtists', 'updatedAt'])
+          && d.displayName is string && d.displayName.size() <= 60
+          && shortString(d, 'photoUrl', 2000)
+          && shortString(d, 'maskId', 40)
+          && d.public is bool
+          && d.stats is map
+          && d.stats.keys().hasOnly(['tracks', 'albums', 'artists'])
+          && count(d.stats.get('tracks', 0), 1000000)
+          && count(d.stats.get('albums', 0), 1000000)
+          && count(d.stats.get('artists', 0), 1000000)
+          && d.topArtists is list && d.topArtists.size() <= 5
+          && (d.topArtists.size() < 1 || validTopArtist(d.topArtists[0]))
+          && (d.topArtists.size() < 2 || validTopArtist(d.topArtists[1]))
+          && (d.topArtists.size() < 3 || validTopArtist(d.topArtists[2]))
+          && (d.topArtists.size() < 4 || validTopArtist(d.topArtists[3]))
+          && (d.topArtists.size() < 5 || validTopArtist(d.topArtists[4]))
+          && d.updatedAt == request.time;
+    }
+
+    // Public profiles: the owner writes theirs (at most every 10 seconds,
+    // to keep within the free quota); others read it only when public.
+    match /profiles/{userId} {
+      allow read: if isOwner(userId)
+          || (resource != null && resource.data.get('public', false) == true);
+      allow create: if isOwner(userId) && validProfile(request.resource.data);
+      allow update: if isOwner(userId)
+          && validProfile(request.resource.data)
+          && request.time > resource.data.updatedAt + duration.value(10, 's');
+      allow delete: if isOwner(userId);
+    }
+
     // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;
