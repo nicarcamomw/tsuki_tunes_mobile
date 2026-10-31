@@ -1372,11 +1372,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
     if (wasCurrent) {
       playTrack(_q.tracks[_q.currentIndex]);
-      _persistPlaybackState();
     } else {
       _queueChanged();
     }
-    _persistPlaybackState();
   }
   /// Clears the entire queue except for the currently playing track.
   void clearQueue() {
