@@ -144,7 +144,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final track = ref.watch(audioProvider.select((a) => a.currentTrack));
+    final track = ref.watch(currentTrackProvider);
     if (track == null) {
       return const Scaffold(backgroundColor: AppColors.bgDeep);
     }

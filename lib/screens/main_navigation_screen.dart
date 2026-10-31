@@ -116,7 +116,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError)));
     final syncError =
         ref.watch(libraryProvider.select((l) => l.lastSyncError));
-    final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));
+    final isOnline = ref.watch(isOnlineProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
 
@@ -351,7 +351,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               top: 0,
               child: Builder(
                 builder: (context) {
-                  final isOnline = ref.watch(connectivityProvider.select((c) => c.isOnline));
+                  final isOnline = ref.watch(isOnlineProvider);
                   return AnimatedSlide(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOutCubic,

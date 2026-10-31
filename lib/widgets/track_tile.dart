@@ -145,7 +145,7 @@ class TrackTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final (currentTrackId, isAudioPlaying) = ref.watch(audioProvider.select(
         (a) => (a.currentTrack?.id, a.isPlaying)));
-    final isListened = ref.watch(libraryProvider.select((l) => l.isTrackListened(track.id)));
+    final isListened = ref.watch(isTrackListenedProvider(track.id));
     final locale = ref.read(localeProvider);
     final isCurrent = currentTrackId == track.id;
     final isPlaying = isCurrent && isAudioPlaying;

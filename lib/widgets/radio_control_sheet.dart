@@ -105,7 +105,7 @@ class _RadioControlSheet extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final seed = ref.watch(audioProvider.select((a) => a.radioSeed));
-    final current = ref.watch(audioProvider.select((a) => a.currentTrack));
+    final current = ref.watch(currentTrackProvider);
 
     if (seed == null) {
       // Radio ended while the sheet was open.

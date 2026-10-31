@@ -398,7 +398,7 @@ class _MusicPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
-    final track = ref.watch(audioProvider.select((a) => a.currentTrack));
+    final track = ref.watch(currentTrackProvider);
     final target = run.target;
     final bpm = run.currentBpm;
     final rate = run.currentRate;

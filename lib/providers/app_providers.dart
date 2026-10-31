@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../core/localization/app_language.dart';
 import '../core/localization/app_strings.dart';
+import '../models/track.dart';
 import '../services/play_history.dart';
 import '../services/release_radar_service.dart';
 import '../services/storage_service.dart';
@@ -26,10 +27,8 @@ import 'weather_provider.dart';
 // The app's state, owned by Riverpod. Each provider builds its object once
 // and wires it to the others it needs, so a test can build the whole graph
 // (or override a piece) with a ProviderContainer, no widgets involved.
-//
-// While the screens move over, main.dart also hands these same instances to
-// the old `provider` tree, so context.watch<X>() and ref.watch(xProvider)
-// see the same object.
+// Widgets read them with ref.watch / ref.read, narrowing with .select so
+// they rebuild only when the value they show changes.
 //
 // The wiring listens to the ChangeNotifiers directly instead of ref.listen:
 // Riverpod pauses the subscriptions of providers nobody watches, and these
@@ -158,6 +157,22 @@ final runProvider = ChangeNotifierProvider<RunProvider>((ref) {
 final shakeSkipProvider = ChangeNotifierProvider<ShakeSkipProvider>((ref) {
   return ShakeSkipProvider()..attach(ref.read(audioProvider), ref.read(runProvider));
 });
+
+// --- Derived state: narrow views that notify only when their value changes.
+
+/// The song playing (or paused) now, null when nothing is loaded.
+final currentTrackProvider = Provider<Track?>(
+  (ref) => ref.watch(audioProvider.select((a) => a.currentTrack)),
+);
+
+final isOnlineProvider = Provider<bool>(
+  (ref) => ref.watch(connectivityProvider.select((c) => c.isOnline)),
+);
+
+/// Whether the song with this id is marked as listened in the library.
+final isTrackListenedProvider = Provider.autoDispose.family<bool, String>(
+  (ref, id) => ref.watch(libraryProvider.select((l) => l.isTrackListened(id))),
+);
 
 /// Calls [onChange] whenever [source] notifies (and right away unless [now]
 /// is false), until the provider holding [ref] is disposed.

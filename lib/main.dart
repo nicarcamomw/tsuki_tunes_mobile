@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerState, ConsumerStatefulWidget, ProviderContainer, UncontrolledProviderScope;
-import 'package:provider/provider.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
@@ -153,56 +152,36 @@ class TsukiTunesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = appContainer;
-    // Built now, like the old non-lazy providers: the player gets its links
-    // to the rest of the app, and shake-to-skip listens from launch.
+    // Built at launch, not on first use: the player gets its links to the
+    // rest of the app, and shake-to-skip listens from the start.
     c.read(playbackWiringProvider);
     c.read(shakeSkipProvider);
     return UncontrolledProviderScope(
       container: c,
-      // Screens not yet on Riverpod still read context.watch<X>(); they get
-      // the very same objects the Riverpod providers own.
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: c.read(connectivityProvider)),
-          ChangeNotifierProvider.value(value: c.read(authProvider)),
-          ChangeNotifierProvider.value(value: c.read(libraryProvider)),
-          ChangeNotifierProvider.value(value: c.read(playlistProvider)),
-          ChangeNotifierProvider.value(value: c.read(searchProvider)),
-          ChangeNotifierProvider.value(value: c.read(localeProvider)),
-          ChangeNotifierProvider.value(value: c.read(ambientProvider)),
-          ChangeNotifierProvider.value(value: c.read(maskProvider)),
-          ChangeNotifierProvider.value(value: c.read(moonProvider)),
-          ChangeNotifierProvider.value(value: c.read(playHistoryProvider)),
-          ChangeNotifierProvider.value(value: c.read(weatherProvider)),
-          ChangeNotifierProvider.value(value: c.read(audioProvider)),
-          ChangeNotifierProvider.value(value: c.read(runProvider)),
-          ChangeNotifierProvider.value(value: c.read(shakeSkipProvider)),
-        ],
-        child: MaterialApp(
-          navigatorKey: rootNavigatorKey,
-          title: 'Tsuki Tunes',
-          debugShowCheckedModeBanner: false,
-          theme: CyberTheme.darkTheme,
-          scrollBehavior: const _SmoothScrollBehavior(),
-          builder: (context, child) {
-            final mediaQuery = MediaQuery.of(context);
-            final clampedScaler = mediaQuery.textScaler.clamp(
-              minScaleFactor: 0.8,
-              maxScaleFactor: 2.0,
-            );
-            return MediaQuery(
-              data: mediaQuery.copyWith(textScaler: clampedScaler),
-              child: MaskUnlockLayer(
-                onOpenCollection: () {
-                  final nav = rootNavigatorKey.currentContext;
-                  if (nav != null) MaskCollectionScreen.open(nav);
-                },
-                child: MoonAtmosphere(child: child!),
-              ),
-            );
-          },
-          home: const _AuthGate(),
-        ),
+      child: MaterialApp(
+        navigatorKey: rootNavigatorKey,
+        title: 'Tsuki Tunes',
+        debugShowCheckedModeBanner: false,
+        theme: CyberTheme.darkTheme,
+        scrollBehavior: const _SmoothScrollBehavior(),
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          final clampedScaler = mediaQuery.textScaler.clamp(
+            minScaleFactor: 0.8,
+            maxScaleFactor: 2.0,
+          );
+          return MediaQuery(
+            data: mediaQuery.copyWith(textScaler: clampedScaler),
+            child: MaskUnlockLayer(
+              onOpenCollection: () {
+                final nav = rootNavigatorKey.currentContext;
+                if (nav != null) MaskCollectionScreen.open(nav);
+              },
+              child: MoonAtmosphere(child: child!),
+            ),
+          );
+        },
+        home: const _AuthGate(),
       ),
     );
   }

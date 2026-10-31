@@ -57,7 +57,7 @@ Sin `android/key.properties`, el build de release se firma con la clave debug. P
 
 | Capa | Dónde | Qué hace |
 |---|---|---|
-| Providers | `lib/providers/` | Estado con `provider`: audio y cola (`AudioProvider`), biblioteca y sincronización (`LibraryProvider`), playlists, búsqueda, auth, idioma, conectividad |
+| Providers | `lib/providers/` | Estado con Riverpod (`app_providers.dart` crea y conecta todo, con providers derivados como `currentTrackProvider`): audio y cola (`AudioProvider`), biblioteca y sincronización (`LibraryProvider`), playlists, búsqueda, auth, idioma, conectividad |
 | Servicios | `lib/services/` | Deezer API (con caché y deduplicación), Spotify (PKCE + Web API + SDK nativo), Firebase, Last.fm, letras, precarga de previews |
 | Modelos | `lib/models/` | `Track`, `Album`, `Artist`, `Playlist` |
 | Pantallas | `lib/screens/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido |
