@@ -15,6 +15,7 @@ import '../../domain/entities/lyrics_search_result.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/search_provider.dart';
+import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
@@ -139,7 +140,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       return;
     }
     unawaited(HapticFeedback.mediumImpact());
-    await audio.playTrack(search.tracks.first, newQueue: search.tracks);
+    await ref.read(playTracksProvider)(search.tracks);
   }
 
   @override

@@ -16,6 +16,7 @@ import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import 'artist_detail_screen.dart';
 import 'main_navigation_screen.dart';
 
@@ -331,7 +332,6 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   Future<void> _listen(_GraphNode node) async {
     if (_startingPlayback) return;
     unawaited(HapticFeedback.lightImpact());
-    final audio = ref.read(audioProvider);
     final messenger = ScaffoldMessenger.of(context);
     final strings = ref.read(stringsProvider);
     setState(() => _startingPlayback = true);
@@ -349,7 +349,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         ));
         return;
       }
-      await audio.playTrack(tracks.first, newQueue: tracks);
+      await ref.read(playTracksProvider)(tracks);
     } finally {
       if (mounted) setState(() => _startingPlayback = false);
     }

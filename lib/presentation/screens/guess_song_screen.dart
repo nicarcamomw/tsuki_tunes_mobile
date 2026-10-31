@@ -16,6 +16,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 
 class GuessSongScreen extends ConsumerStatefulWidget {
   const GuessSongScreen({super.key});
@@ -597,7 +598,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final target = _target;
     if (target == null) return;
     _stopClip();
-    ref.read(audioProvider).playTrack(target, newQueue: [target]);
+    ref.read(playTrackProvider)(target, queue: [target]);
   }
 
   // ── UI ──

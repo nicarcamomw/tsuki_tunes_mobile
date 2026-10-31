@@ -380,8 +380,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     onPressed: () {
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
-                        final audio = ref.read(audioProvider);
-                        audio.playTrack(allTracks.first, newQueue: allTracks);
+                        ref.read(playTracksProvider)(allTracks);
                       }
                     },
                     icon: Icon(Icons.play_arrow, color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
@@ -406,9 +405,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     onPressed: () {
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
-                        final shuffled = List<Track>.from(allTracks)..shuffle();
-                        final audio = ref.read(audioProvider);
-                        audio.playTrack(shuffled.first, newQueue: shuffled);
+                        ref.read(playTracksProvider)(allTracks, shuffled: true);
                       }
                     },
                     icon: Icon(Icons.shuffle, color: AppColors.accent, size: 18, semanticLabel: strings.a11yShuffleAll),
@@ -911,7 +908,6 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
   @override
   Widget build(BuildContext context) {
-    final audio = ref.read(audioProvider);
     final currentTrackId =
         ref.watch(audioProvider.select((a) => a.currentTrack?.id));
     final locale = ref.read(localeProvider);
@@ -1072,7 +1068,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   final track = queue.firstWhere(
                       (t) => t.id == trackData.trackId,
                       orElse: () => queue.first);
-                  audio.playTrack(track, newQueue: queue);
+                  ref.read(playTrackProvider)(track, queue: queue);
                 },
                 onLongPress: () {
                   HapticFeedback.mediumImpact();

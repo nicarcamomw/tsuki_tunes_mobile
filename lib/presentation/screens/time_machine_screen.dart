@@ -15,6 +15,7 @@ import '../../data/datasources/time_machine_service.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import '../widgets/glass_card.dart';
 import 'main_navigation_screen.dart';
 
@@ -101,7 +102,6 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _starting = true);
     final strings = ref.read(stringsProvider);
-    final audio = ref.read(audioProvider);
 
     // History may lack a preview URL (older entries): fetch those fresh.
     final api = DeezerApiService();
@@ -118,7 +118,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
       _snack(strings.timeMachinePlayFailed);
       return;
     }
-    unawaited(audio.playTrack(playable.first, newQueue: playable));
+    unawaited(ref.read(playTracksProvider)(playable));
     _snack(strings.timeMachinePlaying);
   }
 

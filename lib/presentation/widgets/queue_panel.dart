@@ -12,6 +12,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import 'flow_sheet.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
@@ -95,7 +96,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
 
   void _play(Track track) {
     HapticFeedback.selectionClick();
-    _audio.playTrack(track);
+    ref.read(playTrackProvider)(track);
     widget.onPlay?.call();
   }
 

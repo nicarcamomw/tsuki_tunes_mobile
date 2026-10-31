@@ -138,7 +138,7 @@ class TrackTile extends ConsumerWidget {
 
   void _addToQueue(BuildContext context) {
     HapticFeedback.mediumImpact();
-    context.readState(audioProvider).addToQueue(track);
+    context.readState(addToQueueProvider)(track);
     showTrackSnack(context, context.readState(stringsProvider).addedToQueue);
   }
 
@@ -163,7 +163,7 @@ class TrackTile extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           FocusScope.of(context).unfocus();
-          ref.read(audioProvider).playTrack(track, newQueue: queue);
+          ref.read(playTrackProvider)(track, queue: queue);
         },
         onLongPress: () {
           HapticFeedback.mediumImpact();
@@ -557,7 +557,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.a11yPlayNext,
               onTap: () {
                 Navigator.pop(ctx);
-                context.readState(audioProvider).playNext(track);
+                context.readState(playNextProvider)(track);
                 showConfirmation(strings.addedPlayNext);
               },
             ),
@@ -567,7 +567,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.a11yAddToQueue,
               onTap: () {
                 Navigator.pop(ctx);
-                context.readState(audioProvider).addToQueue(track);
+                context.readState(addToQueueProvider)(track);
                 showConfirmation(strings.addedToQueue);
               },
             ),

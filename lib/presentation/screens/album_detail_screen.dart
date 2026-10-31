@@ -443,7 +443,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       if (tracks.isNotEmpty)
                         OutlinedButton.icon(
                           onPressed: () {
-                            audio.playTrack(tracks.first, newQueue: tracks);
+                            ref.read(playTracksProvider)(tracks);
                           },
                           icon: Icon(Icons.play_arrow,
                               color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),

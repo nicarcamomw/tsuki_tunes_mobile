@@ -13,6 +13,7 @@ import '../../domain/logic/song_radio.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import 'swipeable_sheet.dart';
 
 /// Starts a song radio and tells the user how it went.
@@ -22,10 +23,9 @@ Future<void> startRadioWithFeedback(
   double bottomMargin = 12,
 }) async {
   unawaited(HapticFeedback.mediumImpact());
-  final audio = context.readState(audioProvider);
   final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
-  final ok = await audio.startRadio(track);
+  final ok = await context.readState(startRadioProvider)(track);
   _snack(
     messenger,
     locale,

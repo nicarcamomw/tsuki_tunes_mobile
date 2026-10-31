@@ -12,6 +12,7 @@ import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
+import '../state/use_cases.dart';
 import '../widgets/track_tile.dart';
 
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
@@ -291,9 +292,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          final audio = ref.read(audioProvider);
-                          audio.playTrack(playlist.tracks.first,
-                              newQueue: playlist.tracks);
+                          ref.read(playTracksProvider)(playlist.tracks);
                         },
                         icon: const Icon(Icons.play_arrow,
                             color: AppColors.accent, size: 18),
@@ -318,11 +317,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          final shuffled =
-                              List.of(playlist.tracks)..shuffle();
-                          final audio = ref.read(audioProvider);
-                          audio.playTrack(shuffled.first,
-                              newQueue: shuffled);
+                          ref.read(playTracksProvider)(playlist.tracks, shuffled: true);
                         },
                         icon: const Icon(Icons.shuffle,
                             color: AppColors.accent, size: 18),

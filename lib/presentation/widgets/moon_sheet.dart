@@ -12,6 +12,7 @@ import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/moon_provider.dart';
+import '../state/use_cases.dart';
 import 'cyber_glitch_text.dart';
 import 'moon_glyph.dart';
 import 'swipeable_sheet.dart';
@@ -559,7 +560,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      ref.read(audioProvider).playTrack(mix.first, newQueue: mix);
+                      ref.read(playTracksProvider)(mix);
                       Navigator.of(context).pop();
                     },
                     icon: const Icon(Icons.play_arrow_rounded, size: 18),
