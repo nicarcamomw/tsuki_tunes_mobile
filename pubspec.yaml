@@ -72,6 +72,9 @@ dependencies:
   get_it: ^9.3.0
   injectable: ^3.0.0
   go_router: ^18.1.2
+  drift: ^2.35.3
+  drift_flutter: ^0.3.1
+  collection: ^1.19.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -88,6 +91,7 @@ dev_dependencies:
   # 3.1.3 needs an analyzer older than the one freezed uses.
   injectable_generator: ">=3.1.1 <3.1.3"
   go_router_builder: ^4.5.3
+  drift_dev: ^2.35.2
 
 flutter:
   uses-material-design: true
