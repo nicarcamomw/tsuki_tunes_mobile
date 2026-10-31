@@ -6,23 +6,17 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderContainer, UncontrolledProviderScope;
 import 'package:provider/provider.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
-import 'providers/ambient_provider.dart';
+import 'providers/app_providers.dart';
 import 'providers/audio_provider.dart';
 import 'providers/auth_provider.dart';
-import 'providers/connectivity_provider.dart';
 import 'providers/library_provider.dart';
-import 'providers/locale_provider.dart';
-import 'providers/mask_provider.dart';
-import 'providers/moon_provider.dart';
 import 'providers/playlist_provider.dart';
-import 'providers/run_provider.dart';
-import 'providers/search_provider.dart';
-import 'providers/shake_skip_provider.dart';
-import 'providers/weather_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/mask_collection_screen.dart';
@@ -32,10 +26,8 @@ import 'services/deezer_disk_cache.dart';
 import 'services/firebase_service.dart';
 import 'services/home_widget_service.dart';
 import 'services/media_session_handler.dart';
-import 'services/play_history.dart';
 import 'services/release_radar_service.dart';
 import 'services/storage_service.dart';
-import 'services/tile_channel_service.dart';
 import 'widgets/mask_unlock_banner.dart';
 import 'widgets/moon_atmosphere.dart';
 
@@ -69,8 +61,13 @@ void main() async {
   _deferredInit();
 }
 
-/// The app's one player; the widget tree gets it through its provider.
-final AudioProvider _audio = AudioProvider();
+/// The app's state (see providers/app_providers.dart). Created before
+/// runApp so the player exists even when Android Auto starts the app with
+/// no screen and no widget tree.
+final appContainer = ProviderContainer();
+
+/// The app's one player.
+AudioProvider get _audio => appContainer.read(audioProvider);
 
 /// Minimal pre-frame Firebase init: just Firebase.initializeApp() so
 /// AuthProvider (which calls FirebaseService().initialize()) can proceed.
@@ -158,117 +155,57 @@ class TsukiTunesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) {
-          final library = LibraryProvider();
-          library.addListener(() {
-            ReleaseRadarService().watchArtists(library.followedArtists);
-          });
-          return library;
-        }),
-        ChangeNotifierProvider(create: (_) => PlaylistProvider()),
-        ChangeNotifierProvider(create: (_) => SearchProvider()),
-        ChangeNotifierProvider(
-          create: (_) => LocaleProvider(storage: StorageService()),
-        ),
-        ChangeNotifierProvider(
-          create: (ctx) => AmbientProvider(
-            labelFor: (sound) => ctx.read<LocaleProvider>().strings.ambientName(sound),
-          ),
-        ),
-        ChangeNotifierProxyProvider<AuthProvider, MaskProvider>(
-          create: (_) => MaskProvider(),
-          update: (_, auth, masks) =>
-              masks!..setUser(auth.isAuthenticated ? auth.uid : null),
-        ),
-        ChangeNotifierProvider(
-          create: (ctx) => MoonProvider()
-            ..onEclipseSeen = () => ctx.read<MaskProvider>().onEclipseSeen(),
-        ),
-        ChangeNotifierProvider(create: (_) => PlayHistory()..load()),
-        ChangeNotifierProvider(create: (_) => WeatherProvider()),
-        ChangeNotifierProxyProvider5<LibraryProvider, ConnectivityProvider, AmbientProvider,
-            PlayHistory, MaskProvider, AudioProvider>(
-          create: (_) => _audio,
-          update: (ctx, library, connectivity, ambient, history, masks, audio) {
-            final player = audio ?? AudioProvider();
-            player.setConnectivityProvider(connectivity);
-            final playlists = ctx.read<PlaylistProvider>();
-            // Smart shuffle only recommends songs the user doesn't have.
-            player.isInLibrary = (id) =>
-                library.isTrackListened(id) ||
-                library.isFavoriteTrack(id) ||
-                playlists.playlists.any((p) => p.tracks.any((t) => t.id == id));
-            player.onPlayCounted = (track) {
-              history.record(track);
-              masks.onPlayCounted(track);
-              library.recordPlay(track);
-            };
-            player.onTrackCompleted = masks.onTrackCompleted;
-            player.onSleepTimerFinished = ambient.onSleepTimerFinished;
-            player.onAmbientPlay = ambient.resumeAll;
-            player.onAmbientPause = ambient.pauseAll;
-            player.onAmbientStop = ambient.stopAll;
-            ambient.onMediaStateChanged = player.setAmbientMediaState;
-            masks.isMusicPlaying = () => player.isPlaying;
-            masks.isRainPlaying = () =>
-                ambient.isPlaying &&
-                (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
-            if (library.listenedTracksLoaded && !masks.artistsSeeded) {
-              masks.seedKnownArtists([
-                ...library.listenedTracks.map((t) => t.artistName),
-                ...library.favoriteArtists.map((a) => a.name),
-              ]);
-            }
-            player.onTrackStarted = (track) {
-              library.addRecentTrack(track);
-              masks.onTrackStarted(track);
-            };
-            player.onListenedThreshold = (track) {
-              if (!library.isTrackListened(track.id)) library.markTrack(track);
-            };
-            if (audio != null) TileChannelService.init(audio);
-            return player;
+    final c = appContainer;
+    // Built now, like the old non-lazy providers: the player gets its links
+    // to the rest of the app, and shake-to-skip listens from launch.
+    c.read(playbackWiringProvider);
+    c.read(shakeSkipProvider);
+    return UncontrolledProviderScope(
+      container: c,
+      // Screens not yet on Riverpod still read context.watch<X>(); they get
+      // the very same objects the Riverpod providers own.
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: c.read(connectivityProvider)),
+          ChangeNotifierProvider.value(value: c.read(authProvider)),
+          ChangeNotifierProvider.value(value: c.read(libraryProvider)),
+          ChangeNotifierProvider.value(value: c.read(playlistProvider)),
+          ChangeNotifierProvider.value(value: c.read(searchProvider)),
+          ChangeNotifierProvider.value(value: c.read(localeProvider)),
+          ChangeNotifierProvider.value(value: c.read(ambientProvider)),
+          ChangeNotifierProvider.value(value: c.read(maskProvider)),
+          ChangeNotifierProvider.value(value: c.read(moonProvider)),
+          ChangeNotifierProvider.value(value: c.read(playHistoryProvider)),
+          ChangeNotifierProvider.value(value: c.read(weatherProvider)),
+          ChangeNotifierProvider.value(value: c.read(audioProvider)),
+          ChangeNotifierProvider.value(value: c.read(runProvider)),
+          ChangeNotifierProvider.value(value: c.read(shakeSkipProvider)),
+        ],
+        child: MaterialApp(
+          navigatorKey: rootNavigatorKey,
+          title: 'Tsuki Tunes',
+          debugShowCheckedModeBanner: false,
+          theme: CyberTheme.darkTheme,
+          scrollBehavior: const _SmoothScrollBehavior(),
+          builder: (context, child) {
+            final mediaQuery = MediaQuery.of(context);
+            final clampedScaler = mediaQuery.textScaler.clamp(
+              minScaleFactor: 0.8,
+              maxScaleFactor: 2.0,
+            );
+            return MediaQuery(
+              data: mediaQuery.copyWith(textScaler: clampedScaler),
+              child: MaskUnlockLayer(
+                onOpenCollection: () {
+                  final nav = rootNavigatorKey.currentContext;
+                  if (nav != null) MaskCollectionScreen.open(nav);
+                },
+                child: MoonAtmosphere(child: child!),
+              ),
+            );
           },
+          home: const _AuthGate(),
         ),
-        ChangeNotifierProxyProvider2<AudioProvider, LibraryProvider, RunProvider>(
-          create: (_) => RunProvider(),
-          update: (_, audio, library, run) => run!..attach(audio, library),
-        ),
-        ChangeNotifierProxyProvider2<AudioProvider, RunProvider, ShakeSkipProvider>(
-          // Not lazy: it has to listen from launch once switched on.
-          lazy: false,
-          create: (_) => ShakeSkipProvider(),
-          update: (_, audio, run, shake) => shake!..attach(audio, run),
-        ),
-      ],
-      child: MaterialApp(
-        navigatorKey: rootNavigatorKey,
-        title: 'Tsuki Tunes',
-        debugShowCheckedModeBanner: false,
-        theme: CyberTheme.darkTheme,
-        scrollBehavior: const _SmoothScrollBehavior(),
-        builder: (context, child) {
-          final mediaQuery = MediaQuery.of(context);
-          final clampedScaler = mediaQuery.textScaler.clamp(
-            minScaleFactor: 0.8,
-            maxScaleFactor: 2.0,
-          );
-          return MediaQuery(
-            data: mediaQuery.copyWith(textScaler: clampedScaler),
-            child: MaskUnlockLayer(
-              onOpenCollection: () {
-                final nav = rootNavigatorKey.currentContext;
-                if (nav != null) MaskCollectionScreen.open(nav);
-              },
-              child: MoonAtmosphere(child: child!),
-            ),
-          );
-        },
-        home: const _AuthGate(),
       ),
     );
   }
@@ -279,9 +216,7 @@ class _SmoothScrollBehavior extends ScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const BouncingScrollPhysics(
-      decelerationRate: ScrollDecelerationRate.fast,
-    );
+    return const BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.fast);
   }
 }
 
@@ -367,9 +302,6 @@ class _CyberLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF181B22),
-    );
+    return const Scaffold(backgroundColor: Color(0xFF181B22));
   }
 }
-
