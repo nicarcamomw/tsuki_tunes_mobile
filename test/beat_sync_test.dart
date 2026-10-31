@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/services/beat_clock.dart';
-import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
-import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
-import 'package:tsuki_tunes_mobile/widgets/rinnegan_visualizer.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/beat_clock.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/bpm_flow.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/rinnegan_visualizer.dart';
 import 'helpers/test_scope.dart';
 
 Duration _s(double s) => Duration(microseconds: (s * 1e6).round());

@@ -6,10 +6,10 @@ targets:
     builders:
       freezed:
         generate_for:
-          - lib/models/**
+          - lib/domain/entities/**
       json_serializable:
         generate_for:
-          - lib/models/**
+          - lib/domain/entities/**
         options:
           # Nested models stored as maps (Firestore can't store objects).
           explicit_to_json: true

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/services/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/services/ambient_sound_generator.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/ambient_sound_generator.dart';
 
 void main() {
   group('AmbientSoundGenerator', () {

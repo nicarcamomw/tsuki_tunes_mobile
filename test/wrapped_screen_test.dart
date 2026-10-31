@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/wrapped_data.dart';
-import 'package:tsuki_tunes_mobile/screens/wrapped_screen.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/wrapped_data.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/wrapped_screen.dart';
 import 'helpers/test_scope.dart';
 
 WrappedData _data({int? month}) => WrappedData(

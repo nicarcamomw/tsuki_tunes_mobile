@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/playlist_provider.dart';
-import 'package:tsuki_tunes_mobile/services/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 import 'helpers/fake_firebase_service.dart';
 

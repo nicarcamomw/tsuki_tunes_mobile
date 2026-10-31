@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
 
 /// Deezer answer with [count] related artists for [artistId], plus the
 /// artist itself, which must be filtered out.

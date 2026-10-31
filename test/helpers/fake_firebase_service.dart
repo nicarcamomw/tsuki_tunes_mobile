@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:tsuki_tunes_mobile/services/firebase_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/firebase_service.dart';
 
 /// FirebaseService backed by an in-memory Firestore, always signed in.
 /// Several instances can share one [FakeFirebaseFirestore] to simulate

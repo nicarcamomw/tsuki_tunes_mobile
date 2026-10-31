@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
-import 'package:tsuki_tunes_mobile/providers/mask_provider.dart';
-import 'package:tsuki_tunes_mobile/screens/mask_collection_screen.dart';
-import 'package:tsuki_tunes_mobile/widgets/mask_unlock_banner.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/mask_unlock_banner.dart';
+
 import 'helpers/test_scope.dart';
 
 void main() {

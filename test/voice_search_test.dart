@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/services/voice_search_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/voice_search_service.dart';
 
 void main() {
   group('parseCommand', () {

@@ -1,4 +1,4 @@
-import '../../models/album.dart';
+import '../../domain/entities/album.dart';
 
 /// Pure categorization of an artist's albums into buckets.
 /// Extracted from the artist detail / discography screens so it can be tested

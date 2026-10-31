@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
-import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/mask_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/playlist_provider.dart';
-import 'package:tsuki_tunes_mobile/services/play_history.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/play_history.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/ambient_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 import 'helpers/fake_firebase_service.dart';
 

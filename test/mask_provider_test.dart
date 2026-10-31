@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/album.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/mask_provider.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 
 Track _t(String id, {String artist = 'Artist', String albumId = ''}) => Track(
       id: id,

@@ -1,10 +1,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/services/audio_player_service.dart';
-import 'package:tsuki_tunes_mobile/services/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
 
 class FakeAudioPlayerService extends AudioPlayerService {
   Track? lastPlayedTrack;

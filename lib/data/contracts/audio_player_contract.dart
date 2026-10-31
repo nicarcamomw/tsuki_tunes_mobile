@@ -1,0 +1,20 @@
+import 'package:just_audio/just_audio.dart';
+import '../../domain/entities/track.dart';
+
+abstract class AudioPlayerContract {
+  Stream<Duration> get positionStream;
+  Stream<Duration?> get durationStream;
+  Stream<Duration> get bufferedPositionStream;
+  Stream<PlayerState> get playerStateStream;
+  Stream<bool> get playingStream;
+  Stream<PlaybackEvent> get playbackEventStream;
+
+  Future<void> playTrack(Track track, {Duration? initialPosition});
+  Future<void> crossfadeTo(Track nextTrack, int durationSeconds);
+  Future<void> resume();
+  Future<void> pause();
+  Future<void> stop();
+  Future<void> seek(Duration position);
+  Future<void> setVolume(double volume);
+  Future<void> dispose();
+}

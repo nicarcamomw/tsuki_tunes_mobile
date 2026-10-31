@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/services/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 
 void main() {
   group('AudioPrecacheService Tests', () {

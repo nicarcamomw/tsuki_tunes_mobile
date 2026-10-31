@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/ambient_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
-import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/screens/guess_song_screen.dart';
-import 'package:tsuki_tunes_mobile/widgets/ambient_mixer_sheet.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/guess_song_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/ambient_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/ambient_mixer_sheet.dart';
 
 import 'helpers/test_scope.dart';
 

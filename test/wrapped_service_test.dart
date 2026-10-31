@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/models/play_day.dart';
-import 'package:tsuki_tunes_mobile/models/wrapped_data.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/services/wrapped_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/wrapped_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/play_day.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/wrapped_data.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 PlayDayTrack _meta(String id, String artist, {int d = 200}) => PlayDayTrack(
       id: id,

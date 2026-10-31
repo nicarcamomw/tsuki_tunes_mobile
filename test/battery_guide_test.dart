@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/playback_error.dart';
-import 'package:tsuki_tunes_mobile/services/battery_guide.dart';
-import 'package:tsuki_tunes_mobile/widgets/battery_guide_sheet.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/battery_guide.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/playback_error.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/battery_guide_sheet.dart';
+
 import 'helpers/test_scope.dart';
 
 void main() {

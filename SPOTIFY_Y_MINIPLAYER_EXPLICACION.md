@@ -28,7 +28,7 @@ Este documento detalla en profundidad el funcionamiento interno, el flujo de dat
 
 ## 1. Visión General del Sistema de Audio Híbrido
 
-Tsuki Tunes utiliza una **arquitectura de doble motor de reproducción** administrada por el [`AudioProvider`](lib/providers/audio_provider.dart):
+Tsuki Tunes utiliza una **arquitectura de doble motor de reproducción** administrada por el [`AudioProvider`](lib/presentation/state/audio_provider.dart):
 
 ```
                        ┌────────────────────────────────────────┐
@@ -56,7 +56,7 @@ Tsuki Tunes utiliza una **arquitectura de doble motor de reproducción** adminis
 ## 2. Conexión con Spotify: ¿Cómo funciona?
 
 ### 2.1 Flujo de Autenticación (OAuth 2.0 PKCE)
-Ubicación: [`lib/services/spotify_service.dart`](lib/services/spotify_service.dart)
+Ubicación: [`lib/data/datasources/spotify_service.dart`](lib/data/datasources/spotify_service.dart)
 
 1. **Generación de Verificador y Challenge**:
    - Se genera un `code_verifier` criptográfico aleatorio y su respectivo `code_challenge` mediante hashing SHA-256 (`S256`).
@@ -88,7 +88,7 @@ Para controlar Spotify en Android, la app utiliza dos herramientas combinadas:
 ---
 
 ### 2.3 Resolución Predictiva de URIs
-Ubicación: [`AudioProvider._prefetchNextTrack()`](lib/providers/audio_provider.dart)
+Ubicación: [`AudioProvider._prefetchNextTrack()`](lib/presentation/state/audio_provider.dart)
 
 Para eliminar la espera cuando pasa a la siguiente canción:
 - Mientras la pista actual está sonando, el sistema toma la siguiente pista de la cola y consulta en segundo plano a la API de Spotify `track:NextTitle artist:NextArtist`.
@@ -158,7 +158,7 @@ Para que el usuario **nunca se quede con la app congelada o en silencio total**,
 
 ## 4. El Mini Player: Arquitectura y Funcionamiento
 
-Ubicación del código: [`lib/widgets/mini_player.dart`](lib/widgets/mini_player.dart)
+Ubicación del código: [`lib/presentation/widgets/mini_player.dart`](lib/presentation/widgets/mini_player.dart)
 
 El **Mini Player** es la barra flotante inferior que acompaña al usuario por toda la navegación (Home, Búsqueda, Biblioteca, Artista, Álbum).
 

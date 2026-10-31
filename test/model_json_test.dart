@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/models/album.dart';
-import 'package:tsuki_tunes_mobile/models/artist.dart';
-import 'package:tsuki_tunes_mobile/models/playlist.dart';
-import 'package:tsuki_tunes_mobile/models/radar_release.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/models/wrapped_data.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/playlist.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/radar_release.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/wrapped_data.dart';
 
 // The stored JSON of these models lives in SharedPreferences and, for
 // playlists, in Firestore: its shape must not change, and old or odd

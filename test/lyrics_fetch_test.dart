@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:tsuki_tunes_mobile/services/lyrics_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/lyrics_service.dart';
 
 http.Response _json(Object body, [int status = 200]) => http.Response.bytes(
     utf8.encode(jsonEncode(body)), status,

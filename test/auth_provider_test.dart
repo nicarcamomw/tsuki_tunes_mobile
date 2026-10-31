@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/auth_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/auth_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

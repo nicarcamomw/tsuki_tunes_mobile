@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
-import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/widgets/queue_panel.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/queue_panel.dart';
 
 import 'helpers/test_scope.dart';
 

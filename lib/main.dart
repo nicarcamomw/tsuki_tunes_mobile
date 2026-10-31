@@ -11,21 +11,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 
 import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
-import 'providers/app_providers.dart';
-import 'providers/audio_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/main_navigation_screen.dart';
-import 'screens/mask_collection_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'services/auto_media_library.dart';
-import 'services/deezer_disk_cache.dart';
-import 'services/firebase_service.dart';
-import 'services/home_widget_service.dart';
-import 'services/media_session_handler.dart';
-import 'services/release_radar_service.dart';
-import 'services/storage_service.dart';
-import 'widgets/mask_unlock_banner.dart';
-import 'widgets/moon_atmosphere.dart';
+import 'data/datasources/auto_media_library.dart';
+import 'data/datasources/deezer_disk_cache.dart';
+import 'data/datasources/firebase_service.dart';
+import 'data/datasources/home_widget_service.dart';
+import 'data/datasources/media_session_handler.dart';
+import 'data/datasources/release_radar_service.dart';
+import 'data/datasources/storage_service.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/main_navigation_screen.dart';
+import 'presentation/screens/mask_collection_screen.dart';
+import 'presentation/screens/onboarding_screen.dart';
+import 'presentation/state/app_providers.dart';
+import 'presentation/state/audio_provider.dart';
+import 'presentation/widgets/mask_unlock_banner.dart';
+import 'presentation/widgets/moon_atmosphere.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 

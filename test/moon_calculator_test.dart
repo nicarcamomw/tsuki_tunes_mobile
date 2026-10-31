@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/services/moon_calculator.dart';
-import 'package:tsuki_tunes_mobile/widgets/moon_glyph.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/moon_calculator.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/moon_glyph.dart';
 
 Matcher within(DateTime expected, Duration tolerance) => predicate<DateTime>(
       (t) => t.difference(expected).abs() <= tolerance,

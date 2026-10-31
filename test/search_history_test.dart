@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/search_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

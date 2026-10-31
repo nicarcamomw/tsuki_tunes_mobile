@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/core/constants/api_endpoints.dart';
-import 'package:tsuki_tunes_mobile/models/album.dart';
-import 'package:tsuki_tunes_mobile/models/artist_albums_page.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/artist_albums_page.dart';
 
 void main() {
   group('Artist Albums Pagination & Endpoints', () {

@@ -1,15 +1,15 @@
 import 'dart:math';
 import 'dart:ui' show Locale;
 
+import '../../data/datasources/battery_guide.dart';
+import '../../data/datasources/bpm_flow.dart';
+import '../../data/datasources/weather_service.dart';
+import '../../domain/entities/oni_mask.dart';
+import '../../domain/entities/weekly_challenge.dart';
+import '../../domain/logic/ambient_sound_generator.dart';
+import '../../domain/logic/cadence_detector.dart';
+import '../../domain/logic/moon_calculator.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../models/oni_mask.dart';
-import '../../models/weekly_challenge.dart';
-import '../../services/ambient_sound_generator.dart';
-import '../../services/battery_guide.dart';
-import '../../services/bpm_flow.dart';
-import '../../services/cadence_detector.dart';
-import '../../services/moon_calculator.dart';
-import '../../services/weather_service.dart';
 import 'app_language.dart';
 
 class AppStrings {

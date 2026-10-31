@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/core/utils/album_categorizer.dart';
-import 'package:tsuki_tunes_mobile/models/album.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 
 Album _album(
   String id, {

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/providers/app_providers.dart';
-import 'package:tsuki_tunes_mobile/providers/audio_provider.dart';
-import 'package:tsuki_tunes_mobile/services/bpm_flow.dart';
-import 'package:tsuki_tunes_mobile/services/deezer_api_service.dart';
-import 'package:tsuki_tunes_mobile/services/playback_queue.dart';
-import 'package:tsuki_tunes_mobile/widgets/flow_sheet.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/bpm_flow.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/playback_queue.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/flow_sheet.dart';
 
 import 'helpers/test_scope.dart';
 

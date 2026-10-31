@@ -55,11 +55,17 @@ Sin `android/key.properties`, el build de release se firma con la clave debug. P
 
 ## Arquitectura
 
+Clean Architecture en tres capas. Las dependencias apuntan hacia adentro:
+`presentation` → `domain` ← `data`.
+
 | Capa | Dónde | Qué hace |
 |---|---|---|
-| Providers | `lib/providers/` | Estado con Riverpod (`app_providers.dart` crea y conecta todo, con providers derivados como `currentTrackProvider`): audio y cola (`AudioProvider`), biblioteca y sincronización (`LibraryProvider`), playlists, búsqueda, auth, idioma, conectividad |
-| Servicios | `lib/services/` | Deezer API (con caché y deduplicación), Spotify (PKCE + Web API + SDK nativo), Firebase, Last.fm, letras, precarga de previews |
-| Modelos | `lib/models/` | `Track`, `Album`, `Artist`, `Playlist` |
-| Pantallas | `lib/screens/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido |
+| Dominio | `lib/domain/entities/` | Modelos: `Track`, `Album`, `Artist`, `Playlist`, máscaras, Wrapped… |
+| | `lib/domain/logic/` | Lógica pura sin Flutter ni red: cola de reproducción, radio, fases lunares, juego de adivinar, ritmo al correr |
+| Datos | `lib/data/datasources/` | Deezer API (con caché y deduplicación), Spotify (PKCE + Web API + SDK nativo), Firebase, Last.fm, letras, almacenamiento, sensores |
+| | `lib/data/repositories/` | Canciones escuchadas, artistas seguidos y álbumes completados, con sincronización a Firestore |
+| | `lib/data/contracts/` | Interfaces de las fuentes de datos (API de música, almacenamiento, reproductor, Spotify) |
+| Presentación | `lib/presentation/state/` | Estado con Riverpod (`app_providers.dart` crea y conecta todo, con providers derivados como `currentTrackProvider`): audio y cola, biblioteca, playlists, búsqueda, auth, idioma |
+| | `lib/presentation/screens/`, `widgets/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido |
 
 Documentación detallada por versión en `Documentos/`.

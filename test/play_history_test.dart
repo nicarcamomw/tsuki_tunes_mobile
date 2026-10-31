@@ -1,8 +1,8 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/models/play_day.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/services/play_history_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/play_history_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/play_day.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 
 Track _t(String id, {int duration = 180}) => Track(
       id: id,

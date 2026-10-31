@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/services/spotify_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 
 class _TestableSpotifyService extends SpotifyService {
   List<Map<String, dynamic>> devicesToReturn = [];

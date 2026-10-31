@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/models/playlist.dart';
-import 'package:tsuki_tunes_mobile/models/track.dart';
-import 'package:tsuki_tunes_mobile/services/auto_media_library.dart';
-import 'package:tsuki_tunes_mobile/services/media_session_handler.dart';
-import 'package:tsuki_tunes_mobile/services/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/auto_media_library.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/media_session_handler.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/playlist.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 
 Track _t(String id, {String title = 'Song'}) => Track(
       id: id,

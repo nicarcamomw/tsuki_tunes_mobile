@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/services/translation_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/translation_service.dart';
 
 void main() {
   group('TranslationService cache logic', () {

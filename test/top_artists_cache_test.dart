@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
 
 ListenedTrackData _t(String id, String artist) => ListenedTrackData(
       trackId: id,

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/providers/library_provider.dart';
-import 'package:tsuki_tunes_mobile/providers/playlist_provider.dart';
-import 'package:tsuki_tunes_mobile/services/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/library_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/playlist_provider.dart';
 
 Map<String, dynamic> _t(String id) => {'id': id, 'title': 'Track $id'};
 List<String> _ids(List<Map<String, dynamic>> tracks) =>
