@@ -173,9 +173,15 @@ class ListenedTracksRepository {
       ..register(unmarkKind, _sendUnmarks, onRefused: _unmarksRefused);
   }
 
-  // The mirror of the database the screens read.
+  // The mirror of the database the screens read. Changes from the server
+  // are applied to it one song at a time (a full re-read of a library of
+  // thousands, on every confirmation while songs play, froze the screen),
+  // so it also knows which songs have a change of this device's still on
+  // its way up, the ones a server copy must not override.
   List<ListenedTrackData> _tracks = [];
   Set<String> _ids = {};
+  final Set<String> _pendingMarks = {};
+  final Set<String> _pendingUnmarks = {};
   bool _loaded = false;
   String? _uid;
 
@@ -238,12 +244,55 @@ class ListenedTracksRepository {
     return _uniqueArtistsCount;
   }
 
-  /// Reads the mirror back from the database.
+  /// Reads the mirror back from the database: when opening the library,
+  /// after a full download and after undoing a refused change. A change
+  /// made here while it reads is kept (it reads again).
   Future<void> _reload(String uid) async {
-    final rows = await _store.loadListened(uid);
-    if (_uid != uid) return;
-    _tracks = rows.map(ListenedTrackData.fromJson).toList();
-    _ids = _tracks.map((t) => t.trackId).toSet();
+    while (true) {
+      final version = _localVersion;
+      final rows = await _store.loadListened(uid);
+      final pending = await _store.pendingListenedIds(uid);
+      if (_uid != uid) return;
+      if (version != _localVersion) continue;
+      _tracks = rows.map(ListenedTrackData.fromJson).toList();
+      _ids = _tracks.map((t) => t.trackId).toSet();
+      _pendingMarks
+        ..clear()
+        ..addAll(pending.marks);
+      _pendingUnmarks
+        ..clear()
+        ..addAll(pending.unmarks);
+      _albums.prune();
+      _changed();
+      return;
+    }
+  }
+
+  /// Bumped by every change made here, so a read that started before one
+  /// doesn't replace the mirror with a list missing it.
+  int _localVersion = 0;
+
+  /// Applies the server's changes to the mirror, one song at a time,
+  /// leaving alone the songs with a change of this device on its way up.
+  void _applyRemote({List<ListenedTrackData> upserts = const [], List<String> removedIds = const []}) {
+    var changed = false;
+    for (final data in upserts) {
+      if (_pendingUnmarks.contains(data.trackId)) continue;
+      final idx = _tracks.indexWhere((t) => t.trackId == data.trackId);
+      if (idx != -1) {
+        _tracks[idx] = data;
+      } else {
+        _tracks.insert(0, data);
+        _ids.add(data.trackId);
+      }
+      changed = true;
+    }
+    for (final id in removedIds) {
+      if (_pendingMarks.contains(id) || !_ids.remove(id)) continue;
+      _tracks.removeWhere((t) => t.trackId == id);
+      changed = true;
+    }
+    if (!changed) return;
     _albums.prune();
     _changed();
   }
@@ -333,7 +382,7 @@ class ListenedTracksRepository {
 
     _tracksSubscription = deltaQuery.snapshots().listen((snapshot) async {
       if (!isCurrent()) return;
-      final upserts = <Map<String, dynamic>>[];
+      final upserts = <ListenedTrackData>[];
       final removed = <String>[];
       for (final change in snapshot.docChanges) {
         // This device's own write, not on the server yet: the database
@@ -345,14 +394,14 @@ class ListenedTracksRepository {
         if (change.type == DocumentChangeType.removed) {
           removed.add(data.trackId);
         } else {
-          upserts.add(data.toJson());
+          upserts.add(data);
         }
       }
       if (upserts.isEmpty && removed.isEmpty) return;
-      await _store.applyRemoteListened(uid, upserts: upserts, removedIds: removed);
-      if (!isCurrent()) return;
+      // The screens at once, the database in the background (same rules).
       _loaded = true;
-      await _reload(uid);
+      _applyRemote(upserts: upserts, removedIds: removed);
+      await _store.applyRemoteListened(uid, upserts: [for (final d in upserts) d.toJson()], removedIds: removed);
     }, onError: (e) {
       debugPrint('[Listened] delta listener error: $e');
     });
@@ -375,8 +424,15 @@ class ListenedTracksRepository {
         deletions[change.doc.id] = rawDeletedAt.toDate();
       }
       if (deletions.isEmpty) return;
+      var changed = false;
+      deletions.forEach((id, at) {
+        if (!_pendingMarks.contains(id) && _removeIfNotNewer(id, at)) changed = true;
+      });
+      if (changed) {
+        _albums.prune();
+        _changed();
+      }
       await _store.applyRemoteDeletions(uid, deletions);
-      if (isCurrent()) await _reload(uid);
     }, onError: (e) {
       debugPrint('[Listened] deletion log listener error: $e');
     });
@@ -391,6 +447,8 @@ class ListenedTracksRepository {
     _uid = null;
     _tracks = [];
     _ids = {};
+    _pendingMarks.clear();
+    _pendingUnmarks.clear();
     _loaded = false;
     _lastSyncError = null;
     _outbox.stop();
@@ -410,15 +468,21 @@ class ListenedTracksRepository {
   /// Applies an unmark made on another device. A track re-marked after the
   /// deletion (newer listenedAt) is kept. Returns whether anything changed.
   bool applyRemoteDeletion(String trackId, DateTime deletedAt) {
+    if (_pendingMarks.contains(trackId) || !_removeIfNotNewer(trackId, deletedAt)) return false;
+    invalidate();
+    final uid = _uid;
+    if (uid != null) unawaited(_store.applyRemoteDeletions(uid, {trackId: deletedAt}));
+    return true;
+  }
+
+  /// Drops [trackId] from the mirror unless it was marked after [deletedAt].
+  bool _removeIfNotNewer(String trackId, DateTime deletedAt) {
     final idx = _tracks.indexWhere((t) => t.trackId == trackId);
     if (idx == -1) return false;
     final listenedAt = _tracks[idx].listenedAt;
     if (listenedAt != null && listenedAt.isAfter(deletedAt)) return false;
     _tracks.removeAt(idx);
     _ids.remove(trackId);
-    invalidate();
-    final uid = _uid;
-    if (uid != null) unawaited(_store.applyRemoteDeletions(uid, {trackId: deletedAt}));
     return true;
   }
 
@@ -487,8 +551,13 @@ class ListenedTracksRepository {
     _uid = uid;
 
     final data = toMark.map(ListenedTrackData.fromTrack).toList();
+    _localVersion++;
     _tracks.addAll(data);
     _ids.addAll(toMark.map((t) => t.id));
+    for (final t in toMark) {
+      _pendingUnmarks.remove(t.id);
+      _pendingMarks.add(t.id);
+    }
     if (toMark.length > 1 || (toMark.first.albumId.isNotEmpty && _albums.hasTrackCount(toMark.first.albumId))) {
       _albums.prune(forceSave: true);
     }
@@ -513,8 +582,11 @@ class ListenedTracksRepository {
     _uid = uid;
 
     final gone = toUnmark.toSet();
+    _localVersion++;
     _tracks.removeWhere((t) => gone.contains(t.trackId));
     _ids.removeAll(gone);
+    _pendingMarks.removeAll(gone);
+    _pendingUnmarks.addAll(gone);
     _albums.prune();
     _lastSyncError = null;
     _changed();
@@ -558,6 +630,7 @@ class ListenedTracksRepository {
       });
     }
     await _store.confirmListenedUpserts(uid, ids);
+    if (_uid == uid) _pendingMarks.removeAll(ids);
   }
 
   /// Outbox: one batch of unmarks to Firestore, with the deletion log.
@@ -586,6 +659,7 @@ class ListenedTracksRepository {
       });
     });
     await _store.confirmListenedDeletes(uid, ids);
+    if (_uid == uid) _pendingUnmarks.removeAll(ids);
   }
 
   void _marksRefused(OutboxEntry entry, Object error) {

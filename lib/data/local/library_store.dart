@@ -143,6 +143,12 @@ class LibraryStore {
         _listened.remove(uid);
       });
 
+  /// The songs with a mark or an unmark still on its way to the server.
+  Future<({Set<String> marks, Set<String> unmarks})> pendingListenedIds(String uid) => _queued(() async => (
+        marks: await _idsInState(uid, SyncState.pendingUpsert),
+        unmarks: await _idsInState(uid, SyncState.pendingDelete),
+      ));
+
   /// The visible songs among [ids], as the server should get them.
   Future<List<Map<String, dynamic>>> listenedByIds(String uid, List<String> ids) => _queued(() async {
         final out = <Map<String, dynamic>>[];

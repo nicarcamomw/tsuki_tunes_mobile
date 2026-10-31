@@ -374,19 +374,24 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     }
   }
 
+  // The syncing flag only tells when it turns on or off, and without
+  // dropping the derived caches (album counts, top artists): nothing in the
+  // library changed. Writes go out one after another in the background
+  // while songs play, so this matters.
   void _startSync() {
     _syncCount++;
+    if (_syncing) return;
     _syncing = true;
-    notifyListeners();
+    super.notifyListeners();
   }
 
   void _endSync() {
     _syncCount--;
-    if (_syncCount <= 0) {
-      _syncCount = 0;
-      _syncing = false;
-      notifyListeners();
-    }
+    if (_syncCount > 0) return;
+    _syncCount = 0;
+    if (!_syncing) return;
+    _syncing = false;
+    super.notifyListeners();
   }
 
   // --- Top Artists calculation (like web) ---
