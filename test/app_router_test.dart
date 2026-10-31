@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/app_router.dart';
+import 'package:tsuki_tunes_mobile/presentation/navigation/routes.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/session_gate.dart';
 
 String? go(SessionStatus status, String location, {bool guest = false}) =>
@@ -55,4 +56,14 @@ void main() {
       expect(go(SessionStatus.ready, '/loading'), '/');
     });
   });
+
+  test('typed routes build their locations', () {
+    expect(const HomeRoute().location, '/');
+    expect(const PlaylistRoute(id: 'p1').location, '/playlist/p1');
+    expect(const ReleaseRadarRoute().location, '/radar');
+    expect(const RunModeRoute().location, '/run');
+    expect(const WrappedRoute(year: 2026).location, '/wrapped/2026');
+    expect(const WrappedRoute(year: 2026, month: 3).location, '/wrapped/2026?month=3');
+  });
 }
+

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../screens/login_screen.dart';
-import '../screens/main_navigation_screen.dart';
-import '../screens/onboarding_screen.dart';
+import 'routes.dart';
 import 'session_gate.dart';
 
 /// The navigator above everything: login, onboarding, the main shell, and
@@ -50,31 +48,7 @@ GoRouter createAppRouter(SessionGate session) => GoRouter(
         state.uri,
         guest: session.isGuest,
       ),
-      routes: [
-        GoRoute(
-          path: AppPaths.loading,
-          pageBuilder: (_, state) => _fade(state, const _LoadingScreen()),
-        ),
-        GoRoute(
-          path: AppPaths.login,
-          pageBuilder: (_, state) => _fade(state, const LoginScreen()),
-        ),
-        GoRoute(
-          path: AppPaths.onboarding,
-          pageBuilder: (_, state) => _fade(state, const OnboardingScreen()),
-        ),
-        ShellRoute(
-          navigatorKey: appNavigatorKey,
-          observers: [shellNavigatorObserver],
-          pageBuilder: (_, state, child) => _fade(state, MainNavigationScreen(child: child)),
-          routes: [
-            GoRoute(
-              path: AppPaths.home,
-              builder: (_, __) => const MainTabsView(),
-            ),
-          ],
-        ),
-      ],
+      routes: $appRoutes,
     );
 
 const _gatePaths = {AppPaths.loading, AppPaths.login, AppPaths.onboarding};
@@ -104,18 +78,4 @@ String? sessionRedirect(SessionStatus status, Uri uri, {bool guest = false}) {
     SessionStatus.ready when _gatePaths.contains(path) => from ?? AppPaths.home,
     SessionStatus.ready => null,
   };
-}
-
-CustomTransitionPage<void> _fade(GoRouterState state, Widget child) => CustomTransitionPage(
-      key: state.pageKey,
-      child: child,
-      transitionDuration: const Duration(milliseconds: 350),
-      transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
-    );
-
-class _LoadingScreen extends StatelessWidget {
-  const _LoadingScreen();
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(backgroundColor: Color(0xFF181B22));
 }
