@@ -21,9 +21,11 @@ import '../../domain/usecases/playlists/rename_playlist.dart';
 import '../../domain/usecases/playlists/reorder_playlist.dart';
 import 'app_providers.dart';
 
-// The use cases, built on the repositories the app owns. Screens call
-// these (ref.read(xProvider)(args)) instead of the repositories, and tests
-// can override the repository underneath with a fake.
+// The use cases for the screens, which call them (ref.read(xProvider)(args))
+// instead of the repositories. They are built on the repositories in the
+// Riverpod scope: in the app those are get_it's own instances, so these are
+// the same use cases get_it hands out (code outside widgets, like Android
+// Auto, takes them from get_it); in a test, the fakes it overrides.
 //
 // `.notifier` hands over the repository without rebuilding the use case
 // every time the repository notifies.

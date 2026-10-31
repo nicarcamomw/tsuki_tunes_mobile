@@ -45,8 +45,15 @@ const _presentationToDataDebt = {
   'presentation/widgets/wrapped_picker_sheet.dart',
 };
 
-/// Packages the domain may use: annotations for the generated JSON code.
-const _domainPackages = {'freezed_annotation', 'json_annotation', 'meta', 'collection'};
+/// Packages the domain may use: annotations for the generated JSON and
+/// dependency injection code (plain Dart, no Flutter).
+const _domainPackages = {
+  'freezed_annotation',
+  'json_annotation',
+  'injectable',
+  'meta',
+  'collection',
+};
 
 final _import = RegExp(r"^(?:import|export)\s+'([^']+)'", multiLine: true);
 

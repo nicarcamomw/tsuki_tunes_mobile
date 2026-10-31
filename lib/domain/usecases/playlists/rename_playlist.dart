@@ -1,6 +1,9 @@
+import 'package:injectable/injectable.dart';
+
 import '../../repositories/playlist_repository.dart';
 
 /// Renames a playlist; a blank name leaves it as it was.
+@injectable
 class RenamePlaylist {
   const RenamePlaylist(this._playlists);
 

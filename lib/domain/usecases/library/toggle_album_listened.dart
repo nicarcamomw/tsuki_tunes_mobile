@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/album.dart';
 import '../../repositories/library_repository.dart';
 import 'mark_album.dart';
@@ -6,6 +8,7 @@ import 'unmark_album.dart';
 /// The album's "mark all" button: unmarks the album when every loaded song
 /// is listened, otherwise marks the rest. Returns whether it is all
 /// listened now.
+@injectable
 class ToggleAlbumListened {
   ToggleAlbumListened(LibraryRepository library)
       : _library = library,

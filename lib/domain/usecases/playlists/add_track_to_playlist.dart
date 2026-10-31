@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/playlist.dart';
 import '../../entities/track.dart';
 import '../../repositories/playlist_repository.dart';
@@ -16,6 +18,7 @@ enum AddToPlaylistResult {
 }
 
 /// Adds a song to the end of a playlist.
+@injectable
 class AddTrackToPlaylist {
   const AddTrackToPlaylist(this._playlists);
 

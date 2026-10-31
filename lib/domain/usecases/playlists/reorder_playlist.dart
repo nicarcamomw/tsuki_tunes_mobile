@@ -1,6 +1,9 @@
+import 'package:injectable/injectable.dart';
+
 import '../../repositories/playlist_repository.dart';
 
 /// Moves a song inside a playlist (edit mode's drag handle).
+@injectable
 class ReorderPlaylist {
   const ReorderPlaylist(this._playlists);
 

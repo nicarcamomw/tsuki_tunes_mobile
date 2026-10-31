@@ -1,8 +1,11 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/artist.dart';
 import '../../repositories/library_repository.dart';
 
 /// Follows an artist (their new releases reach the radar), or unfollows
 /// them if followed. Returns whether they are followed now.
+@injectable
 class ToggleFollowArtist {
   const ToggleFollowArtist(this._library);
 

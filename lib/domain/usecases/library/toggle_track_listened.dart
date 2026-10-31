@@ -1,8 +1,11 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/track.dart';
 import '../../repositories/library_repository.dart';
 
 /// The listened mark on a song row, mini player or player: marks it, or
 /// unmarks it if it was marked. Returns whether it is listened now.
+@injectable
 class ToggleTrackListened {
   const ToggleTrackListened(this._library);
 

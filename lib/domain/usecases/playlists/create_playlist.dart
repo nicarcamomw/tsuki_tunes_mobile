@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/playlist.dart';
 import '../../entities/track.dart';
 import '../../repositories/playlist_repository.dart';
@@ -6,6 +8,7 @@ import '../../repositories/playlist_repository.dart';
 /// queue or a mix). The name is trimmed; a blank one creates nothing.
 /// Songs go in with the playlist in a single write: adding them right
 /// after would hit the database's one-write-per-second limit.
+@injectable
 class CreatePlaylist {
   const CreatePlaylist(this._playlists);
 

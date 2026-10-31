@@ -46,6 +46,42 @@ import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart'
     as _i802;
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart'
     as _i128;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/mark_album.dart'
+    as _i401;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/mark_track_listened.dart'
+    as _i135;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_album_listened.dart'
+    as _i83;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_follow_artist.dart'
+    as _i6;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_track_listened.dart'
+    as _i42;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/unmark_album.dart'
+    as _i522;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/unmark_track_listened.dart'
+    as _i102;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/add_to_queue.dart'
+    as _i317;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_next.dart'
+    as _i740;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_track.dart'
+    as _i373;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_tracks.dart'
+    as _i639;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/start_radio.dart'
+    as _i1002;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/add_track_to_playlist.dart'
+    as _i883;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/create_playlist.dart'
+    as _i79;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/delete_playlist.dart'
+    as _i371;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/remove_track_from_playlist.dart'
+    as _i161;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/rename_playlist.dart'
+    as _i758;
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/reorder_playlist.dart'
+    as _i670;
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart'
     as _i1052;
 
@@ -93,12 +129,66 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1052.AudioProvider>(
       () => repositoryModule.player(gh<_i905.StorageService>()),
     );
+    gh.factory<_i883.AddTrackToPlaylist>(
+      () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i79.CreatePlaylist>(
+      () => _i79.CreatePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i371.DeletePlaylist>(
+      () => _i371.DeletePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i161.RemoveTrackFromPlaylist>(
+      () => _i161.RemoveTrackFromPlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i758.RenamePlaylist>(
+      () => _i758.RenamePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i670.ReorderPlaylist>(
+      () => _i670.ReorderPlaylist(gh<_i128.PlaylistRepository>()),
+    );
     gh.lazySingleton<_i409.LibraryRepository>(
       () =>
           repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
     );
     gh.lazySingleton<_i802.PlaybackController>(
       () => repositoryModule.playback(gh<_i1052.AudioProvider>()),
+    );
+    gh.factory<_i317.AddToQueue>(
+      () => _i317.AddToQueue(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i740.PlayNext>(
+      () => _i740.PlayNext(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i373.PlayTrack>(
+      () => _i373.PlayTrack(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i639.PlayTracks>(
+      () => _i639.PlayTracks(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i1002.StartRadio>(
+      () => _i1002.StartRadio(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i83.ToggleAlbumListened>(
+      () => _i83.ToggleAlbumListened(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i401.MarkAlbum>(
+      () => _i401.MarkAlbum(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i135.MarkTrackListened>(
+      () => _i135.MarkTrackListened(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i6.ToggleFollowArtist>(
+      () => _i6.ToggleFollowArtist(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i42.ToggleTrackListened>(
+      () => _i42.ToggleTrackListened(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i522.UnmarkAlbum>(
+      () => _i522.UnmarkAlbum(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i102.UnmarkTrackListened>(
+      () => _i102.UnmarkTrackListened(gh<_i409.LibraryRepository>()),
     );
     return this;
   }

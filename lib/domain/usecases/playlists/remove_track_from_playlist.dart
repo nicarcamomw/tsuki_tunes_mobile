@@ -1,8 +1,11 @@
+import 'package:injectable/injectable.dart';
+
 import '../../entities/track.dart';
 import '../../repositories/playlist_repository.dart';
 
 /// Takes a song out of a playlist. Returns the undo, which puts it back in
 /// the same place.
+@injectable
 class RemoveTrackFromPlaylist {
   const RemoveTrackFromPlaylist(this._playlists);
 

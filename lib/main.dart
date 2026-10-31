@@ -19,6 +19,7 @@ import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
+import 'domain/usecases/playback/play_track.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/main_navigation_screen.dart';
 import 'presentation/screens/mask_collection_screen.dart';
@@ -91,7 +92,7 @@ void _deferredInit() {
     if (handler != null) {
       _audio.attachDeferredMediaHandler(handler);
       handler.library = AutoMediaLibrary(
-        play: (track, queue) => _audio.playTrack(track, newQueue: queue),
+        play: (track, queue) => getIt<PlayTrack>()(track, queue: queue),
       );
     }
     unawaited(ReleaseRadarService().initForeground());

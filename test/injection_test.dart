@@ -11,6 +11,17 @@ import 'package:tsuki_tunes_mobile/di/injection.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/library_repository.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/library/mark_track_listened.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_album_listened.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_follow_artist.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/library/toggle_track_listened.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/add_to_queue.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_track.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_tracks.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/start_radio.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/add_track_to_playlist.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/create_playlist.dart';
+import 'package:tsuki_tunes_mobile/domain/usecases/playlists/remove_track_from_playlist.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
 
@@ -39,5 +50,24 @@ void main() {
     expect(container.read(libraryProvider), same(getIt<LibraryRepositoryImpl>()));
     expect(container.read(playlistProvider), same(getIt<PlaylistRepositoryImpl>()));
     expect(container.read(audioProvider), same(getIt<AudioProvider>()));
+  });
+
+  test('every use case resolves, on the same repositories', () {
+    final toggle = getIt<ToggleTrackListened>();
+    expect(toggle, isNot(same(getIt<ToggleTrackListened>())), reason: 'use cases are factories');
+    for (final get in <Object Function()>[
+      () => getIt<MarkTrackListened>(),
+      () => getIt<ToggleAlbumListened>(),
+      () => getIt<ToggleFollowArtist>(),
+      () => getIt<PlayTrack>(),
+      () => getIt<PlayTracks>(),
+      () => getIt<AddToQueue>(),
+      () => getIt<StartRadio>(),
+      () => getIt<CreatePlaylist>(),
+      () => getIt<AddTrackToPlaylist>(),
+      () => getIt<RemoveTrackFromPlaylist>(),
+    ]) {
+      expect(get(), isNotNull);
+    }
   });
 }

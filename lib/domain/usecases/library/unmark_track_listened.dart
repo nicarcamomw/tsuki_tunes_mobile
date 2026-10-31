@@ -1,6 +1,9 @@
+import 'package:injectable/injectable.dart';
+
 import '../../repositories/library_repository.dart';
 
 /// Takes a song off the listened list.
+@injectable
 class UnmarkTrackListened {
   const UnmarkTrackListened(this._library);
 
