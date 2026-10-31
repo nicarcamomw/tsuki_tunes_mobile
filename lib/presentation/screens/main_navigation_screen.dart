@@ -16,6 +16,7 @@ import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/playback_error_text.dart';
 import '../widgets/tap_scale.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';

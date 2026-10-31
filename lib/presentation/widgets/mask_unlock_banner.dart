@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'oni_mask_art.dart';
+import 'oni_mask_colors.dart';
 
 /// App-wide layer that announces newly unlocked masks, one at a time.
 class MaskUnlockLayer extends ConsumerWidget {

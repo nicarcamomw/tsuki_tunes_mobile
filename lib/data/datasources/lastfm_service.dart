@@ -1,13 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-class LastFmSimilarTrack {
-  final String artist;
-  final String title;
-  final double match;
-  const LastFmSimilarTrack(this.artist, this.title, this.match);
-}
+import '../../domain/entities/similar_track.dart';
 
 class LastFmService {
   static const String _apiKey = String.fromEnvironment('LASTFM_API_KEY');
@@ -15,7 +11,7 @@ class LastFmService {
   static bool get isConfigured => _apiKey.isNotEmpty;
 
   /// Songs Last.fm listeners play alongside this one, best match first.
-  static Future<List<LastFmSimilarTrack>> getSimilarTracks(
+  static Future<List<SimilarTrack>> getSimilarTracks(
     String artist,
     String title, {
     int limit = 60,
@@ -43,7 +39,7 @@ class LastFmService {
               t['name'] != null &&
               t['artist'] is Map &&
               t['artist']['name'] != null)
-            LastFmSimilarTrack(
+            SimilarTrack(
               t['artist']['name'].toString(),
               t['name'].toString(),
               double.tryParse('${t['match']}') ?? 0,

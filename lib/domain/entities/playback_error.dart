@@ -1,5 +1,3 @@
-import '../../core/localization/app_strings.dart';
-
 /// Why the current track could not play.
 enum PlaybackError {
   /// Deezer has no 30 s preview for this track.
@@ -12,15 +10,7 @@ enum PlaybackError {
   formatUnsupported,
 
   /// Anything else.
-  generic;
-
-  String message(AppStrings strings, {bool isOnline = true}) => switch (this) {
-        noPreview => strings.playbackNoPreview,
-        network =>
-          isOnline ? strings.playbackNetworkError : strings.offlineNoCache,
-        formatUnsupported => strings.playbackFormatUnsupported,
-        generic => strings.playbackError,
-      };
+  generic,
 }
 
 /// Why playback fell back from Spotify to the Deezer preview.
@@ -29,10 +19,5 @@ enum SpotifyFallbackReason {
   trackUnavailable,
 
   /// No Spotify device could be activated; the user should open the app.
-  openApp;
-
-  String message(AppStrings strings) => switch (this) {
-        trackUnavailable => strings.spotifyTrackUnavailablePreview,
-        openApp => strings.spotifyOpenAppPrompt,
-      };
+  openApp,
 }

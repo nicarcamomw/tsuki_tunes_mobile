@@ -3,17 +3,17 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../presentation/state/audio_provider.dart';
+import '../../domain/repositories/playback_controller.dart';
 import 'rain_mix_service.dart';
 
 class TileChannelService {
   static const _channel = MethodChannel('com.tsuki.tsuki_tunes_mobile/tile');
 
-  static AudioProvider? _audioProvider;
+  static PlaybackController? _player;
   static bool _initialized = false;
 
-  static void init(AudioProvider audioProvider) {
-    _audioProvider = audioProvider;
+  static void init(PlaybackController player) {
+    _player = player;
     if (_initialized || !Platform.isAndroid) return;
     _initialized = true;
     _channel.setMethodCallHandler(_handleCall);
@@ -27,7 +27,7 @@ class TileChannelService {
         await _playRainMix();
         return true;
       case 'isPlaying':
-        return _audioProvider?.isPlaying ?? false;
+        return _player?.isPlaying ?? false;
       default:
         throw PlatformException(
           code: 'UNSUPPORTED',
@@ -46,7 +46,7 @@ class TileChannelService {
   }
 
   static Future<void> _playRainMix() async {
-    final audio = _audioProvider;
+    final audio = _player;
     if (audio == null) return;
 
     try {

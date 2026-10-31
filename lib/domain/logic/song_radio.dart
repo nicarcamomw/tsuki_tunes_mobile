@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/lastfm_service.dart';
+import '../entities/similar_track.dart';
 import '../entities/track.dart';
 
 enum RadioMode { familiar, balanced, adventurous }
@@ -17,7 +16,7 @@ class RadioReason {
   const RadioReason(this.source, this.seedTitle, this.seedArtist);
 }
 
-typedef SimilarTracksFetcher = Future<List<LastFmSimilarTrack>> Function(
+typedef SimilarTracksFetcher = Future<List<SimilarTrack>> Function(
     String artist, String title);
 typedef ArtistRadioFetcher = Future<List<Track>> Function(String artistId);
 typedef TrackSearcher = Future<List<Track>> Function(String query);
@@ -34,7 +33,8 @@ class _Candidate {
 /// variety). It learns during the session: skipped artists fade out, songs
 /// heard through become new seeds, so the radio drifts the way you steer it.
 ///
-/// Pure logic with injectable sources, no Flutter dependency.
+/// Pure logic: the song sources are passed in, so it has no Flutter,
+/// network or Last.fm/Deezer dependency.
 class SongRadio {
   SongRadio({
     required this.seed,
@@ -45,10 +45,10 @@ class SongRadio {
     bool? useLastFm,
     Random? random,
   })  : _mode = mode,
-        _similar = similar ?? LastFmService.getSimilarTracks,
-        _artistRadio = artistRadio ?? DeezerApiService().getArtistRadio,
-        _search = search ?? _defaultSearch,
-        usesLastFm = useLastFm ?? LastFmService.isConfigured,
+        _similar = similar ?? _noSimilar,
+        _artistRadio = artistRadio ?? _noTracks,
+        _search = search ?? _noTracks,
+        usesLastFm = useLastFm ?? false,
         _rng = random ?? Random() {
     _seedArtistKey = artistKeyOf(seed);
     _markUsed(seed);
@@ -344,7 +344,7 @@ class SongRadio {
 
   Future<List<_Candidate>> _fromLastFm(Track from) async {
     if (!usesLastFm) return const [];
-    List<LastFmSimilarTrack> similar;
+    List<SimilarTrack> similar;
     try {
       similar = await _similar(primaryArtist(from), cleanTitle(from.title));
     } catch (_) {
@@ -369,8 +369,8 @@ class SongRadio {
 
   /// Familiar sticks to the closest matches; adventurous skips the obvious
   /// ones and digs deeper into the list.
-  List<LastFmSimilarTrack> _sampleSimilar(
-      List<LastFmSimilarTrack> list, int count) {
+  List<SimilarTrack> _sampleSimilar(
+      List<SimilarTrack> list, int count) {
     final (start, end) = switch (_mode) {
       RadioMode.familiar => (0, 20),
       RadioMode.balanced => (0, 40),
@@ -378,7 +378,7 @@ class SongRadio {
       RadioMode.adventurous => (list.length > 15 ? 5 : 0, 60),
     };
     final window = list.sublist(start, min(end, list.length));
-    final picks = <LastFmSimilarTrack>[];
+    final picks = <SimilarTrack>[];
     final weights = [
       for (final s in window)
         _mode == RadioMode.adventurous ? 0.4 + (1 - s.match) * 0.4 : 0.15 + s.match,
@@ -399,9 +399,9 @@ class SongRadio {
     return picks;
   }
 
-  Future<List<(LastFmSimilarTrack, Track)>> _resolveAll(
-      List<LastFmSimilarTrack> picks) async {
-    final out = <(LastFmSimilarTrack, Track)>[];
+  Future<List<(SimilarTrack, Track)>> _resolveAll(
+      List<SimilarTrack> picks) async {
+    final out = <(SimilarTrack, Track)>[];
     // Bounded concurrency keeps us under Deezer's 50 requests / 5 s.
     for (var i = 0; i < picks.length; i += 4) {
       final chunk = picks.sublist(i, min(i + 4, picks.length));
@@ -414,7 +414,7 @@ class SongRadio {
     return out;
   }
 
-  Future<Track?> _resolve(LastFmSimilarTrack s) async {
+  Future<Track?> _resolve(SimilarTrack s) async {
     final key = '${norm(s.artist)}|${norm(s.title)}';
     if (_resolveCache.containsKey(key)) return _resolveCache[key];
 
@@ -440,7 +440,7 @@ class SongRadio {
   static final RegExp _variant = RegExp(
       r'\b(live|en vivo|karaoke|instrumental|acoustic|acustic|remix|cover|tribute|8-bit|lullaby)\b');
 
-  Track? _bestMatch(List<Track> results, LastFmSimilarTrack s) {
+  Track? _bestMatch(List<Track> results, SimilarTrack s) {
     final wantArtist = norm(s.artist);
     final wantTitle = norm(s.title);
     final wantsVariant = _variant.hasMatch(s.title.toLowerCase());
@@ -544,13 +544,10 @@ class SongRadio {
   // Matching helpers
   // ---------------------------------------------------------------------------
 
-  static Future<List<Track>> _defaultSearch(String query) async {
-    try {
-      return await DeezerApiService().searchTracks(query, limit: 6);
-    } catch (_) {
-      return const [];
-    }
-  }
+  // Without sources the radio finds nothing; the app passes Last.fm and
+  // Deezer in (see AudioRadioController).
+  static Future<List<SimilarTrack>> _noSimilar(String artist, String title) async => const [];
+  static Future<List<Track>> _noTracks(String _) async => const [];
 
   static String primaryArtist(Track t) {
     if (t.contributors.isNotEmpty && t.contributors.first.name.isNotEmpty) {

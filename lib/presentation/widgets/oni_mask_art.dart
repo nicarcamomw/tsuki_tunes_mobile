@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/oni_mask.dart';
+import 'oni_mask_colors.dart';
 
 /// Renders a collectible mask: dyed art inside a rarity frame, or its
 /// locked silhouette (blurred and anonymous for secret masks).

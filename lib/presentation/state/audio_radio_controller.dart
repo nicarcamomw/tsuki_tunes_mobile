@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/lastfm_service.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart';
@@ -41,7 +43,22 @@ class AudioRadioController {
   /// Makes the radios (and smart shuffle's recommendations); tests swap
   /// it for fake song sources.
   static SongRadio Function(Track seed, RadioMode mode) radioFactory =
-      (seed, mode) => SongRadio(seed: seed, mode: mode);
+      (seed, mode) => SongRadio(
+            seed: seed,
+            mode: mode,
+            similar: LastFmService.getSimilarTracks,
+            artistRadio: DeezerApiService().getArtistRadio,
+            search: _searchCatalog,
+            useLastFm: LastFmService.isConfigured,
+          );
+
+  static Future<List<Track>> _searchCatalog(String query) async {
+    try {
+      return await DeezerApiService().searchTracks(query, limit: 6);
+    } catch (_) {
+      return const [];
+    }
+  }
 
   bool get isActive => radio != null;
   Track? get seed => radio?.seed;
@@ -55,7 +72,13 @@ class AudioRadioController {
       radio?.toJson(keepReasonsFor: trackIds);
 
   void restoreFrom(Map<String, dynamic> raw, List<Track> queue) {
-    final restored = SongRadio.fromJson(raw);
+    final restored = SongRadio.fromJson(
+      raw,
+      similar: LastFmService.getSimilarTracks,
+      artistRadio: DeezerApiService().getArtistRadio,
+      search: _searchCatalog,
+      useLastFm: LastFmService.isConfigured,
+    );
     if (restored != null) {
       restored.markQueued(queue);
       radio = restored;

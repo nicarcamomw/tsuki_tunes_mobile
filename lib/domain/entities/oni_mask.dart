@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import '../../core/localization/app_language.dart';
 
 enum MaskRarity { common, rare, epic, secret, legendary }
@@ -75,19 +73,12 @@ class OniMask {
   String name(AppLanguage l) => names[l] ?? names[AppLanguage.es]!;
   String description(AppLanguage l) => descriptions[l] ?? descriptions[AppLanguage.es]!;
 
-  Color get rarityColor => switch (rarity) {
-        MaskRarity.common => const Color(0xFFB8C0D0),
-        MaskRarity.rare => const Color(0xFF00E5FF),
-        MaskRarity.epic => const Color(0xFFB026FF),
-        MaskRarity.secret => const Color(0xFFFF2A4A),
-        MaskRarity.legendary => const Color(0xFFFFC94A),
-      };
 }
 
 /// Luminance-preserving tint: keeps the illustration's shading and detail,
-/// recolors it toward [color].
-List<double> maskDye(Color color, {double strength = 0.85, double gain = 1.25}) {
-  final r = color.r, g = color.g, b = color.b;
+/// recolors it toward [argb] (a 0xAARRGGBB color).
+List<double> maskDye(int argb, {double strength = 0.85, double gain = 1.25}) {
+  final r = ((argb >> 16) & 0xFF) / 255, g = ((argb >> 8) & 0xFF) / 255, b = (argb & 0xFF) / 255;
   final keep = 1 - strength;
   List<double> row(double c, int channel) {
     final k = strength * c * gain;
@@ -169,7 +160,7 @@ class MaskCatalog {
       art: MaskArt.kabuki,
       rarity: MaskRarity.rare,
       goal: 100,
-      dye: maskDye(const Color(0xFFFF6B9D)),
+      dye: maskDye(0xFFFF6B9D),
       names: const {
         AppLanguage.es: 'Devoción',
         AppLanguage.en: 'Devotion',
@@ -187,7 +178,7 @@ class MaskCatalog {
       art: MaskArt.tengu,
       rarity: MaskRarity.rare,
       goal: 20,
-      dye: maskDye(const Color(0xFF2EE6A6)),
+      dye: maskDye(0xFF2EE6A6),
       names: const {
         AppLanguage.es: 'Viajero',
         AppLanguage.en: 'Wanderer',
@@ -204,7 +195,7 @@ class MaskCatalog {
       kanji: '完',
       art: MaskArt.hannya,
       rarity: MaskRarity.rare,
-      dye: maskDye(const Color(0xFFE6ECF5), strength: 0.9, gain: 1.45),
+      dye: maskDye(0xFFE6ECF5, strength: 0.9, gain: 1.45),
       names: const {
         AppLanguage.es: 'Álbum Perfecto',
         AppLanguage.en: 'Perfect Album',
@@ -222,7 +213,7 @@ class MaskCatalog {
       art: MaskArt.kabuki,
       rarity: MaskRarity.rare,
       goal: 10,
-      dye: maskDye(const Color(0xFF4FA8FF)),
+      dye: maskDye(0xFF4FA8FF),
       names: const {
         AppLanguage.es: 'Espíritu de la Lluvia',
         AppLanguage.en: 'Rain Spirit',
@@ -239,7 +230,7 @@ class MaskCatalog {
       kanji: '月',
       art: MaskArt.kabuki,
       rarity: MaskRarity.rare,
-      dye: maskDye(const Color(0xFFD6E0F5), strength: 0.7, gain: 1.35),
+      dye: maskDye(0xFFD6E0F5, strength: 0.7, gain: 1.35),
       names: const {
         AppLanguage.es: 'Luna Llena',
         AppLanguage.en: 'Full Moon',
@@ -257,7 +248,7 @@ class MaskCatalog {
       art: MaskArt.hannya,
       rarity: MaskRarity.rare,
       goal: 50,
-      dye: maskDye(const Color(0xFF7A5CFF)),
+      dye: maskDye(0xFF7A5CFF),
       names: const {
         AppLanguage.es: 'Criatura Nocturna',
         AppLanguage.en: 'Night Creature',
@@ -274,7 +265,7 @@ class MaskCatalog {
       kanji: '耳',
       art: MaskArt.tengu,
       rarity: MaskRarity.epic,
-      dye: maskDye(const Color(0xFFFFC94A), gain: 1.35),
+      dye: maskDye(0xFFFFC94A, gain: 1.35),
       names: const {
         AppLanguage.es: 'Oído Absoluto',
         AppLanguage.en: 'Perfect Pitch',
@@ -292,7 +283,7 @@ class MaskCatalog {
       art: MaskArt.tengu,
       rarity: MaskRarity.epic,
       goal: 14,
-      dye: maskDye(const Color(0xFFB026FF)),
+      dye: maskDye(0xFFB026FF),
       names: const {
         AppLanguage.es: 'Racha Imparable',
         AppLanguage.en: 'Unstoppable Streak',
@@ -328,7 +319,7 @@ class MaskCatalog {
       art: MaskArt.tengu,
       rarity: MaskRarity.secret,
       secret: true,
-      dye: maskDye(const Color(0xFFB0101E), strength: 0.75, gain: 1.4),
+      dye: maskDye(0xFFB0101E, strength: 0.75, gain: 1.4),
       names: const {
         AppLanguage.es: 'Luna de Sangre',
         AppLanguage.en: 'Blood Moon',
@@ -346,7 +337,7 @@ class MaskCatalog {
       art: MaskArt.hannya,
       rarity: MaskRarity.secret,
       secret: true,
-      dye: maskDye(const Color(0xFF9CFF3A)),
+      dye: maskDye(0xFF9CFF3A),
       names: const {
         AppLanguage.es: 'Obsesión',
         AppLanguage.en: 'Obsession',
@@ -381,7 +372,7 @@ class MaskCatalog {
       art: MaskArt.cyberOni,
       rarity: MaskRarity.legendary,
       secret: true,
-      dye: maskDye(const Color(0xFFFFB02E), strength: 0.55, gain: 1.3),
+      dye: maskDye(0xFFFFB02E, strength: 0.55, gain: 1.3),
       names: const {
         AppLanguage.es: 'El Oni',
         AppLanguage.en: 'The Oni',

@@ -61,11 +61,15 @@ Clean Architecture en tres capas. Las dependencias apuntan hacia adentro:
 | Capa | Dónde | Qué hace |
 |---|---|---|
 | Dominio | `lib/domain/entities/` | Modelos: `Track`, `Album`, `Artist`, `Playlist`, máscaras, Wrapped… |
+| | `lib/domain/repositories/` | Interfaces que el resto de la app usa: `LibraryRepository`, `PlaylistRepository`, `PlaybackController` |
+| | `lib/domain/usecases/` | Casos de uso: `PlayTrack`, `PlayTracks`, `MarkAlbum`, `ToggleTrackListened`, `ToggleFollowArtist`, `CreatePlaylist`, `AddTrackToPlaylist`… |
 | | `lib/domain/logic/` | Lógica pura sin Flutter ni red: cola de reproducción, radio, fases lunares, juego de adivinar, ritmo al correr |
 | Datos | `lib/data/datasources/` | Deezer API (con caché y deduplicación), Spotify (PKCE + Web API + SDK nativo), Firebase, Last.fm, letras, almacenamiento, sensores |
-| | `lib/data/repositories/` | Canciones escuchadas, artistas seguidos y álbumes completados, con sincronización a Firestore |
+| | `lib/data/repositories/` | Implementaciones de los repositorios (biblioteca y playlists), con caché local y sincronización a Firestore |
 | | `lib/data/contracts/` | Interfaces de las fuentes de datos (API de música, almacenamiento, reproductor, Spotify) |
 | Presentación | `lib/presentation/state/` | Estado con Riverpod (`app_providers.dart` crea y conecta todo, con providers derivados como `currentTrackProvider`): audio y cola, biblioteca, playlists, búsqueda, auth, idioma |
-| | `lib/presentation/screens/`, `widgets/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido |
+| | `lib/presentation/screens/`, `widgets/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido. Llaman a los casos de uso (`use_cases.dart`), no a los repositorios |
+
+`test/architecture_test.dart` hace cumplir la regla: el dominio no importa Flutter, Firebase, `data` ni `presentation`; `data` no importa `presentation`.
 
 Documentación detallada por versión en `Documentos/`.

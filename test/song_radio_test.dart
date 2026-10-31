@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/data/datasources/lastfm_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/similar_track.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_queue.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/song_radio.dart';
@@ -26,10 +26,10 @@ Future<List<Track>> _deezerRadio(String artistId) async => [
         for (var s = 0; s < 5; s++) _t('dz$a-$s', 'Song $a-$s', 'art$a', 'Artist $a'),
     ];
 
-Future<List<LastFmSimilarTrack>> _similar(String artist, String title) async => [
-      const LastFmSimilarTrack('Deftones', 'Change (In the House of Flies)', 0.9),
-      const LastFmSimilarTrack('Korn', 'Freak on a Leash', 0.8),
-      const LastFmSimilarTrack('System of a Down', 'Toxicity', 0.7), // the seed
+Future<List<SimilarTrack>> _similar(String artist, String title) async => [
+      const SimilarTrack('Deftones', 'Change (In the House of Flies)', 0.9),
+      const SimilarTrack('Korn', 'Freak on a Leash', 0.8),
+      const SimilarTrack('System of a Down', 'Toxicity', 0.7), // the seed
     ];
 
 Future<List<Track>> _search(String query) async {
