@@ -70,6 +70,8 @@ Clean Architecture en tres capas. Las dependencias apuntan hacia adentro:
 | Presentación | `lib/presentation/state/` | Estado con Riverpod (`app_providers.dart` crea y conecta todo, con providers derivados como `currentTrackProvider`): audio y cola, biblioteca, playlists, búsqueda, auth, idioma |
 | | `lib/presentation/screens/`, `widgets/` | Home, búsqueda, biblioteca, detalle de artista/álbum, reproductor expandido. Llaman a los casos de uso (`use_cases.dart`), no a los repositorios |
 
+**Inyección de dependencias:** get_it + injectable (`lib/di/`). get_it arma las capas `data` y `domain`: fuentes de datos, repositorios (registrados también bajo su interfaz del dominio) y casos de uso (`@injectable`). Riverpod queda para el estado de la UI y toma esas instancias desde get_it. Después de agregar o cambiar una anotación: `dart run build_runner build -d`. En los tests, cada test parte con un get_it limpio (`test/flutter_test_config.dart`) y `useFake<T>(...)` reemplaza una pieza por un falso.
+
 `test/architecture_test.dart` hace cumplir la regla: el dominio no importa Flutter, Firebase, `data` ni `presentation`; `data` no importa `presentation`.
 
 Documentación detallada por versión en `Documentos/`.
