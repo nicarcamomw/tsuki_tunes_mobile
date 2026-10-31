@@ -331,6 +331,7 @@
   "searchError": "Search failed. Check your connection.",
   "loadError": "Could not load data. Check your connection.",
   "retry": "RETRY",
+  "linkNotFound": "COULDN'T FIND THIS",
   "offline": "No internet connection",
   "playbackError": "Error playing this track",
   "playbackNoPreview": "Audio preview is unavailable for this track",

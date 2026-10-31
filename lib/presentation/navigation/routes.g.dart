@@ -103,6 +103,28 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
       factory: $HomeRoute._fromState,
       routes: [
         GoRouteData.$route(
+          path: 'album/:id',
+          hasOverriddenOnExit: false,
+          factory: $AlbumRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'artist/:id',
+          hasOverriddenOnExit: false,
+          factory: $ArtistRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'albums',
+              hasOverriddenOnExit: false,
+              factory: $ArtistDiscographyRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'rabbit-hole',
+              hasOverriddenOnExit: false,
+              factory: $RabbitHoleRoute._fromState,
+            ),
+          ],
+        ),
+        GoRouteData.$route(
           path: 'playlist/:id',
           hasOverriddenOnExit: false,
           factory: $PlaylistRoute._fromState,
@@ -173,6 +195,123 @@ mixin $HomeRoute on GoRouteData {
 
   @override
   void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $AlbumRoute on GoRouteData {
+  static AlbumRoute _fromState(GoRouterState state) => AlbumRoute(
+    id: state.pathParameters['id']!,
+    $extra: state.extra as Album?,
+  );
+
+  AlbumRoute get _self => this as AlbumRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/album/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
+}
+
+mixin $ArtistRoute on GoRouteData {
+  static ArtistRoute _fromState(GoRouterState state) => ArtistRoute(
+    id: state.pathParameters['id']!,
+    $extra: state.extra as Artist?,
+  );
+
+  ArtistRoute get _self => this as ArtistRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/artist/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
+}
+
+mixin $ArtistDiscographyRoute on GoRouteData {
+  static ArtistDiscographyRoute _fromState(GoRouterState state) =>
+      ArtistDiscographyRoute(
+        id: state.pathParameters['id']!,
+        filter: state.uri.queryParameters['filter'] ?? 'all',
+        $extra: state.extra as DiscographyArgs,
+      );
+
+  ArtistDiscographyRoute get _self => this as ArtistDiscographyRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/artist/${Uri.encodeComponent(_self.id)}/albums',
+    queryParams: {if (_self.filter != 'all') 'filter': _self.filter},
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
+}
+
+mixin $RabbitHoleRoute on GoRouteData {
+  static RabbitHoleRoute _fromState(GoRouterState state) => RabbitHoleRoute(
+    id: state.pathParameters['id']!,
+    $extra: state.extra as Artist?,
+  );
+
+  RabbitHoleRoute get _self => this as RabbitHoleRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/artist/${Uri.encodeComponent(_self.id)}/rabbit-hole',
+  );
+
+  @override
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
+
+  @override
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location, extra: _self.$extra);
+
+  @override
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 mixin $PlaylistRoute on GoRouteData {

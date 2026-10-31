@@ -944,6 +944,9 @@ class AppStrings {
 
   String get retry => _l.retry;
 
+  /// A link (or a page opened by id) whose album or artist doesn't exist.
+  String get linkNotFound => _l.linkNotFound;
+
   String get offline => _l.offline;
 
   String get playbackError => _l.playbackError;

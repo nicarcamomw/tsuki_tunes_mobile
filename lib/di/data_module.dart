@@ -11,6 +11,7 @@ import '../data/datasources/rain_mix_service.dart';
 import '../data/datasources/release_radar_service.dart';
 import '../data/datasources/storage_service.dart';
 import '../data/datasources/translation_service.dart';
+import '../domain/repositories/catalog_repository.dart';
 
 /// The data sources. Most are process-wide singletons already (their
 /// factory constructor returns one instance), so this hands that same
@@ -31,6 +32,9 @@ abstract class DataModule {
 
   @lazySingleton
   MusicApiContract musicApi(DeezerApiService deezer) => deezer;
+
+  @lazySingleton
+  CatalogRepository catalog(DeezerApiService deezer) => deezer;
 
   @lazySingleton
   LyricsService get lyrics => LyricsService();

@@ -331,6 +331,7 @@
   "searchError": "検索に失敗しました。接続を確認してください。",
   "loadError": "データを読み込めませんでした。接続を確認してください。",
   "retry": "再試行",
+  "linkNotFound": "見つかりませんでした",
   "offline": "インターネット接続なし",
   "playbackError": "この曲の再生に失敗しました",
   "playbackNoPreview": "この曲のプレビュー音源は利用できません",

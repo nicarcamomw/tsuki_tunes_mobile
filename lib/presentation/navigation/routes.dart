@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../domain/entities/album.dart';
+import '../../domain/entities/artist.dart';
+import '../screens/album_detail_screen.dart';
+import '../screens/artist_detail_screen.dart';
+import '../screens/artist_discography_screen.dart';
 import '../screens/guess_song_screen.dart';
 import '../screens/listening_clock_screen.dart';
 import '../screens/login_screen.dart';
@@ -8,10 +13,13 @@ import '../screens/main_navigation_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/playlist_detail_screen.dart';
+import '../screens/rabbit_hole_screen.dart';
 import '../screens/release_radar_screen.dart';
 import '../screens/run_mode_screen.dart';
 import '../screens/time_machine_screen.dart';
 import '../screens/wrapped_screen.dart';
+import '../state/use_cases.dart';
+import '../widgets/load_by_id.dart';
 import 'app_router.dart';
 
 part 'routes.g.dart';
@@ -58,6 +66,14 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
     TypedGoRoute<HomeRoute>(
       path: AppPaths.home,
       routes: [
+        TypedGoRoute<AlbumRoute>(path: 'album/:id'),
+        TypedGoRoute<ArtistRoute>(
+          path: 'artist/:id',
+          routes: [
+            TypedGoRoute<ArtistDiscographyRoute>(path: 'albums'),
+            TypedGoRoute<RabbitHoleRoute>(path: 'rabbit-hole'),
+          ],
+        ),
         TypedGoRoute<PlaylistRoute>(path: 'playlist/:id'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
@@ -87,6 +103,93 @@ class HomeRoute extends GoRouteData with $HomeRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) => const MainTabsView();
+}
+
+/// An album. [$extra] is the album when the caller has it (it opens at
+/// once); a link brings only the id, and it loads.
+class AlbumRoute extends GoRouteData with $AlbumRoute {
+  const AlbumRoute({required this.id, this.$extra});
+
+  final String id;
+  final Album? $extra;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        LoadById<Album>(
+          initial: $extra,
+          load: (ref) => ref.read(getAlbumProvider)(id),
+          builder: (album) => AlbumDetailScreen(album: album),
+        ),
+      );
+}
+
+/// An artist; like [AlbumRoute], loads when it only has the id.
+class ArtistRoute extends GoRouteData with $ArtistRoute {
+  const ArtistRoute({required this.id, this.$extra});
+
+  final String id;
+  final Artist? $extra;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        LoadById<Artist>(
+          initial: $extra,
+          load: (ref) => ref.read(getArtistProvider)(id),
+          builder: (artist) => ArtistDetailScreen(artist: artist),
+        ),
+      );
+}
+
+/// What the artist page already loaded, handed to the full discography.
+class DiscographyArgs {
+  const DiscographyArgs({required this.artistName, required this.albums, this.totalAlbums = 0});
+
+  final String artistName;
+  final List<Album> albums;
+  final int totalAlbums;
+}
+
+/// The artist's full discography, filtered by [filter] (all, album,
+/// single...). Opened from the artist page, which hands over the albums it
+/// has ([$extra]); it pops with the longer list it loaded.
+class ArtistDiscographyRoute extends GoRouteData with $ArtistDiscographyRoute {
+  const ArtistDiscographyRoute({required this.id, this.filter = 'all', required this.$extra});
+
+  final String id;
+  final String filter;
+  final DiscographyArgs $extra;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        ArtistDiscographyScreen(
+          artistId: id,
+          artistName: $extra.artistName,
+          albums: $extra.albums,
+          totalAlbums: $extra.totalAlbums,
+          initialFilter: filter,
+        ),
+      );
+}
+
+/// Rabbit hole: one related artist after another, starting from this one.
+class RabbitHoleRoute extends GoRouteData with $RabbitHoleRoute {
+  const RabbitHoleRoute({required this.id, this.$extra});
+
+  final String id;
+  final Artist? $extra;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        LoadById<Artist>(
+          initial: $extra,
+          load: (ref) => ref.read(getArtistProvider)(id),
+          builder: (artist) => RabbitHoleScreen(seedArtist: artist),
+        ),
+      );
 }
 
 class PlaylistRoute extends GoRouteData with $PlaylistRoute {

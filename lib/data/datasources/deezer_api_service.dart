@@ -9,6 +9,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/catalog_repository.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 
@@ -33,7 +34,7 @@ class TrackAudioInfo {
   const TrackAudioInfo({required this.bpm, this.gain});
 }
 
-class DeezerApiService implements MusicApiContract {
+class DeezerApiService implements MusicApiContract, CatalogRepository {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
   DeezerApiService._internal();

@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../di/injection.dart';
+import '../../domain/repositories/catalog_repository.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../../domain/repositories/playback_controller.dart';
 import '../../domain/repositories/playlist_repository.dart';
+import '../../domain/usecases/catalog/get_album.dart';
+import '../../domain/usecases/catalog/get_artist.dart';
+import '../../domain/usecases/catalog/get_track.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../../domain/usecases/library/toggle_album_listened.dart';
 import '../../domain/usecases/library/toggle_follow_artist.dart';
@@ -85,3 +90,13 @@ final deletePlaylistProvider =
 
 final reorderPlaylistProvider =
     Provider((ref) => ReorderPlaylist(ref.watch(playlistRepositoryProvider)));
+
+// --- Catalog
+
+final catalogRepositoryProvider = Provider<CatalogRepository>((ref) => getIt<CatalogRepository>());
+
+final getAlbumProvider = Provider((ref) => GetAlbum(ref.watch(catalogRepositoryProvider)));
+
+final getArtistProvider = Provider((ref) => GetArtist(ref.watch(catalogRepositoryProvider)));
+
+final getTrackProvider = Provider((ref) => GetTrack(ref.watch(catalogRepositoryProvider)));

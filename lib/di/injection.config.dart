@@ -40,12 +40,20 @@ import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.da
     as _i553;
 import 'package:tsuki_tunes_mobile/di/data_module.dart' as _i520;
 import 'package:tsuki_tunes_mobile/di/repository_module.dart' as _i53;
+import 'package:tsuki_tunes_mobile/domain/repositories/catalog_repository.dart'
+    as _i1049;
 import 'package:tsuki_tunes_mobile/domain/repositories/library_repository.dart'
     as _i409;
 import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart'
     as _i802;
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart'
     as _i128;
+import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_album.dart'
+    as _i741;
+import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_artist.dart'
+    as _i190;
+import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_track.dart'
+    as _i9;
 import 'package:tsuki_tunes_mobile/domain/usecases/library/mark_album.dart'
     as _i401;
 import 'package:tsuki_tunes_mobile/domain/usecases/library/mark_track_listened.dart'
@@ -118,6 +126,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i372.MusicApiContract>(
       () => dataModule.musicApi(gh<_i814.DeezerApiService>()),
     );
+    gh.lazySingleton<_i1049.CatalogRepository>(
+      () => dataModule.catalog(gh<_i814.DeezerApiService>()),
+    );
     gh.lazySingleton<_i128.PlaylistRepository>(
       () => repositoryModule.playlistRepository(
         gh<_i553.PlaylistRepositoryImpl>(),
@@ -128,6 +139,15 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i1052.AudioProvider>(
       () => repositoryModule.player(gh<_i905.StorageService>()),
+    );
+    gh.factory<_i741.GetAlbum>(
+      () => _i741.GetAlbum(gh<_i1049.CatalogRepository>()),
+    );
+    gh.factory<_i190.GetArtist>(
+      () => _i190.GetArtist(gh<_i1049.CatalogRepository>()),
+    );
+    gh.factory<_i9.GetTrack>(
+      () => _i9.GetTrack(gh<_i1049.CatalogRepository>()),
     );
     gh.factory<_i883.AddTrackToPlaylist>(
       () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),

@@ -548,6 +548,7 @@
   "searchError": "Error al buscar. Revisa tu conexión.",
   "loadError": "No se pudieron cargar los datos. Revisa tu conexión.",
   "retry": "REINTENTAR",
+  "linkNotFound": "NO ENCONTRAMOS ESTO",
   "offline": "Sin conexión a internet",
   "playbackError": "Error al reproducir esta pista",
   "playbackNoPreview": "Esta pista no tiene vista previa de audio disponible",
