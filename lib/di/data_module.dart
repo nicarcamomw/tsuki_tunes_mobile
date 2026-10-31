@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../data/contracts/music_api_contract.dart';
@@ -11,6 +12,8 @@ import '../data/datasources/rain_mix_service.dart';
 import '../data/datasources/release_radar_service.dart';
 import '../data/datasources/storage_service.dart';
 import '../data/datasources/translation_service.dart';
+import '../data/local/app_database.dart';
+import '../data/local/library_store.dart';
 import '../domain/repositories/catalog_repository.dart';
 
 /// The data sources. Most are process-wide singletons already (their
@@ -22,7 +25,16 @@ abstract class DataModule {
   FirebaseService get firebase => FirebaseService();
 
   @lazySingleton
-  StorageService get storage => StorageService();
+  AppDatabase get database => AppDatabase.open();
+
+  @lazySingleton
+  LibraryStore libraryStore(AppDatabase database) => LibraryStore(database);
+
+  /// On the web the library stays in SharedPreferences: SQLite there needs
+  /// extra wasm files the app doesn't ship.
+  @lazySingleton
+  StorageService storage(LibraryStore libraryStore) =>
+      StorageService(localStore: kIsWeb ? null : libraryStore);
 
   @lazySingleton
   StorageContract storageContract(StorageService storage) => storage;

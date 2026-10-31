@@ -9,8 +9,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../contracts/storage_contract.dart';
+import '../local/library_store.dart';
 
 class StorageService implements StorageContract {
+  /// [localStore] keeps the library (listened songs, playlists, followed
+  /// artists) in SQLite. Without it (web, tests) they stay in JSON files and
+  /// SharedPreferences, as before.
+  StorageService({LibraryStore? localStore}) : _local = localStore;
+
+  final LibraryStore? _local;
+
   static const String _favTracksKey = 'tsuki_favorite_tracks';
   static const String _recentTracksKey = 'tsuki_recent_tracks';
   static const String _favArtistsKey = 'tsuki_favorite_artists';
@@ -209,6 +217,34 @@ class StorageService implements StorageContract {
   @override
   Future<List<Map<String, dynamic>>> getCachedListenedTracks(String uid) async {
     if (uid.isEmpty) return [];
+    final local = _local;
+    if (local == null) return _legacyListened(uid);
+    try {
+      if (!await local.hasListened(uid)) await _moveListenedToDatabase(local, uid);
+      return await local.loadListened(uid);
+    } catch (e) {
+      debugPrint('[Storage] listened songs from the database failed: $e');
+      return _legacyListened(uid);
+    }
+  }
+
+  /// One-time move of the old JSON library (file, or SharedPreferences
+  /// before that) into the database. The old copy is deleted only once the
+  /// rows are written; if anything fails it stays, and is tried again.
+  Future<void> _moveListenedToDatabase(LibraryStore local, String uid) async {
+    final legacy = await _legacyListened(uid);
+    if (legacy.isEmpty) return;
+    await local.saveListened(uid, legacy);
+    try {
+      final file = await _listenedFile(uid);
+      if (file != null && await file.exists()) await file.delete();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_cachedTracksKey(uid));
+    } catch (_) {}
+  }
+
+  /// The library as the app kept it before the database.
+  Future<List<Map<String, dynamic>>> _legacyListened(String uid) async {
     // A save may still be encoding in the background: read what it writes.
     await _listenedWrites;
     try {
@@ -240,8 +276,21 @@ class StorageService implements StorageContract {
 
   @override
   Future<void> saveCachedListenedTracks(
-      String uid, List<Map<String, dynamic>> tracks) {
-    if (uid.isEmpty) return Future.value();
+      String uid, List<Map<String, dynamic>> tracks) async {
+    if (uid.isEmpty) return;
+    final local = _local;
+    if (local != null) {
+      try {
+        // Only the songs that changed are written.
+        return await local.saveListened(uid, tracks);
+      } catch (e) {
+        debugPrint('[Storage] listened songs to the database failed: $e');
+      }
+    }
+    return _saveLegacyListened(uid, tracks);
+  }
+
+  Future<void> _saveLegacyListened(String uid, List<Map<String, dynamic>> tracks) {
     final write = _listenedWrites.then((_) async {
       try {
         final raw = tracks.length > _isolateThreshold
