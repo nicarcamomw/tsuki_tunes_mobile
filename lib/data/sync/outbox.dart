@@ -52,12 +52,12 @@ typedef OutboxHandler = Future<void> Function(OutboxEntry entry);
 class Outbox {
   Outbox(
     this._db, {
-    required Map<String, OutboxHandler> handlers,
+    Map<String, OutboxHandler> handlers = const {},
     this.onPermanentFailure,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
     this.attemptTimeout = const Duration(seconds: 30),
-  })  : _handlers = handlers,
+  })  : _handlers = {...handlers},
         _backoff = backoff ?? defaultBackoff,
         _now = clock ?? DateTime.now;
 
@@ -72,6 +72,19 @@ class Outbox {
 
   /// The server refused [entry] for good.
   void Function(OutboxEntry entry, Object error)? onPermanentFailure;
+
+  final _refused = <String, void Function(OutboxEntry entry, Object error)>{};
+
+  /// Sends entries of [kind] through [handler]; [onRefused] undoes the
+  /// local change when the server refuses one for good.
+  void register(
+    String kind,
+    OutboxHandler handler, {
+    void Function(OutboxEntry entry, Object error)? onRefused,
+  }) {
+    _handlers[kind] = handler;
+    if (onRefused != null) _refused[kind] = onRefused;
+  }
 
   final _running = <String, Future<void>>{};
   final _timers = <String, Timer>{};
@@ -143,6 +156,7 @@ class Outbox {
       } on PermanentSyncError catch (e) {
         await (_db.delete(_db.outboxRows)..where((o) => o.id.equals(row.id))).go();
         debugPrint('[Outbox] ${row.kind} ${row.entityId} refused for good: ${e.reason}');
+        _refused[row.kind]?.call(entry, e);
         onPermanentFailure?.call(entry, e);
       } catch (e) {
         final attempts = row.attempts + 1;
@@ -162,6 +176,22 @@ class Outbox {
     _timers.remove(uid)?.cancel();
     final wait = at.difference(_now());
     _timers[uid] = Timer(wait.isNegative ? Duration.zero : wait, () => kick(uid));
+  }
+
+  /// Completes when [uid]'s run in progress (and any it queued) is over.
+  Future<void> idle(String uid) async {
+    while (true) {
+      final running = _running[uid];
+      if (running == null) return;
+      await running;
+    }
+  }
+
+  /// Sends [uid]'s writes now, skipping the wait (back online).
+  Future<void> retryNow(String uid) async {
+    await (_db.update(_db.outboxRows)..where((o) => o.uid.equals(uid)))
+        .write(OutboxRowsCompanion(nextAttemptAt: Value(_now())));
+    kick(uid);
   }
 
   /// How many writes of [uid] haven't reached the server, as it changes.

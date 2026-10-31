@@ -47,7 +47,7 @@ void main() {
       library.registerAlbumTrackCount('orphaned_album_2', 8);
 
       // Set active listened tracks containing only active_album
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         ListenedTrackData(
           trackId: 't1',
           title: 'Track 1',
@@ -92,7 +92,7 @@ void main() {
       final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         ListenedTrackData(
           trackId: 't2',
           title: 'Track 2',

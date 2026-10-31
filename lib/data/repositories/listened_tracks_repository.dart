@@ -2,12 +2,16 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/track.dart';
 import '../datasources/firebase_service.dart';
 import '../datasources/storage_service.dart';
 import '../datasources/sub_write_queue.dart';
+import '../local/library_store.dart';
+import '../sync/firestore_sync.dart';
+import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 
 class ListenedTrackData {
@@ -128,38 +132,56 @@ class ListenedTrackData {
 /// Marks and unmarks apply at once and are rolled back if Firestore rejects
 /// them. The local cache is only saved once Firestore confirmed, so a write
 /// that never lands can't leave a phantom track behind.
+/// The listened songs, offline-first. The phone's database is the truth:
+/// marking or unmarking writes it at once (with the outbox entry that will
+/// tell the server, in the same transaction), the screens read an
+/// in-memory mirror of it, and Firestore catches up through the outbox,
+/// retrying until it lands. What other devices change arrives through
+/// Firestore listeners and is merged into the database without undoing
+/// changes still on their way up.
 class ListenedTracksRepository {
   final FirebaseService _firebase;
   final StorageService _storage;
+  final LibraryStore _store;
+  final Outbox _outbox;
   final AlbumCompletionIndex _albums;
   final VoidCallback _onChanged;
 
   /// Runs a Firestore write while the library shows it is syncing.
   final Future<void> Function(Future<void> Function() write) _tracked;
 
+  static const markKind = 'listened.upsert';
+  static const unmarkKind = 'listened.delete';
+
   ListenedTracksRepository({
     required FirebaseService firebase,
     required StorageService storage,
+    required LibraryStore store,
+    required Outbox outbox,
     required AlbumCompletionIndex albums,
     required VoidCallback onChanged,
     required Future<void> Function(Future<void> Function() write) tracked,
   })  : _firebase = firebase,
         _storage = storage,
+        _store = store,
+        _outbox = outbox,
         _albums = albums,
         _onChanged = onChanged,
-        _tracked = tracked;
+        _tracked = tracked {
+    _outbox
+      ..register(markKind, _sendMarks, onRefused: _marksRefused)
+      ..register(unmarkKind, _sendUnmarks, onRefused: _unmarksRefused);
+  }
 
+  // The mirror of the database the screens read.
   List<ListenedTrackData> _tracks = [];
   Set<String> _ids = {};
   bool _loaded = false;
+  String? _uid;
 
-  /// True when in-memory state has changes not yet confirmed by Firestore.
-  /// The delta listener clears this and saves the cache once the server
-  /// confirms (hasPendingWrites == false).
-  bool _cacheDirty = false;
-
-  /// Last error from a mark/unmark Firestore write, cleared on success.
-  /// The UI can watch this to show a snackbar when a save fails.
+  /// Last time the server refused a mark or unmark for good (and undid it
+  /// here), until the next mark or unmark. The UI shows a snackbar for it;
+  /// a later batch landing doesn't hide it.
   String? _lastSyncError;
 
   StreamSubscription? _tracksSubscription;
@@ -172,20 +194,21 @@ class ListenedTracksRepository {
   static const Duration _fullSyncInterval = Duration(hours: 4);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
-  // Test hook, reached through LibraryRepositoryImpl.
-  Future<void> Function(List<ListenedTrackData> chunk, String uid)?
-      markChunkHandlerForTesting;
+  /// Firestore batch sizes: 450 sets (+ the stats) and 240 deletes (each
+  /// also writes the deletion log), under the 500-write limit.
+  static const _markBatch = 450;
+  static const _unmarkBatch = 240;
 
-  // Test hook, reached through LibraryRepositoryImpl.
-  Future<void> Function(List<String> chunkIds, String uid)?
-      unmarkChunkHandlerForTesting;
+  // Test hooks, reached through LibraryRepositoryImpl: they stand in for
+  // the Firestore write of a batch.
+  Future<void> Function(List<ListenedTrackData> chunk, String uid)? markChunkHandlerForTesting;
+  Future<void> Function(List<String> chunkIds, String uid)? unmarkChunkHandlerForTesting;
 
   // Read-only views, not copies: these are read on every rebuild and can hold
   // thousands of tracks. The same view is handed out until the tracks change,
   // so screens can skip work with identical(); every change replaces it.
   List<ListenedTrackData>? _tracksView;
-  List<ListenedTrackData> get tracks =>
-      _tracksView ??= UnmodifiableListView(_tracks);
+  List<ListenedTrackData> get tracks => _tracksView ??= UnmodifiableListView(_tracks);
   Set<String> get ids => UnmodifiableSetView(_ids);
   int get count => _ids.length;
   bool get loaded => _loaded;
@@ -215,9 +238,20 @@ class ListenedTracksRepository {
     return _uniqueArtistsCount;
   }
 
-  /// Restores the cache, fetches everything when the last full sync is old,
-  /// and listens for changes made elsewhere. Returns false when the user
-  /// changed meanwhile ([isCurrent] went false), so the caller stops too.
+  /// Reads the mirror back from the database.
+  Future<void> _reload(String uid) async {
+    final rows = await _store.loadListened(uid);
+    if (_uid != uid) return;
+    _tracks = rows.map(ListenedTrackData.fromJson).toList();
+    _ids = _tracks.map((t) => t.trackId).toSet();
+    _albums.prune();
+    _changed();
+  }
+
+  /// Opens the account's library from the database, sends what was left
+  /// pending last time, downloads everything when the last full sync is
+  /// old, and listens for changes made elsewhere. Returns false when the
+  /// user changed meanwhile ([isCurrent] went false), so the caller stops.
   Future<bool> connect(
     String uid,
     DocumentReference<Map<String, dynamic>> userDoc,
@@ -225,72 +259,65 @@ class ListenedTracksRepository {
   ) async {
     unawaited(_tracksSubscription?.cancel());
     unawaited(_deletionsSubscription?.cancel());
-
+    _uid = uid;
     final tracksCol = userDoc.collection('listenedTracks');
 
-    // 1. Instant local cache restore (0ms cold start — tracks never disappear)
+    // 1. The database, at once (the old JSON library moves in first).
     try {
-      final cached = await _storage.getCachedListenedTracks(uid);
-      if (cached.isNotEmpty && isCurrent()) {
-        _tracks = cached.map((e) => ListenedTrackData.fromJson(e)).toList();
-        _ids = _tracks.map((t) => t.trackId).toSet();
-        _loaded = true;
-        _albums.prune();
-        _changed();
+      if (!await _store.hasListened(uid)) {
+        final legacy = await _storage.getCachedListenedTracks(uid);
+        if (legacy.isNotEmpty && !await _store.hasListened(uid)) {
+          await _store.saveListened(uid, legacy);
+        }
       }
+      if (!isCurrent()) return false;
+      await _reload(uid);
+      if (_tracks.isNotEmpty) _loaded = true;
     } catch (e) {
-      debugPrint('[LibraryRepositoryImpl] Error restoring cached tracks: $e');
+      debugPrint('[Listened] opening the library failed: $e');
     }
 
-    // 2. Full fetch only when there is no cache or the last full sync is
-    //    older than a day. Otherwise the cache plus the delta listeners below
-    //    are enough, so a cold start costs a handful of reads instead of one
-    //    per listened track. The daily full fetch also picks up deletions
-    //    made by clients that don't write the deletion log (the web app).
+    // 2. Whatever didn't reach the server last time goes now.
+    _outbox.kick(uid);
+
+    // 3. Full download only without local songs or when the last one is
+    //    old; otherwise the delta listeners below are enough, so a cold
+    //    start costs a handful of reads. It also picks up deletions made by
+    //    clients that don't write the deletion log (the web app).
     final lastFullSync = await _storage.getLastListenedFullSync(uid);
     if (!isCurrent()) return false;
     final now = DateTime.now();
-    final needsFullSync = _tracks.isEmpty ||
-        lastFullSync == null ||
-        now.difference(lastFullSync) > _fullSyncInterval;
-    DateTime deletionsSince =
-        (lastFullSync ?? now).subtract(const Duration(minutes: 5));
+    final needsFullSync =
+        _tracks.isEmpty || lastFullSync == null || now.difference(lastFullSync) > _fullSyncInterval;
+    DateTime deletionsSince = (lastFullSync ?? now).subtract(const Duration(minutes: 5));
 
     if (needsFullSync) {
       try {
         final fetchStartedAt = DateTime.now();
-        final snapshot =
-            await tracksCol.orderBy('listenedAt', descending: true).get();
+        final snapshot = await tracksCol.orderBy('listenedAt', descending: true).get();
         if (!isCurrent()) return false;
-
-        _tracks = snapshot.docs
-            .map((doc) =>
-                ListenedTrackData.fromFirestore(doc.data(), docId: doc.id))
-            .toList();
-        _ids = _tracks.map((t) => t.trackId).toSet();
+        final server = [
+          for (final doc in snapshot.docs) ListenedTrackData.fromFirestore(doc.data(), docId: doc.id).toJson(),
+        ];
+        await _store.replaceListenedWithServer(uid, server);
+        if (!isCurrent()) return false;
+        await _reload(uid);
         _loaded = true;
         _changed();
-
-        unawaited(_storage.saveCachedListenedTracks(
-          uid,
-          _tracks.map((t) => t.toJson()).toList(),
-        ));
         unawaited(_storage.saveLastListenedFullSync(uid, fetchStartedAt));
         deletionsSince = fetchStartedAt.subtract(const Duration(minutes: 5));
-        _albums.prune();
-        _reconcileServerStats(userDoc, _tracks.length);
+        _reconcileServerStats(userDoc, snapshot.docs.length);
         _pruneDeletionLog(userDoc);
       } catch (e) {
-        debugPrint('[LibraryRepositoryImpl] Initial Firestore fetch error: $e');
+        debugPrint('[Listened] full download failed: $e');
       }
     }
 
-    // 3. Delta listener — only docs newer than the latest known timestamp.
-    //    The margin absorbs device clock skew in optimistic local entries.
+    // 4. Delta listener: only docs newer than the latest known timestamp.
+    //    The margin absorbs device clock skew in local entries.
     DateTime? deltaBoundary;
     for (final t in _tracks) {
-      if (t.listenedAt != null &&
-          (deltaBoundary == null || t.listenedAt!.isAfter(deltaBoundary))) {
+      if (t.listenedAt != null && (deltaBoundary == null || t.listenedAt!.isAfter(deltaBoundary))) {
         deltaBoundary = t.listenedAt;
       }
     }
@@ -300,86 +327,58 @@ class ListenedTracksRepository {
     }
     final deltaQuery = deltaBoundary != null
         ? tracksCol
-            .where('listenedAt',
-                isGreaterThanOrEqualTo: Timestamp.fromDate(deltaBoundary))
+            .where('listenedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(deltaBoundary))
             .orderBy('listenedAt', descending: true)
         : tracksCol.orderBy('listenedAt', descending: true);
 
-    _tracksSubscription = deltaQuery.snapshots().listen((snapshot) {
+    _tracksSubscription = deltaQuery.snapshots().listen((snapshot) async {
       if (!isCurrent()) return;
-
-      bool changed = false;
+      final upserts = <Map<String, dynamic>>[];
+      final removed = <String>[];
       for (final change in snapshot.docChanges) {
+        // This device's own write, not on the server yet: the database
+        // already has it, as pending.
+        if (change.doc.metadata.hasPendingWrites) continue;
         final docData = change.doc.data();
         if (docData == null) continue;
-
-        final data =
-            ListenedTrackData.fromFirestore(docData, docId: change.doc.id);
-
+        final data = ListenedTrackData.fromFirestore(docData, docId: change.doc.id);
         if (change.type == DocumentChangeType.removed) {
-          if (_ids.remove(data.trackId)) {
-            _tracks.removeWhere((t) => t.trackId == data.trackId);
-            changed = true;
-          }
+          removed.add(data.trackId);
         } else {
-          final idx = _tracks.indexWhere((t) => t.trackId == data.trackId);
-          if (idx != -1) {
-            _tracks[idx] = data;
-          } else {
-            _tracks.insert(0, data);
-            _ids.add(data.trackId);
-          }
-          changed = true;
+          upserts.add(data.toJson());
         }
       }
-
-      if (changed) {
-        _albums.prune();
-        _changed();
-        _cacheDirty = true;
-      }
-
-      // Only persist to SharedPreferences cache once the server has
-      // confirmed all pending writes. This prevents phantom tracks from
-      // being cached before they actually reach Firestore. When
-      // hasPendingWrites transitions from true to false the listener
-      // fires again, so the save is never lost.
-      if (!snapshot.metadata.hasPendingWrites && _cacheDirty) {
-        _cacheDirty = false;
-        _saveCache(uid);
-      }
+      if (upserts.isEmpty && removed.isEmpty) return;
+      await _store.applyRemoteListened(uid, upserts: upserts, removedIds: removed);
+      if (!isCurrent()) return;
+      _loaded = true;
+      await _reload(uid);
     }, onError: (e) {
-      debugPrint('[LibraryRepositoryImpl] Firestore delta sync error: $e');
+      debugPrint('[Listened] delta listener error: $e');
     });
 
-    // 4. Deletion log — unmarks of tracks older than the delta boundary never
+    // 5. Deletion log: unmarks of tracks older than the delta boundary never
     //    show up as "removed" in the delta query, so unmarks also write
     //    listenedDeletions/{trackId} and other devices apply them from here.
     _deletionsSubscription = userDoc
         .collection('listenedDeletions')
-        .where('deletedAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(deletionsSince))
+        .where('deletedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(deletionsSince))
         .snapshots()
-        .listen((snapshot) {
+        .listen((snapshot) async {
       if (!isCurrent()) return;
-      bool changed = false;
+      final deletions = <String, DateTime>{};
       for (final change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.removed) continue;
-        final data = change.doc.data();
-        final rawDeletedAt = data?['deletedAt'];
+        final rawDeletedAt = change.doc.data()?['deletedAt'];
         // Pending local write (this device's own unmark): already applied.
         if (rawDeletedAt is! Timestamp) continue;
-        if (applyRemoteDeletion(change.doc.id, rawDeletedAt.toDate())) {
-          changed = true;
-        }
+        deletions[change.doc.id] = rawDeletedAt.toDate();
       }
-      if (changed) {
-        _albums.prune();
-        _changed();
-        _saveCache(uid);
-      }
+      if (deletions.isEmpty) return;
+      await _store.applyRemoteDeletions(uid, deletions);
+      if (isCurrent()) await _reload(uid);
     }, onError: (e) {
-      debugPrint('[LibraryRepositoryImpl] Firestore deletions sync error: $e');
+      debugPrint('[Listened] deletion log listener error: $e');
     });
     return true;
   }
@@ -388,21 +387,25 @@ class ListenedTracksRepository {
     _tracksSubscription?.cancel();
     _deletionsSubscription?.cancel();
     _tracksSubscription = null;
+    _deletionsSubscription = null;
+    _uid = null;
     _tracks = [];
     _ids = {};
     _loaded = false;
-    _cacheDirty = false;
     _lastSyncError = null;
+    _outbox.stop();
     invalidate();
   }
 
-  /// Whether listening already started for [uid]'s tracks.
+  /// Whether listening already started for the account's tracks.
   bool get isListening => _tracksSubscription != null;
 
-  Future<void> _saveCache(String uid) => _storage.saveCachedListenedTracks(
-        uid,
-        _tracks.map((t) => t.toJson()).toList(),
-      );
+  /// Completes once the writes in flight for [uid] are done.
+  Future<void> idle(String uid) => _outbox.idle(uid);
+
+  /// Sends what's pending now, without waiting for the next retry (the
+  /// connection came back).
+  Future<void> retryPending(String uid) => _outbox.retryNow(uid);
 
   /// Applies an unmark made on another device. A track re-marked after the
   /// deletion (newer listenedAt) is kept. Returns whether anything changed.
@@ -414,18 +417,20 @@ class ListenedTracksRepository {
     _tracks.removeAt(idx);
     _ids.remove(trackId);
     invalidate();
+    final uid = _uid;
+    if (uid != null) unawaited(_store.applyRemoteDeletions(uid, {trackId: deletedAt}));
     return true;
   }
 
-  /// stats.totalTracks is kept with client-side increments (the web app
-  /// reads it), which drift when two devices mark the same track. The full
-  /// sync knows the real count, so it rewrites it.
-  void _reconcileServerStats(
-      DocumentReference<Map<String, dynamic>> userDoc, int count) {
+  /// stats.totalTracks (read by the web app) is the account's song count,
+  /// written as a number, not an increment, so a write sent twice (the
+  /// outbox and Firestore's own offline queue) can't count twice. The full
+  /// download knows the server's real count and writes it too.
+  void _reconcileServerStats(DocumentReference<Map<String, dynamic>> userDoc, int count) {
     userDoc.set({
       'stats': {'totalTracks': count},
     }, SetOptions(merge: true)).catchError((Object e) {
-      debugPrint('[LibraryRepositoryImpl] stats reconcile failed: $e');
+      debugPrint('[Listened] stats reconcile failed: $e');
     });
   }
 
@@ -445,313 +450,158 @@ class ListenedTracksRepository {
         batch.delete(doc.reference);
       }
       // The rules only accept subcollection writes stamped with the time.
-      batch.set(userDoc, {'lastSubWrite': FieldValue.serverTimestamp()},
-          SetOptions(merge: true));
+      batch.set(userDoc, {'lastSubWrite': FieldValue.serverTimestamp()}, SetOptions(merge: true));
       await SubWriteQueue.instance.run(batch.commit);
     }).catchError((Object e) {
-      debugPrint('[LibraryRepositoryImpl] deletion log prune failed: $e');
+      debugPrint('[Listened] deletion log prune failed: $e');
     });
   }
 
   // Test hook, reached through LibraryRepositoryImpl.
   void setLoadedForTesting(bool loaded) => _loaded = loaded;
 
-  // Test hook, reached through LibraryRepositoryImpl.
-  void setTracksForTesting(List<ListenedTrackData> tracks) {
+  // Test hook, reached through LibraryRepositoryImpl: [tracks] as the
+  // account's synced library.
+  Future<void> setTracksForTesting(List<ListenedTrackData> tracks, {String? uid}) {
     _tracks = List.from(tracks);
     _ids = tracks.map((t) => t.trackId).toSet();
     _loaded = true;
+    invalidate();
+    if (uid == null) return Future.value();
+    _uid = uid;
+    return _store.saveListened(uid, [for (final t in tracks) t.toJson()]);
   }
 
-  // --- Writes ---
+  // --- Writes: here first, then the outbox tells the server
 
-  /// Puts the snapshot taken before an optimistic change back after
-  /// Firestore rejected it, and caches the restored state.
-  void _rollback(String uid, List<ListenedTrackData> prevTracks,
-      Set<String> prevIds, String error) {
-    _tracks = prevTracks;
-    _ids = prevIds;
-    _lastSyncError = error;
-    _changed();
-    unawaited(_saveCache(uid));
-  }
+  Future<void> mark(String uid, Track track) => markAll(uid, [track]);
 
-  Future<void> mark(String uid, Track track) async {
-    if (_ids.contains(track.id)) return;
+  /// Marks the songs of [tracks] not listened yet.
+  Future<void> markAll(String uid, List<Track> tracks) async {
+    final seen = <String>{};
+    final toMark = [
+      for (final t in tracks)
+        if (!_ids.contains(t.id) && seen.add(t.id)) t,
+    ];
+    if (toMark.isEmpty) return;
+    _uid = uid;
 
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_tracks);
-    final prevIds = Set<String>.from(_ids);
-
-    // Optimistic update — UI reflects the mark immediately.
-    final data = ListenedTrackData.fromTrack(track);
-    _tracks.add(data);
-    _ids.add(track.id);
-    if (track.albumId.isNotEmpty && _albums.hasTrackCount(track.albumId)) {
+    final data = toMark.map(ListenedTrackData.fromTrack).toList();
+    _tracks.addAll(data);
+    _ids.addAll(toMark.map((t) => t.id));
+    if (toMark.length > 1 || (toMark.first.albumId.isNotEmpty && _albums.hasTrackCount(toMark.first.albumId))) {
       _albums.prune(forceSave: true);
     }
     _lastSyncError = null;
     _changed();
 
-    // NOTE: cache is NOT saved here — it is saved by the delta listener
-    // only after Firestore confirms the write, preventing phantom tracks
-    // that disappear on the next full sync.
-
-    await _tracked(() async {
-      try {
-        await _commitMarkBatch(uid, track.id, data);
-      } catch (e) {
-        // Retry once after a short delay (handles rate-limit / transient errors)
-        try {
-          await Future.delayed(const Duration(milliseconds: 1500));
-          await _commitMarkBatch(uid, track.id, data);
-        } catch (retryError) {
-          debugPrint('[LibraryRepositoryImpl] markTrack rollback — Firestore failed after retry: $retryError');
-          _rollback(uid, prevTracks, prevIds, 'mark_failed');
-        }
+    final ids = [for (final t in toMark) t.id];
+    await _store.markListenedLocally(uid, [for (final d in data) d.toJson()], () async {
+      for (final chunk in ids.slices(_markBatch)) {
+        await _outbox.enqueue(uid, markKind, chunk.first, {'ids': chunk});
       }
     });
+    _outbox.kick(uid);
   }
 
-  /// Writes one listened track + stats update to Firestore in a single batch.
-  Future<void> _commitMarkBatch(
-      String uid, String trackId, ListenedTrackData data) async {
-    final db = _firebase.db;
-    final userDoc = db.collection('users').doc(uid);
-    final batch = db.batch();
-    batch.set(
-      userDoc.collection('listenedTracks').doc(trackId),
-      data.toFirestore(),
-      SetOptions(merge: true),
-    );
-    batch.set(
-      userDoc,
-      {
-        'stats': {'totalTracks': FieldValue.increment(1)},
-        'lastSubWrite': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
-    await SubWriteQueue.instance.run(batch.commit);
-    _lastSyncError = null;
-  }
+  Future<void> unmark(String uid, String trackId) => unmarkAll(uid, [trackId]);
 
-  Future<void> unmark(String uid, String trackId) async {
-    if (!_ids.contains(trackId)) return;
-
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_tracks);
-    final prevIds = Set<String>.from(_ids);
-
-    // Optimistic update
-    _tracks.removeWhere((t) => t.trackId == trackId);
-    _ids.remove(trackId);
-    _albums.prune();
-    _lastSyncError = null;
-    _changed();
-
-    // NOTE: cache is NOT saved here — delta listener persists after confirm.
-
-    await _tracked(() async {
-      try {
-        await _commitUnmarkBatch(uid, trackId);
-      } catch (e) {
-        // Retry once after a short delay
-        try {
-          await Future.delayed(const Duration(milliseconds: 1500));
-          await _commitUnmarkBatch(uid, trackId);
-        } catch (retryError) {
-          debugPrint('[LibraryRepositoryImpl] unmarkTrack rollback — Firestore failed after retry: $retryError');
-          _rollback(uid, prevTracks, prevIds, 'unmark_failed');
-        }
-      }
-    });
-  }
-
-  /// Deletes one listened track + writes deletion log + stats in a single batch.
-  Future<void> _commitUnmarkBatch(String uid, String trackId) async {
-    final db = _firebase.db;
-    final userDoc = db.collection('users').doc(uid);
-    final batch = db.batch();
-    batch.delete(userDoc.collection('listenedTracks').doc(trackId));
-    batch.set(userDoc.collection('listenedDeletions').doc(trackId), {
-      'deletedAt': FieldValue.serverTimestamp(),
-    });
-    batch.set(
-      userDoc,
-      {
-        'stats': {'totalTracks': FieldValue.increment(-1)},
-        'lastSubWrite': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
-    await SubWriteQueue.instance.run(batch.commit);
-    _lastSyncError = null;
-  }
-
-  /// Marks [tracks] not listened yet, in Firestore batches; a failed batch
-  /// rolls back only the tracks it carried.
-  Future<void> markAll(String uid, List<Track> tracks) async {
-    final seen = <String>{};
-    final toMark = <Track>[];
-    for (final t in tracks) {
-      if (!_ids.contains(t.id) && seen.add(t.id)) {
-        toMark.add(t);
-      }
-    }
-    if (toMark.isEmpty) return;
-
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_tracks);
-    final prevIds = Set<String>.from(_ids);
-
-    // Optimistic update
-    final newData = toMark.map(ListenedTrackData.fromTrack).toList();
-    _tracks.addAll(newData);
-    _ids.addAll(toMark.map((t) => t.id));
-    _albums.prune(forceSave: true);
-    _lastSyncError = null;
-    _changed();
-
-    // NOTE: cache is NOT saved here — delta listener persists after confirm.
-
-    await _tracked(() async {
-      final committedData = <ListenedTrackData>[];
-      try {
-        final customHandler = markChunkHandlerForTesting;
-        final db = customHandler == null ? _firebase.db : null;
-        final userDoc = db?.collection('users').doc(uid);
-        const batchLimit = 450;
-
-        for (var i = 0; i < newData.length; i += batchLimit) {
-          final chunk = newData.sublist(
-              i, i + batchLimit > newData.length ? newData.length : i + batchLimit);
-
-          if (customHandler != null) {
-            await customHandler(chunk, uid);
-          } else if (db != null && userDoc != null) {
-            final batch = db.batch();
-            for (final data in chunk) {
-              batch.set(
-                userDoc.collection('listenedTracks').doc(data.trackId),
-                data.toFirestore(),
-                SetOptions(merge: true),
-              );
-            }
-            batch.set(
-              userDoc,
-              {
-                'stats': {'totalTracks': FieldValue.increment(chunk.length)},
-                'lastSubWrite': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
-            await SubWriteQueue.instance.run(batch.commit);
-          }
-          committedData.addAll(chunk);
-        }
-      } catch (e) {
-        debugPrint('[LibraryRepositoryImpl] markAlbumTracks rollback — Firestore failed: $e');
-        _lastSyncError = 'mark_album_failed';
-        if (committedData.isEmpty) {
-          _tracks = prevTracks;
-          _ids = prevIds;
-        } else {
-          // Only rollback uncommitted tracks, preserving tracks committed in earlier batches
-          final committedIds = committedData.map((d) => d.trackId).toSet();
-          final uncommittedIds = toMark
-              .map((t) => t.id)
-              .where((id) => !committedIds.contains(id))
-              .toSet();
-
-          _tracks.removeWhere((t) => uncommittedIds.contains(t.trackId));
-          _ids.removeAll(uncommittedIds);
-        }
-        _albums.prune(forceSave: true);
-        _changed();
-        unawaited(_saveCache(uid));
-      }
-    });
-  }
-
-  /// Unmarks the listened ones among [trackIds], in Firestore batches; a
-  /// failed batch restores only the tracks it carried.
+  /// Unmarks the listened ones among [trackIds].
   Future<void> unmarkAll(String uid, List<String> trackIds) async {
-    final toUnmark = trackIds.toSet().where((id) => _ids.contains(id)).toList();
+    final toUnmark = trackIds.toSet().where(_ids.contains).toList();
     if (toUnmark.isEmpty) return;
+    _uid = uid;
 
-    // Snapshot pre-mutation state for rollback
-    final prevTracks = List<ListenedTrackData>.from(_tracks);
-    final prevIds = Set<String>.from(_ids);
-
-    // Optimistic update
-    _tracks.removeWhere((t) => toUnmark.contains(t.trackId));
-    _ids.removeAll(toUnmark);
+    final gone = toUnmark.toSet();
+    _tracks.removeWhere((t) => gone.contains(t.trackId));
+    _ids.removeAll(gone);
     _albums.prune();
     _lastSyncError = null;
     _changed();
 
-    // NOTE: cache is NOT saved here — delta listener persists after confirm.
-
-    await _tracked(() async {
-      final committedUnmarkedIds = <String>[];
-      try {
-        final customHandler = unmarkChunkHandlerForTesting;
-        final db = customHandler == null ? _firebase.db : null;
-        final userDoc = db?.collection('users').doc(uid);
-        // Two writes per track (delete + deletion log) + stats, under the 500 cap.
-        const batchLimit = 240;
-
-        for (var i = 0; i < toUnmark.length; i += batchLimit) {
-          final chunk = toUnmark.sublist(
-              i, i + batchLimit > toUnmark.length ? toUnmark.length : i + batchLimit);
-
-          if (customHandler != null) {
-            await customHandler(chunk, uid);
-          } else if (db != null && userDoc != null) {
-            final batch = db.batch();
-            for (final id in chunk) {
-              batch.delete(userDoc.collection('listenedTracks').doc(id));
-              batch.set(userDoc.collection('listenedDeletions').doc(id), {
-                'deletedAt': FieldValue.serverTimestamp(),
-              });
-            }
-            batch.set(
-              userDoc,
-              {
-                'stats': {'totalTracks': FieldValue.increment(-chunk.length)},
-                'lastSubWrite': FieldValue.serverTimestamp(),
-              },
-              SetOptions(merge: true),
-            );
-            await SubWriteQueue.instance.run(batch.commit);
-          }
-          committedUnmarkedIds.addAll(chunk);
-        }
-      } catch (e) {
-        debugPrint('[LibraryRepositoryImpl] unmarkAlbumTracks rollback — Firestore failed: $e');
-        _lastSyncError = 'unmark_album_failed';
-        if (committedUnmarkedIds.isEmpty) {
-          _tracks = prevTracks;
-          _ids = prevIds;
-        } else {
-          // Partial delete: only restore the tracks that failed to be deleted from Firestore
-          final committedSet = committedUnmarkedIds.toSet();
-          final failedToDeleteIds =
-              toUnmark.where((id) => !committedSet.contains(id)).toSet();
-
-          final tracksToRestore = prevTracks
-              .where((t) => failedToDeleteIds.contains(t.trackId))
-              .toList();
-
-          _tracks.addAll(tracksToRestore);
-          _ids.addAll(failedToDeleteIds);
-        }
-        _albums.prune(forceSave: true);
-        _changed();
-        unawaited(_saveCache(uid));
+    await _store.unmarkListenedLocally(uid, toUnmark, () async {
+      for (final chunk in toUnmark.slices(_unmarkBatch)) {
+        await _outbox.enqueue(uid, unmarkKind, chunk.first, {'ids': chunk});
       }
     });
+    _outbox.kick(uid);
+  }
+
+  static List<String> _idsOf(OutboxEntry entry) =>
+      [for (final id in entry.payload['ids'] as List) id.toString()];
+
+  /// Outbox: one batch of marks to Firestore (the songs as the database has
+  /// them now; one unmarked since is left to its own delete entry).
+  Future<void> _sendMarks(OutboxEntry entry) async {
+    final uid = entry.uid;
+    final ids = _idsOf(entry);
+    final rows = (await _store.listenedByIds(uid, ids)).map(ListenedTrackData.fromJson).toList();
+    if (rows.isNotEmpty) {
+      await _tracked(() async {
+        final testHandler = markChunkHandlerForTesting;
+        if (testHandler != null) return testHandler(rows, uid);
+        final total = await _store.countListened(uid);
+        await sendToFirestore(() async {
+          final db = _firebase.db;
+          final userDoc = db.collection('users').doc(uid);
+          final batch = db.batch();
+          for (final data in rows) {
+            batch.set(userDoc.collection('listenedTracks').doc(data.trackId), data.toFirestore(),
+                SetOptions(merge: true));
+          }
+          batch.set(userDoc, {
+            'stats': {'totalTracks': total},
+            'lastSubWrite': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+          await SubWriteQueue.instance.run(batch.commit);
+        });
+      });
+    }
+    await _store.confirmListenedUpserts(uid, ids);
+  }
+
+  /// Outbox: one batch of unmarks to Firestore, with the deletion log.
+  Future<void> _sendUnmarks(OutboxEntry entry) async {
+    final uid = entry.uid;
+    final ids = _idsOf(entry);
+    await _tracked(() async {
+      final testHandler = unmarkChunkHandlerForTesting;
+      if (testHandler != null) return testHandler(ids, uid);
+      final total = await _store.countListened(uid);
+      await sendToFirestore(() async {
+        final db = _firebase.db;
+        final userDoc = db.collection('users').doc(uid);
+        final batch = db.batch();
+        for (final id in ids) {
+          batch.delete(userDoc.collection('listenedTracks').doc(id));
+          batch.set(userDoc.collection('listenedDeletions').doc(id), {
+            'deletedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        batch.set(userDoc, {
+          'stats': {'totalTracks': total},
+          'lastSubWrite': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        await SubWriteQueue.instance.run(batch.commit);
+      });
+    });
+    await _store.confirmListenedDeletes(uid, ids);
+  }
+
+  void _marksRefused(OutboxEntry entry, Object error) {
+    unawaited(_undo(entry.uid, 'mark_failed', () => _store.revertListenedUpserts(entry.uid, _idsOf(entry))));
+  }
+
+  void _unmarksRefused(OutboxEntry entry, Object error) {
+    unawaited(_undo(entry.uid, 'unmark_failed', () => _store.revertListenedDeletes(entry.uid, _idsOf(entry))));
+  }
+
+  /// The server refused a change for good: undo it here and say so.
+  Future<void> _undo(String uid, String error, Future<void> Function() revert) async {
+    await revert();
+    if (_uid != uid) return;
+    _lastSyncError = error;
+    await _reload(uid);
   }
 
   void dispose() {

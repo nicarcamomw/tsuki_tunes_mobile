@@ -2,8 +2,10 @@ import 'package:injectable/injectable.dart';
 
 import '../data/datasources/firebase_service.dart';
 import '../data/datasources/storage_service.dart';
+import '../data/local/library_store.dart';
 import '../data/repositories/library_repository_impl.dart';
 import '../data/repositories/playlist_repository_impl.dart';
+import '../data/sync/outbox.dart';
 import '../domain/repositories/library_repository.dart';
 import '../domain/repositories/playback_controller.dart';
 import '../domain/repositories/playlist_repository.dart';
@@ -15,8 +17,13 @@ import '../presentation/state/audio_provider.dart';
 @module
 abstract class RepositoryModule {
   @lazySingleton
-  LibraryRepositoryImpl library(FirebaseService firebase, StorageService storage) =>
-      LibraryRepositoryImpl(firebase: firebase, storage: storage);
+  LibraryRepositoryImpl library(
+    FirebaseService firebase,
+    StorageService storage,
+    LibraryStore store,
+    Outbox outbox,
+  ) =>
+      LibraryRepositoryImpl(firebase: firebase, storage: storage, store: store, outbox: outbox);
 
   @lazySingleton
   LibraryRepository libraryRepository(LibraryRepositoryImpl library) => library;

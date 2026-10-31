@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drift/native.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/local/app_database.dart';
+import 'package:tsuki_tunes_mobile/data/local/library_store.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/sync/outbox.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 
 import 'helpers/fake_firebase_service.dart';
@@ -47,8 +51,15 @@ void main() {
     db = FakeFirebaseFirestore();
   });
 
-  LibraryRepositoryImpl newDevice() =>
-      LibraryRepositoryImpl(firebase: FakeFirebaseService(db));
+  /// A device; pass the same [local] database to restart the same phone.
+  LibraryRepositoryImpl newDevice({AppDatabase? local}) {
+    final phone = local ?? AppDatabase(NativeDatabase.memory());
+    return LibraryRepositoryImpl(
+      firebase: FakeFirebaseService(db),
+      store: LibraryStore(phone),
+      outbox: Outbox(phone),
+    );
+  }
 
   group('listened tracks sync', () {
     test('first connect does a full fetch and fixes the stats counter',
@@ -74,7 +85,8 @@ void main() {
         () async {
       final old = DateTime(2026, 1, 1);
       await _seed(db, 't1', old);
-      final first = newDevice();
+      final phone = AppDatabase(NativeDatabase.memory());
+      final first = newDevice(local: phone);
       await first.connectToFirestore(uid);
       await _settle();
       first.disconnectFirestore();
@@ -84,7 +96,7 @@ void main() {
       await _seed(db, 'ancient', DateTime(2020));
       await _seed(db, 'fresh', DateTime.now());
 
-      final second = newDevice();
+      final second = newDevice(local: phone); // the same phone, reopened
       await second.connectToFirestore(uid);
       await _settle();
 
@@ -126,7 +138,7 @@ void main() {
       await _settle();
 
       await phone.markTrack(_track('t9'));
-      await _settle();
+      await phone.pendingWritesSentForTesting();
       final doc = await db
           .collection('users')
           .doc(uid)

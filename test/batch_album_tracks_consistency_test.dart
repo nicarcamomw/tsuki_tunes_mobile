@@ -1,219 +1,177 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/local/app_database.dart';
+import 'package:tsuki_tunes_mobile/data/local/library_store.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/data/sync/outbox.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 
-List<Track> generateTracks(int count, {String albumId = 'album_1'}) {
-  return List.generate(
-    count,
-    (i) => Track(
-      id: 'track_${albumId}_$i',
-      title: 'Track $i',
-      artistId: 'artist_1',
-      artistName: 'Artist 1',
-      albumId: albumId,
-      albumTitle: 'Album 1',
-      coverUrl: 'https://example.com/cover.jpg',
-      previewUrl: 'https://example.com/audio_$i.mp3',
-      durationSeconds: 180,
-    ),
-  );
-}
+List<Track> generateTracks(int count, {String albumId = 'album_1'}) => List.generate(
+      count,
+      (i) => Track(
+        id: 'track_${albumId}_$i',
+        title: 'Track $i',
+        artistId: 'artist_1',
+        artistName: 'Artist 1',
+        albumId: albumId,
+        albumTitle: 'Album 1',
+        coverUrl: 'https://example.com/cover.jpg',
+        previewUrl: 'https://example.com/audio_$i.mp3',
+        durationSeconds: 180,
+      ),
+    );
 
+ListenedTrackData _listened(Track t) => ListenedTrackData(
+      trackId: t.id,
+      title: t.title,
+      artistName: t.fullArtistName,
+      albumTitle: t.albumTitle,
+      albumId: t.albumId,
+      coverUrl: t.coverUrl,
+      previewUrl: t.previewUrl,
+      duration: t.durationSeconds,
+      listenedAt: DateTime.now(),
+    );
+
+// Offline-first: a change shows at once and is saved on the phone; the
+// outbox sends it in batches. A failure that may pass (network) keeps the
+// change and retries it; only a refusal for good undoes it.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  const uid = 'user_test_123';
 
-  setUp(() {
+  late AppDatabase phone;
+  late LibraryRepositoryImpl library;
+
+  LibraryRepositoryImpl open() {
+    final lib = LibraryRepositoryImpl(store: LibraryStore(phone), outbox: Outbox(phone))
+      ..bypassAuthForTesting = true
+      ..setUidForTesting(uid)
+      ..setListenedTracksLoadedForTesting(true);
+    return lib;
+  }
+
+  Future<Map<int, int>> syncStates() async {
+    final rows = await phone.select(phone.listenedTracks).get();
+    final out = <int, int>{};
+    for (final r in rows) {
+      out[r.syncState] = (out[r.syncState] ?? 0) + 1;
+    }
+    return out;
+  }
+
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    phone = AppDatabase(NativeDatabase.memory());
+    library = open();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
   });
 
-  group('Firestore Batch Album Tracks Consistency Tests', () {
-    late StorageService storage;
-    late LibraryRepositoryImpl library;
-    const testUid = 'user_test_123';
+  tearDown(() async {
+    library.disconnectFirestore(); // stops the retry timers
+    await phone.close();
+  });
 
-    setUp(() async {
-      storage = StorageService();
-      library = LibraryRepositoryImpl();
-      await Future.delayed(const Duration(milliseconds: 50));
+  test('marking an album shows at once and is sent in batches of 450', () async {
+    final chunks = <int>[];
+    library.markAlbumChunkHandlerForTesting = (chunk, _) async => chunks.add(chunk.length);
 
-      library.bypassAuthForTesting = true;
-      library.setUidForTesting(testUid);
-      library.setListenedTracksLoadedForTesting(true);
-    });
+    await library.markAlbumTracks(generateTracks(900), albumId: 'album_1', totalTracks: 900);
+    expect(library.totalTracksCount, 900, reason: 'shown before the server answers');
 
-    test('markAlbumTracks: partial failure on chunk 2 preserves chunk 1 in local state and cache', () async {
-      final tracks = generateTracks(900, albumId: 'album_multi_chunk');
-      final chunkCalls = <List<ListenedTrackData>>[];
+    await library.pendingWritesSentForTesting();
+    expect(chunks, [450, 450]);
+    expect(await syncStates(), {SyncState.synced: 900});
+  });
 
-      // Handler succeeds for chunk 0 (450 tracks) and fails for chunk 1 (450 tracks)
-      library.markAlbumChunkHandlerForTesting = (chunk, uid) async {
-        chunkCalls.add(chunk);
-        if (chunkCalls.length == 2) {
-          throw Exception('Simulated Firestore network timeout on chunk 2');
-        }
-      };
+  test('a failure that may pass keeps the songs, and the retry sends them', () async {
+    var calls = 0;
+    library.markAlbumChunkHandlerForTesting = (chunk, _) async {
+      if (++calls == 2) throw Exception('network timeout');
+    };
 
-      await library.markAlbumTracks(tracks, albumId: 'album_multi_chunk', totalTracks: 900);
+    await library.markAlbumTracks(generateTracks(900), albumId: 'album_1', totalTracks: 900);
+    await library.pendingWritesSentForTesting();
 
-      // Verify 2 chunk attempts were made
-      expect(chunkCalls.length, equals(2));
-      expect(chunkCalls[0].length, equals(450));
-      expect(chunkCalls[1].length, equals(450));
+    expect(library.totalTracksCount, 900, reason: 'nothing is undone');
+    expect(library.lastSyncError, isNull);
+    expect(await syncStates(), {SyncState.synced: 450, SyncState.pendingUpsert: 450});
 
-      // Local state should NOT rollback chunk 1 tracks that succeeded in Firestore
-      expect(library.listenedTracks.length, equals(450));
-      expect(library.listenedTrackIds.length, equals(450));
-      expect(library.totalTracksCount, equals(450));
+    // Back online.
+    library.retryPendingSync();
+    await Future<void>.delayed(Duration.zero);
+    await library.pendingWritesSentForTesting();
+    expect(calls, 3);
+    expect(await syncStates(), {SyncState.synced: 900});
+  });
 
-      // Chunk 0 tracks should be marked
-      for (var i = 0; i < 450; i++) {
-        expect(library.isTrackListened('track_album_multi_chunk_$i'), isTrue);
-      }
+  test('a refusal for good undoes only its batch and says so', () async {
+    var calls = 0;
+    library.markAlbumChunkHandlerForTesting = (chunk, _) async {
+      if (++calls == 2) throw const PermanentSyncError('permission-denied');
+    };
 
-      // Chunk 1 tracks should NOT be marked (rolled back because Firestore commit failed)
-      for (var i = 450; i < 900; i++) {
-        expect(library.isTrackListened('track_album_multi_chunk_$i'), isFalse);
-      }
+    await library.markAlbumTracks(generateTracks(900), albumId: 'album_1', totalTracks: 900);
+    await library.pendingWritesSentForTesting();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      // Verify storage matches local state (450 tracks)
-      final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.length, equals(450));
-      expect(cached.first['trackId'], equals('track_album_multi_chunk_0'));
-    });
+    expect(library.totalTracksCount, 450);
+    expect(library.isTrackListened('track_album_1_0'), isTrue);
+    expect(library.isTrackListened('track_album_1_899'), isFalse);
+    expect(library.lastSyncError, 'mark_failed');
+    expect(await syncStates(), {SyncState.synced: 450});
+  });
 
-    test('markAlbumTracks: immediate failure on chunk 1 fully rolls back all state', () async {
-      final tracks = generateTracks(900, albumId: 'album_fail_first');
+  test('unmarking hides at once; the songs only leave once the server agrees', () async {
+    final tracks = generateTracks(900);
+    await library.setListenedTracksForTesting(tracks.map(_listened).toList());
+    var calls = 0;
+    library.unmarkAlbumChunkHandlerForTesting = (ids, _) async {
+      if (++calls == 2) throw Exception('network timeout');
+    };
 
-      library.markAlbumChunkHandlerForTesting = (chunk, uid) async {
-        throw Exception('Simulated Firestore error on chunk 1');
-      };
+    await library.unmarkAlbumTracks([for (final t in tracks) t.id]);
+    await library.pendingWritesSentForTesting();
 
-      await library.markAlbumTracks(tracks, albumId: 'album_fail_first', totalTracks: 900);
+    expect(library.totalTracksCount, 0, reason: 'unmarked here at once');
+    // The first batch of 240 is confirmed; the other 660 wait as hidden
+    // tombstones (the failed batch blocks the ones behind it).
+    expect(await syncStates(), {SyncState.pendingDelete: 660});
+  });
 
-      expect(library.listenedTracks.isEmpty, isTrue);
-      expect(library.listenedTrackIds.isEmpty, isTrue);
-      expect(library.totalTracksCount, equals(0));
+  test('a refused unmark brings its songs back', () async {
+    final tracks = generateTracks(480);
+    await library.setListenedTracksForTesting(tracks.map(_listened).toList());
+    var calls = 0;
+    library.unmarkAlbumChunkHandlerForTesting = (ids, _) async {
+      if (++calls == 1) throw const PermanentSyncError('permission-denied');
+    };
 
-      final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.isEmpty, isTrue);
-    });
+    await library.unmarkAlbumTracks([for (final t in tracks) t.id]);
+    await library.pendingWritesSentForTesting();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
 
-    test('markAlbumTracks: all chunks succeed leaves all 900 tracks marked', () async {
-      final tracks = generateTracks(900, albumId: 'album_success');
-      var chunksCommitted = 0;
+    expect(library.totalTracksCount, 240, reason: 'the first batch of 240 comes back');
+    expect(library.lastSyncError, 'unmark_failed');
+    expect(await syncStates(), {SyncState.synced: 240});
+  });
 
-      library.markAlbumChunkHandlerForTesting = (chunk, uid) async {
-        chunksCommitted++;
-      };
+  test('songs marked offline survive closing the app and go up on reopening', () async {
+    library.markAlbumChunkHandlerForTesting = (_, __) async => throw Exception('offline');
+    await library.markAlbumTracks(generateTracks(3), albumId: 'album_1', totalTracks: 3);
+    await library.pendingWritesSentForTesting();
+    library.disconnectFirestore();
 
-      await library.markAlbumTracks(tracks, albumId: 'album_success', totalTracks: 900);
+    // The app opens again: same phone database, new everything else.
+    final sent = <String>[];
+    library = open();
+    library.markAlbumChunkHandlerForTesting = (chunk, _) async => sent.addAll(chunk.map((t) => t.trackId));
+    library.retryPendingSync();
+    await Future<void>.delayed(Duration.zero);
+    await library.pendingWritesSentForTesting();
 
-      expect(chunksCommitted, equals(2));
-      expect(library.listenedTracks.length, equals(900));
-      expect(library.listenedTrackIds.length, equals(900));
-      expect(library.totalTracksCount, equals(900));
-
-      // The local cache is only written by the Firestore delta listener once
-      // the server confirms (no phantom tracks after a kill or failed
-      // write). The test chunk handler bypasses Firestore, so nothing is
-      // confirmed and nothing may be cached yet.
-      final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached, isEmpty);
-    });
-
-    test('unmarkAlbumTracks: partial failure on chunk 2 keeps chunk 1 deleted and restores chunk 2', () async {
-      // Setup 900 listened tracks initially
-      final tracks = generateTracks(900, albumId: 'album_unmark_test');
-      library.setListenedTracksForTesting(
-        tracks
-            .map((t) => ListenedTrackData(
-                  trackId: t.id,
-                  title: t.title,
-                  artistName: t.fullArtistName,
-                  albumTitle: t.albumTitle,
-                  albumId: t.albumId,
-                  coverUrl: t.coverUrl,
-                  previewUrl: t.previewUrl,
-                  duration: t.durationSeconds,
-                  listenedAt: DateTime.now(),
-                ))
-            .toList(),
-      );
-
-      expect(library.listenedTracks.length, equals(900));
-
-      final chunkCalls = <List<String>>[];
-      // Chunk 1 deletes 240 successfully (2 writes per track), chunk 2 throws
-      library.unmarkAlbumChunkHandlerForTesting = (chunkIds, uid) async {
-        chunkCalls.add(chunkIds);
-        if (chunkCalls.length == 2) {
-          throw Exception('Simulated Firestore error on chunk 2 during unmark');
-        }
-      };
-
-      final allIds = tracks.map((t) => t.id).toList();
-      await library.unmarkAlbumTracks(allIds);
-
-      expect(chunkCalls.length, equals(2));
-      expect(chunkCalls[0].length, equals(240));
-      expect(chunkCalls[1].length, equals(240));
-
-      // Local state:
-      // Chunk 0 was successfully deleted in Firestore -> remains deleted locally
-      // Chunk 1 failed to delete in Firestore -> restored locally
-      expect(library.listenedTracks.length, equals(660));
-      expect(library.listenedTrackIds.length, equals(660));
-      expect(library.totalTracksCount, equals(660));
-
-      // Chunk 0 tracks should NOT be listened
-      for (var i = 0; i < 240; i++) {
-        expect(library.isTrackListened('track_album_unmark_test_$i'), isFalse);
-      }
-
-      // Chunk 1 tracks SHOULD still be listened
-      for (var i = 240; i < 900; i++) {
-        expect(library.isTrackListened('track_album_unmark_test_$i'), isTrue);
-      }
-
-      final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.length, equals(660));
-      expect(cached.first['trackId'], equals('track_album_unmark_test_240'));
-    });
-
-    test('unmarkAlbumTracks: immediate failure on chunk 1 restores all 900 tracks', () async {
-      final tracks = generateTracks(900, albumId: 'album_unmark_fail');
-      library.setListenedTracksForTesting(
-        tracks
-            .map((t) => ListenedTrackData(
-                  trackId: t.id,
-                  title: t.title,
-                  artistName: t.fullArtistName,
-                  albumTitle: t.albumTitle,
-                  albumId: t.albumId,
-                  coverUrl: t.coverUrl,
-                  previewUrl: t.previewUrl,
-                  duration: t.durationSeconds,
-                  listenedAt: DateTime.now(),
-                ))
-            .toList(),
-      );
-
-      library.unmarkAlbumChunkHandlerForTesting = (chunkIds, uid) async {
-        throw Exception('Simulated Firestore error on chunk 1 during unmark');
-      };
-
-      final allIds = tracks.map((t) => t.id).toList();
-      await library.unmarkAlbumTracks(allIds);
-
-      // All 900 tracks restored
-      expect(library.listenedTracks.length, equals(900));
-      expect(library.listenedTrackIds.length, equals(900));
-      expect(library.totalTracksCount, equals(900));
-
-      final cached = await storage.getCachedListenedTracks(testUid);
-      expect(cached.length, equals(900));
-    });
+    expect(sent, hasLength(3));
+    expect(await syncStates(), {SyncState.synced: 3});
   });
 }

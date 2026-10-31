@@ -14,6 +14,7 @@ import '../data/datasources/storage_service.dart';
 import '../data/datasources/translation_service.dart';
 import '../data/local/app_database.dart';
 import '../data/local/library_store.dart';
+import '../data/sync/outbox.dart';
 import '../domain/repositories/catalog_repository.dart';
 
 /// The data sources. Most are process-wide singletons already (their
@@ -29,6 +30,11 @@ abstract class DataModule {
 
   @lazySingleton
   LibraryStore libraryStore(AppDatabase database) => LibraryStore(database);
+
+  /// Writes waiting to reach the server; each repository registers the
+  /// handlers that send its kinds.
+  @lazySingleton
+  Outbox outbox(AppDatabase database) => Outbox(database);
 
   /// On the web the library stays in SharedPreferences: SQLite there needs
   /// extra wasm files the app doesn't ship.

@@ -119,7 +119,15 @@ final playbackWiringProvider = Provider<void>((ref) {
   final history = ref.read(playHistoryProvider);
   final masks = ref.read(maskProvider);
 
-  player.setConnectivityProvider(ref.read(connectivityProvider));
+  final connectivity = ref.read(connectivityProvider);
+  player.setConnectivityProvider(connectivity);
+  // Back online: what was marked offline goes to the server now, without
+  // waiting for the outbox's next retry.
+  var wasOnline = connectivity.isOnline;
+  _follow(ref, connectivity, () {
+    if (connectivity.isOnline && !wasOnline) library.retryPendingSync();
+    wasOnline = connectivity.isOnline;
+  }, now: false);
   // Smart shuffle only recommends songs the user doesn't have.
   player.isInLibrary = (id) =>
       library.isTrackListened(id) ||

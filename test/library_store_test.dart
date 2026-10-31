@@ -94,6 +94,62 @@ void main() {
     });
   });
 
+  group('offline-first merges with the server', () {
+    Future<void> noOutbox() async {}
+    Future<Map<String, int>> states() async => {
+          for (final r in await db.select(db.listenedTracks).get()) r.trackId: r.syncState,
+        };
+
+    test('a song unmarked here is not revived by the server, a pending mark is not removed', () async {
+      await store.saveListened('u1', [_song('a'), _song('b')]); // synced
+      await store.unmarkListenedLocally('u1', ['a'], noOutbox);
+      await store.markListenedLocally('u1', [_song('c')], noOutbox);
+
+      await store.applyRemoteListened('u1', upserts: [_song('a')], removedIds: ['b', 'c']);
+      expect(await states(), {'a': SyncState.pendingDelete, 'c': SyncState.pendingUpsert});
+      expect((await store.loadListened('u1')).map((t) => t['trackId']), ['c'],
+          reason: 'tombstones stay hidden');
+    });
+
+    test('a full download replaces what was synced and keeps what is pending', () async {
+      await store.saveListened('u1', [_song('old'), _song('kept')]);
+      await store.markListenedLocally('u1', [_song('mine')], noOutbox);
+      await store.unmarkListenedLocally('u1', ['kept'], noOutbox);
+
+      await store.replaceListenedWithServer('u1', [_song('kept'), _song('new')]);
+      expect(await states(), {
+        'kept': SyncState.pendingDelete,
+        'mine': SyncState.pendingUpsert,
+        'new': SyncState.synced,
+      });
+    });
+
+    test('confirmations settle the rows, refusals undo them', () async {
+      await store.saveListened('u1', [_song('x')]);
+      await store.markListenedLocally('u1', [_song('a'), _song('b')], noOutbox);
+      await store.unmarkListenedLocally('u1', ['x'], noOutbox);
+
+      await store.confirmListenedUpserts('u1', ['a']);
+      await store.revertListenedUpserts('u1', ['b']);
+      await store.revertListenedDeletes('u1', ['x']);
+      expect(await states(), {'a': SyncState.synced, 'x': SyncState.synced});
+
+      await store.unmarkListenedLocally('u1', ['a'], noOutbox);
+      await store.confirmListenedDeletes('u1', ['a']);
+      expect(await states(), {'x': SyncState.synced});
+      expect(await store.countListened('u1'), 1);
+    });
+
+    test('an unmark from another device spares a song marked again after it', () async {
+      await store.saveListened('u1', [
+        _song('a', at: DateTime(2026, 1, 1)),
+        _song('b', at: DateTime(2026, 3, 1)),
+      ]);
+      await store.applyRemoteDeletions('u1', {'a': DateTime(2026, 2, 1), 'b': DateTime(2026, 2, 1)});
+      expect((await store.loadListened('u1')).map((t) => t['trackId']), ['b']);
+    });
+  });
+
   test('the schema is at version 2 (the outbox)', () {
     expect(db.schemaVersion, 2);
   });

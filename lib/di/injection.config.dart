@@ -40,6 +40,7 @@ import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dar
     as _i424;
 import 'package:tsuki_tunes_mobile/data/repositories/playlist_repository_impl.dart'
     as _i553;
+import 'package:tsuki_tunes_mobile/data/sync/outbox.dart' as _i144;
 import 'package:tsuki_tunes_mobile/di/data_module.dart' as _i520;
 import 'package:tsuki_tunes_mobile/di/repository_module.dart' as _i53;
 import 'package:tsuki_tunes_mobile/domain/repositories/catalog_repository.dart'
@@ -116,6 +117,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i448.LibraryStore>(
       () => dataModule.libraryStore(gh<_i169.AppDatabase>()),
     );
+    gh.lazySingleton<_i144.Outbox>(
+      () => dataModule.outbox(gh<_i169.AppDatabase>()),
+    );
     gh.lazySingleton<_i372.MusicApiContract>(
       () => dataModule.musicApi(gh<_i814.DeezerApiService>()),
     );
@@ -124,6 +128,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i905.StorageService>(
       () => dataModule.storage(gh<_i448.LibraryStore>()),
+    );
+    gh.lazySingleton<_i424.LibraryRepositoryImpl>(
+      () => repositoryModule.library(
+        gh<_i186.FirebaseService>(),
+        gh<_i905.StorageService>(),
+        gh<_i448.LibraryStore>(),
+        gh<_i144.Outbox>(),
+      ),
     );
     gh.lazySingleton<_i298.StorageContract>(
       () => dataModule.storageContract(gh<_i905.StorageService>()),
@@ -140,14 +152,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i9.GetTrack>(
       () => _i9.GetTrack(gh<_i1049.CatalogRepository>()),
     );
+    gh.lazySingleton<_i409.LibraryRepository>(
+      () =>
+          repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
+    );
     gh.lazySingleton<_i802.PlaybackController>(
       () => repositoryModule.playback(gh<_i1052.AudioProvider>()),
-    );
-    gh.lazySingleton<_i424.LibraryRepositoryImpl>(
-      () => repositoryModule.library(
-        gh<_i186.FirebaseService>(),
-        gh<_i905.StorageService>(),
-      ),
     );
     gh.lazySingleton<_i553.PlaylistRepositoryImpl>(
       () => repositoryModule.playlists(
@@ -175,28 +185,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i553.PlaylistRepositoryImpl>(),
       ),
     );
-    gh.factory<_i883.AddTrackToPlaylist>(
-      () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.factory<_i79.CreatePlaylist>(
-      () => _i79.CreatePlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.factory<_i371.DeletePlaylist>(
-      () => _i371.DeletePlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.factory<_i161.RemoveTrackFromPlaylist>(
-      () => _i161.RemoveTrackFromPlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.factory<_i758.RenamePlaylist>(
-      () => _i758.RenamePlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.factory<_i670.ReorderPlaylist>(
-      () => _i670.ReorderPlaylist(gh<_i128.PlaylistRepository>()),
-    );
-    gh.lazySingleton<_i409.LibraryRepository>(
-      () =>
-          repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
-    );
     gh.factory<_i83.ToggleAlbumListened>(
       () => _i83.ToggleAlbumListened(gh<_i409.LibraryRepository>()),
     );
@@ -217,6 +205,24 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i102.UnmarkTrackListened>(
       () => _i102.UnmarkTrackListened(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i883.AddTrackToPlaylist>(
+      () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i79.CreatePlaylist>(
+      () => _i79.CreatePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i371.DeletePlaylist>(
+      () => _i371.DeletePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i161.RemoveTrackFromPlaylist>(
+      () => _i161.RemoveTrackFromPlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i758.RenamePlaylist>(
+      () => _i758.RenamePlaylist(gh<_i128.PlaylistRepository>()),
+    );
+    gh.factory<_i670.ReorderPlaylist>(
+      () => _i670.ReorderPlaylist(gh<_i128.PlaylistRepository>()),
     );
     return this;
   }

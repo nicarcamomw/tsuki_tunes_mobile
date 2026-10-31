@@ -104,7 +104,7 @@ void main() {
       final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
 
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         _listened('1', 'alb1'),
         _listened('2', 'alb1'),
         _listened('3', 'alb2', artist: 'B'),
@@ -116,7 +116,7 @@ void main() {
       expect(library.uniqueAlbumsCount, 2);
       expect(library.uniqueArtistsCount, 2);
 
-      library.setListenedTracksForTesting([_listened('1', 'alb1')]);
+      await library.setListenedTracksForTesting([_listened('1', 'alb1')]);
       expect(library.listenedCountForAlbum('alb1'), 1);
       expect(library.isAlbumCompleted('alb1', albumTracksCount: 2), isFalse);
       expect(library.uniqueAlbumsCount, 1);
@@ -125,7 +125,7 @@ void main() {
     test('ensureAlbumTrackCounts fetches each listened album once', () async {
       final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         _listened('1', 'alb1'),
         _listened('2', 'alb1'),
       ]);

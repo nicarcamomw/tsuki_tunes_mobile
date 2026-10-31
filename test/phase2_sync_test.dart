@@ -61,7 +61,7 @@ void main() {
       final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
       final deletedAt = DateTime(2026, 10, 20);
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         _listened('old', DateTime(2026, 10, 1)),
         _listened('nodate', null),
       ]);
@@ -75,7 +75,7 @@ void main() {
     test('keeps a track re-marked after the deletion', () async {
       final library = LibraryRepositoryImpl();
       await Future.delayed(const Duration(milliseconds: 50));
-      library.setListenedTracksForTesting([
+      await library.setListenedTracksForTesting([
         _listened('remarked', DateTime(2026, 10, 21)),
       ]);
 

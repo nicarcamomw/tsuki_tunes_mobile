@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/album.dart';
@@ -11,6 +12,9 @@ import '../../domain/repositories/library_repository.dart';
 import '../datasources/firebase_service.dart';
 import '../datasources/play_history_service.dart';
 import '../datasources/storage_service.dart';
+import '../local/app_database.dart';
+import '../local/library_store.dart';
+import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
@@ -55,9 +59,17 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   // Artist visits
   Map<String, int> _artistVisits = {};
 
-  LibraryRepositoryImpl({FirebaseService? firebase, StorageService? storage})
-      : _firebase = firebase ?? FirebaseService(),
+  /// [store] and [outbox] hold the listened songs and the writes on their
+  /// way to the server; get_it passes the app's database. Without them (a
+  /// test) an in-memory database stands in.
+  LibraryRepositoryImpl({
+    FirebaseService? firebase,
+    StorageService? storage,
+    LibraryStore? store,
+    Outbox? outbox,
+  })  : _firebase = firebase ?? FirebaseService(),
         _storage = storage ?? StorageService() {
+    final db = (store == null || outbox == null) ? AppDatabase(NativeDatabase.memory()) : null;
     _albums = AlbumCompletionIndex(
       storage: _storage,
       listenedTracks: () => _listened.tracks,
@@ -67,6 +79,8 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     _listened = ListenedTracksRepository(
       firebase: _firebase,
       storage: _storage,
+      store: store ?? LibraryStore(db!),
+      outbox: outbox ?? Outbox(db!),
       albums: _albums,
       onChanged: notifyListeners,
       tracked: _tracked,
@@ -200,6 +214,19 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     await _followed.connect(uid, userDoc, isCurrent);
   }
 
+  /// Completes once the writes in flight to the server are done.
+  @visibleForTesting
+  Future<void> pendingWritesSentForTesting() {
+    final uid = _writeUid;
+    return uid == null ? Future.value() : _listened.idle(uid);
+  }
+
+  /// Sends the writes still pending now (the connection came back).
+  void retryPendingSync() {
+    final uid = _writeUid;
+    if (uid != null) unawaited(_listened.retryPending(uid));
+  }
+
   void disconnectFirestore() {
     _currentUid = null;
     _listened.disconnect();
@@ -263,11 +290,11 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   }
 
   @visibleForTesting
-  void setListenedTracksForTesting(List<ListenedTrackData> tracks) {
-    _listened.setTracksForTesting(tracks);
+  Future<void> setListenedTracksForTesting(List<ListenedTrackData> tracks) {
+    final saved = _listened.setTracksForTesting(tracks, uid: _currentUid);
     _albums.invalidate();
-    _listened.invalidate();
     _topArtists = null;
+    return saved;
   }
 
   /// Applies an unmark made on another device. A track re-marked after the

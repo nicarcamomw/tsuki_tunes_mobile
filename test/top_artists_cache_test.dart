@@ -20,7 +20,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final library = LibraryRepositoryImpl();
     await Future<void>.delayed(const Duration(milliseconds: 50));
-    library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'A'), _t('3', 'B')]);
+    await library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'A'), _t('3', 'B')]);
 
     final first = library.getTopArtists(limit: 2);
     expect(first.map((e) => e.name), ['A', 'B']);
@@ -39,7 +39,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final library = LibraryRepositoryImpl();
     await Future<void>.delayed(const Duration(milliseconds: 50));
-    library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'B')]);
+    await library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'B')]);
 
     final first = library.listenedTracks;
     expect(identical(library.listenedTracks, first), isTrue);
