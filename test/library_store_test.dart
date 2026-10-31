@@ -94,7 +94,7 @@ void main() {
     });
   });
 
-  test('the schema starts at version 1', () {
-    expect(db.schemaVersion, 1);
+  test('the schema is at version 2 (the outbox)', () {
+    expect(db.schemaVersion, 2);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'app_database.steps.dart';
+
 part 'app_database.g.dart';
 
 // The library on the phone: SQLite through Drift. Each account's songs,
@@ -25,8 +27,24 @@ class ListenedTracks extends Table {
   IntColumn get duration => integer()();
   DateTimeColumn get listenedAt => dateTime().nullable()();
 
+  /// Whether the server has this row yet ([SyncState]; 0 is synced, a
+  /// literal so the saved schema snapshots can hold it).
+  IntColumn get syncState => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {uid, trackId};
+}
+
+/// How far a local row is from the server.
+abstract final class SyncState {
+  static const synced = 0;
+
+  /// Written here, waiting in the outbox to reach the server.
+  static const pendingUpsert = 1;
+
+  /// Removed here (kept as a tombstone, hidden from the app) until the
+  /// server confirms the delete, so a remote copy can't bring it back.
+  static const pendingDelete = 2;
 }
 
 /// The account's playlists, in the order the app shows them. The songs stay
@@ -52,7 +70,26 @@ class FollowedArtists extends Table {
   Set<Column> get primaryKey => {uid, artistId};
 }
 
-@DriftDatabase(tables: [ListenedTracks, Playlists, FollowedArtists])
+/// Writes waiting to reach the server, oldest first. Each one is retried
+/// with a growing wait until it lands or fails for good; it survives app
+/// restarts because it lives here.
+@TableIndex(name: 'outbox_due', columns: {#uid, #nextAttemptAt})
+class Outbox extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get uid => text()();
+
+  /// What to do (see OutboxKind), on which entity, with what data.
+  TextColumn get kind => text()();
+  TextColumn get entityId => text()();
+  TextColumn get payload => text().withDefault(const Constant('{}'))();
+
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+  DateTimeColumn get nextAttemptAt => dateTime()();
+  DateTimeColumn get createdAt => dateTime()();
+  TextColumn get lastError => text().nullable()();
+}
+
+@DriftDatabase(tables: [ListenedTracks, Playlists, FollowedArtists, Outbox])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -60,12 +97,19 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'tsuki_library'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
+  // Each step is checked against the saved schema of its version
+  // (drift_schemas/, test/drift/): dart run drift_dev make-migrations
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
-        // Future versions: if (from < 2) { await m.addColumn(...); }
-        onUpgrade: (m, from, to) async {},
+        onUpgrade: stepByStep(
+          from1To2: (m, schema) async {
+            await m.addColumn(schema.listenedTracks, schema.listenedTracks.syncState);
+            await m.createTable(schema.outbox);
+            await m.createIndex(schema.outboxDue);
+          },
+        ),
       );
 }

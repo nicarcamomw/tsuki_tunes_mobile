@@ -116,6 +116,18 @@ class $ListenedTracksTable extends ListenedTracks
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _syncStateMeta = const VerificationMeta(
+    'syncState',
+  );
+  @override
+  late final GeneratedColumn<int> syncState = GeneratedColumn<int>(
+    'sync_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     uid,
@@ -128,6 +140,7 @@ class $ListenedTracksTable extends ListenedTracks
     previewUrl,
     duration,
     listenedAt,
+    syncState,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -217,6 +230,12 @@ class $ListenedTracksTable extends ListenedTracks
         listenedAt.isAcceptableOrUnknown(data['listened_at']!, _listenedAtMeta),
       );
     }
+    if (data.containsKey('sync_state')) {
+      context.handle(
+        _syncStateMeta,
+        syncState.isAcceptableOrUnknown(data['sync_state']!, _syncStateMeta),
+      );
+    }
     return context;
   }
 
@@ -266,6 +285,10 @@ class $ListenedTracksTable extends ListenedTracks
         DriftSqlType.dateTime,
         data['${effectivePrefix}listened_at'],
       ),
+      syncState: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sync_state'],
+      )!,
     );
   }
 
@@ -286,6 +309,10 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
   final String previewUrl;
   final int duration;
   final DateTime? listenedAt;
+
+  /// Whether the server has this row yet ([SyncState]; 0 is synced, a
+  /// literal so the saved schema snapshots can hold it).
+  final int syncState;
   const ListenedTrack({
     required this.uid,
     required this.trackId,
@@ -297,6 +324,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     required this.previewUrl,
     required this.duration,
     this.listenedAt,
+    required this.syncState,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -313,6 +341,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     if (!nullToAbsent || listenedAt != null) {
       map['listened_at'] = Variable<DateTime>(listenedAt);
     }
+    map['sync_state'] = Variable<int>(syncState);
     return map;
   }
 
@@ -330,6 +359,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       listenedAt: listenedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(listenedAt),
+      syncState: Value(syncState),
     );
   }
 
@@ -349,6 +379,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       previewUrl: serializer.fromJson<String>(json['previewUrl']),
       duration: serializer.fromJson<int>(json['duration']),
       listenedAt: serializer.fromJson<DateTime?>(json['listenedAt']),
+      syncState: serializer.fromJson<int>(json['syncState']),
     );
   }
   @override
@@ -365,6 +396,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       'previewUrl': serializer.toJson<String>(previewUrl),
       'duration': serializer.toJson<int>(duration),
       'listenedAt': serializer.toJson<DateTime?>(listenedAt),
+      'syncState': serializer.toJson<int>(syncState),
     };
   }
 
@@ -379,6 +411,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     String? previewUrl,
     int? duration,
     Value<DateTime?> listenedAt = const Value.absent(),
+    int? syncState,
   }) => ListenedTrack(
     uid: uid ?? this.uid,
     trackId: trackId ?? this.trackId,
@@ -390,6 +423,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     previewUrl: previewUrl ?? this.previewUrl,
     duration: duration ?? this.duration,
     listenedAt: listenedAt.present ? listenedAt.value : this.listenedAt,
+    syncState: syncState ?? this.syncState,
   );
   ListenedTrack copyWithCompanion(ListenedTracksCompanion data) {
     return ListenedTrack(
@@ -411,6 +445,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       listenedAt: data.listenedAt.present
           ? data.listenedAt.value
           : this.listenedAt,
+      syncState: data.syncState.present ? data.syncState.value : this.syncState,
     );
   }
 
@@ -426,7 +461,8 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
           ..write('coverUrl: $coverUrl, ')
           ..write('previewUrl: $previewUrl, ')
           ..write('duration: $duration, ')
-          ..write('listenedAt: $listenedAt')
+          ..write('listenedAt: $listenedAt, ')
+          ..write('syncState: $syncState')
           ..write(')'))
         .toString();
   }
@@ -443,6 +479,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     previewUrl,
     duration,
     listenedAt,
+    syncState,
   );
   @override
   bool operator ==(Object other) =>
@@ -457,7 +494,8 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
           other.coverUrl == this.coverUrl &&
           other.previewUrl == this.previewUrl &&
           other.duration == this.duration &&
-          other.listenedAt == this.listenedAt);
+          other.listenedAt == this.listenedAt &&
+          other.syncState == this.syncState);
 }
 
 class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
@@ -471,6 +509,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
   final Value<String> previewUrl;
   final Value<int> duration;
   final Value<DateTime?> listenedAt;
+  final Value<int> syncState;
   final Value<int> rowid;
   const ListenedTracksCompanion({
     this.uid = const Value.absent(),
@@ -483,6 +522,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     this.previewUrl = const Value.absent(),
     this.duration = const Value.absent(),
     this.listenedAt = const Value.absent(),
+    this.syncState = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ListenedTracksCompanion.insert({
@@ -496,6 +536,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     this.previewUrl = const Value.absent(),
     required int duration,
     this.listenedAt = const Value.absent(),
+    this.syncState = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : uid = Value(uid),
        trackId = Value(trackId),
@@ -516,6 +557,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     Expression<String>? previewUrl,
     Expression<int>? duration,
     Expression<DateTime>? listenedAt,
+    Expression<int>? syncState,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -529,6 +571,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
       if (previewUrl != null) 'preview_url': previewUrl,
       if (duration != null) 'duration': duration,
       if (listenedAt != null) 'listened_at': listenedAt,
+      if (syncState != null) 'sync_state': syncState,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -544,6 +587,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     Value<String>? previewUrl,
     Value<int>? duration,
     Value<DateTime?>? listenedAt,
+    Value<int>? syncState,
     Value<int>? rowid,
   }) {
     return ListenedTracksCompanion(
@@ -557,6 +601,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
       previewUrl: previewUrl ?? this.previewUrl,
       duration: duration ?? this.duration,
       listenedAt: listenedAt ?? this.listenedAt,
+      syncState: syncState ?? this.syncState,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -594,6 +639,9 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     if (listenedAt.present) {
       map['listened_at'] = Variable<DateTime>(listenedAt.value);
     }
+    if (syncState.present) {
+      map['sync_state'] = Variable<int>(syncState.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -613,6 +661,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
           ..write('previewUrl: $previewUrl, ')
           ..write('duration: $duration, ')
           ..write('listenedAt: $listenedAt, ')
+          ..write('syncState: $syncState, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1232,6 +1281,556 @@ class FollowedArtistsCompanion extends UpdateCompanion<FollowedArtist> {
   }
 }
 
+class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OutboxTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  @override
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
+    'nextAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextAttemptAt =
+      GeneratedColumn<DateTime>(
+        'next_attempt_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    uid,
+    kind,
+    entityId,
+    payload,
+    attempts,
+    nextAttemptAt,
+    createdAt,
+    lastError,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'outbox';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OutboxData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uidMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('next_attempt_at')) {
+      context.handle(
+        _nextAttemptAtMeta,
+        nextAttemptAt.isAcceptableOrUnknown(
+          data['next_attempt_at']!,
+          _nextAttemptAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nextAttemptAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OutboxData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OutboxData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      nextAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_attempt_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+    );
+  }
+
+  @override
+  $OutboxTable createAlias(String alias) {
+    return $OutboxTable(attachedDatabase, alias);
+  }
+}
+
+class OutboxData extends DataClass implements Insertable<OutboxData> {
+  final int id;
+  final String uid;
+
+  /// What to do (see OutboxKind), on which entity, with what data.
+  final String kind;
+  final String entityId;
+  final String payload;
+  final int attempts;
+  final DateTime nextAttemptAt;
+  final DateTime createdAt;
+  final String? lastError;
+  const OutboxData({
+    required this.id,
+    required this.uid,
+    required this.kind,
+    required this.entityId,
+    required this.payload,
+    required this.attempts,
+    required this.nextAttemptAt,
+    required this.createdAt,
+    this.lastError,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uid'] = Variable<String>(uid);
+    map['kind'] = Variable<String>(kind);
+    map['entity_id'] = Variable<String>(entityId);
+    map['payload'] = Variable<String>(payload);
+    map['attempts'] = Variable<int>(attempts);
+    map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    return map;
+  }
+
+  OutboxCompanion toCompanion(bool nullToAbsent) {
+    return OutboxCompanion(
+      id: Value(id),
+      uid: Value(uid),
+      kind: Value(kind),
+      entityId: Value(entityId),
+      payload: Value(payload),
+      attempts: Value(attempts),
+      nextAttemptAt: Value(nextAttemptAt),
+      createdAt: Value(createdAt),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+    );
+  }
+
+  factory OutboxData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OutboxData(
+      id: serializer.fromJson<int>(json['id']),
+      uid: serializer.fromJson<String>(json['uid']),
+      kind: serializer.fromJson<String>(json['kind']),
+      entityId: serializer.fromJson<String>(json['entityId']),
+      payload: serializer.fromJson<String>(json['payload']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      nextAttemptAt: serializer.fromJson<DateTime>(json['nextAttemptAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uid': serializer.toJson<String>(uid),
+      'kind': serializer.toJson<String>(kind),
+      'entityId': serializer.toJson<String>(entityId),
+      'payload': serializer.toJson<String>(payload),
+      'attempts': serializer.toJson<int>(attempts),
+      'nextAttemptAt': serializer.toJson<DateTime>(nextAttemptAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'lastError': serializer.toJson<String?>(lastError),
+    };
+  }
+
+  OutboxData copyWith({
+    int? id,
+    String? uid,
+    String? kind,
+    String? entityId,
+    String? payload,
+    int? attempts,
+    DateTime? nextAttemptAt,
+    DateTime? createdAt,
+    Value<String?> lastError = const Value.absent(),
+  }) => OutboxData(
+    id: id ?? this.id,
+    uid: uid ?? this.uid,
+    kind: kind ?? this.kind,
+    entityId: entityId ?? this.entityId,
+    payload: payload ?? this.payload,
+    attempts: attempts ?? this.attempts,
+    nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+    createdAt: createdAt ?? this.createdAt,
+    lastError: lastError.present ? lastError.value : this.lastError,
+  );
+  OutboxData copyWithCompanion(OutboxCompanion data) {
+    return OutboxData(
+      id: data.id.present ? data.id.value : this.id,
+      uid: data.uid.present ? data.uid.value : this.uid,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      nextAttemptAt: data.nextAttemptAt.present
+          ? data.nextAttemptAt.value
+          : this.nextAttemptAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxData(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('kind: $kind, ')
+          ..write('entityId: $entityId, ')
+          ..write('payload: $payload, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastError: $lastError')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    uid,
+    kind,
+    entityId,
+    payload,
+    attempts,
+    nextAttemptAt,
+    createdAt,
+    lastError,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OutboxData &&
+          other.id == this.id &&
+          other.uid == this.uid &&
+          other.kind == this.kind &&
+          other.entityId == this.entityId &&
+          other.payload == this.payload &&
+          other.attempts == this.attempts &&
+          other.nextAttemptAt == this.nextAttemptAt &&
+          other.createdAt == this.createdAt &&
+          other.lastError == this.lastError);
+}
+
+class OutboxCompanion extends UpdateCompanion<OutboxData> {
+  final Value<int> id;
+  final Value<String> uid;
+  final Value<String> kind;
+  final Value<String> entityId;
+  final Value<String> payload;
+  final Value<int> attempts;
+  final Value<DateTime> nextAttemptAt;
+  final Value<DateTime> createdAt;
+  final Value<String?> lastError;
+  const OutboxCompanion({
+    this.id = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.entityId = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+  });
+  OutboxCompanion.insert({
+    this.id = const Value.absent(),
+    required String uid,
+    required String kind,
+    required String entityId,
+    this.payload = const Value.absent(),
+    this.attempts = const Value.absent(),
+    required DateTime nextAttemptAt,
+    required DateTime createdAt,
+    this.lastError = const Value.absent(),
+  }) : uid = Value(uid),
+       kind = Value(kind),
+       entityId = Value(entityId),
+       nextAttemptAt = Value(nextAttemptAt),
+       createdAt = Value(createdAt);
+  static Insertable<OutboxData> custom({
+    Expression<int>? id,
+    Expression<String>? uid,
+    Expression<String>? kind,
+    Expression<String>? entityId,
+    Expression<String>? payload,
+    Expression<int>? attempts,
+    Expression<DateTime>? nextAttemptAt,
+    Expression<DateTime>? createdAt,
+    Expression<String>? lastError,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (uid != null) 'uid': uid,
+      if (kind != null) 'kind': kind,
+      if (entityId != null) 'entity_id': entityId,
+      if (payload != null) 'payload': payload,
+      if (attempts != null) 'attempts': attempts,
+      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (lastError != null) 'last_error': lastError,
+    });
+  }
+
+  OutboxCompanion copyWith({
+    Value<int>? id,
+    Value<String>? uid,
+    Value<String>? kind,
+    Value<String>? entityId,
+    Value<String>? payload,
+    Value<int>? attempts,
+    Value<DateTime>? nextAttemptAt,
+    Value<DateTime>? createdAt,
+    Value<String?>? lastError,
+  }) {
+    return OutboxCompanion(
+      id: id ?? this.id,
+      uid: uid ?? this.uid,
+      kind: kind ?? this.kind,
+      entityId: entityId ?? this.entityId,
+      payload: payload ?? this.payload,
+      attempts: attempts ?? this.attempts,
+      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+      createdAt: createdAt ?? this.createdAt,
+      lastError: lastError ?? this.lastError,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (nextAttemptAt.present) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxCompanion(')
+          ..write('id: $id, ')
+          ..write('uid: $uid, ')
+          ..write('kind: $kind, ')
+          ..write('entityId: $entityId, ')
+          ..write('payload: $payload, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastError: $lastError')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1240,6 +1839,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FollowedArtistsTable followedArtists = $FollowedArtistsTable(
     this,
   );
+  late final $OutboxTable outbox = $OutboxTable(this);
   late final Index listenedByAlbum = Index(
     'listened_by_album',
     'CREATE INDEX listened_by_album ON listened_tracks (uid, album_id)',
@@ -1247,6 +1847,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index listenedByDate = Index(
     'listened_by_date',
     'CREATE INDEX listened_by_date ON listened_tracks (uid, listened_at)',
+  );
+  late final Index outboxDue = Index(
+    'outbox_due',
+    'CREATE INDEX outbox_due ON outbox (uid, next_attempt_at)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1256,8 +1860,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     listenedTracks,
     playlists,
     followedArtists,
+    outbox,
     listenedByAlbum,
     listenedByDate,
+    outboxDue,
   ];
 }
 
@@ -1273,6 +1879,7 @@ typedef $$ListenedTracksTableCreateCompanionBuilder =
       Value<String> previewUrl,
       required int duration,
       Value<DateTime?> listenedAt,
+      Value<int> syncState,
       Value<int> rowid,
     });
 typedef $$ListenedTracksTableUpdateCompanionBuilder =
@@ -1287,6 +1894,7 @@ typedef $$ListenedTracksTableUpdateCompanionBuilder =
       Value<String> previewUrl,
       Value<int> duration,
       Value<DateTime?> listenedAt,
+      Value<int> syncState,
       Value<int> rowid,
     });
 
@@ -1346,6 +1954,11 @@ class $$ListenedTracksTableFilterComposer
 
   ColumnFilters<DateTime> get listenedAt => $composableBuilder(
     column: $table.listenedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get syncState => $composableBuilder(
+    column: $table.syncState,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1408,6 +2021,11 @@ class $$ListenedTracksTableOrderingComposer
     column: $table.listenedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get syncState => $composableBuilder(
+    column: $table.syncState,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ListenedTracksTableAnnotationComposer
@@ -1456,6 +2074,9 @@ class $$ListenedTracksTableAnnotationComposer
     column: $table.listenedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get syncState =>
+      $composableBuilder(column: $table.syncState, builder: (column) => column);
 }
 
 class $$ListenedTracksTableTableManager
@@ -1501,6 +2122,7 @@ class $$ListenedTracksTableTableManager
                 Value<String> previewUrl = const Value.absent(),
                 Value<int> duration = const Value.absent(),
                 Value<DateTime?> listenedAt = const Value.absent(),
+                Value<int> syncState = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ListenedTracksCompanion(
                 uid: uid,
@@ -1513,6 +2135,7 @@ class $$ListenedTracksTableTableManager
                 previewUrl: previewUrl,
                 duration: duration,
                 listenedAt: listenedAt,
+                syncState: syncState,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1527,6 +2150,7 @@ class $$ListenedTracksTableTableManager
                 Value<String> previewUrl = const Value.absent(),
                 required int duration,
                 Value<DateTime?> listenedAt = const Value.absent(),
+                Value<int> syncState = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ListenedTracksCompanion.insert(
                 uid: uid,
@@ -1539,6 +2163,7 @@ class $$ListenedTracksTableTableManager
                 previewUrl: previewUrl,
                 duration: duration,
                 listenedAt: listenedAt,
+                syncState: syncState,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -1955,6 +2580,281 @@ typedef $$FollowedArtistsTableProcessedTableManager =
       FollowedArtist,
       PrefetchHooks Function()
     >;
+typedef $$OutboxTableCreateCompanionBuilder =
+    OutboxCompanion Function({
+      Value<int> id,
+      required String uid,
+      required String kind,
+      required String entityId,
+      Value<String> payload,
+      Value<int> attempts,
+      required DateTime nextAttemptAt,
+      required DateTime createdAt,
+      Value<String?> lastError,
+    });
+typedef $$OutboxTableUpdateCompanionBuilder =
+    OutboxCompanion Function({
+      Value<int> id,
+      Value<String> uid,
+      Value<String> kind,
+      Value<String> entityId,
+      Value<String> payload,
+      Value<int> attempts,
+      Value<DateTime> nextAttemptAt,
+      Value<DateTime> createdAt,
+      Value<String?> lastError,
+    });
+
+class $$OutboxTableFilterComposer
+    extends Composer<_$AppDatabase, $OutboxTable> {
+  $$OutboxTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OutboxTableOrderingComposer
+    extends Composer<_$AppDatabase, $OutboxTable> {
+  $$OutboxTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityId => $composableBuilder(
+    column: $table.entityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OutboxTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OutboxTable> {
+  $$OutboxTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get entityId =>
+      $composableBuilder(column: $table.entityId, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+}
+
+class $$OutboxTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OutboxTable,
+          OutboxData,
+          $$OutboxTableFilterComposer,
+          $$OutboxTableOrderingComposer,
+          $$OutboxTableAnnotationComposer,
+          $$OutboxTableCreateCompanionBuilder,
+          $$OutboxTableUpdateCompanionBuilder,
+          (OutboxData, BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>),
+          OutboxData,
+          PrefetchHooks Function()
+        > {
+  $$OutboxTableTableManager(_$AppDatabase db, $OutboxTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OutboxTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OutboxTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OutboxTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> uid = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> entityId = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime> nextAttemptAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+              }) => OutboxCompanion(
+                id: id,
+                uid: uid,
+                kind: kind,
+                entityId: entityId,
+                payload: payload,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+                createdAt: createdAt,
+                lastError: lastError,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String uid,
+                required String kind,
+                required String entityId,
+                Value<String> payload = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                required DateTime nextAttemptAt,
+                required DateTime createdAt,
+                Value<String?> lastError = const Value.absent(),
+              }) => OutboxCompanion.insert(
+                id: id,
+                uid: uid,
+                kind: kind,
+                entityId: entityId,
+                payload: payload,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+                createdAt: createdAt,
+                lastError: lastError,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$OutboxTable, OutboxData>(table),
+                  BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OutboxTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OutboxTable,
+      OutboxData,
+      $$OutboxTableFilterComposer,
+      $$OutboxTableOrderingComposer,
+      $$OutboxTableAnnotationComposer,
+      $$OutboxTableCreateCompanionBuilder,
+      $$OutboxTableUpdateCompanionBuilder,
+      (OutboxData, BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>),
+      OutboxData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1965,4 +2865,6 @@ class $AppDatabaseManager {
       $$PlaylistsTableTableManager(_db, _db.playlists);
   $$FollowedArtistsTableTableManager get followedArtists =>
       $$FollowedArtistsTableTableManager(_db, _db.followedArtists);
+  $$OutboxTableTableManager get outbox =>
+      $$OutboxTableTableManager(_db, _db.outbox);
 }

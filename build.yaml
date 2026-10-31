@@ -15,3 +15,12 @@ targets:
           explicit_to_json: true
           # Firestore and old caches may hand back Map<dynamic, dynamic>.
           any_map: true
+      drift_dev:
+        options:
+          # Schema snapshots per version (drift_schemas/) and generated
+          # migration tests: dart run drift_dev make-migrations
+          databases:
+            app: lib/data/local/app_database.dart
+          test_dir: test/drift/
+          schema_dir: drift_schemas/
+
