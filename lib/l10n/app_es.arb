@@ -1008,5 +1008,691 @@
   "autoRecent": "Recientes",
   "autoFavorites": "Favoritos",
   "autoPlaylists": "Mis playlists",
-  "autoTopChart": "Top mundial"
+  "autoTopChart": "Top mundial",
+  "navHudSubtitle": "{tab, select, home{ホーム // 01} search{探索 // 02} other{保管庫 // 03}}",
+  "@navHudSubtitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "flowCoverage": "BPM conocido en {known} de {total} canciones",
+  "@flowCoverage": {
+    "placeholders": {
+      "known": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flowError": "No se pudo consultar el tempo. Revisa tu conexión.",
+  "flowModeName": "{mode, select, rise{Subir energía} calm{Calmar} other{Ola DJ}}",
+  "@flowModeName": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "flowModeDescription": "{mode, select, rise{El tempo sube poco a poco. Para entrenar o prender la fiesta.} calm{El tempo baja poco a poco. Para relajarte, estudiar o dormir.} other{Sube hasta un clímax y luego baja, como un set de DJ.}}",
+  "@flowModeDescription": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "runCardReading": "Activo · leyendo tu ritmo",
+  "runCardSteps": "Activo · {spm} pasos/min",
+  "@runCardSteps": {
+    "placeholders": {
+      "spm": {
+        "type": "int"
+      }
+    }
+  },
+  "runState": "{state, select, still{SIN RITMO} walking{CAMINANDO} other{CORRIENDO}}",
+  "@runState": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "dayPartName": "{part, select, lateNight{Madrugada} morning{Mañana} afternoon{Tarde} other{Noche}}",
+  "@dayPartName": {
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "skyPhrase": "{part, select, lateNight{Madrugada} morning{Mañana} afternoon{Tarde} other{Noche}} {sky, select, sunny{soleada} clear{despejada} fewClouds{con algunas nubes} cloudy{nublada} overcast{gris} fog{con niebla} drizzle{con llovizna} rain{lluviosa} snow{con nieve} other{de tormenta}}",
+  "@skyPhrase": {
+    "placeholders": {
+      "part": {
+        "type": "String"
+      },
+      "sky": {
+        "type": "String"
+      }
+    }
+  },
+  "skyName": "{sky, select, clear{Despejado} fewClouds{Algunas nubes} cloudy{Nublado} overcast{Cubierto} fog{Niebla} drizzle{Llovizna} rain{Lluvia} snow{Nieve} other{Tormenta}}",
+  "@skyName": {
+    "placeholders": {
+      "sky": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherUpdated": "{minutes, plural, =0{Actualizado ahora} other{Actualizado hace {minutes} min}}",
+  "@weatherUpdated": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "weatherServiceOff": "La ubicación del teléfono está apagada.",
+  "weatherLocationFailed": "No pude obtener tu ubicación. Prueba de nuevo o elige tu ciudad.",
+  "weatherOffline": "Sin conexión con el servicio del clima.",
+  "weatherNoResults": "No encontré esa ciudad.",
+  "rainOfferTitleHere": "Está lloviendo donde estás",
+  "rainOfferTitleIn": "Está lloviendo en {place}",
+  "@rainOfferTitleIn": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "rainOfferEmpty": "Todavía no encuentro canciones tranquilas tuyas. Guarda algunas favoritas y lo intento otra vez.",
+  "rainOfferPlaying": "Sonando: {count} canciones para la lluvia",
+  "@rainOfferPlaying": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "maskRarity": "{rarity, select, common{COMÚN} rare{RARA} epic{ÉPICA} secret{SECRETA} other{LEGENDARIA}}",
+  "@maskRarity": {
+    "placeholders": {
+      "rarity": {
+        "type": "String"
+      }
+    }
+  },
+  "moonPhaseName": "{phase, select, newMoon{Luna nueva} waxingCrescent{Luna creciente} firstQuarter{Cuarto creciente} waxingGibbous{Gibosa creciente} fullMoon{Luna llena} waningGibbous{Gibosa menguante} lastQuarter{Cuarto menguante} other{Luna menguante}}",
+  "@moonPhaseName": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "moonTonightTitle": "LA LUNA DE ESTA NOCHE",
+  "moonUntilFullDays": "{days, plural, =1{Falta 1 día para luna llena} other{Faltan {days} días para luna llena}}",
+  "@moonUntilFullDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "moonUntilFullHours": "{hours, plural, =1{Falta 1 hora para luna llena} other{Faltan {hours} horas para luna llena}}",
+  "@moonUntilFullHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "moonMixUnlocked": "Tus {count} canciones más escuchadas de este ciclo lunar",
+  "@moonMixUnlocked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moonMixProgress": "{count, plural, =0{Escucha música este ciclo para llenarlo} =1{Ya llevas 1 canción en este ciclo} other{Ya llevas {count} canciones en este ciclo}}",
+  "@moonMixProgress": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moonMixEmpty": "Este ciclo no escuchaste música todavía. ¡El próximo mix te espera!",
+  "moonMixSaveFailed": "No se pudo guardar. Inicia sesión e inténtalo de nuevo.",
+  "moonEclipseKind": "{kind, select, total{total} partial{parcial} other{penumbral}}",
+  "@moonEclipseKind": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "moonNextEclipse": "Próximo eclipse lunar: {date} · {kind, select, total{total} partial{parcial} other{penumbral}}",
+  "@moonNextEclipse": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "shortDate": "{day} {month, select, jan{ene} feb{feb} mar{mar} apr{abr} may{may} jun{jun} jul{jul} aug{ago} sep{sep} oct{oct} nov{nov} other{dic}}",
+  "@shortDate": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "longDate": "{date} {year}",
+  "@longDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "ambientName": "{sound, select, rain{Lluvia} storm{Tormenta} waves{Olas} fire{Fogata} wind{Viento} night{Noche} other{Ruido marrón}}",
+  "@ambientName": {
+    "placeholders": {
+      "sound": {
+        "type": "String"
+      }
+    }
+  },
+  "ambientAfterTimerKeep": "No apagar",
+  "ambientAfterTimerMinutes": "{minutes, plural, =0{Apagar con la música} other{Seguir {minutes} min}}",
+  "@ambientAfterTimerMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "guessArtistTooFew": "Este artista no tiene suficientes canciones para jugar. Prueba con otro.",
+  "guessSkip": "SALTAR (+{seconds}s)",
+  "@guessSkip": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "guessWonIn": "{attempts, plural, =1{¡Al primer segundo!} other{¡Lo adivinaste en {attempts} intentos!}}",
+  "@guessWonIn": {
+    "placeholders": {
+      "attempts": {
+        "type": "int"
+      }
+    }
+  },
+  "guessLoadError": "No se pudo cargar la canción",
+  "guessDailyDone": "Reto de hoy completado ✓",
+  "languageCardSubtitle": "{target, select, es{Español (Latinoamérica) · Predeterminado} en{Inglés (Internacional) · Global} other{Japonés (日本語) · Kanji HUD & Cyber}}",
+  "@languageCardSubtitle": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "affinityInfoIntro": "La afinidad mide tu conexión con cada artista según dos factores:",
+  "affinityVisitsBody": "Cada vez que abres la página del artista.",
+  "affinityPoints": "{points, plural, =1{+1 PT} other{+{points} PTS}}",
+  "@affinityPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "affinityInfoOutro": "Cuanto más escuches y explores a un artista, mayor será tu afinidad.",
+  "albumMeta": "{year}  ·  {count} canciones  ·  {duration}",
+  "@albumMeta": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "albumTypeLabel": "{type, select, single{Sencillo} ep{EP} compile{Compilación} other{Álbum}}",
+  "@albumTypeLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "artistDiscographyProgress": "{completed}/{total} lanzamientos completos",
+  "@artistDiscographyProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "albumCountLabel": "{count, plural, =1{1 álbum} other{{count} álbumes}}",
+  "@albumCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "epCountLabel": "{count, plural, =1{1 EP} other{{count} EPs}}",
+  "@epCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "singleCountLabel": "{count, plural, =1{1 sencillo} other{{count} sencillos}}",
+  "@singleCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storedContentSongs": "{count} canciones",
+  "@storedContentSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storedContentFrom": "De {artist}",
+  "@storedContentFrom": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "trackCountLabel": "{count, plural, =1{1 canción} other{{count} canciones}}",
+  "@trackCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingSlide1Desc": "Guarda tus canciones y álbumes favoritos con un toque. Mantén tu colección musical organizada en tu teléfono y accede a tus temas en cualquier momento.",
+  "onboardingSlide2Desc": "Busca cualquier artista, canción o disco en segundos. Explora tendencias globales y escucha avances en alta fidelidad al instante.",
+  "onboardingSlide3Desc": "Control total de tu música con ecualizadores dinámicos, diseño a pantalla completa y controles fluidos a 120 FPS.",
+  "sleepTimerMinutes": "{minutes} MINUTOS",
+  "@sleepTimerMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepTimerRemainingLabel": "APAGADO EN {time}",
+  "@sleepTimerRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "playlistMeta": "{count} canciones  ·  {duration}",
+  "@playlistMeta": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedYear": "TU AÑO {year} EN MÚSICA",
+  "@wrappedYear": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactMarathon": "Tu día maratón: {count} canciones el {date} 🔥",
+  "@wrappedFactMarathon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactLoyal": "Fan incondicional de {artist} con {count} reproducciones 💎",
+  "@wrappedFactLoyal": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactDawn": "Escuchaste {count} canciones al amanecer (5-7 AM) 🌅",
+  "@wrappedFactDawn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactOneHit": "\"{title}\" de {artist} en repeat: {count} veces 🔄",
+  "@wrappedFactOneHit": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "artist": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactWeekend": "Fin de semana pro: ~{weekendAvg} canciones/día vs ~{weekdayAvg} entre semana 🎉",
+  "@wrappedFactWeekend": {
+    "placeholders": {
+      "weekendAvg": {
+        "type": "int"
+      },
+      "weekdayAvg": {
+        "type": "int"
+      }
+    }
+  },
+  "clockPeakHour": "Hora pico: {hour} — {count} reproducciones",
+  "@clockPeakHour": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clockTotalYear": "◈ {count} REPRODUCCIONES ESTE AÑO // CLOCK.SYS",
+  "@clockTotalYear": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rabbitHoleMaxReached": "La red llegó a su límite. Reinicia desde este artista para seguir bajando.",
+  "rabbitHoleHint": "Toca un nodo para expandir · Mantén y arrastra para moverlo · Pellizca para hacer zoom",
+  "rabbitHoleEmptySubtitle": "Deezer todavía no tiene artistas relacionados para este artista.",
+  "rabbitHoleOfflineSubtitle": "No pudimos conectar con Deezer. Revisa tu conexión e inténtalo de nuevo.",
+  "a11yRabbitHole": "Madriguera de conejo: grafo interactivo de artistas relacionados",
+  "radarWatching": "{count, plural, =1{1 artista vigilado} other{{count} artistas vigilados}}",
+  "@radarWatching": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "radarNewCount": "{count, plural, =1{1 LANZAMIENTO NUEVO} other{{count} LANZAMIENTOS NUEVOS}}",
+  "@radarNewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "radarPermissionSettingsHint": "Actívalas en Ajustes › Aplicaciones › Tsuki Tunes › Notificaciones.",
+  "radarNotChecked": "Aún sin revisar",
+  "radarLastChecked": "Última revisión: {span}",
+  "@radarLastChecked": {
+    "placeholders": {
+      "span": {
+        "type": "String"
+      }
+    }
+  },
+  "radarSpanNow": "justo ahora",
+  "radarSpanMinutes": "hace {minutes} min",
+  "@radarSpanMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "radarSpanHours": "hace {hours} h",
+  "@radarSpanHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "radarSpanDays": "{days, plural, =1{hace 1 día} other{hace {days} días}}",
+  "@radarSpanDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "radarEmptyNoArtists": "El radar vigila a los artistas que sigues y te avisa cuando sacan algo nuevo. Toca SEGUIR en el perfil de un artista.",
+  "radarEmptyNoReleases": "Tus artistas no sacaron nada en los últimos 60 días. Te avisaremos en cuanto lo hagan.",
+  "radarIosNote": "En iPhone, iOS decide cuándo ejecutar la revisión en segundo plano. Abrir la app también busca lanzamientos.",
+  "radarType": "{type, select, single{SINGLE} ep{EP} other{ÁLBUM}}",
+  "@radarType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "radarUpcoming": "PRÓXIMAMENTE",
+  "radarDaysAgo": "{days, plural, =0{HOY} =1{AYER} other{HACE {days} DÍAS}}",
+  "@radarDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "radarNotifSingle": "{type, select, single{🔥 {artist} sacó un single nuevo} ep{🔥 {artist} sacó un EP nuevo} other{🔥 {artist} sacó un álbum nuevo}}",
+  "@radarNotifSingle": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "radarNamesPair": "{first} y {second}",
+  "@radarNamesPair": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "radarNamesMore": "{names} y {rest} más",
+  "@radarNamesMore": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      },
+      "rest": {
+        "type": "int"
+      }
+    }
+  },
+  "radarFollowSnack": "Te avisaremos cuando {artist} saque algo nuevo",
+  "@radarFollowSnack": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "radioNoResults": "No encontramos canciones parecidas. Prueba con otra.",
+  "radioReasonDeezer": "Radio de {artist}",
+  "@radioReasonDeezer": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "radioLessSnack": "No pondremos más {artist} en esta radio",
+  "@radioLessSnack": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      }
+    }
+  },
+  "radioLearnHint": "Aprende de ti: si saltas un artista dos veces deja de ponerlo, y lo que escuchas entero guía lo que viene.",
+  "weekdayName": "{day, select, monday{lunes} tuesday{martes} wednesday{miércoles} thursday{jueves} friday{viernes} saturday{sábado} other{domingo}}",
+  "@weekdayName": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedDiscoveredSongs": "{count, plural, =1{1 canción descubierta} other{{count} canciones descubiertas}}",
+  "@wrappedDiscoveredSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactMarathonDiscovery": "Tu día de descubrimientos: {count} canciones nuevas el {date} 🔥",
+  "@wrappedFactMarathonDiscovery": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedFactLoyalDiscovery": "Fan incondicional de {artist}: descubriste {count} de sus canciones 💎",
+  "@wrappedFactLoyalDiscovery": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedBasedOnDiscoveries": "Basado en las canciones que marcaste como escuchadas. Desde ahora Tsuki cuenta cada reproducción para tu próximo Wrapped.",
+  "wrappedPlaysSince": "Basado en tus reproducciones desde el {date}",
+  "@wrappedPlaysSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "timeMachineHeadlineRepeat": "No parabas de escuchar esto 👀",
+  "timeMachineTimesDay": "{count, plural, =1{Una vez ese día} other{{count} veces ese día}}",
+  "@timeMachineTimesDay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMachineTimesWeek": "{count, plural, =1{Una vez esa semana} other{{count} veces esa semana}}",
+  "@timeMachineTimesWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMachineDiscoveredAt": "Descubierta a las {time}",
+  "@timeMachineDiscoveredAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "timeMachineDiscoveredOn": "Descubierta el {weekday}",
+  "@timeMachineDiscoveredOn": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "timeMachinePlayFailed": "No pudimos cargar estas canciones. Revisa tu conexión.",
+  "timeMachineCountingSince": "Tsuki cuenta cada reproducción desde el {date}. A partir de ahí, los recuerdos muestran lo que tenías en repeat.",
+  "@timeMachineCountingSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "timeMachineCountingStarts": "Desde hoy Tsuki cuenta cada reproducción: con el tiempo verás lo que tenías en repeat, no solo lo que descubriste.",
+  "timeMachineNotifRepeatBody": "{artist} · {count} reproducciones",
+  "@timeMachineNotifRepeatBody": {
+    "placeholders": {
+      "artist": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
