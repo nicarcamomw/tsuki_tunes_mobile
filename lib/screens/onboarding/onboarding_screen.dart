@@ -212,9 +212,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       setState(() => _currentPage = index);
                     },
                     children: [
-                      _AnimatedSlide(
+                      _IdentitySlide(
                         timeNotifier: _timeNotifier,
-                        builder: (t) => _buildSlide1Identity(size, t, locale, strings, _selectedVinylMask),
+                        size: size,
+                        locale: locale,
+                        strings: strings,
+                        selectedVinylMask: _selectedVinylMask,
                       ),
                       _AnimatedSlide(
                         timeNotifier: _timeNotifier,
