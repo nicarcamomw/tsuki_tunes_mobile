@@ -104,7 +104,6 @@ class LibraryProvider extends ChangeNotifier {
   @override
   void notifyListeners() {
     _albums.invalidate();
-    _listened.invalidate();
     _topArtists = null;
     super.notifyListeners();
   }

@@ -181,16 +181,28 @@ class ListenedTracksRepository {
       unmarkChunkHandlerForTesting;
 
   // Read-only views, not copies: these are read on every rebuild and can hold
-  // thousands of tracks.
-  List<ListenedTrackData> get tracks => UnmodifiableListView(_tracks);
+  // thousands of tracks. The same view is handed out until the tracks change,
+  // so screens can skip work with identical(); every change replaces it.
+  List<ListenedTrackData>? _tracksView;
+  List<ListenedTrackData> get tracks =>
+      _tracksView ??= UnmodifiableListView(_tracks);
   Set<String> get ids => UnmodifiableSetView(_ids);
   int get count => _ids.length;
   bool get loaded => _loaded;
   String? get lastSyncError => _lastSyncError;
   bool contains(String trackId) => _ids.contains(trackId);
 
-  /// The tracks changed: derived counts are rebuilt on next read.
-  void invalidate() => _dirty = true;
+  /// The tracks changed: a new [tracks] view and derived counts on next read.
+  void invalidate() {
+    _dirty = true;
+    _tracksView = null;
+  }
+
+  /// Every change to the tracks (or the last error) ends here.
+  void _changed() {
+    invalidate();
+    _onChanged();
+  }
 
   int get uniqueArtistsCount {
     if (_dirty) {
@@ -224,7 +236,7 @@ class ListenedTracksRepository {
         _ids = _tracks.map((t) => t.trackId).toSet();
         _loaded = true;
         _albums.prune();
-        _onChanged();
+        _changed();
       }
     } catch (e) {
       debugPrint('[LibraryProvider] Error restoring cached tracks: $e');
@@ -257,7 +269,7 @@ class ListenedTracksRepository {
             .toList();
         _ids = _tracks.map((t) => t.trackId).toSet();
         _loaded = true;
-        _onChanged();
+        _changed();
 
         unawaited(_storage.saveCachedListenedTracks(
           uid,
@@ -323,7 +335,7 @@ class ListenedTracksRepository {
 
       if (changed) {
         _albums.prune();
-        _onChanged();
+        _changed();
         _cacheDirty = true;
       }
 
@@ -363,7 +375,7 @@ class ListenedTracksRepository {
       }
       if (changed) {
         _albums.prune();
-        _onChanged();
+        _changed();
         _saveCache(uid);
       }
     }, onError: (e) {
@@ -381,6 +393,7 @@ class ListenedTracksRepository {
     _loaded = false;
     _cacheDirty = false;
     _lastSyncError = null;
+    invalidate();
   }
 
   /// Whether listening already started for [uid]'s tracks.
@@ -400,6 +413,7 @@ class ListenedTracksRepository {
     if (listenedAt != null && listenedAt.isAfter(deletedAt)) return false;
     _tracks.removeAt(idx);
     _ids.remove(trackId);
+    invalidate();
     return true;
   }
 
@@ -458,7 +472,7 @@ class ListenedTracksRepository {
     _tracks = prevTracks;
     _ids = prevIds;
     _lastSyncError = error;
-    _onChanged();
+    _changed();
     unawaited(_saveCache(uid));
   }
 
@@ -477,7 +491,7 @@ class ListenedTracksRepository {
       _albums.prune(forceSave: true);
     }
     _lastSyncError = null;
-    _onChanged();
+    _changed();
 
     // NOTE: cache is NOT saved here — it is saved by the delta listener
     // only after Firestore confirms the write, preventing phantom tracks
@@ -534,7 +548,7 @@ class ListenedTracksRepository {
     _ids.remove(trackId);
     _albums.prune();
     _lastSyncError = null;
-    _onChanged();
+    _changed();
 
     // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
@@ -597,7 +611,7 @@ class ListenedTracksRepository {
     _ids.addAll(toMark.map((t) => t.id));
     _albums.prune(forceSave: true);
     _lastSyncError = null;
-    _onChanged();
+    _changed();
 
     // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
@@ -654,7 +668,7 @@ class ListenedTracksRepository {
           _ids.removeAll(uncommittedIds);
         }
         _albums.prune(forceSave: true);
-        _onChanged();
+        _changed();
         unawaited(_saveCache(uid));
       }
     });
@@ -675,7 +689,7 @@ class ListenedTracksRepository {
     _ids.removeAll(toUnmark);
     _albums.prune();
     _lastSyncError = null;
-    _onChanged();
+    _changed();
 
     // NOTE: cache is NOT saved here — delta listener persists after confirm.
 
@@ -734,7 +748,7 @@ class ListenedTracksRepository {
           _ids.addAll(failedToDeleteIds);
         }
         _albums.prune(forceSave: true);
-        _onChanged();
+        _changed();
         unawaited(_saveCache(uid));
       }
     });
