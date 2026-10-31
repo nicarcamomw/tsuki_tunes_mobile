@@ -72,6 +72,10 @@ Clean Architecture en tres capas. Las dependencias apuntan hacia adentro:
 
 **Inyección de dependencias:** get_it + injectable (`lib/di/`). get_it arma las capas `data` y `domain`: fuentes de datos, repositorios (registrados también bajo su interfaz del dominio) y casos de uso (`@injectable`). Riverpod queda para el estado de la UI y toma esas instancias desde get_it. Después de agregar o cambiar una anotación: `dart run build_runner build -d`. En los tests, cada test parte con un get_it limpio (`test/flutter_test_config.dart`) y `useFake<T>(...)` reemplaza una pieza por un falso.
 
+**Navegación:** go_router con rutas tipadas (`lib/presentation/navigation/routes.dart`, generadas con go_router_builder): `AlbumRoute(id: '123').push(context)` en lugar de armar pantallas y rutas a mano. La sesión decide la primera pantalla (login, tutorial o la app) desde el `redirect`, sin que ninguna pantalla navegue tras el login.
+
+**Deep links:** `tsukitunes://album/123`, `tsukitunes://artist/27`, `tsukitunes://playlist/<id>` y `tsukitunes://track/<id>` (reproduce la canción y muestra su álbum). Si la sesión no está lista, el enlace espera detrás del login o del tutorial y se abre después. Para probar en Android: `adb shell am start -a android.intent.action.VIEW -d "tsukitunes://album/302127"`.
+
 `test/architecture_test.dart` hace cumplir la regla: el dominio no importa Flutter, Firebase, `data` ni `presentation`; `data` no importa `presentation`.
 
 Documentación detallada por versión en `Documentos/`.

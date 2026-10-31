@@ -49,6 +49,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep links: tsukitunes://album/123, artist/…, playlist/…, track/…
+                 Flutter hands the whole URI to go_router (see app_router.dart). -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tsukitunes" />
+            </intent-filter>
         </activity>
         <!-- flutter_web_auth_2 callback for Spotify OAuth -->
         <activity

@@ -78,5 +78,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Deep links: tsukitunes://album/123, artist/…, playlist/…, track/… -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.tsuki.tsukitunes</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tsukitunes</string>
+			</array>
+		</dict>
+	</array>
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
 </dict>
 </plist>

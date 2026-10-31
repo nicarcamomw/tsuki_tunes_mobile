@@ -130,6 +130,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $PlaylistRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'track/:id',
+          hasOverriddenOnExit: false,
+          factory: $TrackRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -330,6 +335,30 @@ mixin $PlaylistRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/playlist/${Uri.encodeComponent(_self.id)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $TrackRoute on GoRouteData {
+  static TrackRoute _fromState(GoRouterState state) =>
+      TrackRoute(id: state.pathParameters['id']!);
+
+  TrackRoute get _self => this as TrackRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/track/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);

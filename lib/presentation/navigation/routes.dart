@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
+import '../../domain/entities/track.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/artist_discography_screen.dart';
@@ -75,6 +77,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
           ],
         ),
         TypedGoRoute<PlaylistRoute>(path: 'playlist/:id'),
+        TypedGoRoute<TrackRoute>(path: 'track/:id'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -191,6 +194,55 @@ class RabbitHoleRoute extends GoRouteData with $RabbitHoleRoute {
           builder: (artist) => RabbitHoleScreen(seedArtist: artist),
         ),
       );
+}
+
+/// A song link (tsukitunes://track/123): plays it and shows its album.
+class TrackRoute extends GoRouteData with $TrackRoute {
+  const TrackRoute({required this.id});
+
+  final String id;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        LoadById<Track>(
+          initial: null,
+          load: (ref) => ref.read(getTrackProvider)(id),
+          builder: (track) => _PlayingTrackAlbum(track: track),
+        ),
+      );
+}
+
+/// Starts [track] once, then is its album page.
+class _PlayingTrackAlbum extends ConsumerStatefulWidget {
+  const _PlayingTrackAlbum({required this.track});
+
+  final Track track;
+
+  @override
+  ConsumerState<_PlayingTrackAlbum> createState() => _PlayingTrackAlbumState();
+}
+
+class _PlayingTrackAlbumState extends ConsumerState<_PlayingTrackAlbum> {
+  @override
+  void initState() {
+    super.initState();
+    ref.read(playTrackProvider)(widget.track, queue: [widget.track]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.track;
+    return AlbumDetailScreen(
+      album: Album(
+        id: t.albumId,
+        title: t.albumTitle,
+        coverUrl: t.coverUrl,
+        artistId: t.artistId,
+        artistName: t.artistName,
+      ),
+    );
+  }
 }
 
 class PlaylistRoute extends GoRouteData with $PlaylistRoute {

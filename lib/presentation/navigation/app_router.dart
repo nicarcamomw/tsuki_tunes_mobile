@@ -43,13 +43,36 @@ GoRouter createAppRouter(SessionGate session) => GoRouter(
       navigatorKey: rootNavigatorKey,
       refreshListenable: session,
       initialLocation: AppPaths.home,
-      redirect: (context, state) => sessionRedirect(
+      redirect: (context, state) => appRedirect(
         session.status,
         state.uri,
         guest: session.isGuest,
       ),
       routes: $appRoutes,
     );
+
+/// The app's link scheme: tsukitunes://album/123, tsukitunes://artist/27,
+/// tsukitunes://playlist/abc, tsukitunes://track/3135556.
+const deepLinkScheme = 'tsukitunes';
+
+/// A deep link as the app's own location: in tsukitunes://album/123 the
+/// page is the URI's host ("album"), which go_router, matching on the path
+/// alone, would drop. Null for anything that isn't a tsukitunes link.
+@visibleForTesting
+String? deepLinkLocation(Uri uri) {
+  if (uri.scheme != deepLinkScheme) return null;
+  final segments = [if (uri.host.isNotEmpty) uri.host, ...uri.pathSegments.where((s) => s.isNotEmpty)];
+  return Uri(
+    path: '/${segments.join('/')}',
+    queryParameters: uri.queryParameters.isEmpty ? null : uri.queryParameters,
+  ).toString();
+}
+
+/// The router's redirect: a deep link becomes the app's location first,
+/// then the session decides whether it can be shown yet ([sessionRedirect]).
+@visibleForTesting
+String? appRedirect(SessionStatus status, Uri uri, {bool guest = false}) =>
+    deepLinkLocation(uri) ?? sessionRedirect(status, uri, guest: guest);
 
 const _gatePaths = {AppPaths.loading, AppPaths.login, AppPaths.onboarding};
 
@@ -61,7 +84,8 @@ String? sessionRedirect(SessionStatus status, Uri uri, {bool guest = false}) {
   // The page a link asked for, held while the session gets ready.
   final from = uri.queryParameters['from'];
   String gate(String gatePath) {
-    if (path == gatePath) return gatePath;
+    // Already there: stay, with the link it holds.
+    if (path == gatePath) return uri.toString();
     final target = _gatePaths.contains(path) ? from : uri.toString();
     final keep = target != null && target != AppPaths.home;
     return keep ? Uri(path: gatePath, queryParameters: {'from': target}).toString() : gatePath;

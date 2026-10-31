@@ -51,6 +51,12 @@ void main() {
       expect(go(SessionStatus.ready, atTutorial), '/album/123');
     });
 
+    test('waiting at a gate keeps the link it holds', () {
+      expect(go(SessionStatus.signedOut, '/login?from=%2Falbum%2F123'), isNull);
+      expect(go(SessionStatus.loading, '/loading?from=%2Falbum%2F123'), isNull);
+      expect(go(SessionStatus.onboarding, '/onboarding?from=%2Falbum%2F123'), isNull);
+    });
+
     test('the plain home needs no from', () {
       expect(go(SessionStatus.loading, '/'), '/loading');
       expect(go(SessionStatus.ready, '/loading'), '/');
