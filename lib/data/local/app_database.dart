@@ -74,7 +74,11 @@ class FollowedArtists extends Table {
 /// with a growing wait until it lands or fails for good; it survives app
 /// restarts because it lives here.
 @TableIndex(name: 'outbox_due', columns: {#uid, #nextAttemptAt})
-class Outbox extends Table {
+@DataClassName('OutboxRow')
+class OutboxRows extends Table {
+  @override
+  String get tableName => 'outbox';
+
   IntColumn get id => integer().autoIncrement()();
   TextColumn get uid => text()();
 
@@ -89,7 +93,7 @@ class Outbox extends Table {
   TextColumn get lastError => text().nullable()();
 }
 
-@DriftDatabase(tables: [ListenedTracks, Playlists, FollowedArtists, Outbox])
+@DriftDatabase(tables: [ListenedTracks, Playlists, FollowedArtists, OutboxRows])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 

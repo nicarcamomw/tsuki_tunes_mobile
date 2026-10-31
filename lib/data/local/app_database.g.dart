@@ -1281,11 +1281,12 @@ class FollowedArtistsCompanion extends UpdateCompanion<FollowedArtist> {
   }
 }
 
-class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxData> {
+class $OutboxRowsTable extends OutboxRows
+    with TableInfo<$OutboxRowsTable, OutboxRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $OutboxTable(this.attachedDatabase, [this._alias]);
+  $OutboxRowsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1405,7 +1406,7 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxData> {
   static const String $name = 'outbox';
   @override
   VerificationContext validateIntegrity(
-    Insertable<OutboxData> instance, {
+    Insertable<OutboxRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1480,9 +1481,9 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxData> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  OutboxData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  OutboxRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return OutboxData(
+    return OutboxRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -1523,12 +1524,12 @@ class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxData> {
   }
 
   @override
-  $OutboxTable createAlias(String alias) {
-    return $OutboxTable(attachedDatabase, alias);
+  $OutboxRowsTable createAlias(String alias) {
+    return $OutboxRowsTable(attachedDatabase, alias);
   }
 }
 
-class OutboxData extends DataClass implements Insertable<OutboxData> {
+class OutboxRow extends DataClass implements Insertable<OutboxRow> {
   final int id;
   final String uid;
 
@@ -1540,7 +1541,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
   final DateTime nextAttemptAt;
   final DateTime createdAt;
   final String? lastError;
-  const OutboxData({
+  const OutboxRow({
     required this.id,
     required this.uid,
     required this.kind,
@@ -1568,8 +1569,8 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
     return map;
   }
 
-  OutboxCompanion toCompanion(bool nullToAbsent) {
-    return OutboxCompanion(
+  OutboxRowsCompanion toCompanion(bool nullToAbsent) {
+    return OutboxRowsCompanion(
       id: Value(id),
       uid: Value(uid),
       kind: Value(kind),
@@ -1584,12 +1585,12 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
     );
   }
 
-  factory OutboxData.fromJson(
+  factory OutboxRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return OutboxData(
+    return OutboxRow(
       id: serializer.fromJson<int>(json['id']),
       uid: serializer.fromJson<String>(json['uid']),
       kind: serializer.fromJson<String>(json['kind']),
@@ -1617,7 +1618,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
     };
   }
 
-  OutboxData copyWith({
+  OutboxRow copyWith({
     int? id,
     String? uid,
     String? kind,
@@ -1627,7 +1628,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
     DateTime? nextAttemptAt,
     DateTime? createdAt,
     Value<String?> lastError = const Value.absent(),
-  }) => OutboxData(
+  }) => OutboxRow(
     id: id ?? this.id,
     uid: uid ?? this.uid,
     kind: kind ?? this.kind,
@@ -1638,8 +1639,8 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
     createdAt: createdAt ?? this.createdAt,
     lastError: lastError.present ? lastError.value : this.lastError,
   );
-  OutboxData copyWithCompanion(OutboxCompanion data) {
-    return OutboxData(
+  OutboxRow copyWithCompanion(OutboxRowsCompanion data) {
+    return OutboxRow(
       id: data.id.present ? data.id.value : this.id,
       uid: data.uid.present ? data.uid.value : this.uid,
       kind: data.kind.present ? data.kind.value : this.kind,
@@ -1656,7 +1657,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
 
   @override
   String toString() {
-    return (StringBuffer('OutboxData(')
+    return (StringBuffer('OutboxRow(')
           ..write('id: $id, ')
           ..write('uid: $uid, ')
           ..write('kind: $kind, ')
@@ -1685,7 +1686,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is OutboxData &&
+      (other is OutboxRow &&
           other.id == this.id &&
           other.uid == this.uid &&
           other.kind == this.kind &&
@@ -1697,7 +1698,7 @@ class OutboxData extends DataClass implements Insertable<OutboxData> {
           other.lastError == this.lastError);
 }
 
-class OutboxCompanion extends UpdateCompanion<OutboxData> {
+class OutboxRowsCompanion extends UpdateCompanion<OutboxRow> {
   final Value<int> id;
   final Value<String> uid;
   final Value<String> kind;
@@ -1707,7 +1708,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
   final Value<DateTime> nextAttemptAt;
   final Value<DateTime> createdAt;
   final Value<String?> lastError;
-  const OutboxCompanion({
+  const OutboxRowsCompanion({
     this.id = const Value.absent(),
     this.uid = const Value.absent(),
     this.kind = const Value.absent(),
@@ -1718,7 +1719,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
     this.createdAt = const Value.absent(),
     this.lastError = const Value.absent(),
   });
-  OutboxCompanion.insert({
+  OutboxRowsCompanion.insert({
     this.id = const Value.absent(),
     required String uid,
     required String kind,
@@ -1733,7 +1734,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
        entityId = Value(entityId),
        nextAttemptAt = Value(nextAttemptAt),
        createdAt = Value(createdAt);
-  static Insertable<OutboxData> custom({
+  static Insertable<OutboxRow> custom({
     Expression<int>? id,
     Expression<String>? uid,
     Expression<String>? kind,
@@ -1757,7 +1758,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
     });
   }
 
-  OutboxCompanion copyWith({
+  OutboxRowsCompanion copyWith({
     Value<int>? id,
     Value<String>? uid,
     Value<String>? kind,
@@ -1768,7 +1769,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
     Value<DateTime>? createdAt,
     Value<String?>? lastError,
   }) {
-    return OutboxCompanion(
+    return OutboxRowsCompanion(
       id: id ?? this.id,
       uid: uid ?? this.uid,
       kind: kind ?? this.kind,
@@ -1816,7 +1817,7 @@ class OutboxCompanion extends UpdateCompanion<OutboxData> {
 
   @override
   String toString() {
-    return (StringBuffer('OutboxCompanion(')
+    return (StringBuffer('OutboxRowsCompanion(')
           ..write('id: $id, ')
           ..write('uid: $uid, ')
           ..write('kind: $kind, ')
@@ -1839,7 +1840,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FollowedArtistsTable followedArtists = $FollowedArtistsTable(
     this,
   );
-  late final $OutboxTable outbox = $OutboxTable(this);
+  late final $OutboxRowsTable outboxRows = $OutboxRowsTable(this);
   late final Index listenedByAlbum = Index(
     'listened_by_album',
     'CREATE INDEX listened_by_album ON listened_tracks (uid, album_id)',
@@ -1860,7 +1861,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     listenedTracks,
     playlists,
     followedArtists,
-    outbox,
+    outboxRows,
     listenedByAlbum,
     listenedByDate,
     outboxDue,
@@ -2580,8 +2581,8 @@ typedef $$FollowedArtistsTableProcessedTableManager =
       FollowedArtist,
       PrefetchHooks Function()
     >;
-typedef $$OutboxTableCreateCompanionBuilder =
-    OutboxCompanion Function({
+typedef $$OutboxRowsTableCreateCompanionBuilder =
+    OutboxRowsCompanion Function({
       Value<int> id,
       required String uid,
       required String kind,
@@ -2592,8 +2593,8 @@ typedef $$OutboxTableCreateCompanionBuilder =
       required DateTime createdAt,
       Value<String?> lastError,
     });
-typedef $$OutboxTableUpdateCompanionBuilder =
-    OutboxCompanion Function({
+typedef $$OutboxRowsTableUpdateCompanionBuilder =
+    OutboxRowsCompanion Function({
       Value<int> id,
       Value<String> uid,
       Value<String> kind,
@@ -2605,9 +2606,9 @@ typedef $$OutboxTableUpdateCompanionBuilder =
       Value<String?> lastError,
     });
 
-class $$OutboxTableFilterComposer
-    extends Composer<_$AppDatabase, $OutboxTable> {
-  $$OutboxTableFilterComposer({
+class $$OutboxRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $OutboxRowsTable> {
+  $$OutboxRowsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2660,9 +2661,9 @@ class $$OutboxTableFilterComposer
   );
 }
 
-class $$OutboxTableOrderingComposer
-    extends Composer<_$AppDatabase, $OutboxTable> {
-  $$OutboxTableOrderingComposer({
+class $$OutboxRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OutboxRowsTable> {
+  $$OutboxRowsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2715,9 +2716,9 @@ class $$OutboxTableOrderingComposer
   );
 }
 
-class $$OutboxTableAnnotationComposer
-    extends Composer<_$AppDatabase, $OutboxTable> {
-  $$OutboxTableAnnotationComposer({
+class $$OutboxRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OutboxRowsTable> {
+  $$OutboxRowsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2754,32 +2755,35 @@ class $$OutboxTableAnnotationComposer
       $composableBuilder(column: $table.lastError, builder: (column) => column);
 }
 
-class $$OutboxTableTableManager
+class $$OutboxRowsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $OutboxTable,
-          OutboxData,
-          $$OutboxTableFilterComposer,
-          $$OutboxTableOrderingComposer,
-          $$OutboxTableAnnotationComposer,
-          $$OutboxTableCreateCompanionBuilder,
-          $$OutboxTableUpdateCompanionBuilder,
-          (OutboxData, BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>),
-          OutboxData,
+          $OutboxRowsTable,
+          OutboxRow,
+          $$OutboxRowsTableFilterComposer,
+          $$OutboxRowsTableOrderingComposer,
+          $$OutboxRowsTableAnnotationComposer,
+          $$OutboxRowsTableCreateCompanionBuilder,
+          $$OutboxRowsTableUpdateCompanionBuilder,
+          (
+            OutboxRow,
+            BaseReferences<_$AppDatabase, $OutboxRowsTable, OutboxRow>,
+          ),
+          OutboxRow,
           PrefetchHooks Function()
         > {
-  $$OutboxTableTableManager(_$AppDatabase db, $OutboxTable table)
+  $$OutboxRowsTableTableManager(_$AppDatabase db, $OutboxRowsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$OutboxTableFilterComposer($db: db, $table: table),
+              $$OutboxRowsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$OutboxTableOrderingComposer($db: db, $table: table),
+              $$OutboxRowsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$OutboxTableAnnotationComposer($db: db, $table: table),
+              $$OutboxRowsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -2791,7 +2795,7 @@ class $$OutboxTableTableManager
                 Value<DateTime> nextAttemptAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
-              }) => OutboxCompanion(
+              }) => OutboxRowsCompanion(
                 id: id,
                 uid: uid,
                 kind: kind,
@@ -2813,7 +2817,7 @@ class $$OutboxTableTableManager
                 required DateTime nextAttemptAt,
                 required DateTime createdAt,
                 Value<String?> lastError = const Value.absent(),
-              }) => OutboxCompanion.insert(
+              }) => OutboxRowsCompanion.insert(
                 id: id,
                 uid: uid,
                 kind: kind,
@@ -2827,8 +2831,8 @@ class $$OutboxTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$OutboxTable, OutboxData>(table),
-                  BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>(
+                  e.readTable<$OutboxRowsTable, OutboxRow>(table),
+                  BaseReferences<_$AppDatabase, $OutboxRowsTable, OutboxRow>(
                     db,
                     table,
                     e,
@@ -2841,18 +2845,18 @@ class $$OutboxTableTableManager
       );
 }
 
-typedef $$OutboxTableProcessedTableManager =
+typedef $$OutboxRowsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $OutboxTable,
-      OutboxData,
-      $$OutboxTableFilterComposer,
-      $$OutboxTableOrderingComposer,
-      $$OutboxTableAnnotationComposer,
-      $$OutboxTableCreateCompanionBuilder,
-      $$OutboxTableUpdateCompanionBuilder,
-      (OutboxData, BaseReferences<_$AppDatabase, $OutboxTable, OutboxData>),
-      OutboxData,
+      $OutboxRowsTable,
+      OutboxRow,
+      $$OutboxRowsTableFilterComposer,
+      $$OutboxRowsTableOrderingComposer,
+      $$OutboxRowsTableAnnotationComposer,
+      $$OutboxRowsTableCreateCompanionBuilder,
+      $$OutboxRowsTableUpdateCompanionBuilder,
+      (OutboxRow, BaseReferences<_$AppDatabase, $OutboxRowsTable, OutboxRow>),
+      OutboxRow,
       PrefetchHooks Function()
     >;
 
@@ -2865,6 +2869,6 @@ class $AppDatabaseManager {
       $$PlaylistsTableTableManager(_db, _db.playlists);
   $$FollowedArtistsTableTableManager get followedArtists =>
       $$FollowedArtistsTableTableManager(_db, _db.followedArtists);
-  $$OutboxTableTableManager get outbox =>
-      $$OutboxTableTableManager(_db, _db.outbox);
+  $$OutboxRowsTableTableManager get outboxRows =>
+      $$OutboxRowsTableTableManager(_db, _db.outboxRows);
 }
