@@ -10,15 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
-import 'artist_detail_screen.dart';
-import 'main_navigation_screen.dart';
 
 // Canvas is far larger than the screen so nodes stay hit-testable anywhere.
 const double _kCanvas = 6000;
@@ -562,11 +560,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
 
   void _openArtist(_GraphNode node) {
     HapticFeedback.lightImpact();
-    appNavigatorKey.currentState?.push(
-      CyberPageRoute(
-        builder: (_) => ArtistDetailScreen(artist: node.artist),
-      ),
-    );
+    ArtistRoute(id: node.artist.id, $extra: node.artist).push(context);
   }
 
   // ---------------------------------------------------------------------------

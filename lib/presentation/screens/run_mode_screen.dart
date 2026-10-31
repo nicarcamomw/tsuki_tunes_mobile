@@ -7,18 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/pace_matcher.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/run_provider.dart';
 
 class RunModeScreen extends ConsumerWidget {
   const RunModeScreen({super.key});
 
-  static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
-      .push(CyberPageRoute(builder: (_) => const RunModeScreen()));
+  static Future<void> open(BuildContext context) => const RunModeRoute().push(context);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

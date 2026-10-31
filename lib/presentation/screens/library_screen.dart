@@ -9,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/repositories/library_repository_impl.dart';
@@ -18,14 +17,13 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
-import 'album_detail_screen.dart';
 import 'main_navigation_screen.dart';
-import 'playlist_detail_screen.dart';
 
 class _AlbumGroupData {
   final String albumId;
@@ -1001,11 +999,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                     TextButton(
                       onPressed: () {
                         final album = _buildAlbumFromGroup(group);
-                        appNavigatorKey.currentState?.push(
-                          CyberPageRoute(
-                            builder: (_) => AlbumDetailScreen(album: album),
-                          ),
-                        );
+                        AlbumRoute(id: album.id, $extra: album).push(context);
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1182,11 +1176,7 @@ class _PlaylistListTile extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(4),
         onTap: () {
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(
-              builder: (_) => PlaylistDetailScreen(playlistId: playlist.id),
-            ),
-          );
+          PlaylistRoute(id: playlist.id).push(context);
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

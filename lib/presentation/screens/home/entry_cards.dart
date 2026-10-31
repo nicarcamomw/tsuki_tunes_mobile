@@ -84,9 +84,7 @@ class _ListeningClockEntryCard extends StatelessWidget {
       label: strings.a11yClock,
       child: GestureDetector(
         onTap: () {
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(builder: (_) => const ListeningClockScreen()),
-          );
+          const ListeningClockRoute().push(context);
         },
         child: GlassCard(
           color: AppColors.neonCyan,
@@ -160,11 +158,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
       label: strings.a11yRabbitHole,
       child: GestureDetector(
         onTap: () {
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(
-              builder: (_) => RabbitHoleScreen(seedArtist: seedArtist!),
-            ),
-          );
+          RabbitHoleRoute(id: seedArtist!.id, $extra: seedArtist).push(context);
         },
         child: GlassCard(
           color: AppColors.neonPurple,
@@ -262,10 +256,7 @@ class _ReleaseRadarEntryCard extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  appNavigatorKey.currentState?.push(
-                    CyberPageRoute(
-                        builder: (_) => const ReleaseRadarScreen()),
-                  );
+                  const ReleaseRadarRoute().push(context);
                 },
                 child: GlassCard(
                   color: accent,

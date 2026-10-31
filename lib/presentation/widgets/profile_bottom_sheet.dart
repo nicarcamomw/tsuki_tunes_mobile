@@ -8,14 +8,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../navigation/app_router.dart';
+import '../navigation/routes.dart';
 import '../screens/mask_collection_screen.dart';
-import '../screens/onboarding_screen.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/auth_provider.dart';

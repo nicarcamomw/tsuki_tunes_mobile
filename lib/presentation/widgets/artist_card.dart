@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
-import '../screens/artist_detail_screen.dart';
-import '../screens/main_navigation_screen.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import 'tap_scale.dart';
 
@@ -30,11 +28,7 @@ class ArtistCard extends ConsumerWidget {
       semanticLabel: '${artist.name}, ${locale.strings.tabArtists}',
       onTap: () {
         FocusScope.of(context).unfocus();
-        appNavigatorKey.currentState?.push(
-          CyberPageRoute(
-            builder: (_) => ArtistDetailScreen(artist: artist),
-          ),
-        );
+        ArtistRoute(id: artist.id, $extra: artist).push(context);
       },
       scaleDown: 0.95,
       child: Container(

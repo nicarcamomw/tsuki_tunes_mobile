@@ -7,19 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/album.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
-import 'artist_detail_screen.dart';
-import 'main_navigation_screen.dart';
 
 class AlbumDetailScreen extends ConsumerStatefulWidget {
   final Album album;
@@ -321,17 +319,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     child: GestureDetector(
                       onTap: () async {
                         unawaited(HapticFeedback.lightImpact());
+                        // The artist page loads the profile from the id.
                         if (albumData.artistId.isNotEmpty) {
-                          final artist =
-                              await _api.getArtist(albumData.artistId);
-                          if (mounted && artist != null) {
-                            appNavigatorKey.currentState?.push(
-                              CyberPageRoute(
-                                builder: (_) =>
-                                    ArtistDetailScreen(artist: artist),
-                              ),
-                            );
-                          }
+                          unawaited(ArtistRoute(id: albumData.artistId).push(context));
                         }
                       },
                       child: Text(

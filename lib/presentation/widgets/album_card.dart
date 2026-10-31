@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
-import '../screens/album_detail_screen.dart';
-import '../screens/main_navigation_screen.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import 'tap_scale.dart';
 
@@ -29,11 +27,7 @@ class AlbumCard extends ConsumerWidget {
       semanticLabel: '${album.title}, ${album.artistName}',
       onTap: () {
         FocusScope.of(context).unfocus();
-        appNavigatorKey.currentState?.push(
-          CyberPageRoute(
-            builder: (_) => AlbumDetailScreen(album: album),
-          ),
-        );
+        AlbumRoute(id: album.id, $extra: album).push(context);
       },
       scaleDown: 0.95,
       child: Container(

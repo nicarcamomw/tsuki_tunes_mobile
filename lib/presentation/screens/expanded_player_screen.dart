@@ -8,12 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
+import '../navigation/app_router.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
@@ -31,8 +32,6 @@ import '../widgets/shuffle_mode_icon.dart';
 import '../widgets/smart_shuffle_sheet.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
-import 'album_detail_screen.dart';
-import 'artist_detail_screen.dart';
 import 'lyrics_screen.dart';
 import 'main_navigation_screen.dart';
 
@@ -183,19 +182,14 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   void _navigateToSource(BuildContext context, Track track) {
     if (track.albumId.isNotEmpty) {
       Navigator.of(context).pop();
-      appNavigatorKey.currentState?.push(
-        CyberPageRoute(
-          builder: (_) => AlbumDetailScreen(
-            album: Album(
-              id: track.albumId,
-              title: track.albumTitle.isNotEmpty ? track.albumTitle : ref.read(stringsProvider).unknownAlbum,
-              coverUrl: track.coverUrl,
-              artistId: track.artistId,
-              artistName: track.artistName,
-            ),
-          ),
-        ),
+      final album = Album(
+        id: track.albumId,
+        title: track.albumTitle.isNotEmpty ? track.albumTitle : ref.read(stringsProvider).unknownAlbum,
+        coverUrl: track.coverUrl,
+        artistId: track.artistId,
+        artistName: track.artistName,
       );
+      AlbumRoute(id: album.id, $extra: album).push(rootNavigatorKey.currentContext!);
     } else if (track.artistId.isNotEmpty) {
       Navigator.of(context).pop();
       _openArtistOf(track);

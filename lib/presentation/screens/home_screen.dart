@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/release_radar_service.dart';
@@ -17,6 +16,7 @@ import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/radar_release.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/album_card.dart';
@@ -29,12 +29,8 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
 import '../widgets/weekly_challenges_card.dart';
 import '../widgets/wrapped_picker_sheet.dart';
-import 'artist_detail_screen.dart';
 import 'guess_song_screen.dart';
-import 'listening_clock_screen.dart';
 import 'main_navigation_screen.dart';
-import 'rabbit_hole_screen.dart';
-import 'release_radar_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
 
@@ -78,10 +74,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (!mounted) return;
     final payload = ReleaseRadarService().consumePendingOpen();
     if (payload == null) return;
-    final Widget screen = payload == TimeMachineService.payload
-        ? const TimeMachineScreen()
-        : const ReleaseRadarScreen();
-    appNavigatorKey.currentState?.push(CyberPageRoute(builder: (_) => screen));
+    if (payload == TimeMachineService.payload) {
+      unawaited(const TimeMachineRoute().push(context));
+    } else {
+      unawaited(const ReleaseRadarRoute().push(context));
+    }
   }
 
   @override
@@ -583,11 +580,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openArtist(Artist artist) {
-    appNavigatorKey.currentState?.push(
-      CyberPageRoute(
-        builder: (_) => ArtistDetailScreen(artist: artist),
-      ),
-    );
+    ArtistRoute(id: artist.id, $extra: artist).push(context);
   }
 
   /// Opens a top artist, looking them up first when their picture search
@@ -686,9 +679,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _openGuessGame() async {
     unawaited(HapticFeedback.lightImpact());
-    await Navigator.of(context, rootNavigator: true).push(
-      CyberPageRoute(builder: (_) => const GuessSongScreen()),
-    );
+    await const GuessSongRoute().push(context);
     await _refreshDailyDone();
   }
 

@@ -6,15 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/album_categorizer.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
-import 'album_detail_screen.dart';
-import 'main_navigation_screen.dart';
 
 class ArtistDiscographyScreen extends ConsumerStatefulWidget {
   final String? artistId;
@@ -494,9 +492,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       label: '${album.title}, ${album.artistName}',
       child: GestureDetector(
         onTap: () async {
-          await appNavigatorKey.currentState?.push(
-            CyberPageRoute(builder: (_) => AlbumDetailScreen(album: album)),
-          );
+          await AlbumRoute(id: album.id, $extra: album).push(context);
           if (mounted) setState(() {});
         },
         child: Column(

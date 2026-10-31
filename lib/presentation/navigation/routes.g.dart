@@ -147,6 +147,7 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
         GoRouteData.$route(
           path: 'guess',
           hasOverriddenOnExit: false,
+          parentNavigatorKey: GuessSongRoute.$parentNavigatorKey,
           factory: $GuessSongRoute._fromState,
         ),
         GoRouteData.$route(
@@ -166,6 +167,12 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           hasOverriddenOnExit: false,
           parentNavigatorKey: WrappedRoute.$parentNavigatorKey,
           factory: $WrappedRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'tutorial',
+          hasOverriddenOnExit: false,
+          parentNavigatorKey: TutorialRoute.$parentNavigatorKey,
+          factory: $TutorialRoute._fromState,
         ),
       ],
     ),
@@ -476,6 +483,26 @@ mixin $WrappedRoute on GoRouteData {
     '/wrapped/${Uri.encodeComponent(_self.year.toString())}',
     queryParams: {if (_self.month != null) 'month': _self.month!.toString()},
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $TutorialRoute on GoRouteData {
+  static TutorialRoute _fromState(GoRouterState state) => const TutorialRoute();
+
+  @override
+  String get location => GoRouteData.$location('/tutorial');
 
   @override
   void go(BuildContext context) => context.go(location);

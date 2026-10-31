@@ -18,6 +18,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/wrapped_service.dart';
 import '../../domain/entities/wrapped_data.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 
@@ -37,23 +38,9 @@ class WrappedScreen extends ConsumerStatefulWidget {
       {super.key, required this.year, this.month, this.previewData});
 
   /// Opens full screen, over the bottom bar and the mini player.
-  static Future<void> open(BuildContext context, {required int year, int? month}) {
-    return Navigator.of(context, rootNavigator: true).push(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 420),
-        reverseTransitionDuration: const Duration(milliseconds: 260),
-        pageBuilder: (_, __, ___) => WrappedScreen(year: year, month: month),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween(begin: 0.96, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
+  static Future<void> open(BuildContext context, {required int year, int? month}) =>
+      WrappedRoute(year: year, month: month).push(context);
+
 
   @override
   ConsumerState<WrappedScreen> createState() => _WrappedScreenState();

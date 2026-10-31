@@ -82,6 +82,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<RunModeRoute>(path: 'run'),
         TypedGoRoute<MaskCollectionRoute>(path: 'masks'),
         TypedGoRoute<WrappedRoute>(path: 'wrapped/:year'),
+        TypedGoRoute<TutorialRoute>(path: 'tutorial'),
       ],
     ),
   ],
@@ -226,8 +227,11 @@ class ListeningClockRoute extends GoRouteData with $ListeningClockRoute {
       cyberPage(state, const ListeningClockScreen());
 }
 
+/// Full screen, over the bottom bar and the mini player.
 class GuessSongRoute extends GoRouteData with $GuessSongRoute {
   const GuessSongRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
@@ -254,6 +258,25 @@ class MaskCollectionRoute extends GoRouteData with $MaskCollectionRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, const MaskCollectionScreen());
+}
+
+/// The tutorial again, from the settings; it closes when done.
+class TutorialRoute extends GoRouteData with $TutorialRoute {
+  const TutorialRoute();
+
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+        state,
+        Builder(
+          builder: (context) => OnboardingScreen(
+            onComplete: () {
+              if (context.canPop()) context.pop();
+            },
+          ),
+        ),
+      );
 }
 
 /// A year's (or, with [month], a month's) recap, full screen.
@@ -291,7 +314,7 @@ CustomTransitionPage<void> fadePage(GoRouterState state, Widget child) => Custom
       transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
     );
 
-/// The app's page transition (CyberPageRoute's): a short fade and slide.
+/// The app's page transition: a short fade and slide.
 CustomTransitionPage<void> cyberPage(GoRouterState state, Widget child) => CustomTransitionPage(
       key: state.pageKey,
       child: child,

@@ -448,15 +448,6 @@ void _showSongOptionsSheet(
 
 /// Opens the artist page of [track] on the app navigator.
 void _openArtistOf(Track track) {
-  appNavigatorKey.currentState?.push(
-    CyberPageRoute(
-      builder: (_) => ArtistDetailScreen(
-        artist: Artist(
-          id: track.artistId,
-          name: track.artistName,
-          pictureUrl: track.coverUrl,
-        ),
-      ),
-    ),
-  );
+  final artist = Artist(id: track.artistId, name: track.artistName, pictureUrl: track.coverUrl);
+  ArtistRoute(id: artist.id, $extra: artist).push(rootNavigatorKey.currentContext!);
 }

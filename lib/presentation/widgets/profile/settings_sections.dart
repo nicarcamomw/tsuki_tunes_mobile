@@ -349,17 +349,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         label: strings.tutorialOption,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
         onTap: () => widget.closeThen(() async {
-          Navigator.of(host, rootNavigator: true).push(
-            CyberPageRoute(
-              builder: (pushedCtx) => OnboardingScreen(
-                onComplete: () {
-                  if (Navigator.of(pushedCtx).canPop()) {
-                    Navigator.of(pushedCtx).pop();
-                  }
-                },
-              ),
-            ),
-          );
+          unawaited(const TutorialRoute().push(host));
         }),
       ),
     ]);

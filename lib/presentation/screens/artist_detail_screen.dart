@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/album_categorizer.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
@@ -19,6 +18,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
@@ -27,10 +27,6 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
-import 'album_detail_screen.dart';
-import 'artist_discography_screen.dart';
-import 'main_navigation_screen.dart';
-import 'rabbit_hole_screen.dart';
 
 part 'artist_detail/artist_header.dart';
 part 'artist_detail/top_tracks.dart';
@@ -373,17 +369,15 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     onTap: () async {
                       unawaited(HapticFeedback.lightImpact());
                       final updated =
-                          await appNavigatorKey.currentState?.push<List<Album>>(
-                        CyberPageRoute(
-                          builder: (_) => ArtistDiscographyScreen(
-                            artistId: _artist.id,
-                            artistName: _artist.name,
-                            albums: _albums,
-                            totalAlbums: _totalAlbums,
-                            initialFilter: filterKey,
-                          ),
+                          await ArtistDiscographyRoute(
+                        id: _artist.id,
+                        filter: filterKey,
+                        $extra: DiscographyArgs(
+                          artistName: _artist.name,
+                          albums: _albums,
+                          totalAlbums: _totalAlbums,
                         ),
-                      );
+                      ).push<List<Album>>(context);
                       if (mounted) {
                         if (updated != null && updated.length > _albums.length) {
                           setState(() {
@@ -441,11 +435,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       label: '${album.title}, ${album.artistName}',
       child: GestureDetector(
         onTap: () async {
-          await appNavigatorKey.currentState?.push(
-            CyberPageRoute(
-              builder: (_) => AlbumDetailScreen(album: album),
-            ),
-          );
+          await AlbumRoute(id: album.id, $extra: album).push(context);
           if (mounted) setState(() {});
         },
         child: Column(
@@ -576,11 +566,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     // The loaded artist, so the graph's centre has its
                     // picture and fans even when this page was opened from
                     // a bare link.
-                    appNavigatorKey.currentState?.push(
-                      CyberPageRoute(
-                        builder: (_) => RabbitHoleScreen(seedArtist: _artist),
-                      ),
-                    );
+                    RabbitHoleRoute(id: _artist.id, $extra: _artist).push(context);
                   },
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 36),
@@ -629,11 +615,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   child: GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    appNavigatorKey.currentState?.push(
-                      CyberPageRoute(
-                        builder: (_) => ArtistDetailScreen(artist: artist),
-                      ),
-                    );
+                    ArtistRoute(id: artist.id, $extra: artist).push(context);
                   },
                   child: SizedBox(
                     width: 110,

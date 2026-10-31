@@ -5,15 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
-import '../screens/album_detail_screen.dart';
-import '../screens/artist_detail_screen.dart';
-import '../screens/main_navigation_screen.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import 'oni_mask_icon.dart';
@@ -594,19 +591,14 @@ void showTrackActions(BuildContext context, Track track,
                   Navigator.pop(ctx);
                   // ArtistDetailScreen fetches the full profile (photo,
                   // fans, releases) from the id on open.
-                  appNavigatorKey.currentState?.push(
-                    CyberPageRoute(
-                      builder: (_) => ArtistDetailScreen(
-                        artist: Artist(
-                          id: track.artistId,
-                          name: track.artistName,
-                          pictureUrl: '',
-                          fansCount: 0,
-                          albumsCount: 0,
-                        ),
-                      ),
-                    ),
+                  final artist = Artist(
+                    id: track.artistId,
+                    name: track.artistName,
+                    pictureUrl: '',
+                    fansCount: 0,
+                    albumsCount: 0,
                   );
+                  ArtistRoute(id: artist.id, $extra: artist).push(context);
                 },
               ),
             if (track.albumId.isNotEmpty)
@@ -616,24 +608,19 @@ void showTrackActions(BuildContext context, Track track,
                 semanticLabel: strings.a11yGoToAlbum,
                 onTap: () {
                   Navigator.pop(ctx);
-                  appNavigatorKey.currentState?.push(
-                    CyberPageRoute(
-                      builder: (_) => AlbumDetailScreen(
-                        album: Album(
-                          id: track.albumId,
-                          title: track.albumTitle,
-                          coverUrl: track.coverUrl,
-                          artistId: track.artistId,
-                          artistName: track.artistName,
-                          releaseDate: '',
-                          recordType: 'album',
-                          fansCount: 0,
-                          tracksCount: 0,
-                          tracks: [],
-                        ),
-                      ),
-                    ),
+                  final album = Album(
+                    id: track.albumId,
+                    title: track.albumTitle,
+                    coverUrl: track.coverUrl,
+                    artistId: track.artistId,
+                    artistName: track.artistName,
+                    releaseDate: '',
+                    recordType: 'album',
+                    fansCount: 0,
+                    tracksCount: 0,
+                    tracks: [],
                   );
+                  AlbumRoute(id: album.id, $extra: album).push(context);
                 },
               ),
             const SizedBox(height: 12),

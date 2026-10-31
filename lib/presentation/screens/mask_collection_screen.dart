@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import '../widgets/oni_mask_art.dart';
@@ -14,8 +14,7 @@ import '../widgets/weekly_challenges_card.dart';
 class MaskCollectionScreen extends ConsumerWidget {
   const MaskCollectionScreen({super.key});
 
-  static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
-      .push(CyberPageRoute(builder: (_) => const MaskCollectionScreen()));
+  static Future<void> open(BuildContext context) => const MaskCollectionRoute().push(context);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

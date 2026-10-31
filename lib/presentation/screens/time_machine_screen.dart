@@ -8,16 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/time_machine_service.dart';
 import '../../domain/entities/track.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/glass_card.dart';
-import 'main_navigation_screen.dart';
 
 enum _Period { year, sixMonths, month, week, random }
 
@@ -767,9 +766,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          appNavigatorKey.currentState?.push(
-            CyberPageRoute(builder: (_) => const TimeMachineScreen()),
-          );
+          const TimeMachineRoute().push(context);
         },
         child: GlassCard(
           color: AppColors.neonPurple,

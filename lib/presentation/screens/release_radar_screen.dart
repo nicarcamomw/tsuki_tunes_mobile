@@ -9,12 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/cyber_page_route.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../domain/entities/radar_release.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
-import 'album_detail_screen.dart';
 
 class ReleaseRadarScreen extends ConsumerStatefulWidget {
   const ReleaseRadarScreen({super.key});
@@ -88,11 +87,8 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
 
   void _openRelease(RadarRelease release) {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      CyberPageRoute(
-        builder: (_) => AlbumDetailScreen(album: release.toAlbum()),
-      ),
-    );
+    final album = release.toAlbum();
+    AlbumRoute(id: album.id, $extra: album).push(context);
   }
 
   @override
