@@ -929,16 +929,28 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         return;
       }
       if (_isPlaying) {
-        await _spotifyPause();
+        if (!await _spotifyPause()) {
+          // Neither way took it: one more go before giving up. If Spotify
+          // still plays, the state sync shows it playing again.
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+          await _spotifyPause();
+        }
         _isPlaying = false;
         _stopPositionTimer();
       } else {
-        await _spotifyResume();
+        final resumed = await _spotifyResume();
         _isPlaying = true;
         _lastPlayCommandTime = DateTime.now();
         _spotifySyncPosition = _position;
         _spotifySyncTime = DateTime.now();
         _startPositionTimer();
+        if (!resumed && !await _replaySpotifyHere()) {
+          debugPrint('[AudioProvider] Spotify could not resume');
+          _isPlaying = false;
+          _stopPositionTimer();
+        } else {
+          unawaited(_verifySpotifyResume(recover: true));
+        }
       }
       notifyListeners();
     } else {

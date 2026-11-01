@@ -179,21 +179,27 @@ class SpotifyNativePlayer {
     }
   }
 
-  Future<void> pause() async {
-    if (!_isConnected) return;
+  /// False when the Spotify app didn't take it.
+  Future<bool> pause() async {
+    if (!_isConnected) return false;
     try {
       await SpotifySdk.pause();
+      return true;
     } catch (e) {
       debugPrint('SpotifyNative: pause error: $e');
+      return false;
     }
   }
 
-  Future<void> resume() async {
-    if (!_isConnected) return;
+  /// False when the Spotify app didn't take it.
+  Future<bool> resume() async {
+    if (!_isConnected) return false;
     try {
       await SpotifySdk.resume();
+      return true;
     } catch (e) {
       debugPrint('SpotifyNative: resume error: $e');
+      return false;
     }
   }
 

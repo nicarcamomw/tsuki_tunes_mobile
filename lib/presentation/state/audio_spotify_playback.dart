@@ -590,34 +590,47 @@ extension _SpotifyPlayback on AudioProvider {
     notifyListeners();
   }
 
-  Future<void> _spotifyPause() async {
-    if (_nativePlayer.isConnected) {
-      try {
-        await _nativePlayer.pause();
-        return;
-      } catch (e) {
-        debugPrint('[AudioProvider] App Remote pause failed, trying Web API: $e');
-      }
-    }
-    await _spotify.pause();
+  /// Pauses Spotify, through the Web API when the App Remote doesn't take
+  /// it. False when neither did.
+  Future<bool> _spotifyPause() async {
+    if (_nativePlayer.isConnected && await _nativePlayer.pause()) return true;
+    return _spotify.pause();
   }
 
-  Future<void> _spotifyResume() async {
+  /// Resumes Spotify, through the Web API when the App Remote doesn't take
+  /// it. False when neither did.
+  Future<bool> _spotifyResume() async {
     if (_spotifyListStale) {
       _spotifyListStale = false;
       // The queue changed while paused: resuming with the new list also
       // gives Spotify the songs that now come next.
-      if (await _reissueSpotifyAhead(force: true)) return;
+      if (await _reissueSpotifyAhead(force: true)) return true;
     }
-    if (_nativePlayer.isConnected) {
-      try {
-        await _nativePlayer.resume();
-        return;
-      } catch (e) {
-        debugPrint('[AudioProvider] App Remote resume failed, trying Web API: $e');
-      }
+    if (_nativePlayer.isConnected && await _nativePlayer.resume()) return true;
+    return _spotify.resume();
+  }
+
+  /// Plays our song again where it was, which also wakes a Spotify the
+  /// system froze or killed: the way back when resuming didn't work.
+  Future<bool> _replaySpotifyHere() async {
+    final uri = _currentSpotifyUri;
+    if (uri == null) return false;
+    final pos = _position.inMilliseconds;
+    var ok = await _spotify.play(
+        trackUris: [uri, ..._spotifyAhead.map((e) => e.uri)], positionMs: pos);
+    if (!ok &&
+        await _nativePlayer.connect(accessToken: _spotify.accessToken) &&
+        await _nativePlayer.playUri(uri)) {
+      if (pos > 0) await _nativePlayer.seekTo(pos);
+      _spotifyAhead = const [];
+      ok = true;
     }
-    await _spotify.resume();
+    if (ok) {
+      _lastPlayCommandTime = DateTime.now();
+      _spotifySyncPosition = _position;
+      _spotifySyncTime = DateTime.now();
+    }
+    return ok;
   }
 
   Future<void> _spotifySeek(int positionMs) async {
@@ -1000,15 +1013,26 @@ extension _SpotifyPlayback on AudioProvider {
     notifyListeners();
   }
 
-  Future<void> _verifySpotifyResume() async {
+  /// A few seconds after resuming, makes sure Spotify really plays. When it
+  /// doesn't (the command got lost, Spotify was killed) and [recover] is
+  /// set, plays our song again where it was; if that fails too, shows it
+  /// paused rather than pretending to play.
+  Future<void> _verifySpotifyResume({bool recover = false}) async {
     await Future.delayed(const Duration(seconds: 3));
+    if (!_spotifyActive || !_isPlaying) return;
+    if (_nativePlayer.isConnected) await _nativePlayer.refreshState();
     if (!_spotifyActive || !_isPlaying) return;
     if (_nativePlayingOurTrack) return;
     final state = await _spotify.getPlaybackState();
     if (!_spotifyActive || !_isPlaying) return;
     if (state == null && _spotify.lastPlaybackStateFailed) return;
     if (state != null && state['is_playing'] == true) return;
-    debugPrint('[AudioProvider] Spotify did not resume after interruption, marking paused');
+    if (recover) {
+      debugPrint('[AudioProvider] Spotify did not resume, playing our song again where it was');
+      if (await _replaySpotifyHere()) return;
+    }
+    if (!_spotifyActive || !_isPlaying) return;
+    debugPrint('[AudioProvider] Spotify did not resume, marking paused');
     _isPlaying = false;
     _stopPositionTimer();
     notifyListeners();

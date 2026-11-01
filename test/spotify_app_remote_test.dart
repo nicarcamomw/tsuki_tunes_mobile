@@ -110,6 +110,7 @@ class FakeSpotifyService extends SpotifyService {
     _playbackUri = lastPlayedUris!.first;
     _isPlaying = true;
     _progressMs = positionMs ?? 0;
+    lastPlayPositionMs = positionMs;
     return true;
   }
 
@@ -120,10 +121,16 @@ class FakeSpotifyService extends SpotifyService {
     return true;
   }
 
+  bool resumeFails = false;
+  /// Resume "works" but Spotify doesn't actually start (lost command).
+  bool resumeIsIgnored = false;
+  int? lastPlayPositionMs;
+
   @override
   Future<bool> resume() async {
     resumeCount++;
-    _isPlaying = true;
+    if (resumeFails) return false;
+    if (!resumeIsIgnored) _isPlaying = true;
     return true;
   }
 
@@ -246,16 +253,22 @@ class FakeNativePlayer extends SpotifyNativePlayer {
     return true;
   }
 
+  bool commandsFail = false;
+
   @override
-  Future<void> pause() async {
+  Future<bool> pause() async {
     pauseCount++;
+    if (commandsFail) return false;
     _paused = true;
+    return true;
   }
 
   @override
-  Future<void> resume() async {
+  Future<bool> resume() async {
     resumeCount++;
+    if (commandsFail) return false;
     _paused = false;
+    return true;
   }
 
   @override
@@ -340,6 +353,65 @@ void main() {
         spotifyService: fakeSpotify,
         nativePlayer: fakeNative,
       );
+
+  group('resuming always ends in sync with Spotify', () {
+    Future<AudioProvider> pausedAt(int ms) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final track = _track('t1');
+      await provider.playTrack(track, newQueue: [track]);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(ms, 180000, false, uri: 'spotify:track:t1');
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: ms);
+      // Let the start-of-song check confirm it plays.
+      await Future.delayed(const Duration(milliseconds: 3500));
+      expect(provider.isPlaying, isTrue);
+      await provider.togglePlay(); // pause
+      expect(provider.isPlaying, isFalse);
+      fakeSpotify.setPaused('spotify:track:t1', progressMs: ms);
+      // From here the Spotify app no longer takes commands (frozen).
+      fakeNative.commandsFail = true;
+      fakeNative.playWillFail = true;
+      return provider;
+    }
+
+    test('a resume Spotify refuses plays our song again where it was', () async {
+      final provider = await pausedAt(42000);
+      fakeSpotify.resumeFails = true;
+      final plays = fakeSpotify.playCount;
+      final pausedAtMs = provider.position.inMilliseconds;
+
+      await provider.togglePlay();
+
+      expect(fakeSpotify.playCount, plays + 1);
+      expect(fakeSpotify.lastPlayedUris!.first, 'spotify:track:t1');
+      expect(fakeSpotify.lastPlayPositionMs, pausedAtMs);
+      expect(provider.isPlaying, isTrue);
+    });
+
+    test('a resume that never started Spotify is caught and replayed', () async {
+      final provider = await pausedAt(42000);
+      fakeSpotify.resumeIsIgnored = true;
+      final plays = fakeSpotify.playCount;
+
+      await provider.togglePlay();
+      expect(provider.isPlaying, isTrue);
+      await Future.delayed(const Duration(milliseconds: 3300));
+
+      expect(fakeSpotify.playCount, plays + 1, reason: 'played again where it was');
+      expect(provider.isPlaying, isTrue);
+    });
+
+    test('when nothing can start Spotify, Tsuki shows paused', () async {
+      final provider = await pausedAt(42000);
+      fakeSpotify.resumeFails = true;
+      fakeSpotify.playWillFail = true;
+
+      await provider.togglePlay();
+
+      expect(provider.isPlaying, isFalse);
+    });
+  });
 
   group('App Remote fast-path', () {
     test('playViaSpotify uses App Remote when already connected', () async {
