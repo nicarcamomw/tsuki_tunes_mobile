@@ -117,6 +117,24 @@ void main() {
       expect(calls.length, 4, reason: 'only the new track is fetched after a restart');
     });
 
+    test('the same track asked from two places is fetched once, and says so', () async {
+      final calls = <String>[];
+      final s = BpmService(
+        fetch: (id) async {
+          calls.add(id);
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          return const TrackAudioInfo(bpm: 128, gain: -9);
+        },
+        gap: Duration.zero,
+      );
+      var bumps = 0;
+      s.revision.addListener(() => bumps++);
+      await Future.wait([s.ensure('a'), s.lookup([_t('a'), _t('b')]), s.ensure('a')]);
+      expect(calls..sort(), ['a', 'b']);
+      expect(s.cached('a'), 128);
+      expect(bumps, 2, reason: 'what shows the tempo hears about each new one');
+    });
+
     test('failed requests are counted and retried next time', () async {
       var online = false;
       final s = BpmService(

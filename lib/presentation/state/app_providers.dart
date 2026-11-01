@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
 import '../../data/datasources/release_radar_service.dart';
@@ -154,6 +157,9 @@ final playbackWiringProvider = Provider<void>((ref) {
   player.onTrackStarted = (track) {
     library.addRecentTrack(track);
     masks.onTrackStarted(track);
+    // Tempo for the player (menu, eye, queue) even when loudness isn't
+    // looked up (Spotify, normalization off).
+    unawaited(BpmService.shared.ensure(track.id));
     // Lyrics of this song and the next are ready before the player opens.
     lyrics.prefetch(track.title, track.artistName);
     final queue = player.queue;

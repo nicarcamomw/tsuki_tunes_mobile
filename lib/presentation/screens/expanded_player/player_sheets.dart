@@ -229,7 +229,9 @@ void _showSongOptionsSheet(
   required VoidCallback onOpenAlbum,
 }) {
   final strings = locale.strings;
-  final bpm = BpmService.shared.cached(track.id);
+  // Not asked yet (e.g. playing through Spotify): ask now, the row shows
+  // up when the answer arrives.
+  unawaited(BpmService.shared.ensure(track.id));
 
   Widget optionTile({
     required IconData icon,
@@ -363,12 +365,18 @@ void _showSongOptionsSheet(
               const Divider(color: AppColors.border, height: 1),
               const SizedBox(height: 8),
               // BPM info
-              if (bpm != null)
-                optionTile(
-                  icon: Icons.speed,
-                  label: 'BPM',
-                  trailing: '${bpm.round()}',
-                ),
+              ValueListenableBuilder<int>(
+                valueListenable: BpmService.shared.revision,
+                builder: (_, __, ___) {
+                  final bpm = BpmService.shared.cached(track.id);
+                  if (bpm == null) return const SizedBox.shrink();
+                  return optionTile(
+                    icon: Icons.speed,
+                    label: 'BPM',
+                    trailing: '${bpm.round()}',
+                  );
+                },
+              ),
               // Save the song to a playlist
               optionTile(
                 icon: Icons.playlist_add,

@@ -705,7 +705,6 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final strings = locale.strings;
     final why = radioReasonLabel(strings,
         _audio.radioReasonFor(t.id) ?? _audio.recommendationReasonFor(t.id));
-    final bpm = BpmService.shared.cached(t.id);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 3),
       decoration: BoxDecoration(
@@ -807,18 +806,24 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     ],
                   ),
                 ),
-                if (bpm != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6),
-                    child: Text(
-                      '${bpm.round()}',
-                      style: locale.getTextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.neonCyan.withValues(alpha: 0.8),
+                ValueListenableBuilder<int>(
+                  valueListenable: BpmService.shared.revision,
+                  builder: (_, __, ___) {
+                    final bpm = BpmService.shared.cached(t.id);
+                    if (bpm == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        '${bpm.round()}',
+                        style: locale.getTextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.neonCyan.withValues(alpha: 0.8),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                ),
                 if (t.durationSeconds > 0)
                   Padding(
                     padding: const EdgeInsets.only(left: 8),

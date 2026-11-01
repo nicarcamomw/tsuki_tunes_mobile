@@ -146,7 +146,12 @@ class BpmService {
   final Map<String, double> _bpm = {};
   final Map<String, double> _gain = {};
   final Map<String, int> _unknownSince = {};
+  final Map<String, Future<bool>> _inFlight = {};
   Future<void>? _loading;
+
+  /// Bumps whenever a tempo or loudness is learned, so what shows them can
+  /// update when they arrive instead of only showing what was cached.
+  final ValueNotifier<int> revision = ValueNotifier(0);
   DateTime _nextSlot = DateTime.fromMillisecondsSinceEpoch(0);
 
   BpmService({Future<TrackAudioInfo?> Function(String trackId)? fetch, Duration? gap})
@@ -193,8 +198,14 @@ class BpmService {
     if (wait > Duration.zero) await Future<void>.delayed(wait);
   }
 
-  /// Fetches one track. Returns false when the request failed.
-  Future<bool> _fetchOne(String id) async {
+  /// Fetches one track. Returns false when the request failed. The same
+  /// track asked from two places (flow, shuffle, player) is fetched once.
+  Future<bool> _fetchOne(String id) =>
+      _inFlight[id] ??= _doFetchOne(id).whenComplete(() {
+        _inFlight.remove(id);
+      });
+
+  Future<bool> _doFetchOne(String id) async {
     await _paced();
     final info = await _fetch(id);
     if (info == null) return false;
@@ -202,6 +213,7 @@ class BpmService {
     if (info.gain != null) _gain[id] = info.gain!;
     if (info.bpm > 0 || info.gain != null) {
       _unknownSince.remove(id);
+      revision.value++;
     } else {
       _unknownSince[id] = DateTime.now().millisecondsSinceEpoch;
     }
@@ -249,6 +261,10 @@ class BpmService {
     if (!_settled(trackId) && await _fetchOne(trackId)) await _save();
     return _gain[trackId];
   }
+
+  /// Makes sure [trackId]'s tempo and loudness were asked for (one request,
+  /// remembered); [revision] bumps when they arrive.
+  Future<void> ensure(String trackId) => gainFor(trackId);
 
   double? cached(String trackId) => _bpm[trackId];
   double? cachedGain(String trackId) => _gain[trackId];
