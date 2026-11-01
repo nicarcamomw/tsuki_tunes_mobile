@@ -602,6 +602,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   }
 
   bool _spotifyInterrupted = false;
+  Timer? _completionRecheck;
   /// Seconds between asks to the Spotify app for its state.
   static const int _nativeRefreshEvery = 3;
   int _nativeRefreshFailures = 0;
@@ -1418,7 +1419,24 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   void _handleTrackCompleted() {
     if (_completionHandled || _crossfadeTriggered) return;
-    if (DateTime.now().difference(_lastPlayStart).inSeconds < 3) return;
+    final sinceStart = DateTime.now().difference(_lastPlayStart);
+    if (sinceStart < const Duration(seconds: 3)) {
+      // Usually a stale "completed" from the song before. But a song that
+      // really ended this fast (a broken preview) sends no second event and
+      // the queue would stall in silence: look again once the window passed.
+      if (!_spotifyActive) {
+        final gen = _playGeneration;
+        _completionRecheck?.cancel();
+        _completionRecheck = Timer(
+            const Duration(seconds: 3) - sinceStart + const Duration(milliseconds: 100), () {
+          if (gen != _playGeneration || _completionHandled || _spotifyActive) return;
+          if (_service.player.processingState == ProcessingState.completed) {
+            _handleTrackCompleted();
+          }
+        });
+      }
+      return;
+    }
     _completionHandled = true;
     final finished = _currentTrack;
     if (finished != null) onTrackCompleted?.call(finished);
@@ -1555,6 +1573,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
+    _completionRecheck?.cancel();
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
     _unplugSub?.cancel();

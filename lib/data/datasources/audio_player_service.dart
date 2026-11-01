@@ -8,13 +8,17 @@ import '../contracts/audio_player_contract.dart';
 import 'audio_precache_service.dart';
 
 class AudioPlayerService implements AudioPlayerContract {
-  final AudioPlayer _playerA = AudioPlayer();
-  final AudioPlayer _playerB = AudioPlayer();
+  final AudioPlayer _playerA;
+  final AudioPlayer _playerB;
   late AudioPlayer _activePlayer;
   late AudioPlayer _standbyPlayer;
 
   Timer? _fadeTimer;
   bool _isCrossfading = false;
+  // The deck the streams (and so the UI) follow. During a crossfade it is
+  // the incoming one while _activePlayer is still the outgoing one.
+  AudioPlayer? _hooked;
+  double _incomingLoudness = 1.0;
 
   /// Volume factor for loudness normalization of a track (1.0 = untouched).
   /// Every volume this service sets is scaled by the active track's factor.
@@ -42,13 +46,17 @@ class AudioPlayerService implements AudioPlayerContract {
   StreamSubscription? _playingSub;
   StreamSubscription? _eventSub;
 
-  AudioPlayerService() {
+  AudioPlayerService() : this.withPlayers(AudioPlayer(), AudioPlayer());
+
+  @visibleForTesting
+  AudioPlayerService.withPlayers(this._playerA, this._playerB) {
     _activePlayer = _playerA;
     _standbyPlayer = _playerB;
     _hookActivePlayer(_activePlayer);
   }
 
   void _hookActivePlayer(AudioPlayer player) {
+    _hooked = player;
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();
@@ -183,6 +191,7 @@ class AudioPlayerService implements AudioPlayerContract {
       _speed = inSpeed;
       final outLevel = _loudness;
       final inLevel = loudnessFor?.call(nextTrack) ?? 1.0;
+      _incomingLoudness = inLevel;
 
       _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
         currentStep++;
@@ -211,16 +220,37 @@ class AudioPlayerService implements AudioPlayerContract {
     }
   }
 
+  /// Ends a crossfade at once (a seek, a new song, stop). Once the incoming
+  /// song is the one shown, it is the one kept: dropping it instead left
+  /// the old song playing under the new one's title, with the UI following
+  /// a stopped deck (stuck position, "paused" while playing, no advance).
   void _cancelCrossfade() {
     _fadeTimer?.cancel();
     _fadeTimer = null;
-    if (_isCrossfading) {
+    if (!_isCrossfading) return;
+    _isCrossfading = false;
+    if (identical(_hooked, _standbyPlayer)) {
+      final outgoing = _activePlayer;
+      _activePlayer = _standbyPlayer;
+      _standbyPlayer = outgoing;
+      outgoing.stop();
+      outgoing.setVolume(1.0);
+      _loudness = _incomingLoudness;
+      _activePlayer.setVolume(_loudness.clamp(0.0, 1.0));
+    } else {
       _standbyPlayer.stop();
       _standbyPlayer.setVolume(1.0);
       _activePlayer.setVolume(_loudness);
-      _isCrossfading = false;
     }
   }
+
+  /// The deck the UI follows is the one that plays: true outside a
+  /// crossfade.
+  @visibleForTesting
+  bool get followsActiveDeck => identical(_hooked, _activePlayer);
+
+  @visibleForTesting
+  bool get isCrossfading => _isCrossfading;
 
   @override
   Future<void> resume() async {
