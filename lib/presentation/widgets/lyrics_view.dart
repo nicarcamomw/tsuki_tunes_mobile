@@ -52,6 +52,10 @@ class LyricsController extends ChangeNotifier {
 
   void retry(Track track) => _load(track);
 
+  /// Waits before each automatic retry when lrclib couldn't be reached.
+  @visibleForTesting
+  static List<Duration> retryDelays = const [Duration(seconds: 2), Duration(seconds: 5)];
+
   Future<void> _load(Track track) async {
     _trackId = track.id;
     _lyrics = null;
@@ -61,10 +65,18 @@ class LyricsController extends ChangeNotifier {
     _translating = false;
     _notify();
     SyncedLyrics? result;
-    try {
-      result = await LyricsService().getLyrics(track.title, track.artistName);
-    } catch (e) {
-      debugPrint('[Lyrics] load failed: $e');
+    for (var attempt = 0;; attempt++) {
+      try {
+        result = await LyricsService().getLyrics(track.title, track.artistName);
+        break;
+      } catch (e) {
+        debugPrint('[Lyrics] load failed (attempt ${attempt + 1}): $e');
+        // A network hiccup, not "no lyrics": try again on our own instead
+        // of making the user tap retry.
+        if (attempt >= retryDelays.length) break;
+        await Future<void>.delayed(retryDelays[attempt]);
+        if (_disposed || _trackId != track.id) return;
+      }
     }
     if (_disposed || _trackId != track.id) return;
     _lyrics = result;

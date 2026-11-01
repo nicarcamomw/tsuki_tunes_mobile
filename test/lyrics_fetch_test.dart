@@ -46,4 +46,43 @@ void main() {
     }, () => client);
     expect(lyrics.cachedCount, 150);
   });
+
+  test('a network failure is not remembered as "no lyrics"', () async {
+    var fail = true;
+    final client = MockClient((req) async {
+      if (fail) throw http.ClientException('offline');
+      if (req.url.path == '/api/get') return _json({'plainLyrics': 'back'});
+      return _json([]);
+    });
+    await http.runWithClient(() async {
+      await expectLater(lyrics.getLyrics('Song', 'Artist'), throwsA(isA<http.ClientException>()));
+      fail = false;
+      final again = await lyrics.getLyrics('Song', 'Artist');
+      expect(again?.plainLyrics, 'back');
+    }, () => client);
+  });
+
+  test('a real miss is remembered, a slow search does not hold an exact hit', () async {
+    final seen = <String>[];
+    final client = MockClient((req) async {
+      seen.add('${req.url.path} ${req.url.queryParameters['artist_name']}');
+      if (req.url.path == '/api/search') return _json([]);
+      return _json({'code': 404}, 404);
+    });
+    await http.runWithClient(() async {
+      expect(await lyrics.getLyrics('Nada', 'Bad Bunny, J Balvin'), isNull);
+      expect(await lyrics.getLyrics('Nada', 'Bad Bunny, J Balvin'), isNull);
+    }, () => client);
+    // Asked once, both lookups together, with the main artist only.
+    expect(seen, ['/api/get Bad Bunny', '/api/search Bad Bunny']);
+  });
+
+  test('the exact hit wins even when the search fails', () async {
+    final client = MockClient((req) async {
+      if (req.url.path == '/api/search') return http.Response('busy', 503);
+      return _json({'syncedLyrics': '[00:01.00] hola'});
+    });
+    final r = await http.runWithClient(() => lyrics.getLyrics('Hola', 'Artist'), () => client);
+    expect(r!.lines.single.text, 'hola');
+  });
 }

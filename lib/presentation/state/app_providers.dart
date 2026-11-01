@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
@@ -149,9 +150,17 @@ final playbackWiringProvider = Provider<void>((ref) {
   masks.isMusicPlaying = () => player.isPlaying;
   masks.isRainPlaying = () =>
       ambient.isPlaying && (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
+  final lyrics = getIt<LyricsService>();
   player.onTrackStarted = (track) {
     library.addRecentTrack(track);
     masks.onTrackStarted(track);
+    // Lyrics of this song and the next are ready before the player opens.
+    lyrics.prefetch(track.title, track.artistName);
+    final queue = player.queue;
+    final next = player.currentIndex + 1;
+    if (next > 0 && next < queue.length) {
+      lyrics.prefetch(queue[next].title, queue[next].artistName);
+    }
   };
   final markListened = MarkTrackListened(library);
   player.onListenedThreshold = markListened.call;

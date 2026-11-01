@@ -33,9 +33,14 @@ class LyricsService {
         .trim();
   }
 
+  /// Lyrics for a song: null when lrclib has none. Throws when lrclib
+  /// couldn't be reached, so a network hiccup isn't remembered as "no
+  /// lyrics" and the caller can try again.
   Future<SyncedLyrics?> getLyrics(String title, String artistName) async {
     final cleanTitle = _cleanString(title);
-    final cleanArtist = _cleanString(artistName);
+    // A collab's joined name ("A, B") rarely matches lrclib exactly; the
+    // main artist does.
+    final cleanArtist = _cleanString(ArtistNames.primary(artistName));
     final key = '${cleanTitle.toLowerCase()}__${cleanArtist.toLowerCase()}';
 
     if (_cache.containsKey(key)) {
@@ -45,13 +50,13 @@ class LyricsService {
       return hit;
     }
 
-    if (_inFlight.containsKey(key)) {
-      return _inFlight[key];
-    }
+    return _inFlight[key] ??= _fetchLyrics(cleanTitle, cleanArtist, key);
+  }
 
-    final future = _fetchLyrics(cleanTitle, cleanArtist, key);
-    _inFlight[key] = future;
-    return future;
+  /// Loads a song's lyrics ahead of time (the playing and the next song),
+  /// so they are there when the player opens. Failures are ignored.
+  void prefetch(String title, String artistName) {
+    unawaited(getLyrics(title, artistName).then((_) {}, onError: (_) {}));
   }
 
   void _remember(String key, SyncedLyrics? lyrics) {
@@ -62,42 +67,61 @@ class LyricsService {
     }
   }
 
+  static const Duration _timeout = Duration(seconds: 10);
+
+  /// The exact lookup and the search run side by side: the exact one wins
+  /// when it has lyrics, the search covers small title/artist differences.
+  /// Waiting for one before starting the other doubled the wait.
   Future<SyncedLyrics?> _fetchLyrics(
       String title, String artistName, String cacheKey) async {
     try {
-      final uri = Uri.https('lrclib.net', '/api/get', {
-        'track_name': title,
-        'artist_name': artistName,
-      });
+      final exact = _exactLookup(title, artistName).then<Object?>((v) => v, onError: (Object e) => e);
+      final search =
+          _searchBestMatch(title, artistName).then<Object?>((v) => v, onError: (Object e) => e);
 
-      final response =
-          await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data is Map<String, dynamic>) {
-          final result = _fromFields(
-            synced: data['syncedLyrics'] as String?,
-            plain: data['plainLyrics'] as String?,
-            instrumental: data['instrumental'] == true,
-          );
-          _remember(cacheKey, result);
-          return result;
-        }
-      } else if (response.statusCode == 404) {
-        // The exact lookup misses on small title/artist differences; a
-        // search by both fields often finds the song anyway.
-        final found = await _searchBestMatch(title, artistName);
-        // Cache misses too, so the same song isn't looked up again.
+      final got = await exact;
+      if (got is SyncedLyrics && got != SyncedLyrics.empty) {
+        _remember(cacheKey, got);
+        return got;
+      }
+      final found = await search;
+      if (found is SyncedLyrics) {
         _remember(cacheKey, found);
         return found;
       }
-    } catch (e) {
-      debugPrint('[LyricsService] Error fetching lyrics for "$title": $e');
+      final gotAnswered = got == null || got is SyncedLyrics;
+      if (gotAnswered && found == null) {
+        // Both answered and neither has lyrics: remember the miss.
+        final miss = got as SyncedLyrics?;
+        _remember(cacheKey, miss);
+        return miss;
+      }
+      final error = gotAnswered ? found! : got;
+      debugPrint('[LyricsService] Error fetching lyrics for "$title": $error');
+      throw error;
     } finally {
       unawaited(_inFlight.remove(cacheKey));
     }
-    return null;
+  }
+
+  /// lrclib's exact lookup: null when it doesn't know the song.
+  Future<SyncedLyrics?> _exactLookup(String title, String artistName) async {
+    final uri = Uri.https('lrclib.net', '/api/get', {
+      'track_name': title,
+      'artist_name': artistName,
+    });
+    final response = await http.get(uri, headers: _headers).timeout(_timeout);
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) {
+      throw http.ClientException('lrclib get ${response.statusCode}', uri);
+    }
+    final data = json.decode(response.body);
+    if (data is! Map<String, dynamic>) return null;
+    return _fromFields(
+      synced: data['syncedLyrics'] as String?,
+      plain: data['plainLyrics'] as String?,
+      instrumental: data['instrumental'] == true,
+    );
   }
 
   static SyncedLyrics _fromFields({String? synced, String? plain, required bool instrumental}) {
@@ -125,9 +149,10 @@ class LyricsService {
       'track_name': title,
       'artist_name': artistName,
     });
-    final response =
-        await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
-    if (response.statusCode != 200) return null;
+    final response = await http.get(uri, headers: _headers).timeout(_timeout);
+    if (response.statusCode != 200) {
+      throw http.ClientException('lrclib search ${response.statusCode}', uri);
+    }
     final data = json.decode(response.body);
     if (data is! List) return null;
 
