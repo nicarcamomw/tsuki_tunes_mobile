@@ -163,6 +163,17 @@ test('play log accepts back-to-back writes and rejects bad day ids', async () =>
   await assertFails(setDoc(doc(db, 'users/alice/playDays/hello'), day));
 });
 
+test('a listened song may carry its artist list, of a sane size', async () => {
+  await seed('users/alice', oldStamp());
+  const db = alice();
+  await assertSucceeds(stampedBatch(db, 'alice', (b) =>
+    b.set(doc(db, 'users/alice/listenedTracks/t1'), { ...track('t1'), artists: ['Bad Bunny', 'J Balvin'] })));
+  await seed('users/alice', oldStamp());
+  const many = Array.from({ length: 21 }, (_, i) => `A${i}`);
+  await assertFails(stampedBatch(db, 'alice', (b) =>
+    b.set(doc(db, 'users/alice/listenedTracks/t2'), { ...track('t2'), artists: many })));
+});
+
 // --- Public profiles
 
 const profile = (overrides = {}) => ({

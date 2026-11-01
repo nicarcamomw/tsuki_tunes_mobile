@@ -12,9 +12,8 @@ void main() {
       displayName: ' Nico ',
       isPublic: true,
       albumsCompleted: 2,
-      listenedArtistNames: [
-        'SOAD', 'soad', 'SOAD', 'Korn', 'Korn', 'Deftones', 'Tool', 'Tool', 'Tool', 'Tool',
-        'Muse', 'Placebo', '',
+      listenedTrackArtists: [
+        for (final a in ['SOAD', 'soad', 'SOAD', 'Korn', 'Korn', 'Deftones', 'Tool', 'Tool', 'Tool', 'Tool', 'Muse', 'Placebo', '']) [a],
       ],
       knownArtists: const [Artist(id: '27', name: 'System of a Down', pictureUrl: 'x'), Artist(id: '9', name: 'tool', pictureUrl: 'https://t')],
     );
@@ -26,9 +25,27 @@ void main() {
   });
 
   test('an empty library publishes zeros and no artists', () {
-    final p = build(uid: 'u', displayName: '', isPublic: false, albumsCompleted: 0, listenedArtistNames: const []);
+    final p = build(uid: 'u', displayName: '', isPublic: false, albumsCompleted: 0, listenedTrackArtists: const []);
     expect(p.displayName, 'Tsuki');
     expect(p.stats, const ProfileStats());
     expect(p.topArtists, isEmpty);
+  });
+
+  test('a collaboration counts for each of its artists, not as a new one', () {
+    final p = build(
+      uid: 'u',
+      displayName: 'N',
+      isPublic: false,
+      albumsCompleted: 0,
+      listenedTrackArtists: const [
+        ['Bad Bunny', 'J Balvin'],
+        ['Bad Bunny'],
+        ['Tyler, The Creator'],
+        ['J Balvin', 'j balvin'],
+      ],
+    );
+    expect(p.stats.tracks, 4);
+    expect(p.stats.artists, 3);
+    expect(p.topArtists.map((a) => '${a.name}:${a.count}'), ['Bad Bunny:2', 'J Balvin:2', 'Tyler, The Creator:1']);
   });
 }

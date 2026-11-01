@@ -143,6 +143,23 @@ class LibraryStore {
         _listened.remove(uid);
       });
 
+  /// Stores the real artist lists of songs that only had the joined name.
+  Future<void> setListenedArtists(String uid, Map<String, List<String>> artists) => _queued(() async {
+        await _db.batch((b) {
+          artists.forEach((id, names) {
+            b.update(
+              _db.listenedTracks,
+              ListenedTracksCompanion(artists: Value(jsonEncode(names))),
+              where: (t) => t.uid.equals(uid) & t.trackId.equals(id),
+            );
+          });
+        });
+        final known = _listened[uid];
+        if (known != null) {
+          artists.forEach((id, names) => known[id]?['artists'] = names);
+        }
+      });
+
   /// The songs with a mark or an unmark still on its way to the server.
   Future<({Set<String> marks, Set<String> unmarks})> pendingListenedIds(String uid) => _queued(() async => (
         marks: await _idsInState(uid, SyncState.pendingUpsert),
@@ -266,6 +283,7 @@ class LibraryStore {
         'previewUrl': r.previewUrl,
         'duration': r.duration,
         'listenedAt': r.listenedAt?.toIso8601String(),
+        if (r.artists != null) 'artists': jsonDecode(r.artists!),
       };
 
   static ListenedTracksCompanion _listenedRow(String uid, Map<String, dynamic> t) =>
@@ -280,6 +298,9 @@ class LibraryStore {
         previewUrl: Value(t['previewUrl']?.toString() ?? ''),
         duration: t['duration'] is num ? (t['duration'] as num).toInt() : 0,
         listenedAt: Value(DateTime.tryParse(t['listenedAt']?.toString() ?? '')),
+        // A copy without the list (an old song, from the server) leaves the
+        // one already known alone.
+        artists: t['artists'] is List ? Value(jsonEncode(t['artists'])) : const Value.absent(),
       );
 
   // --- Playlists and followed artists: one JSON row each, in order

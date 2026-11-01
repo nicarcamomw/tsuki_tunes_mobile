@@ -21,7 +21,7 @@ class ProfileController extends ChangeNotifier {
     required String? Function() photoUrl,
     required String? Function() maskId,
     required bool Function() libraryLoaded,
-    required Iterable<String> Function() listenedArtistNames,
+    required Iterable<List<String>> Function() listenedTrackArtists,
     required int Function() albumsCompleted,
     required Iterable<Artist> Function() knownArtists,
     this.debounce = const Duration(seconds: 20),
@@ -34,7 +34,7 @@ class ProfileController extends ChangeNotifier {
         _photoUrl = photoUrl,
         _maskId = maskId,
         _libraryLoaded = libraryLoaded,
-        _listenedArtistNames = listenedArtistNames,
+        _listenedTrackArtists = listenedTrackArtists,
         _albumsCompleted = albumsCompleted,
         _knownArtists = knownArtists,
         _now = clock ?? DateTime.now {
@@ -49,7 +49,7 @@ class ProfileController extends ChangeNotifier {
   final String? Function() _photoUrl;
   final String? Function() _maskId;
   final bool Function() _libraryLoaded;
-  final Iterable<String> Function() _listenedArtistNames;
+  final Iterable<List<String>> Function() _listenedTrackArtists;
   final int Function() _albumsCompleted;
   final Iterable<Artist> Function() _knownArtists;
   final DateTime Function() _now;
@@ -88,7 +88,7 @@ class ProfileController extends ChangeNotifier {
       photoUrl: _photoUrl(),
       maskId: _maskId(),
       isPublic: _isPublic,
-      listenedArtistNames: _listenedArtistNames(),
+      listenedTrackArtists: _listenedTrackArtists(),
       albumsCompleted: _albumsCompleted(),
       knownArtists: _knownArtists(),
     );

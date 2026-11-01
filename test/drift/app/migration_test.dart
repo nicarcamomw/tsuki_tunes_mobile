@@ -8,6 +8,7 @@ import 'package:tsuki_tunes_mobile/data/local/app_database.dart';
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -143,6 +144,51 @@ void main() {
           expectedNewFollowedArtistsData,
           await newDb.select(newDb.followedArtists).get(),
         );
+      },
+    );
+  });
+
+  test('migration from v2 to v3 keeps the songs, with no artist list yet', () async {
+    final at = DateTime.utc(2026, 3, 1).millisecondsSinceEpoch ~/ 1000;
+    await verifier.testWithDataIntegrity(
+      oldVersion: 2,
+      newVersion: 3,
+      createOld: v2.DatabaseAtV2.new,
+      createNew: v3.DatabaseAtV3.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insertAll(oldDb.listenedTracks, [
+          v2.ListenedTracksData(
+            uid: 'u1',
+            trackId: 't1',
+            title: 'Song',
+            artistName: 'Bad Bunny, J Balvin',
+            albumTitle: 'A',
+            albumId: 'alb',
+            coverUrl: '',
+            previewUrl: '',
+            duration: 200,
+            listenedAt: at,
+            syncState: 1,
+          ),
+        ]);
+      },
+      validateItems: (newDb) async {
+        expect(await newDb.select(newDb.listenedTracks).get(), [
+          v3.ListenedTracksData(
+            uid: 'u1',
+            trackId: 't1',
+            title: 'Song',
+            artistName: 'Bad Bunny, J Balvin',
+            albumTitle: 'A',
+            albumId: 'alb',
+            coverUrl: '',
+            previewUrl: '',
+            duration: 200,
+            listenedAt: at,
+            syncState: 1,
+          ),
+        ]);
       },
     );
   });

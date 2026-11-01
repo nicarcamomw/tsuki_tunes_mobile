@@ -116,6 +116,17 @@ class $ListenedTracksTable extends ListenedTracks
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _artistsMeta = const VerificationMeta(
+    'artists',
+  );
+  @override
+  late final GeneratedColumn<String> artists = GeneratedColumn<String>(
+    'artists',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _syncStateMeta = const VerificationMeta(
     'syncState',
   );
@@ -140,6 +151,7 @@ class $ListenedTracksTable extends ListenedTracks
     previewUrl,
     duration,
     listenedAt,
+    artists,
     syncState,
   ];
   @override
@@ -230,6 +242,12 @@ class $ListenedTracksTable extends ListenedTracks
         listenedAt.isAcceptableOrUnknown(data['listened_at']!, _listenedAtMeta),
       );
     }
+    if (data.containsKey('artists')) {
+      context.handle(
+        _artistsMeta,
+        artists.isAcceptableOrUnknown(data['artists']!, _artistsMeta),
+      );
+    }
     if (data.containsKey('sync_state')) {
       context.handle(
         _syncStateMeta,
@@ -285,6 +303,10 @@ class $ListenedTracksTable extends ListenedTracks
         DriftSqlType.dateTime,
         data['${effectivePrefix}listened_at'],
       ),
+      artists: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}artists'],
+      ),
       syncState: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sync_state'],
@@ -310,6 +332,10 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
   final int duration;
   final DateTime? listenedAt;
 
+  /// Each artist of the song, as a JSON list; null for songs marked before
+  /// it was kept (schema 3), which only have [artistName].
+  final String? artists;
+
   /// Whether the server has this row yet ([SyncState]; 0 is synced, a
   /// literal so the saved schema snapshots can hold it).
   final int syncState;
@@ -324,6 +350,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     required this.previewUrl,
     required this.duration,
     this.listenedAt,
+    this.artists,
     required this.syncState,
   });
   @override
@@ -340,6 +367,9 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     map['duration'] = Variable<int>(duration);
     if (!nullToAbsent || listenedAt != null) {
       map['listened_at'] = Variable<DateTime>(listenedAt);
+    }
+    if (!nullToAbsent || artists != null) {
+      map['artists'] = Variable<String>(artists);
     }
     map['sync_state'] = Variable<int>(syncState);
     return map;
@@ -359,6 +389,9 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       listenedAt: listenedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(listenedAt),
+      artists: artists == null && nullToAbsent
+          ? const Value.absent()
+          : Value(artists),
       syncState: Value(syncState),
     );
   }
@@ -379,6 +412,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       previewUrl: serializer.fromJson<String>(json['previewUrl']),
       duration: serializer.fromJson<int>(json['duration']),
       listenedAt: serializer.fromJson<DateTime?>(json['listenedAt']),
+      artists: serializer.fromJson<String?>(json['artists']),
       syncState: serializer.fromJson<int>(json['syncState']),
     );
   }
@@ -396,6 +430,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       'previewUrl': serializer.toJson<String>(previewUrl),
       'duration': serializer.toJson<int>(duration),
       'listenedAt': serializer.toJson<DateTime?>(listenedAt),
+      'artists': serializer.toJson<String?>(artists),
       'syncState': serializer.toJson<int>(syncState),
     };
   }
@@ -411,6 +446,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     String? previewUrl,
     int? duration,
     Value<DateTime?> listenedAt = const Value.absent(),
+    Value<String?> artists = const Value.absent(),
     int? syncState,
   }) => ListenedTrack(
     uid: uid ?? this.uid,
@@ -423,6 +459,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     previewUrl: previewUrl ?? this.previewUrl,
     duration: duration ?? this.duration,
     listenedAt: listenedAt.present ? listenedAt.value : this.listenedAt,
+    artists: artists.present ? artists.value : this.artists,
     syncState: syncState ?? this.syncState,
   );
   ListenedTrack copyWithCompanion(ListenedTracksCompanion data) {
@@ -445,6 +482,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
       listenedAt: data.listenedAt.present
           ? data.listenedAt.value
           : this.listenedAt,
+      artists: data.artists.present ? data.artists.value : this.artists,
       syncState: data.syncState.present ? data.syncState.value : this.syncState,
     );
   }
@@ -462,6 +500,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
           ..write('previewUrl: $previewUrl, ')
           ..write('duration: $duration, ')
           ..write('listenedAt: $listenedAt, ')
+          ..write('artists: $artists, ')
           ..write('syncState: $syncState')
           ..write(')'))
         .toString();
@@ -479,6 +518,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
     previewUrl,
     duration,
     listenedAt,
+    artists,
     syncState,
   );
   @override
@@ -495,6 +535,7 @@ class ListenedTrack extends DataClass implements Insertable<ListenedTrack> {
           other.previewUrl == this.previewUrl &&
           other.duration == this.duration &&
           other.listenedAt == this.listenedAt &&
+          other.artists == this.artists &&
           other.syncState == this.syncState);
 }
 
@@ -509,6 +550,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
   final Value<String> previewUrl;
   final Value<int> duration;
   final Value<DateTime?> listenedAt;
+  final Value<String?> artists;
   final Value<int> syncState;
   final Value<int> rowid;
   const ListenedTracksCompanion({
@@ -522,6 +564,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     this.previewUrl = const Value.absent(),
     this.duration = const Value.absent(),
     this.listenedAt = const Value.absent(),
+    this.artists = const Value.absent(),
     this.syncState = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -536,6 +579,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     this.previewUrl = const Value.absent(),
     required int duration,
     this.listenedAt = const Value.absent(),
+    this.artists = const Value.absent(),
     this.syncState = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : uid = Value(uid),
@@ -557,6 +601,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     Expression<String>? previewUrl,
     Expression<int>? duration,
     Expression<DateTime>? listenedAt,
+    Expression<String>? artists,
     Expression<int>? syncState,
     Expression<int>? rowid,
   }) {
@@ -571,6 +616,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
       if (previewUrl != null) 'preview_url': previewUrl,
       if (duration != null) 'duration': duration,
       if (listenedAt != null) 'listened_at': listenedAt,
+      if (artists != null) 'artists': artists,
       if (syncState != null) 'sync_state': syncState,
       if (rowid != null) 'rowid': rowid,
     });
@@ -587,6 +633,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     Value<String>? previewUrl,
     Value<int>? duration,
     Value<DateTime?>? listenedAt,
+    Value<String?>? artists,
     Value<int>? syncState,
     Value<int>? rowid,
   }) {
@@ -601,6 +648,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
       previewUrl: previewUrl ?? this.previewUrl,
       duration: duration ?? this.duration,
       listenedAt: listenedAt ?? this.listenedAt,
+      artists: artists ?? this.artists,
       syncState: syncState ?? this.syncState,
       rowid: rowid ?? this.rowid,
     );
@@ -639,6 +687,9 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
     if (listenedAt.present) {
       map['listened_at'] = Variable<DateTime>(listenedAt.value);
     }
+    if (artists.present) {
+      map['artists'] = Variable<String>(artists.value);
+    }
     if (syncState.present) {
       map['sync_state'] = Variable<int>(syncState.value);
     }
@@ -661,6 +712,7 @@ class ListenedTracksCompanion extends UpdateCompanion<ListenedTrack> {
           ..write('previewUrl: $previewUrl, ')
           ..write('duration: $duration, ')
           ..write('listenedAt: $listenedAt, ')
+          ..write('artists: $artists, ')
           ..write('syncState: $syncState, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1880,6 +1932,7 @@ typedef $$ListenedTracksTableCreateCompanionBuilder =
       Value<String> previewUrl,
       required int duration,
       Value<DateTime?> listenedAt,
+      Value<String?> artists,
       Value<int> syncState,
       Value<int> rowid,
     });
@@ -1895,6 +1948,7 @@ typedef $$ListenedTracksTableUpdateCompanionBuilder =
       Value<String> previewUrl,
       Value<int> duration,
       Value<DateTime?> listenedAt,
+      Value<String?> artists,
       Value<int> syncState,
       Value<int> rowid,
     });
@@ -1955,6 +2009,11 @@ class $$ListenedTracksTableFilterComposer
 
   ColumnFilters<DateTime> get listenedAt => $composableBuilder(
     column: $table.listenedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get artists => $composableBuilder(
+    column: $table.artists,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2023,6 +2082,11 @@ class $$ListenedTracksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get artists => $composableBuilder(
+    column: $table.artists,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get syncState => $composableBuilder(
     column: $table.syncState,
     builder: (column) => ColumnOrderings(column),
@@ -2076,6 +2140,9 @@ class $$ListenedTracksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get artists =>
+      $composableBuilder(column: $table.artists, builder: (column) => column);
+
   GeneratedColumn<int> get syncState =>
       $composableBuilder(column: $table.syncState, builder: (column) => column);
 }
@@ -2123,6 +2190,7 @@ class $$ListenedTracksTableTableManager
                 Value<String> previewUrl = const Value.absent(),
                 Value<int> duration = const Value.absent(),
                 Value<DateTime?> listenedAt = const Value.absent(),
+                Value<String?> artists = const Value.absent(),
                 Value<int> syncState = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ListenedTracksCompanion(
@@ -2136,6 +2204,7 @@ class $$ListenedTracksTableTableManager
                 previewUrl: previewUrl,
                 duration: duration,
                 listenedAt: listenedAt,
+                artists: artists,
                 syncState: syncState,
                 rowid: rowid,
               ),
@@ -2151,6 +2220,7 @@ class $$ListenedTracksTableTableManager
                 Value<String> previewUrl = const Value.absent(),
                 required int duration,
                 Value<DateTime?> listenedAt = const Value.absent(),
+                Value<String?> artists = const Value.absent(),
                 Value<int> syncState = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ListenedTracksCompanion.insert(
@@ -2164,6 +2234,7 @@ class $$ListenedTracksTableTableManager
                 previewUrl: previewUrl,
                 duration: duration,
                 listenedAt: listenedAt,
+                artists: artists,
                 syncState: syncState,
                 rowid: rowid,
               ),

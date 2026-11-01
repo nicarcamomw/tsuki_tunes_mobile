@@ -150,7 +150,21 @@ void main() {
     });
   });
 
-  test('the schema is at version 2 (the outbox)', () {
-    expect(db.schemaVersion, 2);
+  test('the schema is at version 3 (artist lists)', () {
+    expect(db.schemaVersion, 3);
+  });
+
+  test('a song keeps its artist list through the database', () async {
+    await store.saveListened('u1', [
+      {..._song('a'), 'artistName': 'Bad Bunny, J Balvin', 'artists': ['Bad Bunny', 'J Balvin']},
+      _song('b'),
+    ]);
+    final rows = {for (final t in await LibraryStore(db).loadListened('u1')) t['trackId']: t};
+    expect(rows['a']!['artists'], ['Bad Bunny', 'J Balvin']);
+    expect(rows['b']!.containsKey('artists'), isFalse);
+
+    await store.setListenedArtists('u1', {'b': ['Tyler, The Creator']});
+    final again = {for (final t in await LibraryStore(db).loadListened('u1')) t['trackId']: t};
+    expect(again['b']!['artists'], ['Tyler, The Creator']);
   });
 }

@@ -4,6 +4,7 @@ import '../../entities/public_profile.dart';
 /// The profile a user publishes, from their library: songs listened,
 /// albums completed, distinct artists and the five artists with the most
 /// songs listened (with a picture when they follow or love that artist).
+/// A collaboration counts for each of its artists.
 class BuildMyProfile {
   const BuildMyProfile();
 
@@ -13,20 +14,26 @@ class BuildMyProfile {
     String? photoUrl,
     String? maskId,
     required bool isPublic,
-    required Iterable<String> listenedArtistNames,
+    /// The artists of each listened song, one list per song.
+    required Iterable<List<String>> listenedTrackArtists,
     required int albumsCompleted,
     Iterable<Artist> knownArtists = const [],
   }) {
     final perArtist = <String, int>{};
     final shown = <String, String>{}; // lowercase -> name as first seen
     var tracks = 0;
-    for (final raw in listenedArtistNames) {
+    for (final song in listenedTrackArtists) {
       tracks++;
-      final name = raw.trim();
-      if (name.isEmpty) continue;
-      final key = name.toLowerCase();
-      shown.putIfAbsent(key, () => name);
-      perArtist[key] = (perArtist[key] ?? 0) + 1;
+      // An artist named twice in one song still counts that song once.
+      final seen = <String>{};
+      for (final raw in song) {
+        final name = raw.trim();
+        if (name.isEmpty) continue;
+        final key = name.toLowerCase();
+        if (!seen.add(key)) continue;
+        shown.putIfAbsent(key, () => name);
+        perArtist[key] = (perArtist[key] ?? 0) + 1;
+      }
     }
     final pictures = {
       for (final a in knownArtists)

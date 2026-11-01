@@ -37,7 +37,7 @@ void main() {
         photoUrl: () => null,
         maskId: () => 'hannya',
         libraryLoaded: () => loaded,
-        listenedArtistNames: () => artists,
+        listenedTrackArtists: () => artists.map((a) => [a]),
         albumsCompleted: () => 0,
         knownArtists: () => const [],
         debounce: const Duration(seconds: 20),

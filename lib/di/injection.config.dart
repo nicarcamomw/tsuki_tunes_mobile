@@ -134,14 +134,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i905.StorageService>(
       () => dataModule.storage(gh<_i448.LibraryStore>()),
     );
-    gh.lazySingleton<_i424.LibraryRepositoryImpl>(
-      () => repositoryModule.library(
-        gh<_i186.FirebaseService>(),
-        gh<_i905.StorageService>(),
-        gh<_i448.LibraryStore>(),
-        gh<_i144.Outbox>(),
-      ),
-    );
     gh.lazySingleton<_i553.PlaylistRepositoryImpl>(
       () => repositoryModule.playlists(
         gh<_i186.FirebaseService>(),
@@ -188,12 +180,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i670.ReorderPlaylist>(
       () => _i670.ReorderPlaylist(gh<_i128.PlaylistRepository>()),
     );
-    gh.lazySingleton<_i409.LibraryRepository>(
-      () =>
-          repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
-    );
     gh.lazySingleton<_i802.PlaybackController>(
       () => repositoryModule.playback(gh<_i1052.AudioProvider>()),
+    );
+    gh.lazySingleton<_i424.LibraryRepositoryImpl>(
+      () => repositoryModule.library(
+        gh<_i186.FirebaseService>(),
+        gh<_i905.StorageService>(),
+        gh<_i448.LibraryStore>(),
+        gh<_i144.Outbox>(),
+        gh<_i814.DeezerApiService>(),
+      ),
     );
     gh.factory<_i317.AddToQueue>(
       () => _i317.AddToQueue(gh<_i802.PlaybackController>()),
@@ -209,6 +206,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1002.StartRadio>(
       () => _i1002.StartRadio(gh<_i802.PlaybackController>()),
+    );
+    gh.lazySingleton<_i409.LibraryRepository>(
+      () =>
+          repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
     );
     gh.factory<_i83.ToggleAlbumListened>(
       () => _i83.ToggleAlbumListened(gh<_i409.LibraryRepository>()),

@@ -25,6 +25,12 @@ class ListenedTrackData {
   final int duration;
   final DateTime? listenedAt;
 
+  /// Each artist of the song (a collaboration has several). Songs marked
+  /// before this was kept only have [artistName], all of them joined by
+  /// commas: [hasArtistList] is false and this is a best guess.
+  final List<String> artists;
+  final bool hasArtistList;
+
   ListenedTrackData({
     required this.trackId,
     required this.title,
@@ -35,7 +41,21 @@ class ListenedTrackData {
     this.previewUrl = '',
     required this.duration,
     this.listenedAt,
-  });
+    List<String>? artists,
+  })  : hasArtistList = artists != null && artists.isNotEmpty,
+        artists = (artists != null && artists.isNotEmpty) ? artists : guessArtists(artistName);
+
+  /// The artists in a joined name, until the real list is known. Splitting
+  /// on commas is right for collaborations ("A, B") and wrong for the few
+  /// names that hold one ("Tyler, The Creator"); those get repaired from
+  /// the catalog (see ListenedTracksRepository).
+  static List<String> guessArtists(String joined) => [
+        for (final part in joined.split(','))
+          if (part.trim().isNotEmpty) part.trim(),
+      ];
+
+  static List<String>? _artistsFrom(Object? raw) =>
+      raw is List ? [for (final a in raw) if (a != null && a.toString().trim().isNotEmpty) a.toString().trim()] : null;
 
   factory ListenedTrackData.fromTrack(Track track) => ListenedTrackData(
         trackId: track.id,
@@ -47,6 +67,22 @@ class ListenedTrackData {
         duration: track.durationSeconds,
         previewUrl: track.previewUrl,
         listenedAt: DateTime.now(),
+        artists: track.contributors.length > 1
+            ? [for (final c in track.contributors) if (c.name.isNotEmpty) c.name]
+            : [if (track.artistName.isNotEmpty) track.artistName],
+      );
+
+  ListenedTrackData withArtists(List<String> artists) => ListenedTrackData(
+        trackId: trackId,
+        title: title,
+        artistName: artistName,
+        albumTitle: albumTitle,
+        albumId: albumId,
+        coverUrl: coverUrl,
+        previewUrl: previewUrl,
+        duration: duration,
+        listenedAt: listenedAt,
+        artists: artists,
       );
 
   factory ListenedTrackData.fromFirestore(Map<String, dynamic> data,
@@ -79,6 +115,7 @@ class ListenedTrackData {
       previewUrl: data['previewUrl']?.toString() ?? '',
       duration: dur,
       listenedAt: listened,
+      artists: _artistsFrom(data['artists']),
     );
   }
 
@@ -98,6 +135,7 @@ class ListenedTrackData {
       duration:
           json['duration'] is num ? (json['duration'] as num).toInt() : 0,
       listenedAt: listened,
+      artists: _artistsFrom(json['artists']),
     );
   }
 
@@ -111,6 +149,7 @@ class ListenedTrackData {
         'previewUrl': previewUrl,
         'duration': duration,
         'listenedAt': listenedAt?.toIso8601String(),
+        if (hasArtistList) 'artists': artists,
       };
 
   Map<String, dynamic> toFirestore() => {
@@ -123,6 +162,7 @@ class ListenedTrackData {
         'previewUrl': previewUrl,
         'duration': duration,
         'listenedAt': FieldValue.serverTimestamp(),
+        if (hasArtistList) 'artists': artists,
       };
 }
 
@@ -150,6 +190,9 @@ class ListenedTracksRepository {
   /// Runs a Firestore write while the library shows it is syncing.
   final Future<void> Function(Future<void> Function() write) _tracked;
 
+  /// Looks a song up in the catalog, to learn the artists of old songs.
+  final Future<Track?> Function(String trackId)? _lookupTrack;
+
   static const markKind = 'listened.upsert';
   static const unmarkKind = 'listened.delete';
 
@@ -161,13 +204,15 @@ class ListenedTracksRepository {
     required AlbumCompletionIndex albums,
     required VoidCallback onChanged,
     required Future<void> Function(Future<void> Function() write) tracked,
+    Future<Track?> Function(String trackId)? lookupTrack,
   })  : _firebase = firebase,
         _storage = storage,
         _store = store,
         _outbox = outbox,
         _albums = albums,
         _onChanged = onChanged,
-        _tracked = tracked {
+        _tracked = tracked,
+        _lookupTrack = lookupTrack {
     _outbox
       ..register(markKind, _sendMarks, onRefused: _marksRefused)
       ..register(unmarkKind, _sendUnmarks, onRefused: _unmarksRefused);
@@ -235,9 +280,11 @@ class ListenedTracksRepository {
 
   int get uniqueArtistsCount {
     if (_dirty) {
+      // Each artist of each song: a collaboration counts its artists, not
+      // the joined name as one more.
       _uniqueArtistsCount = {
         for (final t in _tracks)
-          if (t.artistName.isNotEmpty) t.artistName,
+          for (final a in t.artists) a.toLowerCase(),
       }.length;
       _dirty = false;
     }
@@ -276,9 +323,13 @@ class ListenedTracksRepository {
   /// leaving alone the songs with a change of this device on its way up.
   void _applyRemote({List<ListenedTrackData> upserts = const [], List<String> removedIds = const []}) {
     var changed = false;
-    for (final data in upserts) {
-      if (_pendingUnmarks.contains(data.trackId)) continue;
-      final idx = _tracks.indexWhere((t) => t.trackId == data.trackId);
+    for (final incoming in upserts) {
+      if (_pendingUnmarks.contains(incoming.trackId)) continue;
+      final idx = _tracks.indexWhere((t) => t.trackId == incoming.trackId);
+      // A server copy of an old song has no artist list: keep the one known.
+      final data = idx != -1 && !incoming.hasArtistList && _tracks[idx].hasArtistList
+          ? incoming.withArtists(_tracks[idx].artists)
+          : incoming;
       if (idx != -1) {
         _tracks[idx] = data;
       } else {
@@ -436,7 +487,55 @@ class ListenedTracksRepository {
     }, onError: (e) {
       debugPrint('[Listened] deletion log listener error: $e');
     });
+    unawaited(_repairArtists(uid));
     return true;
+  }
+
+  /// Songs marked before their artist list was kept only have the names
+  /// joined by commas, which can't tell "A, B" (two artists) from
+  /// "Tyler, The Creator" (one). Those few get their real list from the
+  /// catalog, in the background and gently (a few a second), and keep it.
+  Future<void> _repairArtists(String uid, {Duration gap = const Duration(milliseconds: 250)}) async {
+    final lookup = _lookupTrack;
+    if (lookup == null) return;
+    final todo = [
+      for (final t in _tracks)
+        if (!t.hasArtistList && t.artistName.contains(',')) t.trackId,
+    ].take(500).toList();
+    final found = <String, List<String>>{};
+
+    Future<void> flush() async {
+      if (found.isEmpty || _uid != uid) return;
+      final batch = Map.of(found);
+      found.clear();
+      await _store.setListenedArtists(uid, batch);
+      var changed = false;
+      for (var i = 0; i < _tracks.length; i++) {
+        final names = batch[_tracks[i].trackId];
+        if (names != null) {
+          _tracks[i] = _tracks[i].withArtists(names);
+          changed = true;
+        }
+      }
+      if (changed) _changed();
+    }
+
+    for (final id in todo) {
+      if (_uid != uid) return;
+      try {
+        final track = await lookup(id);
+        if (track != null) {
+          found[id] = track.contributors.length > 1
+              ? [for (final c in track.contributors) if (c.name.isNotEmpty) c.name]
+              : [if (track.artistName.isNotEmpty) track.artistName];
+        }
+      } catch (e) {
+        debugPrint('[Listened] artist lookup for $id failed: $e');
+      }
+      if (found.length >= 20) await flush();
+      await Future<void>.delayed(gap);
+    }
+    await flush();
   }
 
   void disconnect() {

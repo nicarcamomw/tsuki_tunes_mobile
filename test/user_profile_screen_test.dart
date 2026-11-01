@@ -27,7 +27,11 @@ ProfileController _mine() => ProfileController(
       photoUrl: () => null,
       maskId: () => null,
       libraryLoaded: () => true,
-      listenedArtistNames: () => ['Tool', 'Tool', 'SOAD'],
+      listenedTrackArtists: () => [
+        ['Tool'],
+        ['Tool'],
+        ['SOAD'],
+      ],
       albumsCompleted: () => 1,
       knownArtists: () => const [],
     );

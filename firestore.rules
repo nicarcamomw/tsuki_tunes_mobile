@@ -33,7 +33,8 @@ service cloud.firestore {
           && shortString(d, 'albumTitle', 500)
           && shortString(d, 'albumId', 64)
           && shortString(d, 'coverUrl', 2000)
-          && shortString(d, 'previewUrl', 2000);
+          && shortString(d, 'previewUrl', 2000)
+          && (!('artists' in d) || (d.artists is list && d.artists.size() <= 20));
     }
 
     function validFollowedArtist(d) {

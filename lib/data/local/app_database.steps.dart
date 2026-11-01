@@ -361,8 +361,139 @@ i1.GeneratedColumn<String> _column_22(String aliasedName) =>
       type: i1.DriftSqlType.string,
       $customConstraints: 'NULL',
     );
+
+final class Schema3 extends i0.VersionedSchema {
+  Schema3({required super.database}) : super(version: 3);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    listenedTracks,
+    playlists,
+    followedArtists,
+    outbox,
+    listenedByAlbum,
+    listenedByDate,
+    outboxDue,
+  ];
+  late final Shape4 listenedTracks = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'listened_tracks',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(uid, track_id)'],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_6,
+        _column_7,
+        _column_8,
+        _column_9,
+        _column_23,
+        _column_10,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape1 playlists = Shape1(
+    source: i0.VersionedTable(
+      entityName: 'playlists',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(uid, id)'],
+      columns: [_column_0, _column_11, _column_12, _column_13],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape2 followedArtists = Shape2(
+    source: i0.VersionedTable(
+      entityName: 'followed_artists',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(uid, artist_id)'],
+      columns: [_column_0, _column_14, _column_12, _column_13],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 outbox = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'outbox',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_15,
+        _column_0,
+        _column_16,
+        _column_17,
+        _column_18,
+        _column_19,
+        _column_20,
+        _column_21,
+        _column_22,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  final i1.Index listenedByAlbum = i1.Index(
+    'listened_by_album',
+    'CREATE INDEX listened_by_album ON listened_tracks (uid, album_id)',
+  );
+  final i1.Index listenedByDate = i1.Index(
+    'listened_by_date',
+    'CREATE INDEX listened_by_date ON listened_tracks (uid, listened_at)',
+  );
+  final i1.Index outboxDue = i1.Index(
+    'outbox_due',
+    'CREATE INDEX outbox_due ON outbox (uid, next_attempt_at)',
+  );
+}
+
+class Shape4 extends i0.VersionedTable {
+  Shape4({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get uid =>
+      columnsByName['uid']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get trackId =>
+      columnsByName['track_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get title =>
+      columnsByName['title']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get artistName =>
+      columnsByName['artist_name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get albumTitle =>
+      columnsByName['album_title']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get albumId =>
+      columnsByName['album_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get coverUrl =>
+      columnsByName['cover_url']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get previewUrl =>
+      columnsByName['preview_url']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get duration =>
+      columnsByName['duration']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get listenedAt =>
+      columnsByName['listened_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get artists =>
+      columnsByName['artists']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get syncState =>
+      columnsByName['sync_state']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_23(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'artists',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -371,6 +502,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from1To2(migrator, schema);
         return 2;
+      case 2:
+        final schema = Schema3(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from2To3(migrator, schema);
+        return 3;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -379,6 +515,7 @@ i0.MigrationStepWithVersion migrationSteps({
 
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2),
+  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
 );

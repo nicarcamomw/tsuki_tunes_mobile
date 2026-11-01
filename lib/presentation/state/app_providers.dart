@@ -161,7 +161,7 @@ final playbackWiringProvider = Provider<void>((ref) {
   void seedArtists() {
     if (!library.listenedTracksLoaded || masks.artistsSeeded) return;
     masks.seedKnownArtists([
-      ...library.listenedTracks.map((t) => t.artistName),
+      ...library.listenedTracks.expand((t) => t.artists),
       ...library.favoriteArtists.map((a) => a.name),
     ]);
   }
@@ -212,7 +212,7 @@ final profileControllerProvider = ChangeNotifierProvider<ProfileController>((ref
     photoUrl: () => auth.user?.photoURL,
     maskId: () => masks.equipped?.id,
     libraryLoaded: () => library.listenedTracksLoaded,
-    listenedArtistNames: () => library.listenedTracks.map((t) => t.artistName),
+    listenedTrackArtists: () => library.listenedTracks.map((t) => t.artists),
     albumsCompleted: () => library.completedAlbumsCount,
     knownArtists: () => [...library.followedArtists, ...library.favoriteArtists],
   );

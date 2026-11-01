@@ -67,6 +67,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     StorageService? storage,
     LibraryStore? store,
     Outbox? outbox,
+    Future<Track?> Function(String trackId)? lookupTrack,
   })  : _firebase = firebase ?? FirebaseService(),
         _storage = storage ?? StorageService() {
     final db = (store == null || outbox == null) ? AppDatabase(NativeDatabase.memory()) : null;
@@ -83,6 +84,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
       storage: _storage,
       store: localStore,
       outbox: localOutbox,
+      lookupTrack: lookupTrack,
       albums: _albums,
       onChanged: notifyListeners,
       tracked: _tracked,
@@ -407,9 +409,10 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
 
   List<TopArtistEntry> _rankArtists() {
     final Map<String, int> savedCounts = {};
+    // Each artist of each song, so a collaboration counts for each of its
+    // artists instead of as one more artist.
     for (final t in _listened.tracks) {
-      final name = t.artistName;
-      if (name.isNotEmpty) {
+      for (final name in t.artists) {
         savedCounts[name] = (savedCounts[name] ?? 0) + 1;
       }
     }

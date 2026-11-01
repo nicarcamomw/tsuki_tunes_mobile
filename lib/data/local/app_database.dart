@@ -27,6 +27,10 @@ class ListenedTracks extends Table {
   IntColumn get duration => integer()();
   DateTimeColumn get listenedAt => dateTime().nullable()();
 
+  /// Each artist of the song, as a JSON list; null for songs marked before
+  /// it was kept (schema 3), which only have [artistName].
+  TextColumn get artists => text().nullable()();
+
   /// Whether the server has this row yet ([SyncState]; 0 is synced, a
   /// literal so the saved schema snapshots can hold it).
   IntColumn get syncState => integer().withDefault(const Constant(0))();
@@ -101,7 +105,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'tsuki_library'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   // Each step is checked against the saved schema of its version
   // (drift_schemas/, test/drift/): dart run drift_dev make-migrations
@@ -113,6 +117,9 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(schema.listenedTracks, schema.listenedTracks.syncState);
             await m.createTable(schema.outbox);
             await m.createIndex(schema.outboxDue);
+          },
+          from2To3: (m, schema) async {
+            await m.addColumn(schema.listenedTracks, schema.listenedTracks.artists);
           },
         ),
       );

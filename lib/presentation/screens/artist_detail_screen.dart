@@ -691,7 +691,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
     final artistTracks = library.listenedTracks.where((t) {
       if (albumIds.contains(t.albumId)) return true;
-      final trackArtists = t.artistName.toLowerCase().split(',').map((s) => s.trim());
+      final trackArtists = t.artists.map((a) => a.toLowerCase());
       return trackArtists.any((a) => a == artistNameLower);
     }).toList();
     final songCount = artistTracks.length;

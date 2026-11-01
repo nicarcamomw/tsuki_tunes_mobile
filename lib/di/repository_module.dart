@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 
+import '../data/datasources/deezer_api_service.dart';
 import '../data/datasources/firebase_service.dart';
 import '../data/datasources/storage_service.dart';
 import '../data/local/library_store.dart';
@@ -24,8 +25,16 @@ abstract class RepositoryModule {
     StorageService storage,
     LibraryStore store,
     Outbox outbox,
+    DeezerApiService deezer,
   ) =>
-      LibraryRepositoryImpl(firebase: firebase, storage: storage, store: store, outbox: outbox);
+      LibraryRepositoryImpl(
+        firebase: firebase,
+        storage: storage,
+        store: store,
+        outbox: outbox,
+        // Old songs learn their artist lists from the catalog.
+        lookupTrack: deezer.getTrack,
+      );
 
   @lazySingleton
   LibraryRepository libraryRepository(LibraryRepositoryImpl library) => library;
