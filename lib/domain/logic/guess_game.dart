@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import '../entities/track.dart';
+import 'artist_names.dart';
 
 enum GuessMode { daily, library, artist, chart }
 
@@ -82,14 +83,14 @@ class GuessGame {
     final seen = <String>{};
     return tracks
         .where((t) =>
-            seen.add('${normalize(t.title)}|${normalize(t.artistName.split(',').first)}'))
+            seen.add('${normalize(t.title)}|${normalize(ArtistNames.primary(t.artistName))}'))
         .toList();
   }
 
   static bool _sameArtist(Track a, Track b) {
     if (a.artistId.isNotEmpty && a.artistId == b.artistId) return true;
-    final na = normalize(a.artistName.split(',').first);
-    final nb = normalize(b.artistName.split(',').first);
+    final na = normalize(ArtistNames.primary(a.artistName));
+    final nb = normalize(ArtistNames.primary(b.artistName));
     return na.isNotEmpty && na == nb;
   }
 

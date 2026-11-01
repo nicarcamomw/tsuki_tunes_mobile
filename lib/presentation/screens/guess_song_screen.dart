@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -476,7 +477,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           results = found
               .where((t) =>
                   t.artistId == artist.id ||
-                  GuessGame.normalize(t.artistName.split(',').first) == artistKey)
+                  GuessGame.normalize(ArtistNames.primary(t.artistName)) == artistKey)
               .toList();
         } else {
           results = await _api.searchTracksUnfiltered(q.trim(), limit: 40);

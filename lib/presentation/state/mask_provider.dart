@@ -11,6 +11,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
+import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/moon_calculator.dart';
 
 export '../../domain/entities/oni_mask.dart';
@@ -479,7 +480,7 @@ class MaskProvider extends ChangeNotifier {
   void seedKnownArtists(Iterable<String> artistNames) {
     if (!_loaded || _stats.seeded) return;
     for (final name in artistNames) {
-      final key = name.split(',').first.trim().toLowerCase();
+      final key = ArtistNames.primary(name).toLowerCase();
       if (key.isEmpty) continue;
       _stats.artistFirst.putIfAbsent(key, () => 0);
     }
@@ -489,7 +490,7 @@ class MaskProvider extends ChangeNotifier {
 
   bool get artistsSeeded => !_loaded || _stats.seeded;
 
-  static String _artistKey(Track t) => t.artistName.split(',').first.trim().toLowerCase();
+  static String _artistKey(Track t) => ArtistNames.primary(t.artistName).toLowerCase();
   static int _epochDay(DateTime t) =>
       DateTime.utc(t.year, t.month, t.day).millisecondsSinceEpoch ~/ 86400000;
   static String _dayKey(DateTime t) => '${t.year}-${t.month}-${t.day}';

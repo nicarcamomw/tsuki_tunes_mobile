@@ -8,6 +8,7 @@ import 'package:tsuki_tunes_mobile/data/local/library_store.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/sync/outbox.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/artist_names.dart';
 
 import 'helpers/fake_firebase_service.dart';
 
@@ -85,6 +86,8 @@ void main() {
     expect(g('Earth, Wind & Fire'), ['Earth, Wind & Fire']);
     expect(g('Bad Bunny, J Balvin'), ['Bad Bunny', 'J Balvin']);
     expect(g('Bad Bunny'), ['Bad Bunny']);
+    expect(ArtistNames.primary('Tyler, The Creator, Kali Uchis'), 'Tyler, The Creator');
+    expect(ArtistNames.primary('Bad Bunny, J Balvin'), 'Bad Bunny');
     final old = ListenedTrackData(
         trackId: 't', title: 'x', artistName: 'Tyler, The Creator', albumTitle: '',
         albumId: '', coverUrl: '', duration: 1);

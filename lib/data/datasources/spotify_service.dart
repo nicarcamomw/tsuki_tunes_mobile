@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../domain/logic/artist_names.dart';
 import 'storage_service.dart';
 
 class SpotifyService {
@@ -456,8 +457,7 @@ class SpotifyService {
       ];
 
       final wantedTitle = normalizeTitle(title);
-      final wantedArtists = artist
-          .split(',')
+      final wantedArtists = ArtistNames.split(artist)
           .map(_normalize)
           .where((a) => a.isNotEmpty)
           .toList();

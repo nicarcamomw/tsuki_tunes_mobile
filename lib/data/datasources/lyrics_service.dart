@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/synced_lyrics.dart';
+import '../../domain/logic/artist_names.dart';
 
 class LyricsService {
   static final LyricsService _instance = LyricsService._internal();
@@ -130,7 +131,7 @@ class LyricsService {
     final data = json.decode(response.body);
     if (data is! List) return null;
 
-    final artistKey = _norm(artistName.split(',').first);
+    final artistKey = _norm(ArtistNames.primary(artistName));
     final titleKey = _norm(title);
     LyricsSearchResult? plainHit;
     for (final item in data.whereType<Map<String, dynamic>>()) {
