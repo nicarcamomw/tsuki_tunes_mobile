@@ -145,6 +145,10 @@ class TrackTile extends ConsumerWidget {
         (a) => (a.currentTrack?.id, a.isPlaying)));
     final isListened = ref.watch(isTrackListenedProvider(track.id));
     final locale = ref.read(localeProvider);
+    // Its Spotify link is looked up while it's on screen, so a tap plays it
+    // at once (once per song; nothing without Spotify).
+    final audio = ref.read(audioProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) => audio.warmSpotifyUri(track));
     final isCurrent = currentTrackId == track.id;
     final isPlaying = isCurrent && isAudioPlaying;
     final strings = locale.strings;

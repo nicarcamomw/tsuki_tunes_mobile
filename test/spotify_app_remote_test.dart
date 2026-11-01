@@ -380,6 +380,22 @@ void main() {
     expect(handler.playbackState.value.playing, isTrue);
   });
 
+  test('songs shown on screen get their Spotify link ahead, once each', () async {
+    fakeSpotify.lookedUp = {};
+    final provider = createProvider();
+    await Future.delayed(const Duration(milliseconds: 50)); // Spotify state loaded
+    final shown = [_track('s1'), _track('s2'), _track('s3')];
+    for (final t in [...shown, ...shown]) {
+      provider.warmSpotifyUri(t);
+    }
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    expect(fakeSpotify.lookedUp, {'s1', 's2', 's3'});
+    expect(fakeSpotify.events.where((e) => e.startsWith('search:')).length, 3);
+    expect(provider.warmQueueLengthForTesting, 0);
+  });
+
   group('resuming always ends in sync with Spotify', () {
     Future<AudioProvider> pausedAt(int ms) async {
       fakeNative.setConnected(true);

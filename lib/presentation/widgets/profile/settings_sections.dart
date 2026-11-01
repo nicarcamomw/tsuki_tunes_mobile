@@ -239,6 +239,21 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
       ),
       _SettingLink(
         locale: locale,
+        icon: Icons.receipt_long_rounded,
+        iconColor: AppColors.textSecondary,
+        label: strings.playbackLogCopy,
+        labelColor: AppColors.textSecondary,
+        borderRadius: BorderRadius.zero,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Clipboard.setData(ClipboardData(text: PlaybackLog.instance.dump()));
+          ScaffoldMessenger.of(widget.hostContext).showSnackBar(
+            SnackBar(content: Text(strings.playbackLogCopied)),
+          );
+        },
+      ),
+      _SettingLink(
+        locale: locale,
         icon: Icons.delete_sweep_rounded,
         iconColor: AppColors.textSecondary,
         iconSemanticLabel: strings.a11yClearCache,

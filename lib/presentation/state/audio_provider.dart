@@ -898,6 +898,48 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   @visibleForTesting
   int? peekNextIndex() => _q.peekNext();
 
+  // ── Spotify links looked up ahead ──
+  //
+  // A song whose Spotify link is known (one that played before, like the
+  // library's) starts at once and goes to Spotify with the songs after it;
+  // a new one first has to be searched, which takes seconds. Songs shown on
+  // screen are looked up quietly, newest screen first, before they're tapped.
+
+  final Set<String> _warmSeen = {};
+  final List<Track> _warmQueue = [];
+  bool _warming = false;
+
+  /// Looks up [track]'s Spotify link in the background (once per song).
+  void warmSpotifyUri(Track track) {
+    if (!_useSpotify || track.id.isEmpty || !_online) return;
+    if (!_warmSeen.add(track.id)) return;
+    if (_warmSeen.length > 3000) _warmSeen.clear();
+    _warmQueue.add(track);
+    // Only the latest screens matter: drop what scrolled away long ago.
+    if (_warmQueue.length > 60) _warmQueue.removeAt(0);
+    if (!_warming) unawaited(_drainWarmQueue());
+  }
+
+  Future<void> _drainWarmQueue() async {
+    _warming = true;
+    try {
+      while (_warmQueue.isNotEmpty && _useSpotify && _online) {
+        final t = _warmQueue.removeLast();
+        if (await _spotify.cachedTrackUri(t.title, t.artistName, trackId: t.id) != null) continue;
+        await _resolveSpotifyUri(t);
+        // Gentle on Spotify's search: about four songs a second.
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+    } catch (e) {
+      debugPrint('[AudioProvider] Spotify link lookup failed: $e');
+    } finally {
+      _warming = false;
+    }
+  }
+
+  @visibleForTesting
+  int get warmQueueLengthForTesting => _warmQueue.length;
+
   void _prefetchNextTrack() {
     _maybeContinueWithSimilar();
     if (_smartShuffle) unawaited(_topUpRecommendations());

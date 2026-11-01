@@ -16,6 +16,7 @@ import 'data/datasources/deezer_disk_cache.dart';
 import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
+import 'data/datasources/playback_log.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
@@ -31,7 +32,13 @@ void main() async {
   // debugPrint also writes to the system log in release builds, where any
   // app with log access (or a bug report) could read songs, searches and
   // request URLs. Errors still reach Crashlytics.
-  if (kReleaseMode) debugPrint = (String? message, {int? wrapWidth}) {};
+  // Playback events are also kept in memory (PlaybackLog) so the user can
+  // copy them from settings when something goes wrong.
+  final systemPrint = debugPrint;
+  debugPrint = (String? message, {int? wrapWidth}) {
+    PlaybackLog.instance.capture(message);
+    if (!kReleaseMode) systemPrint(message, wrapWidth: wrapWidth);
+  };
   WidgetsFlutterBinding.ensureInitialized();
   // Data sources, repositories and use cases (see di/injection.dart).
   configureDependencies();

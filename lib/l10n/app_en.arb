@@ -798,5 +798,7 @@
   "profileShare": "SHARE PROFILE",
   "profileShareText": "My Tsuki Tunes profile 🌙 {link}",
   "profileUnavailable": "THIS PROFILE IS PRIVATE OR DOESN'T EXIST",
-  "profileMakePublicFirst": "Make it public to share it"
+  "profileMakePublicFirst": "Make it public to share it",
+  "playbackLogCopy": "Copy playback log",
+  "playbackLogCopied": "Log copied. Paste it in the chat so we can see what happened."
 }
