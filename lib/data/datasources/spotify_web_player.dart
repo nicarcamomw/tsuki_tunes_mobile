@@ -127,6 +127,36 @@ class SpotifyNativePlayer {
     );
   }
 
+  /// Asks the Spotify app for its state (a local call, no network) and
+  /// reports it like a pushed event. Android can leave the link looking
+  /// connected while its events stop arriving, so a pause made elsewhere
+  /// (another app taking the audio, a call, the notification) would go
+  /// unnoticed. False when the app didn't answer.
+  Future<bool> refreshState() async {
+    if (!_isConnected) return false;
+    try {
+      final state =
+          await SpotifySdk.getPlayerState().timeout(const Duration(seconds: 2));
+      if (state == null) return false;
+      final track = state.track;
+      _lastTrackUri = track?.uri;
+      _lastPaused = state.isPaused;
+      if (track != null) {
+        onStateChanged?.call(state.playbackPosition, track.duration, state.isPaused);
+      }
+      return true;
+    } catch (e) {
+      debugPrint('SpotifyNative: state refresh failed: $e');
+      return false;
+    }
+  }
+
+  /// Drops a link that stopped answering, so playback is followed through
+  /// the Web API and the next command reconnects.
+  void dropStaleLink() {
+    if (_isConnected) _markDisconnected();
+  }
+
   /// Plays [uri] in the Spotify app through App Remote. A failure usually
   /// means the Spotify app died after we connected, so reconnect (which
   /// relaunches it in the background) and try once more.

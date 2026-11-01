@@ -191,6 +191,32 @@ class FakeNativePlayer extends SpotifyNativePlayer {
 
   void setConnected(bool v) => _connected = v;
 
+  /// What the Spotify app answers when asked for its state; null: it
+  /// answers with nothing new.
+  ({int pos, bool paused})? appState;
+  bool refreshFails = false;
+  int refreshCount = 0;
+  bool dropped = false;
+
+  @override
+  Future<bool> refreshState() async {
+    refreshCount++;
+    if (!_connected || refreshFails) return false;
+    final st = appState;
+    if (st != null && _playingUri != null) {
+      _paused = st.paused;
+      onStateChanged?.call(st.pos, 180000, st.paused);
+    }
+    return true;
+  }
+
+  @override
+  void dropStaleLink() {
+    dropped = true;
+    _connected = false;
+    onDisconnected?.call();
+  }
+
   void simulateStateChanged(int posMs, int durMs, bool paused, {String? uri}) {
     if (uri != null) _playingUri = uri;
     _paused = paused;
@@ -504,6 +530,30 @@ void main() {
       provider.backdatePlayStartForTesting(const Duration(seconds: 15));
       return provider;
     }
+
+    test('a pause the Spotify app never pushed is caught within seconds', () async {
+      final provider = await playing([_track('t1')]);
+      expect(provider.isPlaying, isTrue);
+      // Another app took the audio: Spotify paused, no event reached us.
+      fakeNative.appState = (pos: 20000, paused: true);
+
+      await Future.delayed(const Duration(milliseconds: 3500));
+
+      expect(fakeNative.refreshCount, greaterThan(0));
+      expect(provider.isPlaying, isFalse);
+      expect(provider.position, const Duration(milliseconds: 20000));
+    });
+
+    test('a Spotify app that stops answering is followed through the Web API', () async {
+      final provider = await playing([_track('t1')]);
+      fakeNative.refreshFails = true;
+      fakeSpotify.setPaused('spotify:track:t1', progressMs: 30000);
+
+      await Future.delayed(const Duration(milliseconds: 6500));
+
+      expect(fakeNative.dropped, isTrue);
+      expect(provider.isPlaying, isFalse);
+    });
 
     test('losing the App Remote link does not mark playback paused', () async {
       final provider = await playing([_track('t1')]);

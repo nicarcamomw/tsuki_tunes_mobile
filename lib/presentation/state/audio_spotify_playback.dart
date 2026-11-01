@@ -155,8 +155,15 @@ extension _SpotifyPlayback on AudioProvider {
       _spotifyPollTick++;
 
       final hasRealTimeState = _nativePlayer.isConnected;
-      final pollInterval = hasRealTimeState ? 60 : 15;
+      // Without the App Remote link, the Web API is all we have: ask it
+      // often enough that a pause made elsewhere shows within seconds.
+      final pollInterval = hasRealTimeState ? 60 : 5;
       final pausePollInterval = hasRealTimeState ? 30 : 5;
+      // With it, still ask the Spotify app now and then (local, cheap):
+      // its pushed events can stop without the link reporting it.
+      if (hasRealTimeState && _spotifyPollTick % AudioProvider._nativeRefreshEvery == 0) {
+        unawaited(_refreshNativeState());
+      }
 
       if (_isPlaying) {
         final elapsed = DateTime.now().difference(_spotifySyncTime);
@@ -198,6 +205,23 @@ extension _SpotifyPlayback on AudioProvider {
         }
       }
     });
+  }
+
+  /// Asks the Spotify app for its state. Two unanswered asks in a row mean
+  /// the link is dead even if it says otherwise: drop it and follow
+  /// playback through the Web API.
+  Future<void> _refreshNativeState() async {
+    if (await _nativePlayer.refreshState()) {
+      _nativeRefreshFailures = 0;
+      return;
+    }
+    if (!_spotifyActive) return;
+    if (++_nativeRefreshFailures >= 2) {
+      _nativeRefreshFailures = 0;
+      debugPrint('[AudioProvider] Spotify app stopped answering, following it through the Web API');
+      _nativePlayer.dropStaleLink();
+    }
+    unawaited(_syncSpotifyPlaybackState());
   }
 
   Future<void> _syncSpotifyPlaybackState() async {

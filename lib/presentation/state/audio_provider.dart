@@ -426,6 +426,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _checkBackgroundCompletion();
       if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
+        // The Spotify app answers right away; the Web API backs it up.
+        if (_nativePlayer.isConnected) unawaited(_refreshNativeState());
         _syncSpotifyPlaybackState();
       } else if (_useSpotify && !_isPlaying) {
         unawaited(_adoptRunningSpotify());
@@ -600,6 +602,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   }
 
   bool _spotifyInterrupted = false;
+  /// Seconds between asks to the Spotify app for its state.
+  static const int _nativeRefreshEvery = 3;
+  int _nativeRefreshFailures = 0;
 
   StreamSubscription<void>? _unplugSub;
 
