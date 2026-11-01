@@ -18,6 +18,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/artist_features.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -47,6 +48,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   // the full profile (photos, fans, release count) is fetched on open.
   late Artist _artist = widget.artist;
   List<Track> _topTracks = [];
+  /// Songs by others where this artist is featured.
+  List<Track> _features = [];
+  bool _showAllFeatures = false;
   List<Album> _albums = [];
   int _totalAlbums = 0;
   List<String> _artistTags = [];
@@ -124,7 +128,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     }
     try {
       final results = await Future.wait([
-        _api.getArtistTopTracks(_artist.id, limit: 10),
+        // Deezer's top mixes the artist's own songs with their features;
+        // a longer list leaves enough of both after splitting them.
+        _api.getArtistTopTracks(_artist.id, limit: 50),
         _api.getArtistAlbumsPage(_artist.id, limit: 250, index: 0),
         LastFmService.getArtistTags(_artist.name),
         _api.getArtistCompilations(_artist.id),
@@ -137,8 +143,11 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         final uniqueCompilations =
             compilations.where((c) => !existingIds.contains(c.id)).toList();
         final allAlbums = [...pagedAlbums.items, ...uniqueCompilations];
+        final split = ArtistFeatures.split(results[0] as List<Track>,
+            artistId: _artist.id, artistName: _artist.name);
         setState(() {
-          _topTracks = results[0] as List<Track>;
+          _topTracks = split.own.take(10).toList();
+          _features = split.features.take(20).toList();
           _albums = allAlbums;
           _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
           _hasMoreAlbums = pagedAlbums.hasMore;
@@ -252,6 +261,16 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 setState(() => _showAllTracks = !_showAllTracks),
             reduceMotion: _reduceMotion,
           ),
+
+          if (!_isLoading && _features.isNotEmpty)
+            _FeaturesSliver(
+              tracks: _features,
+              locale: locale,
+              showAll: _showAllFeatures,
+              onToggleShowAll: () =>
+                  setState(() => _showAllFeatures = !_showAllFeatures),
+              reduceMotion: _reduceMotion,
+            ),
 
           // Stored content section
           if (!_isLoading)
