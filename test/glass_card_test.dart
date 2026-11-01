@@ -8,8 +8,9 @@ void main() {
       home: GlassCard(color: Colors.purple, child: SizedBox(height: 60, width: 300)),
     ));
     expect(tester.binding.transientCallbackCount, 1, reason: 'blooming');
+    // The bloom's ticker takes its start time from its first frame.
     await tester.pump(GlassCard.bloomDuration);
-    await tester.pump();
+    await tester.pump(GlassCard.bloomDuration);
     expect(tester.binding.transientCallbackCount, 0, reason: 'still after the bloom');
   });
 
