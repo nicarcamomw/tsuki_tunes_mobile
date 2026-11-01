@@ -60,7 +60,6 @@ void main() {
     );
     await Future<void>.delayed(const Duration(milliseconds: 20));
     await library.connectToFirestore('test-user');
-    // Before the repair the comma guess splits Tyler in two: 4 artists.
     await Future<void>.delayed(const Duration(milliseconds: 900));
 
     expect(lookups.toSet(), {'collab', 'tyler'}, reason: 'only songs with a comma are looked up');
@@ -76,5 +75,19 @@ void main() {
 
     library.disconnectFirestore();
     await phone.close();
+  });
+
+  test('the comma guess keeps names that hold a comma whole', () {
+    List<String> g(String s) => ListenedTrackData.guessArtists(s);
+    expect(g('Tyler, The Creator'), ['Tyler, The Creator']);
+    expect(g('Tyler, The Creator, Kali Uchis'), ['Tyler, The Creator', 'Kali Uchis']);
+    expect(g('Kali Uchis, Tyler, The Creator'), ['Kali Uchis', 'Tyler, The Creator']);
+    expect(g('Earth, Wind & Fire'), ['Earth, Wind & Fire']);
+    expect(g('Bad Bunny, J Balvin'), ['Bad Bunny', 'J Balvin']);
+    expect(g('Bad Bunny'), ['Bad Bunny']);
+    final old = ListenedTrackData(
+        trackId: 't', title: 'x', artistName: 'Tyler, The Creator', albumTitle: '',
+        albumId: '', coverUrl: '', duration: 1);
+    expect(old.artists, ['Tyler, The Creator']);
   });
 }

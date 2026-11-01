@@ -45,14 +45,60 @@ class ListenedTrackData {
   })  : hasArtistList = artists != null && artists.isNotEmpty,
         artists = (artists != null && artists.isNotEmpty) ? artists : guessArtists(artistName);
 
-  /// The artists in a joined name, until the real list is known. Splitting
-  /// on commas is right for collaborations ("A, B") and wrong for the few
-  /// names that hold one ("Tyler, The Creator"); those get repaired from
-  /// the catalog (see ListenedTracksRepository).
-  static List<String> guessArtists(String joined) => [
-        for (final part in joined.split(','))
-          if (part.trim().isNotEmpty) part.trim(),
-      ];
+  /// The artists in a joined name ("A, B" from the contributors), until the
+  /// real list is known. Some names hold a comma themselves ("Tyler, The
+  /// Creator", "Earth, Wind & Fire"): those are kept whole. Anything this
+  /// misses is repaired from the catalog (see ListenedTracksRepository).
+  static List<String> guessArtists(String joined) {
+    final parts = [
+      for (final part in joined.split(','))
+        if (part.trim().isNotEmpty) part.trim(),
+    ];
+    final out = <String>[];
+    var i = 0;
+    while (i < parts.length) {
+      final kept = _commaNameAt(parts, i);
+      if (kept > 1) {
+        out.add(parts.sublist(i, i + kept).join(', '));
+        i += kept;
+        continue;
+      }
+      // "Tyler, The Creator": a part starting with "The" finishes the name
+      // before it, it is never an artist of its own after a comma.
+      if (out.isNotEmpty && parts[i].toLowerCase().startsWith('the ')) {
+        out[out.length - 1] = '${out.last}, ${parts[i]}';
+      } else {
+        out.add(parts[i]);
+      }
+      i++;
+    }
+    return out;
+  }
+
+  /// Well-known artist names with commas, lowercased and split like above.
+  static const List<List<String>> _commaNames = [
+    ['earth', 'wind & fire'],
+    ['crosby', 'stills', 'nash & young'],
+    ['crosby', 'stills & nash'],
+    ['emerson', 'lake & palmer'],
+    ['peter', 'bjorn and john'],
+    ['blood', 'sweat & tears'],
+    ['now', 'now'],
+    ['me', 'myself and i'],
+  ];
+
+  /// How many parts from [i] form one known comma name (1 when none).
+  static int _commaNameAt(List<String> parts, int i) {
+    for (final name in _commaNames) {
+      if (i + name.length > parts.length) continue;
+      var match = true;
+      for (var j = 0; j < name.length && match; j++) {
+        match = parts[i + j].toLowerCase() == name[j];
+      }
+      if (match) return name.length;
+    }
+    return 1;
+  }
 
   static List<String>? _artistsFrom(Object? raw) =>
       raw is List ? [for (final a in raw) if (a != null && a.toString().trim().isNotEmpty) a.toString().trim()] : null;
