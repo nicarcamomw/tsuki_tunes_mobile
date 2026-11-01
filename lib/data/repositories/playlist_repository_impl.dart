@@ -67,8 +67,6 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   int _syncCount = 0;
   String? _currentUid;
   bool _isGuest = false;
-  final List<DateTime> _writeTimestamps = [];
-  static const _maxWritesPerMinute = 30;
   StreamSubscription? _playlistsSubscription;
 
   // Test hook: stands in for the Firestore write of an operation.
@@ -105,13 +103,6 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
     return trimmed.length > maxNameLength ? trimmed.substring(0, maxNameLength) : trimmed;
   }
 
-  bool _isWriteThrottled() {
-    final now = DateTime.now();
-    _writeTimestamps.removeWhere((t) => now.difference(t).inSeconds > 60);
-    if (_writeTimestamps.length >= _maxWritesPerMinute) return true;
-    _writeTimestamps.add(now);
-    return false;
-  }
 
   bool _canSyncToFirestore(String uid) {
     if (uid.isEmpty || uid.startsWith('guest_')) return false;
@@ -343,10 +334,6 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
     final cleanName = _cleanName(name);
     // Same name already on its way (a double tap): don't make another.
     if (!_creating.add(cleanName)) return null;
-    if (_isWriteThrottled()) {
-      _creating.remove(cleanName);
-      return null;
-    }
     final now = DateTime.now();
     // The id is made here (Firestore makes ids on the device), so the
     // server's copy of this playlist replaces it instead of adding another.
@@ -379,7 +366,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<void> renamePlaylist(String playlistId, String newName) async {
     final uid = _currentUid;
-    if (uid == null || newName.trim().isEmpty || _isWriteThrottled()) return;
+    if (uid == null || newName.trim().isEmpty) return;
     if (getPlaylist(playlistId) == null) return;
     await _change(uid, renameKind, playlistId, {
       'name': _cleanName(newName),
@@ -390,7 +377,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<void> deletePlaylist(String playlistId) async {
     final uid = _currentUid;
-    if (uid == null || _isWriteThrottled()) return;
+    if (uid == null) return;
     if (getPlaylist(playlistId) == null) return;
     await _change(uid, deleteKind, playlistId, const {});
   }
@@ -398,7 +385,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<bool> addTrackToPlaylist(String playlistId, Track track) async {
     final uid = _currentUid;
-    if (uid == null || _isWriteThrottled()) return false;
+    if (uid == null) return false;
     final playlist = getPlaylist(playlistId);
     if (playlist == null || playlist.contains(track.id) || playlist.isFull) return false;
     await _change(uid, tracksKind, playlistId, {
@@ -411,7 +398,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<bool> insertTrackAt(String playlistId, Track track, int index) async {
     final uid = _currentUid;
-    if (uid == null || _isWriteThrottled()) return false;
+    if (uid == null) return false;
     final playlist = getPlaylist(playlistId);
     if (playlist == null || playlist.contains(track.id) || playlist.isFull) return false;
     final order = [for (final t in playlist.tracks) t.id]..insert(index.clamp(0, playlist.tracks.length), track.id);
@@ -426,7 +413,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<void> removeTrackFromPlaylist(String playlistId, String trackId) async {
     final uid = _currentUid;
-    if (uid == null || _isWriteThrottled()) return;
+    if (uid == null) return;
     final playlist = getPlaylist(playlistId);
     if (playlist == null || !playlist.contains(trackId)) return;
     await _change(uid, tracksKind, playlistId, {
@@ -438,7 +425,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   @override
   Future<void> reorderTrack(String playlistId, int oldIndex, int newIndex) async {
     final uid = _currentUid;
-    if (uid == null || _isWriteThrottled()) return;
+    if (uid == null) return;
     final playlist = getPlaylist(playlistId);
     if (playlist == null) return;
     final ids = [for (final t in playlist.tracks) t.id];
