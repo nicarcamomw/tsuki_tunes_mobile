@@ -365,69 +365,71 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   // Action buttons row
                   Row(
                     children: [
-                      // Mark all / All listened
-                      Expanded(
-                        child: Material(
-                          color: allListened
-                              ? AppColors.accent.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(4),
-                          child: InkWell(
-                            onTap: tracks.isNotEmpty
-                                ? () => _toggleAll(albumData)
-                                : null,
+                      // Guests have no listened marks (they need an account).
+                      if (!ref.watch(authProvider.select((a) => a.isGuest)))
+                        // Mark all / All listened
+                        Expanded(
+                          child: Material(
+                            color: allListened
+                                ? AppColors.accent.withValues(alpha: 0.15)
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10, horizontal: 12),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: allListened
-                                      ? AppColors.accent
-                                      : AppColors.border,
+                            child: InkWell(
+                              onTap: tracks.isNotEmpty
+                                  ? () => _toggleAll(albumData)
+                                  : null,
+                              borderRadius: BorderRadius.circular(4),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: allListened
+                                        ? AppColors.accent
+                                        : AppColors.border,
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: library.syncing
-                                        ? const CircularProgressIndicator(
-                                            strokeWidth: 1.5,
-                                            color: AppColors.accent,
-                                          )
-                                        : Image.asset(
-                                            'assets/images/tengu.png',
-                                            color: allListened
-                                                ? AppColors.accent
-                                                : AppColors.textMuted,
-                                            colorBlendMode: BlendMode.srcIn,
-                                          ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    library.syncing
-                                        ? strings.syncing
-                                        : (allListened
-                                            ? strings.allListened
-                                            : strings.markAll),
-                                    style: locale.getTextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: allListened
-                                          ? AppColors.accent
-                                          : AppColors.textSecondary,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: library.syncing
+                                          ? const CircularProgressIndicator(
+                                              strokeWidth: 1.5,
+                                              color: AppColors.accent,
+                                            )
+                                          : Image.asset(
+                                              'assets/images/tengu.png',
+                                              color: allListened
+                                                  ? AppColors.accent
+                                                  : AppColors.textMuted,
+                                              colorBlendMode: BlendMode.srcIn,
+                                            ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      library.syncing
+                                          ? strings.syncing
+                                          : (allListened
+                                              ? strings.allListened
+                                              : strings.markAll),
+                                      style: locale.getTextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: allListened
+                                            ? AppColors.accent
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                       const SizedBox(width: 8),
                       // Play album
                       if (tracks.isNotEmpty)

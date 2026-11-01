@@ -254,24 +254,27 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                           ),
                           const SizedBox(width: 10),
                           // --- Oni mask (listened toggle) ---
-                          Tooltip(
-                            message: isListened
-                                ? locale.strings.unmarkAsListened
-                                : locale.strings.markAsListened,
-                            child: TapScale(
-                              semanticLabel: isListened
+                          // Guests have no listened marks (they need an account).
+                          if (!ref.watch(authProvider.select((a) => a.isGuest))) ...[
+                            Tooltip(
+                              message: isListened
                                   ? locale.strings.unmarkAsListened
                                   : locale.strings.markAsListened,
-                              onTap: () =>
-                                  ref.read(toggleTrackListenedProvider)(track),
-                              scaleDown: 0.8,
-                              child: OniMaskIcon(
-                                isActive: isListened,
-                                size: 20,
+                              child: TapScale(
+                                semanticLabel: isListened
+                                    ? locale.strings.unmarkAsListened
+                                    : locale.strings.markAsListened,
+                                onTap: () =>
+                                    ref.read(toggleTrackListenedProvider)(track),
+                                scaleDown: 0.8,
+                                child: OniMaskIcon(
+                                  isActive: isListened,
+                                  size: 20,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
+                            const SizedBox(width: 10),
+                          ],
                           // --- Play / Pause ---
                           TapScale(
                             semanticLabel: isPlaying

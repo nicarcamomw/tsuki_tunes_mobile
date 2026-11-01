@@ -488,18 +488,20 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
               ],
             ),
           ),
-          TapScale(
-            semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
-            onTap: () => ref.read(toggleTrackListenedProvider)(track),
-            scaleDown: 0.8,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: OniMaskIcon(
-                isActive: isListened,
-                size: 30,
+          // Guests have no listened marks (they need an account).
+          if (!ref.watch(authProvider.select((a) => a.isGuest)))
+            TapScale(
+              semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
+              onTap: () => ref.read(toggleTrackListenedProvider)(track),
+              scaleDown: 0.8,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: OniMaskIcon(
+                  isActive: isListened,
+                  size: 30,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
