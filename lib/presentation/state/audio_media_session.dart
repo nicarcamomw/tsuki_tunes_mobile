@@ -93,8 +93,22 @@ extension _MediaSession on AudioProvider {
             ? AudioProcessingState.buffering
             : AudioProcessingState.ready);
     final stateKey = '$processing|$_isPlaying|$itemKey';
-    if (!force && stateKey == _mediaStateKey) return;
+    // The system moves the lock-screen bar on its own from the last pushed
+    // position and speed; when ours moved elsewhere (a Spotify resync, a
+    // speed ramp) push again, or the bar drifts from the song.
+    final speed = _spotifyActive && !_spotifyFallbackActive ? 1.0 : _service.speed;
+    final now = DateTime.now();
+    final expected = _isPlaying
+        ? _mediaPostedPosition +
+            (now.difference(_mediaPostedAt) * _mediaPostedSpeed)
+        : _mediaPostedPosition;
+    final drifted = (expected - _position).abs() > const Duration(seconds: 2) ||
+        (speed - _mediaPostedSpeed).abs() > 0.01;
+    if (!force && !drifted && stateKey == _mediaStateKey) return;
     _mediaStateKey = stateKey;
+    _mediaPostedPosition = _position;
+    _mediaPostedAt = now;
+    _mediaPostedSpeed = speed;
     handler.playbackState.add(PlaybackState(
       controls: [
         MediaControl.skipToPrevious,
@@ -111,7 +125,7 @@ extension _MediaSession on AudioProvider {
       playing: _isPlaying,
       updatePosition: _position,
       bufferedPosition: _bufferedPosition,
-      speed: 1.0,
+      speed: speed,
     ));
   }
 

@@ -227,6 +227,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // on every tick would only waste work.
   String? _mediaItemKey;
   String? _mediaStateKey;
+  // Where the lock-screen bar was put last, to tell when it drifted.
+  Duration _mediaPostedPosition = Duration.zero;
+  DateTime _mediaPostedAt = DateTime.fromMillisecondsSinceEpoch(0);
+  double _mediaPostedSpeed = 1.0;
 
   @override
   void notifyListeners() {
@@ -781,15 +785,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     try {
       _lastPlaybackError = null;
 
-      track = await _withFreshPreview(track);
-      if (gen != _playGeneration) return;
-
+      // Before anything that needs the network: offline, a song that isn't
+      // downloaded is reported at once instead of after a request times out.
       if (!_canPlayOffline(track)) {
         _isBuffering = false;
         _lastPlaybackError = PlaybackError.network;
         notifyListeners();
         return;
       }
+
+      track = await _withFreshPreview(track);
+      if (gen != _playGeneration) return;
 
       if (_useSpotify) {
         await _playViaSpotify(track);

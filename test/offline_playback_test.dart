@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
@@ -145,6 +147,29 @@ void main() {
       expect(audioProvider.lastPlaybackError, equals(PlaybackError.network));
       expect(audioProvider.isBuffering, isFalse);
       expect(fakePlayer.playCallCount, equals(0)); // Never attempted playback
+    });
+
+    test('sin conexión, una canción no descargada avisa al tiro sin pedir nada a la red', () async {
+      final connectivity = MockConnectivityProvider(isOnline: false);
+      final fakePlayer = FakeAudioPlayerService();
+      final audioProvider = AudioProvider(
+        service: fakePlayer,
+        storage: StorageService(),
+        connectivityProvider: connectivity,
+      );
+      // A Deezer preview whose signature expired: online it would be renewed.
+      final track = createTestTrack('expired_t',
+          previewUrl: 'https://cdnt-preview.dzcdn.net/api/1/x.mp3?hdnea=exp=1000~acl=x');
+      var requests = 0;
+      final client = MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      });
+
+      await http.runWithClient(() => audioProvider.playTrack(track), () => client);
+
+      expect(requests, 0);
+      expect(audioProvider.lastPlaybackError, equals(PlaybackError.network));
     });
 
     test('next() offline salta tracks sin cache', () async {

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/media_session_handler.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
@@ -353,6 +354,25 @@ void main() {
         spotifyService: fakeSpotify,
         nativePlayer: fakeNative,
       );
+
+  test('the lock-screen bar follows a Spotify resync', () async {
+    fakeNative.setConnected(true);
+    final provider = createProvider();
+    final handler = TsukiAudioHandler();
+    provider.attachDeferredMediaHandler(handler);
+    final track = _track('t1');
+    await provider.playTrack(track, newQueue: [track]);
+    await Future.delayed(Duration.zero);
+    fakeNative.simulateStateChanged(10000, 180000, false, uri: 'spotify:track:t1');
+    await Future.delayed(Duration.zero);
+    expect(handler.playbackState.value.updatePosition, const Duration(seconds: 10));
+
+    // Spotify reports it is elsewhere in the song (it skipped back).
+    fakeNative.simulateStateChanged(60000, 180000, false, uri: 'spotify:track:t1');
+    await Future.delayed(Duration.zero);
+    expect(handler.playbackState.value.updatePosition, const Duration(seconds: 60));
+    expect(handler.playbackState.value.playing, isTrue);
+  });
 
   group('resuming always ends in sync with Spotify', () {
     Future<AudioProvider> pausedAt(int ms) async {
