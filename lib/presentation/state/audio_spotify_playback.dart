@@ -269,16 +269,21 @@ extension _SpotifyPlayback on AudioProvider {
       final pausedAtEnd =
           !isPlaying && _spotifyPausedAtEnd(progressMs, durationMs);
 
-      _checkSpotifyLoop(Duration(milliseconds: progressMs));
       final webPos = Duration(milliseconds: progressMs);
-      // Always anchor the position to what Spotify actually reports.
-      // When App Remote is connected it feeds real-time updates too, but
-      // if its audio thread is frozen (battery optimization) it can report
-      // "playing" while the real position is stuck.  Re-syncing here
-      // catches that: the estimate jumps back to the true position.
-      _spotifySyncPosition = webPos;
-      _spotifySyncTime = DateTime.now();
-      _setPosition(webPos);
+      final estimated = _isPlaying
+          ? _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime)
+          : _position;
+      // App Remote, when connected, reports the position as it changes; the
+      // Web API's snapshot lags it by a second or two, so replacing it every
+      // poll makes the bar jump back. Only a real gap replaces it: App
+      // Remote frozen by battery optimization, saying "playing" while stuck.
+      if (!_nativePlayer.isConnected ||
+          (webPos - estimated).abs() > const Duration(seconds: 3)) {
+        _checkSpotifyLoop(webPos);
+        _spotifySyncPosition = webPos;
+        _spotifySyncTime = DateTime.now();
+        _setPosition(webPos);
+      }
 
       if (!isPlaying && _isPlaying) {
         // Grace period: ignore stale pause reports right after a play command
@@ -438,6 +443,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (gen != _playGeneration || !ok) return false;
     _spotifyAhead = ahead;
     _lastPlayCommandTime = DateTime.now();
+    _keepMediaSessionOnTop();
     if (force) {
       _spotifySyncPosition = pos;
       _spotifySyncTime = DateTime.now();
@@ -589,6 +595,7 @@ extension _SpotifyPlayback on AudioProvider {
       // gives Spotify the songs that now come next.
       if (await _reissueSpotifyAhead(force: true)) return;
     }
+    _keepMediaSessionOnTop();
     if (_nativePlayer.isConnected) {
       try {
         await _nativePlayer.resume();
@@ -601,6 +608,7 @@ extension _SpotifyPlayback on AudioProvider {
   }
 
   Future<void> _spotifySeek(int positionMs) async {
+    _keepMediaSessionOnTop();
     if (_nativePlayer.isConnected) {
       try {
         await _nativePlayer.seekTo(positionMs);
@@ -675,9 +683,42 @@ extension _SpotifyPlayback on AudioProvider {
     _spotifyAhead = const [];
     _spotifyListPlayFailed = false;
 
+    // ── Preferred: hand Spotify the next songs of our queue along with this
+    // one. It then plays them by itself, so the queue goes on even when
+    // Android freezes or kills Tsuki in the background (otherwise Spotify
+    // falls into its own autoplay when the song ends). Only the ones
+    // already looked up (the next one is, during the previous song). One
+    // request to the phone of the last play, and no second play a few
+    // seconds in to hand over the list (which restarts the song and puts
+    // Spotify's notification above ours).
+    final ahead = await _resolveAhead(cachedOnly: true);
+    if (gen != _playGeneration) return;
+    if (ahead.isNotEmpty) {
+      final ok =
+          await _spotify.play(trackUris: [uri, ...ahead.map((e) => e.uri)]);
+      if (gen != _playGeneration) return;
+      if (ok) {
+        debugPrint('Spotify: playing with ${ahead.length} queued songs ahead');
+        _spotifyAhead = ahead;
+        _spotifyActive = true;
+        _spotifyFallbackActive = false;
+        _isPlaying = false;
+        _isBuffering = true;
+        _setPosition(Duration.zero);
+        _lastPlayCommandTime = DateTime.now();
+        notifyListeners();
+        _prefetchNextTrack();
+        unawaited(_resolveAhead());
+        unawaited(_verifySpotifyPlayback(gen, uri, track));
+        return;
+      }
+      debugPrint('Spotify: list play failed, playing the single song');
+      _spotifyListPlayFailed = true;
+    }
+
     // ── Fast path: App Remote already connected (warm-up or previous play).
-    // Zero HTTP round-trips → the song starts instantly.  The list of next
-    // songs follows a few seconds in (_afterSpotifyStarted).
+    // No HTTP round-trips; the list of next songs follows a few seconds in
+    // (_afterSpotifyStarted).
     if (_nativePlayer.isConnected) {
       debugPrint('Spotify: App Remote connected, playing directly...');
       final ok = await _nativePlayer.playUri(uri);
@@ -698,41 +739,10 @@ extension _SpotifyPlayback on AudioProvider {
       debugPrint('Spotify: App Remote fast-path failed, falling through to Web API');
     }
 
-    // ── Web API path: resolve device once and reuse it. ──
+    // ── Web API single play: resolve the device once and reuse it. ──
     final deviceId = await _spotify.ensureActiveDevice();
     if (gen != _playGeneration) return;
-
     if (deviceId != null) {
-      // Try list play (enables Spotify's own crossfade between songs).
-      final ahead = await _resolveAhead(cachedOnly: true);
-      if (gen != _playGeneration) return;
-
-      if (ahead.isNotEmpty) {
-        final ok = await _spotify.play(
-          trackUris: [uri, ...ahead.map((e) => e.uri)],
-          deviceId: deviceId,
-        );
-        if (gen != _playGeneration) return;
-        if (ok) {
-          debugPrint('Spotify: playing with ${ahead.length} queued songs ahead');
-          _spotifyAhead = ahead;
-          _spotifyActive = true;
-          _spotifyFallbackActive = false;
-          _isPlaying = false;
-          _isBuffering = true;
-          _setPosition(Duration.zero);
-          _lastPlayCommandTime = DateTime.now();
-          notifyListeners();
-          _prefetchNextTrack();
-          unawaited(_resolveAhead());
-          unawaited(_verifySpotifyPlayback(gen, uri, track));
-          return;
-        }
-        debugPrint('Spotify: list play failed, playing the single song');
-        _spotifyListPlayFailed = true;
-      }
-
-      // Single play with the same device (no extra device lookup).
       final played = await _spotify.play(trackUri: uri, deviceId: deviceId);
       if (gen != _playGeneration) return;
       debugPrint('Spotify: Web API single play=$played');

@@ -640,7 +640,7 @@ void main() {
       await provider.togglePlay();
 
       expect(fakeNative.resumeCount, 0);
-      expect(fakeNative._playingUri, 'spotify:track:t1');
+      expect(fakeSpotify.lastPlayedUris?.first, 'spotify:track:t1');
       expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
     });
   });
