@@ -34,6 +34,33 @@ class MoonSheet extends ConsumerWidget {
     );
   }
 
+  /// Bakes the moons this sheet shows while the app is idle, so it opens
+  /// without drawing them all on its first frame.
+  static void prewarm(BuildContext context, MoonProvider moon) {
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
+    final s = moon.snapshot;
+    final south = moon.southernHemisphere;
+    MoonImageKey key(double size, double ill, bool waxing, {bool halo = false}) => MoonImageKey(
+        size: size,
+        dpr: dpr,
+        illumination: ill,
+        waxing: waxing,
+        southern: south,
+        eclipse: false,
+        halo: halo);
+    MoonImageCache.instance.warm([
+      key(132, s.illumination, s.waxing, halo: true),
+      for (final p in moon.cyclePhases) key(28, p.illumination, p.waxing),
+      for (final e in s.upcoming)
+        switch (e.kind) {
+          MoonPhaseKind.newMoon => key(30, 0, true),
+          MoonPhaseKind.firstQuarter => key(30, 0.5, true),
+          MoonPhaseKind.fullMoon => key(30, 1, true),
+          MoonPhaseKind.lastQuarter => key(30, 0.5, false),
+        },
+    ]);
+  }
+
   /// "Faltan 3 días para luna llena", or "luna llena esta noche".
   static String countdown(AppStrings strings, MoonSnapshot s) {
     if (s.isFullMoonWindow) return strings.moonFullTonight;

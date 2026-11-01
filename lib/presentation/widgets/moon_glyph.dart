@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 
@@ -24,19 +25,138 @@ class MoonGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: CustomPaint(
-        size: Size.square(size),
-        painter: MoonPainter(
-          illumination: eclipse ? 1.0 : illumination.clamp(0.0, 1.0),
-          waxing: waxing,
-          southern: southernHemisphere,
-          eclipse: eclipse,
-          halo: halo,
-        ),
-      ),
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0;
+    final key = MoonImageKey(
+      size: size,
+      dpr: dpr,
+      illumination: eclipse ? 1.0 : illumination.clamp(0.0, 1.0),
+      waxing: waxing,
+      southern: southernHemisphere,
+      eclipse: eclipse,
+      halo: halo,
+    );
+    return CustomPaint(
+      size: Size.square(size),
+      painter: _MoonImagePainter(MoonImageCache.instance.imageFor(key), key),
     );
   }
+}
+
+/// What a baked moon depends on. Illumination is rounded to 0.1%, the same
+/// step at which the moon visibly changes.
+@immutable
+class MoonImageKey {
+  final double size;
+  final double dpr;
+  final int milli;
+  final bool waxing;
+  final bool southern;
+  final bool eclipse;
+  final bool halo;
+
+  MoonImageKey({
+    required this.size,
+    required this.dpr,
+    required double illumination,
+    required this.waxing,
+    required this.southern,
+    required this.eclipse,
+    required this.halo,
+  }) : milli = (illumination * 1000).round();
+
+  /// The halo spreads to twice the moon's radius, past the widget's box.
+  double get extent => halo ? size * 2 : size + 2;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MoonImageKey &&
+      other.size == size &&
+      other.dpr == dpr &&
+      other.milli == milli &&
+      other.waxing == waxing &&
+      other.southern == southern &&
+      other.eclipse == eclipse &&
+      other.halo == halo;
+
+  @override
+  int get hashCode => Object.hash(size, dpr, milli, waxing, southern, eclipse, halo);
+}
+
+/// Baked moons. The painter uses layers, blurs, path boolean ops and, for
+/// big moons, a couple hundred craters: fine once, far too heavy to redo on
+/// every frame of a sheet sliding in or a list scrolling (Impeller keeps no
+/// raster cache). Each look is painted once into an image and reused.
+class MoonImageCache {
+  MoonImageCache._();
+  static final MoonImageCache instance = MoonImageCache._();
+
+  static const int maxEntries = 48;
+
+  // Insertion order doubles as recency: a hit is moved to the end.
+  final Map<MoonImageKey, ui.Image> _images = {};
+
+  int get length => _images.length;
+
+  ui.Image imageFor(MoonImageKey key) {
+    final hit = _images.remove(key);
+    if (hit != null) return _images[key] = hit;
+
+    final extent = key.extent;
+    final px = (extent * key.dpr).ceil().clamp(1, 4096);
+    final scale = px / extent;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)
+      ..scale(scale)
+      ..translate((extent - key.size) / 2, (extent - key.size) / 2);
+    MoonPainter(
+      illumination: key.milli / 1000,
+      waxing: key.waxing,
+      southern: key.southern,
+      eclipse: key.eclipse,
+      halo: key.halo,
+    ).paint(canvas, Size.square(key.size));
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(px, px);
+    picture.dispose();
+
+    // Evicted images are left to the GC: a widget may still be drawing one.
+    if (_images.length >= maxEntries) _images.remove(_images.keys.first);
+    return _images[key] = image;
+  }
+
+  /// Bakes [keys] ahead of time (recording is cheap; the GPU work runs
+  /// off the UI thread), so the first opening of a screen full of moons
+  /// doesn't pay for all of them on its first frame.
+  void warm(Iterable<MoonImageKey> keys) {
+    for (final key in keys) {
+      if (!_images.containsKey(key)) imageFor(key);
+    }
+  }
+
+  @visibleForTesting
+  void clear() => _images.clear();
+}
+
+class _MoonImagePainter extends CustomPainter {
+  final ui.Image image;
+  final MoonImageKey key;
+
+  _MoonImagePainter(this.image, this.key);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dst = Rect.fromCenter(
+        center: size.center(Offset.zero), width: key.extent, height: key.extent);
+    canvas.drawImageRect(
+      image,
+      Offset.zero & Size(image.width.toDouble(), image.height.toDouble()),
+      dst,
+      Paint()..filterQuality = FilterQuality.medium,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MoonImagePainter old) => old.key != key;
 }
 
 /// Slow pulse for the blood moon. Static when [active] is false or the system

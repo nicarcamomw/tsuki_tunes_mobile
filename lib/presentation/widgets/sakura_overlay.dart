@@ -28,7 +28,9 @@ class _SakuraOverlayState extends State<SakuraOverlay>
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker(_onTick)..start();
+    // Started only on the birthday: a running ticker makes every frame of
+    // the whole app redraw, even with no petals on screen.
+    _ticker = createTicker(_onTick);
     _checkBirthday();
   }
 
@@ -49,6 +51,7 @@ class _SakuraOverlayState extends State<SakuraOverlay>
         _active = true;
         _petals = List.generate(_petalCount, (_) => _Petal.random(_rng));
       });
+      _ticker.start();
     }
   }
 
