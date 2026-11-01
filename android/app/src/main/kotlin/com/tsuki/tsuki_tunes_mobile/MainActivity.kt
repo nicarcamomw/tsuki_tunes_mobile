@@ -48,6 +48,8 @@ class MainActivity : AudioServiceActivity() {
                             result.success(openAppSettings(pkg))
                         }
                     }
+                    "runsInBackground" -> result.success(ignoresBatteryOptimizations())
+                    "askToRunInBackground" -> result.success(askToRunInBackground())
                     else -> result.notImplemented()
                 }
             }
@@ -136,6 +138,27 @@ class MainActivity : AudioServiceActivity() {
         true
     } catch (e: Exception) {
         false
+    }
+
+    /// Whether Android leaves Tsuki alone in the background (no battery
+    /// optimization), so locking the phone doesn't kill it mid-song.
+    private fun ignoresBatteryOptimizations(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    /// The system's own "let this app always run in the background?" dialog.
+    private fun askToRunInBackground(): Boolean {
+        if (ignoresBatteryOptimizations()) return true
+        return try {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+            )
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     private fun requestHighestRefreshRate() {

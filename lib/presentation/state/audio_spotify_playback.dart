@@ -406,6 +406,7 @@ extension _SpotifyPlayback on AudioProvider {
 
     final now = DateTime.now();
     _spotifyAhead = _spotifyAhead.sublist(k + 1);
+    _spotifyFollowedAt = now;
     _currentTrack = track;
     _currentSpotifyUri = passed.last.uri;
     _linkedSpotifyUri = null;
@@ -430,9 +431,33 @@ extension _SpotifyPlayback on AudioProvider {
     unawaited(_radioCtrl.topUp());
     if (_spotifyAhead.length < 2 || _spotifyExtendAtNextSong) {
       _spotifyExtendAtNextSong = false;
-      unawaited(_reissueSpotifyAhead());
+      // Not now: Spotify may still be crossfading out of the song before,
+      // and a play would cut its last seconds. Once the overlap is over.
+      _scheduleSpotifyExtend();
     }
     _keepMediaSessionOnTop();
+  }
+
+  /// Whether Spotify may still be fading out the song before (it moved on
+  /// by itself less than its longest crossfade ago).
+  bool get _inSpotifyCrossfadeTail {
+    final at = _spotifyFollowedAt;
+    return at != null &&
+        DateTime.now().difference(at) < AudioProvider._spotifyCrossfadeTail;
+  }
+
+  /// Hands Spotify the longer list once its crossfade can't be cut.
+  void _scheduleSpotifyExtend({bool force = false}) {
+    final at = _spotifyFollowedAt ?? DateTime.now();
+    final wait = AudioProvider._spotifyCrossfadeTail - DateTime.now().difference(at);
+    _spotifyExtendForce = _spotifyExtendForce || force;
+    _spotifyExtendTimer?.cancel();
+    _spotifyExtendTimer = Timer(
+        wait > Duration.zero ? wait + const Duration(milliseconds: 200) : Duration.zero, () {
+      final f = _spotifyExtendForce;
+      _spotifyExtendForce = false;
+      unawaited(_reissueSpotifyAhead(force: f, afterTail: true));
+    });
   }
 
   /// Hands Spotify a fresh list from the current song on, from where it is,
@@ -440,10 +465,14 @@ extension _SpotifyPlayback on AudioProvider {
   /// brief restart goes unnoticed; otherwise the next song boundary does it.
   /// [force] (the queue was edited) hands it anywhere in the song, whenever
   /// the list differs from the one Spotify has. Returns whether it played.
-  Future<bool> _reissueSpotifyAhead({bool force = false}) async {
+  Future<bool> _reissueSpotifyAhead({bool force = false, bool afterTail = false}) async {
     final gen = _playGeneration;
     final uri = _currentSpotifyUri;
     if (uri == null || !_spotifyActive) return false;
+    if (_inSpotifyCrossfadeTail) {
+      _scheduleSpotifyExtend(force: force);
+      return false;
+    }
     final ahead = await _resolveAhead();
     if (gen != _playGeneration || !_spotifyActive) return false;
     if (force) {
@@ -459,7 +488,9 @@ extension _SpotifyPlayback on AudioProvider {
     final pos = _isPlaying
         ? _spotifySyncPosition + DateTime.now().difference(_spotifySyncTime)
         : _position;
-    if (!force && pos > const Duration(seconds: 8)) return false;
+    if (!force && pos > (afterTail ? const Duration(seconds: 25) : const Duration(seconds: 8))) {
+      return false;
+    }
     final ok = await _spotify.play(
       trackUris: [uri, ...ahead.map((e) => e.uri)],
       positionMs: pos.inMilliseconds,
@@ -745,7 +776,13 @@ extension _SpotifyPlayback on AudioProvider {
         _lastPlayCommandTime = DateTime.now();
         notifyListeners();
         _prefetchNextTrack();
-        unawaited(_resolveAhead());
+        // The rest of the next songs, looked up now, go to Spotify while
+        // this one has just started (where the brief restart goes
+        // unnoticed), so no song change has to hand them later.
+        unawaited(() async {
+          await _resolveAhead();
+          if (gen == _playGeneration) await _reissueSpotifyAhead();
+        }());
         unawaited(_verifySpotifyPlayback(gen, uri, track));
         return;
       }

@@ -849,6 +849,24 @@ void main() {
       expect(fakeSpotify.playCount, plays);
     });
 
+    test('a longer list waits until Spotify\'s crossfade is over', () async {
+      // 15 songs: Spotify gets t1 and the next 12 (t2..t13).
+      final tracks = [for (var i = 1; i <= 15; i++) _track('t$i')];
+      final provider = await playingList(tracks);
+      final plays = fakeSpotify.playCount;
+
+      // Spotify reaches t12 by itself: only t13 left after it.
+      fakeNative.simulateStateChanged(800, 180000, false, uri: 'spotify:track:t12');
+      await Future.delayed(const Duration(seconds: 5));
+      expect(provider.currentTrack?.id, 't12');
+      expect(fakeSpotify.playCount, plays, reason: 't11 may still be fading out');
+
+      await Future.delayed(const Duration(milliseconds: 8500));
+      expect(fakeSpotify.playCount, plays + 1, reason: 'then the longer list goes out');
+      expect(fakeSpotify.lastPlayedUris,
+          ['spotify:track:t12', 'spotify:track:t13', 'spotify:track:t14', 'spotify:track:t15']);
+    });
+
     test('after a long sleep we catch up several songs at once', () async {
       final provider = await playingList(
           [_track('t1'), _track('t2'), _track('t3'), _track('t4')]);

@@ -84,6 +84,25 @@ class BatteryGuide {
     }
   }
 
+  static const _askedBackgroundKey = 'asked_run_in_background';
+
+  /// Once, the first time music plays: asks Android (its own dialog) to let
+  /// Tsuki run in the background. Without it, many phones kill Tsuki when
+  /// the screen locks, and the music stops or Spotify's player takes over
+  /// the lock screen.
+  Future<void> askToRunInBackgroundOnce() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_askedBackgroundKey) ?? false) return;
+      if (await _channel.invokeMethod<bool>('runsInBackground') ?? true) return;
+      await prefs.setBool(_askedBackgroundKey, true);
+      await _channel.invokeMethod<bool>('askToRunInBackground');
+    } catch (e) {
+      debugPrint('[BatteryGuide] background request failed: $e');
+    }
+  }
+
   Future<void> dismiss() async {
     _dismissed = true;
     try {

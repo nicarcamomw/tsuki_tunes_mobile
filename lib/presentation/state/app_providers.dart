@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../data/datasources/battery_guide.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
@@ -155,6 +156,8 @@ final playbackWiringProvider = Provider<void>((ref) {
       ambient.isPlaying && (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
   final lyrics = getIt<LyricsService>();
   player.onTrackStarted = (track) {
+    // Locking the phone must not kill Tsuki mid-song (asked once).
+    unawaited(BatteryGuide.instance.askToRunInBackgroundOnce());
     library.addRecentTrack(track);
     masks.onTrackStarted(track);
     // Tempo for the player (menu, eye, queue) even when loudness isn't

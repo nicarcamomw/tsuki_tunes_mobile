@@ -111,6 +111,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // restart of the song), so Spotify's own crossfade and gapless playback
   // join song after song; short enough to look the songs up quickly.
   static const int _spotifyAheadMax = 12;
+  /// Spotify's longest crossfade: after it moves on by itself, the song
+  /// before may still be fading out this long, and a play would cut it.
+  static const Duration _spotifyCrossfadeTail = Duration(seconds: 13);
+  DateTime? _spotifyFollowedAt;
+  Timer? _spotifyExtendTimer;
+  bool _spotifyExtendForce = false;
   // Whether Spotify loops the current song itself (our repeat-one), so it
   // starts over with no gap instead of Tsuki playing it again. Null until
   // set this session.
@@ -1578,6 +1584,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
     _completionRecheck?.cancel();
+    _spotifyExtendTimer?.cancel();
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
     _unplugSub?.cancel();
