@@ -1,10 +1,14 @@
 import 'dart:math';
-import 'dart:ui' show PointMode;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 
+/// A tinted card with soft blots of color inside, like ink spreading in
+/// water. The blots bloom one after another when the card appears and then
+/// stay still: nothing is redrawn afterwards, so a screen full of cards
+/// costs nothing while it sits there.
 class GlassCard extends StatefulWidget {
   final Color color;
   final double highlightAlpha;
@@ -27,121 +31,179 @@ class GlassCard extends StatefulWidget {
     required this.child,
   });
 
+  /// How long the blots take to bloom when the card appears.
+  static const Duration bloomDuration = Duration(milliseconds: 1400);
+
   @override
   State<GlassCard> createState() => _GlassCardState();
 }
 
-class _GlassCardState extends State<GlassCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _anim;
-  late final double _phase;
+class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _bloom =
+      AnimationController(vsync: this, duration: GlassCard.bloomDuration);
+  final _InkBlots _blots = _InkBlots(Random().nextInt(1 << 31));
+  bool _started = false;
 
   @override
-  void initState() {
-    super.initState();
-    _phase = Random().nextDouble() * 2 * pi;
-    // Slow on purpose: the glass should drift, not flash. Every motion in
-    // the painter is periodic over one cycle, so the loop never jumps.
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 16),
-    )..repeat();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _bloom.value = 1;
+    } else {
+      _bloom.forward();
+    }
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _bloom.dispose();
+    _blots.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
-    final br = BorderRadius.circular(widget.borderRadius);
-    final borderColor = widget.color.withValues(alpha: widget.borderAlpha);
-
-    if (reduceMotion) {
-      return Container(
-        margin: widget.margin,
-        padding: widget.padding,
-        decoration: BoxDecoration(
-          borderRadius: br,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              widget.color.withValues(alpha: widget.highlightAlpha),
-              AppColors.bgCard,
-            ],
-          ),
-          border: Border.all(color: borderColor),
-        ),
-        child: widget.child,
-      );
-    }
-
-    Widget inner = RepaintBoundary(
+    final dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+    Widget card = RepaintBoundary(
       child: CustomPaint(
-        painter: _GlassPainter(
+        painter: _CardPainter(
           color: widget.color,
           highlightAlpha: widget.highlightAlpha,
           dimAlpha: widget.dimAlpha,
           borderAlpha: widget.borderAlpha,
           borderRadius: widget.borderRadius,
-          bgCard: AppColors.bgCard,
-          phase: _phase,
-          animation: _anim,
+          blots: _blots,
+          bloom: _bloom,
+          dpr: dpr,
         ),
-        child: Padding(
-          padding: widget.padding,
-          child: widget.child,
-        ),
+        child: Padding(padding: widget.padding, child: widget.child),
       ),
     );
-
-    if (widget.margin != null) {
-      inner = Padding(padding: widget.margin!, child: inner);
-    }
-
-    return inner;
+    if (widget.margin != null) card = Padding(padding: widget.margin!, child: card);
+    return card;
   }
 }
 
-class _GlassPainter extends CustomPainter {
+/// One blot: an irregular rounded shape, blurred, baked once into an image.
+class _Blot {
+  final Offset center; // fraction of the card
+  final double radius; // fraction of the card's longest side
+  final double start; // when it starts blooming, fraction of the bloom
+  final bool second; // painted in the shifted hue
+  final List<double> wobble; // radius factor per control point
+
+  const _Blot(this.center, this.radius, this.start, this.second, this.wobble);
+}
+
+/// A card's blots and their baked images.
+class _InkBlots {
+  final List<_Blot> blots;
+  final Map<int, ui.Image> _images = {};
+  Object? _bakedFor;
+
+  _InkBlots(int seed) : blots = _make(Random(seed));
+
+  static List<_Blot> _make(Random rng) {
+    // Big soft blot near a corner, a mid one across from it and a small
+    // bright one: reads as depth, never as a pattern.
+    final corner = rng.nextBool();
+    final spots = [
+      (Offset(corner ? 0.1 : 0.9, 0.1 + rng.nextDouble() * 0.3), 0.5, 0.0, false),
+      (Offset(corner ? 0.78 : 0.22, 0.7 + rng.nextDouble() * 0.3), 0.4, 0.18, true),
+      (Offset(0.4 + rng.nextDouble() * 0.25, rng.nextDouble()), 0.24, 0.38, false),
+      if (rng.nextDouble() < 0.6)
+        (Offset(rng.nextDouble(), rng.nextDouble()), 0.16, 0.5, true),
+    ];
+    return [
+      for (final (c, r, s, second) in spots)
+        _Blot(c, r * (0.85 + rng.nextDouble() * 0.3), s, second,
+            [for (var i = 0; i < 7; i++) 0.72 + rng.nextDouble() * 0.5]),
+    ];
+  }
+
+  /// The blot's image, baked for [key] (card size, colors, density).
+  ui.Image imageFor(int index, Object key, double sizePx, Color color) {
+    if (_bakedFor != key) {
+      dispose();
+      _bakedFor = key;
+    }
+    return _images[index] ??= _bake(blots[index], sizePx, color);
+  }
+
+  static ui.Image _bake(_Blot blot, double sizePx, Color color) {
+    final px = sizePx.ceil().clamp(2, 1024);
+    final c = Offset(px / 2, px / 2);
+    // The shape fills ~60% of the image so the blur fades out inside it.
+    final r = px * 0.3;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawPath(
+      _shape(c, r, blot.wobble),
+      Paint()
+        ..shader = RadialGradient(
+          colors: [color, color.withValues(alpha: color.a * 0.55)],
+        ).createShader(Rect.fromCircle(center: c, radius: r * 1.2))
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.38),
+    );
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(px, px);
+    picture.dispose();
+    return image;
+  }
+
+  /// A smooth closed curve through points around [c] (Catmull-Rom as
+  /// cubic Béziers), so the blot is organic rather than a circle.
+  static Path _shape(Offset c, double r, List<double> wobble) {
+    final n = wobble.length;
+    final pts = [
+      for (var i = 0; i < n; i++)
+        c + Offset.fromDirection(i * 2 * pi / n, r * wobble[i]),
+    ];
+    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+    for (var i = 0; i < n; i++) {
+      final p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+      final c1 = p1 + (p2 - p0) / 6;
+      final c2 = p2 - (p3 - p1) / 6;
+      path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p2.dx, p2.dy);
+    }
+    return path..close();
+  }
+
+  void dispose() {
+    for (final image in _images.values) {
+      image.dispose();
+    }
+    _images.clear();
+  }
+}
+
+class _CardPainter extends CustomPainter {
   final Color color;
   final double highlightAlpha;
   final double dimAlpha;
   final double borderAlpha;
   final double borderRadius;
-  final Color bgCard;
-  final double phase;
+  final _InkBlots blots;
+  final Animation<double> bloom;
+  final double dpr;
 
-  _GlassPainter({
+  _CardPainter({
     required this.color,
     required this.highlightAlpha,
     required this.dimAlpha,
     required this.borderAlpha,
     required this.borderRadius,
-    required this.bgCard,
-    required this.phase,
-    required Animation<double> animation,
-  }) : _animation = animation, super(repaint: animation);
+    required this.blots,
+    required this.bloom,
+    required this.dpr,
+  }) : super(repaint: bloom);
 
-  final Animation<double> _animation;
-
-  // Frosted-glass grain, fixed per card size so it never shimmers.
-  List<Offset>? _grain;
-  Size? _grainSize;
-
-  List<Offset> _grainFor(Size size) {
-    if (_grain != null && _grainSize == size) return _grain!;
-    final rng = Random((phase * 1000).round());
-    final count = (size.width * size.height / 90).round().clamp(40, 900);
-    _grainSize = size;
-    return _grain = [
-      for (var i = 0; i < count; i++)
-        Offset(rng.nextDouble() * size.width, rng.nextDouble() * size.height),
-    ];
+  /// The card's color turned around the color wheel, for the second tone.
+  Color get _shifted {
+    final hsv = HSVColor.fromColor(color);
+    return hsv.withHue((hsv.hue + 38) % 360).toColor();
   }
 
   @override
@@ -149,15 +211,12 @@ class _GlassPainter extends CustomPainter {
     if (size.isEmpty) return;
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
-    // One full turn per cycle; only whole multiples of t below, so the
-    // last frame matches the first.
-    final t = _animation.value * 2 * pi;
-    final longest = max(size.width, size.height);
+    final bg = AppColors.bgCard;
 
     canvas.save();
     canvas.clipRRect(rrect);
 
-    // Base: the card tinted from the top-left corner, static.
+    // Base: the card tinted from the top-left corner.
     canvas.drawRect(
       rect,
       Paint()
@@ -165,91 +224,60 @@ class _GlassPainter extends CustomPainter {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.alphaBlend(color.withValues(alpha: highlightAlpha * 0.8), bgCard),
-            bgCard,
-            Color.alphaBlend(color.withValues(alpha: dimAlpha), bgCard),
+            Color.alphaBlend(color.withValues(alpha: highlightAlpha * 0.6), bg),
+            bg,
+            Color.alphaBlend(color.withValues(alpha: dimAlpha), bg),
           ],
           stops: const [0.0, 0.6, 1.0],
         ).createShader(rect),
     );
 
-    // Caustics: soft pools of light drifting on looping paths, like light
-    // bent through thick glass.
-    const blobs = [
-      (fx: 1, fy: 1, ox: 0.0, r: 0.75, a: 1.0),
-      (fx: 1, fy: 2, ox: 2.1, r: 0.55, a: 0.7),
-      (fx: 2, fy: 1, ox: 4.2, r: 0.45, a: 0.5),
-    ];
-    for (final b in blobs) {
-      final cx = size.width * (0.5 + 0.42 * sin(b.fx * t + phase + b.ox));
-      final cy = size.height * (0.5 + 0.38 * cos(b.fy * t + phase * 1.3 + b.ox));
-      final radius = longest * b.r;
-      final center = Offset(cx, cy);
-      canvas.drawCircle(
-        center,
-        radius,
+    // Blots: each grows from a drop and fades in, one after another.
+    // Sized by the card's area: on a wide, short card blots sized by its
+    // length would flood it.
+    final unit = sqrt(size.width * size.height);
+    final strength = (highlightAlpha * 2.6).clamp(0.16, 0.48);
+    final key = (size, dpr, color, _shifted, strength);
+    final t = bloom.value;
+    for (var i = 0; i < blots.blots.length; i++) {
+      final b = blots.blots[i];
+      final local = ((t - b.start) / (1 - b.start)).clamp(0.0, 1.0);
+      if (local <= 0) continue;
+      final grow = Curves.easeOutCubic.transform(local);
+      final side = unit * b.radius * 2 / 0.6; // the shape is 60% of the image
+      final image = blots.imageFor(
+        i,
+        key,
+        side * dpr,
+        (b.second ? _shifted : color).withValues(alpha: strength * (b.second ? 0.8 : 1)),
+      );
+      final drawn = side * (0.45 + 0.55 * grow);
+      final center = Offset(b.center.dx * size.width, b.center.dy * size.height);
+      canvas.drawImageRect(
+        image,
+        Offset.zero & Size(image.width.toDouble(), image.height.toDouble()),
+        Rect.fromCenter(center: center, width: drawn, height: drawn),
         Paint()
-          ..shader = RadialGradient(
-            colors: [
-              color.withValues(alpha: highlightAlpha * 0.55 * b.a),
-              color.withValues(alpha: 0),
-            ],
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+          ..filterQuality = FilterQuality.low
+          ..color = Color.fromRGBO(255, 255, 255, Curves.easeOut.transform(local)),
       );
     }
 
-    // Ripples: faint wavy refraction lines that slowly undulate.
-    final ripple = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8
-      ..color = Colors.white.withValues(alpha: 0.035);
-    for (var i = 0; i < 4; i++) {
-      final path = Path();
-      final baseY = size.height * (0.18 + i * 0.22);
-      final amp = size.height * (0.05 + 0.025 * sin(t + i));
-      for (double x = 0; x <= size.width; x += 6) {
-        final y = baseY +
-            amp * sin(x / size.width * 2 * pi * (1.2 + i * 0.35) + t * (i.isEven ? 1 : -1) + phase + i);
-        x == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-      }
-      canvas.drawPath(path, ripple);
-    }
-
-    // Frosted grain.
-    canvas.drawPoints(
-      PointMode.points,
-      _grainFor(size),
+    // A faint highlight along the top, like light on glass.
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height * 0.5),
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.045)
-        ..strokeWidth = 1,
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white.withValues(alpha: 0.045), Colors.white.withValues(alpha: 0)],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.5)),
     );
-
-    // Sheen: a wide diagonal glint that crosses once per cycle and fades
-    // in and out, so it's invisible where the loop wraps.
-    final v = _animation.value;
-    final glint = pow(sin(pi * v), 2).toDouble();
-    if (glint > 0.01) {
-      final sweep = -0.6 + 2.2 * v;
-      canvas.drawRect(
-        rect,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment(-1 + sweep * 2 - 0.6, -1),
-            end: Alignment(-1 + sweep * 2 + 0.6, 1),
-            colors: [
-              Colors.white.withValues(alpha: 0),
-              Colors.white.withValues(alpha: 0.05 * glint),
-              Colors.white.withValues(alpha: 0),
-            ],
-          ).createShader(rect),
-      );
-    }
-
     canvas.restore();
 
-    // Glass rim: border in the card's color, brighter along the top edge.
+    // Rim: the card's color, brighter along the top edge.
     canvas.drawRRect(
-      rrect,
+      rrect.deflate(0.5),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0
@@ -265,12 +293,12 @@ class _GlassPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlassPainter old) =>
+  bool shouldRepaint(_CardPainter old) =>
       old.color != color ||
       old.highlightAlpha != highlightAlpha ||
       old.dimAlpha != dimAlpha ||
       old.borderAlpha != borderAlpha ||
       old.borderRadius != borderRadius ||
-      old.bgCard != bgCard ||
-      old.phase != phase;
+      old.blots != blots ||
+      old.dpr != dpr;
 }
