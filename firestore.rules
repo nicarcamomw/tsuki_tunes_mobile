@@ -16,47 +16,159 @@ service cloud.firestore {
       return !(field in d) || d[field] == null || (d[field] is string && d[field].size() <= max);
     }
 
-    // Size limits only: the web app writes the same documents, so shapes are
-    // not enforced field by field. Limits stop a buggy or abusive client from
-    // writing documents near Firestore's 1 MiB cap.
-    function validPlaylist(d) {
-      return d.keys().size() <= 20
-          && (!('name' in d) || (d.name is string && d.name.size() <= 100))
-          && (!('tracks' in d) || (d.tracks is list && d.tracks.size() <= 1000));
+    // ── Schema validation ──
+    //
+    // Each collection lists the fields it may hold and the type of each one.
+    // Only what a write adds or changes is checked: an older document
+    // keeps fields from earlier versions (the web app wrote the same
+    // documents) without blocking updates, but nothing outside the schema
+    // can be written, and every written value has its type. Removing a
+    // field is always fine.
+
+    // The fields this write adds or changes.
+    function written() {
+      return resource == null
+          ? request.resource.data.keys().toSet()
+          : request.resource.data.diff(resource.data).addedKeys()
+              .union(request.resource.data.diff(resource.data).changedKeys());
     }
 
-    function validListenedTrack(d) {
-      return d.keys().size() <= 20
-          && shortString(d, 'trackId', 64)
-          && shortString(d, 'title', 500)
-          && shortString(d, 'artistName', 500)
-          && shortString(d, 'albumTitle', 500)
-          && shortString(d, 'albumId', 64)
-          && shortString(d, 'coverUrl', 2000)
-          && shortString(d, 'previewUrl', 2000)
-          && (!('artists' in d) || (d.artists is list && d.artists.size() <= 20));
+    function only(allowed) {
+      return written().hasOnly(allowed);
     }
 
-    function validFollowedArtist(d) {
-      return d.keys().size() <= 20
-          && shortString(d, 'id', 64)
-          && shortString(d, 'name', 500)
-          && shortString(d, 'pictureUrl', 2000)
-          && shortString(d, 'pictureSmall', 2000)
-          && shortString(d, 'pictureMedium', 2000)
-          && shortString(d, 'pictureBig', 2000)
-          && shortString(d, 'pictureXl', 2000);
+    function isWritten(f) {
+      return f in written();
     }
 
+    // When written: a string up to max characters (or null when nullable).
+    function wString(f, max, nullable) {
+      let v = request.resource.data.get(f, null);
+      return !isWritten(f)
+          || (nullable && v == null)
+          || (v is string && v.size() <= max);
+    }
+
+    // When written: a string of 1..max characters.
+    function wName(f, max) {
+      let v = request.resource.data.get(f, null);
+      return !isWritten(f) || (v is string && v.size() > 0 && v.size() <= max);
+    }
+
+    // When written: a whole number in [0, max].
+    function wCount(f, max) {
+      let v = request.resource.data.get(f, null);
+      return !isWritten(f) || (v is int && v >= 0 && v <= max);
+    }
+
+    function wTime(f) {
+      return !isWritten(f) || request.resource.data.get(f, null) is timestamp;
+    }
+
+    // When written: the server's clock (FieldValue.serverTimestamp()).
+    function wNow(f) {
+      return !isWritten(f) || request.resource.data.get(f, null) == request.time;
+    }
+
+    function wList(f, max) {
+      let v = request.resource.data.get(f, null);
+      return !isWritten(f) || (v is list && v.size() <= max);
+    }
+
+    function wMap(f, max) {
+      let v = request.resource.data.get(f, null);
+      return !isWritten(f) || (v is map && v.size() <= max);
+    }
+
+    // When written, equals the document's id.
+    function wId(f, id) {
+      return !isWritten(f) || request.resource.data.get(f, null) == id;
+    }
+
+    // users/{uid}: profile basics, counters, masks and the rate-limit stamp.
+    // stats and masks are merged into, so older keys inside them may stay:
+    // only their size and the values the app writes are checked.
     function validUserDoc(d) {
       return d.keys().size() <= 40
-          && shortString(d, 'displayName', 500)
-          && shortString(d, 'email', 500)
-          && shortString(d, 'photoURL', 2000)
-          && (!('stats' in d) || (d.stats is map && d.stats.keys().size() <= 20))
-          && (!('masks' in d) || (d.masks is map
-              && d.masks.keys().size() <= 10
-              && (!('unlocked' in d.masks) || (d.masks.unlocked is map && d.masks.unlocked.size() <= 200))));
+          && only(['displayName', 'email', 'photoURL', 'createdAt', 'lastLoginAt',
+                   'stats', 'masks', 'lastSubWrite'])
+          && wString('displayName', 500, true)
+          && wString('email', 500, true)
+          && wString('photoURL', 2000, true)
+          && wTime('createdAt')
+          && wTime('lastLoginAt')
+          && wMap('stats', 20)
+          && (!isWritten('stats') || !('totalTracks' in d.stats)
+              || (d.stats.totalTracks is int && d.stats.totalTracks >= 0))
+          && wMap('masks', 10)
+          && (!isWritten('masks') || !('unlocked' in d.masks)
+              || (d.masks.unlocked is map && d.masks.unlocked.size() <= 200))
+          && (!isWritten('masks') || !('equipped' in d.masks)
+              || d.masks.equipped == null
+              || (d.masks.equipped is string && d.masks.equipped.size() <= 40));
+    }
+
+    // users/{uid}/listenedTracks/{trackId}
+    function validListenedTrack(d, trackId) {
+      return d.keys().size() <= 20
+          && only(['trackId', 'title', 'artistName', 'albumTitle', 'albumId',
+                   'coverUrl', 'previewUrl', 'duration', 'listenedAt', 'artists'])
+          && wId('trackId', trackId)
+          && wString('title', 500, false)
+          && wString('artistName', 500, false)
+          && wString('albumTitle', 500, false)
+          && wString('albumId', 64, false)
+          && wString('coverUrl', 2000, false)
+          && wString('previewUrl', 2000, false)
+          && wCount('duration', 86400)
+          && wTime('listenedAt')
+          && wList('artists', 20);
+    }
+
+    // users/{uid}/playlists/{playlistId}. Its songs can't be checked one by
+    // one (rules have no loops): their number is.
+    function validPlaylist(d) {
+      return d.keys().size() <= 20
+          && only(['name', 'tracks', 'createdAt', 'updatedAt'])
+          && (resource != null || ('name' in d && 'tracks' in d))
+          && wName('name', 100)
+          && wList('tracks', 1000)
+          && wTime('createdAt')
+          && wNow('updatedAt');
+    }
+
+    // users/{uid}/followedArtists/{artistId}
+    function validFollowedArtist(d, artistId) {
+      return d.keys().size() <= 20
+          && only(['id', 'name', 'pictureUrl', 'pictureSmall', 'pictureMedium',
+                   'pictureBig', 'pictureXl', 'fansCount', 'albumsCount'])
+          && wId('id', artistId)
+          && wString('name', 500, false)
+          && wString('pictureUrl', 2000, false)
+          && wString('pictureSmall', 2000, true)
+          && wString('pictureMedium', 2000, true)
+          && wString('pictureBig', 2000, true)
+          && wString('pictureXl', 2000, true)
+          && wCount('fansCount', 1000000000)
+          && wCount('albumsCount', 100000);
+    }
+
+    // users/{uid}/listenedDeletions/{trackId}: when the song was unmarked.
+    function validDeletion(d) {
+      return d.keys().hasOnly(['deletedAt']) && d.deletedAt is timestamp;
+    }
+
+    // users/{uid}/playDays/{yyyy-MM-dd}: the day's plays, merged into with
+    // increments.
+    function validPlayDay(d, day) {
+      return d.keys().size() <= 10
+          && only(['date', 'plays', 'hours', 'seconds', 'tracks', 'updatedAt'])
+          && wId('date', day)
+          && wMap('plays', 2000)
+          && wMap('tracks', 2000)
+          && wMap('hours', 24)
+          && wCount('seconds', 86400 * 1000)
+          && wTime('updatedAt');
     }
 
     // lastSubWrite can only ever be set to the time of the request (or left
@@ -97,7 +209,7 @@ service cloud.firestore {
       match /listenedTracks/{trackId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId)
-            && validListenedTrack(request.resource.data)
+            && validListenedTrack(request.resource.data, trackId)
             && notRateLimited(userId);
         allow delete: if isOwner(userId) && notRateLimited(userId);
       }
@@ -115,7 +227,7 @@ service cloud.firestore {
       match /listenedDeletions/{trackId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId)
-            && request.resource.data.keys().hasOnly(['deletedAt'])
+            && validDeletion(request.resource.data)
             && notRateLimited(userId);
         allow delete: if isOwner(userId) && notRateLimited(userId);
       }
@@ -124,7 +236,7 @@ service cloud.firestore {
       match /followedArtists/{artistId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId)
-            && validFollowedArtist(request.resource.data)
+            && validFollowedArtist(request.resource.data, artistId)
             && notRateLimited(userId);
         allow delete: if isOwner(userId) && notRateLimited(userId);
       }
@@ -136,10 +248,7 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId)
             && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-            && request.resource.data.keys().size() <= 10
-            && request.resource.data.get('plays', {}).size() <= 2000
-            && request.resource.data.get('tracks', {}).size() <= 2000
-            && request.resource.data.get('hours', {}).size() <= 24;
+            && validPlayDay(request.resource.data, day);
         allow delete: if isOwner(userId);
       }
     }

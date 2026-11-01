@@ -174,6 +174,65 @@ test('a listened song may carry its artist list, of a sane size', async () => {
     b.set(doc(db, 'users/alice/listenedTracks/t2'), { ...track('t2'), artists: many })));
 });
 
+// --- Schema per collection
+
+const artist = (id) => ({
+  id, name: 'Artist', pictureUrl: 'https://e/a.jpg', pictureSmall: null,
+  pictureMedium: 'https://e/m.jpg', pictureBig: null, pictureXl: null, fansCount: 10, albumsCount: 2,
+});
+
+test('what the app writes passes the schema of every collection', async () => {
+  const db = alice();
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/followedArtists/a1'), artist('a1'))));
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'),
+    { name: 'Mix', tracks: [{ id: '1' }], createdAt: Timestamp.now(), updatedAt: serverTimestamp() })));
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.update(doc(db, 'users/alice/playlists/p1'),
+    { name: 'Renamed', updatedAt: serverTimestamp() })));
+});
+
+test('a field outside the schema is rejected, in every collection', async () => {
+  const db = alice();
+  const junk = { isAdmin: true };
+  await seed('users/alice', oldStamp());
+  await assertFails(setDoc(doc(db, 'users/alice'), junk, { merge: true }));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'), { ...track('t1'), ...junk })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/followedArtists/a1'), { ...artist('a1'), ...junk })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'), { name: 'P', tracks: [], ...junk })));
+  await assertFails(setDoc(doc(db, 'users/alice/playDays/2026-10-30'), { date: '2026-10-30', ...junk }, { merge: true }));
+});
+
+test('wrong types and ids that do not match the document are rejected', async () => {
+  const db = alice();
+  await seed('users/alice', oldStamp());
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'), { ...track('t1'), duration: '200' })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'), track('other'))));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'), { ...track('t1'), listenedAt: 'yesterday' })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/followedArtists/a1'), artist('a2'))));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/followedArtists/a1'), { ...artist('a1'), fansCount: -1 })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'), { name: '', tracks: [] })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'), { tracks: [] })));
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'),
+    { name: 'P', tracks: [], updatedAt: Timestamp.fromMillis(0) })));
+  await assertFails(setDoc(doc(db, 'users/alice/playDays/2026-10-30'), { date: '2026-10-31' }, { merge: true }));
+  await assertFails(setDoc(doc(db, 'users/alice'), { stats: { totalTracks: -5 } }, { merge: true }));
+  await assertFails(setDoc(doc(db, 'users/alice'), { masks: { equipped: 'x'.repeat(41) } }, { merge: true }));
+});
+
+test('an older document with fields from earlier versions can still be updated', async () => {
+  const db = alice();
+  await seed('users/alice', { ...oldStamp(), webTheme: 'dark', stats: { totalTracks: 3, webOnly: 1 } });
+  await seed('users/alice/listenedTracks/t1', { ...track('t1'), listenedAt: Timestamp.now(), legacyRating: 5 });
+  await assertSucceeds(setDoc(doc(db, 'users/alice'), { stats: { totalTracks: 4 } }, { merge: true }));
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'),
+    { ...track('t1'), artists: ['A'] }, { merge: true })));
+  // Replacing it whole drops the old field: that is fine too.
+  await seed('users/alice', { ...oldStamp(), webTheme: 'dark' });
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/listenedTracks/t1'), track('t1'))));
+});
+
 // --- Public profiles
 
 const profile = (overrides = {}) => ({
