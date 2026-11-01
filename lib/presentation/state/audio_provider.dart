@@ -616,6 +616,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// Seconds between asks to the Spotify app for its state.
   static const int _nativeRefreshEvery = 3;
   int _nativeRefreshFailures = 0;
+  // Last Web API position, to tell a frozen Spotify (says "playing", its
+  // position stuck) from one that plays.
+  int? _webProgressMs;
+  DateTime? _webProgressAt;
+  int _webStalls = 0;
+  bool _recoveringStall = false;
 
   StreamSubscription<void>? _unplugSub;
 

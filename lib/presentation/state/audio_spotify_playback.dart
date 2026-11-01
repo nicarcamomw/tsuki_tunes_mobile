@@ -218,10 +218,83 @@ extension _SpotifyPlayback on AudioProvider {
     if (!_spotifyActive) return;
     if (++_nativeRefreshFailures >= 2) {
       _nativeRefreshFailures = 0;
-      debugPrint('[AudioProvider] Spotify app stopped answering, following it through the Web API');
+      debugPrint('[AudioProvider] Spotify app stopped answering, reconnecting');
       _nativePlayer.dropStaleLink();
+      // Connecting again also wakes a Spotify the system froze; then it
+      // tells its real state (the Web API keeps saying "playing" for it).
+      final token = _spotify.accessToken;
+      if (token != null &&
+          await _nativePlayer.connect(accessToken: token) &&
+          await _nativePlayer.refreshState()) {
+        return;
+      }
     }
     unawaited(_syncSpotifyPlaybackState());
+  }
+
+  /// A frozen Spotify keeps telling the Web API it plays, with a position
+  /// that no longer moves. True after two such answers in a row.
+  bool _webApiStalled(int progressMs) {
+    final now = DateTime.now();
+    final prev = _webProgressMs;
+    final at = _webProgressAt;
+    _webProgressMs = progressMs;
+    _webProgressAt = now;
+    if (prev == null || at == null) return false;
+    final wall = now.difference(at);
+    if (wall < const Duration(seconds: 4) ||
+        now.difference(_lastPlayCommandTime) < const Duration(seconds: 8)) {
+      return false;
+    }
+    // A seek or another song moves it too: only "no movement" counts.
+    if ((progressMs - prev).abs() > wall.inMilliseconds ~/ 4) {
+      _webStalls = 0;
+      return false;
+    }
+    return ++_webStalls >= 2;
+  }
+
+  /// Spotify was frozen in the background mid-song: wake it (connecting the
+  /// App Remote launches it) and play our song again where it was. If it
+  /// can't be woken, show it paused and offer the battery guide, instead
+  /// of a progress bar running over silence.
+  Future<void> _recoverStalledSpotify() async {
+    if (_recoveringStall) return;
+    _recoveringStall = true;
+    _webStalls = 0;
+    final gen = _playGeneration;
+    try {
+      debugPrint('[AudioProvider] Spotify says it plays but its position stopped: frozen, waking it');
+      final token = _spotify.accessToken;
+      final uri = _currentSpotifyUri;
+      var woke = false;
+      if (token != null && uri != null) {
+        if (_nativePlayer.isConnected) _nativePlayer.dropStaleLink();
+        if (await _nativePlayer.connect(accessToken: token) &&
+            gen == _playGeneration &&
+            await _nativePlayer.playUri(uri)) {
+          final pos = _position;
+          if (pos > Duration.zero) await _nativePlayer.seekTo(pos.inMilliseconds);
+          _spotifyAhead = const [];
+          _lastPlayCommandTime = DateTime.now();
+          _spotifySyncPosition = pos;
+          _spotifySyncTime = DateTime.now();
+          woke = true;
+        }
+      }
+      if (gen != _playGeneration || !_spotifyActive) return;
+      if (woke) {
+        unawaited(_verifySpotifyResume());
+        return;
+      }
+      debugPrint('[AudioProvider] Spotify could not be woken, showing it paused');
+      _isPlaying = false;
+      _stopPositionTimer();
+      _lastSpotifyError = SpotifyFallbackReason.openApp;
+      notifyListeners();
+    } finally {
+      _recoveringStall = false;
+    }
   }
 
   Future<void> _syncSpotifyPlaybackState() async {
@@ -307,6 +380,11 @@ extension _SpotifyPlayback on AudioProvider {
         _spotifySyncPosition = webPos;
         _spotifySyncTime = DateTime.now();
         _setPosition(webPos);
+      }
+
+      if (isPlaying && _isPlaying && _webApiStalled(progressMs)) {
+        unawaited(_recoverStalledSpotify());
+        return;
       }
 
       if (!isPlaying && _isPlaying) {

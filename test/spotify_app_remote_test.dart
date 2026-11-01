@@ -240,9 +240,15 @@ class FakeNativePlayer extends SpotifyNativePlayer {
   @override
   bool isPlayingUri(String uri) => _connected && _playingUri == uri && !_paused;
 
+  /// Connecting again makes a mute Spotify app answer (it was frozen).
+  bool reconnectHeals = false;
+  int connectCount = 0;
+
   @override
   Future<bool> connect({String? accessToken}) async {
+    connectCount++;
     _connected = true;
+    if (reconnectHeals) refreshFails = false;
     return true;
   }
 
@@ -645,6 +651,48 @@ void main() {
 
       expect(fakeNative.dropped, isTrue);
       expect(provider.isPlaying, isFalse);
+    });
+
+    test('a mute Spotify app is reconnected and tells its real state', () async {
+      final provider = await playing([_track('t1')]);
+      fakeNative.refreshFails = true;
+      fakeNative.reconnectHeals = true;
+      fakeNative.appState = (pos: 40000, paused: true);
+      // The Web API still says it plays (a frozen app's last word).
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 40000);
+
+      await Future.delayed(const Duration(milliseconds: 6500));
+
+      expect(fakeNative.connectCount, greaterThan(0));
+      expect(provider.isPlaying, isFalse);
+    });
+
+    test('a frozen Spotify (playing, position stuck) is woken and the song goes on', () async {
+      final provider = await playing([_track('t1')]);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 30000); // never moves
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+      final seeks = fakeNative.seekCount;
+
+      await Future.delayed(const Duration(seconds: 16));
+
+      expect(fakeNative.connectCount, greaterThan(0), reason: 'woken');
+      expect(fakeNative.seekCount, greaterThan(seeks), reason: 'played again where it was');
+      expect(provider.isPlaying, isTrue);
+      expect(provider.lastSpotifyError, isNull);
+    });
+
+    test('a frozen Spotify that can\'t be woken shows paused and offers the guide', () async {
+      final provider = await playing([_track('t1')]);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 30000);
+      fakeNative.playWillFail = true;
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+
+      await Future.delayed(const Duration(seconds: 16));
+
+      expect(provider.isPlaying, isFalse);
+      expect(provider.lastSpotifyError, SpotifyFallbackReason.openApp);
     });
 
     test('losing the App Remote link does not mark playback paused', () async {
