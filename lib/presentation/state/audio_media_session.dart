@@ -21,6 +21,8 @@ extension _MediaSession on AudioProvider {
     handler.onSkipToNext = next;
     handler.onSkipToPrevious = previous;
     handler.onSeek = (pos) => seek(pos);
+    handler.isSpotifyPlaying =
+        () => _useSpotify && _spotifyActive && !_spotifyFallbackActive;
   }
 
   /// Keeps the player widget on the home screen showing the current song

@@ -244,7 +244,12 @@ extension _SpotifyPlayback on AudioProvider {
             _handleTrackCompleted();
             return;
           }
-          if (_isPlaying) {
+          // In the background the Web API often returns null because Doze
+          // throttles the network or the token expired — Spotify is still
+          // playing.  Marking paused here drops the foreground service
+          // priority and lets Android kill us.  Wait until the user brings
+          // Tsuki back to the foreground to reconcile the real state.
+          if (_isPlaying && _inForeground) {
             _log.warning('Spotify session gone, marking paused');
             _isPlaying = false;
             _stopPositionTimer();

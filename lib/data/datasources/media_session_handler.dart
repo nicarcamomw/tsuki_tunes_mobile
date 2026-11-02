@@ -23,6 +23,10 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> Function()? onSkipToPrevious;
   Future<void> Function(Duration position)? onSeek;
 
+  /// True when Spotify's own process is handling playback, so swiping
+  /// Tsuki away should NOT stop the music.
+  bool Function()? isSpotifyPlaying;
+
   /// Browsing and voice commands from Android Auto.
   MediaLibrarySource? library;
 
@@ -66,9 +70,12 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> seek(Duration position) async => onSeek?.call(position);
 
-  /// The user swiped the app away from recents: stop like Spotify does.
+  /// The user swiped the app away from recents. When Spotify's own process
+  /// is playing, let it continue — Tsuki can pick it back up on relaunch.
+  /// When Tsuki is playing previews itself, stop as usual.
   @override
   Future<void> onTaskRemoved() async {
+    if (isSpotifyPlaying?.call() ?? false) return;
     await onStop?.call();
   }
 

@@ -59,6 +59,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   final StorageService _storage;
   ConnectivityProvider? _connectivityProvider;
   Timer? _persistTimer;
+  bool _inForeground = true;
 
   @visibleForTesting
   Function(Track track)? onPrecacheTrackForTesting;
@@ -495,9 +496,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
+      _inForeground = false;
       _persistPlaybackState();
     }
     if (state == AppLifecycleState.resumed) {
+      _inForeground = true;
       _sleepCtrl.check();
       _checkBackgroundCompletion();
       if (_useSpotify && _spotifyActive) {

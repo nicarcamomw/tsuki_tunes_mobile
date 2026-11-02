@@ -172,6 +172,7 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
         // ForegroundServiceStartNotAllowedException when resuming from the
         // background on Android 12+.
         androidStopForegroundOnPause: false,
+        androidNotificationOngoing: true,
         // Android Auto: songs as a list, folders as a grid, voice search.
         androidBrowsableRootExtras: {
           'android.media.browse.SEARCH_SUPPORTED': true,
