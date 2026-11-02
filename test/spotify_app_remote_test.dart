@@ -191,8 +191,18 @@ class FakeNativePlayer extends SpotifyNativePlayer {
 
   void setConnected(bool v) => _connected = v;
 
-  void simulateStateChanged(int posMs, int durMs, bool paused, {String? uri}) {
+  /// The song name the Spotify app reports.
+  String? playingName;
+
+  @override
+  String? get lastTrackName => playingName;
+
+  @override
+  bool get isPlayingSomething => _connected && _playingUri != null && !_paused;
+
+  void simulateStateChanged(int posMs, int durMs, bool paused, {String? uri, String? name}) {
     if (uri != null) _playingUri = uri;
+    if (name != null) playingName = name;
     _paused = paused;
     onStateChanged?.call(posMs, durMs, paused);
   }
@@ -212,10 +222,13 @@ class FakeNativePlayer extends SpotifyNativePlayer {
     return true;
   }
 
+  /// Spotify plays every song as this other version (relinking).
+  String? relinkAs;
+
   @override
   Future<bool> playUri(String uri) async {
     if (playWillFail) return false;
-    _playingUri = uri;
+    _playingUri = relinkAs ?? uri;
     _paused = false;
     return true;
   }
@@ -314,6 +327,42 @@ void main() {
         spotifyService: fakeSpotify,
         nativePlayer: fakeNative,
       );
+
+  group('Spotify playing another version of our song', () {
+    test('is our song: no preview, Spotify never paused', () async {
+      fakeNative.setConnected(true);
+      // Spotify plays another album's copy, every time; the Web API says nothing.
+      fakeNative.relinkAs = 'spotify:track:compilation-copy';
+      fakeNative.playingName = 'Track t1 - Remastered';
+      final provider = createProvider();
+      final track = _track('t1');
+      await provider.playTrack(track, newQueue: [track]);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1200, 257000, false);
+      await Future.delayed(const Duration(milliseconds: 7000));
+
+      expect(provider.isPlaying, isTrue);
+      expect(provider.spotifyFallbackActive, isFalse);
+      expect(fakeNative.pauseCount, 0);
+      expect(fakeSpotify.pauseCount, 0);
+    });
+
+    test('a different song in Spotify is still not ours', () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final track = _track('t1');
+      await provider.playTrack(track, newQueue: [track]);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false, uri: 'spotify:track:t1', name: 'Track t1');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+
+      fakeNative.simulateStateChanged(500, 200000, false, uri: 'spotify:track:x', name: 'Something Else');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.isPlaying, isFalse, reason: 'Spotify switched to another track');
+    });
+  });
 
   group('App Remote fast-path', () {
     test('playViaSpotify uses App Remote when already connected', () async {

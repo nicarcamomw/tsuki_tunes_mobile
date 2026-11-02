@@ -47,7 +47,7 @@ extension _SpotifyPlayback on AudioProvider {
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
       if (!_spotifyActive) return;
-      if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
+      if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri) && !_adoptRelinkedSong()) {
         _onSpotifyLeftTrack(
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
         return;
@@ -311,6 +311,36 @@ extension _SpotifyPlayback on AudioProvider {
 
   bool _isOurSpotifyUri(String? uri) =>
       uri != null && (uri == _currentSpotifyUri || uri == _linkedSpotifyUri);
+
+  /// Spotify often plays an equivalent version of the song under another
+  /// URI (another album or market: "relinking"). Matching URIs only, the
+  /// start check decided Spotify hadn't started and put the Deezer preview
+  /// on, which fought Spotify for the audio. A song with our song's name,
+  /// not one of the next songs handed to Spotify, is taken as ours.
+  bool _adoptRelinkedSong() {
+    final uri = _nativePlayer.lastTrackUri;
+    final track = _currentTrack;
+    if (uri == null || track == null || _currentSpotifyUri == null) return false;
+    if (_spotifyAhead.any((e) => e.uri == uri)) return false;
+    if (!_sameSongName(_nativePlayer.lastTrackName, track.title)) return false;
+    if (_linkedSpotifyUri != uri) {
+      debugPrint('[AudioProvider] Spotify plays our song as $uri (another version)');
+      _linkedSpotifyUri = uri;
+    }
+    return true;
+  }
+
+  static String _songKey(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r'\(.*?\)|\[.*?\]| - .*$'), '')
+      .replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
+
+  static bool _sameSongName(String? spotifyName, String ourTitle) {
+    if (spotifyName == null) return false;
+    final a = _songKey(spotifyName), b = _songKey(ourTitle);
+    if (a.isEmpty || b.isEmpty) return false;
+    return a == b || a.startsWith(b) || b.startsWith(a);
+  }
 
   bool get _nativePlayingOurTrack =>
       (_currentSpotifyUri != null &&
@@ -873,7 +903,8 @@ extension _SpotifyPlayback on AudioProvider {
   Future<bool> _spotifyConfirmsPlaying(int gen, String uri) async {
     await Future.delayed(const Duration(seconds: 3));
     if (gen != _playGeneration || !_spotifyActive) return true;
-    if (_nativePlayer.isPlayingUri(uri)) {
+    if (_nativePlayer.isPlayingUri(uri) ||
+        (_nativePlayer.isPlayingSomething && _adoptRelinkedSong())) {
       debugPrint('[SpotifyCheck] Playing (App Remote)');
       _onSpotifyConfirmed(0);
       _afterSpotifyStarted();
@@ -895,10 +926,13 @@ extension _SpotifyPlayback on AudioProvider {
     if (device?['volume_percent'] == 0) {
       debugPrint('[SpotifyCheck] Spotify device volume is 0%: playback is silent');
     }
-    final confirmed = state['is_playing'] == true &&
-        (item?['uri'] == uri || linked?['uri'] == uri);
+    final sameVersion = item?['uri'] == uri || linked?['uri'] == uri;
+    final otherVersion = !sameVersion &&
+        _currentTrack != null &&
+        _sameSongName(item?['name'] as String?, _currentTrack!.title);
+    final confirmed = state['is_playing'] == true && (sameVersion || otherVersion);
     if (confirmed) {
-      if (linked?['uri'] == uri) _linkedSpotifyUri = item?['uri'] as String?;
+      if (linked?['uri'] == uri || otherVersion) _linkedSpotifyUri = item?['uri'] as String?;
       final durationMs = item?['duration_ms'] as int? ?? 0;
       if (durationMs > 0) _duration = Duration(milliseconds: durationMs);
       _onSpotifyConfirmed(progressMs);

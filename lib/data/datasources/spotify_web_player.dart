@@ -23,10 +23,18 @@ class SpotifyNativePlayer {
   // Last state reported by the Spotify app.
   String? _lastTrackUri;
   bool _lastPaused = true;
+  String? _lastTrackName;
 
   bool get isConnected => _isConnected;
   String? get deviceId => _deviceId;
   String? get lastTrackUri => _lastTrackUri;
+
+  /// The name of the song the Spotify app is on, to recognize ours when
+  /// Spotify plays an equivalent version under another URI (relinking).
+  String? get lastTrackName => _lastTrackName;
+
+  /// Whether the Spotify app reports something playing (not paused).
+  bool get isPlayingSomething => _isConnected && _lastTrackUri != null && !_lastPaused;
 
   /// Whether the Spotify app reports [uri] as the current, unpaused track.
   bool isPlayingUri(String uri) =>
@@ -113,6 +121,7 @@ class SpotifyNativePlayer {
       (state) {
         final track = state.track;
         _lastTrackUri = track?.uri;
+        _lastTrackName = track?.name;
         _lastPaused = state.isPaused;
         if (track == null) return;
         onStateChanged?.call(
