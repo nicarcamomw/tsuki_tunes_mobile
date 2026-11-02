@@ -1,25 +1,44 @@
-name: Build APK
+name: Build
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: build-apk-${{ github.ref }}
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
   build:
+    needs: analyze-and-test
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      # Release builds (two NDKs, R8, three ABIs) ran the stock runner out of
-      # disk at packaging time; drop toolchains this job never uses,
-      # including stale NDKs (the pinned one is installed below).
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk-bundle \
@@ -51,8 +70,6 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # The signing key is committed encrypted; the password lives only in
-      # the ANDROID_KEYSTORE_PASSWORD repository secret.
       - name: Decrypt signing key
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -74,7 +91,6 @@ jobs:
             echo "storeFile=release.jks"
           } > android/key.properties
 
-      # The project pins a preview NDK whose license Gradle can't accept by itself.
       - name: Install Android NDK
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -85,9 +101,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # android/gradle.properties asks for an 8 GB heap plus 4 GB metaspace;
-      # on the 16 GB runner that got the job killed mid-build. The
-      # user-level file overrides it for CI only.
       - name: Limit Gradle memory for CI
         run: |
           mkdir -p ~/.gradle
@@ -98,10 +111,6 @@ jobs:
           kotlin.compiler.execution.strategy=in-process
           EOF
 
-      # LASTFM_API_KEY is optional: without it the song radio uses Deezer only.
-      # The run number is the build number (it only grows, so each APK
-      # installs over the last) and, with the commit, is shown at the bottom
-      # of the settings, matching the APK's name.
       - name: Build APK
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
@@ -113,15 +122,27 @@ jobs:
           --dart-define=BUILD_NUMBER=${{ github.run_number }}
           --dart-define=GIT_SHA=${{ github.sha }}
 
-      # Most phones need the arm64 build; the others cover old 32-bit and x86 devices.
-      - name: Rename APKs
+      - name: Build AAB
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        run: >-
+          flutter build appbundle --release --flavor prod
+          --obfuscate --split-debug-info=build/symbols-aab
+          --build-number=${{ github.run_number }}
+          --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
+          --dart-define=BUILD_NUMBER=${{ github.run_number }}
+          --dart-define=GIT_SHA=${{ github.sha }}
+
+      - name: Rename artifacts
         run: |
-          OUT=build/app/outputs/flutter-apk
+          OUT_APK=build/app/outputs/flutter-apk
+          OUT_AAB=build/app/outputs/bundle/prodRelease
           N=${{ github.run_number }}
-          mv "$OUT/app-arm64-v8a-prod-release.apk" "tsuki-tunes-$N.apk"
-          mv "$OUT/app-armeabi-v7a-prod-release.apk" "tsuki-tunes-$N-armeabi-v7a.apk"
-          mv "$OUT/app-x86_64-prod-release.apk" "tsuki-tunes-$N-x86_64.apk"
-          ls -lh tsuki-tunes-*.apk
+          mv "$OUT_APK/app-arm64-v8a-prod-release.apk" "tsuki-tunes-$N.apk"
+          mv "$OUT_APK/app-armeabi-v7a-prod-release.apk" "tsuki-tunes-$N-armeabi-v7a.apk"
+          mv "$OUT_APK/app-x86_64-prod-release.apk" "tsuki-tunes-$N-x86_64.apk"
+          mv "$OUT_AAB/app-prod-release.aab" "tsuki-tunes-$N.aab"
+          ls -lh tsuki-tunes-*
 
       - uses: actions/upload-artifact@v4
         with:
@@ -130,20 +151,32 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: tsuki-tunes-aab
+          path: tsuki-tunes-*.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
           name: debug-symbols
-          path: build/symbols/
+          path: |
+            build/symbols/
+            build/symbols-aab/
           retention-days: 90
 
       - name: Publish release
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
-          name: Tsuki Tunes APK ${{ github.run_number }}
+          name: Tsuki Tunes ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           prerelease: true
-          files: tsuki-tunes-*.apk
+          files: |
+            tsuki-tunes-*.apk
+            tsuki-tunes-*.aab
           body: |
             Built from `${{ github.ref_name }}` @ ${{ github.sha }}.
 
-            Download `tsuki-tunes-${{ github.run_number }}.apk` (arm64) for almost any modern phone.
+            **APK** — Download `tsuki-tunes-${{ github.run_number }}.apk` (arm64) for almost any modern phone.
             The `armeabi-v7a` build is for old 32-bit phones; `x86_64` is for emulators.
+
+            **AAB** — `tsuki-tunes-${{ github.run_number }}.aab` for Play Store upload.
