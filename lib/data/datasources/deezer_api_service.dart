@@ -12,6 +12,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/catalog_repository.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
+import 'perf_tracker.dart';
 
 /// Top-level so it can be sent to an isolate via [compute].
 dynamic _decodeJson(String source) => json.decode(source);
@@ -121,16 +122,19 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
   /// Throws [DeezerApiException] for search/chart operations that need error propagation.
   Future<dynamic> _fetchJson(String url, {bool throwOnError = false}) async {
     if (!kIsWeb) {
-      // Mobile/desktop: direct call, no CORS proxies needed
+      // Mobile/desktop: direct call, no CORS proxies needed. Each request is
+      // timed by endpoint in Firebase Performance (PerfTracker).
+      final uri = Uri.parse(url);
+      Future<http.Response> get() => PerfTracker.instance.request(
+          'GET', uri, () => http.get(uri).timeout(const Duration(seconds: 10)));
       try {
-        var res =
-            await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+        var res = await get();
 
         // Auto-recovery for HTTP 429 Too Many Requests (Deezer rate limit)
         if (res.statusCode == 429) {
           debugPrint('[DeezerAPI] HTTP 429 rate limit for $url. Waiting 1s before retry...');
           await Future.delayed(const Duration(milliseconds: 1000));
-          res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+          res = await get();
         }
 
         if (res.statusCode == 200) {
@@ -140,8 +144,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
             if (errCode == 4 || errCode == 800) {
               debugPrint('[DeezerAPI] Quota limit code $errCode for $url. Waiting 1s before retry...');
               await Future.delayed(const Duration(milliseconds: 1000));
-              final retryRes =
-                  await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+              final retryRes = await get();
               if (retryRes.statusCode == 200) {
                 final retryDecoded = await _decode(retryRes.body);
                 if (retryDecoded is Map<String, dynamic> && retryDecoded['error'] == null) {

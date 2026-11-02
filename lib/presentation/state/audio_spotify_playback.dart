@@ -66,6 +66,7 @@ extension _SpotifyPlayback on AudioProvider {
       _setPosition(_spotifySyncPosition);
       if (dur > 0) _duration = Duration(milliseconds: dur);
       if (_isBuffering && !paused) {
+        _audioHeard();
         _isBuffering = false;
         _isPlaying = true;
         _lastPlayCommandTime = DateTime.now();
@@ -724,6 +725,7 @@ extension _SpotifyPlayback on AudioProvider {
     // sounds, which took seconds to notice. Connecting App Remote launches
     // it in the background, so start now, while the song is looked up.
     final waking = _nativePlayer.isConnected ? null : _wakeSpotifyApp();
+    if (waking != null) _timeToAudio?.attribute('woke_spotify', 'yes');
 
     final Future<String?> lookup;
     if (_prefetchedForTrackId == track.id && _prefetchedUri != null) {
@@ -878,12 +880,19 @@ extension _SpotifyPlayback on AudioProvider {
 
   /// Launches the Spotify app in the background through App Remote (or
   /// finds it running). False when it can't, after a few seconds at most.
+  /// How long it takes is timed in Firebase Performance (spotify_wake): a
+  /// Spotify the system killed can take far longer to come back.
   Future<bool> _wakeSpotifyApp() async {
     final token = _spotify.accessToken;
     if (token == null) return false;
-    return _nativePlayer
+    final span = PerfTracker.instance.start('spotify_wake');
+    final ok = await _nativePlayer
         .connect(accessToken: token)
         .timeout(const Duration(seconds: 4), onTimeout: () => false);
+    span
+      ..attribute('result', ok ? 'connected' : 'failed')
+      ..stop();
+    return ok;
   }
 
   /// The Web API can accept a play command (204) for a Spotify device whose
@@ -1083,6 +1092,7 @@ extension _SpotifyPlayback on AudioProvider {
   }
 
   void _onSpotifyConfirmed(int progressMs) {
+    _audioHeard();
     if (_isPlaying && !_isBuffering) return;
     _isBuffering = false;
     _isPlaying = true;

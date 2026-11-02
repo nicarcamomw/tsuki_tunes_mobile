@@ -8,6 +8,7 @@ import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/crash_reporter.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/feature_flags.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/perf_tracker.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
@@ -296,6 +297,33 @@ class _FakeReports implements CrashReporterBackend {
   @override
   Future<void> recordNonFatal(Object error, StackTrace stack, String reason) async =>
       issues.add(reason);
+}
+
+class _FakeTiming implements PerfSpan {
+  _FakeTiming(this.name);
+  final String name;
+  final attributes = <String, String>{};
+  bool stopped = false;
+
+  @override
+  void attribute(String name, String value) => attributes[name] = value;
+
+  @override
+  void stop({int? responseCode, int? responseBytes}) => stopped = true;
+}
+
+class _FakePerf implements PerfBackend {
+  final traces = <_FakeTiming>[];
+
+  @override
+  PerfSpan trace(String name) {
+    final t = _FakeTiming(name);
+    traces.add(t);
+    return t;
+  }
+
+  @override
+  PerfSpan request(Uri url, String method) => _FakeTiming('request');
 }
 
 class _FakePreviewPlayer extends AudioPlayerService {
@@ -752,6 +780,32 @@ void main() {
       expect(provider.repeatMode, PlaybackRepeatMode.one);
       await tick();
       expect(fakeNative.queued, isEmpty);
+    });
+
+    test('the time to the first sound stops when Spotify plays, with how',
+        () async {
+      final perf = _FakePerf();
+      PerfTracker.instance
+        ..resetForTesting()
+        ..attach(perf);
+      addTearDown(PerfTracker.instance.resetForTesting);
+      final provider = createProvider();
+      await Future.delayed(Duration.zero);
+      // Spotify killed after the launch's warm-up: this song wakes it.
+      fakeNative.setConnected(false);
+      await provider.playTrack(_track('t1'), newQueue: [_track('t1')]);
+
+      final timing = perf.traces.firstWhere((t) => t.name == 'time_to_audio');
+      expect(timing.stopped, isFalse, reason: 'not heard yet');
+      fakeNative.simulateStateChanged(200, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(timing.stopped, isTrue);
+      expect(timing.attributes['mode'], 'spotify_app_remote');
+      expect(timing.attributes['woke_spotify'], 'yes');
+      expect(perf.traces.where((t) => t.name == 'spotify_wake').single.attributes['result'],
+          'connected');
     });
 
     test('a refused queue is reported, with how the song was playing',

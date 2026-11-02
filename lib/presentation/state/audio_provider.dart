@@ -19,6 +19,7 @@ import '../../data/datasources/feature_flags.dart';
 import '../../data/datasources/headphones_service.dart';
 import '../../data/datasources/home_widget_service.dart';
 import '../../data/datasources/media_session_handler.dart';
+import '../../data/datasources/perf_tracker.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/spotify_web_player.dart';
 import '../../data/datasources/storage_service.dart';
@@ -259,16 +260,33 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void _reportPlaybackKeys() {
     final reporter = CrashReporter.instance;
     reporter.setKey('track_id', _currentTrack?.id ?? '');
-    reporter.setKey('playback_mode', switch (_currentTrack) {
-      null => 'idle',
-      _ when !_useSpotify => 'preview',
-      _ when _spotifyFallbackActive => 'preview_fallback',
-      _ when !_spotifyActive => 'preview',
-      _ when _nativePlayer.isConnected => 'spotify_app_remote',
-      _ => 'spotify_web_api',
-    });
+    reporter.setKey('playback_mode', _playbackMode);
     reporter.setKey('spotify_connected', _useSpotify);
     reporter.setKey('is_playing', _isPlaying);
+  }
+
+  /// How the current song plays, as reports and timings name it.
+  String get _playbackMode => switch (_currentTrack) {
+        null => 'idle',
+        _ when !_useSpotify => 'preview',
+        _ when _spotifyFallbackActive => 'preview_fallback',
+        _ when !_spotifyActive => 'preview',
+        _ when _nativePlayer.isConnected => 'spotify_app_remote',
+        _ => 'spotify_web_api',
+      };
+
+  // The time from a song being picked to its first sound (PerfTracker),
+  // running until it's heard.
+  PerfSpan? _timeToAudio;
+
+  /// The song started sounding: the time since it was picked goes to
+  /// Firebase Performance, with how it plays. Once per song.
+  void _audioHeard() {
+    final span = _timeToAudio;
+    if (span == null) return;
+    _timeToAudio = null;
+    span.attribute('mode', _playbackMode);
+    span.stop();
   }
 
   // Last song / play state written to the home screen widget.
@@ -780,6 +798,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         _isPlaying = state.playing;
         _isBuffering = state.processingState == ProcessingState.buffering ||
             state.processingState == ProcessingState.loading;
+        if (state.playing && state.processingState == ProcessingState.ready) {
+          _audioHeard();
+        }
 
         if (state.processingState == ProcessingState.completed) {
           _handleTrackCompleted();
@@ -833,6 +854,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       unawaited(SemanticsService.sendAnnouncement(view, '${track.title}, ${track.fullArtistName}', TextDirection.ltr));
     }
     final gen = ++_playGeneration;
+    // A song picked before the last one sounded replaces its timing.
+    _timeToAudio = PerfTracker.instance.start('time_to_audio')
+      ..attribute('woke_spotify', 'no');
     _duration = Duration(
         seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _isBuffering = true;

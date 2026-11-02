@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_environment.dart';
+import 'perf_tracker.dart';
 import 'storage_service.dart';
 
 class SpotifyService {
@@ -19,15 +20,19 @@ class SpotifyService {
   static const _apiTimeout = Duration(seconds: 10);
   static const _authTimeout = Duration(seconds: 15);
 
+  // Every request is timed by endpoint in Firebase Performance (PerfTracker).
   static Future<http.Response> _get(Uri url, {Map<String, String>? headers}) =>
-      http.get(url, headers: headers).timeout(_apiTimeout);
+      PerfTracker.instance.request(
+          'GET', url, () => http.get(url, headers: headers).timeout(_apiTimeout));
 
   static Future<http.Response> _put(Uri url, {Map<String, String>? headers, Object? body}) =>
-      http.put(url, headers: headers, body: body).timeout(_apiTimeout);
+      PerfTracker.instance.request('PUT', url,
+          () => http.put(url, headers: headers, body: body).timeout(_apiTimeout));
 
   static Future<http.Response> _post(Uri url,
           {Map<String, String>? headers, Object? body, Duration timeout = _apiTimeout}) =>
-      http.post(url, headers: headers, body: body).timeout(timeout);
+      PerfTracker.instance.request('POST', url,
+          () => http.post(url, headers: headers, body: body).timeout(timeout));
 
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
   static final _redirectUri = spotifyRedirectUri;

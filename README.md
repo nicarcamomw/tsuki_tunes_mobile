@@ -81,6 +81,14 @@ Además de los crashes, `lib/data/datasources/crash_reporter.dart` manda a Crash
 - **Breadcrumbs:** los eventos del registro de reproducción, sin títulos de canciones, búsquedas ni nombres de dispositivos.
 - **Problemas no fatales**, que no cierran la app pero conviene ver por modelo de teléfono: `spotify_track_not_found`, `spotify_app_remote_unreachable`, `spotify_all_attempts_failed`, `spotify_did_not_start`, `spotify_queue_refused`. Cada uno se reporta como máximo una vez cada 10 minutos.
 
+## Tiempos (Firebase Performance)
+
+`lib/data/datasources/perf_tracker.dart` mide lo que el usuario espera (apagado en builds debug):
+
+- `time_to_audio`: desde que se elige una canción hasta que suena, con `mode` (como en Crashlytics: `preview`, `spotify_app_remote`, …) y `woke_spotify` (si hubo que despertar a Spotify).
+- `spotify_wake`: cuánto tarda en conectar App Remote, con `result` (`connected` o `failed`, que incluye pasar de los 4 s de espera).
+- Cada request a Deezer y a la Web API de Spotify, por endpoint: la URL va sin parámetros, así que el texto de una búsqueda no sale del teléfono.
+
 ## Feature flags (Remote Config)
 
 `lib/data/datasources/feature_flags.dart` lee interruptores de Firebase Remote Config, para cambiar lo que hace la app sin publicar un APK nuevo:

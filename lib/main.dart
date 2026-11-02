@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +20,7 @@ import 'data/datasources/feature_flags.dart';
 import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
+import 'data/datasources/perf_tracker.dart';
 import 'data/datasources/playback_log.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
@@ -136,6 +138,10 @@ Future<void> _initCrashReporting() async {
     CrashReporter.instance
       ..setKey('env', isDevEnvironment ? 'dev' : 'prod')
       ..attach(CrashlyticsBackend(crashlytics));
+    // Timings of what users wait on (PerfTracker), off in debug like crashes.
+    final performance = FirebasePerformance.instance;
+    await performance.setPerformanceCollectionEnabled(!kDebugMode);
+    PerfTracker.instance.attach(FirebasePerfBackend(performance));
   } catch (e) {
     debugPrint('[main] Crashlytics init failed: $e');
   }
