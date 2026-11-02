@@ -795,8 +795,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       }
 
       // A song tapped right as the app opens waits for the Spotify session
-      // to load (a moment), instead of going to the preview.
-      await _spotifyReady;
+      // to load (a moment), instead of going to the preview. Never more
+      // than 3 s: loading may renew the token over a slow network.
+      await _spotifyReady.timeout(const Duration(seconds: 3), onTimeout: () {});
       if (gen != _playGeneration) return;
       track = await _withFreshPreview(track);
       if (gen != _playGeneration) return;
