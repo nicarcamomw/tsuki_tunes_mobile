@@ -32,8 +32,64 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Test
-        run: flutter test --exclude-tags golden
+      - name: Test with coverage
+        run: flutter test --exclude-tags golden --coverage
+
+      - name: Check coverage gate (60% for providers + services)
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "::error::No coverage data found"
+            exit 1
+          fi
+
+          # Extract coverage for gated directories.
+          check_coverage() {
+            local dir="$1"
+            local min="$2"
+            local label="$3"
+
+            # Filter lcov to only lines in the target directory.
+            local total=0 hit=0
+            while IFS= read -r line; do
+              case "$line" in
+                SF:*"$dir"*) in_scope=1 ;;
+                SF:*) in_scope=0 ;;
+                DA:*)
+                  if [ "$in_scope" = 1 ]; then
+                    total=$((total + 1))
+                    count="${line#DA:*,}"
+                    if [ "$count" != "0" ]; then hit=$((hit + 1)); fi
+                  fi
+                  ;;
+              esac
+            done < coverage/lcov.info
+
+            if [ "$total" -eq 0 ]; then
+              echo "⚠️  $label: no lines found — skipping"
+              return 0
+            fi
+
+            pct=$((hit * 100 / total))
+            if [ "$pct" -lt "$min" ]; then
+              echo "::error::❌ $label coverage is ${pct}% (minimum ${min}%): ${hit}/${total} lines"
+              return 1
+            fi
+            echo "✅ $label coverage: ${pct}% (${hit}/${total} lines)"
+          }
+
+          failed=0
+          check_coverage "lib/presentation/state/" 60 "Providers" || failed=1
+          check_coverage "lib/data/datasources/" 60 "Services" || failed=1
+          check_coverage "lib/data/repositories/" 60 "Repositories" || failed=1
+          check_coverage "lib/domain/usecases/" 60 "Use cases" || failed=1
+          exit $failed
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
+          if-no-files-found: ignore
 
       - name: Golden tests
         run: flutter test --tags golden
