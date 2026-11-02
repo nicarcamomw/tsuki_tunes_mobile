@@ -38,6 +38,23 @@ Los tests de las reglas (`tool/firestore_rules_test/`, con `@firebase/rules-unit
 cd tool/firestore_rules_test && npm ci && npm test
 ```
 
+## Respaldos de Firestore
+
+Firestore guarda un respaldo **diario** de la base `(default)` y lo conserva **98 días** (programación creada el 2026-11-02; el proyecto está en el plan Blaze). Comandos con el CLI de Firebase (v13.7 o más nuevo):
+
+```bash
+firebase firestore:backups:schedules:list --project tsuki-tunes-web
+firebase firestore:backups:list --project tsuki-tunes-web
+```
+
+Restaurar crea una base **nueva** con el contenido del respaldo; la actual no se toca:
+
+```bash
+firebase firestore:databases:restore --backup projects/tsuki-tunes-web/locations/nam5/backups/<id> --database restaurada --project tsuki-tunes-web
+```
+
+Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar.
+
 ## Feature flags (Remote Config)
 
 `lib/data/datasources/feature_flags.dart` lee interruptores de Firebase Remote Config, para cambiar lo que hace la app sin publicar un APK nuevo:
