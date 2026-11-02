@@ -9,6 +9,7 @@ import '../data/datasources/feature_flags.dart';
 import '../data/datasources/firebase_service.dart';
 import '../data/datasources/home_widget_service.dart';
 import '../data/datasources/lyrics_service.dart';
+import '../data/datasources/product_analytics.dart';
 import '../data/datasources/rain_mix_service.dart';
 import '../data/datasources/release_radar_service.dart';
 import '../data/datasources/storage_service.dart';
@@ -17,6 +18,7 @@ import '../data/local/app_database.dart';
 import '../data/local/library_store.dart';
 import '../data/sync/outbox.dart';
 import '../domain/repositories/catalog_repository.dart';
+import '../domain/repositories/product_events.dart';
 
 /// The data sources. Most are process-wide singletons already (their
 /// factory constructor returns one instance), so this hands that same
@@ -29,6 +31,11 @@ abstract class DataModule {
   /// Remote switches (Remote Config); started in main() once Firebase is.
   @lazySingleton
   FeatureFlags get featureFlags => FeatureFlags();
+
+  /// Product analytics (Firebase Analytics), attached in main() once
+  /// Firebase is up; the use cases report what people do through it.
+  @lazySingleton
+  ProductEvents get productEvents => ProductAnalytics.instance;
 
   @lazySingleton
   AppDatabase get database => AppDatabase.open();

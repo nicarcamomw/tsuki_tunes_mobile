@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/playlist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart';
+import 'package:tsuki_tunes_mobile/domain/repositories/product_events.dart';
 import 'package:tsuki_tunes_mobile/domain/usecases/playlists/add_track_to_playlist.dart';
 import 'package:tsuki_tunes_mobile/domain/usecases/playlists/create_playlist.dart';
 import 'package:tsuki_tunes_mobile/domain/usecases/playlists/remove_track_from_playlist.dart';
@@ -65,9 +66,25 @@ class _FakePlaylists implements PlaylistRepository {
   Future<void> reorderTrack(String playlistId, int oldIndex, int newIndex) async {}
 }
 
+class _RecordedEvents implements ProductEvents {
+  final events = <String>[];
+
+  @override
+  void log(String name, [Map<String, Object> parameters = const {}]) =>
+      events.add(parameters.isEmpty ? name : '$name $parameters');
+}
+
 void main() {
   late _FakePlaylists repo;
   setUp(() => repo = _FakePlaylists());
+
+  test('a new playlist is reported with how many songs it starts with', () async {
+    final events = _RecordedEvents();
+    final create = CreatePlaylist(repo, events: events);
+    await create('   ');
+    await create('Noche', tracks: [_t('1'), _t('2')]);
+    expect(events.events, ['playlist_created {tracks: 2}']);
+  });
 
   test('a blank name creates nothing; names are trimmed', () async {
     expect(await CreatePlaylist(repo)('   '), isNull);

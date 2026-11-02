@@ -89,6 +89,24 @@ Además de los crashes, `lib/data/datasources/crash_reporter.dart` manda a Crash
 - `spotify_wake`: cuánto tarda en conectar App Remote, con `result` (`connected` o `failed`, que incluye pasar de los 4 s de espera).
 - Cada request a Deezer y a la Web API de Spotify, por endpoint: la URL va sin parámetros, así que el texto de una búsqueda no sale del teléfono.
 
+## Analytics de producto
+
+Qué hace la gente en la app (embudos y retención), con Firebase Analytics a través de `ProductEvents` (`lib/domain/repositories/product_events.dart`, implementado en `lib/data/datasources/product_analytics.dart`):
+
+| Evento | Parámetros |
+|---|---|
+| `play_start` (cuando la canción suena) | `mode` |
+| `spotify_connected` / `spotify_connect_failed` | `premium` / `canceled` |
+| `spotify_fallback` | `reason`: `track_not_found`, `all_attempts_failed`, `did_not_start` |
+| `track_listened`, `album_completed` | `album_id` |
+| `follow_artist`, `unfollow_artist` | `artist_id` |
+| `playlist_created` | `tracks` (cuántas canciones) |
+| Pantallas | por patrón de ruta (`/album/:id`), sin ids |
+
+- Sin ID de publicidad ni personalización de anuncios (`AndroidManifest.xml`); solo ids y categorías, nunca títulos, búsquedas ni nombres.
+- Nada desde builds debug, y nada si el usuario apaga "Compartir estadísticas de uso" en configuraciones (queda guardado).
+- Los datos aparecen en la consola si el proyecto tiene Google Analytics vinculado (Configuración del proyecto → Integraciones).
+
 ## Feature flags (Remote Config)
 
 `lib/data/datasources/feature_flags.dart` lee interruptores de Firebase Remote Config, para cambiar lo que hace la app sin publicar un APK nuevo:

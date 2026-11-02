@@ -11,6 +11,7 @@ import '../../data/datasources/battery_guide.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
+import '../../data/datasources/product_analytics.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
@@ -171,7 +172,7 @@ final playbackWiringProvider = Provider<void>((ref) {
       lyrics.prefetch(queue[next].title, queue[next].artistName);
     }
   };
-  final markListened = MarkTrackListened(library);
+  final markListened = MarkTrackListened(library, events: ProductAnalytics.instance);
   player.onListenedThreshold = markListened.call;
 
   // The "new artist" mask needs the artists the user already knew, once

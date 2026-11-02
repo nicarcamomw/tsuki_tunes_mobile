@@ -14,6 +14,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/playback_log.dart';
+import '../../data/datasources/product_analytics.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../navigation/app_router.dart';

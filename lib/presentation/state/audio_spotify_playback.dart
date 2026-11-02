@@ -744,6 +744,8 @@ extension _SpotifyPlayback on AudioProvider {
     if (uri == null) {
       debugPrint('Spotify: track not found "${track.title}", falling back to preview');
       _lastSpotifyError = SpotifyFallbackReason.trackUnavailable;
+      CrashReporter.instance.issue('spotify_track_not_found');
+      ProductAnalytics.instance.log('spotify_fallback', {'reason': 'track_not_found'});
       _spotifyActive = false;
       _spotifyFallbackActive = true;
       await _service.playTrack(track);
@@ -869,6 +871,7 @@ extension _SpotifyPlayback on AudioProvider {
 
     debugPrint('Spotify: all play attempts failed, falling back to preview');
     CrashReporter.instance.issue('spotify_all_attempts_failed');
+    ProductAnalytics.instance.log('spotify_fallback', {'reason': 'all_attempts_failed'});
     _lastSpotifyError = SpotifyFallbackReason.openApp;
     _spotifyActive = false;
     _spotifyFallbackActive = true;
@@ -923,6 +926,7 @@ extension _SpotifyPlayback on AudioProvider {
 
     debugPrint('[SpotifyCheck] Spotify did not start, falling back to preview');
     CrashReporter.instance.issue('spotify_did_not_start');
+    ProductAnalytics.instance.log('spotify_fallback', {'reason': 'did_not_start'});
     _lastSpotifyError = SpotifyFallbackReason.openApp;
     _spotifyActive = false;
     _spotifyFallbackActive = true;

@@ -136,6 +136,15 @@
                 android:resource="@xml/widget_luna_info" />
         </receiver>
 
+        <!-- Firebase Analytics without the advertising id and with no ad
+             personalization: usage counts only (see ProductAnalytics). -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
+
         <!-- Android Auto: media app (browse tree served by AudioService) -->
         <meta-data
             android:name="com.google.android.gms.car.application"

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_environment.dart';
+import '../../data/datasources/product_analytics.dart';
 import 'routes.dart';
 import 'session_gate.dart';
 
@@ -40,17 +41,29 @@ class ShellNavigatorObserver extends NavigatorObserver {
 /// sends a signed-out user to the login, a new one to the tutorial and
 /// everyone else to the main screen, keeping where a link pointed (`from`)
 /// until the session is ready.
-GoRouter createAppRouter(SessionGate session) => GoRouter(
-      navigatorKey: rootNavigatorKey,
-      refreshListenable: session,
-      initialLocation: AppPaths.home,
-      redirect: (context, state) => appRedirect(
-        session.status,
-        state.uri,
-        guest: session.isGuest,
-      ),
-      routes: $appRoutes,
-    );
+GoRouter createAppRouter(SessionGate session) {
+  final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
+    refreshListenable: session,
+    initialLocation: AppPaths.home,
+    redirect: (context, state) => appRedirect(
+      session.status,
+      state.uri,
+      guest: session.isGuest,
+    ),
+    routes: $appRoutes,
+  );
+  // Each screen opened goes to product analytics by its route pattern
+  // (/album/:id), never the ids in it.
+  String? lastScreen;
+  router.routerDelegate.addListener(() {
+    final screen = router.routerDelegate.currentConfiguration.fullPath;
+    if (screen.isEmpty || screen == lastScreen) return;
+    lastScreen = screen;
+    ProductAnalytics.instance.screen(screen);
+  });
+  return router;
+}
 
 // The app's link scheme (deepLinkScheme, per environment):
 // tsukitunes://album/123, tsukitunes://artist/27, tsukitunes://playlist/abc,

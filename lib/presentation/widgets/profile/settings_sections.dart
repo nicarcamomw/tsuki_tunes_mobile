@@ -333,6 +333,18 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           await widget.closeThen(() => WeatherSheet.show(host));
         },
       ),
+      _SettingSwitch(
+        locale: locale,
+        icon: Icons.insights_rounded,
+        title: strings.analyticsSettingTitle,
+        subtitle: strings.analyticsSettingSubtitle,
+        value: ProductAnalytics.instance.enabled,
+        onChanged: (v) async {
+          unawaited(HapticFeedback.selectionClick());
+          await ProductAnalytics.instance.setEnabled(v);
+          if (mounted) setState(() {});
+        },
+      ),
       _SettingLink(
         locale: locale,
         icon: Icons.language_rounded,

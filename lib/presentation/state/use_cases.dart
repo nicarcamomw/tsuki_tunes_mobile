@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/product_analytics.dart';
 import '../../di/injection.dart';
 import '../../domain/repositories/catalog_repository.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../../domain/repositories/playback_controller.dart';
 import '../../domain/repositories/playlist_repository.dart';
+import '../../domain/repositories/product_events.dart';
 import '../../domain/usecases/catalog/get_album.dart';
 import '../../domain/usecases/catalog/get_artist.dart';
 import '../../domain/usecases/catalog/get_track.dart';
@@ -35,11 +37,16 @@ import 'app_providers.dart';
 // `.notifier` hands over the repository without rebuilding the use case
 // every time the repository notifies.
 
+/// Where the use cases report what people do (product analytics); a test
+/// can override it.
+final productEventsProvider = Provider<ProductEvents>((ref) => ProductAnalytics.instance);
+
 final libraryRepositoryProvider =
     Provider<LibraryRepository>((ref) => ref.watch(libraryProvider.notifier));
 
 final markTrackListenedProvider =
-    Provider((ref) => MarkTrackListened(ref.watch(libraryRepositoryProvider)));
+    Provider((ref) => MarkTrackListened(ref.watch(libraryRepositoryProvider),
+        events: ref.watch(productEventsProvider)));
 
 final unmarkTrackListenedProvider =
     Provider((ref) => UnmarkTrackListened(ref.watch(libraryRepositoryProvider)));
@@ -51,7 +58,8 @@ final toggleAlbumListenedProvider =
     Provider((ref) => ToggleAlbumListened(ref.watch(libraryRepositoryProvider)));
 
 final toggleFollowArtistProvider =
-    Provider((ref) => ToggleFollowArtist(ref.watch(libraryRepositoryProvider)));
+    Provider((ref) => ToggleFollowArtist(ref.watch(libraryRepositoryProvider),
+        events: ref.watch(productEventsProvider)));
 
 // --- Playback
 
@@ -74,7 +82,8 @@ final playlistRepositoryProvider =
     Provider<PlaylistRepository>((ref) => ref.watch(playlistProvider.notifier));
 
 final createPlaylistProvider =
-    Provider((ref) => CreatePlaylist(ref.watch(playlistRepositoryProvider)));
+    Provider((ref) => CreatePlaylist(ref.watch(playlistRepositoryProvider),
+        events: ref.watch(productEventsProvider)));
 
 final addTrackToPlaylistProvider =
     Provider((ref) => AddTrackToPlaylist(ref.watch(playlistRepositoryProvider)));

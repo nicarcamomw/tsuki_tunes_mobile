@@ -67,6 +67,7 @@ dependencies:
   firebase_app_check: ^0.3.2+10
   firebase_remote_config: ^5.5.0
   firebase_performance: ^0.10.1+10
+  firebase_analytics: ^11.6.0
   sensors_plus: ^7.1.1
   geolocator: ^14.0.2
   freezed_annotation: ^3.1.0

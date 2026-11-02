@@ -52,6 +52,8 @@ import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart'
     as _i802;
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart'
     as _i128;
+import 'package:tsuki_tunes_mobile/domain/repositories/product_events.dart'
+    as _i73;
 import 'package:tsuki_tunes_mobile/domain/repositories/profile_repository.dart'
     as _i834;
 import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_album.dart'
@@ -110,6 +112,7 @@ extension GetItInjectableX on _i174.GetIt {
     final repositoryModule = _$RepositoryModule();
     gh.lazySingleton<_i186.FirebaseService>(() => dataModule.firebase);
     gh.lazySingleton<_i36.FeatureFlags>(() => dataModule.featureFlags);
+    gh.lazySingleton<_i73.ProductEvents>(() => dataModule.productEvents);
     gh.lazySingleton<_i169.AppDatabase>(() => dataModule.database);
     gh.lazySingleton<_i814.DeezerApiService>(() => dataModule.deezer);
     gh.lazySingleton<_i416.LyricsService>(() => dataModule.lyrics);
@@ -170,9 +173,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i883.AddTrackToPlaylist>(
       () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),
     );
-    gh.factory<_i79.CreatePlaylist>(
-      () => _i79.CreatePlaylist(gh<_i128.PlaylistRepository>()),
-    );
     gh.factory<_i371.DeletePlaylist>(
       () => _i371.DeletePlaylist(gh<_i128.PlaylistRepository>()),
     );
@@ -197,6 +197,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i814.DeezerApiService>(),
       ),
     );
+    gh.factory<_i79.CreatePlaylist>(
+      () => _i79.CreatePlaylist(
+        gh<_i128.PlaylistRepository>(),
+        events: gh<_i73.ProductEvents>(),
+      ),
+    );
     gh.factory<_i317.AddToQueue>(
       () => _i317.AddToQueue(gh<_i802.PlaybackController>()),
     );
@@ -216,17 +222,23 @@ extension GetItInjectableX on _i174.GetIt {
       () =>
           repositoryModule.libraryRepository(gh<_i424.LibraryRepositoryImpl>()),
     );
+    gh.factory<_i135.MarkTrackListened>(
+      () => _i135.MarkTrackListened(
+        gh<_i409.LibraryRepository>(),
+        events: gh<_i73.ProductEvents>(),
+      ),
+    );
+    gh.factory<_i6.ToggleFollowArtist>(
+      () => _i6.ToggleFollowArtist(
+        gh<_i409.LibraryRepository>(),
+        events: gh<_i73.ProductEvents>(),
+      ),
+    );
     gh.factory<_i83.ToggleAlbumListened>(
       () => _i83.ToggleAlbumListened(gh<_i409.LibraryRepository>()),
     );
     gh.factory<_i401.MarkAlbum>(
       () => _i401.MarkAlbum(gh<_i409.LibraryRepository>()),
-    );
-    gh.factory<_i135.MarkTrackListened>(
-      () => _i135.MarkTrackListened(gh<_i409.LibraryRepository>()),
-    );
-    gh.factory<_i6.ToggleFollowArtist>(
-      () => _i6.ToggleFollowArtist(gh<_i409.LibraryRepository>()),
     );
     gh.factory<_i42.ToggleTrackListened>(
       () => _i42.ToggleTrackListened(gh<_i409.LibraryRepository>()),

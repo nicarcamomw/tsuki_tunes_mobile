@@ -20,6 +20,7 @@ import '../../data/datasources/headphones_service.dart';
 import '../../data/datasources/home_widget_service.dart';
 import '../../data/datasources/media_session_handler.dart';
 import '../../data/datasources/perf_tracker.dart';
+import '../../data/datasources/product_analytics.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/spotify_web_player.dart';
 import '../../data/datasources/storage_service.dart';
@@ -287,6 +288,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _timeToAudio = null;
     span.attribute('mode', _playbackMode);
     span.stop();
+    ProductAnalytics.instance.log('play_start', {'mode': _playbackMode});
   }
 
   // Last song / play state written to the home screen widget.

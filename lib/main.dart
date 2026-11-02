@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
@@ -22,6 +23,7 @@ import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/perf_tracker.dart';
 import 'data/datasources/playback_log.dart';
+import 'data/datasources/product_analytics.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
@@ -142,6 +144,11 @@ Future<void> _initCrashReporting() async {
     final performance = FirebasePerformance.instance;
     await performance.setPerformanceCollectionEnabled(!kDebugMode);
     PerfTracker.instance.attach(FirebasePerfBackend(performance));
+    // Product events (ProductAnalytics): nothing from debug builds, and
+    // only while the user leaves usage statistics on in the settings.
+    await ProductAnalytics.instance.attach(
+        FirebaseAnalyticsBackend(FirebaseAnalytics.instance),
+        collect: !kDebugMode);
   } catch (e) {
     debugPrint('[main] Crashlytics init failed: $e');
   }

@@ -50,6 +50,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
       final success = await _spotify.connect();
       _isConnecting = false;
       if (success) {
+        ProductAnalytics.instance.log('spotify_connected', {'premium': _spotify.isPremium});
         await _audio.updateSpotifyState();
         if (mounted) setState(() {});
         _showSnack(_plainSnack(strings.spotifySyncSuccess, const Duration(seconds: 2)));
@@ -63,6 +64,8 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             msg = strings.spotifyCanceledByUser;
           }
         }
+        ProductAnalytics.instance.log('spotify_connect_failed',
+            {'canceled': msg == strings.spotifyCanceledByUser});
         _showSnack(_plainSnack(msg, const Duration(seconds: 3)));
       }
     } catch (e) {

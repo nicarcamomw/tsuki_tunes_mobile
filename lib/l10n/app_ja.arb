@@ -802,5 +802,7 @@
   "profileMakePublicFirst": "共有するには公開にしてください",
   "playbackLogCopy": "再生ログをコピー",
   "playbackLogCopied": "ログをコピーしました。チャットに貼り付けて状況を確認できます。",
-  "appVersionCopied": "バージョンをコピーしました"
+  "appVersionCopied": "バージョンをコピーしました",
+  "analyticsSettingTitle": "利用統計を共有",
+  "analyticsSettingSubtitle": "アプリ改善のため、どの機能が使われているかを送信します。曲名・検索・名前は含みません。"
 }

@@ -802,5 +802,7 @@
   "profileMakePublicFirst": "Make it public to share it",
   "playbackLogCopy": "Copy playback log",
   "playbackLogCopied": "Log copied. Paste it in the chat so we can see what happened.",
-  "appVersionCopied": "Version copied"
+  "appVersionCopied": "Version copied",
+  "analyticsSettingTitle": "Share usage statistics",
+  "analyticsSettingSubtitle": "Which features get used, to improve the app. No songs, searches or names."
 }

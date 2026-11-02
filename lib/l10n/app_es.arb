@@ -1833,5 +1833,7 @@
   "profileMakePublicFirst": "Hazlo público para poder compartirlo",
   "playbackLogCopy": "Copiar registro de reproducción",
   "playbackLogCopied": "Registro copiado. Pégalo en el chat para revisar qué pasó.",
-  "appVersionCopied": "Versión copiada"
+  "appVersionCopied": "Versión copiada",
+  "analyticsSettingTitle": "Compartir estadísticas de uso",
+  "analyticsSettingSubtitle": "Qué funciones se usan, para mejorar la app. Sin canciones, búsquedas ni nombres."
 }
