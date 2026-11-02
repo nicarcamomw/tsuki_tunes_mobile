@@ -6,6 +6,7 @@ import 'package:home_widget/home_widget.dart';
 import '../../core/utils/moon_phase.dart';
 import '../../domain/entities/track.dart';
 import '../../core/logger.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 
 final _log = Log.named('HomeWidget');

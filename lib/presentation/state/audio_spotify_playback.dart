@@ -53,9 +53,11 @@ extension _SpotifyPlayback on AudioProvider {
       if (!_spotifyActive) return;
       if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
         _onSpotifyLeftTrack(
-            _nativePlayer.lastTrackUri, Duration(milliseconds: pos));
+            _nativePlayer.lastTrackUri, Duration(milliseconds: pos),
+            live: true);
         return;
       }
+      if (!paused) _spotifyHeardGen = _playGeneration;
       _checkSpotifyLoop(Duration(milliseconds: pos));
       if (paused && _isPlaying && !_isBuffering && _spotifyPausedAtEnd(pos, dur)) {
         _log.info('Spotify stopped at the end of the track, advancing');
@@ -392,6 +394,8 @@ extension _SpotifyPlayback on AudioProvider {
     final now = DateTime.now();
     _spotifyAhead = _spotifyAhead.sublist(k + 1);
     _currentTrack = track;
+    _spotifyPrevUri = _currentSpotifyUri;
+    _spotifyNextUp = null;
     _currentSpotifyUri = passed.last.uri;
     _linkedSpotifyUri = null;
     _spotifyTookOver = false;
@@ -420,6 +424,7 @@ extension _SpotifyPlayback on AudioProvider {
       unawaited(_reissueSpotifyAhead());
     }
     _keepMediaSessionOnTop();
+    unawaited(_learnSpotifyNextUp());
   }
 
   /// Near the end of a song playing through App Remote, puts only the next
@@ -618,16 +623,25 @@ extension _SpotifyPlayback on AudioProvider {
 
   /// Spotify is on a track other than ours: the next song of the list we
   /// handed it (follow along), past the end of ours into its autoplay
-  /// (advance our queue, which replaces it), or something someone picked in
-  /// the Spotify app (stop claiming it).
-  void _onSpotifyLeftTrack(String? uri, Duration otherProgress) {
+  /// (advance our queue, which replaces it), Spotify's own next/previous
+  /// pressed (the car's buttons: do ours), or something someone picked in
+  /// the Spotify app (stop claiming it). [live]: reported by App Remote.
+  void _onSpotifyLeftTrack(String? uri, Duration otherProgress,
+      {bool live = false}) {
     if (_isBuffering || _completionHandled || _crossfadeTriggered) return;
     final k = uri == null ? -1 : _spotifyAhead.indexWhere((e) => e.uri == uri);
     if (k != -1) {
       _followSpotify(k, otherProgress);
       return;
     }
-    if (DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) return;
+    // Right after a play Spotify may still report the song it was on. Not
+    // once App Remote said ours plays: a change after that is real (the
+    // car's "next" pressed twice in a row).
+    final settled = live && _spotifyHeardGen == _playGeneration;
+    if (!settled &&
+        DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) {
+      return;
+    }
 
     if (_isPlaying && _duration > Duration.zero) {
       final estimated =
@@ -643,12 +657,58 @@ extension _SpotifyPlayback on AudioProvider {
       }
     }
 
+    if (_isPlaying && !_spotifyTookOver && _followSpotifyControls(uri, otherProgress)) {
+      return;
+    }
+
     if (_spotifyTookOver) return;
     _log.info('Spotify switched to another track, no longer ours');
     _spotifyTookOver = true;
     _isPlaying = false;
     _stopPositionTimer();
     notifyListeners();
+  }
+
+  /// Media buttons (the car's, over Bluetooth; a headset's; Spotify's
+  /// notification and lock screen) go to the app making the sound, so with
+  /// Spotify playing our song its "next" and "previous" reach Spotify, not
+  /// Tsuki: it jumps to its own next song (its autoplay) or back to the one
+  /// it played before. Do our next/previous instead, which replaces it.
+  /// A song picked by hand in the Spotify app also lands here; it's left
+  /// alone when Spotify is known to have had another song next and Tsuki
+  /// isn't on screen (the Spotify app may be). Returns whether it handled
+  /// the change.
+  bool _followSpotifyControls(String? uri, Duration otherProgress) {
+    if (uri == null || !uri.startsWith('spotify:track:')) return false;
+    if (uri == _spotifyPrevUri && otherProgress < const Duration(seconds: 3)) {
+      _log.info('Spotify went back a song (its own "previous"), doing ours');
+      _stopPositionTimer();
+      _setPosition(Duration.zero);
+      unawaited(_applyStep(_q.previous(
+        position: Duration.zero,
+        online: _online,
+        canPlay: _canPlayOffline,
+      )));
+      return true;
+    }
+    final nextUp = _spotifyNextUp;
+    final onScreen =
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    if (!onScreen && nextUp != null && nextUp != uri) return false;
+    _log.info('Spotify skipped ahead (its own "next"), doing ours');
+    ProductAnalytics.instance.log('spotify_controls_skip');
+    _stopPositionTimer();
+    unawaited(next());
+    return true;
+  }
+
+  /// Asks Spotify what its "next" would play after our song, so a skip to
+  /// it is told apart from a song picked in the Spotify app.
+  Future<void> _learnSpotifyNextUp() async {
+    final gen = _playGeneration;
+    final uri = await _spotify.nextInQueue();
+    if (gen != _playGeneration || !_spotifyActive) return;
+    _spotifyNextUp = uri;
   }
 
   Future<void> _spotifyPause() async {
@@ -698,6 +758,7 @@ extension _SpotifyPlayback on AudioProvider {
   Future<void> _playViaSpotify(Track track) async {
     final gen = _playGeneration;
     _lastSpotifyError = null;
+    _spotifyNextUp = null;
 
     // Gate just_audio streams immediately to prevent state interference
     _spotifyActive = true;
@@ -762,6 +823,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
 
     _log.fine('Spotify: found URI=$uri');
+    if (_currentSpotifyUri != uri) _spotifyPrevUri = _currentSpotifyUri;
     _currentSpotifyUri = uri;
     _linkedSpotifyUri = null;
     _spotifyTookOver = false;

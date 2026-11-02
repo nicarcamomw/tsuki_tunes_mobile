@@ -36,12 +36,12 @@ import 'time_machine_screen.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('HomeScreen');
-
 part 'home/affinity_sheet.dart';
 part 'home/entry_cards.dart';
 part 'home/gear_profile_button.dart';
 part 'home/home_widgets.dart';
+
+final _log = Log.named('HomeScreen');
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

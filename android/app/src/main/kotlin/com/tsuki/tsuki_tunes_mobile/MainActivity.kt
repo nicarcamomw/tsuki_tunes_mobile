@@ -23,11 +23,13 @@ class MainActivity : AudioServiceActivity() {
         // Kept for the whole process: the engine outlives the activity
         // while music plays in the background.
         private var noisyReceiver: BroadcastReceiver? = null
+        private var screenReceiver: BroadcastReceiver? = null
     }
 
     private val tileChannel = "com.tsuki.tsuki_tunes_mobile/tile"
     private val deviceChannel = "com.tsuki.tsuki_tunes_mobile/device"
     private val noisyChannel = "com.tsuki.tsuki_tunes_mobile/noisy"
+    private val screenChannel = "com.tsuki.tsuki_tunes_mobile/screen"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -93,6 +95,47 @@ class MainActivity : AudioServiceActivity() {
                     unregisterNoisy()
                 }
             })
+
+        // Screen on (true) / off (false): while Spotify plays, Tsuki posts
+        // its media card again then, so the lock screen shows Tsuki's
+        // player rather than Spotify's.
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, screenChannel)
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                    unregisterScreen()
+                    val receiver = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context, intent: Intent) {
+                            when (intent.action) {
+                                Intent.ACTION_SCREEN_ON -> events.success(true)
+                                Intent.ACTION_SCREEN_OFF -> events.success(false)
+                            }
+                        }
+                    }
+                    val filter = IntentFilter().apply {
+                        addAction(Intent.ACTION_SCREEN_ON)
+                        addAction(Intent.ACTION_SCREEN_OFF)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        applicationContext.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                    } else {
+                        applicationContext.registerReceiver(receiver, filter)
+                    }
+                    screenReceiver = receiver
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    unregisterScreen()
+                }
+            })
+    }
+
+    private fun unregisterScreen() {
+        val receiver = screenReceiver ?: return
+        screenReceiver = null
+        try {
+            applicationContext.unregisterReceiver(receiver)
+        } catch (_: IllegalArgumentException) {
+        }
     }
 
     private fun unregisterNoisy() {

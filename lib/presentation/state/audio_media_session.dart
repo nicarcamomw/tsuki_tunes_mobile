@@ -151,4 +151,14 @@ extension _MediaSession on AudioProvider {
       _syncMediaSession(force: true);
     });
   }
+
+  /// The lock screen picks its player as the screen turns on or off, often
+  /// with App Remote cut off in the background (so Spotify's own updates
+  /// went unheard): post Tsuki's card again right then, and for a moment
+  /// after, while Spotify reacts to the screen too.
+  void _onScreenChanged() {
+    if (!(_useSpotify && _spotifyActive && _currentTrack != null)) return;
+    _syncMediaSession(force: true);
+    _keepMediaSessionOnTop();
+  }
 }

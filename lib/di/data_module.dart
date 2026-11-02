@@ -18,6 +18,7 @@ import '../data/local/library_store.dart';
 import '../data/sync/outbox.dart';
 import '../domain/repositories/catalog_repository.dart';
 import '../domain/repositories/product_events.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// The data sources. Most are process-wide singletons already (their
 /// factory constructor returns one instance), so this hands that same

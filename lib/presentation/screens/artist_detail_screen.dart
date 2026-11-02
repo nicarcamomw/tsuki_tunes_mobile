@@ -31,10 +31,10 @@ import '../widgets/track_tile.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('ArtistDetail');
-
 part 'artist_detail/artist_header.dart';
 part 'artist_detail/top_tracks.dart';
+
+final _log = Log.named('ArtistDetail');
 
 class ArtistDetailScreen extends ConsumerStatefulWidget {
   final Artist artist;
