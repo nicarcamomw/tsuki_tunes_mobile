@@ -206,8 +206,12 @@ class FakeNativePlayer extends SpotifyNativePlayer {
   @override
   bool isPlayingUri(String uri) => _connected && _playingUri == uri && !_paused;
 
+  /// The Spotify app can't be reached (not installed, or blocked).
+  bool connectWillFail = false;
+
   @override
   Future<bool> connect({String? accessToken}) async {
+    if (connectWillFail) return false;
     _connected = true;
     return true;
   }
@@ -640,14 +644,52 @@ void main() {
       await provider.togglePlay();
 
       expect(fakeNative.resumeCount, 0);
-      expect(fakeSpotify.lastPlayedUris?.first, 'spotify:track:t1');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
       expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
     });
   });
 
-  group('Spotify gets our next songs so it keeps our queue on its own', () {
-    Future<AudioProvider> playingList(List<Track> tracks) async {
+  group('With App Remote, every play goes through it', () {
+    test('no list is ever sent over the Web API', () async {
+      // A Web API play into a Spotify started through App Remote left it on
+      // no track at all: the song cut out seconds in.
       fakeNative.setConnected(true);
+      final provider = createProvider();
+      final tracks = [_track('t1'), _track('t2'), _track('t3')];
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
+
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      provider.afterSpotifyStartedForTesting();
+      provider.playNext(_track('t9'));
+      await provider.refreshSpotifyListForTesting();
+
+      expect(fakeSpotify.playCount, 0);
+    });
+
+    test('Spotify closed is woken through App Remote before playing',
+        () async {
+      fakeNative.setConnected(false);
+      final provider = createProvider();
+      await provider.playTrack(_track('t1'), newQueue: [_track('t1')]);
+
+      expect(fakeNative.isConnected, isTrue);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
+      expect(fakeSpotify.playCount, 0);
+    });
+  });
+
+  group('Without App Remote, Spotify gets our next songs over the Web API',
+      () {
+    void webApiOnly() {
+      fakeNative.setConnected(false);
+      fakeNative.connectWillFail = true;
+    }
+
+    Future<AudioProvider> playingList(List<Track> tracks) async {
+      webApiOnly();
       final provider = createProvider();
       await provider.playTrack(tracks.first, newQueue: tracks);
       await Future.delayed(Duration.zero);
@@ -660,15 +702,13 @@ void main() {
 
     test('a song starts without waiting to look up the next ones', () async {
       fakeSpotify.lookedUp = {};
-      fakeNative.setConnected(true);
+      webApiOnly();
       final provider = createProvider();
       final tracks = [_track('t1'), _track('t2'), _track('t3')];
       await provider.playTrack(tracks.first, newQueue: tracks);
 
-      expect(fakeNative._playingUri, 'spotify:track:t1');
+      expect(fakeSpotify.lastPlayedUris, ['spotify:track:t1']);
       expect(fakeSpotify.events.first, 'search:t1');
-      expect(fakeSpotify.events, isNot(contains('search:t3')),
-          reason: 'only the next one is looked up, in the background');
 
       // Once it plays, Spotify gets the rest.
       fakeNative.simulateStateChanged(1000, 180000, false,
@@ -680,6 +720,17 @@ void main() {
       }
       expect(fakeSpotify.lastPlayedUris,
           ['spotify:track:t1', 'spotify:track:t2', 'spotify:track:t3']);
+    });
+
+    test('two list handovers at once go out one after the other', () async {
+      final provider = await playingList([_track('t1'), _track('t2')]);
+      fakeSpotify.playCount = 0;
+      provider.addToQueue(_track('t3'));
+      provider.addToQueue(_track('t4'));
+      await provider.refreshSpotifyListForTesting();
+      await provider.refreshSpotifyListForTesting();
+      expect(fakeSpotify.playCount, 1,
+          reason: 'the second finds the list already sent');
     });
 
     test('the play hands Spotify the upcoming songs in order', () async {
@@ -785,6 +836,7 @@ void main() {
 
     test('Web API pause is used when App Remote not connected', () async {
       fakeNative.setConnected(false);
+      fakeNative.connectWillFail = true;
       final provider = createProvider();
       final track = _track('t1');
       await provider.playTrack(track, newQueue: [track]);
@@ -988,9 +1040,10 @@ void main() {
     });
   });
 
-  group('Editing the queue hands Spotify the new list', () {
+  group('Without App Remote, editing the queue hands Spotify the new list', () {
     Future<AudioProvider> playing(List<Track> tracks) async {
-      fakeNative.setConnected(true);
+      fakeNative.setConnected(false);
+      fakeNative.connectWillFail = true;
       final provider = createProvider();
       await provider.playTrack(tracks.first, newQueue: tracks);
       await Future.delayed(Duration.zero);
@@ -1063,14 +1116,18 @@ void main() {
     Future<void> settle() =>
         Future.delayed(const Duration(milliseconds: 100));
 
-    test('similar songs are added and handed to Spotify before it ends',
-        () async {
-      fakeNative.setConnected(true);
+    test('without App Remote, similar songs are handed to Spotify before '
+        'it ends', () async {
+      fakeNative.setConnected(false);
+      fakeNative.connectWillFail = true;
       final provider = createProvider();
       await Future.delayed(Duration.zero);
       final tracks = [_track('t1'), _track('t2')];
       await provider.playTrack(tracks.first, newQueue: tracks);
-      await settle();
+      // The similar songs arrive while it starts; they go out once Spotify
+      // confirms it plays.
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 500);
+      await Future.delayed(const Duration(milliseconds: 3500));
 
       expect(provider.queue.length, greaterThan(2));
       expect(provider.isRadioActive, isTrue);

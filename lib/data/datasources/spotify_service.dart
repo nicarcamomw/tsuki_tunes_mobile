@@ -53,6 +53,10 @@ class SpotifyService {
   String? _activeDeviceName;
   Completer<void>? _refreshLock;
 
+  // The phone Spotify last played on: plays and resumes go straight to it,
+  // without listing the devices first.
+  String? _phoneDeviceId;
+
   // URI cache: deezer_id / query -> spotify_uri (persisted in SharedPreferences)
   final Map<String, String> _uriCache = {};
   bool _uriCacheLoaded = false;
@@ -648,7 +652,7 @@ class SpotifyService {
     final activePhone = smartphones.where((d) => d['is_active'] == true).toList();
     if (activePhone.isNotEmpty) {
       debugPrint('Spotify: using active smartphone ${activePhone.first['name']}');
-      return activePhone.first['id'] as String?;
+      return _phoneDeviceId = activePhone.first['id'] as String?;
     }
 
     // If there's a smartphone but not active, transfer to it
@@ -657,9 +661,11 @@ class SpotifyService {
       if (phoneId != null) {
         debugPrint('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
         await transferPlayback(phoneId);
+        // The transfer settles asynchronously: a play sent sooner is often
+        // dropped. Only on this cold path; warm plays use _phoneDeviceId.
         await Future.delayed(const Duration(milliseconds: 500));
       }
-      return phoneId;
+      return _phoneDeviceId = phoneId;
     }
 
     // No smartphone found — do NOT fall back to other device types (TV,
@@ -683,8 +689,10 @@ class SpotifyService {
 
     try {
       // Ensure we have an active smartphone device — never play on a
-      // non-phone (TV, speaker, etc.).
-      final targetDevice = deviceId ?? await ensureActiveDevice();
+      // non-phone (TV, speaker, etc.). The phone of the last play needs no
+      // lookup; if it's gone, it's looked up again below.
+      final remembered = deviceId == null ? _phoneDeviceId : null;
+      final targetDevice = deviceId ?? remembered ?? await ensureActiveDevice();
       if (targetDevice == null) {
         debugPrint('Spotify play: no smartphone device available');
         return false;
@@ -712,7 +720,15 @@ class SpotifyService {
       debugPrint('Spotify play: ${response.statusCode} (device=$targetDevice)');
 
       if (response.statusCode == 204 || response.statusCode == 200) {
+        _phoneDeviceId = targetDevice;
         return true;
+      }
+
+      if (remembered != null && response.statusCode != 401) {
+        // The remembered phone is gone or asleep: look it up again.
+        _phoneDeviceId = null;
+        return await play(
+            trackUri: trackUri, trackUris: trackUris, positionMs: positionMs);
       }
 
       if (response.statusCode == 401) {
@@ -773,19 +789,36 @@ class SpotifyService {
     if (_accessToken == null) return false;
 
     try {
+      // Resume on the phone of the last play (no device lookup). Never
+      // without a device_id: Spotify would resume wherever it was last
+      // active, a PC or a speaker included.
+      final remembered = _phoneDeviceId;
+      if (remembered != null) {
+        final response = await _put(
+          Uri.parse(
+              'https://api.spotify.com/v1/me/player/play?device_id=$remembered'),
+          headers: {'Authorization': 'Bearer $_accessToken'},
+        );
+        debugPrint('Spotify resume response: ${response.statusCode}');
+        if (response.statusCode == 204 || response.statusCode == 200) {
+          return true;
+        }
+        _phoneDeviceId = null;
+      }
+
+      // Phone unknown or gone: resolve and retry.
       final deviceId = await ensureActiveDevice();
       if (deviceId == null) {
-        debugPrint('Spotify resume: no smartphone device, skipping Web API');
+        debugPrint('Spotify resume: no smartphone device');
         return false;
       }
-      final url =
-          'https://api.spotify.com/v1/me/player/play?device_id=$deviceId';
-      final response = await _put(
-        Uri.parse(url),
+      final retry = await _put(
+        Uri.parse(
+            'https://api.spotify.com/v1/me/player/play?device_id=$deviceId'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
-      debugPrint('Spotify resume response: ${response.statusCode}');
-      return response.statusCode == 204 || response.statusCode == 200;
+      debugPrint('Spotify resume retry: ${retry.statusCode}');
+      return retry.statusCode == 204 || retry.statusCode == 200;
     } catch (e) {
       debugPrint('Spotify resume error: $e');
       return false;
@@ -909,6 +942,7 @@ class SpotifyService {
     _tokenExpiry = null;
     _profile = null;
     _isPremium = false;
+    _phoneDeviceId = null;
 
     await _secureStorage.delete(key: _tokenKey);
     await _secureStorage.delete(key: _refreshKey);

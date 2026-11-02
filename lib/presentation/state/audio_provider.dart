@@ -124,6 +124,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // Queue edits wait a moment (several drags in a row) before Spotify gets
   // the new list; while paused it gets it on resume instead.
   Timer? _spotifyListTimer;
+
+  // The list being handed to Spotify right now, if any.
+  Future<bool>? _spotifyReissue;
   bool _spotifyListStale = false;
 
   late final SleepTimerController _sleepCtrl;
@@ -839,7 +842,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void _afterSpotifyStarted() {
     _keepMediaSessionOnTop();
     unawaited(_syncSpotifyRepeat());
-    if (_spotifyAhead.isEmpty && !_spotifyListPlayFailed) {
+    // Also when it's about to run out: similar songs that arrived while the
+    // song was starting weren't sent then (_sendSpotifyAhead waits for it).
+    if (_spotifyAhead.length < 2 && !_spotifyListPlayFailed) {
       unawaited(_reissueSpotifyAhead());
     }
   }
@@ -848,6 +853,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void afterSpotifyStartedForTesting() => _afterSpotifyStarted();
 
   Timer? _mediaTopTimer;
+  DateTime _mediaTopUntil = DateTime.fromMillisecondsSinceEpoch(0);
 
 
   Future<void> _precache(Track track) async {

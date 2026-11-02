@@ -130,14 +130,25 @@ extension _MediaSession on AudioProvider {
   }
 
   /// With Spotify, Android also shows Spotify's own player and puts first
-  /// the one that updated last. Posting Tsuki's state again just after
-  /// Spotify updates its own (at each song start) keeps Tsuki's on top.
+  /// the one that updated last, so tapping it would open Spotify. Posting
+  /// Tsuki's state again just after Spotify updates its own (any change it
+  /// reports, a pause included) keeps Tsuki's on top. Every half second for
+  /// 5 s after Spotify's latest change: as a song starts Spotify updates its
+  /// own several times (buffering, artwork, playing), and a wait restarted
+  /// by each of them left Spotify's card first for those seconds. Only the
+  /// card is posted again; playback is untouched.
   void _keepMediaSessionOnTop() {
-    _mediaTopTimer?.cancel();
-    _mediaTopTimer = Timer(const Duration(milliseconds: 1500), () {
-      if (_useSpotify && _spotifyActive && _isPlaying) {
-        _syncMediaSession(force: true);
+    _mediaTopUntil = DateTime.now().add(const Duration(seconds: 5));
+    if (_mediaTopTimer?.isActive ?? false) return;
+    _mediaTopTimer =
+        Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      final spotifyPlayer =
+          _useSpotify && _spotifyActive && _currentTrack != null;
+      if (!spotifyPlayer || DateTime.now().isAfter(_mediaTopUntil)) {
+        timer.cancel();
+        return;
       }
+      _syncMediaSession(force: true);
     });
   }
 }
