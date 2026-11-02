@@ -507,7 +507,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         unawaited(_adoptRunningSpotify());
       }
       // The system may have killed Spotify while we were in the background.
-      if (_useSpotify) _warmUpSpotifyDevice();
+      if (_useSpotify) unawaited(_warmUpSpotifyDevice());
     }
   }
 
@@ -703,6 +703,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void headphonesUnpluggedForTesting() => _onHeadphonesUnplugged();
 
   bool _warmingUpSpotify = false;
+  Future<void>? _warmUpFuture;
 
 
   /// Whether songs may play in full through Spotify: a Premium account
@@ -736,7 +737,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _stopPositionTimer();
       await _nativePlayer.disconnect();
     } else if (_useSpotify && !wasSpotify) {
-      _warmUpSpotifyDevice();
+      // Await warm-up so the next song can play via Spotify immediately.
+      await _warmUpSpotifyDevice();
     }
 
     notifyListeners();

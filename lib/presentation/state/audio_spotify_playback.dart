@@ -101,7 +101,7 @@ extension _SpotifyPlayback on AudioProvider {
     await _spotify.loadSavedState();
     _useSpotify = _spotifyAllowed;
     if (_useSpotify) {
-      _warmUpSpotifyDevice();
+      await _warmUpSpotifyDevice();
     }
   }
 
@@ -122,20 +122,26 @@ extension _SpotifyPlayback on AudioProvider {
   /// Makes sure the Spotify app on this phone is running so playback works
   /// without the user opening Spotify by hand. The phone being listed as
   /// active doesn't prove it: Spotify swiped away stays listed for a while.
-  void _warmUpSpotifyDevice() {
-    if (_warmingUpSpotify || _nativePlayer.isConnected) return;
+  Future<void> _warmUpSpotifyDevice() {
+    if (_warmingUpSpotify || _nativePlayer.isConnected) {
+      return _warmUpFuture ?? Future.value();
+    }
     _warmingUpSpotify = true;
-    Future.microtask(() async {
+    final future = Future.microtask(() async {
       try {
-        // Connecting App Remote launches Spotify in the background (no UI).
         final token = _spotify.accessToken;
         if (token == null) return;
         _log.warning('Spotify not active on this phone, waking via App Remote...');
         final connected = await _nativePlayer.connect(accessToken: token);
         if (connected) {
-          await Future.delayed(const Duration(milliseconds: 1500));
-          final wokenDevice = await _spotify.ensureActiveDevice();
-          _log.info('Spotify native wake result: ${wokenDevice ?? "still no device"}');
+          // Poll for the device to appear instead of a blind 1500ms wait.
+          String? deviceId;
+          for (var i = 0; i < 6; i++) {
+            await Future.delayed(const Duration(milliseconds: 250));
+            deviceId = await _spotify.ensureActiveDevice();
+            if (deviceId != null) break;
+          }
+          _log.info('Spotify native wake result: ${deviceId ?? "still no device"}');
         } else {
           _log.severe('Spotify native SDK connect failed during warm-up');
         }
@@ -145,6 +151,8 @@ extension _SpotifyPlayback on AudioProvider {
         _warmingUpSpotify = false;
       }
     });
+    _warmUpFuture = future;
+    return future;
   }
 
   void _startPositionTimer() {

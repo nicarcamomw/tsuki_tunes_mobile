@@ -671,9 +671,15 @@ class SpotifyService {
       if (phoneId != null) {
         _log.fine('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
         await transferPlayback(phoneId);
-        // The transfer settles asynchronously: a play sent sooner is often
-        // dropped. Only on this cold path; warm plays use _phoneDeviceId.
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Poll until the device reports active instead of a blind 500ms wait.
+        for (var i = 0; i < 3; i++) {
+          await Future.delayed(const Duration(milliseconds: 150));
+          final check = await getDevices();
+          final active = check.any(
+            (d) => d['id'] == phoneId && d['is_active'] == true,
+          );
+          if (active) break;
+        }
       }
       return _phoneDeviceId = phoneId;
     }
