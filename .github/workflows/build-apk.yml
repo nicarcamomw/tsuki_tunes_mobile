@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -162,21 +163,10 @@ jobs:
             build/symbols-aab/
           retention-days: 90
 
-      - name: Publish release
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk-${{ github.run_number }}
-          name: Tsuki Tunes ${{ github.run_number }}
-          target_commitish: ${{ github.sha }}
-          prerelease: true
           files: |
             tsuki-tunes-*.apk
             tsuki-tunes-*.aab
-          body: |
-            Built from `${{ github.ref_name }}` @ ${{ github.sha }}.
-
-            **APK** — Download `tsuki-tunes-${{ github.run_number }}.apk` (arm64) for almost any modern phone.
-            The `armeabi-v7a` build is for old 32-bit phones; `x86_64` is for emulators.
-
-            **AAB** — `tsuki-tunes-${{ github.run_number }}.aab` for Play Store upload.
