@@ -15,6 +15,11 @@ class AlbumCompletionIndex {
   final bool Function() _listenedLoaded;
   final VoidCallback _onChanged;
 
+  /// Called when a newly-registered track count reveals a completed album
+  /// that could not be detected before (the count was unknown). Wired up
+  /// to fire the album_completed product event so it isn't lost.
+  void Function(String albumId)? onAlbumCompleted;
+
   AlbumCompletionIndex({
     required StorageService storage,
     required List<ListenedTrackData> Function() listenedTracks,
@@ -78,6 +83,7 @@ class AlbumCompletionIndex {
   void register(String albumId, int count) {
     if (albumId.isEmpty || count <= 0) return;
     if (_trackCounts[albumId] == count) return;
+    final wasComplete = isCompleted(albumId);
     _trackCounts[albumId] = count;
 
     // Only persist if this album has listened tracks associated with it.
@@ -91,6 +97,9 @@ class AlbumCompletionIndex {
       prune();
       _trackCounts[albumId] = count;
     }
+    if (!wasComplete && isCompleted(albumId)) {
+      onAlbumCompleted?.call(albumId);
+    }
     _onChanged();
   }
 
@@ -98,15 +107,23 @@ class AlbumCompletionIndex {
   void registerAll(Map<String, int> counts) {
     var changed = false;
     var touchesListened = false;
+    final newlyCompleted = <String>[];
     for (final entry in counts.entries) {
       if (entry.key.isEmpty || entry.value <= 0) continue;
       if (_trackCounts[entry.key] == entry.value) continue;
+      final wasComplete = isCompleted(entry.key);
       _trackCounts[entry.key] = entry.value;
       changed = true;
       if (listenedCountForAlbum(entry.key) > 0) touchesListened = true;
+      if (!wasComplete && isCompleted(entry.key)) {
+        newlyCompleted.add(entry.key);
+      }
     }
     if (!changed) return;
     if (touchesListened) prune(forceSave: true);
+    for (final albumId in newlyCompleted) {
+      onAlbumCompleted?.call(albumId);
+    }
     _onChanged();
   }
 

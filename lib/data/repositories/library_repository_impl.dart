@@ -47,6 +47,12 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   late final ListenedTracksRepository _listened;
   late final FollowedArtistsRepository _followed;
 
+  /// Called when a newly-registered track count reveals a completed album.
+  /// Wired to the album_completed product event in app_providers so events
+  /// that couldn't fire at listen time (count wasn't known yet) still fire.
+  set onAlbumCompleted(void Function(String albumId)? cb) =>
+      _albums.onAlbumCompleted = cb;
+
   // Local data
   List<Track> _favoriteTracks = [];
   List<Track> _recentTracks = [];
@@ -159,6 +165,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
 
   // --- Album completion ---
 
+  @override
   int getAlbumTracksCount(String albumId) => _albums.trackCount(albumId);
   int listenedCountForAlbum(String albumId) =>
       _albums.listenedCountForAlbum(albumId);

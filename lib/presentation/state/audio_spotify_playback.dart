@@ -405,6 +405,8 @@ extension _SpotifyPlayback on AudioProvider {
         Duration(seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _isBuffering = false;
     _isPlaying = true;
+    _playStartPending = true;
+    _audioHeard();
     _startPositionTimer();
     onTrackStarted?.call(track);
     _persistPlaybackState();
@@ -605,6 +607,8 @@ extension _SpotifyPlayback on AudioProvider {
         : Duration(seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);
     _playGeneration++;
     _completionHandled = false;
+    _playStartPending = true;
+    _audioHeard();
     _startPositionTimer();
     notifyListeners();
     _prefetchNextTrack();
@@ -1091,6 +1095,8 @@ extension _SpotifyPlayback on AudioProvider {
     _playGeneration++;
     _completionHandled = false;
     _lastPlayStart = now.subtract(pos);
+    _playStartPending = true;
+    _audioHeard();
     onTrackStarted?.call(track);
     notifyListeners();
   }

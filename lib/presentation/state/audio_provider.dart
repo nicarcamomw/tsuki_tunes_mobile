@@ -280,15 +280,25 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // running until it's heard.
   PerfSpan? _timeToAudio;
 
+  /// Whether a play_start event is pending for the current song. Set when
+  /// a new track begins (playTrack, crossfade, Spotify auto-advance) and
+  /// cleared the first time the song is heard. Decoupled from the perf
+  /// span so every playback path counts.
+  bool _playStartPending = false;
+
   /// The song started sounding: the time since it was picked goes to
   /// Firebase Performance, with how it plays. Once per song.
   void _audioHeard() {
     final span = _timeToAudio;
-    if (span == null) return;
-    _timeToAudio = null;
-    span.attribute('mode', _playbackMode);
-    span.stop();
-    ProductAnalytics.instance.log('play_start', {'mode': _playbackMode});
+    if (span != null) {
+      _timeToAudio = null;
+      span.attribute('mode', _playbackMode);
+      span.stop();
+    }
+    if (_playStartPending) {
+      _playStartPending = false;
+      ProductAnalytics.instance.log('play_start', {'mode': _playbackMode});
+    }
   }
 
   // Last song / play state written to the home screen widget.
@@ -857,6 +867,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     }
     final gen = ++_playGeneration;
     // A song picked before the last one sounded replaces its timing.
+    _playStartPending = true;
     _timeToAudio = PerfTracker.instance.start('time_to_audio')
       ..attribute('woke_spotify', 'no');
     _duration = Duration(
@@ -1666,6 +1677,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _lastPlayStart = DateTime.now();
     final gen = ++_playGeneration;
     _completionHandled = false;
+    _playStartPending = true;
 
     debugPrint('[AudioProvider] Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
     notifyListeners();

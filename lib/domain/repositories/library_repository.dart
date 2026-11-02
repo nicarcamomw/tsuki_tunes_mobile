@@ -15,6 +15,7 @@ abstract interface class LibraryRepository {
   Future<void> markAlbumTracks(List<Track> tracks, {String? albumId, int? totalTracks});
   Future<void> unmarkAlbumTracks(List<String> trackIds);
   void registerAlbumTrackCount(String albumId, int count);
+  int getAlbumTracksCount(String albumId);
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0});
 
   bool isFavoriteTrack(String trackId);

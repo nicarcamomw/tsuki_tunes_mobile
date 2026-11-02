@@ -41,6 +41,9 @@ class FakeLibraryRepository implements LibraryRepository {
   void registerAlbumTrackCount(String albumId, int count) => albumCounts[albumId] = count;
 
   @override
+  int getAlbumTracksCount(String albumId) => albumCounts[albumId] ?? 0;
+
+  @override
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0}) => false;
 
   @override
