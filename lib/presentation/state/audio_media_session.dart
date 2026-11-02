@@ -152,5 +152,24 @@ extension _MediaSession on AudioProvider {
       }
       _syncMediaSession(force: true);
     });
+    _startMediaSessionHeartbeat();
+  }
+
+  /// A slow heartbeat that re-posts Tsuki's media session every 10 seconds
+  /// while Spotify is playing. Without it, Spotify's own media session
+  /// becomes "most recent" after the 5-second burst ends, and car/Bluetooth
+  /// controls (steering wheel next/prev) go to Spotify instead of Tsuki.
+  void _startMediaSessionHeartbeat() {
+    if (_mediaHeartbeatTimer?.isActive ?? false) return;
+    _mediaHeartbeatTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) {
+      final spotifyPlayer =
+          _useSpotify && _spotifyActive && _isPlaying && _currentTrack != null;
+      if (!spotifyPlayer) {
+        timer.cancel();
+        return;
+      }
+      _syncMediaSession(force: true);
+    });
   }
 }

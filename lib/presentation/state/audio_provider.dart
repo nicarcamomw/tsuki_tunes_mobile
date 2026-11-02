@@ -953,6 +953,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void afterSpotifyStartedForTesting() => _afterSpotifyStarted();
 
   Timer? _mediaTopTimer;
+  Timer? _mediaHeartbeatTimer;
   DateTime _mediaTopUntil = DateTime.fromMillisecondsSinceEpoch(0);
 
 
@@ -1148,6 +1149,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       ));
   Future<void> stop() async {
     _persistTimer?.cancel();
+    _mediaHeartbeatTimer?.cancel();
     unawaited(_storage.savePlaybackState(null));
     _stopPositionTimer();
     _retryTimer?.cancel();
@@ -1724,6 +1726,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _completionRecheck?.cancel();
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
+    _mediaHeartbeatTimer?.cancel();
     _unplugSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
