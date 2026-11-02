@@ -175,7 +175,6 @@ class _AppVersionLabel extends StatelessWidget {
         if (_build.isNotEmpty) 'build $_build',
         if (_commit.isNotEmpty)
           _commit.length > 7 ? _commit.substring(0, 7) : _commit,
-        if (isDevEnvironment) 'dev',
         if (!kReleaseMode) 'debug',
         if (useFirebaseEmulators) 'emulators',
       ].join(' · ');

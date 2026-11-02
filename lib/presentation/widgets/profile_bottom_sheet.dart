@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_environment.dart';
 import '../../core/constants/firebase_emulators.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/image_cache_size.dart';
