@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../core/constants/firebase_emulators.dart';
 import 'app_database.steps.dart';
 
 part 'app_database.g.dart';
@@ -101,8 +102,11 @@ class OutboxRows extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  /// The app's database file, in the app's private storage.
-  factory AppDatabase.open() => AppDatabase(driftDatabase(name: 'tsuki_library'));
+  /// The app's database file, in the app's private storage. Against the
+  /// Firebase emulators, a file of its own: its outbox must never send to
+  /// the real project, nor the real one's to the emulators.
+  factory AppDatabase.open() => AppDatabase(driftDatabase(
+      name: useFirebaseEmulators ? 'tsuki_library_emulators' : 'tsuki_library'));
 
   @override
   int get schemaVersion => 3;

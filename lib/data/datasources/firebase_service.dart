@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../core/constants/firebase_emulators.dart';
 import '../../firebase_options.dart';
 
 class FirebaseService {
@@ -43,19 +44,36 @@ class FirebaseService {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    if (useFirebaseEmulators) {
+      // Before anything signs in or reads the session. 127.0.0.1 through
+      // adb reverse, so FlutterFire's rewrite to the Android emulator's
+      // 10.0.2.2 is turned off.
+      await FirebaseAuth.instance.useAuthEmulator(firebaseEmulatorHost, 9099,
+          automaticHostMapping: false);
+      debugPrint('[Firebase] Using the local emulators at $firebaseEmulatorHost');
+    }
     _coreReady = true;
   }
 
   Future<void> initialize() async {
     if (_initialized) return;
     await initializeCore();
-    await _activateAppCheck();
+    // The emulators don't check App Check tokens.
+    if (!useFirebaseEmulators) await _activateAppCheck();
     _auth = FirebaseAuth.instance;
     _db = FirebaseFirestore.instance;
     _db!.settings = const Settings(
-      persistenceEnabled: true,
+      // No disk cache against the emulators: the real project's cache (and
+      // its pending writes) is keyed by project, not host, so the two would
+      // mix, and an emulator write could later reach the real project.
+      persistenceEnabled: !useFirebaseEmulators,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
+    // After the settings above, which would otherwise put the real host back.
+    if (useFirebaseEmulators) {
+      _db!.useFirestoreEmulator(firebaseEmulatorHost, 8080,
+          automaticHostMapping: false);
+    }
     _googleSignIn = GoogleSignIn(
       serverClientId: '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
       scopes: ['email'],

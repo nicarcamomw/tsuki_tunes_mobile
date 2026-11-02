@@ -32,6 +32,26 @@ Las reglas viven en `firestore.rules`. El proyecto de Firebase se comparte con l
 firebase deploy --only firestore:rules
 ```
 
+Los tests de las reglas (`tool/firestore_rules_test/`, con `@firebase/rules-unit-testing`) corren contra el emulador de Firestore; el workflow de deploy los pasa antes de publicar:
+
+```bash
+cd tool/firestore_rules_test && npm ci && npm test
+```
+
+## Desarrollo con los emuladores de Firebase
+
+Para probar sin tocar el proyecto real: Auth y Firestore corren en el PC (con `firestore.rules`) y la app se conecta a ellos.
+
+```bash
+bash tool/dev_emulators.sh
+flutter run --dart-define=USE_EMULATORS=true
+```
+
+- El script levanta los emuladores (interfaz en http://127.0.0.1:4000), usa el JDK de Android Studio si el `java` del PATH es anterior a 11, y hace `adb reverse` de los puertos a cada dispositivo conectado (teléfono o emulador). Si el dispositivo se reconecta, correrlo de nuevo.
+- Los datos quedan entre sesiones en `.emulator-data/` (ignorado por git); borrar la carpeta para empezar vacío.
+- En modo emuladores la app no usa App Check, Firestore no guarda caché en disco y la biblioteca local va en otro archivo (`tsuki_library_emulators`), así que nada se mezcla con los datos reales ni llega al proyecto real. Solo funciona en builds debug.
+- Al volver al modo normal puede que pida iniciar sesión de nuevo.
+
 ## Firma de release (Android)
 
 Sin `android/key.properties`, el build de release se firma con la clave debug. Para firmar con tu propia clave:
