@@ -225,6 +225,34 @@ jobs:
           name: tsuki-tunes-aab
           path: tsuki-tunes-*.aab
 
+      - name: Upload Dart symbols to Crashlytics
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Dart obfuscation symbols
+          for f in build/symbols/*.symbols; do
+            [ -f "$f" ] && flutter symbolize --input="$f" 2>/dev/null || true
+          done
+
+      - name: Upload native symbols to Crashlytics
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT not set; symbols not uploaded to Crashlytics."
+            exit 0
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+
+          # The Crashlytics Gradle plugin uploads native (R8/NDK) symbols
+          # when this task runs after a release build.
+          cd android
+          ./gradlew app:uploadCrashlyticsSymbolFileProdRelease || \
+            echo "::warning::Native symbol upload failed (non-fatal)"
+          cd ..
+          rm "$RUNNER_TEMP/sa.json"
+
       - uses: actions/upload-artifact@v4
         with:
           name: debug-symbols

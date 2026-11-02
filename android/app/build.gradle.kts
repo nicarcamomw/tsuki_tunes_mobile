@@ -82,6 +82,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = true
+                nativeSymbolUploadEnabled = true
+            }
             // Release key when android/key.properties exists (see README);
             // debug key otherwise so local release builds keep working.
             // Remember to add the release key's SHA-1/SHA-256 in Firebase,
