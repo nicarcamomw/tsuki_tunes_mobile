@@ -11,9 +11,9 @@ import '../../domain/logic/song_radio.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('AudioRadio');
-
 export '../../domain/logic/song_radio.dart' show RadioMode, RadioReason, RadioSource;
+
+final _log = Log.named('AudioRadio');
 
 enum RadioStatus { loading, ready, offline, exhausted }
 

@@ -11,9 +11,9 @@ import '../../domain/logic/ambient_sound_generator.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('Ambient');
-
 export '../../domain/logic/ambient_sound_generator.dart' show AmbientSound;
+
+final _log = Log.named('Ambient');
 
 /// Ambient sound layers (rain, waves...) that play on top of whatever music
 /// is playing, including Spotify.

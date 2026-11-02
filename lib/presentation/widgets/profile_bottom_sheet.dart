@@ -32,12 +32,12 @@ import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
 import '../../core/logger.dart';
 
-final _log = Log.named('Profile');
-
 part 'profile/logout.dart';
 part 'profile/settings_sections.dart';
 part 'profile/settings_widgets.dart';
 part 'profile/spotify_card.dart';
+
+final _log = Log.named('Profile');
 
 class ProfileBottomSheet {
   static void show(BuildContext context, AuthProvider auth) {

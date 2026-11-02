@@ -21,9 +21,9 @@ import 'listened_tracks_repository.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('LibraryRepositoryImpl');
-
 export 'listened_tracks_repository.dart' show ListenedTrackData;
+
+final _log = Log.named('LibraryRepositoryImpl');
 
 class TopArtistEntry {
   final String name;

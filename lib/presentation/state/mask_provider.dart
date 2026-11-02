@@ -16,10 +16,10 @@ import '../../domain/logic/moon_calculator.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('Masks');
-
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';
+
+final _log = Log.named('Masks');
 
 /// Achievement engine for the Oni mask collection.
 ///

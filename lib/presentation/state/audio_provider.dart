@@ -37,8 +37,6 @@ import 'connectivity_provider.dart';
 import '../../core/logger.dart';
 
 
-final _log = Log.named('AudioProvider');
-
 export '../../domain/entities/playback_error.dart';
 export '../../domain/entities/repeat_mode.dart';
 export '../../domain/entities/smart_shuffle.dart';
@@ -49,6 +47,8 @@ part 'audio_media_session.dart';
 part 'audio_playback_errors.dart';
 part 'audio_playback_state.dart';
 part 'audio_spotify_playback.dart';
+
+final _log = Log.named('AudioProvider');
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implements PlaybackController {
   final AudioPlayerService _service;
