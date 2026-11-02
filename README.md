@@ -26,7 +26,7 @@ El CI (`.github/workflows/ci.yml`) corre ambos en cada PR y en cada push a `main
 
 ## Reglas de Firestore
 
-Las reglas viven en `firestore.rules`. El proyecto de Firebase se comparte con la versión web, así que un deploy reemplaza **todas** las reglas: mantener un solo archivo como fuente de verdad antes de desplegar.
+Las reglas viven en `firestore.rules`, la única fuente de verdad: un deploy reemplaza **todas** las reglas del proyecto. La antigua versión web (React, repo `Tsuki-Notes`) quedó abandonada y no debe desplegarse: su `firebase.json` apunta al mismo proyecto (`tsuki-tunes-web`, nombre heredado) y pisaría estas reglas con las viejas.
 
 ```bash
 firebase deploy --only firestore:rules
