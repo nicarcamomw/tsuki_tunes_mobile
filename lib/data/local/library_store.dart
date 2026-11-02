@@ -345,6 +345,20 @@ class LibraryStore {
         _playlists[uid] = after;
       }));
 
+  /// Removes everything kept for [uid]: its library and the writes still
+  /// waiting to reach Firestore (the account is being deleted).
+  Future<void> clearAccount(String uid) => _queued(() async {
+        await _db.transaction(() async {
+          await (_db.delete(_db.listenedTracks)..where((t) => t.uid.equals(uid))).go();
+          await (_db.delete(_db.playlists)..where((t) => t.uid.equals(uid))).go();
+          await (_db.delete(_db.followedArtists)..where((t) => t.uid.equals(uid))).go();
+          await (_db.delete(_db.outboxRows)..where((t) => t.uid.equals(uid))).go();
+        });
+        _listened.remove(uid);
+        _playlists.remove(uid);
+        _followed.remove(uid);
+      });
+
   Future<void> clearPlaylists(String uid) => _queued(() async {
         await (_db.delete(_db.playlists)..where((t) => t.uid.equals(uid))).go();
         _playlists[uid] = {};

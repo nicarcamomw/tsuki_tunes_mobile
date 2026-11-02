@@ -2000,4 +2000,24 @@ class AppStrings {
   String get batteryGuideDontShow => _l.batteryGuideDontShow;
 
   String get batteryGuideOpenFailed => _l.batteryGuideOpenFailed;
+
+  String get deleteAccountOption => _l.deleteAccountOption;
+
+  String get deleteAccountConfirmTitle => _l.deleteAccountConfirmTitle;
+
+  String get deleteAccountConfirmMessage => _l.deleteAccountConfirmMessage;
+
+  String get deleteAccountConfirm => _l.deleteAccountConfirm;
+
+  String get deleteAccountInProgress => _l.deleteAccountInProgress;
+
+  String get deleteAccountDone => _l.deleteAccountDone;
+
+  String get deleteAccountOffline => _l.deleteAccountOffline;
+
+  String get deleteAccountFailed => _l.deleteAccountFailed;
+
+  String get privacyPolicyOption => _l.privacyPolicyOption;
+
+  String get termsOption => _l.termsOption;
 }

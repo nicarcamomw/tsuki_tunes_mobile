@@ -804,5 +804,15 @@
   "playbackLogCopied": "ログをコピーしました。チャットに貼り付けて状況を確認できます。",
   "appVersionCopied": "バージョンをコピーしました",
   "analyticsSettingTitle": "利用統計を共有",
-  "analyticsSettingSubtitle": "アプリ改善のため、どの機能が使われているかを送信します。曲名・検索・名前は含みません。"
+  "analyticsSettingSubtitle": "アプリ改善のため、どの機能が使われているかを送信します。曲名・検索・名前は含みません。",
+  "deleteAccountOption": "アカウントを削除",
+  "deleteAccountConfirmTitle": "アカウントを削除",
+  "deleteAccountConfirmMessage": "Tsuki Tunes のアカウントとそのデータ（再生履歴、プレイリスト、フォロー中のアーティスト、マスク、公開プロフィール）が完全に削除されます。確認のため Google で再度ログインしていただきます。元に戻すことはできません。",
+  "deleteAccountConfirm": "削除",
+  "deleteAccountInProgress": "アカウントを削除しています…",
+  "deleteAccountDone": "アカウントとデータを削除しました。",
+  "deleteAccountOffline": "アカウントを削除するにはインターネット接続が必要です。",
+  "deleteAccountFailed": "アカウントの削除を完了できませんでした。ログインしてもう一度お試しください。",
+  "privacyPolicyOption": "プライバシーポリシー",
+  "termsOption": "利用規約"
 }

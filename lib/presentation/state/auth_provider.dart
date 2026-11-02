@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/datasources/account_deletion_service.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
@@ -12,6 +14,17 @@ import '../../core/logger.dart';
 
 
 final _log = Log.named('Auth');
+
+enum AccountDeletionResult {
+  deleted,
+  /// The Google sign-in asked first was cancelled: nothing was touched.
+  cancelled,
+  /// No connection to Firestore: nothing was touched.
+  offline,
+  /// Stopped partway; the person was signed out and can sign in and try
+  /// again (what's already deleted stays deleted).
+  failed,
+}
 
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
@@ -164,6 +177,56 @@ class AuthProvider extends ChangeNotifier {
     if (leftGuestUid != null) await getIt<StorageService>().clearCachedPlaylists(leftGuestUid);
     await _firebase.signOut();
     notifyListeners();
+  }
+
+  /// Deletes the signed-in account and everything it keeps: its data in
+  /// Firestore, what this phone keeps for it, and the sign-in account
+  /// itself. Google sign-in is asked again first (Firebase requires a
+  /// recent one). [beforeDelete] runs once that's done and Firestore is
+  /// reachable, right before anything is deleted: stop playback and the
+  /// syncing that would write the data back.
+  Future<AccountDeletionResult> deleteAccount({
+    Future<void> Function()? beforeDelete,
+  }) async {
+    final user = _user;
+    if (user == null || _isGuest) return AccountDeletionResult.failed;
+    final uid = user.uid;
+    try {
+      if (!await _firebase.reauthenticateWithGoogle()) {
+        return AccountDeletionResult.cancelled;
+      }
+    } catch (e) {
+      _log.severe('Re-authentication before deleting the account failed: $e');
+      return AccountDeletionResult.failed;
+    }
+    final firestore = _firebase.db;
+    try {
+      await firestore
+          .collection('users')
+          .doc(uid)
+          .get(const GetOptions(source: Source.server));
+    } catch (e) {
+      _log.warning('Firestore unreachable, account not deleted: $e');
+      return AccountDeletionResult.offline;
+    }
+
+    try {
+      await beforeDelete?.call();
+    } catch (e) {
+      _log.warning('Preparing the account deletion failed (non-fatal): $e');
+    }
+    try {
+      await AccountDeletionService(firestore).deleteUserData(uid);
+      await getIt<StorageService>().clearAccountData(uid);
+      await _firebase.deleteCurrentUser();
+    } catch (e) {
+      _log.severe('Account deletion stopped partway: $e');
+      await logout();
+      return AccountDeletionResult.failed;
+    }
+    _user = null;
+    notifyListeners();
+    return AccountDeletionResult.deleted;
   }
 
   @override

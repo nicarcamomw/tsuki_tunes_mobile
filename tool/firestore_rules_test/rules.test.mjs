@@ -18,6 +18,7 @@ import {
   serverTimestamp,
   increment,
   Timestamp,
+  deleteField,
 } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
@@ -289,6 +290,61 @@ test('profile updates are at least 10 seconds apart', async () => {
 
   await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.fromMillis(Date.now() - 11_000) });
   await assertSucceeds(setDoc(doc(alice(), 'profiles/alice'), profile({ public: false })));
+});
+
+// Deleting the account from the app (AccountDeletionService): every
+// subcollection in stamped batches, the play log and profile outright, and
+// the user document stripped of everything but the stamp.
+test('the app can delete all of an account\'s data', async () => {
+  await seed('users/alice', {
+    displayName: 'Alice',
+    email: 'alice@example.com',
+    photoURL: 'https://e/a.jpg',
+    createdAt: Timestamp.now(),
+    lastLoginAt: Timestamp.now(),
+    stats: { totalTracks: 2 },
+    masks: { equipped: 'oni' },
+    ...oldStamp(),
+  });
+  await seed('users/alice/listenedTracks/t1', { trackId: 't1' });
+  await seed('users/alice/playlists/p1', { name: 'Mix', tracks: [] });
+  await seed('users/alice/followedArtists/a1', { id: 'a1', name: 'A' });
+  await seed('users/alice/listenedDeletions/t2', { deletedAt: Timestamp.now() });
+  await seed('users/alice/playDays/2026-11-02', { date: '2026-11-02' });
+  await seed('profiles/alice', { ...profile(), updatedAt: Timestamp.now() });
+
+  const db = alice();
+  const paths = [
+    'users/alice/listenedTracks/t1',
+    'users/alice/playlists/p1',
+    'users/alice/followedArtists/a1',
+    'users/alice/listenedDeletions/t2',
+  ];
+  for (const [i, path] of paths.entries()) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 1100));
+    await assertSucceeds(stampedBatch(db, 'alice', (b) => b.delete(doc(db, path))));
+  }
+  await assertSucceeds(deleteDoc(doc(db, 'users/alice/playDays/2026-11-02')));
+  await assertSucceeds(deleteDoc(doc(db, 'profiles/alice')));
+  await assertSucceeds(updateDoc(doc(db, 'users/alice'), {
+    displayName: deleteField(),
+    email: deleteField(),
+    photoURL: deleteField(),
+    createdAt: deleteField(),
+    lastLoginAt: deleteField(),
+    stats: deleteField(),
+    masks: deleteField(),
+  }));
+  const left = (await getDoc(doc(db, 'users/alice'))).data();
+  assert.deepEqual(Object.keys(left), ['lastSubWrite']);
+});
+
+test('nobody else can delete an account\'s data', async () => {
+  await seed('users/alice', { email: 'alice@example.com', ...oldStamp() });
+  await seed('users/alice/playDays/2026-11-02', { date: '2026-11-02' });
+  const db = bob();
+  await assertFails(updateDoc(doc(db, 'users/alice'), { email: deleteField() }));
+  await assertFails(deleteDoc(doc(db, 'users/alice/playDays/2026-11-02')));
 });
 
 let failed = 0;

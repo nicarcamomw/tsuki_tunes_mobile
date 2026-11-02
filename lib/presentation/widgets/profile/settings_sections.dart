@@ -374,10 +374,26 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         icon: Icons.auto_stories_rounded,
         iconColor: AppColors.neonCyan,
         label: strings.tutorialOption,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
         onTap: () => widget.closeThen(() async {
           unawaited(const TutorialRoute().push(host));
         }),
+      ),
+      _SettingLink(
+        locale: locale,
+        icon: Icons.privacy_tip_outlined,
+        iconColor: AppColors.textSecondary,
+        label: strings.privacyPolicyOption,
+        labelColor: AppColors.textSecondary,
+        onTap: () => _openLegalPage(privacyPolicyUrl),
+      ),
+      _SettingLink(
+        locale: locale,
+        icon: Icons.gavel_rounded,
+        iconColor: AppColors.textSecondary,
+        label: strings.termsOption,
+        labelColor: AppColors.textSecondary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+        onTap: () => _openLegalPage(termsOfServiceUrl),
       ),
     ]);
   }
@@ -505,5 +521,13 @@ class _BirthdayRowState extends State<_BirthdayRow> {
         ),
       ),
     );
+  }
+}
+
+Future<void> _openLegalPage(String url) async {
+  try {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } catch (e) {
+    _log.warning('Could not open $url: $e');
   }
 }

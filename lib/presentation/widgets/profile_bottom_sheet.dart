@@ -7,9 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/firebase_emulators.dart';
+import '../../core/constants/legal_links.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/audio_precache_service.dart';
@@ -32,6 +34,7 @@ import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
 import '../../core/logger.dart';
 
+part 'profile/delete_account.dart';
 part 'profile/logout.dart';
 part 'profile/settings_sections.dart';
 part 'profile/settings_widgets.dart';
@@ -148,6 +151,27 @@ class _ProfileSheet extends ConsumerWidget {
                 ),
               ),
             ),
+            if (auth.isAuthenticated) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _confirmDeleteAccount(hostContext, auth);
+                },
+                icon: Icon(Icons.delete_forever_rounded,
+                    color: AppColors.textSecondary,
+                    size: 16,
+                    semanticLabel: strings.a11yDeleteAccount),
+                label: Text(
+                  strings.deleteAccountOption,
+                  style: locale.getTextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             _AppVersionLabel(locale: locale, hostContext: hostContext),
           ],

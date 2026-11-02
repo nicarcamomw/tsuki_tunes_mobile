@@ -1835,5 +1835,15 @@
   "playbackLogCopied": "Registro copiado. Pégalo en el chat para revisar qué pasó.",
   "appVersionCopied": "Versión copiada",
   "analyticsSettingTitle": "Compartir estadísticas de uso",
-  "analyticsSettingSubtitle": "Qué funciones se usan, para mejorar la app. Sin canciones, búsquedas ni nombres."
+  "analyticsSettingSubtitle": "Qué funciones se usan, para mejorar la app. Sin canciones, búsquedas ni nombres.",
+  "deleteAccountOption": "ELIMINAR CUENTA",
+  "deleteAccountConfirmTitle": "Eliminar cuenta",
+  "deleteAccountConfirmMessage": "Se borrarán para siempre tu cuenta de Tsuki Tunes y sus datos: historial, playlists, artistas seguidos, máscaras y perfil público. Te pediremos iniciar sesión con Google para confirmar. No se puede deshacer.",
+  "deleteAccountConfirm": "ELIMINAR",
+  "deleteAccountInProgress": "Eliminando tu cuenta…",
+  "deleteAccountDone": "Tu cuenta y tus datos fueron eliminados.",
+  "deleteAccountOffline": "Necesitas conexión a internet para eliminar tu cuenta.",
+  "deleteAccountFailed": "No se pudo terminar de eliminar la cuenta. Inicia sesión e inténtalo de nuevo.",
+  "privacyPolicyOption": "Política de privacidad",
+  "termsOption": "Términos de servicio"
 }

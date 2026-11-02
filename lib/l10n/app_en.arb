@@ -804,5 +804,15 @@
   "playbackLogCopied": "Log copied. Paste it in the chat so we can see what happened.",
   "appVersionCopied": "Version copied",
   "analyticsSettingTitle": "Share usage statistics",
-  "analyticsSettingSubtitle": "Which features get used, to improve the app. No songs, searches or names."
+  "analyticsSettingSubtitle": "Which features get used, to improve the app. No songs, searches or names.",
+  "deleteAccountOption": "DELETE ACCOUNT",
+  "deleteAccountConfirmTitle": "Delete account",
+  "deleteAccountConfirmMessage": "Your Tsuki Tunes account and its data will be deleted for good: history, playlists, followed artists, masks and public profile. You will be asked to sign in with Google to confirm. This cannot be undone.",
+  "deleteAccountConfirm": "DELETE",
+  "deleteAccountInProgress": "Deleting your account…",
+  "deleteAccountDone": "Your account and your data were deleted.",
+  "deleteAccountOffline": "You need an internet connection to delete your account.",
+  "deleteAccountFailed": "The account could not be fully deleted. Sign in and try again.",
+  "privacyPolicyOption": "Privacy policy",
+  "termsOption": "Terms of service"
 }

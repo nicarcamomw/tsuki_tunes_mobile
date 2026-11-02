@@ -417,6 +417,28 @@ class StorageService implements StorageContract {
 
   // --- Cached Followed Artists (per-user) ---
 
+  /// Removes all that this phone keeps for the account [uid] (deleted):
+  /// its library in the database, copies left in SharedPreferences and the
+  /// listened-songs file.
+  Future<void> clearAccountData(String uid) async {
+    if (uid.isEmpty) return;
+    try {
+      await _local?.clearAccount(uid);
+    } catch (e) {
+      _log.severe('clearing the account in the database failed: $e');
+    }
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in prefs.getKeys().where((k) => k.endsWith('_$uid')).toList()) {
+      await prefs.remove(key);
+    }
+    try {
+      final file = await _listenedFile(uid);
+      if (file != null && await file.exists()) await file.delete();
+    } catch (e) {
+      _log.warning('removing the listened-songs file failed: $e');
+    }
+  }
+
   Future<void> clearCachedPlaylists(String uid) async {
     if (uid.isEmpty) return;
     try {

@@ -163,6 +163,45 @@ class FirebaseService {
     }
   }
 
+  /// Signs in with Google again to prove it's still the owner, which
+  /// Firebase asks before deleting an account. Uses the Google account
+  /// already on the phone when it can, otherwise shows the picker. False
+  /// when the person cancelled; throws when another Google account was
+  /// picked or sign-in failed.
+  Future<bool> reauthenticateWithGoogle() async {
+    final user = _auth?.currentUser;
+    if (user == null) return false;
+    GoogleSignInAccount? account;
+    try {
+      account = await _googleSignIn!.signInSilently();
+    } catch (_) {}
+    account ??= await _googleSignIn!.signIn();
+    if (account == null) return false;
+    final googleAuth = await account.authentication;
+    await user.reauthenticateWithCredential(GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    ));
+    return true;
+  }
+
+  /// Deletes the signed-in Firebase account (which also signs it out) and
+  /// forgets the Google account on this phone.
+  Future<void> deleteCurrentUser() async {
+    final user = _auth?.currentUser;
+    if (user == null) return;
+    await user.delete();
+    try {
+      await _googleSignIn?.disconnect();
+    } catch (e) {
+      _log.warning('Google disconnect failed (non-fatal): $e');
+      try {
+        await _googleSignIn?.signOut();
+      } catch (_) {}
+    }
+    await _auth?.signOut();
+  }
+
   /// Signs out of Firebase even when Google's own sign-out fails (offline,
   /// Play services hiccup), so a failed logout never leaves the account on.
   Future<void> signOut() async {
