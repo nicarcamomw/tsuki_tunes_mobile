@@ -1831,5 +1831,6 @@
   "profileUnavailable": "ESTE PERFIL ES PRIVADO O NO EXISTE",
   "profileMakePublicFirst": "Hazlo público para poder compartirlo",
   "playbackLogCopy": "Copiar registro de reproducción",
-  "playbackLogCopied": "Registro copiado. Pégalo en el chat para revisar qué pasó."
+  "playbackLogCopied": "Registro copiado. Pégalo en el chat para revisar qué pasó.",
+  "appVersionCopied": "Versión copiada"
 }

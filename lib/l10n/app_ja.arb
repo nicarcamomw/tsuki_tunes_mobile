@@ -800,5 +800,6 @@
   "profileUnavailable": "このプロフィールは非公開か存在しません",
   "profileMakePublicFirst": "共有するには公開にしてください",
   "playbackLogCopy": "再生ログをコピー",
-  "playbackLogCopied": "ログをコピーしました。チャットに貼り付けて状況を確認できます。"
+  "playbackLogCopied": "ログをコピーしました。チャットに貼り付けて状況を確認できます。",
+  "appVersionCopied": "バージョンをコピーしました"
 }

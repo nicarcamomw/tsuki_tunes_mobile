@@ -551,6 +551,7 @@ class AppStrings {
   String get audioCacheCleared => _l.audioCacheCleared;
   String get playbackLogCopy => _l.playbackLogCopy;
   String get playbackLogCopied => _l.playbackLogCopied;
+  String get appVersionCopied => _l.appVersionCopied;
 
   String crossfadeSecondsLabel(int seconds) => _l.crossfadeSecondsLabel(seconds);
 

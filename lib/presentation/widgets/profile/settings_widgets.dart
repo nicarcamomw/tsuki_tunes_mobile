@@ -154,3 +154,58 @@ class _SettingLink extends StatelessWidget {
     );
   }
 }
+
+/// Which build is installed, at the bottom of the settings: the version,
+/// and the CI build and commit it came from (the build matches the APK's
+/// name, tsuki-tunes-N.apk); local builds say debug. A tap copies it, for a
+/// bug report.
+class _AppVersionLabel extends StatelessWidget {
+  final LocaleProvider locale;
+  final BuildContext hostContext;
+
+  const _AppVersionLabel({required this.locale, required this.hostContext});
+
+  static final Future<PackageInfo> _info = PackageInfo.fromPlatform();
+  // Set by the CI build (.github/workflows/build-apk.yml).
+  static const _build = String.fromEnvironment('BUILD_NUMBER');
+  static const _commit = String.fromEnvironment('GIT_SHA');
+
+  static String _describe(PackageInfo info) => [
+        'Tsuki Tunes ${info.version}',
+        if (_build.isNotEmpty) 'build $_build',
+        if (_commit.isNotEmpty)
+          _commit.length > 7 ? _commit.substring(0, 7) : _commit,
+        if (!kReleaseMode) 'debug',
+        if (useFirebaseEmulators) 'emulators',
+      ].join(' · ');
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: _info,
+      builder: (context, snapshot) {
+        final info = snapshot.data;
+        if (info == null) return const SizedBox(height: 16);
+        final text = _describe(info);
+        return InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Clipboard.setData(ClipboardData(text: text));
+            ScaffoldMessenger.of(hostContext).showSnackBar(
+              SnackBar(content: Text(locale.strings.appVersionCopied)),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
