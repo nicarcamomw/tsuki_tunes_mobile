@@ -149,6 +149,20 @@ class SpotifyNativePlayer {
     }
   }
 
+  /// Puts [uri] in the Spotify app's queue, to play after the current
+  /// track (joined with Spotify's crossfade). No play: what sounds now is
+  /// left alone.
+  Future<bool> queue(String uri) async {
+    if (!_isConnected) return false;
+    try {
+      await SpotifySdk.queue(spotifyUri: uri);
+      return true;
+    } catch (e) {
+      debugPrint('SpotifyNative: queue error: $e');
+      return false;
+    }
+  }
+
   Future<void> pause() async {
     if (!_isConnected) return;
     try {

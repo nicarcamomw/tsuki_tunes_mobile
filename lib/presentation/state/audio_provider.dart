@@ -127,6 +127,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   // The list being handed to Spotify right now, if any.
   Future<bool>? _spotifyReissue;
+
+  // The next song put in the Spotify app's queue near a song's end (see
+  // _maybeQueueNextInSpotify): the play generation it was done for, the
+  // links put there and not played yet, and whether App Remote refused it.
+  int _spotifyQueuedGen = -1;
+  final Set<String> _spotifyQueuedPending = {};
+  bool _spotifyQueueBroken = false;
   bool _spotifyListStale = false;
 
   late final SleepTimerController _sleepCtrl;

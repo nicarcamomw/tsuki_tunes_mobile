@@ -209,6 +209,16 @@ class FakeNativePlayer extends SpotifyNativePlayer {
   /// The Spotify app can't be reached (not installed, or blocked).
   bool connectWillFail = false;
 
+  final queued = <String>[];
+  bool queueWillFail = false;
+
+  @override
+  Future<bool> queue(String uri) async {
+    if (queueWillFail) return false;
+    queued.add(uri);
+    return true;
+  }
+
   @override
   Future<bool> connect({String? accessToken}) async {
     if (connectWillFail) return false;
@@ -667,6 +677,100 @@ void main() {
       await provider.refreshSpotifyListForTesting();
 
       expect(fakeSpotify.playCount, 0);
+    });
+
+    Future<AudioProvider> playingAt(List<Track> tracks, int atMs) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      fakeNative.simulateStateChanged(atMs, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      return provider;
+    }
+
+    // The position timer looks once a second.
+    Future<void> tick() => Future.delayed(const Duration(milliseconds: 1100));
+
+    test('near the end only the next song goes to Spotify\'s queue, once',
+        () async {
+      await playingAt([_track('t1'), _track('t2'), _track('t3')], 165000);
+      await tick();
+      await tick();
+
+      expect(fakeNative.queued, ['spotify:track:t2']);
+      expect(fakeSpotify.playCount, 0);
+    });
+
+    test('Spotify moving to the queued song is followed without a new play',
+        () async {
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 165000);
+      await tick();
+
+      fakeNative.simulateStateChanged(300, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(provider.isPlaying, isTrue);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2',
+          reason: 'no playUri restarting it');
+    });
+
+    test('nothing is queued before the last 20 seconds', () async {
+      await playingAt([_track('t1'), _track('t2')], 60000);
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+    });
+
+    test('nothing is queued with repeat-one', () async {
+      final provider = await playingAt([_track('t1'), _track('t2')], 165000);
+      provider.toggleRepeat();
+      provider.toggleRepeat();
+      expect(provider.repeatMode, PlaybackRepeatMode.one);
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+    });
+
+    test('a refused queue is not tried again; Tsuki moves on by itself',
+        () async {
+      fakeNative.queueWillFail = true;
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 165000);
+      await tick();
+
+      // The song ends and Spotify slips into its autoplay.
+      fakeNative.simulateStateChanged(179000, 180000, false,
+          uri: 'spotify:track:t1');
+      fakeNative.simulateStateChanged(500, 200000, false,
+          uri: 'spotify:track:autoplay');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
+
+      fakeNative.queueWillFail = false;
+      fakeNative.simulateStateChanged(165000, 180000, false,
+          uri: 'spotify:track:t2');
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+    });
+
+    test('a queued song left behind by a skip blocks queueing another',
+        () async {
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 165000);
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2']);
+
+      // Skipped to t3 before Spotify got to t2: t2 is still in its queue.
+      await provider.playTrack(provider.queue[2]);
+      fakeNative.simulateStateChanged(165000, 180000, false,
+          uri: 'spotify:track:t3');
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      await tick();
+
+      expect(fakeNative.queued, ['spotify:track:t2']);
     });
 
     test('Spotify closed is woken through App Remote before playing',

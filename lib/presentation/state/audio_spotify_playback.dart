@@ -46,6 +46,8 @@ extension _SpotifyPlayback on AudioProvider {
 
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
+      // A song we put in Spotify's queue left it once it plays.
+      _spotifyQueuedPending.remove(_nativePlayer.lastTrackUri);
       if (!_spotifyActive) return;
       if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
         _onSpotifyLeftTrack(
@@ -86,6 +88,8 @@ extension _SpotifyPlayback on AudioProvider {
     // and Spotify keeps playing, so losing it says nothing about playback:
     // ask the Web API instead (the timer keeps polling it from now on).
     _nativePlayer.onDisconnected = () {
+      // Spotify closed: its queue is gone with it.
+      _spotifyQueuedPending.clear();
       if (!_spotifyActive || !_isPlaying) return;
       debugPrint('[AudioProvider] App Remote link lost, checking Spotify through the Web API');
       unawaited(_syncSpotifyPlaybackState());
@@ -179,6 +183,7 @@ extension _SpotifyPlayback on AudioProvider {
           _maybePersistPosition();
           _checkListenedThreshold();
           _checkSpotifyCrossfade();
+          unawaited(_maybeQueueNextInSpotify(raw));
           // Past the end, check often: Spotify either moved on to the next
           // song we handed it, or its end-of-track event may have been lost.
           final interval = pastEnd ? 3 : pollInterval;
@@ -410,6 +415,47 @@ extension _SpotifyPlayback on AudioProvider {
       unawaited(_reissueSpotifyAhead());
     }
     _keepMediaSessionOnTop();
+  }
+
+  /// Near the end of a song playing through App Remote, puts only the next
+  /// one in the Spotify app's queue: Spotify then joins them with its own
+  /// crossfade instead of slipping into its autoplay, and Tsuki follows
+  /// (_followSpotify) without a new play. Spotify's queue can't be emptied
+  /// from outside, so it's one song, as late as possible (an edit before
+  /// then leaves nothing behind), and never while one we put there hasn't
+  /// played yet. An edit after it is caught by _followSpotify, which takes
+  /// over with the right song.
+  Future<void> _maybeQueueNextInSpotify(Duration pos) async {
+    if (_spotifyQueueBroken || !_nativePlayer.isConnected) return;
+    if (_spotifyQueuedGen == _playGeneration) return;
+    if (_duration < const Duration(seconds: 40) ||
+        pos < _duration - const Duration(seconds: 20)) {
+      return;
+    }
+    if (_spotifyAhead.isNotEmpty || _spotifyQueuedPending.isNotEmpty) return;
+    if (_q.repeatMode == PlaybackRepeatMode.one ||
+        _sleepCtrl.stopAfterCurrentTrack) {
+      return;
+    }
+    final upcoming = _q.peekUpcoming(1);
+    if (upcoming.isEmpty) return;
+    final next = _q.tracks[upcoming.first];
+
+    // Once per song, whatever happens below.
+    final gen = _spotifyQueuedGen = _playGeneration;
+    final uri = await _resolveSpotifyUri(next);
+    if (uri == null || gen != _playGeneration || !_isPlaying) return;
+    if (!await _nativePlayer.queue(uri)) {
+      debugPrint('[AudioProvider] Spotify queue refused, Tsuki moves on by itself');
+      _spotifyQueueBroken = true;
+      return;
+    }
+    _spotifyQueuedPending.add(uri);
+    // The song changed meanwhile: what's queued no longer follows it, and
+    // waits in Spotify's queue until it plays (see above).
+    if (gen != _playGeneration) return;
+    debugPrint('[AudioProvider] "${next.title}" queued in Spotify after this song');
+    _spotifyAhead = [(trackId: next.id, uri: uri)];
   }
 
   /// Hands Spotify a fresh list from the current song on, from where it is,
