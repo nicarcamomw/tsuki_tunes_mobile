@@ -417,7 +417,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _initSubscriptions();
     // Once both are known, a Spotify still playing our queue after Tsuki
     // was killed is picked up instead of the restored song shown paused.
-    unawaited(Future.wait([_restorePlaybackState(), _initSpotify()])
+    _spotifyReady = _initSpotify().catchError((Object e) {
+      debugPrint('[AudioProvider] Spotify init failed: $e');
+    });
+    unawaited(Future.wait([_restorePlaybackState(), _spotifyReady])
         .then((_) => _adoptRunningSpotify())
         .catchError((Object e) {
       debugPrint('[AudioProvider] startup Spotify check failed: $e');
@@ -613,6 +616,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   bool _spotifyInterrupted = false;
   Timer? _completionRecheck;
+  /// Done once the saved Spotify session is known (whether to play there).
+  Future<void> _spotifyReady = Future.value();
   /// Seconds between asks to the Spotify app for its state.
   static const int _nativeRefreshEvery = 3;
   int _nativeRefreshFailures = 0;
@@ -806,12 +811,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         return;
       }
 
-      track = await _withFreshPreview(track);
+      // A song tapped right as the app opens waits for the Spotify session
+      // to load (a moment), instead of going to the preview.
+      await _spotifyReady;
       if (gen != _playGeneration) return;
-
       if (_useSpotify) {
+        // Straight to Spotify: refreshing the Deezer preview's link first
+        // cost a request before every song that Spotify doesn't need.
         await _playViaSpotify(track);
       } else {
+        track = await _withFreshPreview(track);
+        if (gen != _playGeneration) return;
         try {
           await _service.playTrack(track);
         } catch (e) {

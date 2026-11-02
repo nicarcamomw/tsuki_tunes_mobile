@@ -225,8 +225,18 @@ class FakeNativePlayer extends SpotifyNativePlayer {
     onDisconnected?.call();
   }
 
-  void simulateStateChanged(int posMs, int durMs, bool paused, {String? uri}) {
+  /// The song name the Spotify app reports.
+  String? playingName;
+
+  @override
+  String? get lastTrackName => playingName;
+
+  @override
+  bool get isPlayingSomething => _connected && _playingUri != null && !_paused;
+
+  void simulateStateChanged(int posMs, int durMs, bool paused, {String? uri, String? name}) {
     if (uri != null) _playingUri = uri;
+    if (name != null) playingName = name;
     _paused = paused;
     onStateChanged?.call(posMs, durMs, paused);
   }
@@ -394,6 +404,45 @@ void main() {
     expect(fakeSpotify.lookedUp, {'s1', 's2', 's3'});
     expect(fakeSpotify.events.where((e) => e.startsWith('search:')).length, 3);
     expect(provider.warmQueueLengthForTesting, 0);
+  });
+
+  group('Spotify playing another version of our song', () {
+    test('is our song: no second play, no preview, Spotify never paused', () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final track = _track('t1');
+      await provider.playTrack(track, newQueue: [track]);
+      await Future.delayed(Duration.zero);
+      final plays = fakeSpotify.playCount;
+
+      // Spotify relinked it (another album's copy); the Web API says nothing yet.
+      fakeNative.simulateStateChanged(1200, 257000, false,
+          uri: 'spotify:track:compilation-copy', name: 'Track t1 - Remastered');
+      await Future.delayed(const Duration(milliseconds: 6500));
+
+      expect(provider.isPlaying, isTrue);
+      expect(provider.spotifyFallbackActive, isFalse);
+      expect(fakeNative.pauseCount, 0);
+      expect(fakeSpotify.pauseCount, 0);
+      expect(fakeSpotify.playCount, plays);
+      expect(provider.duration, const Duration(milliseconds: 257000));
+    });
+
+    test('a different song in Spotify is still not ours', () async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      final track = _track('t1');
+      await provider.playTrack(track, newQueue: [track]);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false, uri: 'spotify:track:t1', name: 'Track t1');
+      await Future.delayed(Duration.zero);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+
+      fakeNative.simulateStateChanged(500, 200000, false, uri: 'spotify:track:x', name: 'Something Else');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.isPlaying, isFalse, reason: 'Spotify switched to another track');
+    });
   });
 
   group('resuming always ends in sync with Spotify', () {
@@ -648,6 +697,9 @@ void main() {
     test('a pause the Spotify app never pushed is caught within seconds', () async {
       final provider = await playing([_track('t1')]);
       expect(provider.isPlaying, isTrue);
+      // Mid-song, past the start-of-song check.
+      fakeNative.appState = (pos: 15000, paused: false);
+      await Future.delayed(const Duration(milliseconds: 3500));
       // Another app took the audio: Spotify paused, no event reached us.
       fakeNative.appState = (pos: 20000, paused: true);
 
