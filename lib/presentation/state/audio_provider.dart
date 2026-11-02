@@ -111,12 +111,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // restart of the song), so Spotify's own crossfade and gapless playback
   // join song after song; short enough to look the songs up quickly.
   static const int _spotifyAheadMax = 12;
-  /// Spotify's longest crossfade: after it moves on by itself, the song
-  /// before may still be fading out this long, and a play would cut it.
-  static const Duration _spotifyCrossfadeTail = Duration(seconds: 13);
-  DateTime? _spotifyFollowedAt;
-  Timer? _spotifyExtendTimer;
-  bool _spotifyExtendForce = false;
   // Whether Spotify loops the current song itself (our repeat-one), so it
   // starts over with no gap instead of Tsuki playing it again. Null until
   // set this session.
@@ -439,8 +433,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _checkBackgroundCompletion();
       if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
-        // The Spotify app answers right away; the Web API backs it up.
-        if (_nativePlayer.isConnected) unawaited(_refreshNativeState());
         _syncSpotifyPlaybackState();
       } else if (_useSpotify && !_isPlaying) {
         unawaited(_adoptRunningSpotify());
@@ -618,15 +610,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   Timer? _completionRecheck;
   /// Done once the saved Spotify session is known (whether to play there).
   Future<void> _spotifyReady = Future.value();
-  /// Seconds between asks to the Spotify app for its state.
-  static const int _nativeRefreshEvery = 3;
-  int _nativeRefreshFailures = 0;
-  // Last Web API position, to tell a frozen Spotify (says "playing", its
-  // position stuck) from one that plays.
-  int? _webProgressMs;
-  DateTime? _webProgressAt;
-  int _webStalls = 0;
-  bool _recoveringStall = false;
 
   StreamSubscription<void>? _unplugSub;
 
@@ -815,13 +798,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       // to load (a moment), instead of going to the preview.
       await _spotifyReady;
       if (gen != _playGeneration) return;
+      track = await _withFreshPreview(track);
+      if (gen != _playGeneration) return;
+
       if (_useSpotify) {
-        // Straight to Spotify: refreshing the Deezer preview's link first
-        // cost a request before every song that Spotify doesn't need.
         await _playViaSpotify(track);
       } else {
-        track = await _withFreshPreview(track);
-        if (gen != _playGeneration) return;
         try {
           await _service.playTrack(track);
         } catch (e) {
@@ -926,7 +908,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     if (_warmSeen.length > 3000) _warmSeen.clear();
     _warmQueue.add(track);
     // Only the latest screens matter: drop what scrolled away long ago.
-    if (_warmQueue.length > 60) _warmQueue.removeAt(0);
+    if (_warmQueue.length > 20) _warmQueue.removeAt(0);
     if (!_warming) unawaited(_drainWarmQueue());
   }
 
@@ -937,8 +919,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         final t = _warmQueue.removeLast();
         if (await _spotify.cachedTrackUri(t.title, t.artistName, trackId: t.id) != null) continue;
         await _resolveSpotifyUri(t);
-        // Gentle on Spotify's search: about four songs a second.
-        await Future<void>.delayed(const Duration(milliseconds: 250));
+        // Gentle on Spotify: one song every second and a half, so lookups
+        // never compete with playback's own requests.
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
       }
     } catch (e) {
       debugPrint('[AudioProvider] Spotify link lookup failed: $e');
@@ -1000,28 +983,16 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         return;
       }
       if (_isPlaying) {
-        if (!await _spotifyPause()) {
-          // Neither way took it: one more go before giving up. If Spotify
-          // still plays, the state sync shows it playing again.
-          await Future<void>.delayed(const Duration(milliseconds: 400));
-          await _spotifyPause();
-        }
+        await _spotifyPause();
         _isPlaying = false;
         _stopPositionTimer();
       } else {
-        final resumed = await _spotifyResume();
+        await _spotifyResume();
         _isPlaying = true;
         _lastPlayCommandTime = DateTime.now();
         _spotifySyncPosition = _position;
         _spotifySyncTime = DateTime.now();
         _startPositionTimer();
-        if (!resumed && !await _replaySpotifyHere()) {
-          debugPrint('[AudioProvider] Spotify could not resume');
-          _isPlaying = false;
-          _stopPositionTimer();
-        } else {
-          unawaited(_verifySpotifyResume(recover: true));
-        }
       }
       notifyListeners();
     } else {
@@ -1642,7 +1613,6 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     WidgetsBinding.instance.removeObserver(this);
     _persistTimer?.cancel();
     _completionRecheck?.cancel();
-    _spotifyExtendTimer?.cancel();
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
     _unplugSub?.cancel();

@@ -22,19 +22,11 @@ class SpotifyNativePlayer {
 
   // Last state reported by the Spotify app.
   String? _lastTrackUri;
-  String? _lastTrackName;
   bool _lastPaused = true;
 
   bool get isConnected => _isConnected;
   String? get deviceId => _deviceId;
   String? get lastTrackUri => _lastTrackUri;
-
-  /// The name of the song the Spotify app is on, to recognize ours when
-  /// Spotify plays an equivalent version under another URI (relinking).
-  String? get lastTrackName => _lastTrackName;
-
-  /// Whether the Spotify app reports something playing (not paused).
-  bool get isPlayingSomething => _isConnected && _lastTrackUri != null && !_lastPaused;
 
   /// Whether the Spotify app reports [uri] as the current, unpaused track.
   bool isPlayingUri(String uri) =>
@@ -100,7 +92,6 @@ class SpotifyNativePlayer {
   void _markDisconnected() {
     _isConnected = false;
     _lastTrackUri = null;
-    _lastTrackName = null;
     _lastPaused = true;
     final sub = _stateSub;
     _stateSub = null;
@@ -122,7 +113,6 @@ class SpotifyNativePlayer {
       (state) {
         final track = state.track;
         _lastTrackUri = track?.uri;
-        _lastTrackName = track?.name;
         _lastPaused = state.isPaused;
         if (track == null) return;
         onStateChanged?.call(
@@ -135,37 +125,6 @@ class SpotifyNativePlayer {
         debugPrint('SpotifyNative: state error: $e');
       },
     );
-  }
-
-  /// Asks the Spotify app for its state (a local call, no network) and
-  /// reports it like a pushed event. Android can leave the link looking
-  /// connected while its events stop arriving, so a pause made elsewhere
-  /// (another app taking the audio, a call, the notification) would go
-  /// unnoticed. False when the app didn't answer.
-  Future<bool> refreshState() async {
-    if (!_isConnected) return false;
-    try {
-      final state =
-          await SpotifySdk.getPlayerState().timeout(const Duration(seconds: 2));
-      if (state == null) return false;
-      final track = state.track;
-      _lastTrackUri = track?.uri;
-      _lastTrackName = track?.name;
-      _lastPaused = state.isPaused;
-      if (track != null) {
-        onStateChanged?.call(state.playbackPosition, track.duration, state.isPaused);
-      }
-      return true;
-    } catch (e) {
-      debugPrint('SpotifyNative: state refresh failed: $e');
-      return false;
-    }
-  }
-
-  /// Drops a link that stopped answering, so playback is followed through
-  /// the Web API and the next command reconnects.
-  void dropStaleLink() {
-    if (_isConnected) _markDisconnected();
   }
 
   /// Plays [uri] in the Spotify app through App Remote. A failure usually
@@ -190,27 +149,21 @@ class SpotifyNativePlayer {
     }
   }
 
-  /// False when the Spotify app didn't take it.
-  Future<bool> pause() async {
-    if (!_isConnected) return false;
+  Future<void> pause() async {
+    if (!_isConnected) return;
     try {
       await SpotifySdk.pause();
-      return true;
     } catch (e) {
       debugPrint('SpotifyNative: pause error: $e');
-      return false;
     }
   }
 
-  /// False when the Spotify app didn't take it.
-  Future<bool> resume() async {
-    if (!_isConnected) return false;
+  Future<void> resume() async {
+    if (!_isConnected) return;
     try {
       await SpotifySdk.resume();
-      return true;
     } catch (e) {
       debugPrint('SpotifyNative: resume error: $e');
-      return false;
     }
   }
 
