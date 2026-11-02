@@ -1,3 +1,7 @@
+---
+title: Términos de Servicio — Tsuki Tunes
+---
+
 # Términos de Servicio — Tsuki Tunes
 
 **Última actualización:** 2 de noviembre de 2026
@@ -10,7 +14,7 @@ Tsuki Tunes es un reproductor de música que permite escuchar previews de cancio
 
 ## 2. Cuentas
 
-- Necesitas una cuenta de Google para usar la app.
+- Puedes usar la app sin cuenta (modo invitado) o iniciar sesión con Google para sincronizar tu biblioteca entre dispositivos.
 - Eres responsable de mantener la seguridad de tu cuenta.
 - No compartas tu sesión con terceros.
 
@@ -26,7 +30,7 @@ Al usar la app, aceptas:
 
 - Los previews de canciones (30 segundos) son proporcionados por Deezer según sus términos de servicio.
 - La reproducción completa requiere una cuenta de Spotify Premium activa y está sujeta a los [términos de Spotify](https://www.spotify.com/legal/end-user-agreement/).
-- Tsuki Tunes no almacena ni descarga música protegida por derechos de autor para reproducción offline sin autorización del proveedor.
+- Tsuki Tunes no descarga canciones completas. Solo guarda en caché, de forma temporal, los fragmentos de 30 segundos de Deezer para reproducirlos sin cortes.
 
 ## 5. Disponibilidad
 
@@ -39,7 +43,7 @@ Al usar la app, aceptas:
 En la máxima medida permitida por la ley:
 - No somos responsables de daños indirectos derivados del uso de la app.
 - No garantizamos que la app esté libre de errores.
-- No somos responsables del contenido proporcionado por Spotify, Deezer o Last.fm.
+- No somos responsables del contenido proporcionado por Spotify, Deezer, Last.fm, LRCLIB u Open-Meteo.
 
 ## 7. Propiedad intelectual
 
@@ -48,7 +52,7 @@ En la máxima medida permitida por la ley:
 
 ## 8. Terminación
 
-- Puedes dejar de usar la app en cualquier momento y eliminar tu cuenta.
+- Puedes dejar de usar la app en cualquier momento y eliminar tu cuenta y tus datos desde **Perfil → Eliminar cuenta** (o [sin la app](delete-account.md)).
 - Nos reservamos el derecho de suspender cuentas que violen estos términos.
 
 ## 9. Cambios
