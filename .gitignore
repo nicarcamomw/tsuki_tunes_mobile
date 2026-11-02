@@ -50,6 +50,8 @@ app.*.map.json
 # Secrets & API keys
 .env
 .env.*
+config/*.env
+!config/.env.example
 *.keystore
 *.jks
 **/key.properties

@@ -179,27 +179,30 @@ jobs:
           kotlin.compiler.execution.strategy=in-process
           EOF
 
-      - name: Build APK
+      - name: Write CI env file
         env:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+        run: |
+          cat > config/prod.env <<EOF
+          LASTFM_API_KEY=${LASTFM_API_KEY}
+          BUILD_NUMBER=${{ github.run_number }}
+          GIT_SHA=${{ github.sha }}
+          USE_EMULATORS=false
+          EOF
+
+      - name: Build APK
         run: >-
           flutter build apk --release --split-per-abi --flavor prod
           --obfuscate --split-debug-info=build/symbols
           --build-number=${{ github.run_number }}
-          --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
-          --dart-define=BUILD_NUMBER=${{ github.run_number }}
-          --dart-define=GIT_SHA=${{ github.sha }}
+          --dart-define-from-file=config/prod.env
 
       - name: Build AAB
-        env:
-          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
         run: >-
           flutter build appbundle --release --flavor prod
           --obfuscate --split-debug-info=build/symbols-aab
           --build-number=${{ github.run_number }}
-          --dart-define=LASTFM_API_KEY="$LASTFM_API_KEY"
-          --dart-define=BUILD_NUMBER=${{ github.run_number }}
-          --dart-define=GIT_SHA=${{ github.sha }}
+          --dart-define-from-file=config/prod.env
 
       - name: Rename artifacts
         run: |

@@ -3,7 +3,8 @@
 # (with firestore.rules), and the UI at http://127.0.0.1:4000. Then run the
 # app against it:
 #
-#   flutter run --dart-define=USE_EMULATORS=true
+#   flutter run --dart-define-from-file=config/dev.env
+#   (set USE_EMULATORS=true in config/dev.env)
 #
 # Data is kept between runs in .emulator-data (git-ignored); delete it to
 # start empty. Ctrl+C stops the emulators and saves it.

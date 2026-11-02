@@ -55,11 +55,18 @@ jobs:
           kotlin.compiler.execution.strategy=in-process
           EOF
 
+      - name: Write CI env file
+        run: |
+          cat > config/dev.env <<EOF
+          BUILD_NUMBER=${{ github.run_number }}
+          GIT_SHA=${{ github.sha }}
+          USE_EMULATORS=false
+          EOF
+
       - name: Build APK for integration tests
         run: |
           flutter build apk --flavor dev \
-            --dart-define=BUILD_NUMBER=${{ github.run_number }} \
-            --dart-define=GIT_SHA=${{ github.sha }} \
+            --dart-define-from-file=config/dev.env \
             --target=integration_test/app_smoke_test.dart
 
       - name: Build test runner APK
