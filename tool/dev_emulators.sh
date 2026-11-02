@@ -45,4 +45,4 @@ if [ -f .emulator-data/firebase-export-metadata.json ]; then
   import=(--import .emulator-data)
 fi
 exec "$firebase" emulators:start --only auth,firestore \
-  --project tsuki-tunes-web "${import[@]}" --export-on-exit .emulator-data
+  --project tsuki-tunes-dev "${import[@]}" --export-on-exit .emulator-data

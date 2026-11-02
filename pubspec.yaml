@@ -97,6 +97,9 @@ dev_dependencies:
   fake_async: ^1.3.3
 
 flutter:
+  # Builds and runs are the dev environment unless --flavor prod is given
+  # (android/app/build.gradle.kts): only CI's release builds are prod.
+  default-flavor: dev
   uses-material-design: true
   # Compiles lib/l10n/*.arb (see l10n.yaml) on pub get and build.
   generate: true

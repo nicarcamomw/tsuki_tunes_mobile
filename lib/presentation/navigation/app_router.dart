@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_environment.dart';
 import 'routes.dart';
 import 'session_gate.dart';
 
@@ -51,9 +52,9 @@ GoRouter createAppRouter(SessionGate session) => GoRouter(
       routes: $appRoutes,
     );
 
-/// The app's link scheme: tsukitunes://album/123, tsukitunes://artist/27,
-/// tsukitunes://playlist/abc, tsukitunes://track/3135556.
-const deepLinkScheme = 'tsukitunes';
+// The app's link scheme (deepLinkScheme, per environment):
+// tsukitunes://album/123, tsukitunes://artist/27, tsukitunes://playlist/abc,
+// tsukitunes://track/3135556.
 
 /// A deep link as the app's own location: in tsukitunes://album/123 the
 /// page is the URI's host ("album"), which go_router, matching on the path

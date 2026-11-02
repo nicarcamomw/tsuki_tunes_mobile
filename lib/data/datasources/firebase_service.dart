@@ -5,8 +5,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../core/constants/app_environment.dart';
 import '../../core/constants/firebase_emulators.dart';
 import '../../firebase_options.dart';
+import '../../firebase_options_dev.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -42,7 +44,10 @@ class FirebaseService {
   Future<void> initializeCore() async {
     if (_coreReady) return;
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      // The dev flavor has a Firebase project of its own (tsuki-tunes-dev).
+      options: isDevEnvironment
+          ? DevFirebaseOptions.android
+          : DefaultFirebaseOptions.currentPlatform,
     );
     if (useFirebaseEmulators) {
       // Before anything signs in or reads the session. 127.0.0.1 through
@@ -75,7 +80,11 @@ class FirebaseService {
           automaticHostMapping: false);
     }
     _googleSignIn = GoogleSignIn(
-      serverClientId: '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
+      // In dev, null: Android takes the dev project's web client from its
+      // google-services.json (default_web_client_id).
+      serverClientId: isDevEnvironment
+          ? null
+          : '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
       scopes: ['email'],
     );
     _initialized = true;

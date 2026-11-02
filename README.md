@@ -15,6 +15,24 @@ flutter pub get
 flutter run --dart-define=LASTFM_API_KEY=tu_api_key
 ```
 
+## Ambientes: dev y prod
+
+La app se compila en dos versiones que conviven en el mismo teléfono (flavors de Android, `android/app/build.gradle.kts`):
+
+| | dev | prod |
+|---|---|---|
+| ID de la app | `com.tsuki.tsuki_tunes_mobile.dev` | `com.tsuki.tsuki_tunes_mobile` |
+| Nombre | Tsuki DEV | Tsuki Tunes |
+| Proyecto Firebase | `tsuki-tunes-dev` (`android/app/src/dev/google-services.json`, `lib/firebase_options_dev.dart`) | `tsuki-tunes-web` (`android/app/google-services.json`, `lib/firebase_options.dart`) |
+| Links | `tsukitunes-dev://` | `tsukitunes://` |
+| Callback de Spotify | `com.tsuki.tsukitunesmobile.dev://spotify-callback` | `com.tsuki.tsukitunesmobile://spotify-callback` |
+
+- `flutter run` y `flutter build` usan **dev** por defecto (`default-flavor` en `pubspec.yaml`); prod solo con `--flavor prod`, que es lo que compila el CI para los APK publicados.
+- En Dart, `lib/core/constants/app_environment.dart` dice en qué ambiente corre la app.
+- Las reglas e índices se despliegan a cada proyecto: `firebase deploy --only firestore --project tsuki-tunes-dev` (el workflow solo despliega a prod).
+- Para que dev inicie sesión con Google, el proveedor Google tiene que estar activado en Authentication del proyecto `tsuki-tunes-dev`, y su `google-services.json` descargado de nuevo después (`firebase apps:sdkconfig ANDROID <app id> --project tsuki-tunes-dev`).
+- Spotify en dev: en el panel de la app de Spotify Developer, agregar el paquete `com.tsuki.tsuki_tunes_mobile.dev` con la huella SHA-1 de la llave de debug, y el redirect URI de dev.
+
 ## Tests y análisis
 
 ```bash

@@ -37,6 +37,34 @@ android {
         versionName = flutter.versionName
     }
 
+    // Two environments of the same app, side by side on a phone:
+    // - dev: its own id, name and Firebase project (tsuki-tunes-dev,
+    //   src/dev/google-services.json), and its own link schemes, so
+    //   nothing it does reaches real users' data.
+    // - prod: what users install (same id as always), Firebase project
+    //   tsuki-tunes-web (google-services.json beside this file).
+    // flutter run/build pick dev unless told --flavor prod (pubspec.yaml).
+    buildFeatures {
+        resValues = true // the flavors' app_name
+    }
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Tsuki DEV")
+            manifestPlaceholders["deepLinkScheme"] = "tsukitunes-dev"
+            manifestPlaceholders["spotifyAuthScheme"] = "com.tsuki.tsukitunesmobile.dev"
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "Tsuki Tunes")
+            manifestPlaceholders["deepLinkScheme"] = "tsukitunes"
+            manifestPlaceholders["spotifyAuthScheme"] = "com.tsuki.tsukitunesmobile"
+        }
+    }
+
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?

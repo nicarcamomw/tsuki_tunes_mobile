@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "603398005547",
+    "project_id": "tsuki-tunes-dev",
+    "storage_bucket": "tsuki-tunes-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:603398005547:android:d065623248f6cf08065b6e",
+        "android_client_info": {
+          "package_name": "com.tsuki.tsuki_tunes_mobile.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNp7eCNiDj1m8nJ1kyKIc11fb2gL6EOjc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

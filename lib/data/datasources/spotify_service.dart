@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/app_environment.dart';
 import 'storage_service.dart';
 
 class SpotifyService {
@@ -29,7 +30,7 @@ class SpotifyService {
       http.post(url, headers: headers, body: body).timeout(timeout);
 
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
-  static const _redirectUri = 'com.tsuki.tsukitunesmobile://spotify-callback';
+  static final _redirectUri = spotifyRedirectUri;
   static const _scopes =
       'streaming user-read-private '
       'user-read-playback-state user-modify-playback-state '
@@ -232,7 +233,7 @@ class SpotifyService {
 
       final result = await FlutterWebAuth2.authenticate(
         url: authUrl.toString(),
-        callbackUrlScheme: 'com.tsuki.tsukitunesmobile',
+        callbackUrlScheme: spotifyRedirectScheme,
       );
 
       final uri = Uri.parse(result);

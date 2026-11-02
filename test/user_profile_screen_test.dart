@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsuki_tunes_mobile/core/constants/app_environment.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/public_profile.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/profile_repository.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/app_router.dart';
@@ -72,6 +73,6 @@ void main() {
 
   test('profile links lead to the profile route', () {
     expect(const UserProfileRoute(uid: 'u1').location, '/user/u1');
-    expect(deepLinkLocation(Uri.parse('tsukitunes://user/u1')), '/user/u1');
+    expect(deepLinkLocation(Uri.parse('$deepLinkScheme://user/u1')), '/user/u1');
   });
 }

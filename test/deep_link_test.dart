@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tsuki_tunes_mobile/core/constants/app_environment.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/app_router.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/routes.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/session_gate.dart';
@@ -21,12 +22,12 @@ Future<void> openLink(WidgetTester tester, String link) async {
 void main() {
   group('links become app locations', () {
     test('the page is the link host, the id its path', () {
-      expect(deepLinkLocation(Uri.parse('tsukitunes://album/123')), '/album/123');
-      expect(deepLinkLocation(Uri.parse('tsukitunes://artist/27')), '/artist/27');
-      expect(deepLinkLocation(Uri.parse('tsukitunes://playlist/abc')), '/playlist/abc');
-      expect(deepLinkLocation(Uri.parse('tsukitunes://track/3135556')), '/track/3135556');
-      expect(deepLinkLocation(Uri.parse('tsukitunes:///album/9')), '/album/9');
-      expect(deepLinkLocation(Uri.parse('tsukitunes://artist/27/albums?filter=single')),
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://album/123')), '/album/123');
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://artist/27')), '/artist/27');
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://playlist/abc')), '/playlist/abc');
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://track/3135556')), '/track/3135556');
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme:///album/9')), '/album/9');
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://artist/27/albums?filter=single')),
           '/artist/27/albums?filter=single');
     });
 
@@ -37,8 +38,8 @@ void main() {
     });
 
     test('they match the typed routes', () {
-      expect(deepLinkLocation(Uri.parse('tsukitunes://album/123')), const AlbumRoute(id: '123').location);
-      expect(deepLinkLocation(Uri.parse('tsukitunes://track/1')), const TrackRoute(id: '1').location);
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://album/123')), const AlbumRoute(id: '123').location);
+      expect(deepLinkLocation(Uri.parse('$deepLinkScheme://track/1')), const TrackRoute(id: '1').location);
     });
   });
 
@@ -69,14 +70,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('home'), findsOneWidget);
 
-      await openLink(tester, 'tsukitunes://album/123');
+      await openLink(tester, '$deepLinkScheme://album/123');
       expect(find.text('album 123'), findsOneWidget);
     });
 
     testWidgets('signed out, it waits behind the login and opens after', (tester) async {
       session.value = SessionStatus.signedOut;
       await tester.pumpWidget(MaterialApp.router(routerConfig: router()));
-      await openLink(tester, 'tsukitunes://album/123');
+      await openLink(tester, '$deepLinkScheme://album/123');
       expect(find.text('login'), findsOneWidget);
 
       session.value = SessionStatus.ready;

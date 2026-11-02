@@ -27,7 +27,7 @@
     </queries>
 
     <application
-        android:label="Tsuki Tunes"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
@@ -59,7 +59,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="tsukitunes" />
+                <data android:scheme="${deepLinkScheme}" />
             </intent-filter>
         </activity>
         <!-- flutter_web_auth_2 callback for Spotify OAuth -->
@@ -70,7 +70,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.tsuki.tsukitunesmobile" />
+                <data android:scheme="${spotifyAuthScheme}" />
             </intent-filter>
         </activity>
         <!-- audio_service: media session, playback notification, lock screen -->

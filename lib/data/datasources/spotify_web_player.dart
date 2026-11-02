@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
+import '../../core/constants/app_environment.dart';
+
 /// Spotify App Remote (the native SDK): talks to the Spotify app on this
 /// phone directly. Connecting also launches/wakes the Spotify app, which the
 /// Web API cannot do when the system has frozen or killed it.
 class SpotifyNativePlayer {
   static const _clientId = '455655dc7d1040f5bedad11de1a1817b';
-  static const _redirectUrl = 'com.tsuki.tsukitunesmobile://spotify-callback';
+  static final _redirectUrl = spotifyRedirectUri;
 
   bool _isConnected = false;
   String? _deviceId;
