@@ -21,6 +21,7 @@ import '../../data/datasources/home_widget_service.dart';
 import '../../data/datasources/media_session_handler.dart';
 import '../../data/datasources/perf_tracker.dart';
 import '../../data/datasources/product_analytics.dart';
+import '../../data/datasources/screen_service.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/spotify_web_player.dart';
 import '../../data/datasources/storage_service.dart';
@@ -461,6 +462,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     SpotifyService? spotifyService,
     SpotifyNativePlayer? nativePlayer,
     FeatureFlags? flags,
+    Stream<bool>? screenChanges,
   })  : _service = service ?? AudioPlayerService(),
         _storage = storage ?? StorageService(),
         _spotify = spotifyService ?? SpotifyService(),
@@ -483,6 +485,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       onQueueGrew: _onQueueGrew,
     );
     WidgetsBinding.instance.addObserver(this);
+    _screenSub = (screenChanges ?? ScreenService.changes)
+        .listen((_) => _onScreenChanged());
     _initAudioSession();
     _initSubscriptions();
     // Once both are known, a Spotify still playing our queue after Tsuki
@@ -688,6 +692,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   Future<void> _spotifyReady = Future.value();
 
   StreamSubscription<void>? _unplugSub;
+  StreamSubscription<bool>? _screenSub;
 
   /// Headphones out: pause, and stay paused (an interruption ending later
   /// must not resume it out of the speaker).
@@ -1727,6 +1732,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
     _unplugSub?.cancel();
+    _screenSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();

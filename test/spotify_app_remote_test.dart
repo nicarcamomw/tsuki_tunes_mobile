@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/crash_reporter.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/feature_flags.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/media_session_handler.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/perf_tracker.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
@@ -828,6 +830,62 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.currentTrack?.id, 't1');
+    });
+  });
+
+  group('Lock screen', () {
+    test('the screen turning off or on posts Tsuki\'s card again', () async {
+      fakeNative.setConnected(true);
+      final handler = TsukiAudioHandler();
+      final screen = StreamController<bool>.broadcast();
+      final provider = AudioProvider(
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        flags: flags,
+        mediaHandler: handler,
+        screenChanges: screen.stream,
+      );
+      final t1 = _track('t1');
+      await provider.playTrack(t1, newQueue: [t1]);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t1');
+      // Past the burst that follows Spotify's own update.
+      await Future.delayed(const Duration(milliseconds: 5600));
+
+      var posts = 0;
+      final sub = handler.playbackState.skip(1).listen((_) => posts++);
+      await Future.delayed(const Duration(milliseconds: 600));
+      expect(posts, 0);
+
+      screen.add(false);
+      await Future.delayed(const Duration(milliseconds: 1200));
+      expect(posts, greaterThanOrEqualTo(2));
+      expect(handler.playbackState.value.playing, isTrue);
+
+      await sub.cancel();
+      await screen.close();
+    });
+
+    test('nothing is posted when Spotify isn\'t playing for Tsuki', () async {
+      final handler = TsukiAudioHandler();
+      final screen = StreamController<bool>.broadcast();
+      AudioProvider(
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        flags: flags,
+        mediaHandler: handler,
+        screenChanges: screen.stream,
+      );
+      await Future.delayed(const Duration(milliseconds: 300));
+      var posts = 0;
+      final sub = handler.playbackState.skip(1).listen((_) => posts++);
+
+      screen.add(false);
+      await Future.delayed(const Duration(milliseconds: 1200));
+      expect(posts, 0);
+
+      await sub.cancel();
+      await screen.close();
     });
   });
 
