@@ -1,10 +1,13 @@
 import 'dart:collection';
 
+import 'crash_reporter.dart';
+
 /// The last few hundred playback events (Spotify commands and answers, the
 /// player's state changes), with their time, kept in memory only. The user
 /// can copy them from settings to show what happened when playback went
 /// wrong on their phone, which can't be seen from anywhere else. Nothing is
-/// written to the system log or sent anywhere.
+/// written to the system log; Crashlytics gets a copy without song titles
+/// or device names, as breadcrumbs for its reports (CrashReporter).
 class PlaybackLog {
   PlaybackLog._();
   static final PlaybackLog instance = PlaybackLog._();
@@ -24,6 +27,7 @@ class PlaybackLog {
     final stamp = '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.'
         '${(now.millisecond ~/ 10).toString().padLeft(2, '0')}';
     _lines.addLast('$stamp $message');
+    CrashReporter.instance.breadcrumb(message);
     while (_lines.length > maxLines) {
       _lines.removeFirst();
     }

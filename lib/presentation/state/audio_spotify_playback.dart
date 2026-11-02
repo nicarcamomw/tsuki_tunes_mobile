@@ -449,6 +449,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (!await _nativePlayer.queue(uri)) {
       debugPrint('[AudioProvider] Spotify queue refused, Tsuki moves on by itself');
       _spotifyQueueBroken = true;
+      CrashReporter.instance.issue('spotify_queue_refused');
       return;
     }
     _spotifyQueuedPending.add(uri);
@@ -757,7 +758,9 @@ extension _SpotifyPlayback on AudioProvider {
     _spotifyAhead = const [];
     _spotifyListPlayFailed = false;
 
-    if (waking != null) await waking;
+    if (waking != null && !await waking) {
+      CrashReporter.instance.issue('spotify_app_remote_unreachable');
+    }
     if (gen != _playGeneration) return;
 
     // ── App Remote: straight to the Spotify app on this phone, sounding in
@@ -863,6 +866,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
 
     debugPrint('Spotify: all play attempts failed, falling back to preview');
+    CrashReporter.instance.issue('spotify_all_attempts_failed');
     _lastSpotifyError = SpotifyFallbackReason.openApp;
     _spotifyActive = false;
     _spotifyFallbackActive = true;
@@ -909,6 +913,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (gen != _playGeneration || !_spotifyActive) return;
 
     debugPrint('[SpotifyCheck] Spotify did not start, falling back to preview');
+    CrashReporter.instance.issue('spotify_did_not_start');
     _lastSpotifyError = SpotifyFallbackReason.openApp;
     _spotifyActive = false;
     _spotifyFallbackActive = true;

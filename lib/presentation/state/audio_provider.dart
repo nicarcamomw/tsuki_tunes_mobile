@@ -13,6 +13,7 @@ import '../../core/utils/deezer_preview.dart';
 import '../../data/datasources/audio_player_service.dart';
 import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/bpm_flow.dart';
+import '../../data/datasources/crash_reporter.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/feature_flags.dart';
 import '../../data/datasources/headphones_service.dart';
@@ -248,7 +249,26 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void notifyListeners() {
     _syncMediaSession();
     _syncHomeWidget();
+    _reportPlaybackKeys();
     super.notifyListeners();
+  }
+
+  /// What a crash report shows about playback when it happened: the song
+  /// (its id, not its title) and how it was playing. Unchanged values send
+  /// nothing (CrashReporter).
+  void _reportPlaybackKeys() {
+    final reporter = CrashReporter.instance;
+    reporter.setKey('track_id', _currentTrack?.id ?? '');
+    reporter.setKey('playback_mode', switch (_currentTrack) {
+      null => 'idle',
+      _ when !_useSpotify => 'preview',
+      _ when _spotifyFallbackActive => 'preview_fallback',
+      _ when !_spotifyActive => 'preview',
+      _ when _nativePlayer.isConnected => 'spotify_app_remote',
+      _ => 'spotify_web_api',
+    });
+    reporter.setKey('spotify_connected', _useSpotify);
+    reporter.setKey('is_playing', _isPlaying);
   }
 
   // Last song / play state written to the home screen widget.

@@ -73,6 +73,14 @@ firebase firestore:databases:restore --backup projects/tsuki-tunes-web/locations
 
 Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar.
 
+## Reportes de errores (Crashlytics)
+
+Además de los crashes, `lib/data/datasources/crash_reporter.dart` manda a Crashlytics (apagado en builds debug):
+
+- **Claves** con el estado del momento: `env`, `track_id`, `playback_mode` (`idle`, `preview`, `preview_fallback`, `spotify_app_remote`, `spotify_web_api`), `spotify_connected`, `is_playing` y un `flag_<parámetro>` por cada feature flag.
+- **Breadcrumbs:** los eventos del registro de reproducción, sin títulos de canciones, búsquedas ni nombres de dispositivos.
+- **Problemas no fatales**, que no cierran la app pero conviene ver por modelo de teléfono: `spotify_track_not_found`, `spotify_app_remote_unreachable`, `spotify_all_attempts_failed`, `spotify_did_not_start`, `spotify_queue_refused`. Cada uno se reporta como máximo una vez cada 10 minutos.
+
 ## Feature flags (Remote Config)
 
 `lib/data/datasources/feature_flags.dart` lee interruptores de Firebase Remote Config, para cambiar lo que hace la app sin publicar un APK nuevo:

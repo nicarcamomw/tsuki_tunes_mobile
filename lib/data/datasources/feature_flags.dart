@@ -4,6 +4,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/constants/firebase_emulators.dart';
+import 'crash_reporter.dart';
 
 /// Switches that change what the app does without a new APK, from Firebase
 /// Remote Config: a kill switch for a part that broke, or a feature turned
@@ -50,6 +51,7 @@ class FeatureFlags extends ChangeNotifier {
   /// listening, so a kill switch reaches open apps within seconds. Needs
   /// Firebase initialized.
   Future<void> start() async {
+    _reportKeys();
     if (_config != null || useFirebaseEmulators) return;
     try {
       final config = FirebaseRemoteConfig.instance;
@@ -81,6 +83,19 @@ class FeatureFlags extends ChangeNotifier {
       debugPrint('[FeatureFlags] ${_describe()}');
     } catch (e) {
       debugPrint('[FeatureFlags] Fetch failed, keeping the last values: $e');
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    _reportKeys();
+    super.notifyListeners();
+  }
+
+  /// Each switch's value goes with crash reports (`flag_<key>`).
+  void _reportKeys() {
+    for (final key in defaults.keys) {
+      CrashReporter.instance.setKey('flag_$key', _bool(key));
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/crash_reporter.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/feature_flags.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
@@ -280,6 +281,21 @@ class _OfflineConnectivity extends ChangeNotifier
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeReports implements CrashReporterBackend {
+  final keys = <String, Object>{};
+  final issues = <String>[];
+
+  @override
+  Future<void> setKey(String key, Object value) async => keys[key] = value;
+
+  @override
+  Future<void> log(String message) async {}
+
+  @override
+  Future<void> recordNonFatal(Object error, StackTrace stack, String reason) async =>
+      issues.add(reason);
 }
 
 class _FakePreviewPlayer extends AudioPlayerService {
@@ -736,6 +752,22 @@ void main() {
       expect(provider.repeatMode, PlaybackRepeatMode.one);
       await tick();
       expect(fakeNative.queued, isEmpty);
+    });
+
+    test('a refused queue is reported, with how the song was playing',
+        () async {
+      final reports = _FakeReports();
+      CrashReporter.instance
+        ..resetForTesting()
+        ..attach(reports);
+      addTearDown(CrashReporter.instance.resetForTesting);
+      fakeNative.queueWillFail = true;
+      await playingAt([_track('t1'), _track('t2')], 165000);
+      await tick();
+
+      expect(reports.issues, ['spotify_queue_refused']);
+      expect(reports.keys['playback_mode'], 'spotify_app_remote');
+      expect(reports.keys['track_id'], 't1');
     });
 
     test('a refused queue is not tried again; Tsuki moves on by itself',

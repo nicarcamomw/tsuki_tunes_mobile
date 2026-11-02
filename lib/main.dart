@@ -10,8 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_colors.dart';
+import 'core/constants/app_environment.dart';
 import 'core/theme/cyber_theme.dart';
 import 'data/datasources/auto_media_library.dart';
+import 'data/datasources/crash_reporter.dart';
 import 'data/datasources/deezer_disk_cache.dart';
 import 'data/datasources/feature_flags.dart';
 import 'data/datasources/firebase_service.dart';
@@ -117,7 +119,8 @@ void _deferredInit() {
   Timer(const Duration(seconds: 1), start);
 }
 
-/// Sends uncaught Flutter and async errors to Crashlytics. Collection is off
+/// Sends uncaught Flutter and async errors to Crashlytics, with the state of
+/// playback and the events before them (CrashReporter). Collection is off
 /// in debug builds so development crashes don't pollute the dashboard.
 Future<void> _initCrashReporting() async {
   if (kIsWeb) return;
@@ -130,6 +133,9 @@ Future<void> _initCrashReporting() async {
       crashlytics.recordError(error, stack, fatal: true);
       return true;
     };
+    CrashReporter.instance
+      ..setKey('env', isDevEnvironment ? 'dev' : 'prod')
+      ..attach(CrashlyticsBackend(crashlytics));
   } catch (e) {
     debugPrint('[main] Crashlytics init failed: $e');
   }
