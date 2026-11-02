@@ -65,6 +65,7 @@ dependencies:
   audio_service: ^0.18.19
   firebase_crashlytics: ^4.3.10
   firebase_app_check: ^0.3.2+10
+  firebase_remote_config: ^5.5.0
   sensors_plus: ^7.1.1
   geolocator: ^14.0.2
   freezed_annotation: ^3.1.0

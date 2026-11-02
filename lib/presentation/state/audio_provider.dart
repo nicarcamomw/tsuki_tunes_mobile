@@ -14,6 +14,7 @@ import '../../data/datasources/audio_player_service.dart';
 import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/feature_flags.dart';
 import '../../data/datasources/headphones_service.dart';
 import '../../data/datasources/home_widget_service.dart';
 import '../../data/datasources/media_session_handler.dart';
@@ -46,6 +47,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   final AudioPlayerService _service;
   final SpotifyService _spotify;
   final SpotifyNativePlayer _nativePlayer;
+  final FeatureFlags _flags;
   TsukiAudioHandler? _mediaHandler;
   final StorageService _storage;
   ConnectivityProvider? _connectivityProvider;
@@ -397,12 +399,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     TsukiAudioHandler? mediaHandler,
     SpotifyService? spotifyService,
     SpotifyNativePlayer? nativePlayer,
+    FeatureFlags? flags,
   })  : _service = service ?? AudioPlayerService(),
         _storage = storage ?? StorageService(),
         _spotify = spotifyService ?? SpotifyService(),
         _nativePlayer = nativePlayer ?? SpotifyNativePlayer(),
+        _flags = flags ?? FeatureFlags(),
         _connectivityProvider = connectivityProvider {
     if (mediaHandler != null) _attachMediaHandler(mediaHandler);
+    _flags.addListener(_onFeatureFlagsChanged);
     _service.loudnessFor = _loudnessFor;
     _sleepCtrl = SleepTimerController(
       service: _service,
@@ -646,9 +651,30 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   bool _warmingUpSpotify = false;
 
 
+  /// Whether songs may play in full through Spotify: a Premium account
+  /// connected, and Spotify not switched off remotely (FeatureFlags).
+  bool get _spotifyAllowed =>
+      _spotify.isConnected && _spotify.isPremium && _flags.spotifyPlayback;
+
+  /// Remote Config changed. The Spotify kill switch turned on mid-song moves
+  /// to the preview at once (pausing Spotify); turned back off, the next
+  /// song plays in Spotify again.
+  void _onFeatureFlagsChanged() {
+    final allowed = _spotifyAllowed;
+    if (_useSpotify && !allowed && !_flags.spotifyPlayback) {
+      debugPrint('[AudioProvider] Spotify switched off remotely, playing previews');
+      _lastSpotifyError = SpotifyFallbackReason.disabled;
+      unawaited(_fallbackFromSpotify(
+          announcement: 'Spotify is paused for now, switching to preview'));
+    } else if (!_useSpotify && allowed) {
+      debugPrint('[AudioProvider] Spotify switched back on remotely');
+      unawaited(updateSpotifyState());
+    }
+  }
+
   Future<void> updateSpotifyState() async {
     final wasSpotify = _useSpotify;
-    _useSpotify = _spotify.isConnected && _spotify.isPremium;
+    _useSpotify = _spotifyAllowed;
 
     if (!_useSpotify && wasSpotify) {
       _spotifyActive = false;
@@ -1625,6 +1651,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _flags.removeListener(_onFeatureFlagsChanged);
     _persistTimer?.cancel();
     _completionRecheck?.cancel();
     _spotifyListTimer?.cancel();

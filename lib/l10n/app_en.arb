@@ -259,6 +259,7 @@
   "spotifyNoConnection": "NO CONNECTION // Retrying audio server connection...",
   "spotifyTrackUnavailablePreview": "Track unavailable on Spotify, playing preview",
   "spotifyOpenAppPrompt": "Open the Spotify app to activate full playback",
+  "spotifyDisabledPreview": "Spotify is paused for a moment; playing previews",
   "audioStatusPrefix": "AUDIO STATUS //",
   "openSpotifyTooltip": "Open Spotify",
   "errorPrefix": "Error",

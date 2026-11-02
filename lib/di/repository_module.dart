@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 
 import '../data/datasources/deezer_api_service.dart';
+import '../data/datasources/feature_flags.dart';
 import '../data/datasources/firebase_service.dart';
 import '../data/datasources/storage_service.dart';
 import '../data/local/library_store.dart';
@@ -54,7 +55,8 @@ abstract class RepositoryModule {
   /// The one player. It has to exist before any widget: Android Auto can
   /// start the app with no screen.
   @lazySingleton
-  AudioProvider player(StorageService storage) => AudioProvider(storage: storage);
+  AudioProvider player(StorageService storage, FeatureFlags flags) =>
+      AudioProvider(storage: storage, flags: flags);
 
   @lazySingleton
   PlaybackController playback(AudioProvider player) => player;

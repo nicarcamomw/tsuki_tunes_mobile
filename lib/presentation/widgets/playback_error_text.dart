@@ -17,5 +17,6 @@ extension SpotifyFallbackReasonText on SpotifyFallbackReason {
   String message(AppStrings strings) => switch (this) {
         SpotifyFallbackReason.trackUnavailable => strings.spotifyTrackUnavailablePreview,
         SpotifyFallbackReason.openApp => strings.spotifyOpenAppPrompt,
+        SpotifyFallbackReason.disabled => strings.spotifyDisabledPreview,
       };
 }

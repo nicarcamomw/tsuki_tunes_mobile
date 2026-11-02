@@ -13,6 +13,7 @@ import 'core/constants/app_colors.dart';
 import 'core/theme/cyber_theme.dart';
 import 'data/datasources/auto_media_library.dart';
 import 'data/datasources/deezer_disk_cache.dart';
+import 'data/datasources/feature_flags.dart';
 import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
 import 'data/datasources/media_session_handler.dart';
@@ -81,6 +82,9 @@ Future<void> _initFirebaseCore() async {
   if (kIsWeb) return;
   try {
     await FirebaseService().initializeCore();
+    // Not awaited: the last fetched values apply in a moment, new ones
+    // whenever they arrive; the player follows them (FeatureFlags).
+    unawaited(FeatureFlags().start());
   } catch (e) {
     debugPrint('[main] Firebase core init failed: $e');
   }

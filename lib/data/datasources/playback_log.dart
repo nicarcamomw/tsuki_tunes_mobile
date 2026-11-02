@@ -12,7 +12,7 @@ class PlaybackLog {
   static const int maxLines = 400;
 
   // What playback logs through debugPrint carries one of these.
-  static const _markers = ['[AudioProvider]', 'Spotify', '[SpotifyCheck]', 'AudioPlayerService', '[Lyrics'];
+  static const _markers = ['[AudioProvider]', 'Spotify', '[SpotifyCheck]', 'AudioPlayerService', '[Lyrics', '[FeatureFlags]'];
 
   final Queue<String> _lines = Queue();
 

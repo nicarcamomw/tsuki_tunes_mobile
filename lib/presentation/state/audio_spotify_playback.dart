@@ -96,7 +96,7 @@ extension _SpotifyPlayback on AudioProvider {
     };
 
     await _spotify.loadSavedState();
-    _useSpotify = _spotify.isConnected && _spotify.isPremium;
+    _useSpotify = _spotifyAllowed;
     if (_useSpotify) {
       _warmUpSpotifyDevice();
     }
@@ -426,6 +426,7 @@ extension _SpotifyPlayback on AudioProvider {
   /// played yet. An edit after it is caught by _followSpotify, which takes
   /// over with the right song.
   Future<void> _maybeQueueNextInSpotify(Duration pos) async {
+    if (!_flags.spotifyQueueNext) return;
     if (_spotifyQueueBroken || !_nativePlayer.isConnected) return;
     if (_spotifyQueuedGen == _playGeneration) return;
     if (_duration < const Duration(seconds: 40) ||
@@ -938,16 +939,22 @@ extension _SpotifyPlayback on AudioProvider {
     await _service.playTrack(track);
   }
 
-  Future<void> _fallbackFromSpotify() async {
+  Future<void> _fallbackFromSpotify({
+    String announcement = 'Spotify Premium not available, switching to preview',
+  }) async {
     _useSpotify = false;
     _spotifyActive = false;
     _spotifyFallbackActive = true;
     _stopPositionTimer();
     final view = WidgetsBinding.instance.platformDispatcher.implicitView;
     if (view != null) {
-      unawaited(SemanticsService.sendAnnouncement(view, 'Spotify Premium not available, switching to preview', TextDirection.ltr));
+      unawaited(SemanticsService.sendAnnouncement(view, announcement, TextDirection.ltr));
     }
-    await _nativePlayer.pause();
+    // Through the Web API too when App Remote is down, or Spotify would
+    // keep playing over the preview.
+    try {
+      await _spotifyPause();
+    } catch (_) {}
     await _nativePlayer.disconnect();
 
     final track = _currentTrack;

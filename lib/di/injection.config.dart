@@ -20,6 +20,7 @@ import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart'
     as _i316;
 import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart'
     as _i814;
+import 'package:tsuki_tunes_mobile/data/datasources/feature_flags.dart' as _i36;
 import 'package:tsuki_tunes_mobile/data/datasources/firebase_service.dart'
     as _i186;
 import 'package:tsuki_tunes_mobile/data/datasources/home_widget_service.dart'
@@ -108,6 +109,7 @@ extension GetItInjectableX on _i174.GetIt {
     final dataModule = _$DataModule();
     final repositoryModule = _$RepositoryModule();
     gh.lazySingleton<_i186.FirebaseService>(() => dataModule.firebase);
+    gh.lazySingleton<_i36.FeatureFlags>(() => dataModule.featureFlags);
     gh.lazySingleton<_i169.AppDatabase>(() => dataModule.database);
     gh.lazySingleton<_i814.DeezerApiService>(() => dataModule.deezer);
     gh.lazySingleton<_i416.LyricsService>(() => dataModule.lyrics);
@@ -150,9 +152,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i298.StorageContract>(
       () => dataModule.storageContract(gh<_i905.StorageService>()),
     );
-    gh.lazySingleton<_i1052.AudioProvider>(
-      () => repositoryModule.player(gh<_i905.StorageService>()),
-    );
     gh.factory<_i741.GetAlbum>(
       () => _i741.GetAlbum(gh<_i1049.CatalogRepository>()),
     );
@@ -161,6 +160,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i9.GetTrack>(
       () => _i9.GetTrack(gh<_i1049.CatalogRepository>()),
+    );
+    gh.lazySingleton<_i1052.AudioProvider>(
+      () => repositoryModule.player(
+        gh<_i905.StorageService>(),
+        gh<_i36.FeatureFlags>(),
+      ),
     );
     gh.factory<_i883.AddTrackToPlaylist>(
       () => _i883.AddTrackToPlaylist(gh<_i128.PlaylistRepository>()),

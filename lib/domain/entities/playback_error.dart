@@ -20,4 +20,7 @@ enum SpotifyFallbackReason {
 
   /// No Spotify device could be activated; the user should open the app.
   openApp,
+
+  /// Spotify playback is switched off remotely for now (kill switch).
+  disabled,
 }

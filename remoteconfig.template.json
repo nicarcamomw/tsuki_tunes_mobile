@@ -1,0 +1,14 @@
+{
+  "parameters": {
+    "spotify_playback_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Kill switch: false plays the Deezer previews for everyone, moving a song already playing in Spotify to its preview within seconds.",
+      "valueType": "BOOLEAN"
+    },
+    "spotify_queue_next_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Puts the next song in Spotify's queue 20 s before a song ends (crossfade, no autoplay). false: Tsuki starts the next song itself.",
+      "valueType": "BOOLEAN"
+    }
+  }
+}

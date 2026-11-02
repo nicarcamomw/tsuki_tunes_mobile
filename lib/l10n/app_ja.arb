@@ -259,6 +259,7 @@
   "spotifyNoConnection": "オフライン // 音源サーバーへの再接続を試みています...",
   "spotifyTrackUnavailablePreview": "Spotifyで利用不可のため、プレビューを再生中",
   "spotifyOpenAppPrompt": "フル再生を有効にするにはSpotifyアプリを起動してください",
+  "spotifyDisabledPreview": "Spotifyは一時停止中のため、プレビューを再生中",
   "audioStatusPrefix": "音声ステータス //",
   "openSpotifyTooltip": "Spotifyを開く",
   "errorPrefix": "エラー",

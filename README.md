@@ -38,6 +38,21 @@ Los tests de las reglas (`tool/firestore_rules_test/`, con `@firebase/rules-unit
 cd tool/firestore_rules_test && npm ci && npm test
 ```
 
+## Feature flags (Remote Config)
+
+`lib/data/datasources/feature_flags.dart` lee interruptores de Firebase Remote Config, para cambiar lo que hace la app sin publicar un APK nuevo:
+
+| Parámetro | Por defecto | En `false` |
+|---|---|---|
+| `spotify_playback_enabled` | `true` | **Kill switch**: todos pasan a las vistas previas de Deezer; una canción que suena en Spotify pasa a su vista previa en segundos |
+| `spotify_queue_next_enabled` | `true` | Sin encolar la siguiente canción en Spotify (sin crossfade); Tsuki pone la siguiente él mismo |
+
+- Sin red, antes de la primera descarga, en modo emuladores o si Remote Config falla, rigen los valores por defecto del código: la app tal como está.
+- Al abrir se aplican los últimos valores descargados; los nuevos llegan en segundo plano y en vivo (en segundos a las apps abiertas).
+- Para activar algo a un porcentaje de usuarios: en la consola, una condición "Usuario en percentil aleatorio" (cada usuario cae siempre en el mismo grupo) con su valor para ese parámetro.
+- Los parámetros y su descripción viven en `remoteconfig.template.json`. `firebase deploy --only remoteconfig` publica esa plantilla y **reemplaza la configuración entera**, condiciones hechas en la consola incluidas: o se editan en la consola o en la plantilla, no en las dos. Ojo con un `firebase deploy` sin `--only`, que también la publica.
+- Un flag nuevo: su clave y valor por defecto en `FeatureFlags.defaults`, un getter, y el parámetro en la plantilla.
+
 ## Desarrollo con los emuladores de Firebase
 
 Para probar sin tocar el proyecto real: Auth y Firestore corren en el PC (con `firestore.rules`) y la app se conecta a ellos.

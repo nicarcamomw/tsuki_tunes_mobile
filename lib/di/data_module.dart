@@ -5,6 +5,7 @@ import '../data/contracts/music_api_contract.dart';
 import '../data/contracts/storage_contract.dart';
 import '../data/datasources/audio_precache_service.dart';
 import '../data/datasources/deezer_api_service.dart';
+import '../data/datasources/feature_flags.dart';
 import '../data/datasources/firebase_service.dart';
 import '../data/datasources/home_widget_service.dart';
 import '../data/datasources/lyrics_service.dart';
@@ -24,6 +25,10 @@ import '../domain/repositories/catalog_repository.dart';
 abstract class DataModule {
   @lazySingleton
   FirebaseService get firebase => FirebaseService();
+
+  /// Remote switches (Remote Config); started in main() once Firebase is.
+  @lazySingleton
+  FeatureFlags get featureFlags => FeatureFlags();
 
   @lazySingleton
   AppDatabase get database => AppDatabase.open();

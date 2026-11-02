@@ -459,6 +459,7 @@
   "spotifyNoConnection": "SIN CONEXIÓN // Reintentando enlace con el servidor de audio...",
   "spotifyTrackUnavailablePreview": "Pista no disponible en Spotify, reproduciendo vista previa",
   "spotifyOpenAppPrompt": "Abre la app de Spotify para activar la reproducción completa",
+  "spotifyDisabledPreview": "Spotify está en pausa por un momento; suenan las vistas previas",
   "audioStatusPrefix": "ESTADO AUDIO //",
   "openSpotifyTooltip": "Abrir Spotify",
   "errorPrefix": "Error",

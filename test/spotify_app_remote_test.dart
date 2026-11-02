@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/feature_flags.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
@@ -296,6 +297,7 @@ void main() {
 
   late FakeSpotifyService fakeSpotify;
   late FakeNativePlayer fakeNative;
+  late FeatureFlags flags;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -322,11 +324,13 @@ void main() {
 
     fakeSpotify = FakeSpotifyService();
     fakeNative = FakeNativePlayer();
+    flags = FeatureFlags.forTesting();
   });
 
   AudioProvider createProvider() => AudioProvider(
         spotifyService: fakeSpotify,
         nativePlayer: fakeNative,
+        flags: flags,
       );
 
   group('App Remote fast-path', () {
@@ -1286,6 +1290,7 @@ void main() {
         service: previews,
         spotifyService: fakeSpotify,
         nativePlayer: fakeNative,
+        flags: flags,
         connectivityProvider: _OfflineConnectivity(),
       );
       await Future.delayed(Duration.zero);
@@ -1299,6 +1304,77 @@ void main() {
       expect(previews.played, ['t1']);
       expect(provider.spotifyFallbackActive, isTrue);
       AudioPrecacheService().clearCache();
+    });
+  });
+
+  group('Remote switches (FeatureFlags)', () {
+    Future<(AudioProvider, _FakePreviewPlayer)> playingInSpotify() async {
+      fakeNative.setConnected(true);
+      final previews = _FakePreviewPlayer();
+      final provider = AudioProvider(
+        service: previews,
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        flags: flags,
+      );
+      await Future.delayed(Duration.zero);
+      await provider.playTrack(_track('t1'), newQueue: [_track('t1'), _track('t2')]);
+      fakeNative.simulateStateChanged(30000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      return (provider, previews);
+    }
+
+    test('the Spotify kill switch mid-song pauses Spotify and plays the preview',
+        () async {
+      final (provider, previews) = await playingInSpotify();
+      expect(provider.useSpotify, isTrue);
+      fakeNative.pauseCount = 0;
+
+      flags.setForTesting(FeatureFlags.spotifyPlaybackKey, false);
+      await Future.delayed(Duration.zero);
+
+      expect(provider.useSpotify, isFalse);
+      expect(fakeNative.pauseCount, greaterThanOrEqualTo(1));
+      expect(previews.played, ['t1']);
+      expect(provider.lastSpotifyError, SpotifyFallbackReason.disabled);
+    });
+
+    test('while it is on, songs play as previews, not in Spotify', () async {
+      final (provider, previews) = await playingInSpotify();
+      flags.setForTesting(FeatureFlags.spotifyPlaybackKey, false);
+      await Future.delayed(Duration.zero);
+      final plays = fakeSpotify.playCount;
+
+      await provider.playTrack(_track('t2'));
+
+      expect(previews.played.last, 't2');
+      expect(fakeSpotify.playCount, plays);
+      expect(fakeNative.lastTrackUri, isNot('spotify:track:t2'));
+    });
+
+    test('turned back off, the next song plays in Spotify again', () async {
+      final (provider, _) = await playingInSpotify();
+      flags.setForTesting(FeatureFlags.spotifyPlaybackKey, false);
+      await Future.delayed(Duration.zero);
+
+      flags.setForTesting(FeatureFlags.spotifyPlaybackKey, true);
+      await Future.delayed(Duration.zero);
+      expect(provider.useSpotify, isTrue);
+
+      await provider.playTrack(_track('t2'));
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('with the queue switch off, nothing goes to Spotify\'s queue',
+        () async {
+      flags.setForTesting(FeatureFlags.spotifyQueueNextKey, false);
+      final (_, _) = await playingInSpotify();
+      fakeNative.simulateStateChanged(165000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(const Duration(milliseconds: 1100));
+
+      expect(fakeNative.queued, isEmpty);
     });
   });
 

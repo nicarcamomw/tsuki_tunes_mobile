@@ -734,6 +734,7 @@ class AppStrings {
   String get spotifyTrackUnavailablePreview => _l.spotifyTrackUnavailablePreview;
 
   String get spotifyOpenAppPrompt => _l.spotifyOpenAppPrompt;
+  String get spotifyDisabledPreview => _l.spotifyDisabledPreview;
 
   String get audioStatusPrefix => _l.audioStatusPrefix;
 
