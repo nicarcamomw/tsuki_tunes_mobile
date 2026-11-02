@@ -12,7 +12,20 @@
           "package_name": "com.tsuki.tsuki_tunes_mobile.dev"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "603398005547-c9a20roeg3u5dvg4v7avftf67n6qb7nn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tsuki.tsuki_tunes_mobile.dev",
+            "certificate_hash": "0987ef32db4591f073ed1fc671627538793d74c4"
+          }
+        },
+        {
+          "client_id": "603398005547-5cqk2801pmv9ch5m3shr0r2pdo08emng.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDNp7eCNiDj1m8nJ1kyKIc11fb2gL6EOjc"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "603398005547-5cqk2801pmv9ch5m3shr0r2pdo08emng.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
