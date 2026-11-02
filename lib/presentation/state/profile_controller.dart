@@ -6,6 +6,10 @@ import '../../domain/entities/artist.dart';
 import '../../domain/entities/public_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/profile/build_my_profile.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Profile');
 
 /// Keeps the signed-in user's public profile up to date: when the library,
 /// the mask or the account change it waits a moment and publishes, only if
@@ -117,7 +121,7 @@ class ProfileController extends ChangeNotifier {
     try {
       remote = await _repo.getProfile(uid);
     } catch (e) {
-      debugPrint('[Profile] reading the published profile failed: $e');
+      _log.severe('reading the published profile failed: $e');
     }
     if (_account != uid) return;
     _published = remote;
@@ -171,7 +175,7 @@ class ProfileController extends ChangeNotifier {
       _published = profile;
       _publishedAt = _now();
     }).catchError((Object e) {
-      debugPrint('[Profile] publishing failed, next change retries: $e');
+      _log.severe('publishing failed, next change retries: $e');
     });
     _publishing = attempt;
     // The time counts from the send: offline, Firestore holds the write

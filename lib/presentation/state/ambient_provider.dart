@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/headphones_service.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Ambient');
 
 export '../../domain/logic/ambient_sound_generator.dart' show AmbientSound;
 
@@ -79,7 +83,7 @@ class AmbientProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('[Ambient] restore error: $e');
+      _log.severe('restore error: $e');
     }
   }
 
@@ -102,7 +106,7 @@ class AmbientProvider extends ChangeNotifier {
         if (isPlaying) pauseAll();
       });
     }).catchError((e) {
-      debugPrint('[Ambient] audio session error: $e');
+      _log.severe('audio session error: $e');
     });
   }
 
@@ -150,7 +154,7 @@ class AmbientProvider extends ChangeNotifier {
       }
       unawaited(player.play());
     } catch (e) {
-      debugPrint('[Ambient] could not start ${sound.name}: $e');
+      _log.severe('could not start ${sound.name}: $e');
       _volumes.remove(sound);
     } finally {
       _loading.remove(sound);

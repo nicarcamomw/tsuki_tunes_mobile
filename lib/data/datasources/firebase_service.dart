@@ -9,6 +9,10 @@ import '../../core/constants/app_environment.dart';
 import '../../core/constants/firebase_emulators.dart';
 import '../../firebase_options.dart';
 import '../../firebase_options_dev.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Firebase');
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -55,7 +59,7 @@ class FirebaseService {
       // 10.0.2.2 is turned off.
       await FirebaseAuth.instance.useAuthEmulator(firebaseEmulatorHost, 9099,
           automaticHostMapping: false);
-      debugPrint('[Firebase] Using the local emulators at $firebaseEmulatorHost');
+      _log.fine('Using the local emulators at $firebaseEmulatorHost');
     }
     _coreReady = true;
   }
@@ -106,7 +110,7 @@ class FirebaseService {
       _appCheckActive = true;
     } catch (e) {
       _appCheckActive = false;
-      debugPrint('App Check activation failed (non-fatal): $e');
+      _log.warning('App Check activation failed (non-fatal): $e');
     }
   }
 
@@ -134,7 +138,7 @@ class FirebaseService {
       }
     } catch (e) {
       // Non-blocking: Firestore permission/network errors shouldn't break sign-in
-      debugPrint('Firestore profile sync non-fatal warning: $e');
+      _log.warning('Firestore profile sync non-fatal warning: $e');
     }
     return userCredential;
   }
@@ -165,7 +169,7 @@ class FirebaseService {
     try {
       await _googleSignIn?.signOut();
     } catch (e) {
-      debugPrint('Google sign-out failed (non-fatal): $e');
+      _log.warning('Google sign-out failed (non-fatal): $e');
     }
     await _auth?.signOut();
   }

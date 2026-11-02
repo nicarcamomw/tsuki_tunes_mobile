@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/product_analytics.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/album_completion_index.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/listened_tracks_repository.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/product_events.dart';
@@ -122,6 +125,77 @@ void main() {
         'track_listened',
         'album_completed {album_id: alb}',
       ]);
+    });
+
+    test('album_completed fires retroactively when track count arrives late',
+        () async {
+      // Two songs listened from album "a1" via shuffle; its track count
+      // was never registered (the user never opened its detail screen).
+      final listened = [
+        ListenedTrackData(
+          trackId: '1', title: '', artistName: '', albumTitle: '',
+          albumId: 'a1', coverUrl: '', previewUrl: '', duration: 100,
+          artists: const [],
+        ),
+        ListenedTrackData(
+          trackId: '2', title: '', artistName: '', albumTitle: '',
+          albumId: 'a1', coverUrl: '', previewUrl: '', duration: 100,
+          artists: const [],
+        ),
+      ];
+      SharedPreferences.setMockInitialValues({});
+      final index = AlbumCompletionIndex(
+        storage: StorageService(),
+        listenedTracks: () => listened,
+        listenedLoaded: () => true,
+        onChanged: () {},
+      );
+
+      final completed = <String>[];
+      index.onAlbumCompleted = completed.add;
+
+      // The count was unknown, so album wasn't complete.
+      expect(index.isCompleted('a1'), isFalse);
+
+      // Now the track count arrives (user opened the album screen).
+      index.register('a1', 2);
+      expect(index.isCompleted('a1'), isTrue);
+      expect(completed, ['a1']);
+
+      // Registering the same count again does not fire twice.
+      index.register('a1', 2);
+      expect(completed, ['a1']);
+    });
+
+    test('registerAll fires album_completed for each newly-completed album',
+        () async {
+      final listened = [
+        ListenedTrackData(
+          trackId: '1', title: '', artistName: '', albumTitle: '',
+          albumId: 'a1', coverUrl: '', previewUrl: '', duration: 100,
+          artists: const [],
+        ),
+        ListenedTrackData(
+          trackId: '2', title: '', artistName: '', albumTitle: '',
+          albumId: 'a2', coverUrl: '', previewUrl: '', duration: 100,
+          artists: const [],
+        ),
+      ];
+      SharedPreferences.setMockInitialValues({});
+      final index = AlbumCompletionIndex(
+        storage: StorageService(),
+        listenedTracks: () => listened,
+        listenedLoaded: () => true,
+        onChanged: () {},
+      );
+
+      final completed = <String>[];
+      index.onAlbumCompleted = completed.add;
+
+      // Both albums have 1 listened track each.
+      // Register counts: a1 has 1 track (complete), a2 has 3 (not yet).
+      index.registerAll({'a1': 1, 'a2': 3});
+      expect(completed, ['a1']);
     });
   });
 }

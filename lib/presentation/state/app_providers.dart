@@ -175,6 +175,13 @@ final playbackWiringProvider = Provider<void>((ref) {
   final markListened = MarkTrackListened(library, events: ProductAnalytics.instance);
   player.onListenedThreshold = markListened.call;
 
+  // When a track count arrives late (the album screen is opened after all
+  // songs were heard through radio/shuffle), fire the album_completed event
+  // that MarkTrackListened couldn't fire at listen time.
+  library.onAlbumCompleted = (albumId) {
+    ProductAnalytics.instance.log('album_completed', {'album_id': albumId});
+  };
+
   // The "new artist" mask needs the artists the user already knew, once
   // the library has loaded.
   void seedArtists() {

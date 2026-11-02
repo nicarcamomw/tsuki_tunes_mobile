@@ -14,6 +14,10 @@ import '../local/library_store.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
 import 'album_completion_index.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Listened');
 
 class ListenedTrackData {
   final String trackId;
@@ -371,7 +375,7 @@ class ListenedTracksRepository {
       await _reload(uid);
       if (_tracks.isNotEmpty) _loaded = true;
     } catch (e) {
-      debugPrint('[Listened] opening the library failed: $e');
+      _log.severe('opening the library failed: $e');
     }
 
     // 2. Whatever didn't reach the server last time goes now.
@@ -406,7 +410,7 @@ class ListenedTracksRepository {
         _reconcileServerStats(userDoc, snapshot.docs.length);
         _pruneDeletionLog(userDoc);
       } catch (e) {
-        debugPrint('[Listened] full download failed: $e');
+        _log.severe('full download failed: $e');
       }
     }
 
@@ -451,7 +455,7 @@ class ListenedTracksRepository {
       _applyRemote(upserts: upserts, removedIds: removed);
       await _store.applyRemoteListened(uid, upserts: [for (final d in upserts) d.toJson()], removedIds: removed);
     }, onError: (e) {
-      debugPrint('[Listened] delta listener error: $e');
+      _log.severe('delta listener error: $e');
     });
 
     // 5. Deletion log: unmarks of tracks older than the delta boundary never
@@ -482,7 +486,7 @@ class ListenedTracksRepository {
       }
       await _store.applyRemoteDeletions(uid, deletions);
     }, onError: (e) {
-      debugPrint('[Listened] deletion log listener error: $e');
+      _log.severe('deletion log listener error: $e');
     });
     unawaited(_repairArtists(uid));
     return true;
@@ -527,7 +531,7 @@ class ListenedTracksRepository {
               : [if (track.artistName.isNotEmpty) track.artistName];
         }
       } catch (e) {
-        debugPrint('[Listened] artist lookup for $id failed: $e');
+        _log.severe('artist lookup for $id failed: $e');
       }
       if (found.length >= 20) await flush();
       await Future<void>.delayed(gap);
@@ -590,7 +594,7 @@ class ListenedTracksRepository {
     userDoc.set({
       'stats': {'totalTracks': count},
     }, SetOptions(merge: true)).catchError((Object e) {
-      debugPrint('[Listened] stats reconcile failed: $e');
+      _log.severe('stats reconcile failed: $e');
     });
   }
 
@@ -613,7 +617,7 @@ class ListenedTracksRepository {
       batch.set(userDoc, {'lastSubWrite': FieldValue.serverTimestamp()}, SetOptions(merge: true));
       await SubWriteQueue.instance.run(batch.commit);
     }).catchError((Object e) {
-      debugPrint('[Listened] deletion log prune failed: $e');
+      _log.severe('deletion log prune failed: $e');
     });
   }
 

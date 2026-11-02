@@ -19,6 +19,10 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/radar_release.dart';
 import 'time_machine_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('ReleaseRadar');
 
 /// Also the iOS BGTask identifier: must match Info.plist and AppDelegate.
 const String kReleaseRadarTask = 'com.tsuki.releaseRadar';
@@ -32,7 +36,7 @@ void releaseRadarDispatcher() {
       // iOS gives background refresh ~30s; stay well inside it.
       await ReleaseRadarService().runCheck(budget: const Duration(seconds: 20));
     } catch (e) {
-      debugPrint('[ReleaseRadar] background check failed: $e');
+      _log.severe('background check failed: $e');
     }
     // Local-only (no network): reads the schedule the app precomputed.
     await TimeMachineService().runBackgroundCheck();
@@ -126,7 +130,7 @@ class ReleaseRadarService {
         ),
       );
     } catch (e) {
-      debugPrint('[ReleaseRadar] background scheduling unavailable: $e');
+      _log.fine('background scheduling unavailable: $e');
     }
 
     try {
@@ -134,7 +138,7 @@ class ReleaseRadarService {
       // Cold start from a notification: Home may already be listening.
       if (_pendingPayload != null) openRequests.value++;
     } catch (e) {
-      debugPrint('[ReleaseRadar] notifications init failed: $e');
+      _log.severe('notifications init failed: $e');
     }
 
     await _reloadUiState();
@@ -161,7 +165,7 @@ class ReleaseRadarService {
         ]),
       );
     } catch (e) {
-      debugPrint('[ReleaseRadar] watchArtists save failed: $e');
+      _log.severe('watchArtists save failed: $e');
     }
   }
 
@@ -180,7 +184,7 @@ class ReleaseRadarService {
     try {
       return await runCheck(budget: const Duration(seconds: 45));
     } catch (e) {
-      debugPrint('[ReleaseRadar] check failed: $e');
+      _log.severe('check failed: $e');
       return 0;
     } finally {
       await _reloadUiState();
@@ -198,7 +202,7 @@ class ReleaseRadarService {
           _releasesKey, json.encode(updated.map((r) => r.toJson()).toList()));
       await _notifications.cancel(_notificationId);
     } catch (e) {
-      debugPrint('[ReleaseRadar] markAllRead failed: $e');
+      _log.severe('markAllRead failed: $e');
     }
   }
 
@@ -494,7 +498,7 @@ class ReleaseRadarService {
         payload: payload,
       );
     } catch (e) {
-      debugPrint('[Notifications] show failed: $e');
+      _log.severe('show failed: $e');
     }
   }
 
@@ -550,7 +554,7 @@ class ReleaseRadarService {
         payload: _payload,
       );
     } catch (e) {
-      debugPrint('[ReleaseRadar] notify failed: $e');
+      _log.severe('notify failed: $e');
     }
   }
 
@@ -581,7 +585,7 @@ class ReleaseRadarService {
       watchedCount.value = _watchedIds!.length;
       notifyEnabled.value = prefs.getBool(_notifyKey) ?? true;
     } catch (e) {
-      debugPrint('[ReleaseRadar] reload failed: $e');
+      _log.severe('reload failed: $e');
     }
   }
 

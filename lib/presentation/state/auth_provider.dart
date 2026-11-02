@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Auth');
 
 class AuthProvider extends ChangeNotifier {
   static const _guestUidKey = 'guest_device_uid';
@@ -98,7 +102,7 @@ class AuthProvider extends ChangeNotifier {
         _isGuest = _guestUid != null;
       }
     } catch (e) {
-      debugPrint('Guest restore error: $e');
+      _log.severe('Guest restore error: $e');
     }
     try {
       await _firebase.initialize();
@@ -110,7 +114,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      debugPrint('Auth init error: $e');
+      _log.severe('Auth init error: $e');
       _loading = false;
       notifyListeners();
     }
@@ -141,7 +145,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _loginAttempts++;
-      debugPrint('Google sign-in error: $e');
+      _log.severe('Google sign-in error: $e');
       _authError = 'login_failed';
       notifyListeners();
       return false;

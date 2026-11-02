@@ -33,6 +33,10 @@ import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('HomeScreen');
 
 part 'home/affinity_sheet.dart';
 part 'home/entry_cards.dart';
@@ -145,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
       unawaited(_loadPersonalizedRecommendations(topDisplay));
     } catch (e) {
-      debugPrint('[HomeScreen] loadHomeData error: $e');
+      _log.severe('loadHomeData error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -169,7 +173,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         matched ??= results.isNotEmpty ? results.first : null;
         return _TopArtistDisplay(entry: entry, artist: matched);
       } catch (e) {
-        debugPrint('[HomeScreen] fetchTopArtistPictures error: $e');
+        _log.severe('fetchTopArtistPictures error: $e');
         return _TopArtistDisplay(entry: entry, artist: null);
       }
     }));
@@ -194,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return a;
         }).toList();
       } catch (e) {
-        debugPrint('[HomeScreen] loadLatestFromTopArtists error for ${top.entry.name}: $e');
+        _log.severe('loadLatestFromTopArtists error for ${top.entry.name}: $e');
         return <Album>[];
       }
     }));
@@ -235,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return a;
         }).toList();
       } catch (e) {
-        debugPrint('[HomeScreen] loadLatestFromFeatured error: $e');
+        _log.severe('loadLatestFromFeatured error: $e');
         return <Album>[];
       }
     }));
@@ -604,7 +608,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       matched ??= results.isNotEmpty ? results.first : null;
       if (mounted && matched != null) _openArtist(matched);
     } catch (e) {
-      debugPrint('[HomeScreen] retry artist search for ${entry.name}: $e');
+      _log.warning('retry artist search for ${entry.name}: $e');
     }
   }
 

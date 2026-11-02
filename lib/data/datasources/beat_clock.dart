@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('BeatSync');
 
 /// Where the beats of a song fall: its tempo plus the offset of a beat.
 ///
@@ -218,7 +221,7 @@ class BeatSyncStore {
         if (g != null) _grids[k] = g;
       });
     } catch (e) {
-      debugPrint('[BeatSync] load error: $e');
+      _log.severe('load error: $e');
     }
   }
 

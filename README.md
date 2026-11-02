@@ -73,6 +73,21 @@ firebase firestore:databases:restore --backup projects/tsuki-tunes-web/locations
 
 Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar.
 
+## Logging estructurado
+
+`lib/core/logger.dart` con `package:logging`. Cada subsistema tiene su propio logger (`Log.named('AudioProvider')`, `Log.named('SpotifyService')`, …) con cuatro niveles:
+
+| Nivel | Cuándo |
+|---|---|
+| `fine` | Traza: syncs de posición, prefetches, ediciones de cola |
+| `info` | Cambios de estado que vale la pena saber: audífonos desconectados, crossfade iniciado |
+| `warning` | Errores atrapados de los que la app se recupera (fallback, retry) |
+| `severe` | Errores atrapados que pierden funcionalidad (init failures, errores de streams) |
+
+En release el root level es `OFF` → no se imprime nada (el `debugPrint` override de `main.dart` ya bloqueaba la salida, ahora `Log.init()` también apaga `package:logging`). En debug se imprime todo con la etiqueta, nivel y mensaje en una línea: `I [AudioProvider] Headphones unplugged, pausing`.
+
+Los registros siguen llegando a `PlaybackLog` (el usuario los copia desde configuraciones) porque `Log._print` llama a `debugPrint`, que pasa por el override que captura a `PlaybackLog`.
+
 ## Reportes de errores (Crashlytics)
 
 Además de los crashes, `lib/data/datasources/crash_reporter.dart` manda a Crashlytics (apagado en builds debug):
@@ -106,6 +121,24 @@ Qué hace la gente en la app (embudos y retención), con Firebase Analytics a tr
 - Sin ID de publicidad ni personalización de anuncios (`AndroidManifest.xml`); solo ids y categorías, nunca títulos, búsquedas ni nombres.
 - Nada desde builds debug, y nada si el usuario apaga "Compartir estadísticas de uso" en configuraciones (queda guardado).
 - Los datos aparecen en la consola si el proyecto tiene Google Analytics vinculado (Configuración del proyecto → Integraciones).
+
+### Dashboard (Looker Studio + BigQuery)
+
+Las métricas diarias del dashboard están en `Documentos/dashboard_bigquery.sql`, listas para usar como fuentes de datos en Looker Studio (una "Consulta personalizada de BigQuery" por métrica):
+
+| Métrica | Qué muestra |
+|---|---|
+| **DAU** | Usuarios activos diarios (`user_pseudo_id` distintos) |
+| **% Spotify vs preview** | De cada `play_start`, cuántos son `spotify_*` y cuántos `preview*` |
+| **Crash-free users** | 1 − (usuarios con crash fatal / DAU), cruzando Analytics con Crashlytics |
+| **Spotify fallback breakdown** | `spotify_fallback` por `reason` y día |
+| **Album funnel** | `play_start` → `track_listened` → `album_completed` (últimos 30 días) |
+
+**Setup:**
+
+1. **Exportar Analytics a BigQuery:** Consola de Firebase → Configuración del proyecto → Integraciones → BigQuery → Vincular. Marcar "Firebase Analytics" y "Crashlytics". Los datos empiezan a llegar al día siguiente.
+2. **Registrar dimensiones personalizadas en GA4:** En la consola de GA4 → Configurar → Definiciones personalizadas, crear `mode`, `reason`, `album_id`, `artist_id` como dimensiones de evento. Sin esto, BigQuery tiene los datos pero GA4 no deja filtrar por ellos en sus reportes nativos.
+3. **Crear el dashboard en Looker Studio:** Conectar cada query de `dashboard_bigquery.sql` como fuente de datos (reemplazar `PROJECT` y `PROPERTY_ID`). El rango de fechas se controla con un filtro de Looker Studio.
 
 ## Feature flags (Remote Config)
 

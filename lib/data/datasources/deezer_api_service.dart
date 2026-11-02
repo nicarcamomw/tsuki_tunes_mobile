@@ -13,6 +13,10 @@ import '../../domain/repositories/catalog_repository.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('DeezerAPI');
 
 /// Top-level so it can be sent to an isolate via [compute].
 dynamic _decodeJson(String source) => json.decode(source);
@@ -85,7 +89,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return data;
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] disk deserialize error ($key): $e');
+      _log.severe('disk deserialize error ($key): $e');
     }
     return null;
   }
@@ -132,7 +136,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
 
         // Auto-recovery for HTTP 429 Too Many Requests (Deezer rate limit)
         if (res.statusCode == 429) {
-          debugPrint('[DeezerAPI] HTTP 429 rate limit for $url. Waiting 1s before retry...');
+          _log.warning('HTTP 429 rate limit for $url. Waiting 1s before retry...');
           await Future.delayed(const Duration(milliseconds: 1000));
           res = await get();
         }
@@ -142,7 +146,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           if (decoded is Map<String, dynamic> && decoded['error'] != null) {
             final errCode = decoded['error']['code'];
             if (errCode == 4 || errCode == 800) {
-              debugPrint('[DeezerAPI] Quota limit code $errCode for $url. Waiting 1s before retry...');
+              _log.warning('Quota limit code $errCode for $url. Waiting 1s before retry...');
               await Future.delayed(const Duration(milliseconds: 1000));
               final retryRes = await get();
               if (retryRes.statusCode == 200) {
@@ -153,7 +157,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
               }
             }
             final msg = '[DeezerAPI] Error in response for $url: ${decoded['error']}';
-            debugPrint(msg);
+            _log.info(msg);
             if (throwOnError) throw DeezerApiException(msg);
             return null;
           }
@@ -161,12 +165,12 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         }
 
         final msg = '[DeezerAPI] HTTP ${res.statusCode} for $url';
-        debugPrint(msg);
+        _log.info(msg);
         if (throwOnError) throw DeezerApiException(msg);
       } catch (e) {
         if (e is DeezerApiException) rethrow;
         final msg = '[DeezerAPI] Network error for $url: $e';
-        debugPrint(msg);
+        _log.info(msg);
         if (throwOnError) throw DeezerApiException(msg);
       }
       return null;
@@ -182,7 +186,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         if (res.statusCode == 200) return await _decode(res.body);
       } catch (e) {
         if (e is DeezerApiException) rethrow;
-        debugPrint('[DeezerAPI] CORS proxy error: $e');
+        _log.severe('CORS proxy error: $e');
       }
     }
 
@@ -193,7 +197,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
     } catch (e) {
       if (e is DeezerApiException) rethrow;
       final msg = '[DeezerAPI] Direct web fetch error for $url: $e';
-      debugPrint(msg);
+      _log.info(msg);
       if (throwOnError) throw DeezerApiException(msg);
     }
 
@@ -344,7 +348,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return tracks;
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getChartTracks error: $e');
+      _log.severe('getChartTracks error: $e');
     }
     return [];
   }
@@ -364,7 +368,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         );
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getTrackAudioInfo($trackId) error: $e');
+      _log.severe('getTrackAudioInfo($trackId) error: $e');
     }
     return null;
   }
@@ -385,7 +389,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return tracks;
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getLargeChartTracks error: $e');
+      _log.severe('getLargeChartTracks error: $e');
     }
     return [];
   }
@@ -405,7 +409,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return artists;
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getChartArtists error: $e');
+      _log.severe('getChartArtists error: $e');
     }
     return [];
   }
@@ -449,7 +453,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           return artist;
         }
       } catch (e) {
-        debugPrint('[DeezerAPI] getArtist($id) error: $e');
+        _log.severe('getArtist($id) error: $e');
       }
       return null;
     });
@@ -472,7 +476,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return tracks;
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getArtistTopTracks($artistId) error: $e');
+      _log.severe('getArtistTopTracks($artistId) error: $e');
     }
     return [];
   }
@@ -514,8 +518,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           return page;
         }
       } catch (e) {
-        debugPrint(
-            '[DeezerAPI] getArtistAlbumsPage($artistId, index: $index) error: $e');
+        _log.severe('getArtistAlbumsPage($artistId, index: $index) error: $e');
       }
       return ArtistAlbumsPage.empty;
     });
@@ -541,7 +544,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           return items;
         }
       } catch (e) {
-        debugPrint('[DeezerAPI] getArtistCompilations($artistId) error: $e');
+        _log.severe('getArtistCompilations($artistId) error: $e');
       }
       return <Album>[];
     });
@@ -568,7 +571,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
       _setCache(cacheKey, page.items);
       return page.items;
     } catch (e) {
-      debugPrint('[DeezerAPI] getArtistAlbums($artistId) error: $e');
+      _log.severe('getArtistAlbums($artistId) error: $e');
     }
     return [];
   }
@@ -588,7 +591,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           return album;
         }
       } catch (e) {
-        debugPrint('[DeezerAPI] getAlbum($albumId) error: $e');
+        _log.severe('getAlbum($albumId) error: $e');
       }
       return null;
     });
@@ -609,7 +612,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
           return track;
         }
       } catch (e) {
-        debugPrint('[DeezerAPI] getTrack($trackId) error: $e');
+        _log.severe('getTrack($trackId) error: $e');
       }
       return null;
     });
@@ -645,7 +648,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
       });
       return all.take(limit).toList();
     } catch (e) {
-      debugPrint('[DeezerAPI] getRelatedArtists($artistId) error: $e');
+      _log.severe('getRelatedArtists($artistId) error: $e');
       if (throwOnError) rethrow;
       return <Artist>[];
     }
@@ -671,7 +674,7 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
         return list.map((item) => Track.fromDeezer(item)).toList();
       }
     } catch (e) {
-      debugPrint('[DeezerAPI] getArtistRadio($artistId) error: $e');
+      _log.severe('getArtistRadio($artistId) error: $e');
     }
     return <Track>[];
   }

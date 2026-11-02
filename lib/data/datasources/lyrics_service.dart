@@ -6,6 +6,10 @@ import 'package:http/http.dart' as http;
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/logic/artist_names.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('LyricsService');
 
 class LyricsService {
   static final LyricsService _instance = LyricsService._internal();
@@ -97,7 +101,7 @@ class LyricsService {
         return miss;
       }
       final error = gotAnswered ? found! : got;
-      debugPrint('[LyricsService] Error fetching lyrics for "$title": $error');
+      _log.severe('Error fetching lyrics for "$title": $error');
       throw error;
     } finally {
       unawaited(_inFlight.remove(cacheKey));
@@ -192,7 +196,7 @@ class LyricsService {
         }
       }
     } catch (e) {
-      debugPrint('[LyricsService] Lyrics search error: $e');
+      _log.severe('Lyrics search error: $e');
       rethrow;
     }
     return [];

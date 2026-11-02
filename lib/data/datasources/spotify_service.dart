@@ -13,6 +13,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_environment.dart';
 import 'perf_tracker.dart';
 import 'storage_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('SpotifyService');
 
 class SpotifyService {
   // Every Spotify request is bounded: a stalled connection must fail (and
@@ -144,7 +148,7 @@ class SpotifyService {
       _uriCache.addAll(loaded);
       _uriCacheLoaded = true;
     } catch (e) {
-      debugPrint('[SpotifyService] error loading URI cache: $e');
+      _log.severe('error loading URI cache: $e');
     }
   }
 
@@ -244,14 +248,14 @@ class SpotifyService {
       final uri = Uri.parse(result);
       if (uri.queryParameters.containsKey('error')) {
         _lastError = uri.queryParameters['error_description'] ?? uri.queryParameters['error'];
-        debugPrint('Spotify auth redirect error: $_lastError');
+        _log.severe('Spotify auth redirect error: $_lastError');
         return false;
       }
 
       final returnedState = uri.queryParameters['state'];
       if (returnedState != state) {
         _lastError = 'oauth_state_mismatch';
-        debugPrint('Spotify auth: OAuth state mismatch (CSRF protection)');
+        _log.fine('Spotify auth: OAuth state mismatch (CSRF protection)');
         return false;
       }
 
@@ -263,7 +267,7 @@ class SpotifyService {
 
       return await _exchangeCode(code, codeVerifier);
     } catch (e) {
-      debugPrint('Spotify connect error: $e');
+      _log.severe('Spotify connect error: $e');
       final errStr = e.toString();
       if (errStr.contains('CANCELED') || errStr.contains('user_canceled')) {
         _lastError = 'canceled_by_user';
@@ -290,7 +294,7 @@ class SpotifyService {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('Spotify exchange failed (${response.statusCode})');
+        _log.severe('Spotify exchange failed (${response.statusCode})');
         try {
           final data = json.decode(response.body);
           _lastError = data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}';
@@ -310,7 +314,7 @@ class SpotifyService {
       await _fetchProfile();
       return _accessToken != null;
     } catch (e) {
-      debugPrint('Spotify exchange error: $e');
+      _log.severe('Spotify exchange error: $e');
       _lastError = 'network_error: $e';
       return false;
     }
@@ -345,15 +349,15 @@ class SpotifyService {
         try {
           final data = json.decode(response.body);
           if (data['error'] == 'invalid_grant') {
-            debugPrint('Spotify refresh token invalid_grant: disconnecting');
+            _log.fine('Spotify refresh token invalid_grant: disconnecting');
             await disconnect();
           }
         } catch (_) {}
       } else {
-        debugPrint('Spotify refresh transient status: ${response.statusCode}');
+        _log.fine('Spotify refresh transient status: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Spotify refresh network error: $e');
+      _log.severe('Spotify refresh network error: $e');
       // Do not disconnect on network errors so playback can retry
     }
   }
@@ -391,7 +395,7 @@ class SpotifyService {
         await _secureStorage.write(key: _profileKey, value: json.encode(_profile));
       }
     } catch (e) {
-      debugPrint('Spotify profile error: $e');
+      _log.severe('Spotify profile error: $e');
     }
   }
 
@@ -402,7 +406,7 @@ class SpotifyService {
         return await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      debugPrint('Error launching Spotify app: $e');
+      _log.severe('Error launching Spotify app: $e');
     }
     return false;
   }
@@ -435,7 +439,7 @@ class SpotifyService {
 
     final cachedUri = _getFromCache(trackId, title, artist);
     if (cachedUri != null) {
-      debugPrint('Spotify: using locally cached URI for "$title" (${trackId ?? 'no-id'}): $cachedUri');
+      _log.fine('Spotify: using locally cached URI for "$title" (${trackId ?? 'no-id'}): $cachedUri');
       return cachedUri;
     }
 
@@ -453,7 +457,7 @@ class SpotifyService {
         final items = await _searchItems('isrc:$resolvedIsrc', limit: 5);
         if (items != null && items.isNotEmpty) {
           final resolvedUri = items.first['uri'] as String;
-          debugPrint('Spotify: ISRC match "${items.first['name']}" ($resolvedIsrc)');
+          _log.fine('Spotify: ISRC match "${items.first['name']}" ($resolvedIsrc)');
           _saveToCache(trackId, title, artist, resolvedUri);
           return resolvedUri;
         }
@@ -489,16 +493,16 @@ class SpotifyService {
           });
           if (artistMatches) {
             final resolvedUri = item['uri'] as String;
-            debugPrint('Spotify: title+artist match "${item['name']}"');
+            _log.fine('Spotify: title+artist match "${item['name']}"');
             _saveToCache(trackId, title, artist, resolvedUri);
             return resolvedUri;
           }
         }
       }
     } catch (e) {
-      debugPrint('Spotify search error: $e');
+      _log.severe('Spotify search error: $e');
     }
-    debugPrint('Spotify: no reliable match for "$title" by "$artist"');
+    _log.fine('Spotify: no reliable match for "$title" by "$artist"');
     return null;
   }
 
@@ -572,7 +576,7 @@ class SpotifyService {
         final devices = data['devices'] as List?;
         if (devices != null && devices.isNotEmpty) {
           for (final d in devices) {
-            debugPrint('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
+            _log.fine('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
           }
           // Prefer smartphone, then active device, then first
           final smartphone = devices.cast<Map<String, dynamic>>().where(
@@ -586,14 +590,14 @@ class SpotifyService {
                 );
           final deviceId = chosen['id'] as String?;
           _activeDeviceName = chosen['name'] as String?;
-          debugPrint('Spotify chosen device: $_activeDeviceName (${chosen['type']})');
+          _log.fine('Spotify chosen device: $_activeDeviceName (${chosen['type']})');
           return deviceId;
         }
         _activeDeviceName = null;
-        debugPrint('Spotify: no devices found');
+        _log.fine('Spotify: no devices found');
       }
     } catch (e) {
-      debugPrint('Spotify devices error: $e');
+      _log.severe('Spotify devices error: $e');
     }
     return null;
   }
@@ -614,7 +618,7 @@ class SpotifyService {
         return devices;
       }
     } catch (e) {
-      debugPrint('Spotify getDevices error: $e');
+      _log.severe('Spotify getDevices error: $e');
     }
     return [];
   }
@@ -633,10 +637,10 @@ class SpotifyService {
           'play': false,
         }),
       );
-      debugPrint('Spotify transfer: ${response.statusCode}');
+      _log.fine('Spotify transfer: ${response.statusCode}');
       return response.statusCode == 204 || response.statusCode == 200;
     } catch (e) {
-      debugPrint('Spotify transfer error: $e');
+      _log.severe('Spotify transfer error: $e');
       return false;
     }
   }
@@ -644,12 +648,12 @@ class SpotifyService {
   Future<String?> ensureActiveDevice() async {
     final devices = await getDevices();
     if (devices.isEmpty) {
-      debugPrint('Spotify: no devices available at all');
+      _log.fine('Spotify: no devices available at all');
       return null;
     }
 
     for (final d in devices) {
-      debugPrint('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
+      _log.fine('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
     }
 
     final smartphones = devices.where((d) => d['type'] == 'Smartphone').toList();
@@ -657,7 +661,7 @@ class SpotifyService {
     // If a smartphone is already active, use it
     final activePhone = smartphones.where((d) => d['is_active'] == true).toList();
     if (activePhone.isNotEmpty) {
-      debugPrint('Spotify: using active smartphone ${activePhone.first['name']}');
+      _log.fine('Spotify: using active smartphone ${activePhone.first['name']}');
       return _phoneDeviceId = activePhone.first['id'] as String?;
     }
 
@@ -665,7 +669,7 @@ class SpotifyService {
     if (smartphones.isNotEmpty) {
       final phoneId = smartphones.first['id'] as String?;
       if (phoneId != null) {
-        debugPrint('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
+        _log.fine('Spotify: forcing playback to smartphone ${smartphones.first['name']}');
         await transferPlayback(phoneId);
         // The transfer settles asynchronously: a play sent sooner is often
         // dropped. Only on this cold path; warm plays use _phoneDeviceId.
@@ -677,7 +681,7 @@ class SpotifyService {
     // No smartphone found — do NOT fall back to other device types (TV,
     // speaker, etc.).  Returning null lets the caller use App Remote which
     // plays on the local phone only.
-    debugPrint('Spotify: no Smartphone device found, skipping non-phone devices');
+    _log.fine('Spotify: no Smartphone device found, skipping non-phone devices');
     return null;
   }
 
@@ -700,7 +704,7 @@ class SpotifyService {
       final remembered = deviceId == null ? _phoneDeviceId : null;
       final targetDevice = deviceId ?? remembered ?? await ensureActiveDevice();
       if (targetDevice == null) {
-        debugPrint('Spotify play: no smartphone device available');
+        _log.fine('Spotify play: no smartphone device available');
         return false;
       }
 
@@ -723,7 +727,7 @@ class SpotifyService {
         body: json.encode(body),
       );
 
-      debugPrint('Spotify play: ${response.statusCode} (device=$targetDevice)');
+      _log.fine('Spotify play: ${response.statusCode} (device=$targetDevice)');
 
       if (response.statusCode == 204 || response.statusCode == 200) {
         _phoneDeviceId = targetDevice;
@@ -754,7 +758,7 @@ class SpotifyService {
       }
 
       // Play failed — try transfer + retry once
-      debugPrint('Spotify play failed, forcing transfer and retry');
+      _log.warning('Spotify play failed, forcing transfer and retry');
       await transferPlayback(targetDevice);
       await Future.delayed(const Duration(milliseconds: 800));
 
@@ -766,10 +770,10 @@ class SpotifyService {
         },
         body: json.encode(body),
       );
-      debugPrint('Spotify play retry: ${retry.statusCode}');
+      _log.warning('Spotify play retry: ${retry.statusCode}');
       return retry.statusCode == 204 || retry.statusCode == 200;
     } catch (e) {
-      debugPrint('Spotify play error: $e');
+      _log.severe('Spotify play error: $e');
       return false;
     }
   }
@@ -785,7 +789,7 @@ class SpotifyService {
       );
       return response.statusCode == 204 || response.statusCode == 200;
     } catch (e) {
-      debugPrint('Spotify pause error: $e');
+      _log.severe('Spotify pause error: $e');
       return false;
     }
   }
@@ -805,7 +809,7 @@ class SpotifyService {
               'https://api.spotify.com/v1/me/player/play?device_id=$remembered'),
           headers: {'Authorization': 'Bearer $_accessToken'},
         );
-        debugPrint('Spotify resume response: ${response.statusCode}');
+        _log.fine('Spotify resume response: ${response.statusCode}');
         if (response.statusCode == 204 || response.statusCode == 200) {
           return true;
         }
@@ -815,7 +819,7 @@ class SpotifyService {
       // Phone unknown or gone: resolve and retry.
       final deviceId = await ensureActiveDevice();
       if (deviceId == null) {
-        debugPrint('Spotify resume: no smartphone device');
+        _log.fine('Spotify resume: no smartphone device');
         return false;
       }
       final retry = await _put(
@@ -823,10 +827,10 @@ class SpotifyService {
             'https://api.spotify.com/v1/me/player/play?device_id=$deviceId'),
         headers: {'Authorization': 'Bearer $_accessToken'},
       );
-      debugPrint('Spotify resume retry: ${retry.statusCode}');
+      _log.warning('Spotify resume retry: ${retry.statusCode}');
       return retry.statusCode == 204 || retry.statusCode == 200;
     } catch (e) {
-      debugPrint('Spotify resume error: $e');
+      _log.severe('Spotify resume error: $e');
       return false;
     }
   }
@@ -843,7 +847,7 @@ class SpotifyService {
       );
       return response.statusCode == 204;
     } catch (e) {
-      debugPrint('Spotify seek error: $e');
+      _log.severe('Spotify seek error: $e');
       return false;
     }
   }
@@ -860,7 +864,7 @@ class SpotifyService {
       );
       return response.statusCode == 204 || response.statusCode == 200;
     } catch (e) {
-      debugPrint('Spotify repeat error: $e');
+      _log.severe('Spotify repeat error: $e');
       return false;
     }
   }
@@ -922,7 +926,7 @@ class SpotifyService {
         _playbackStateFailed = false;
       }
     } catch (e) {
-      debugPrint('Spotify playback state error: $e');
+      _log.severe('Spotify playback state error: $e');
     }
     return null;
   }

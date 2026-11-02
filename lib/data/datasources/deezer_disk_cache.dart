@@ -10,6 +10,10 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('DeezerDiskCache');
 
 dynamic _decodeJson(String source) => json.decode(source);
 const int _isolateThreshold = 10 * 1024;
@@ -41,7 +45,7 @@ class DeezerDiskCache {
       _ready = true;
       unawaited(_pruneExpired());
     } catch (e) {
-      debugPrint('[DeezerDiskCache] init failed: $e');
+      _log.severe('init failed: $e');
     }
   }
 
@@ -69,7 +73,7 @@ class DeezerDiskCache {
         expiry: DateTime.fromMillisecondsSinceEpoch(expiryMs),
       );
     } catch (e) {
-      debugPrint('[DeezerDiskCache] read error ($key): $e');
+      _log.severe('read error ($key): $e');
       return null;
     }
   }
@@ -85,12 +89,12 @@ class DeezerDiskCache {
       final file = File('${_dir!.path}/${_hash(key)}.json');
       unawaited(
         file.writeAsString(json.encode(envelope)).catchError((Object e) {
-          debugPrint('[DeezerDiskCache] write error ($key): $e');
+          _log.severe('write error ($key): $e');
           return file;
         }),
       );
     } catch (e) {
-      debugPrint('[DeezerDiskCache] write error ($key): $e');
+      _log.severe('write error ($key): $e');
     }
   }
 
@@ -102,7 +106,7 @@ class DeezerDiskCache {
         if (entry is File) await entry.delete().catchError((_) => entry);
       }
     } catch (e) {
-      debugPrint('[DeezerDiskCache] clear error: $e');
+      _log.severe('clear error: $e');
     }
   }
 
@@ -140,10 +144,10 @@ class DeezerDiskCache {
       }
 
       if (removed > 0) {
-        debugPrint('[DeezerDiskCache] pruned $removed expired entries');
+        _log.fine('pruned $removed expired entries');
       }
     } catch (e) {
-      debugPrint('[DeezerDiskCache] prune error: $e');
+      _log.severe('prune error: $e');
     }
   }
 

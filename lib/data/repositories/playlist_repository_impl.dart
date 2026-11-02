@@ -15,6 +15,10 @@ import '../local/library_store.dart';
 import '../mappers/playlist_firestore.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Playlists');
 
 /// The account's playlists, offline-first. Every change is an operation
 /// (create, rename, delete, a track change) applied here at once and saved
@@ -135,7 +139,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[Playlists] opening local playlists failed: $e');
+      _log.severe('opening local playlists failed: $e');
     }
   }
 
@@ -158,7 +162,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
         await _refresh(uid);
       }
     } catch (e) {
-      debugPrint('[Playlists] opening saved playlists failed: $e');
+      _log.severe('opening saved playlists failed: $e');
     }
 
     // 2. Whatever didn't reach the server last time goes now.
@@ -171,7 +175,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
       _server = _unique(snapshot.docs.map((d) => playlistFromFirestore(d.data(), docId: d.id)));
       await _refresh(uid);
     } catch (e) {
-      debugPrint('[Playlists] fetch failed: $e');
+      _log.severe('fetch failed: $e');
     }
 
     // 4. Changes made elsewhere. A doc with this device's writes still
@@ -199,7 +203,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
       }
       if (changed) await _refresh(uid);
     }, onError: (e) {
-      debugPrint('[Playlists] listener error: $e');
+      _log.severe('listener error: $e');
     });
   }
 
@@ -228,9 +232,9 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
       _outbox.kick(uid);
       await _store.clearPlaylists(guestUid);
       await _storage.clearCachedPlaylists(guestUid);
-      debugPrint('[Playlists] imported ${imported.length} guest playlists');
+      _log.fine('imported ${imported.length} guest playlists');
     } catch (e) {
-      debugPrint('[Playlists] guest import failed: $e');
+      _log.severe('guest import failed: $e');
     }
   }
 

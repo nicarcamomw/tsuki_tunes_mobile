@@ -18,6 +18,10 @@ import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('LibraryRepositoryImpl');
 
 export 'listened_tracks_repository.dart' show ListenedTrackData;
 
@@ -46,6 +50,12 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   late final AlbumCompletionIndex _albums;
   late final ListenedTracksRepository _listened;
   late final FollowedArtistsRepository _followed;
+
+  /// Called when a newly-registered track count reveals a completed album.
+  /// Wired to the album_completed product event in app_providers so events
+  /// that couldn't fire at listen time (count wasn't known yet) still fire.
+  set onAlbumCompleted(void Function(String albumId)? cb) =>
+      _albums.onAlbumCompleted = cb;
 
   // Local data
   List<Track> _favoriteTracks = [];
@@ -159,6 +169,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
 
   // --- Album completion ---
 
+  @override
   int getAlbumTracksCount(String albumId) => _albums.trackCount(albumId);
   int listenedCountForAlbum(String albumId) =>
       _albums.listenedCountForAlbum(albumId);
@@ -351,7 +362,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     try {
       await _history.recordPlay(uid, track);
     } catch (e) {
-      debugPrint('[LibraryRepositoryImpl] recordPlay failed: $e');
+      _log.severe('recordPlay failed: $e');
     }
   }
 
@@ -361,7 +372,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     try {
       return await _history.loadRange(uid, from, to);
     } catch (e) {
-      debugPrint('[LibraryRepositoryImpl] loadPlayDays failed: $e');
+      _log.severe('loadPlayDays failed: $e');
       return const [];
     }
   }

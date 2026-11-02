@@ -1,9 +1,12 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/track.dart';
 import 'bpm_flow.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('RainMix');
 
 /// Builds a queue for a rainy moment out of the listener's own music: their
 /// calm songs (by tempo), topped up with calm songs by their artists when
@@ -50,7 +53,7 @@ class RainMix {
             if (t.id.isNotEmpty && seen.add(t.id)) extra.add(t);
           }
         } catch (e) {
-          debugPrint('[RainMix] search failed for $a: $e');
+          _log.severe('search failed for $a: $e');
         }
       }
       extra.shuffle(rng);

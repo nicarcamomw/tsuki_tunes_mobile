@@ -1,3 +1,5 @@
+
+
 part of 'audio_provider.dart';
 
 // Saves the queue, position and radio so a killed app comes back where it was,
@@ -89,7 +91,7 @@ extension _PlaybackState on AudioProvider {
           _isBuffering = false;
           _prefetchNextTrack();
           notifyListeners();
-          debugPrint('[AudioProvider] Track "${restoredTrack.title}" would have ended during background; advanced to "${nextTrack.title}"');
+          _log.fine('Track "${restoredTrack.title}" would have ended during background; advanced to "${nextTrack.title}"');
           return;
         }
       }
@@ -113,9 +115,9 @@ extension _PlaybackState on AudioProvider {
       notifyListeners();
       // Make sure the restored radio has songs lined up before they're due.
       if (_radioCtrl.isActive) unawaited(_radioCtrl.topUp());
-      debugPrint('[AudioProvider] Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue${_radioCtrl.isActive ? ', radio on' : ''})');
+      _log.fine('Restored playback state: "${restoredTrack.title}" at ${posMs}ms (${_q.length} tracks in queue${_radioCtrl.isActive ? ', radio on' : ''})');
     } catch (e) {
-      debugPrint('[AudioProvider] Error restoring playback state: $e');
+      _log.severe('Error restoring playback state: $e');
     }
   }
 }

@@ -13,6 +13,10 @@ import '../../domain/entities/track.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/pace_matcher.dart';
 import 'audio_provider.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Run');
 
 enum RunPhase {
   /// Waiting for a steady rhythm before choosing music.
@@ -203,7 +207,7 @@ class RunProvider extends ChangeNotifier {
     _sub = _sensor().listen(
       (s) => _detector.add(s.x, s.y, s.z, s.t),
       onError: (Object e) {
-        debugPrint('[Run] sensor error: $e');
+        _log.severe('sensor error: $e');
         _sensorAvailable = false;
         _locked ??= 120;
         _onTarget();

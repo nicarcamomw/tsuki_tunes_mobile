@@ -28,6 +28,10 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('ArtistDetail');
 
 part 'artist_detail/artist_header.dart';
 part 'artist_detail/top_tracks.dart';
@@ -157,7 +161,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[ArtistDetail] loadArtistData error: $e');
+      _log.severe('loadArtistData error: $e');
       if (mounted) {
         setState(() {
           _hasError = true;

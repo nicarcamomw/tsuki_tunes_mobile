@@ -6,6 +6,10 @@ import 'package:just_audio/just_audio.dart';
 import '../../domain/entities/track.dart';
 import '../contracts/audio_player_contract.dart';
 import 'audio_precache_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('AudioPlayerService');
 
 class AudioPlayerService implements AudioPlayerContract {
   final AudioPlayer _playerA;
@@ -93,7 +97,7 @@ class AudioPlayerService implements AudioPlayerContract {
   /// runs once a track has started.
   void _start(AudioPlayer p) {
     unawaited(p.play().catchError((Object e) {
-      debugPrint('[AudioPlayerService] play error: $e');
+      _log.severe('play error: $e');
     }));
   }
 
@@ -131,7 +135,7 @@ class AudioPlayerService implements AudioPlayerContract {
         _speed = speedFor?.call(track) ?? 1.0;
         unawaited(_activePlayer.setSpeed(_speed));
         if (localPath != null && !kIsWeb) {
-          debugPrint('[AudioPlayerService] Zero-latency play from pre-cached file: $localPath');
+          _log.fine('Zero-latency play from pre-cached file: $localPath');
           await _activePlayer.setFilePath(localPath);
         } else {
           await _activePlayer.setUrl(track.previewUrl);
@@ -143,7 +147,7 @@ class AudioPlayerService implements AudioPlayerContract {
         return;
       } catch (e) {
         lastError = e;
-        debugPrint('[AudioPlayerService] playTrack attempt $attempt/$maxRetries error: $e');
+        _log.severe('playTrack attempt $attempt/$maxRetries error: $e');
         if (attempt < maxRetries) {
           await Future.delayed(Duration(milliseconds: 500 * attempt));
         }
@@ -169,7 +173,7 @@ class AudioPlayerService implements AudioPlayerContract {
       final inSpeed = speedFor?.call(nextTrack) ?? 1.0;
       unawaited(_standbyPlayer.setSpeed(inSpeed));
       if (localPath != null && !kIsWeb) {
-        debugPrint('[AudioPlayerService] Crossfade loading pre-cached file: $localPath');
+        _log.fine('Crossfade loading pre-cached file: $localPath');
         await _standbyPlayer.setFilePath(localPath);
       } else {
         await _standbyPlayer.setUrl(nextTrack.previewUrl);
@@ -210,11 +214,11 @@ class AudioPlayerService implements AudioPlayerContract {
           _standbyPlayer = outgoingPlayer;
           _loudness = inLevel;
           _isCrossfading = false;
-          debugPrint('[AudioPlayerService] Crossfade complete! Swapped active deck.');
+          _log.fine('Crossfade complete! Swapped active deck.');
         }
       });
     } catch (e) {
-      debugPrint('[AudioPlayerService] Crossfade start error: $e. Falling back to normal play.');
+      _log.warning('Crossfade start error: $e. Falling back to normal play.');
       _cancelCrossfade();
       await playTrack(nextTrack);
     }

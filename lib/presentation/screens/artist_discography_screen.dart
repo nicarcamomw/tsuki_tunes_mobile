@@ -13,6 +13,10 @@ import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('ArtistDiscography');
 
 class ArtistDiscographyScreen extends ConsumerStatefulWidget {
   final String? artistId;
@@ -134,7 +138,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
 
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkAutoFill());
     } catch (e) {
-      debugPrint('[ArtistDiscography] _loadMoreAlbums error: $e');
+      _log.severe('_loadMoreAlbums error: $e');
       if (mounted) {
         setState(() {
           _isLoadingMore = false;

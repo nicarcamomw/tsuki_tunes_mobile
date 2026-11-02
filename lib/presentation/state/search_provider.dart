@@ -9,6 +9,10 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Search');
 
 class SearchProvider extends ChangeNotifier {
   final DeezerApiService _api = DeezerApiService();
@@ -124,7 +128,7 @@ class SearchProvider extends ChangeNotifier {
       unawaited(_saveToHistory(cleanQuery));
     } catch (e) {
       if (generation != _searchGeneration) return;
-      debugPrint('Search error: $e');
+      _log.severe('Search error: $e');
       _hasError = true;
       _tracks = [];
       _artists = [];
@@ -160,7 +164,7 @@ class SearchProvider extends ChangeNotifier {
       _hasLyricsError = false;
     } catch (e) {
       if (generation != _lyricsSearchGeneration) return;
-      debugPrint('Lyrics search error: $e');
+      _log.severe('Lyrics search error: $e');
       _hasLyricsError = true;
       _lyricsResults = [];
     } finally {

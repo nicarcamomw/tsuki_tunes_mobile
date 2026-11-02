@@ -6,6 +6,10 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
 import '../local/app_database.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Outbox');
 
 /// A write waiting to reach the server.
 class OutboxEntry {
@@ -155,7 +159,7 @@ class Outbox {
         await (_db.delete(_db.outboxRows)..where((o) => o.id.equals(row.id))).go();
       } on PermanentSyncError catch (e) {
         await (_db.delete(_db.outboxRows)..where((o) => o.id.equals(row.id))).go();
-        debugPrint('[Outbox] ${row.kind} ${row.entityId} refused for good: ${e.reason}');
+        _log.warning('${row.kind} ${row.entityId} refused for good: ${e.reason}');
         _refused[row.kind]?.call(entry, e);
         onPermanentFailure?.call(entry, e);
       } catch (e) {

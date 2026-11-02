@@ -18,6 +18,10 @@ import '../widgets/album_progress_bar.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('AlbumDetail');
 
 class AlbumDetailScreen extends ConsumerStatefulWidget {
   final Album album;
@@ -86,7 +90,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[AlbumDetail] loadAlbumDetails error: $e');
+      _log.severe('loadAlbumDetails error: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -107,7 +111,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[AlbumDetail] enrichTracks error: $e');
+      _log.severe('enrichTracks error: $e');
     }
   }
 
@@ -194,7 +198,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         }
                       }
                     } catch (e) {
-                      debugPrint('Could not launch external album URL: $e');
+                      _log.severe('Could not launch external album URL: $e');
                     }
                   },
                 ),

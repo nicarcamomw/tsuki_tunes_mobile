@@ -5,6 +5,10 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/constants/firebase_emulators.dart';
 import 'crash_reporter.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('FeatureFlags');
 
 /// Switches that change what the app does without a new APK, from Firebase
 /// Remote Config: a kill switch for a part that broke, or a feature turned
@@ -67,22 +71,22 @@ class FeatureFlags extends ChangeNotifier {
       unawaited(_fetch(config));
       _updates = config.onConfigUpdated.listen((_) async {
         await config.activate();
-        debugPrint('[FeatureFlags] Updated: ${_describe()}');
+        _log.fine('Updated: ${_describe()}');
         notifyListeners();
       }, onError: (Object e) {
-        debugPrint('[FeatureFlags] Live updates failed: $e');
+        _log.severe('Live updates failed: $e');
       });
     } catch (e) {
-      debugPrint('[FeatureFlags] Remote Config unavailable, using defaults: $e');
+      _log.fine('Remote Config unavailable, using defaults: $e');
     }
   }
 
   Future<void> _fetch(FirebaseRemoteConfig config) async {
     try {
       if (await config.fetchAndActivate()) notifyListeners();
-      debugPrint('[FeatureFlags] ${_describe()}');
+      _log.fine('${_describe()}');
     } catch (e) {
-      debugPrint('[FeatureFlags] Fetch failed, keeping the last values: $e');
+      _log.severe('Fetch failed, keeping the last values: $e');
     }
   }
 

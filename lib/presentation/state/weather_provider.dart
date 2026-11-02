@@ -6,6 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/device_location.dart';
 import '../../data/datasources/weather_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Weather');
 
 enum WeatherSource { device, place }
 
@@ -85,7 +89,7 @@ class WeatherProvider extends ChangeNotifier with WidgetsBindingObserver {
       _offeredAt = offered == null ? null : DateTime.tryParse(offered);
       _offeredThisRain = prefs.getBool(_rainEpisodeKey) ?? false;
     } catch (e) {
-      debugPrint('[Weather] load error: $e');
+      _log.severe('load error: $e');
     }
     notifyListeners();
     if (_enabled) {

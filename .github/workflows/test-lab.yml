@@ -1,0 +1,96 @@
+name: Firebase Test Lab
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: test-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk-bundle \
+            /usr/local/lib/android/sdk/ndk/* /usr/local/lib/android/sdk/system-images \
+            /usr/local/share/powershell /usr/share/swift /usr/local/share/boost \
+            /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          sudo apt-get clean || true
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Android NDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          NDK_VERSION=$(grep -oP 'ndkVersion\s*=\s*"\K[^"]+' android/app/build.gradle.kts)
+          "$SDKMANAGER" "ndk;$NDK_VERSION"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Limit Gradle memory for CI
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g
+          org.gradle.daemon=false
+          org.gradle.workers.max=2
+          kotlin.compiler.execution.strategy=in-process
+          EOF
+
+      - name: Write CI env file
+        run: |
+          cat > config/dev.env <<EOF
+          BUILD_NUMBER=${{ github.run_number }}
+          GIT_SHA=${{ github.sha }}
+          USE_EMULATORS=false
+          EOF
+
+      - name: Build APK for integration tests
+        run: |
+          flutter build apk --flavor dev \
+            --dart-define-from-file=config/dev.env \
+            --target=integration_test/app_smoke_test.dart
+
+      - name: Build test runner APK
+        run: |
+          cd android
+          ./gradlew app:assembleDevDebugAndroidTest
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run tests on Firebase Test Lab
+        run: |
+          gcloud firebase test android run \
+            --type instrumentation \
+            --app build/app/outputs/flutter-apk/app-dev-debug.apk \
+            --test build/app/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk \
+            --device model=oriole,version=33,locale=en,orientation=portrait \
+            --device model=redfin,version=30,locale=en,orientation=portrait \
+            --timeout 5m \
+            --results-bucket=gs://tsuki-tunes-web-test-lab \
+            --project=tsuki-tunes-web \
+            --no-record-video

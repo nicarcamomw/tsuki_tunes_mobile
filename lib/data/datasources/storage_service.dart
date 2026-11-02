@@ -10,6 +10,10 @@ import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../contracts/storage_contract.dart';
 import '../local/library_store.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Storage');
 
 class StorageService implements StorageContract {
   /// [localStore] keeps the library (listened songs, playlists, followed
@@ -223,7 +227,7 @@ class StorageService implements StorageContract {
       if (!await local.hasListened(uid)) await _moveListenedToDatabase(local, uid);
       return await local.loadListened(uid);
     } catch (e) {
-      debugPrint('[Storage] listened songs from the database failed: $e');
+      _log.severe('listened songs from the database failed: $e');
       return _legacyListened(uid);
     }
   }
@@ -284,7 +288,7 @@ class StorageService implements StorageContract {
         // Only the songs that changed are written.
         return await local.saveListened(uid, tracks);
       } catch (e) {
-        debugPrint('[Storage] listened songs to the database failed: $e');
+        _log.severe('listened songs to the database failed: $e');
       }
     }
     return _saveLegacyListened(uid, tracks);
@@ -304,7 +308,7 @@ class StorageService implements StorageContract {
           await prefs.setString(_cachedTracksKey(uid), raw);
         }
       } catch (e) {
-        debugPrint('[Storage] listened tracks save failed: $e');
+        _log.severe('listened tracks save failed: $e');
       }
     });
     _listenedWrites = write;
@@ -418,7 +422,7 @@ class StorageService implements StorageContract {
     try {
       await _local?.clearPlaylists(uid);
     } catch (e) {
-      debugPrint('[Storage] clearing playlists in the database failed: $e');
+      _log.severe('clearing playlists in the database failed: $e');
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_cachedPlaylistsKey(uid));
@@ -458,7 +462,7 @@ class StorageService implements StorageContract {
       await prefs.remove(legacyKey);
       return legacy;
     } catch (e) {
-      debugPrint('[Storage] $legacyKey from the database failed: $e');
+      _log.severe('$legacyKey from the database failed: $e');
       return _legacyList(legacyKey);
     }
   }
@@ -477,7 +481,7 @@ class StorageService implements StorageContract {
       try {
         return await save(local);
       } catch (e) {
-        debugPrint('[Storage] $legacyKey to the database failed: $e');
+        _log.severe('$legacyKey to the database failed: $e');
       }
     }
     final prefs = await SharedPreferences.getInstance();

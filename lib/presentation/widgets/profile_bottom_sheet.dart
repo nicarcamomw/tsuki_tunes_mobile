@@ -30,6 +30,9 @@ import 'shuffle_mode_icon.dart';
 import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
+import '../../core/logger.dart';
+
+final _log = Log.named('Profile');
 
 part 'profile/logout.dart';
 part 'profile/settings_sections.dart';
