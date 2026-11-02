@@ -112,6 +112,13 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   String? _linkedSpotifyUri;
   // Spotify moved on to a track we didn't ask for; resuming must replay ours.
   bool _spotifyTookOver = false;
+  // The song Spotify played before ours, which its "previous" goes back to.
+  String? _spotifyPrevUri;
+  // What Spotify's own "next" plays after our song (its queue's first), or
+  // null when unknown; see _followSpotifyControls.
+  String? _spotifyNextUp;
+  // Play generation App Remote last reported our song playing in.
+  int _spotifyHeardGen = -1;
   // Our next songs, handed to Spotify along with the current one, in play
   // order. Spotify plays them by itself, so the queue goes on even when
   // Android freezes or kills Tsuki in the background.
@@ -935,6 +942,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// by itself (with its crossfade) instead of stopping at the end.
   void _afterSpotifyStarted() {
     _keepMediaSessionOnTop();
+    unawaited(_learnSpotifyNextUp());
     unawaited(_syncSpotifyRepeat());
     // Also when it's about to run out: similar songs that arrived while the
     // song was starting weren't sent then (_sendSpotifyAhead waits for it).

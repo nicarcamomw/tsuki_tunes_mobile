@@ -931,6 +931,27 @@ class SpotifyService {
     return null;
   }
 
+  /// The song Spotify plays next if its "next" is pressed (the first of
+  /// its queue, autoplay included), or null when unknown.
+  Future<String?> nextInQueue() async {
+    await _ensureValidToken();
+    if (_accessToken == null) return null;
+    try {
+      final response = await _get(
+        Uri.parse('https://api.spotify.com/v1/me/player/queue'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+      if (response.statusCode != 200 || response.body.isEmpty) return null;
+      final queue = (json.decode(response.body) as Map?)?['queue'];
+      if (queue is! List || queue.isEmpty) return null;
+      final first = queue.first;
+      return first is Map ? first['uri'] as String? : null;
+    } catch (e) {
+      _log.fine('Spotify queue lookup failed: $e');
+      return null;
+    }
+  }
+
   Future<void> _saveTokens() async {
     if (_accessToken != null) {
       await _secureStorage.write(key: _tokenKey, value: _accessToken!);

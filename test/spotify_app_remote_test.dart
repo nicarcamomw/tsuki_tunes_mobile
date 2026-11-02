@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
@@ -180,6 +181,12 @@ class FakeSpotifyService extends SpotifyService {
   Future<void> refreshProfile() async {
     profileRefreshCount++;
   }
+
+  /// What Spotify's own "next" would play; null: unknown.
+  String? nextUp;
+
+  @override
+  Future<String?> nextInQueue() async => nextUp;
 }
 
 class FakeNativePlayer extends SpotifyNativePlayer {
@@ -370,6 +377,11 @@ void main() {
     fakeNative = FakeNativePlayer();
     flags = FeatureFlags.forTesting();
   });
+
+  void setLifecycle(AppLifecycleState state) =>
+      TestWidgetsFlutterBinding.instance.handleAppLifecycleStateChanged(state);
+
+  tearDown(() => setLifecycle(AppLifecycleState.resumed));
 
   AudioProvider createProvider() => AudioProvider(
         spotifyService: fakeSpotify,
@@ -689,8 +701,13 @@ void main() {
 
     test('another track picked in Spotify mid-song: paused, play replays ours',
         () async {
+      // Spotify had something else next, and Tsuki isn't on screen: the
+      // song was picked in the Spotify app, not skipped to.
+      fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
+      setLifecycle(AppLifecycleState.paused);
       final provider =
           await playing([_track('t1'), _track('t2')], atMs: 60000);
+      await Future.delayed(const Duration(milliseconds: 300));
 
       fakeNative.simulateStateChanged(1000, 200000, false,
           uri: 'spotify:track:OTHER');
@@ -704,6 +721,113 @@ void main() {
       expect(fakeNative.resumeCount, 0);
       expect(fakeNative.lastTrackUri, 'spotify:track:t1');
       expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
+    });
+  });
+
+  group('Spotify\'s own next/previous (the car\'s buttons) move our queue', () {
+    Future<AudioProvider> playing(List<Track> tracks, {int atMs = 60000}) async {
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(atMs, 180000, false,
+          uri: 'spotify:track:${tracks.first.id}');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      return provider;
+    }
+
+    final tracks = [_track('t1'), _track('t2'), _track('t3')];
+
+    test('Spotify skipping to its autoplay mid-song plays our next song',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('a skip to the song Spotify had next is ours, screen off or not',
+        () async {
+      fakeSpotify.nextUp = 'spotify:track:autoplay';
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('with Tsuki on screen any jump mid-song is a skip', () async {
+      fakeSpotify.nextUp = 'spotify:track:autoplay';
+      setLifecycle(AppLifecycleState.resumed);
+      final provider = await playing(tracks);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:OTHER');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('"next" pressed twice in a row moves two songs', () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay1');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
+      // Spotify plays ours, then the second press, a second later.
+      fakeNative.simulateStateChanged(800, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay2');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't3');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t3');
+    });
+
+    test('right after a play, the song Spotify was on is not a skip',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      await provider.next();
+      await Future.delayed(Duration.zero);
+
+      // Stale report before Spotify says t2 plays.
+      fakeNative.simulateStateChanged(61000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+    });
+
+    test('Spotify going back to the song before plays our previous one',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      await provider.next();
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+
+      fakeNative.simulateStateChanged(0, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't1');
     });
   });
 
