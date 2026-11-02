@@ -1,3 +1,5 @@
+
+
 part of 'audio_provider.dart';
 
 // Classifies preview playback failures and retries the transient ones.
@@ -66,7 +68,7 @@ extension _PlaybackErrors on AudioProvider {
       notifyListeners();
 
       final delayMs = 1000 * _retryCount;
-      debugPrint('[AudioProvider] Retrying playback in ${delayMs}ms (attempt $_retryCount/$_maxPlaybackRetries) at position $_position');
+      _log.warning('Retrying playback in ${delayMs}ms (attempt $_retryCount/$_maxPlaybackRetries) at position $_position');
 
       _retryTimer?.cancel();
       _retryTimer = Timer(Duration(milliseconds: delayMs), () async {
@@ -80,7 +82,7 @@ extension _PlaybackErrors on AudioProvider {
             _lastPlaybackError = null;
             notifyListeners();
           } catch (e) {
-            debugPrint('[AudioProvider] Auto-retry attempt #$_retryCount failed: $e');
+            _log.warning('Auto-retry attempt #$_retryCount failed: $e');
             if (_retryCount >= _maxPlaybackRetries) {
               _isBuffering = false;
               _isPlaying = false;

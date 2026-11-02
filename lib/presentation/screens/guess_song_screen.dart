@@ -18,6 +18,10 @@ import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('GuessSong');
 
 class GuessSongScreen extends ConsumerStatefulWidget {
   const GuessSongScreen({super.key});
@@ -272,7 +276,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       });
       if (_finished) _startCountdown();
     } catch (e) {
-      debugPrint('[GuessSong] round error: $e');
+      _log.severe('round error: $e');
       if (!mounted || gen != _roundGen) return;
       setState(() {
         _loading = false;

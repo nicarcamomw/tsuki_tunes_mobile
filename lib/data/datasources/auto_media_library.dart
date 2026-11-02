@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/localization/app_language.dart';
@@ -12,6 +11,10 @@ import '../../domain/entities/track.dart';
 import 'deezer_api_service.dart';
 import 'media_session_handler.dart';
 import 'storage_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Auto');
 
 /// What Android Auto (and other media browsers) can browse and play.
 ///
@@ -101,7 +104,7 @@ class AutoMediaLibrary implements MediaLibrarySource {
         return _tracks(parentId, playlist?.tracks ?? const []);
       }
     } catch (e) {
-      debugPrint('[Auto] browse "$parentId" failed: $e');
+      _log.severe('browse "$parentId" failed: $e');
     }
     return const [];
   }
@@ -113,7 +116,7 @@ class AutoMediaLibrary implements MediaLibrarySource {
     try {
       return _tracks('$_searchPrefix$q', await _api.searchTracks(q));
     } catch (e) {
-      debugPrint('[Auto] search failed: $e');
+      _log.severe('search failed: $e');
       return const [];
     }
   }

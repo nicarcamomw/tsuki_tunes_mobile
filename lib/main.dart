@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_environment.dart';
+import 'core/logger.dart';
 import 'core/theme/cyber_theme.dart';
 import 'data/datasources/auto_media_library.dart';
 import 'data/datasources/crash_reporter.dart';
@@ -35,6 +36,9 @@ import 'presentation/state/audio_provider.dart';
 import 'presentation/widgets/mask_unlock_banner.dart';
 import 'presentation/widgets/moon_atmosphere.dart';
 
+
+final _log = Log.named('main');
+
 void main() async {
   // debugPrint also writes to the system log in release builds, where any
   // app with log access (or a bug report) could read songs, searches and
@@ -47,6 +51,7 @@ void main() async {
     if (!kReleaseMode) systemPrint(message, wrapWidth: wrapWidth);
   };
   WidgetsFlutterBinding.ensureInitialized();
+  Log.init();
   // Data sources, repositories and use cases (see di/injection.dart).
   configureDependencies();
 
@@ -92,7 +97,7 @@ Future<void> _initFirebaseCore() async {
     // whenever they arrive; the player follows them (FeatureFlags).
     unawaited(FeatureFlags().start());
   } catch (e) {
-    debugPrint('[main] Firebase core init failed: $e');
+    _log.severe('Firebase core init failed: $e');
   }
 }
 
@@ -150,7 +155,7 @@ Future<void> _initCrashReporting() async {
         FirebaseAnalyticsBackend(FirebaseAnalytics.instance),
         collect: !kDebugMode);
   } catch (e) {
-    debugPrint('[main] Crashlytics init failed: $e');
+    _log.severe('Crashlytics init failed: $e');
   }
 }
 
@@ -176,7 +181,7 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
       ),
     );
   } catch (e) {
-    debugPrint('[main] AudioService init failed, no system media controls: $e');
+    _log.severe('AudioService init failed, no system media controls: $e');
     return null;
   }
 }

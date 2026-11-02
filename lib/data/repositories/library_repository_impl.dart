@@ -18,6 +18,10 @@ import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('LibraryRepositoryImpl');
 
 export 'listened_tracks_repository.dart' show ListenedTrackData;
 
@@ -358,7 +362,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     try {
       await _history.recordPlay(uid, track);
     } catch (e) {
-      debugPrint('[LibraryRepositoryImpl] recordPlay failed: $e');
+      _log.severe('recordPlay failed: $e');
     }
   }
 
@@ -368,7 +372,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     try {
       return await _history.loadRange(uid, from, to);
     } catch (e) {
-      debugPrint('[LibraryRepositoryImpl] loadPlayDays failed: $e');
+      _log.severe('loadPlayDays failed: $e');
       return const [];
     }
   }

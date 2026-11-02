@@ -1,3 +1,5 @@
+
+
 part of '../profile_bottom_sheet.dart';
 
 Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
@@ -87,7 +89,7 @@ Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
 
     await auth.logout();
   } catch (e) {
-    debugPrint('Error durante el cierre de sesión: $e');
+    _log.severe('Error durante el cierre de sesión: $e');
   } finally {
     if (context.mounted) {
       // Signed out, the router shows the login on its own; this covers a

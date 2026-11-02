@@ -6,6 +6,10 @@ import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/localization/app_language.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('TranslationService');
 
 class TranslationService {
   static final TranslationService _instance = TranslationService._internal();
@@ -124,7 +128,7 @@ class TranslationService {
         final result = await translator.translateText(line);
         translated.add(result);
       } catch (e) {
-        debugPrint('[TranslationService] Error translating line: $e');
+        _log.severe('Error translating line: $e');
         translated.add('');
         failed = true;
       }
@@ -149,7 +153,7 @@ class TranslationService {
         return decoded.cast<String>();
       }
     } catch (e) {
-      debugPrint('[TranslationService] Cache read error: $e');
+      _log.severe('Cache read error: $e');
     }
     return null;
   }
@@ -174,7 +178,7 @@ class TranslationService {
       }
       await prefs.setStringList(_indexKey, index);
     } catch (e) {
-      debugPrint('[TranslationService] Cache write error: $e');
+      _log.severe('Cache write error: $e');
     }
   }
 

@@ -1,5 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Location');
 
 enum LocationStatus { ok, denied, deniedForever, serviceOff, failed }
 
@@ -54,7 +57,7 @@ class DeviceLocation implements LocationSource {
             );
       return LocationResult(LocationStatus.ok, pos.latitude, pos.longitude);
     } catch (e) {
-      debugPrint('[Location] failed: $e');
+      _log.severe('failed: $e');
       return const LocationResult(LocationStatus.failed);
     }
   }

@@ -11,6 +11,10 @@ import '../datasources/sub_write_queue.dart';
 import '../local/library_store.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Follows');
 
 /// The artists the account follows (their new releases reach the radar),
 /// offline-first: following or unfollowing saves here at once, with an
@@ -88,7 +92,7 @@ class FollowedArtistsRepository {
       }
       if (saved.isNotEmpty && isCurrent()) _show(saved.map(Artist.fromJson).toList());
     } catch (e) {
-      debugPrint('[Follows] opening the saved follows failed: $e');
+      _log.severe('opening the saved follows failed: $e');
     }
     _outbox.kick(uid);
 
@@ -98,7 +102,7 @@ class FollowedArtistsRepository {
       if (!isCurrent()) return;
       await _takeServer(uid, snapshot.docs.map((d) => Artist.fromJson(d.data())).toList());
     } catch (e) {
-      debugPrint('[Follows] fetch failed: $e');
+      _log.severe('fetch failed: $e');
     }
 
     _subscription = followedCol.snapshots().listen((snapshot) async {
@@ -107,7 +111,7 @@ class FollowedArtistsRepository {
       if (snapshot.metadata.hasPendingWrites) return;
       await _takeServer(uid, snapshot.docs.map((d) => Artist.fromJson(d.data())).toList());
     }, onError: (e) {
-      debugPrint('[Follows] listener error: $e');
+      _log.severe('listener error: $e');
     });
   }
 

@@ -3,6 +3,10 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/album.dart';
 import '../datasources/storage_service.dart';
 import 'listened_tracks_repository.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('LibraryRepositoryImpl');
 
 /// Knows how many tracks each album has and how many of them were listened,
 /// so it can tell when an album is complete.
@@ -162,7 +166,7 @@ class AlbumCompletionIndex {
       }
       registerAll(counts);
     }).catchError((Object e) {
-      debugPrint('[LibraryRepositoryImpl] ensureAlbumTrackCounts error: $e');
+      _log.severe('ensureAlbumTrackCounts error: $e');
     });
   }
 
@@ -202,8 +206,7 @@ class AlbumCompletionIndex {
     if (_trackCounts.length < before || forceSave) {
       _storage.saveAlbumTrackCounts(_trackCounts);
       if (_trackCounts.length < before) {
-        debugPrint(
-            '[LibraryRepositoryImpl] Pruned ${before - _trackCounts.length} orphaned albumTrackCounts');
+        _log.fine('Pruned ${before - _trackCounts.length} orphaned albumTrackCounts');
       }
     }
   }

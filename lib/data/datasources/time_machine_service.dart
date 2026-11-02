@@ -8,6 +8,10 @@ import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
 import '../repositories/library_repository_impl.dart';
 import 'release_radar_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('TimeMachine');
 
 enum TimeMachineKind {
   /// From the play log: what was on repeat.
@@ -234,7 +238,7 @@ class TimeMachineService {
       await prefs.setString(_scheduleKey, json.encode(schedule));
       await prefs.setString(_scheduleBuiltKey, PlayDay.keyFor(today));
     } catch (e) {
-      debugPrint('[TimeMachine] refreshSchedule failed: $e');
+      _log.severe('refreshSchedule failed: $e');
     }
   }
 
@@ -295,7 +299,7 @@ class TimeMachineService {
       );
       await prefs.setString(_lastNotifiedKey, now.toIso8601String());
     } catch (e) {
-      debugPrint('[TimeMachine] background check failed: $e');
+      _log.severe('background check failed: $e');
     }
   }
 }

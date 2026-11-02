@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../../core/utils/moon_phase.dart';
 import '../../domain/entities/track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('HomeWidget');
 
 class HomeWidgetService {
   static const _playerWidget = 'TsukiPlayerWidgetProvider';
@@ -38,7 +41,7 @@ class HomeWidgetService {
     try {
       await _writeTrack(track, isPlaying: isPlaying);
     } catch (e) {
-      debugPrint('[HomeWidget] update failed: $e');
+      _log.severe('update failed: $e');
     }
   }
 
@@ -99,7 +102,7 @@ class HomeWidgetService {
 Future<void> widgetBackgroundCallback(Uri? uri) async {
   if (uri == null) return;
   final host = uri.host;
-  debugPrint('[HomeWidget] background action: $host');
+  _log.fine('background action: $host');
   // Widget button taps arrive here. The actual playback control goes through
   // the system media session — audio_service's notification already provides
   // prev/play-pause/next on the lock-screen and notification shade, and the

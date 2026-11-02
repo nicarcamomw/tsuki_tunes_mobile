@@ -8,6 +8,10 @@ import '../../data/datasources/motion_sensor.dart';
 import '../../domain/logic/shake_detector.dart';
 import 'audio_provider.dart';
 import 'run_provider.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Shake');
 
 /// Shake the phone to skip to the next song. Off by default.
 ///
@@ -81,7 +85,7 @@ class ShakeSkipProvider extends ChangeNotifier with WidgetsBindingObserver {
           if (_detector.add(s.x, s.y, s.z, s.t)) _onShake();
         },
         onError: (Object e) {
-          debugPrint('[Shake] sensor error: $e');
+          _log.severe('sensor error: $e');
           _sub = null;
         },
         cancelOnError: true,

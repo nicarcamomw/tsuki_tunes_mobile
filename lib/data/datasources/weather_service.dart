@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Weather');
 
 enum Sky { clear, fewClouds, cloudy, overcast, fog, drizzle, rain, snow, storm }
 
@@ -104,7 +107,7 @@ class WeatherService {
       if (res.statusCode != 200) return null;
       return parseCurrent(res.body, now: now ?? DateTime.now());
     } catch (e) {
-      debugPrint('[Weather] forecast failed: $e');
+      _log.severe('forecast failed: $e');
       return null;
     }
   }
@@ -118,7 +121,7 @@ class WeatherService {
       if (res.statusCode != 200) return null;
       return parsePlaces(res.body);
     } catch (e) {
-      debugPrint('[Weather] search failed: $e');
+      _log.severe('search failed: $e');
       return null;
     }
   }
@@ -137,7 +140,7 @@ class WeatherService {
         fetchedAt: now,
       );
     } catch (e) {
-      debugPrint('[Weather] unexpected forecast: $e');
+      _log.fine('unexpected forecast: $e');
       return null;
     }
   }
@@ -156,7 +159,7 @@ class WeatherService {
           ),
       ];
     } catch (e) {
-      debugPrint('[Weather] unexpected search: $e');
+      _log.fine('unexpected search: $e');
       return const [];
     }
   }

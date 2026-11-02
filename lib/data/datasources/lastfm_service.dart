@@ -1,9 +1,12 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../domain/entities/similar_track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('LastFM');
 
 class LastFmService {
   static const String _apiKey = String.fromEnvironment('LASTFM_API_KEY');
@@ -46,7 +49,7 @@ class LastFmService {
             ),
       ];
     } catch (e) {
-      debugPrint('LastFM getSimilarTracks error for $artist - $title: $e');
+      _log.severe('LastFM getSimilarTracks error for $artist - $title: $e');
       return [];
     }
   }
@@ -75,7 +78,7 @@ class LastFmService {
         }
       }
     } catch (e) {
-      debugPrint('Error fetching LastFM artist tags for $artistName: $e');
+      _log.severe('Error fetching LastFM artist tags for $artistName: $e');
     }
     return [];
   }

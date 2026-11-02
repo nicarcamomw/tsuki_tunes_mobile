@@ -1,8 +1,11 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import '../../core/constants/app_environment.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('SpotifyService');
 
 /// Spotify App Remote (the native SDK): talks to the Spotify app on this
 /// phone directly. Connecting also launches/wakes the Spotify app, which the
@@ -60,10 +63,10 @@ class SpotifyNativePlayer {
         _watchConnection();
         _startListening();
       }
-      debugPrint('SpotifyNative: connected=$_isConnected');
+      _log.info('SpotifyNative: connected=$_isConnected');
       return _isConnected;
     } catch (e) {
-      debugPrint('SpotifyNative: connect error: $e');
+      _log.severe('SpotifyNative: connect error: $e');
       onError?.call(e.toString());
       return false;
     }
@@ -81,12 +84,12 @@ class SpotifyNativePlayer {
             _startListening();
           }
         } else if (_isConnected) {
-          debugPrint('SpotifyNative: connection lost (${status.message})');
+          _log.warning('SpotifyNative: connection lost (${status.message})');
           _markDisconnected();
         }
       },
       onError: (e) {
-        debugPrint('SpotifyNative: connection status error: $e');
+        _log.severe('SpotifyNative: connection status error: $e');
       },
     );
   }
@@ -124,7 +127,7 @@ class SpotifyNativePlayer {
         );
       },
       onError: (e) {
-        debugPrint('SpotifyNative: state error: $e');
+        _log.severe('SpotifyNative: state error: $e');
       },
     );
   }
@@ -135,7 +138,7 @@ class SpotifyNativePlayer {
   Future<bool> playUri(String uri) async {
     if (!_isConnected) return false;
     if (await _tryPlay(uri)) return true;
-    debugPrint('SpotifyNative: play failed, reconnecting to relaunch Spotify');
+    _log.severe('SpotifyNative: play failed, reconnecting to relaunch Spotify');
     _markDisconnected();
     if (!await connect()) return false;
     return _tryPlay(uri);
@@ -146,7 +149,7 @@ class SpotifyNativePlayer {
       await SpotifySdk.play(spotifyUri: uri);
       return true;
     } catch (e) {
-      debugPrint('SpotifyNative: play error: $e');
+      _log.severe('SpotifyNative: play error: $e');
       return false;
     }
   }
@@ -160,7 +163,7 @@ class SpotifyNativePlayer {
       await SpotifySdk.queue(spotifyUri: uri);
       return true;
     } catch (e) {
-      debugPrint('SpotifyNative: queue error: $e');
+      _log.severe('SpotifyNative: queue error: $e');
       return false;
     }
   }
@@ -170,7 +173,7 @@ class SpotifyNativePlayer {
     try {
       await SpotifySdk.pause();
     } catch (e) {
-      debugPrint('SpotifyNative: pause error: $e');
+      _log.severe('SpotifyNative: pause error: $e');
     }
   }
 
@@ -179,7 +182,7 @@ class SpotifyNativePlayer {
     try {
       await SpotifySdk.resume();
     } catch (e) {
-      debugPrint('SpotifyNative: resume error: $e');
+      _log.severe('SpotifyNative: resume error: $e');
     }
   }
 
@@ -188,7 +191,7 @@ class SpotifyNativePlayer {
     try {
       await SpotifySdk.seekTo(positionedMilliseconds: positionMs);
     } catch (e) {
-      debugPrint('SpotifyNative: seek error: $e');
+      _log.severe('SpotifyNative: seek error: $e');
     }
   }
 
@@ -200,7 +203,7 @@ class SpotifyNativePlayer {
           repeatMode: on ? SpotifyRepeatMode.track : SpotifyRepeatMode.off);
       return true;
     } catch (e) {
-      debugPrint('SpotifyNative: repeat error: $e');
+      _log.severe('SpotifyNative: repeat error: $e');
       return false;
     }
   }

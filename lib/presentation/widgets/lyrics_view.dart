@@ -13,6 +13,10 @@ import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import 'audio_progress_selector.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Lyrics');
 
 /// Lyrics of the playing track, shared by the card under the player and the
 /// full-screen view, so they load once and a translation carries over.
@@ -70,7 +74,7 @@ class LyricsController extends ChangeNotifier {
         result = await LyricsService().getLyrics(track.title, track.artistName);
         break;
       } catch (e) {
-        debugPrint('[Lyrics] load failed (attempt ${attempt + 1}): $e');
+        _log.severe('load failed (attempt ${attempt + 1}): $e');
         // A network hiccup, not "no lyrics": try again on our own instead
         // of making the user tap retry.
         if (attempt >= retryDelays.length) break;
@@ -125,7 +129,7 @@ class LyricsController extends ChangeNotifier {
       _showTranslation = true;
       return true;
     } catch (e) {
-      debugPrint('[Lyrics] translation failed: $e');
+      _log.severe('translation failed: $e');
       return false;
     } finally {
       if (!_disposed && _trackId == trackId) {

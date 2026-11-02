@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/track.dart';
 import '../../domain/logic/pace_matcher.dart';
 import 'bpm_flow.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('RunCatalog');
 
 /// Finds songs at a given pace: the listener's own songs whose tempo is
 /// known, plus Deezer searches filtered by tempo (Deezer's advanced search
@@ -62,7 +65,7 @@ class RunCatalog {
     return _warming ??= bpm.lookup(list, concurrency: 2).then((found) {
       _bpms.addAll(found);
     }).catchError((Object e) {
-      debugPrint('[RunCatalog] warm-up failed: $e');
+      _log.severe('warm-up failed: $e');
     });
   }
 
@@ -84,7 +87,7 @@ class RunCatalog {
         filter,
       ];
       final results = await Future.wait(queries.map((q) => search(q).catchError((Object e) {
-            debugPrint('[RunCatalog] search failed ($q): $e');
+            _log.severe('search failed ($q): $e');
             return <Track>[];
           })));
       for (final list in results) {

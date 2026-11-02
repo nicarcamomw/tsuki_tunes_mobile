@@ -4,6 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('PlayHistory');
 
 class PlayEntry {
   final String trackId;
@@ -48,7 +52,7 @@ class PlayHistory extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('[PlayHistory] load error: $e');
+      _log.severe('load error: $e');
     }
   }
 
@@ -76,7 +80,7 @@ class PlayHistory extends ChangeNotifier {
         jsonEncode(_tracks.map((id, t) => MapEntry(id, t.toJson()))),
       );
     } catch (e) {
-      debugPrint('[PlayHistory] save error: $e');
+      _log.severe('save error: $e');
     }
   }
 

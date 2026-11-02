@@ -5,6 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/playback_error.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('BatteryGuide');
 
 /// Phone makers whose battery manager freezes apps in the background, each
 /// with its own settings to undo it. Sister brands share their system.
@@ -63,7 +67,7 @@ class BatteryGuide {
       _family = batteryFamilyFor(manufacturer, brand);
       _makerName = brand.isNotEmpty ? brand : manufacturer;
     } catch (e) {
-      debugPrint('[BatteryGuide] maker lookup failed: $e');
+      _log.severe('maker lookup failed: $e');
     }
   }
 
@@ -79,7 +83,7 @@ class BatteryGuide {
               'openAppSettings', {'package': spotifyPackage}) ??
           false;
     } catch (e) {
-      debugPrint('[BatteryGuide] opening Spotify settings failed: $e');
+      _log.severe('opening Spotify settings failed: $e');
       return false;
     }
   }
@@ -99,7 +103,7 @@ class BatteryGuide {
       await prefs.setBool(_askedBackgroundKey, true);
       await _channel.invokeMethod<bool>('askToRunInBackground');
     } catch (e) {
-      debugPrint('[BatteryGuide] background request failed: $e');
+      _log.severe('background request failed: $e');
     }
   }
 

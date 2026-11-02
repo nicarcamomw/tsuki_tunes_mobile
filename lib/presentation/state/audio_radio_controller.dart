@@ -8,6 +8,10 @@ import '../../data/datasources/lastfm_service.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('AudioRadio');
 
 export '../../domain/logic/song_radio.dart' show RadioMode, RadioReason, RadioSource;
 
@@ -217,7 +221,7 @@ class AudioRadioController {
     try {
       batch = await r.nextBatch(count: count);
     } catch (e) {
-      debugPrint('[AudioRadio] refill failed: $e');
+      _log.severe('refill failed: $e');
       batch = const [];
     }
     if (!identical(radio, r)) return false;

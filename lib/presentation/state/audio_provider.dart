@@ -34,6 +34,10 @@ import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
 import 'audio_sleep_timer.dart';
 import 'connectivity_provider.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('AudioProvider');
 
 export '../../domain/entities/playback_error.dart';
 export '../../domain/entities/repeat_mode.dart';
@@ -477,12 +481,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     // Once both are known, a Spotify still playing our queue after Tsuki
     // was killed is picked up instead of the restored song shown paused.
     _spotifyReady = _initSpotify().catchError((Object e) {
-      debugPrint('[AudioProvider] Spotify init failed: $e');
+      _log.severe('Spotify init failed: $e');
     });
     unawaited(Future.wait([_restorePlaybackState(), _spotifyReady])
         .then((_) => _adoptRunningSpotify())
         .catchError((Object e) {
-      debugPrint('[AudioProvider] startup Spotify check failed: $e');
+      _log.severe('startup Spotify check failed: $e');
     }));
     _initCrossfade();
   }
@@ -567,7 +571,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       await _loadShuffleSettings();
       notifyListeners();
     } catch (e) {
-      debugPrint('[AudioProvider] Error loading saved crossfade: $e');
+      _log.severe('Error loading saved crossfade: $e');
     }
   }
 
@@ -614,7 +618,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     final spotify = _useSpotify && _spotifyActive && !_spotifyFallbackActive;
     if (left > (spotify ? _spotifyAheadMax : 3)) return;
     _continueTriedFor = track.id;
-    debugPrint('[AudioProvider] Queue ending, adding similar songs');
+    _log.info('Queue ending, adding similar songs');
     unawaited(_radioCtrl.continueFrom(track));
   }
 
@@ -683,7 +687,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void _onHeadphonesUnplugged() {
     _spotifyInterrupted = false;
     if (!_isPlaying) return;
-    debugPrint('[AudioProvider] Headphones unplugged, pausing');
+    _log.info('Headphones unplugged, pausing');
     if (_useSpotify && _spotifyActive && !_spotifyFallbackActive) {
       unawaited(_spotifyPause());
       _isPlaying = false;
@@ -712,12 +716,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void _onFeatureFlagsChanged() {
     final allowed = _spotifyAllowed;
     if (_useSpotify && !allowed && !_flags.spotifyPlayback) {
-      debugPrint('[AudioProvider] Spotify switched off remotely, playing previews');
+      _log.info('Spotify switched off remotely, playing previews');
       _lastSpotifyError = SpotifyFallbackReason.disabled;
       unawaited(_fallbackFromSpotify(
           announcement: 'Spotify is paused for now, switching to preview'));
     } else if (!_useSpotify && allowed) {
-      debugPrint('[AudioProvider] Spotify switched back on remotely');
+      _log.info('Spotify switched back on remotely');
       unawaited(updateSpotifyState());
     }
   }
@@ -785,7 +789,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         }
       }
     }, onError: (e) {
-      debugPrint('[AudioProvider] positionStream error: $e');
+      _log.severe('positionStream error: $e');
     });
 
     _durSub = _service.durationStream.listen((dur) {
@@ -794,7 +798,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         notifyListeners();
       }
     }, onError: (e) {
-      debugPrint('[AudioProvider] durationStream error: $e');
+      _log.severe('durationStream error: $e');
     });
 
     _bufSub = _service.bufferedPositionStream.listen((buf) {
@@ -802,7 +806,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         _setBufferedPosition(buf);
       }
     }, onError: (e) {
-      debugPrint('[AudioProvider] bufferedPositionStream error: $e');
+      _log.severe('bufferedPositionStream error: $e');
     });
 
     _stateSub = _service.playerStateStream.listen((state) {
@@ -821,14 +825,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         notifyListeners();
       }
     }, onError: (e) {
-      debugPrint('[AudioProvider] playerStateStream error: $e');
+      _log.severe('playerStateStream error: $e');
       _handlePlaybackError(e);
     });
 
     _eventSub = _service.playbackEventStream.listen((_) {
       // Stream monitors native audio pipeline
     }, onError: (e) {
-      debugPrint('[AudioProvider] playbackEventStream error: $e');
+      _log.severe('playbackEventStream error: $e');
       _handlePlaybackError(e);
     });
   }
@@ -922,7 +926,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _isBuffering = false;
       _lastPlaybackError = _classifyPlaybackError(e, track);
       notifyListeners();
-      debugPrint('Error playing track: $e');
+      _log.severe('Error playing track: $e');
     }
   }
 
@@ -954,7 +958,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     try {
       await AudioPrecacheService().precacheTrack(await _withFreshPreview(track));
     } catch (e) {
-      debugPrint('[AudioProvider] Precache non-fatal error: $e');
+      _log.warning('Precache non-fatal error: $e');
     }
   }
 
@@ -974,7 +978,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     if (fresh == null || fresh.previewUrl.isEmpty || fresh.previewUrl == url) {
       return track;
     }
-    debugPrint('[AudioProvider] Refreshed expired preview for "${track.title}"');
+    _log.info('Refreshed expired preview for "${track.title}"');
     final updated = track.copyWith(
       previewUrl: fresh.previewUrl,
       isrc: track.isrc ?? fresh.isrc,
@@ -1021,7 +1025,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         await Future<void>.delayed(const Duration(milliseconds: 1500));
       }
     } catch (e) {
-      debugPrint('[AudioProvider] Spotify link lookup failed: $e');
+      _log.severe('Spotify link lookup failed: $e');
     } finally {
       _warming = false;
     }
@@ -1053,12 +1057,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         if (gen != _prefetchGeneration) return;
         _prefetchedUri = uri;
         _prefetchedForTrackId = nextTrack.id;
-        debugPrint('[AudioProvider] Prefetched Spotify URI for "${nextTrack.title}"');
+        _log.fine('Prefetched Spotify URI for "${nextTrack.title}"');
       }).catchError((e) {
         if (gen == _prefetchGeneration) {
           _prefetchedTargetTrackId = null;
         }
-        debugPrint('[AudioProvider] Spotify prefetch non-fatal error: $e');
+        _log.warning('Spotify prefetch non-fatal error: $e');
       });
     }
   }
@@ -1342,7 +1346,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     try {
       bpms = await BpmService.shared.lookup(tracks, concurrency: 2);
     } catch (e) {
-      debugPrint('[AudioProvider] Tempo lookup failed: $e');
+      _log.severe('Tempo lookup failed: $e');
       return;
     }
     if (gen != _tempoGeneration || !_q.isShuffle) return;
@@ -1380,11 +1384,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
           if (!(isInLibrary?.call(t.id) ?? false)) t
       ];
       if (_q.addRecommendations(fresh) == 0) return;
-      debugPrint('[AudioProvider] ${fresh.length} recommended songs ready');
+      _log.info('${fresh.length} recommended songs ready');
       if (reshuffle) _q.reshuffleAhead();
       _queueChanged();
     } catch (e) {
-      debugPrint('[AudioProvider] Recommendations failed: $e');
+      _log.severe('Recommendations failed: $e');
     } finally {
       _recoLoading = false;
     }
@@ -1679,7 +1683,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _completionHandled = false;
     _playStartPending = true;
 
-    debugPrint('[AudioProvider] Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
+    _log.fine('Starting crossfade to "${nextTrack.title}" (${_crossfadeSeconds}s)');
     notifyListeners();
     onTrackStarted?.call(nextTrack);
     unawaited(_ensureLoudness(nextTrack));
@@ -1693,7 +1697,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
     } catch (e) {
-      debugPrint('[AudioProvider] Crossfade error, falling back to normal play: $e');
+      _log.warning('Crossfade error, falling back to normal play: $e');
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
       try {

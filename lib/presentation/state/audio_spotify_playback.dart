@@ -1,3 +1,5 @@
+
+
 part of 'audio_provider.dart';
 
 // Full-song playback through Spotify (Web API and App Remote): starting songs,
@@ -37,7 +39,7 @@ extension _SpotifyPlayback on AudioProvider {
       });
       session.becomingNoisyEventStream.listen((_) => _onHeadphonesUnplugged());
     } catch (e) {
-      debugPrint('[AudioProvider] AudioSession config error: $e');
+      _log.severe('AudioSession config error: $e');
     }
     // Also while Spotify plays (Tsuki then has no audio focus, so the
     // session above doesn't hear it).
@@ -56,7 +58,7 @@ extension _SpotifyPlayback on AudioProvider {
       }
       _checkSpotifyLoop(Duration(milliseconds: pos));
       if (paused && _isPlaying && !_isBuffering && _spotifyPausedAtEnd(pos, dur)) {
-        debugPrint('[AudioProvider] Spotify stopped at the end of the track, advancing');
+        _log.info('Spotify stopped at the end of the track, advancing');
         _stopPositionTimer();
         _handleTrackCompleted();
         return;
@@ -92,7 +94,7 @@ extension _SpotifyPlayback on AudioProvider {
       // Spotify closed: its queue is gone with it.
       _spotifyQueuedPending.clear();
       if (!_spotifyActive || !_isPlaying) return;
-      debugPrint('[AudioProvider] App Remote link lost, checking Spotify through the Web API');
+      _log.warning('App Remote link lost, checking Spotify through the Web API');
       unawaited(_syncSpotifyPlaybackState());
     };
 
@@ -128,17 +130,17 @@ extension _SpotifyPlayback on AudioProvider {
         // Connecting App Remote launches Spotify in the background (no UI).
         final token = _spotify.accessToken;
         if (token == null) return;
-        debugPrint('[AudioProvider] Spotify not active on this phone, waking via App Remote...');
+        _log.warning('Spotify not active on this phone, waking via App Remote...');
         final connected = await _nativePlayer.connect(accessToken: token);
         if (connected) {
           await Future.delayed(const Duration(milliseconds: 1500));
           final wokenDevice = await _spotify.ensureActiveDevice();
-          debugPrint('[AudioProvider] Spotify native wake result: ${wokenDevice ?? "still no device"}');
+          _log.info('Spotify native wake result: ${wokenDevice ?? "still no device"}');
         } else {
-          debugPrint('[AudioProvider] Spotify native SDK connect failed during warm-up');
+          _log.severe('Spotify native SDK connect failed during warm-up');
         }
       } catch (e) {
-        debugPrint('[AudioProvider] Spotify device pre-warm error: $e');
+        _log.severe('Spotify device pre-warm error: $e');
       } finally {
         _warmingUpSpotify = false;
       }
@@ -205,7 +207,7 @@ extension _SpotifyPlayback on AudioProvider {
       if (_spotifyPollTick % 300 == 0 && _spotifyPollTick > 0) {
         await _spotify.refreshProfile();
         if (!_spotify.isPremium) {
-          debugPrint('[AudioProvider] Spotify Premium lost, falling back to preview');
+          _log.warning('Spotify Premium lost, falling back to preview');
           await _fallbackFromSpotify();
           return;
         }
@@ -227,7 +229,7 @@ extension _SpotifyPlayback on AudioProvider {
           if (_isPlaying &&
               estimatedPos >= _duration &&
               _duration > Duration.zero) {
-            debugPrint('[AudioProvider] Spotify session gone, track would have ended; advancing');
+            _log.warning('Spotify session gone, track would have ended; advancing');
             _stopPositionTimer();
             _completionHandled = false;
             _crossfadeTriggered = false;
@@ -235,7 +237,7 @@ extension _SpotifyPlayback on AudioProvider {
             return;
           }
           if (_isPlaying) {
-            debugPrint('[AudioProvider] Spotify session gone, marking paused');
+            _log.warning('Spotify session gone, marking paused');
             _isPlaying = false;
             _stopPositionTimer();
             notifyListeners();
@@ -289,7 +291,7 @@ extension _SpotifyPlayback on AudioProvider {
         // Grace period: ignore stale pause reports right after a play command
         final sincePlayCommand = DateTime.now().difference(_lastPlayCommandTime);
         if (sincePlayCommand.inSeconds < 5) {
-          debugPrint('[AudioProvider] Spotify sync: ignoring stale pause (${sincePlayCommand.inMilliseconds}ms since play command)');
+          _log.warning('Spotify sync: ignoring stale pause (${sincePlayCommand.inMilliseconds}ms since play command)');
           return;
         }
         if (pausedAtEnd) {
@@ -309,7 +311,7 @@ extension _SpotifyPlayback on AudioProvider {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('[AudioProvider] Spotify state sync error: $e');
+      _log.severe('Spotify state sync error: $e');
     }
   }
 
@@ -368,7 +370,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (stale ||
         _sleepCtrl.stopAfterCurrentTrack ||
         _q.repeatMode == PlaybackRepeatMode.one) {
-      debugPrint('[AudioProvider] Spotify list out of date, taking over');
+      _log.info('Spotify list out of date, taking over');
       _spotifyAhead = const [];
       _stopPositionTimer();
       _completionHandled = false;
@@ -383,7 +385,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
     final track = _q.current;
     if (track == null) return;
-    debugPrint('[AudioProvider] Spotify moved on to "${track.title}", following');
+    _log.fine('Spotify moved on to "${track.title}", following');
     _radioCtrl.registerLeaving(track, finished, _position, _duration,
         completed: true);
 
@@ -450,7 +452,7 @@ extension _SpotifyPlayback on AudioProvider {
     final uri = await _resolveSpotifyUri(next);
     if (uri == null || gen != _playGeneration || !_isPlaying) return;
     if (!await _nativePlayer.queue(uri)) {
-      debugPrint('[AudioProvider] Spotify queue refused, Tsuki moves on by itself');
+      _log.warning('Spotify queue refused, Tsuki moves on by itself');
       _spotifyQueueBroken = true;
       CrashReporter.instance.issue('spotify_queue_refused');
       return;
@@ -459,7 +461,7 @@ extension _SpotifyPlayback on AudioProvider {
     // The song changed meanwhile: what's queued no longer follows it, and
     // waits in Spotify's queue until it plays (see above).
     if (gen != _playGeneration) return;
-    debugPrint('[AudioProvider] "${next.title}" queued in Spotify after this song');
+    _log.info('"${next.title}" queued in Spotify after this song');
     _spotifyAhead = [(trackId: next.id, uri: uri)];
   }
 
@@ -558,7 +560,7 @@ extension _SpotifyPlayback on AudioProvider {
       _spotifyListStale = true;
       return;
     }
-    debugPrint('[AudioProvider] Queue edited, handing Spotify the new list');
+    _log.info('Queue edited, handing Spotify the new list');
     await _reissueSpotifyAhead(force: true);
   }
 
@@ -587,7 +589,7 @@ extension _SpotifyPlayback on AudioProvider {
     final progress = Duration(milliseconds: state['progress_ms'] as int? ?? 0);
     final durationMs = item['duration_ms'] as int? ?? 0;
     final now = DateTime.now();
-    debugPrint('[AudioProvider] Spotify is playing "${track.title}" from our queue, picking it up');
+    _log.info('Spotify is playing "${track.title}" from our queue, picking it up');
     _currentTrack = track;
     _currentSpotifyUri = uri;
     _linkedSpotifyUri = null;
@@ -634,7 +636,7 @@ extension _SpotifyPlayback on AudioProvider {
       final atSwitch = estimated - otherProgress;
       if (estimated >= _duration ||
           atSwitch >= _duration - const Duration(seconds: 10)) {
-        debugPrint('[AudioProvider] Spotify moved on after our track ended, advancing queue');
+        _log.info('Spotify moved on after our track ended, advancing queue');
         _stopPositionTimer();
         _handleTrackCompleted();
         return;
@@ -642,7 +644,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
 
     if (_spotifyTookOver) return;
-    debugPrint('[AudioProvider] Spotify switched to another track, no longer ours');
+    _log.info('Spotify switched to another track, no longer ours');
     _spotifyTookOver = true;
     _isPlaying = false;
     _stopPositionTimer();
@@ -655,7 +657,7 @@ extension _SpotifyPlayback on AudioProvider {
         await _nativePlayer.pause();
         return;
       } catch (e) {
-        debugPrint('[AudioProvider] App Remote pause failed, trying Web API: $e');
+        _log.severe('App Remote pause failed, trying Web API: $e');
       }
     }
     await _spotify.pause();
@@ -674,7 +676,7 @@ extension _SpotifyPlayback on AudioProvider {
         await _nativePlayer.resume();
         return;
       } catch (e) {
-        debugPrint('[AudioProvider] App Remote resume failed, trying Web API: $e');
+        _log.severe('App Remote resume failed, trying Web API: $e');
       }
     }
     await _spotify.resume();
@@ -687,7 +689,7 @@ extension _SpotifyPlayback on AudioProvider {
         await _nativePlayer.seekTo(positionMs);
         return;
       } catch (e) {
-        debugPrint('[AudioProvider] App Remote seek failed, trying Web API: $e');
+        _log.severe('App Remote seek failed, trying Web API: $e');
       }
     }
     await _spotify.seekTo(positionMs);
@@ -709,7 +711,7 @@ extension _SpotifyPlayback on AudioProvider {
       // No connection (metro, plane): Spotify can't be searched or told to
       // play, so play the preview downloaded ahead of time right away
       // instead of waiting on requests that will time out.
-      debugPrint('Spotify: offline, playing the cached preview of "${track.title}"');
+      _log.warning('Spotify: offline, playing the cached preview of "${track.title}"');
       _spotifyActive = false;
       _spotifyFallbackActive = true;
       if (_nativePlayer.isConnected) {
@@ -737,16 +739,16 @@ extension _SpotifyPlayback on AudioProvider {
       _prefetchedUri = null;
       _prefetchedForTrackId = null;
       _prefetchedTargetTrackId = null;
-      debugPrint('Spotify: using prefetched URI for "${track.title}"');
+      _log.fine('Spotify: using prefetched URI for "${track.title}"');
     } else {
-      debugPrint('Spotify: searching "${track.title}" by "${track.artistName}"');
+      _log.fine('Spotify: searching "${track.title}" by "${track.artistName}"');
       lookup = _resolveSpotifyUri(track);
     }
     final uri = await lookup;
     if (gen != _playGeneration) return;
 
     if (uri == null) {
-      debugPrint('Spotify: track not found "${track.title}", falling back to preview');
+      _log.warning('Spotify: track not found "${track.title}", falling back to preview');
       _lastSpotifyError = SpotifyFallbackReason.trackUnavailable;
       CrashReporter.instance.issue('spotify_track_not_found');
       ProductAnalytics.instance.log('spotify_fallback', {'reason': 'track_not_found'});
@@ -759,7 +761,7 @@ extension _SpotifyPlayback on AudioProvider {
       return;
     }
 
-    debugPrint('Spotify: found URI=$uri');
+    _log.fine('Spotify: found URI=$uri');
     _currentSpotifyUri = uri;
     _linkedSpotifyUri = null;
     _spotifyTookOver = false;
@@ -777,11 +779,11 @@ extension _SpotifyPlayback on AudioProvider {
     // Spotify on no track at all (seen on Honor), so they're only for when
     // App Remote can't be reached.
     if (_nativePlayer.isConnected) {
-      debugPrint('Spotify: App Remote connected, playing directly...');
+      _log.info('Spotify: App Remote connected, playing directly...');
       final ok = await _nativePlayer.playUri(uri);
       if (gen != _playGeneration) return;
       if (ok) {
-        debugPrint('Spotify: App Remote fast-path succeeded');
+        _log.fine('Spotify: App Remote fast-path succeeded');
         _spotifyActive = true;
         _spotifyFallbackActive = false;
         _isPlaying = false;
@@ -793,7 +795,7 @@ extension _SpotifyPlayback on AudioProvider {
         unawaited(_verifySpotifyPlayback(gen, uri, track));
         return;
       }
-      debugPrint('Spotify: App Remote fast-path failed, falling through to Web API');
+      _log.severe('Spotify: App Remote fast-path failed, falling through to Web API');
     }
 
     // ── No App Remote: the Web API, handing Spotify the next songs already
@@ -806,7 +808,7 @@ extension _SpotifyPlayback on AudioProvider {
           await _spotify.play(trackUris: [uri, ...ahead.map((e) => e.uri)]);
       if (gen != _playGeneration) return;
       if (ok) {
-        debugPrint('Spotify: playing with ${ahead.length} queued songs ahead');
+        _log.info('Spotify: playing with ${ahead.length} queued songs ahead');
         _spotifyAhead = ahead;
         _spotifyActive = true;
         _spotifyFallbackActive = false;
@@ -819,7 +821,7 @@ extension _SpotifyPlayback on AudioProvider {
         unawaited(_verifySpotifyPlayback(gen, uri, track));
         return;
       }
-      debugPrint('Spotify: list play failed, playing the single song');
+      _log.severe('Spotify: list play failed, playing the single song');
       _spotifyListPlayFailed = true;
     }
 
@@ -829,7 +831,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (deviceId != null) {
       final played = await _spotify.play(trackUri: uri, deviceId: deviceId);
       if (gen != _playGeneration) return;
-      debugPrint('Spotify: Web API single play=$played');
+      _log.fine('Spotify: Web API single play=$played');
       if (played) {
         _spotifyActive = true;
         _spotifyFallbackActive = false;
@@ -845,7 +847,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
 
     // ── Last resort: wake Spotify through App Remote. ──
-    debugPrint('Spotify: Web API exhausted, playing through App Remote...');
+    _log.warning('Spotify: Web API exhausted, playing through App Remote...');
     try {
       final token = _spotify.accessToken;
       if (token != null) {
@@ -854,7 +856,7 @@ extension _SpotifyPlayback on AudioProvider {
         if (connected) {
           final played = await _nativePlayer.playUri(uri);
           if (gen != _playGeneration) return;
-          debugPrint('Spotify: App Remote play result=$played');
+          _log.fine('Spotify: App Remote play result=$played');
           if (played) {
             _spotifyActive = true;
             _spotifyFallbackActive = false;
@@ -870,10 +872,10 @@ extension _SpotifyPlayback on AudioProvider {
         }
       }
     } catch (e) {
-      debugPrint('Spotify: App Remote error: $e');
+      _log.severe('Spotify: App Remote error: $e');
     }
 
-    debugPrint('Spotify: all play attempts failed, falling back to preview');
+    _log.warning('Spotify: all play attempts failed, falling back to preview');
     CrashReporter.instance.issue('spotify_all_attempts_failed');
     ProductAnalytics.instance.log('spotify_fallback', {'reason': 'all_attempts_failed'});
     _lastSpotifyError = SpotifyFallbackReason.openApp;
@@ -910,7 +912,7 @@ extension _SpotifyPlayback on AudioProvider {
   Future<void> _verifySpotifyPlayback(int gen, String uri, Track track) async {
     if (await _spotifyConfirmsPlaying(gen, uri)) return;
 
-    debugPrint('[SpotifyCheck] Not playing, waking Spotify via App Remote');
+    _log.info('Not playing, waking Spotify via App Remote');
     final token = _spotify.accessToken;
     if (token != null) {
       final connected = await _nativePlayer.connect(accessToken: token);
@@ -928,7 +930,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
     if (gen != _playGeneration || !_spotifyActive) return;
 
-    debugPrint('[SpotifyCheck] Spotify did not start, falling back to preview');
+    _log.warning('Spotify did not start, falling back to preview');
     CrashReporter.instance.issue('spotify_did_not_start');
     ProductAnalytics.instance.log('spotify_fallback', {'reason': 'did_not_start'});
     _lastSpotifyError = SpotifyFallbackReason.openApp;
@@ -1007,7 +1009,7 @@ extension _SpotifyPlayback on AudioProvider {
       await Future.delayed(const Duration(milliseconds: 250));
       if (gen != _playGeneration || !_spotifyActive) return true;
       if (_nativePlayer.isPlayingUri(uri) || _nativePlayingOurTrack) {
-        debugPrint('[SpotifyCheck] Playing (App Remote)');
+        _log.info('Playing (App Remote)');
         _onSpotifyConfirmed(0);
         _afterSpotifyStarted();
         return true;
@@ -1016,18 +1018,18 @@ extension _SpotifyPlayback on AudioProvider {
     final state = await _spotify.getPlaybackState();
     if (gen != _playGeneration || !_spotifyActive) return true;
     if (state == null) {
-      debugPrint('[SpotifyCheck] No active Spotify session');
+      _log.fine('No active Spotify session');
       return false;
     }
     final device = state['device'] as Map<String, dynamic>?;
     final item = state['item'] as Map<String, dynamic>?;
     final linked = item?['linked_from'] as Map<String, dynamic>?;
     final progressMs = state['progress_ms'] as int? ?? 0;
-    debugPrint('[SpotifyCheck] is_playing=${state['is_playing']} '
+    _log.fine('is_playing=${state['is_playing']} '
         'progress_ms=$progressMs item=${item?['uri']} '
         'device=${device?['name']} volume=${device?['volume_percent']}');
     if (device?['volume_percent'] == 0) {
-      debugPrint('[SpotifyCheck] Spotify device volume is 0%: playback is silent');
+      _log.fine('Spotify device volume is 0%: playback is silent');
     }
     final confirmed = state['is_playing'] == true &&
         (item?['uri'] == uri || linked?['uri'] == uri);
@@ -1062,7 +1064,7 @@ extension _SpotifyPlayback on AudioProvider {
       _spotifyLoopsTrack = null;
       return;
     }
-    debugPrint('[AudioProvider] Spotify repeat ${want ? 'track' : 'off'}');
+    _log.fine('Spotify repeat ${want ? 'track' : 'off'}');
   }
 
   /// Spotify reported [reported] for our song: if it just started over
@@ -1085,7 +1087,7 @@ extension _SpotifyPlayback on AudioProvider {
   void _onSpotifyLooped(Duration pos) {
     final track = _currentTrack;
     if (track == null) return;
-    debugPrint('[AudioProvider] Spotify looped "${track.title}"');
+    _log.info('Spotify looped "${track.title}"');
     onTrackCompleted?.call(track);
     final now = DateTime.now();
     _spotifySyncPosition = pos;
@@ -1121,7 +1123,7 @@ extension _SpotifyPlayback on AudioProvider {
     if (!_spotifyActive || !_isPlaying) return;
     if (state == null && _spotify.lastPlaybackStateFailed) return;
     if (state != null && state['is_playing'] == true) return;
-    debugPrint('[AudioProvider] Spotify did not resume after interruption, marking paused');
+    _log.fine('Spotify did not resume after interruption, marking paused');
     _isPlaying = false;
     _stopPositionTimer();
     notifyListeners();

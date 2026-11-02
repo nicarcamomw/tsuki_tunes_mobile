@@ -21,6 +21,10 @@ import '../../domain/entities/wrapped_data.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Wrapped');
 
 /// Tsuki Wrapped as stories: the recap of a [year], or of one [month] of
 /// it. Tap the sides to move, hold to pause, swipe down to close.
@@ -156,7 +160,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       await Share.shareXFiles([XFile(file.path)],
           text: 'Tsuki Wrapped · ${strings.wrappedPeriod(widget.year, widget.month)}');
     } catch (e) {
-      debugPrint('[Wrapped] share error: $e');
+      _log.severe('share error: $e');
     } finally {
       if (mounted) {
         setState(() => _sharing = false);

@@ -7,6 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/track.dart';
 import 'deezer_api_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('BPM');
 
 enum FlowMode {
   /// Tempo climbs gradually: warm-up, workout, party.
@@ -170,7 +174,7 @@ class BpmService {
       (m['gain'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _gain[k] = (v as num).toDouble());
       (m['unknown'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _unknownSince[k] = v as int);
     } catch (e) {
-      debugPrint('[BPM] cache load error: $e');
+      _log.severe('cache load error: $e');
     }
   }
 

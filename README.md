@@ -73,6 +73,21 @@ firebase firestore:databases:restore --backup projects/tsuki-tunes-web/locations
 
 Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar.
 
+## Logging estructurado
+
+`lib/core/logger.dart` con `package:logging`. Cada subsistema tiene su propio logger (`Log.named('AudioProvider')`, `Log.named('SpotifyService')`, …) con cuatro niveles:
+
+| Nivel | Cuándo |
+|---|---|
+| `fine` | Traza: syncs de posición, prefetches, ediciones de cola |
+| `info` | Cambios de estado que vale la pena saber: audífonos desconectados, crossfade iniciado |
+| `warning` | Errores atrapados de los que la app se recupera (fallback, retry) |
+| `severe` | Errores atrapados que pierden funcionalidad (init failures, errores de streams) |
+
+En release el root level es `OFF` → no se imprime nada (el `debugPrint` override de `main.dart` ya bloqueaba la salida, ahora `Log.init()` también apaga `package:logging`). En debug se imprime todo con la etiqueta, nivel y mensaje en una línea: `I [AudioProvider] Headphones unplugged, pausing`.
+
+Los registros siguen llegando a `PlaybackLog` (el usuario los copia desde configuraciones) porque `Log._print` llama a `debugPrint`, que pasa por el override que captura a `PlaybackLog`.
+
 ## Reportes de errores (Crashlytics)
 
 Además de los crashes, `lib/data/datasources/crash_reporter.dart` manda a Crashlytics (apagado en builds debug):

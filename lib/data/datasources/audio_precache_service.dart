@@ -1,7 +1,10 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../domain/entities/track.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('AudioPrecache');
 
 /// Service responsible for predictive background caching of audio previews.
 /// Pre-downloads upcoming tracks in queue to eliminate network buffer latency
@@ -31,7 +34,7 @@ class AudioPrecacheService {
       }
       return dir;
     } catch (e) {
-      debugPrint('[AudioPrecacheService] error getting cache dir: $e');
+      _log.severe('error getting cache dir: $e');
       return null;
     }
   }
@@ -56,7 +59,7 @@ class AudioPrecacheService {
       }
       _pruneOldFiles();
     } catch (e) {
-      debugPrint('[AudioPrecacheService] error indexing cache dir: $e');
+      _log.severe('error indexing cache dir: $e');
     }
   }
 
@@ -105,7 +108,7 @@ class AudioPrecacheService {
       if (dir == null) return;
 
       final targetFile = File('${dir.path}/preview_${track.id}.mp3');
-      debugPrint('[AudioPrecache] Pre-caching upcoming track audio: "${track.title}"...');
+      _log.fine('Pre-caching upcoming track audio: "${track.title}"...');
 
       final response = await http
           .get(Uri.parse(track.previewUrl))
@@ -116,10 +119,10 @@ class AudioPrecacheService {
         _cachedPaths[track.id] = targetFile.path;
         _touch(track.id);
         _pruneOldFiles();
-        debugPrint('[AudioPrecache] Pre-cached "${track.title}" (${response.bodyBytes.length} bytes) successfully! Zero-latency ready.');
+        _log.info('Pre-cached "${track.title}" (${response.bodyBytes.length} bytes) successfully! Zero-latency ready.');
       }
     } catch (e) {
-      debugPrint('[AudioPrecache] Non-fatal precache error for "${track.title}": $e');
+      _log.warning('Non-fatal precache error for "${track.title}": $e');
     } finally {
       _inFlight.remove(track.id);
     }

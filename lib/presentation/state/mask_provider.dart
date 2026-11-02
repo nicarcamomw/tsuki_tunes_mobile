@@ -13,6 +13,10 @@ import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/moon_calculator.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Masks');
 
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';
@@ -191,7 +195,7 @@ class MaskProvider extends ChangeNotifier {
       _equipped = prefs.getString(_equippedKey);
       _stats = _Stats.decode(prefs.getString(_statsKey));
     } catch (e) {
-      debugPrint('[Masks] load error: $e');
+      _log.severe('load error: $e');
     }
     _loaded = true;
     if (!_ready.isCompleted) _ready.complete();
@@ -211,7 +215,7 @@ class MaskProvider extends ChangeNotifier {
       }
       await prefs.setString(_statsKey, _stats.encode());
     } catch (e) {
-      debugPrint('[Masks] save error: $e');
+      _log.severe('save error: $e');
     }
   }
 
@@ -289,7 +293,7 @@ class MaskProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[Masks] cloud sync error: $e');
+      _log.severe('cloud sync error: $e');
     }
   }
 
@@ -299,7 +303,7 @@ class MaskProvider extends ChangeNotifier {
     try {
       await doc.set({'masks': masks}, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('[Masks] cloud write error: $e');
+      _log.severe('cloud write error: $e');
     }
   }
 

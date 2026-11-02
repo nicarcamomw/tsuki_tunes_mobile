@@ -5,6 +5,10 @@ import 'package:flutter/widgets.dart';
 
 import '../../domain/repositories/playback_controller.dart';
 import 'rain_mix_service.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('TileChannel');
 
 class TileChannelService {
   static const _channel = MethodChannel('com.tsuki.tsuki_tunes_mobile/tile');
@@ -52,12 +56,12 @@ class TileChannelService {
     try {
       final tracks = await RainMixService().getTracks();
       if (tracks.isEmpty) {
-        debugPrint('[TileChannel] No rain mix tracks found');
+        _log.fine('No rain mix tracks found');
         return;
       }
       await audio.playTrack(tracks.first, newQueue: tracks);
     } catch (e) {
-      debugPrint('[TileChannel] Rain mix playback failed: $e');
+      _log.severe('Rain mix playback failed: $e');
     }
   }
 }

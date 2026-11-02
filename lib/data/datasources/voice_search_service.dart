@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Voice');
 
 enum VoiceAction { play, search }
 
@@ -61,7 +65,7 @@ class VoiceSearchService {
         onStatus: (status) => _onStatus?.call(status),
       );
     } catch (e) {
-      debugPrint('[Voice] Init failed: $e');
+      _log.severe('Init failed: $e');
       _available = false;
     }
     return _available;
@@ -76,7 +80,7 @@ class VoiceSearchService {
   }
 
   void _handleError(SpeechRecognitionError error) {
-    debugPrint('[Voice] ${error.errorMsg} (permanent: ${error.permanent})');
+    _log.severe('${error.errorMsg} (permanent: ${error.permanent})');
     _onError?.call(errorFromCode(error.errorMsg));
   }
 
@@ -134,7 +138,7 @@ class VoiceSearchService {
         ),
       );
     } catch (e) {
-      debugPrint('[Voice] listen failed: $e');
+      _log.severe('listen failed: $e');
       onError(VoiceError.other);
     }
   }
@@ -166,7 +170,7 @@ class VoiceSearchService {
       final ids = (await _speech.locales()).map((l) => l.localeId).toList();
       chosen = pickLocale(langCode, system?.localeId, ids);
     } catch (e) {
-      debugPrint('[Voice] locale lookup failed: $e');
+      _log.severe('locale lookup failed: $e');
     }
     return _localeCache[langCode] = chosen;
   }

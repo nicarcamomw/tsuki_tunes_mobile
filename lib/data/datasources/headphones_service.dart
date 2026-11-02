@@ -1,7 +1,10 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../core/logger.dart';
+
+
+final _log = Log.named('Headphones');
 
 /// Tells when the headphones are unplugged (or Bluetooth audio drops), so
 /// the music pauses instead of carrying on out of the speaker. Android
@@ -19,7 +22,7 @@ class HeadphonesService {
         .receiveBroadcastStream()
         .map<void>((_) {})
         .handleError((Object e) =>
-            debugPrint('[Headphones] unplug events unavailable: $e'))
+            _log.fine('unplug events unavailable: $e'))
         .asBroadcastStream();
   }
 }
