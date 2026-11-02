@@ -621,6 +621,7 @@ extension _SpotifyPlayback on AudioProvider {
     _audioHeard();
     _startPositionTimer();
     notifyListeners();
+    _keepMediaSessionOnTop();
     _prefetchNextTrack();
   }
 

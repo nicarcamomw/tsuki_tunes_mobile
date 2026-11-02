@@ -503,6 +503,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       if (_useSpotify && _spotifyActive) {
         _startPositionTimer();
         _syncSpotifyPlaybackState();
+        _keepMediaSessionOnTop();
       } else if (_useSpotify && !_isPlaying) {
         unawaited(_adoptRunningSpotify());
       }
