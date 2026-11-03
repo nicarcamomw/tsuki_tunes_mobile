@@ -35,6 +35,7 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - **Reportes de errores** enviados a Firebase Crashlytics cuando la app falla. Incluyen el modelo del dispositivo, la versión del sistema, el detalle técnico del error y el estado de la app en ese momento. No incluyen tu nombre ni tu correo.
 - **Mediciones de rendimiento** (tiempos de carga y de red) enviadas a Firebase Performance.
 - Para proteger el servicio contra abusos, Firebase App Check verifica que las solicitudes vengan de la app original (Google Play Integrity).
+- **Si el teléfono tiene acceso root o es un emulador**: se anota junto a los reportes de errores y, si dejas activadas las estadísticas de uso, una vez en ellas. Solo sirve para entender fallas y cuántos teléfonos así hay; la app no te bloquea ni cambia por eso.
 
 ### Spotify (opcional)
 - Si conectas tu cuenta de Spotify, la app usa la API de Spotify para buscar canciones, controlar la reproducción y leer tu perfil (nombre, país y tipo de suscripción), tu biblioteca y tus artistas más escuchados.

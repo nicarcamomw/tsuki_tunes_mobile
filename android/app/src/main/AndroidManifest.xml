@@ -19,6 +19,13 @@
     <!-- Android 11+: lets the Spotify App Remote SDK find and wake the Spotify app -->
     <queries>
         <package android:name="com.spotify.music"/>
+        <!-- Root managers, only to report a rooted phone (MainActivity
+             deviceIntegrity; Android 11+ hides other apps otherwise) -->
+        <package android:name="com.topjohnwu.magisk"/>
+        <package android:name="eu.chainfire.supersu"/>
+        <package android:name="com.koushikdutta.superuser"/>
+        <package android:name="com.noshufou.android.su"/>
+        <package android:name="com.kingroot.kinguser"/>
         <!-- Android 11+: without this the speech recognizer looks missing
              and voice search reports itself unavailable -->
         <intent>

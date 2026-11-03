@@ -18,6 +18,7 @@ import 'core/theme/cyber_theme.dart';
 import 'data/datasources/auto_media_library.dart';
 import 'data/datasources/crash_reporter.dart';
 import 'data/datasources/deezer_disk_cache.dart';
+import 'data/datasources/device_integrity.dart';
 import 'data/datasources/feature_flags.dart';
 import 'data/datasources/firebase_service.dart';
 import 'data/datasources/home_widget_service.dart';
@@ -118,6 +119,8 @@ void _deferredInit() {
         play: (track, queue) => getIt<PlayTrack>()(track, queue: queue),
       );
     }
+    // Rooted phone or emulator: only reported (Crashlytics, analytics).
+    unawaited(DeviceIntegrity.report());
     unawaited(ReleaseRadarService().initForeground());
     unawaited(HomeWidgetService().initialize());
     unawaited(HomeWidgetService().registerInteractivityCallback());

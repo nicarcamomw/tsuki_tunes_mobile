@@ -89,6 +89,17 @@ La app elimina la cuenta sola (Perfil → Eliminar cuenta). Quien no pueda usarl
 4. En Authentication, menú ⋮ de esa cuenta → **Borrar cuenta**.
 5. Responder el correo confirmando que se eliminó.
 
+## Seguridad
+
+- **Red:** solo HTTPS y solo las autoridades de certificación de Android, no las que instale el usuario. Eso impide leer el tráfico con un proxy. Está en `android/app/src/main/res/xml/network_security_config.xml` y lo vigila `test/network_security_test.dart`, que también falla si algún código acepta certificados inválidos.
+- **Sin certificate pinning, a propósito:** la app solo habla con servicios de terceros (Google/Firebase, Spotify, Deezer, Last.fm, LRCLIB, Open-Meteo), que cambian sus certificados cuando quieren. Un pin dejaría sin conexión a todos los usuarios hasta publicar una actualización. Fijar cuando exista una API propia.
+- **Root y emuladores:** solo se registran (`DeviceIntegrity`): claves `device_rooted`, `device_emulator` y `device_root_signals` en cada reporte de Crashlytics, y un evento `device_integrity` por instalación en Analytics. La app no bloquea por esto: es fácil de ocultar y las ROMs personalizadas lo activan.
+- **Lo que protege el backend: App Check con Play Integrity.** La app ya envía los tokens. Para que Firestore rechace pedidos que no vengan de la app original:
+  1. [Firebase Console](https://console.firebase.google.com/project/tsuki-tunes-web/appcheck) → App Check → pestaña **APIs** → **Cloud Firestore**.
+  2. Mirar las métricas: los pedidos **verificados** deberían ser casi el 100 %. Si hay muchos sin verificar, son versiones antiguas de la app: esperar a que se actualicen.
+  3. Registrar los tokens de depuración de los teléfonos de desarrollo (salen en logcat: *"Enter this debug secret into the allow list"*), o las versiones debug quedan sin acceso.
+  4. **Aplicar** (Enforce). Se puede volver atrás en el mismo lugar.
+
 ## Logging estructurado
 
 `lib/core/logger.dart` con `package:logging`. Cada subsistema tiene su propio logger (`Log.named('AudioProvider')`, `Log.named('SpotifyService')`, …) con cuatro niveles:

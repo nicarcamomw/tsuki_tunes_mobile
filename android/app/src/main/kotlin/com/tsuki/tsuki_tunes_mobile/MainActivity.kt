@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
@@ -14,6 +15,7 @@ import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 
 class MainActivity : AudioServiceActivity() {
 
@@ -51,6 +53,7 @@ class MainActivity : AudioServiceActivity() {
                         }
                     }
                     "runsInBackground" -> result.success(ignoresBatteryOptimizations())
+                    "integrity" -> result.success(deviceIntegrity())
                     "askToRunInBackground" -> result.success(askToRunInBackground())
                     else -> result.notImplemented()
                 }
@@ -180,6 +183,48 @@ class MainActivity : AudioServiceActivity() {
         )
         true
     } catch (e: Exception) {
+        false
+    }
+
+    /// Signs of a rooted phone or an emulator. Only reported (Crashlytics
+    /// keys, one analytics event), never acted on: they're easy to hide
+    /// (Magisk), custom ROMs trip them, and what guards the backend is Play
+    /// Integrity through Firebase App Check.
+    private fun deviceIntegrity(): Map<String, Any> {
+        val signals = mutableListOf<String>()
+        val suPaths = listOf(
+            "/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su",
+            "/system/sd/xbin/su", "/data/local/xbin/su", "/data/local/bin/su",
+            "/system/app/Superuser.apk", "/data/adb/magisk",
+        )
+        if (suPaths.any { File(it).exists() }) signals += "su"
+        if (Build.TAGS?.contains("test-keys") == true) signals += "test_keys"
+        val rootApps = listOf(
+            "com.topjohnwu.magisk", "eu.chainfire.supersu",
+            "com.koushikdutta.superuser", "com.noshufou.android.su",
+            "com.kingroot.kinguser",
+        )
+        if (rootApps.any { isInstalled(it) }) signals += "root_app"
+        val emulator = Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.contains("emulator") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu") ||
+            Build.PRODUCT.contains("sdk_gphone")
+        return mapOf(
+            "rooted" to signals.isNotEmpty(),
+            "emulator" to emulator,
+            "signals" to signals.joinToString(","),
+        )
+    }
+
+    private fun isInstalled(pkg: String): Boolean = try {
+        packageManager.getPackageInfo(pkg, 0)
+        true
+    } catch (e: PackageManager.NameNotFoundException) {
         false
     }
 
