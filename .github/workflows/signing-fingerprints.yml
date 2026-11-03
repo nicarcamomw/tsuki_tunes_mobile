@@ -1,0 +1,34 @@
+name: Signing fingerprints
+
+# Prints the SHA-1 and SHA-256 of the release signing key, the ones Firebase
+# needs (Google Sign-In, App Check with Play Integrity). Fingerprints aren't
+# secret: they're in every APK. Run it by hand from the Actions tab.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fingerprints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Print the release key fingerprints
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Missing repository secret ANDROID_KEYSTORE_PASSWORD"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/kspass"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in android/app/release-keystore.jks.enc \
+            -out "$RUNNER_TEMP/release.jks" \
+            -pass file:"$RUNNER_TEMP/kspass"
+          keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -alias tsuki \
+            -storepass:file "$RUNNER_TEMP/kspass" | grep -E 'SHA1:|SHA256:'
+          rm "$RUNNER_TEMP/kspass" "$RUNNER_TEMP/release.jks"
