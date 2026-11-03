@@ -1,6 +1,8 @@
 import '../../core/localization/app_language.dart';
 
-enum MaskRarity { common, rare, epic, secret, legendary }
+/// Rarity tiers, gacha style: R (rare), SR (super rare), SSR (super super
+/// rare) and UL (ultra). Whether a mask is hidden is [OniMask.secret].
+enum MaskRarity { r, sr, ssr, ul }
 
 enum MaskArt {
   tengu,
@@ -31,12 +33,16 @@ enum MaskArt {
   chinoame,
 }
 
-/// A collectible mask: one of the four illustrations, dyed with a color
-/// matrix, unlocked by an achievement.
+/// A collectible mask, unlocked by an achievement or a week's challenges:
+/// one of the original illustrations ([art], maybe dyed), or its own
+/// [image] from a tier folder (assets/images/masks/r|sr|ssr|ul/).
 class OniMask {
   final String id;
   final String kanji;
-  final MaskArt art;
+  final MaskArt? art;
+
+  /// Its own illustration (510×637, transparent), instead of an [art].
+  final String? image;
   final MaskRarity rarity;
   /// Hidden until unlocked: no name, no hint.
   final bool secret;
@@ -55,7 +61,8 @@ class OniMask {
   const OniMask({
     required this.id,
     required this.kanji,
-    required this.art,
+    this.art,
+    this.image,
     required this.rarity,
     required this.names,
     required this.descriptions,
@@ -64,14 +71,14 @@ class OniMask {
     this.goal,
     this.weekly = false,
     this.hints,
-  });
+  }) : assert((art == null) != (image == null), 'a mask has an art or its own image');
 
-  String asset() => switch (art) {
+  String asset() => image ?? switch (art!) {
         MaskArt.tengu => 'assets/images/tengu.png',
         MaskArt.kabuki => 'assets/images/oni.png',
         MaskArt.hannya => 'assets/images/hannya.png',
         MaskArt.cyberOni => 'assets/images/cyber_oni_mask.png',
-        _ => 'assets/images/masks/${art.name}.webp',
+        final other => 'assets/images/masks/${other.name}.webp',
       };
 
   String name(AppLanguage l) => names[l] ?? names[AppLanguage.es]!;
@@ -113,7 +120,7 @@ class MaskCatalog {
       id: 'hajime',
       kanji: '初',
       art: MaskArt.tengu,
-      rarity: MaskRarity.common,
+      rarity: MaskRarity.r,
       names: {
         AppLanguage.es: 'Primer Eco',
         AppLanguage.en: 'First Echo',
@@ -129,7 +136,7 @@ class MaskCatalog {
       id: 'hyaku',
       kanji: '百',
       art: MaskArt.kabuki,
-      rarity: MaskRarity.common,
+      rarity: MaskRarity.r,
       goal: 250,
       names: {
         AppLanguage.es: 'Cien Voces',
@@ -146,7 +153,7 @@ class MaskCatalog {
       id: 'sen',
       kanji: '千',
       art: MaskArt.hannya,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       goal: 2500,
       names: {
         AppLanguage.es: 'Mil Ecos',
@@ -163,7 +170,7 @@ class MaskCatalog {
       id: 'oshi',
       kanji: '推',
       art: MaskArt.kabuki,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       goal: 100,
       dye: maskDye(0xFFFF6B9D),
       names: const {
@@ -181,7 +188,7 @@ class MaskCatalog {
       id: 'tabibito',
       kanji: '旅',
       art: MaskArt.tengu,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       goal: 20,
       dye: maskDye(0xFF2EE6A6),
       names: const {
@@ -199,7 +206,7 @@ class MaskCatalog {
       id: 'kanpeki',
       kanji: '完',
       art: MaskArt.hannya,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       dye: maskDye(0xFFE6ECF5, strength: 0.9, gain: 1.45),
       names: const {
         AppLanguage.es: 'Álbum Perfecto',
@@ -216,7 +223,7 @@ class MaskCatalog {
       id: 'ame',
       kanji: '雨',
       art: MaskArt.kabuki,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       goal: 10,
       dye: maskDye(0xFF4FA8FF),
       names: const {
@@ -234,7 +241,7 @@ class MaskCatalog {
       id: 'mangetsu',
       kanji: '月',
       art: MaskArt.kabuki,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       dye: maskDye(0xFFD6E0F5, strength: 0.7, gain: 1.35),
       names: const {
         AppLanguage.es: 'Luna Llena',
@@ -251,7 +258,7 @@ class MaskCatalog {
       id: 'yoru',
       kanji: '夜',
       art: MaskArt.hannya,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       goal: 50,
       dye: maskDye(0xFF7A5CFF),
       names: const {
@@ -269,7 +276,7 @@ class MaskCatalog {
       id: 'mimi',
       kanji: '耳',
       art: MaskArt.tengu,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       dye: maskDye(0xFFFFC94A, gain: 1.35),
       names: const {
         AppLanguage.es: 'Oído Absoluto',
@@ -286,7 +293,7 @@ class MaskCatalog {
       id: 'ren',
       kanji: '連',
       art: MaskArt.tengu,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       goal: 14,
       dye: maskDye(0xFFB026FF),
       names: const {
@@ -304,7 +311,7 @@ class MaskCatalog {
       id: 'sanji',
       kanji: '三',
       art: MaskArt.kabuki,
-      rarity: MaskRarity.secret,
+      rarity: MaskRarity.ssr,
       secret: true,
       dye: _negative,
       names: {
@@ -327,7 +334,7 @@ class MaskCatalog {
       id: 'chizuki',
       kanji: '血',
       art: MaskArt.tengu,
-      rarity: MaskRarity.secret,
+      rarity: MaskRarity.ssr,
       secret: true,
       dye: maskDye(0xFFB0101E, strength: 0.75, gain: 1.4),
       names: const {
@@ -350,7 +357,7 @@ class MaskCatalog {
       id: 'shuchaku',
       kanji: '執',
       art: MaskArt.hannya,
-      rarity: MaskRarity.secret,
+      rarity: MaskRarity.ssr,
       secret: true,
       dye: maskDye(0xFF9CFF3A),
       names: const {
@@ -373,7 +380,7 @@ class MaskCatalog {
       id: 'hannya',
       kanji: '般',
       art: MaskArt.cyberOni,
-      rarity: MaskRarity.secret,
+      rarity: MaskRarity.ssr,
       secret: true,
       names: {
         AppLanguage.es: 'Noche de Hannya',
@@ -395,7 +402,7 @@ class MaskCatalog {
       id: 'oni',
       kanji: '鬼',
       art: MaskArt.cyberOni,
-      rarity: MaskRarity.legendary,
+      rarity: MaskRarity.ul,
       secret: true,
       dye: maskDye(0xFFFFB02E, strength: 0.55, gain: 1.3),
       names: const {
@@ -419,7 +426,7 @@ class MaskCatalog {
       id: 'sumi',
       kanji: '墨',
       art: MaskArt.sumie,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Tinta',
@@ -432,7 +439,7 @@ class MaskCatalog {
       id: 'hachi',
       kanji: '点',
       art: MaskArt.pixel,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: '8 Bits',
@@ -445,7 +452,7 @@ class MaskCatalog {
       id: 'ranpa',
       kanji: '乱',
       art: MaskArt.glitch,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Señal Rota',
@@ -458,7 +465,7 @@ class MaskCatalog {
       id: 'kori',
       kanji: '氷',
       art: MaskArt.ice,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Hielo Eterno',
@@ -471,7 +478,7 @@ class MaskCatalog {
       id: 'hanami',
       kanji: '桜',
       art: MaskArt.sakura,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Hanami',
@@ -484,7 +491,7 @@ class MaskCatalog {
       id: 'maboroshi',
       kanji: '幻',
       art: MaskArt.hologram,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Fantasma Digital',
@@ -497,7 +504,7 @@ class MaskCatalog {
       id: 'hikari',
       kanji: '光',
       art: MaskArt.neon,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Neón Nocturno',
@@ -510,7 +517,7 @@ class MaskCatalog {
       id: 'futaomote',
       kanji: '双',
       art: MaskArt.duo,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Dos Caras',
@@ -523,7 +530,7 @@ class MaskCatalog {
       id: 'kintsugi',
       kanji: '継',
       art: MaskArt.kintsugi,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Kintsugi',
@@ -536,7 +543,7 @@ class MaskCatalog {
       id: 'ougon',
       kanji: '輝',
       art: MaskArt.gold,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Oro Puro',
@@ -550,7 +557,7 @@ class MaskCatalog {
       id: 'akaoni',
       kanji: '赤',
       art: MaskArt.akaoni,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Aka Oni',
@@ -563,7 +570,7 @@ class MaskCatalog {
       id: 'kijo',
       kanji: '女',
       art: MaskArt.kijo,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Kijo',
@@ -576,7 +583,7 @@ class MaskCatalog {
       id: 'kibori',
       kanji: '木',
       art: MaskArt.kibori,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Talla de Madera',
@@ -589,7 +596,7 @@ class MaskCatalog {
       id: 'ishi',
       kanji: '石',
       art: MaskArt.ishi,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Yasha de Piedra',
@@ -602,7 +609,7 @@ class MaskCatalog {
       id: 'seidou',
       kanji: '銅',
       art: MaskArt.seidou,
-      rarity: MaskRarity.rare,
+      rarity: MaskRarity.r,
       weekly: true,
       names: {
         AppLanguage.es: 'Bronce Antiguo',
@@ -615,7 +622,7 @@ class MaskCatalog {
       id: 'raijin',
       kanji: '雷',
       art: MaskArt.raijin,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Raijin',
@@ -628,7 +635,7 @@ class MaskCatalog {
       id: 'namahage',
       kanji: '剥',
       art: MaskArt.namahage,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Namahage',
@@ -641,7 +648,7 @@ class MaskCatalog {
       id: 'kurohannya',
       kanji: '黒',
       art: MaskArt.kurohannya,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Hannya Negra',
@@ -654,7 +661,7 @@ class MaskCatalog {
       id: 'yurei',
       kanji: '霊',
       art: MaskArt.yurei,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Yūrei',
@@ -667,7 +674,7 @@ class MaskCatalog {
       id: 'chinoame',
       kanji: '血',
       art: MaskArt.chinoame,
-      rarity: MaskRarity.epic,
+      rarity: MaskRarity.sr,
       weekly: true,
       names: {
         AppLanguage.es: 'Luna de Sangre',

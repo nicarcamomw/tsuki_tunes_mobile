@@ -132,7 +132,7 @@ class OniMaskArt extends StatelessWidget {
       ),
     );
 
-    if (unlocked && mask.rarity == MaskRarity.legendary) {
+    if (unlocked && mask.rarity == MaskRarity.ul) {
       return _LegendaryShimmer(size: size, child: box);
     }
     return box;

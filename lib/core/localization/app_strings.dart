@@ -368,6 +368,9 @@ class AppStrings {
 
   String maskRarity(MaskRarity r) => _l.maskRarity(r.name);
 
+  /// "SÚPER RARA" for SR.
+  String maskRarityName(MaskRarity r) => _l.maskRarityName(r.name);
+
   String get masksProfileRow => _l.masksProfileRow;
 
   // --- Moon ---

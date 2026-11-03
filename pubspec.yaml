@@ -115,6 +115,11 @@ flutter:
   assets:
     - assets/images/
     - assets/images/masks/
+    # New masks, by rarity (tool/add_mask.py puts them here).
+    - assets/images/masks/r/
+    - assets/images/masks/sr/
+    - assets/images/masks/ssr/
+    - assets/images/masks/ul/
 
   fonts:
     - family: SystemOfADown

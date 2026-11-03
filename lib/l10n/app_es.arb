@@ -1121,7 +1121,16 @@
       }
     }
   },
-  "maskRarity": "{rarity, select, common{COMÚN} rare{RARA} epic{ÉPICA} secret{SECRETA} other{LEGENDARIA}}",
+  "maskRarity": "{rarity, select, r{R} sr{SR} ssr{SSR} other{UL}}",
+  "maskRarityName": "{rarity, select, r{RARA} sr{SÚPER RARA} ssr{SÚPER SÚPER RARA} other{ULTRA}}",
+  "@maskRarityName": {
+    "description": "Full name of a mask rarity tier (R, SR, SSR, UL).",
+    "placeholders": {
+      "rarity": {
+        "type": "String"
+      }
+    }
+  },
   "@maskRarity": {
     "placeholders": {
       "rarity": {
