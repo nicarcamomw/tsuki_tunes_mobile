@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_player_description">Music controls with album art, track title and playback buttons.</string>
+    <string name="widget_no_track">Nothing playing</string>
     <string name="widget_luna_description">Moon phase and current song — aesthetic tsuki widget.</string>
 </resources>

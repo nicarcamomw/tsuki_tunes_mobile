@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_player_description">Controles de música con portada, nombre de la canción y botones de reproducción.</string>
+    <string name="widget_luna_description">Fase lunar y la canción que suena: widget tsuki.</string>
+    <string name="widget_no_track">Nada sonando</string>
+</resources>

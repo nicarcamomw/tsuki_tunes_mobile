@@ -12,6 +12,7 @@ import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -19,27 +20,76 @@ import kotlin.concurrent.thread
 
 class TsukiPlayerWidgetProvider : HomeWidgetProvider() {
 
+    /// The cover last shown, so a play/pause (or any update of the same
+    /// song) shows it at once: no placeholder flash, no new download.
+    private object CoverCache {
+        var url: String? = null
+        var bitmap: Bitmap? = null
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
-        for (widgetId in appWidgetIds) {
-            val views = buildViews(context, widgetData)
-            val coverUrl = widgetData.getString("track_cover", "") ?: ""
+        val coverUrl = widgetData.getString("track_cover", "") ?: ""
+        val cached = if (coverUrl.isEmpty()) null else cachedCover(context, coverUrl)
+        val views = buildViews(context, widgetData)
+        if (cached != null) views.setImageViewBitmap(R.id.img_cover, cached)
+        for (widgetId in appWidgetIds) appWidgetManager.updateAppWidget(widgetId, views)
 
-            if (coverUrl.isNotEmpty()) {
-                thread {
-                    val bitmap = loadBitmap(coverUrl, 256)
-                    if (bitmap != null) {
-                        views.setImageViewBitmap(R.id.img_cover, bitmap)
+        if (coverUrl.isEmpty() || cached != null) return
+        // A new song's cover: fetched off the main thread, with the
+        // broadcast kept alive until it's shown (or the system may stop the
+        // process first and the widget keeps the placeholder).
+        val pending = goAsync()
+        thread {
+            try {
+                val bitmap = loadBitmap(coverUrl, 256)
+                if (bitmap != null) {
+                    rememberCover(context, coverUrl, bitmap)
+                    // The song may have changed meanwhile: only its cover.
+                    if (widgetData.getString("track_cover", "") == coverUrl) {
+                        val withCover = buildViews(context, widgetData)
+                        withCover.setImageViewBitmap(R.id.img_cover, bitmap)
+                        for (widgetId in appWidgetIds) {
+                            appWidgetManager.updateAppWidget(widgetId, withCover)
+                        }
                     }
-                    appWidgetManager.updateAppWidget(widgetId, views)
                 }
+            } finally {
+                pending.finish()
             }
+        }
+    }
 
-            appWidgetManager.updateAppWidget(widgetId, views)
+    /// The cover for [url] if it's the one last shown: from memory, or from
+    /// the copy kept in the cache folder after the process was stopped.
+    private fun cachedCover(context: Context, url: String): Bitmap? {
+        if (CoverCache.url == url) CoverCache.bitmap?.let { return it }
+        val urlFile = File(context.cacheDir, "widget_cover.url")
+        val imageFile = File(context.cacheDir, "widget_cover.png")
+        return try {
+            if (!urlFile.exists() || urlFile.readText() != url) return null
+            BitmapFactory.decodeFile(imageFile.path)?.also {
+                CoverCache.url = url
+                CoverCache.bitmap = it
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun rememberCover(context: Context, url: String, bitmap: Bitmap) {
+        CoverCache.url = url
+        CoverCache.bitmap = bitmap
+        try {
+            File(context.cacheDir, "widget_cover.png").outputStream().use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+            File(context.cacheDir, "widget_cover.url").writeText(url)
+        } catch (_: Exception) {
         }
     }
 
@@ -51,7 +101,10 @@ class TsukiPlayerWidgetProvider : HomeWidgetProvider() {
         val isPlaying = widgetData.getBoolean("is_playing", false)
 
         views.setTextViewText(R.id.txt_title, title.ifEmpty { "Tsuki Tunes" })
-        views.setTextViewText(R.id.txt_artist, artist.ifEmpty { "No track playing" })
+        views.setTextViewText(
+            R.id.txt_artist,
+            artist.ifEmpty { context.getString(R.string.widget_no_track) }
+        )
 
         val playPauseIcon = if (isPlaying) {
             android.R.drawable.ic_media_pause

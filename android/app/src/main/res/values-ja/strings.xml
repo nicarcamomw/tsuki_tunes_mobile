@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_player_description">ジャケット、曲名、再生ボタン付きの音楽コントロール。</string>
+    <string name="widget_luna_description">月の満ち欠けと再生中の曲 ― tsukiウィジェット。</string>
+    <string name="widget_no_track">再生中の曲はありません</string>
+</resources>
