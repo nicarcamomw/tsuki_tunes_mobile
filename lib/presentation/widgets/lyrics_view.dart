@@ -71,7 +71,8 @@ class LyricsController extends ChangeNotifier {
     SyncedLyrics? result;
     for (var attempt = 0;; attempt++) {
       try {
-        result = await LyricsService().getLyrics(track.title, track.artistName);
+        result = await LyricsService().getLyrics(track.title, track.artistName,
+            durationSeconds: track.durationSeconds);
         break;
       } catch (e) {
         _log.severe('load failed (attempt ${attempt + 1}): $e');
@@ -242,22 +243,32 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
           _userScrolling = false;
         }
         if (!lyrics.isSynced) return _buildLines(lyrics, -1, synced: false);
-        return AudioProgressSelector<int>(
-          selector: (a) => lyrics.activeIndexAt(a.position),
-          builder: (context, active) {
+        // A preview's position isn't the song's: show the words unsynced.
+        final fullSong = ref.watch(audioProvider.select((a) => a.playsFullSong));
+        if (!fullSong) {
+          return _buildLines(lyrics, -1, synced: false, previewNote: true);
+        }
+        return AudioProgressSelector<(int, bool)>(
+          selector: (a) => (lyrics.activeIndexAt(a.position), lyrics.inBreakAt(a.position)),
+          builder: (context, at) {
+            final (active, inBreak) = at;
             if (active != _lastActive) {
               final first = _lastActive == -2;
               _lastActive = active;
               if (!_userScrolling) _follow(active, jump: first);
             }
-            return _buildLines(lyrics, active, synced: true);
+            return _buildLines(lyrics, active, synced: true, inBreak: inBreak);
           },
         );
       },
     );
   }
 
-  Widget _buildLines(SyncedLyrics lyrics, int active, {required bool synced}) {
+  /// [inBreak]: an instrumental break, so no line is the current one.
+  /// [previewNote]: synced lyrics shown unsynced under a preview, said so
+  /// at the top.
+  Widget _buildLines(SyncedLyrics lyrics, int active,
+      {required bool synced, bool inBreak = false, bool previewNote = false}) {
     final locale = ref.read(localeProvider);
     final texts = widget.controller.lineTexts;
     final translation = widget.controller.translation;
@@ -284,6 +295,19 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (previewNote)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                locale.strings.lyricsPreviewNote,
+                style: locale
+                    .getTextStyle(
+                      fontSize: widget.compact ? 10 : 12,
+                      color: AppColors.textMuted,
+                    )
+                    .copyWith(fontStyle: FontStyle.italic),
+              ),
+            ),
           for (var i = 0; i < texts.length; i++)
             _LyricLine(
               key: _keys[i],
@@ -293,9 +317,9 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
                   : null,
               state: !synced
                   ? _LineState.plain
-                  : i == active
+                  : i == active && !inBreak
                       ? _LineState.current
-                      : i < active
+                      : i <= active
                           ? _LineState.sung
                           : _LineState.upcoming,
               base: base,
@@ -637,7 +661,9 @@ class LyricsCard extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    lyrics?.isSynced == true
+                                    lyrics?.isSynced == true &&
+                                            ref.watch(audioProvider
+                                                .select((a) => a.playsFullSong))
                                         ? '歌詞 // LIVE.SYNC'
                                         : '歌詞 // LYRICS',
                                     style: locale.getTextStyle(

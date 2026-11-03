@@ -42,12 +42,20 @@ class LyricsService {
   /// Lyrics for a song: null when lrclib has none. Throws when lrclib
   /// couldn't be reached, so a network hiccup isn't remembered as "no
   /// lyrics" and the caller can try again.
-  Future<SyncedLyrics?> getLyrics(String title, String artistName) async {
+  ///
+  /// [durationSeconds] (the full song's) picks the right version: an album
+  /// cut, a radio edit and a live take share a title but not their timings,
+  /// and the wrong one's lyrics run early or late all song long.
+  Future<SyncedLyrics?> getLyrics(String title, String artistName,
+      {int? durationSeconds}) async {
     final cleanTitle = _cleanString(title);
     // A collab's joined name ("A, B") rarely matches lrclib exactly; the
     // main artist does.
     final cleanArtist = _cleanString(ArtistNames.primary(artistName));
-    final key = '${cleanTitle.toLowerCase()}__${cleanArtist.toLowerCase()}';
+    // 30 s or less is a preview's length (the default when Deezer has
+    // none), not the song's: no version to match then.
+    final duration = durationSeconds != null && durationSeconds > 30 ? durationSeconds : null;
+    final key = '${cleanTitle.toLowerCase()}__${cleanArtist.toLowerCase()}__${duration ?? ''}';
 
     if (_cache.containsKey(key)) {
       // Touch: move to the most recently used end.
@@ -56,13 +64,14 @@ class LyricsService {
       return hit;
     }
 
-    return _inFlight[key] ??= _fetchLyrics(cleanTitle, cleanArtist, key);
+    return _inFlight[key] ??= _fetchLyrics(cleanTitle, cleanArtist, duration, key);
   }
 
   /// Loads a song's lyrics ahead of time (the playing and the next song),
   /// so they are there when the player opens. Failures are ignored.
-  void prefetch(String title, String artistName) {
-    unawaited(getLyrics(title, artistName).then((_) {}, onError: (_) {}));
+  void prefetch(String title, String artistName, {int? durationSeconds}) {
+    unawaited(getLyrics(title, artistName, durationSeconds: durationSeconds)
+        .then((_) {}, onError: (_) {}));
   }
 
   void _remember(String key, SyncedLyrics? lyrics) {
@@ -79,11 +88,12 @@ class LyricsService {
   /// when it has lyrics, the search covers small title/artist differences.
   /// Waiting for one before starting the other doubled the wait.
   Future<SyncedLyrics?> _fetchLyrics(
-      String title, String artistName, String cacheKey) async {
+      String title, String artistName, int? duration, String cacheKey) async {
     try {
-      final exact = _exactLookup(title, artistName).then<Object?>((v) => v, onError: (Object e) => e);
-      final search =
-          _searchBestMatch(title, artistName).then<Object?>((v) => v, onError: (Object e) => e);
+      final exact = _exactLookup(title, artistName, duration)
+          .then<Object?>((v) => v, onError: (Object e) => e);
+      final search = _searchBestMatch(title, artistName, duration)
+          .then<Object?>((v) => v, onError: (Object e) => e);
 
       final got = await exact;
       if (got is SyncedLyrics && got != SyncedLyrics.empty) {
@@ -110,11 +120,13 @@ class LyricsService {
     }
   }
 
-  /// lrclib's exact lookup: null when it doesn't know the song.
-  Future<SyncedLyrics?> _exactLookup(String title, String artistName) async {
+  /// lrclib's exact lookup: null when it doesn't know the song. With
+  /// [duration] it only answers for a version within 2 s of it.
+  Future<SyncedLyrics?> _exactLookup(String title, String artistName, int? duration) async {
     final uri = Uri.https('lrclib.net', '/api/get', {
       'track_name': title,
       'artist_name': artistName,
+      if (duration != null) 'duration': '$duration',
     });
     final response = await http.get(uri, headers: _headers).timeout(_timeout);
     if (response.statusCode == 404) return null;
@@ -148,9 +160,16 @@ class LyricsService {
   static String _norm(String s) =>
       s.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), '');
 
+  /// How far a version's length may be from the song's and still count
+  /// as the same recording.
+  static const int _sameVersionSeconds = 3;
+
   /// Best search hit for this song: same artist (loosely compared), synced
-  /// lyrics preferred over plain ones. Null when nothing fits.
-  Future<SyncedLyrics?> _searchBestMatch(String title, String artistName) async {
+  /// lyrics preferred over plain ones, and among synced ones the version
+  /// closest in length to [duration]. Synced lyrics of a clearly different
+  /// version lose to plain ones: their timing would be off all song long.
+  /// Null when nothing fits.
+  Future<SyncedLyrics?> _searchBestMatch(String title, String artistName, int? duration) async {
     final uri = Uri.https('lrclib.net', '/api/search', {
       'track_name': title,
       'artist_name': artistName,
@@ -165,6 +184,8 @@ class LyricsService {
     final artistKey = _norm(ArtistNames.primary(artistName));
     final titleKey = _norm(title);
     LyricsSearchResult? plainHit;
+    LyricsSearchResult? syncedHit;
+    int? syncedGap;
     for (final item in data.whereType<Map<String, dynamic>>()) {
       final r = LyricsSearchResult.fromJson(item);
       final sameArtist = artistKey.isNotEmpty &&
@@ -172,11 +193,24 @@ class LyricsService {
       final sameTitle = titleKey.isNotEmpty && _norm(r.trackName).contains(titleKey);
       if (!sameArtist || !sameTitle) continue;
       if ((r.syncedLyrics ?? '').trim().isNotEmpty) {
-        return _fromFields(synced: r.syncedLyrics, plain: r.plainLyrics, instrumental: r.instrumental);
+        // Without a length to compare, the first synced hit (lrclib's best).
+        if (duration == null) {
+          return _fromFields(synced: r.syncedLyrics, plain: r.plainLyrics, instrumental: r.instrumental);
+        }
+        final gap = r.duration <= 0 ? 1 << 20 : (r.duration - duration).abs();
+        if (syncedGap == null || gap < syncedGap) {
+          syncedHit = r;
+          syncedGap = gap;
+        }
+      } else {
+        plainHit ??= r;
       }
-      plainHit ??= r;
     }
-    final hit = plainHit;
+    final synced = syncedHit;
+    final plain = plainHit;
+    final hit = synced != null && (syncedGap! <= _sameVersionSeconds || plain == null)
+        ? synced
+        : plain ?? synced;
     if (hit == null) return null;
     return _fromFields(synced: hit.syncedLyrics, plain: hit.plainLyrics, instrumental: hit.instrumental);
   }

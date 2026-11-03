@@ -1853,5 +1853,6 @@
   "deleteAccountNotConfirmed": "No se pudo confirmar tu cuenta de Google. Asegúrate de elegir la misma cuenta e inténtalo de nuevo. No se borró nada.",
   "deleteAccountClosing": "Tu cuenta y tus datos fueron eliminados, también los de este teléfono. Tsuki Tunes se cerrará para terminar.",
   "deleteAccountCloseApp": "CERRAR",
-  "crossfadeGapless": "Sin pausa"
+  "crossfadeGapless": "Sin pausa",
+  "lyricsPreviewNote": "Suena un fragmento de 30 s: la letra va sin sincronizar. Con Spotify sigue la canción."
 }

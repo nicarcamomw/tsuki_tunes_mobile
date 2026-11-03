@@ -1478,6 +1478,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// Spotify plays full songs on its own player, whose speed can't be set.
   bool get canChangeTempo => !_useSpotify || _spotifyFallbackActive;
 
+  /// Whether the whole song plays (Spotify), so the position is the song's.
+  /// Deezer previews are 30 s cut from somewhere in the song, at an offset
+  /// Deezer doesn't give: their position says nothing about where in the
+  /// song they are (synced lyrics can't follow them).
+  bool get playsFullSong => !canChangeTempo;
+
   /// Playback speed per track (running mode locks songs onto the steps).
   /// Null plays everything at normal speed.
   set tempoFor(double Function(Track track)? fn) {

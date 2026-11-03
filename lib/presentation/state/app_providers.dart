@@ -165,11 +165,12 @@ final playbackWiringProvider = Provider<void>((ref) {
     // looked up (Spotify, normalization off).
     unawaited(BpmService.shared.ensure(track.id));
     // Lyrics of this song and the next are ready before the player opens.
-    lyrics.prefetch(track.title, track.artistName);
+    lyrics.prefetch(track.title, track.artistName, durationSeconds: track.durationSeconds);
     final queue = player.queue;
     final next = player.currentIndex + 1;
     if (next > 0 && next < queue.length) {
-      lyrics.prefetch(queue[next].title, queue[next].artistName);
+      lyrics.prefetch(queue[next].title, queue[next].artistName,
+          durationSeconds: queue[next].durationSeconds);
     }
   };
   final markListened = MarkTrackListened(library, events: ProductAnalytics.instance);

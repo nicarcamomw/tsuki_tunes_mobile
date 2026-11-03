@@ -822,5 +822,6 @@
   "deleteAccountNotConfirmed": "Google アカウントを確認できませんでした。同じアカウントを選んでもう一度お試しください。何も削除されていません。",
   "deleteAccountClosing": "アカウントとデータを削除しました（この端末のデータも含む）。Tsuki Tunes を終了します。",
   "deleteAccountCloseApp": "閉じる",
-  "crossfadeGapless": "ギャップレス"
+  "crossfadeGapless": "ギャップレス",
+  "lyricsPreviewNote": "30秒のプレビュー再生中のため、歌詞は同期されません。Spotifyでは曲に合わせて表示されます。"
 }

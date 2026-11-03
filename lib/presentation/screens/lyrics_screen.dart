@@ -130,7 +130,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     final lyrics = widget.controller.lyrics;
     final audio = ref.read(audioProvider);
     String? line;
-    if (lyrics != null && lyrics.isSynced) {
+    if (lyrics != null && lyrics.isSynced && audio.playsFullSong) {
       final i = lyrics.activeIndexAt(audio.position);
       if (i >= 0 && i < lyrics.lines.length) line = lyrics.lines[i].text;
     }

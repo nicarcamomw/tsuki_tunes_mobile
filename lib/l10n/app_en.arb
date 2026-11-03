@@ -822,5 +822,6 @@
   "deleteAccountNotConfirmed": "Your Google account could not be confirmed. Make sure you pick the same account and try again. Nothing was deleted.",
   "deleteAccountClosing": "Your account and your data were deleted, including what was on this phone. Tsuki Tunes will now close.",
   "deleteAccountCloseApp": "CLOSE",
-  "crossfadeGapless": "No gap"
+  "crossfadeGapless": "No gap",
+  "lyricsPreviewNote": "A 30-second preview is playing: lyrics are not synced. With Spotify they follow the song."
 }

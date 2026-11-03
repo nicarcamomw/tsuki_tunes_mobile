@@ -2036,4 +2036,6 @@ class AppStrings {
   String get deleteAccountCloseApp => _l.deleteAccountCloseApp;
 
   String get crossfadeGapless => _l.crossfadeGapless;
+
+  String get lyricsPreviewNote => _l.lyricsPreviewNote;
 }
