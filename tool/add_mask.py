@@ -5,7 +5,9 @@ parts inside the mask (a kitsune's face) stay. Edges are softened and the
 white fringe is taken out of their color. The mask is then centered at the
 size of the others: 510x637, transparent, about 85% of the width.
 
-    python3 tool/add_mask.py <picture> <tier: r|sr|ssr|ul> <name>
+    python3 tool/add_mask.py <picture> <tier: r|sr|ssr|ul> <name> [...]
+
+Several masks at once: repeat the three arguments (the AI model loads once).
 
 Writes assets/images/masks/<tier>/<name>.webp and keeps the original in
 tool/mask_sources/<tier>/ (not in the app) to redo it at another size.
@@ -56,12 +58,20 @@ def cut_out(img: Image.Image) -> Image.Image:
     ai = ai_alpha(img)
     if ai is not None:
         alpha = np.maximum(alpha, ai)
+        # Background the edges can't reach (white between cords, a floor
+        # shadow): light, colorless, and background to the AI.
+        light = (rgb.min(axis=2) > 150) & (rgb.max(axis=2) - rgb.min(axis=2) < 28)
+        holes = light & (ai < 0.15)
+        alpha = np.where(holes, ai, alpha)
 
     # Edge colors were mixed with white: take the white back out.
     a = np.maximum(alpha, 1e-3)[..., None]
     color = np.clip((rgb - (1 - a) * 255) / a, 0, 255)
     out = np.dstack([color, alpha * 255]).astype(np.uint8)
     return Image.fromarray(out, 'RGBA')
+
+
+_session = None
 
 
 def ai_alpha(img: Image.Image):
@@ -71,7 +81,10 @@ def ai_alpha(img: Image.Image):
     except ImportError:
         print('rembg not installed: color cut-out only (white edges may go)')
         return None
-    cut = remove(img.convert('RGB'), session=new_session('isnet-general-use'))
+    global _session
+    if _session is None:
+        _session = new_session('isnet-general-use')
+    cut = remove(img.convert('RGB'), session=_session)
     return np.asarray(cut.getchannel('A')).astype(np.float32) / 255
 
 
@@ -87,10 +100,10 @@ def fit(img: Image.Image) -> Image.Image:
     return canvas
 
 
-def main():
-    if len(sys.argv) != 4 or sys.argv[2] not in TIERS:
-        raise SystemExit(__doc__)
-    src, tier, name = sys.argv[1:]
+def add(src: str, tier: str, name: str) -> str:
+    """One picture into its tier folder; returns the image's path."""
+    if tier not in TIERS:
+        raise SystemExit(f'tier must be one of {TIERS}')
     out = f'assets/images/masks/{tier}/{name}.webp'
     os.makedirs(os.path.dirname(out), exist_ok=True)
     fit(cut_out(Image.open(src))).save(out, 'WEBP', quality=92, method=6)
@@ -99,7 +112,16 @@ def main():
     os.makedirs(os.path.dirname(keep), exist_ok=True)
     if os.path.abspath(src) != os.path.abspath(keep):
         shutil.copyfile(src, keep)
-    print(out)
+    return out
+
+
+def main():
+    """add_mask.py <picture> <tier> <name> [<picture> <tier> <name> ...]"""
+    args = sys.argv[1:]
+    if not args or len(args) % 3:
+        raise SystemExit(__doc__)
+    for i in range(0, len(args), 3):
+        print(add(*args[i:i + 3]))
 
 
 if __name__ == '__main__':
