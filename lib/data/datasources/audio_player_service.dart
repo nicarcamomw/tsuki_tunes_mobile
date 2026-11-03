@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
 import '../contracts/audio_player_contract.dart';
 import 'audio_precache_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('AudioPlayerService');

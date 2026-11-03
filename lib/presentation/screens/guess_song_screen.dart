@@ -10,6 +10,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
@@ -18,7 +19,6 @@ import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('GuessSong');

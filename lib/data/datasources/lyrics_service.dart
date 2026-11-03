@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
+import '../../core/logger.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/logic/artist_names.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('LyricsService');

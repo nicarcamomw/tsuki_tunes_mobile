@@ -15,13 +15,13 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/wrapped_service.dart';
 import '../../domain/entities/wrapped_data.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Wrapped');

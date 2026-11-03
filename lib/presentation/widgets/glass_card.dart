@@ -19,6 +19,10 @@ class GlassCard extends StatefulWidget {
   final EdgeInsets? margin;
   final Widget child;
 
+  /// Fixes where the blots fall, which is otherwise different every time
+  /// (golden tests need the same picture each run).
+  final int? seed;
+
   const GlassCard({
     super.key,
     required this.color,
@@ -29,6 +33,7 @@ class GlassCard extends StatefulWidget {
     this.padding = const EdgeInsets.all(12),
     this.margin,
     required this.child,
+    @visibleForTesting this.seed,
   });
 
   /// How long the blots take to bloom when the card appears.
@@ -41,7 +46,8 @@ class GlassCard extends StatefulWidget {
 class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMixin {
   late final AnimationController _bloom =
       AnimationController(vsync: this, duration: GlassCard.bloomDuration);
-  final _InkBlots _blots = _InkBlots(Random().nextInt(1 << 31));
+  late final _InkBlots _blots =
+      _InkBlots(widget.seed ?? Random().nextInt(1 << 31));
   bool _started = false;
 
   @override

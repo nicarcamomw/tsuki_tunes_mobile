@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/public_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/profile/build_my_profile.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Profile');

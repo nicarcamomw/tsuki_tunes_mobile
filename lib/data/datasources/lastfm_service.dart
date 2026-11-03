@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../domain/entities/similar_track.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/similar_track.dart';
 
 
 final _log = Log.named('LastFM');

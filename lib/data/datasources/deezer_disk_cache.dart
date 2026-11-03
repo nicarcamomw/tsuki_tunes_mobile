@@ -6,11 +6,11 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/track.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('DeezerDiskCache');

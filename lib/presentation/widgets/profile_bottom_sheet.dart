@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/firebase_emulators.dart';
 import '../../core/constants/legal_links.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/playback_log.dart';
@@ -32,7 +33,6 @@ import 'shuffle_mode_icon.dart';
 import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';
 import 'weather_sheet.dart';
-import '../../core/logger.dart';
 
 part 'profile/delete_account.dart';
 part 'profile/logout.dart';

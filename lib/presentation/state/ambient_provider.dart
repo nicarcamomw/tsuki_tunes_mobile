@@ -6,10 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/headphones_service.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
-import '../../core/logger.dart';
-
 
 export '../../domain/logic/ambient_sound_generator.dart' show AmbientSound;
 

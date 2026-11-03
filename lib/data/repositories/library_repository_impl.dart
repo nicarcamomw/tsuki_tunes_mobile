@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/play_day.dart';
@@ -18,8 +19,6 @@ import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
-import '../../core/logger.dart';
-
 
 export 'listened_tracks_repository.dart' show ListenedTrackData;
 

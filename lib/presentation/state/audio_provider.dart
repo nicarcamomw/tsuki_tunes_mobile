@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../core/utils/deezer_preview.dart';
 import '../../data/datasources/audio_player_service.dart';
 import '../../data/datasources/audio_precache_service.dart';
@@ -35,8 +36,6 @@ import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
 import 'audio_sleep_timer.dart';
 import 'connectivity_provider.dart';
-import '../../core/logger.dart';
-
 
 export '../../domain/entities/playback_error.dart';
 export '../../domain/entities/repeat_mode.dart';

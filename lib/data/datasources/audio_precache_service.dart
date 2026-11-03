@@ -1,8 +1,10 @@
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import '../../domain/entities/track.dart';
-import '../../core/logger.dart';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+
+import '../../core/logger.dart';
+import '../../domain/entities/track.dart';
 
 
 final _log = Log.named('AudioPrecache');

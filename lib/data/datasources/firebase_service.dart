@@ -7,9 +7,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/constants/app_environment.dart';
 import '../../core/constants/firebase_emulators.dart';
+import '../../core/logger.dart';
 import '../../firebase_options.dart';
 import '../../firebase_options_dev.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Firebase');

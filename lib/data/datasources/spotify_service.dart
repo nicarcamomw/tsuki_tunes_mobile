@@ -11,9 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_environment.dart';
+import '../../core/logger.dart';
 import 'perf_tracker.dart';
 import 'storage_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('SpotifyService');

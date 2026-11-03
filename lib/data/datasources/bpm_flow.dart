@@ -5,9 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
 import 'deezer_api_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('BPM');

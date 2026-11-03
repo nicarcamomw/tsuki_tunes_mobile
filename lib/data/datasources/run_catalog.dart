@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
-
+import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/pace_matcher.dart';
 import 'bpm_flow.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('RunCatalog');

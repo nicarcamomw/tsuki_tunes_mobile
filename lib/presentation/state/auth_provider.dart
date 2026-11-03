@@ -6,11 +6,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/account_deletion_service.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Auth');

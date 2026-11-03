@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
@@ -13,7 +14,6 @@ import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('ArtistDiscography');

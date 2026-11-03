@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
+import '../../core/logger.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/translation_service.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import 'audio_progress_selector.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Lyrics');

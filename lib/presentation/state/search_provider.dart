@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/track.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Search');

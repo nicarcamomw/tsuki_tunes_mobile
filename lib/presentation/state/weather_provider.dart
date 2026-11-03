@@ -4,9 +4,9 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/device_location.dart';
 import '../../data/datasources/weather_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Weather');

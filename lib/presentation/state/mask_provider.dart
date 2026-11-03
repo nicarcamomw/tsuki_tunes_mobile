@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../domain/entities/album.dart';
@@ -13,8 +14,6 @@ import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/moon_calculator.dart';
-import '../../core/logger.dart';
-
 
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';

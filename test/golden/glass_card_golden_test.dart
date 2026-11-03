@@ -11,15 +11,16 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
-          home: Scaffold(
-            backgroundColor: const Color(0xFF0A0A0A),
+          home: const Scaffold(
+            backgroundColor: Color(0xFF0A0A0A),
             body: Center(
               child: SizedBox(
                 width: 300,
                 child: GlassCard(
+                  seed: 7,
                   color: Colors.purple,
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     child: Text(
                       'Tsuki Tunes',
                       style: TextStyle(color: Colors.white, fontSize: 18),
@@ -44,15 +45,16 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
-          home: Scaffold(
-            backgroundColor: const Color(0xFF0A0A0A),
+          home: const Scaffold(
+            backgroundColor: Color(0xFF0A0A0A),
             body: Center(
               child: SizedBox(
                 width: 300,
                 child: GlassCard(
+                  seed: 7,
                   color: Colors.cyan,
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     child: Text(
                       'Now Playing',
                       style: TextStyle(color: Colors.white, fontSize: 18),

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/release_radar_service.dart';
@@ -33,8 +34,6 @@ import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
 import 'run_mode_screen.dart';
 import 'time_machine_screen.dart';
-import '../../core/logger.dart';
-
 
 part 'home/affinity_sheet.dart';
 part 'home/entry_cards.dart';

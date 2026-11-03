@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/constants/api_endpoints.dart';
+import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
@@ -13,7 +14,6 @@ import '../../domain/repositories/catalog_repository.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('DeezerAPI');

@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../datasources/storage_service.dart';
 import 'listened_tracks_repository.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('LibraryRepositoryImpl');

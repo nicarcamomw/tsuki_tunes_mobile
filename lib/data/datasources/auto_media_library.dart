@@ -6,12 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import 'deezer_api_service.dart';
 import 'media_session_handler.dart';
 import 'storage_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Auto');

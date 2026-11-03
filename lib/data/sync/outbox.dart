@@ -5,8 +5,8 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
-import '../local/app_database.dart';
 import '../../core/logger.dart';
+import '../local/app_database.dart';
 
 
 final _log = Log.named('Outbox');

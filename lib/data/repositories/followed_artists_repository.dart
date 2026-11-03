@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/artist.dart';
 import '../datasources/firebase_service.dart';
 import '../datasources/storage_service.dart';
@@ -11,7 +12,6 @@ import '../datasources/sub_write_queue.dart';
 import '../local/library_store.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Follows');

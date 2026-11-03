@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
@@ -28,8 +29,6 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
-import '../../core/logger.dart';
-
 
 part 'artist_detail/artist_header.dart';
 part 'artist_detail/top_tracks.dart';

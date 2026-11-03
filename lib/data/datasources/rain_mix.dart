@@ -1,9 +1,8 @@
 import 'dart:math';
 
-
+import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
 import 'bpm_flow.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('RainMix');

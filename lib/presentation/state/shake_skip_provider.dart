@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/motion_sensor.dart';
 import '../../domain/logic/shake_detector.dart';
 import 'audio_provider.dart';
 import 'run_provider.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Shake');

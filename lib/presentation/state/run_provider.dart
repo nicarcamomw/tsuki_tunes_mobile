@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/motion_sensor.dart';
@@ -13,7 +14,6 @@ import '../../domain/entities/track.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/pace_matcher.dart';
 import 'audio_provider.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Run');

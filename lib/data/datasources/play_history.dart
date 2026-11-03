@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../domain/entities/track.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/track.dart';
 
 
 final _log = Log.named('PlayHistory');

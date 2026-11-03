@@ -4,8 +4,8 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/constants/firebase_emulators.dart';
-import 'crash_reporter.dart';
 import '../../core/logger.dart';
+import 'crash_reporter.dart';
 
 
 final _log = Log.named('FeatureFlags');
@@ -84,7 +84,7 @@ class FeatureFlags extends ChangeNotifier {
   Future<void> _fetch(FirebaseRemoteConfig config) async {
     try {
       if (await config.fetchAndActivate()) notifyListeners();
-      _log.fine('${_describe()}');
+      _log.fine(_describe());
     } catch (e) {
       _log.severe('Fetch failed, keeping the last values: $e');
     }

@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/lastfm_service.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart';
-import '../../core/logger.dart';
-
 
 export '../../domain/logic/song_radio.dart' show RadioMode, RadioReason, RadioSource;
 

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -15,7 +16,6 @@ import '../local/library_store.dart';
 import '../mappers/playlist_firestore.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Playlists');

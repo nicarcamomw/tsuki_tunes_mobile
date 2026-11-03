@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-import '../../core/logger.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
+
+import '../../core/logger.dart';
 
 
 final _log = Log.named('Headphones');

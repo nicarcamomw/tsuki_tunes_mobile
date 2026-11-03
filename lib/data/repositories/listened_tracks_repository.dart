@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/foundation.dart';
 
+import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/artist_names.dart';
 import '../datasources/firebase_service.dart';
@@ -14,7 +15,6 @@ import '../local/library_store.dart';
 import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
 import 'album_completion_index.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('Listened');

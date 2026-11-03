@@ -15,11 +15,11 @@ import 'package:workmanager/workmanager.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/radar_release.dart';
 import 'time_machine_service.dart';
-import '../../core/logger.dart';
 
 
 final _log = Log.named('ReleaseRadar');
