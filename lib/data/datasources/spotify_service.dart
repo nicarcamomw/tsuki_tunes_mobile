@@ -77,6 +77,15 @@ class SpotifyService {
   bool get isPremium => _isPremium;
   Map<String, dynamic>? get profile => _profile;
   String? get lastError => _lastError;
+
+  /// The account signed in, but Spotify refuses this app to it: while the
+  /// app is in Spotify's development mode only the few accounts added in
+  /// its dashboard may use it (five, since February 2026).
+  bool get accessRestricted => _accessRestricted;
+  bool _accessRestricted = false;
+
+  /// What [lastError] holds when [connect] failed for that reason.
+  static const notRegisteredError = 'user_not_registered';
   String? get accessToken => _accessToken;
   String? get activeDeviceName => _activeDeviceName;
 
@@ -224,6 +233,7 @@ class SpotifyService {
 
   Future<bool> connect() async {
     _lastError = null;
+    _accessRestricted = false;
     try {
       final codeVerifier = _generateCodeVerifier();
       final codeChallenge = _generateCodeChallenge(codeVerifier);
@@ -312,6 +322,14 @@ class SpotifyService {
 
       await _saveTokens();
       await _fetchProfile();
+      if (_accessRestricted) {
+        // Signed in, but nothing would work: don't stay half connected.
+        _log.warning('Spotify: this account is not allowed to use the app');
+        await disconnect();
+        _accessRestricted = true;
+        _lastError = notRegisteredError;
+        return false;
+      }
       return _accessToken != null;
     } catch (e) {
       _log.severe('Spotify exchange error: $e');
@@ -390,9 +408,15 @@ class SpotifyService {
       );
 
       if (response.statusCode == 200) {
+        _accessRestricted = false;
         _profile = json.decode(response.body);
         _isPremium = _profile?['product'] == 'premium';
         await _secureStorage.write(key: _profileKey, value: json.encode(_profile));
+      } else if (response.statusCode == 403) {
+        // "Check settings on developer.spotify.com/dashboard, the user may
+        // not be registered": the account isn't one of the app's users.
+        _accessRestricted = true;
+        _isPremium = false;
       }
     } catch (e) {
       _log.severe('Spotify profile error: $e');

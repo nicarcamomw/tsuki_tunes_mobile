@@ -2020,4 +2020,12 @@ class AppStrings {
   String get privacyPolicyOption => _l.privacyPolicyOption;
 
   String get termsOption => _l.termsOption;
+
+  String get spotifyLimitedNote => _l.spotifyLimitedNote;
+
+  String get spotifyNotRegisteredTitle => _l.spotifyNotRegisteredTitle;
+
+  String get spotifyNotRegisteredMessage => _l.spotifyNotRegisteredMessage;
+
+  String get spotifyNotRegisteredOk => _l.spotifyNotRegisteredOk;
 }

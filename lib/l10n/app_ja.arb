@@ -814,5 +814,9 @@
   "deleteAccountOffline": "アカウントを削除するにはインターネット接続が必要です。",
   "deleteAccountFailed": "アカウントの削除を完了できませんでした。ログインしてもう一度お試しください。",
   "privacyPolicyOption": "プライバシーポリシー",
-  "termsOption": "利用規約"
+  "termsOption": "利用規約",
+  "spotifyLimitedNote": "Spotify ではこのアプリを使えるのは招待された一部のアカウントのみです。Spotify なしでは曲は30秒のプレビューで再生されます。",
+  "spotifyNotRegisteredTitle": "Spotify の利用は制限されています",
+  "spotifyNotRegisteredMessage": "現在 Spotify では、Tsuki Tunes を使えるのは招待された一部のアカウントのみで、お使いのアカウントは含まれていません。アカウントやプランの問題ではありません。\n\nアプリはこのまま使えます。曲は30秒のプレビューで再生されます。",
+  "spotifyNotRegisteredOk": "OK"
 }

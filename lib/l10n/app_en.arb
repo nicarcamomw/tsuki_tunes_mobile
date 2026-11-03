@@ -814,5 +814,9 @@
   "deleteAccountOffline": "You need an internet connection to delete your account.",
   "deleteAccountFailed": "The account could not be fully deleted. Sign in and try again.",
   "privacyPolicyOption": "Privacy policy",
-  "termsOption": "Terms of service"
+  "termsOption": "Terms of service",
+  "spotifyLimitedNote": "Spotify only lets a few invited accounts use this app. Without Spotify, songs play as 30-second previews.",
+  "spotifyNotRegisteredTitle": "Spotify access is limited",
+  "spotifyNotRegisteredMessage": "For now Spotify only lets a few invited accounts use Tsuki Tunes, and yours is not one of them. It is not a problem with your account or your plan.\n\nYou can keep using the app as usual: songs play as 30-second previews.",
+  "spotifyNotRegisteredOk": "GOT IT"
 }

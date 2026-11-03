@@ -54,6 +54,10 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         await _audio.updateSpotifyState();
         if (mounted) setState(() {});
         _showSnack(_plainSnack(strings.spotifySyncSuccess, const Duration(seconds: 2)));
+      } else if (_spotify.lastError == SpotifyService.notRegisteredError) {
+        if (mounted) setState(() {});
+        ProductAnalytics.instance.log('spotify_connect_failed', {'reason': 'not_registered'});
+        await _explainRestrictedAccess();
       } else {
         if (mounted) setState(() {});
         final rawError = _spotify.lastError;
@@ -92,6 +96,59 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         ),
       ));
     }
+  }
+
+  /// The account isn't one of the few Spotify lets use the app (development
+  /// mode): say so plainly, so it doesn't read as a broken app or account.
+  Future<void> _explainRestrictedAccess() async {
+    final host = widget.hostContext;
+    if (!host.mounted) return;
+    final locale = widget.locale;
+    final strings = locale.strings;
+    await showDialog<void>(
+      context: host,
+      useRootNavigator: true,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.bgCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: AppColors.border, width: 1.0),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: AppColors.accent, size: 20),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                strings.spotifyNotRegisteredTitle,
+                style: locale.getTextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          strings.spotifyNotRegisteredMessage,
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              strings.spotifyNotRegisteredOk,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -214,6 +271,23 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             ],
           ),
         ),
+        if (!spotify.isConnected && !_isConnecting)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    strings.spotifyLimitedNote,
+                    style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (spotify.isConnected)
           Padding(
             padding: const EdgeInsets.only(top: 8),

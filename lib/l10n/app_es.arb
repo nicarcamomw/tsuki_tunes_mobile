@@ -1845,5 +1845,9 @@
   "deleteAccountOffline": "Necesitas conexión a internet para eliminar tu cuenta.",
   "deleteAccountFailed": "No se pudo terminar de eliminar la cuenta. Inicia sesión e inténtalo de nuevo.",
   "privacyPolicyOption": "Política de privacidad",
-  "termsOption": "Términos de servicio"
+  "termsOption": "Términos de servicio",
+  "spotifyLimitedNote": "Spotify solo deja usar esta app a unas pocas cuentas invitadas. Sin Spotify, las canciones suenan como fragmentos de 30 segundos.",
+  "spotifyNotRegisteredTitle": "Spotify con acceso limitado",
+  "spotifyNotRegisteredMessage": "Por ahora Spotify solo permite que unas pocas cuentas invitadas usen Tsuki Tunes, y la tuya no está entre ellas. No es un problema de tu cuenta ni de tu plan.\n\nPuedes seguir usando la app con normalidad: las canciones suenan como fragmentos de 30 segundos.",
+  "spotifyNotRegisteredOk": "ENTENDIDO"
 }

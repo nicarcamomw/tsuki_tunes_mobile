@@ -158,6 +158,70 @@ void main() {
     });
   });
 
+  group('accounts Spotify doesn\'t let use the app (development mode)', () {
+    /// Spotify's sign-in page, answering with a code.
+    void signInPageAnswers() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(const MethodChannel('flutter_web_auth_2'),
+              (call) async {
+        final url = Uri.parse((call.arguments as Map)['url'] as String);
+        final state = url.queryParameters['state'];
+        return 'tsuki://spotify-callback?code=abc&state=$state';
+      });
+    }
+
+    test('signing in with one is refused, and the app says why', () async {
+      signInPageAnswers();
+      api = (req) async {
+        if (req.url.host == 'accounts.spotify.com') {
+          return json200({'access_token': 'tok', 'refresh_token': 'r', 'expires_in': 3600});
+        }
+        return http.Response(
+            jsonEncode({
+              'error': {
+                'status': 403,
+                'message': 'Check settings on developer.spotify.com/dashboard, '
+                    'the user may not be registered.',
+              },
+            }),
+            403);
+      };
+      final s = SpotifyService();
+
+      expect(await withApi(s.connect), isFalse);
+      expect(s.lastError, SpotifyService.notRegisteredError);
+      expect(s.accessRestricted, isTrue);
+      // Not left half connected.
+      expect(s.isConnected, isFalse);
+      expect(secure, isEmpty);
+    });
+
+    test('an invited account connects as usual', () async {
+      signInPageAnswers();
+      api = (req) async {
+        if (req.url.host == 'accounts.spotify.com') {
+          return json200({'access_token': 'tok', 'refresh_token': 'r', 'expires_in': 3600});
+        }
+        return json200({'display_name': 'Nico', 'product': 'premium'});
+      };
+      final s = SpotifyService();
+
+      expect(await withApi(s.connect), isTrue);
+      expect(s.accessRestricted, isFalse);
+      expect(s.isPremium, isTrue);
+      expect(s.lastError, isNull);
+    });
+
+    test('an account removed from the list later loses full songs', () async {
+      final s = await signedIn(profile: {'display_name': 'Nico', 'product': 'premium'});
+      api = (_) async => http.Response('', 403);
+
+      await withApi(s.refreshProfile);
+      expect(s.accessRestricted, isTrue);
+      expect(s.isPremium, isFalse);
+    });
+  });
+
   group('search', () {
     Map<String, dynamic> item(String name, String artist, String uri) => {
           'name': name,
