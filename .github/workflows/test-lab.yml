@@ -1,5 +1,13 @@
 name: Firebase Test Lab
 
+# Runs integration_test/app_smoke_test.dart on real phones in Firebase Test
+# Lab (project tsuki-tunes-web, results in gs://tsuki-tunes-web-test-lab).
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT: the JSON key of a
+# service account with the "Firebase Test Lab Admin" role and write access
+# to that bucket. Without it the run is skipped right away, instead of
+# building for 15 minutes and failing at the login.
+
 on:
   push:
     branches: [main]
@@ -10,7 +18,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-credentials:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT is not set; Test Lab skipped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
   integration-test:
+    needs: check-credentials
+    if: needs.check-credentials.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
