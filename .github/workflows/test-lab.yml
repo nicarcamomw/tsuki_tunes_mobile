@@ -89,16 +89,19 @@ jobs:
           USE_EMULATORS=false
           EOF
 
+      # Both debug: the app and the test runner must be signed alike, and
+      # Test Lab is handed build/app/outputs/flutter-apk/app-dev-debug.apk.
       - name: Build APK for integration tests
         run: |
-          flutter build apk --flavor dev \
+          flutter build apk --debug --flavor dev \
             --dart-define-from-file=config/dev.env \
             --target=integration_test/app_smoke_test.dart
 
       - name: Build test runner APK
         run: |
           cd android
-          ./gradlew app:assembleDevDebugAndroidTest
+          ./gradlew app:assembleDevDebugAndroidTest \
+            -Ptarget="$GITHUB_WORKSPACE/integration_test/app_smoke_test.dart"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2

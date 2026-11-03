@@ -8,8 +8,12 @@ void main() {
 
   testWidgets('app launches and shows the home screen', (tester) async {
     app.main();
-    // Let Firebase init and the first frame settle.
-    await tester.pumpAndSettle(const Duration(seconds: 5));
+    // Firebase and the first screen take a few seconds. The app has looping
+    // animations (moon, glitch text), so it never settles: pumpAndSettle
+    // would wait until the test times out. Pump for 10 s instead.
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
 
     // The app should have rendered something — at minimum, a Material scaffold.
     expect(find.byType(MaterialApp), findsOneWidget);
