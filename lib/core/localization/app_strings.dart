@@ -338,6 +338,20 @@ class AppStrings {
 
   String get maskSecretHint => _l.maskSecretHint;
 
+  /// Label over a secret mask's riddle.
+  String get maskRiddleLabel => switch (language) {
+        AppLanguage.es => 'PISTA',
+        AppLanguage.en => 'RIDDLE',
+        AppLanguage.ja => '手がかり',
+      };
+
+  /// Under a secret mask while its riddle is still hidden.
+  String maskRiddleAfter(int count) => switch (language) {
+        AppLanguage.es => 'Consigue $count máscaras para ver una pista.',
+        AppLanguage.en => 'Collect $count masks to see a riddle.',
+        AppLanguage.ja => '$count個の面を集めると手がかりが見える。',
+      };
+
   String get maskEquip => _l.maskEquip;
 
   String get maskHowToUnlock => _l.maskHowToUnlock;

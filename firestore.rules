@@ -105,7 +105,12 @@ service cloud.firestore {
               || (d.masks.unlocked is map && d.masks.unlocked.size() <= 200))
           && (!isWritten('masks') || !('equipped' in d.masks)
               || d.masks.equipped == null
-              || (d.masks.equipped is string && d.masks.equipped.size() <= 40));
+              || (d.masks.equipped is string && d.masks.equipped.size() <= 40))
+          // Progress backup: a few counters and the top artists' plays.
+          && (!isWritten('masks') || !('progress' in d.masks)
+              || (d.masks.progress is map && d.masks.progress.size() <= 10
+                  && d.masks.progress.get('artists', {}) is map
+                  && d.masks.progress.get('artists', {}).size() <= 50));
     }
 
     // users/{uid}/listenedTracks/{trackId}

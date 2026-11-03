@@ -339,18 +339,64 @@ class _MaskDetail extends ConsumerWidget {
             ),
             const SizedBox(height: 14),
             // Description / hint
-            if (hidden)
+            if (hidden) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.visibility_off_rounded, size: 14, color: AppColors.textMuted),
                   const SizedBox(width: 6),
-                  Text(
-                    strings.maskSecretHint,
-                    style: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.35),
+                  Flexible(
+                    child: Text(
+                      strings.maskSecretHint,
+                      textAlign: TextAlign.center,
+                      style: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.35),
+                    ),
                   ),
                 ],
-              )
+              ),
+              // A riddle once a few masks are collected.
+              if (mask.hint(lang) case final riddle?) ...[
+                const SizedBox(height: 12),
+                if (masks.secretHintsShown)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: rColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: rColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          strings.maskRiddleLabel,
+                          style: locale.getTextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: rColor.withValues(alpha: 0.8),
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          riddle,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                            height: 1.35,
+                          ).copyWith(fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    strings.maskRiddleAfter(MaskProvider.secretHintsAfter),
+                    textAlign: TextAlign.center,
+                    style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+              ],
+            ]
             else ...[
               if (!unlocked)
                 Padding(

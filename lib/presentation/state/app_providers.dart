@@ -196,6 +196,19 @@ final playbackWiringProvider = Provider<void>((ref) {
   _follow(ref, library, seedArtists);
   _follow(ref, masks, seedArtists, now: false);
 
+  // Plays from before the masks existed (or from another phone) count
+  // toward them: read once from the play log, once the library is ready.
+  masks.historyLoader = () {
+    final now = DateTime.now();
+    return library.loadPlayDays(now.subtract(const Duration(days: 365)), now);
+  };
+  void catchUpMasks() {
+    if (library.listenedTracksLoaded) unawaited(masks.catchUpFromHistory());
+  }
+
+  _follow(ref, library, catchUpMasks);
+  _follow(ref, masks, catchUpMasks, now: false);
+
   TileChannelService.init(player);
 });
 

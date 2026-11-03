@@ -120,6 +120,21 @@ test('stats increment with stamp and masks merge are accepted', async () => {
   await assertSucceeds(setDoc(doc(db, 'users/alice'), { masks: { unlocked: { hajime: 1 }, equipped: 'hajime' } }, { merge: true }));
 });
 
+test('mask progress backup: counters and up to 50 artists', async () => {
+  await seed('users/alice', { ...oldStamp(), masks: { unlocked: { hajime: 1 } } });
+  const db = alice();
+  const artists = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`artist ${i}`, i]));
+  await assertSucceeds(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { plays: 300, night: 12, rain: 3600, artists: artists(30) } } },
+    { mergeFields: ['masks.progress'] }));
+  await assertFails(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { plays: 1, artists: artists(51) } } },
+    { mergeFields: ['masks.progress'] }));
+  await assertFails(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { artists: 'many' } } },
+    { mergeFields: ['masks.progress'] }));
+});
+
 test('oversized fields are rejected', async () => {
   await seed('users/alice', oldStamp());
   const db = alice();

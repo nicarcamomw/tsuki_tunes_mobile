@@ -10,6 +10,7 @@ import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/oni_mask.dart';
+import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
@@ -23,13 +24,26 @@ final _log = Log.named('Masks');
 /// Achievement engine for the Oni mask collection.
 ///
 /// Unlocked masks and the equipped one live in the user's Firestore document
-/// (one small write per unlock or equip). Progress counters stay on the
-/// device: they change on every play and would cost far more writes.
+/// (one small write per unlock or equip). Progress counters change on every
+/// play, so they're kept on the device and backed up to the account at most
+/// every [progressUploadEvery] (masks.progress); another phone takes the
+/// higher of each. Plays made before the masks existed, or on a phone that
+/// never backed up, are caught up once from the play log
+/// ([catchUpFromHistory]).
 class MaskProvider extends ChangeNotifier {
   static const _unlockedKey = 'masks_unlocked_v1';
   static const _equippedKey = 'masks_equipped_v1';
   static const _statsKey = 'masks_stats_v1';
   static const int rainGoalSeconds = 10 * 3600;
+
+  /// How often the progress counters are backed up, at most.
+  static const progressUploadEvery = Duration(hours: 6);
+
+  /// Artists kept in the backup (the "devotion" goal needs only the top).
+  static const int backedUpArtists = 30;
+
+  /// Secret masks show a riddle once this many masks are unlocked.
+  static const int secretHintsAfter = 5;
 
   final DateTime Function() _clock;
   final Future<Album?> Function(String albumId) _albumLookup;
@@ -47,6 +61,11 @@ class MaskProvider extends ChangeNotifier {
   /// whether music is playing.
   bool Function()? isRainPlaying;
   bool Function()? isMusicPlaying;
+
+  /// The account's play log for the last year. Set by the app's wiring.
+  Future<List<PlayDay>> Function()? historyLoader;
+  String? _historyTriedFor;
+  DateTime? _historyTriedAt;
 
   // Album run: consecutive natural completions within one album.
   String? _runAlbum;
@@ -69,6 +88,9 @@ class MaskProvider extends ChangeNotifier {
   int get totalCount => MaskCatalog.all.length;
   OniMask? get equipped => MaskCatalog.byId(_equipped);
   String? get pendingCelebration => _celebrations.isEmpty ? null : _celebrations.first;
+
+  /// Whether locked secret masks show their riddle.
+  bool get secretHintsShown => _unlocked.length >= secretHintsAfter;
 
   /// (current, goal) for masks with a counted goal.
   (int, int)? progress(String id) {
@@ -242,6 +264,11 @@ class MaskProvider extends ChangeNotifier {
         _unlocked.clear();
         _equipped = null;
         _celebrations.clear();
+        // Progress is the account's too (it's backed up to it): the next
+        // account must not start from this one's counts.
+        _stats = _Stats();
+        _historyTriedFor = null;
+        _historyTriedAt = null;
         notifyListeners();
         await _saveLocal();
       }));
@@ -275,6 +302,9 @@ class MaskProvider extends ChangeNotifier {
           changed = true;
         }
       }
+      if (masks is Map && masks['progress'] is Map) {
+        if (applyProgress(Map<String, dynamic>.from(masks['progress'] as Map))) changed = true;
+      }
       final cloudIds = masks is Map && masks['unlocked'] is Map
           ? (masks['unlocked'] as Map).keys.toSet()
           : <dynamic>{};
@@ -291,9 +321,143 @@ class MaskProvider extends ChangeNotifier {
         await _saveLocal();
         notifyListeners();
       }
+      unawaited(_maybeUploadProgress());
     } catch (e) {
       _log.severe('cloud sync error: $e');
     }
+  }
+
+  // ── Progress backup ──
+
+  /// The counters as backed up to the account.
+  @visibleForTesting
+  Map<String, dynamic> progressSnapshot() {
+    final top = (_stats.artistPlays.entries
+            .where((e) => e.key.isNotEmpty && !e.key.startsWith('__'))
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value)))
+        .take(backedUpArtists);
+    return {
+      'plays': _stats.plays,
+      'night': _stats.nightPlays,
+      'rain': _stats.rainSeconds,
+      'artists': {
+        for (final e in top) (e.key.length > 100 ? e.key.substring(0, 100) : e.key): e.value,
+      },
+    };
+  }
+
+  /// Takes the higher of each counter from a backup ([progressSnapshot]
+  /// format) and unlocks what the counts now reach. Whether anything rose.
+  @visibleForTesting
+  bool applyProgress(Map<String, dynamic> cloud) {
+    int read(String k) => cloud[k] is num ? (cloud[k] as num).toInt() : 0;
+    var rose = false;
+    int higher(int local, int other) {
+      if (other > local) {
+        rose = true;
+        return other;
+      }
+      return local;
+    }
+
+    _stats.plays = higher(_stats.plays, read('plays'));
+    _stats.nightPlays = higher(_stats.nightPlays, read('night'));
+    _stats.rainSeconds = higher(_stats.rainSeconds, read('rain'));
+    final artists = cloud['artists'];
+    if (artists is Map) {
+      artists.forEach((k, v) {
+        if (v is! num) return;
+        final key = '$k';
+        _stats.artistPlays[key] = higher(_stats.artistPlays[key] ?? 0, v.toInt());
+      });
+    }
+    // This phone had more: the backup is behind.
+    if (_stats.plays > read('plays') || _stats.nightPlays > read('night') || _stats.rainSeconds > read('rain')) {
+      _stats.progressDirty = true;
+    }
+    if (rose) _checkCounters();
+    return rose;
+  }
+
+  /// Counts plays, late-night plays and plays per artist in [days] (the
+  /// play log) and takes the higher of each, like [applyProgress].
+  @visibleForTesting
+  bool applyHistory(List<PlayDay> days) {
+    var plays = 0, night = 0;
+    final artists = <String, int>{};
+    for (final d in days) {
+      plays += d.totalPlays;
+      for (var h = 0; h < 5; h++) {
+        night += d.hours[h] ?? 0;
+      }
+      d.plays.forEach((id, n) {
+        final name = d.tracks[id]?.artistName ?? '';
+        final key = ArtistNames.primary(name).toLowerCase();
+        if (key.isNotEmpty) artists[key] = (artists[key] ?? 0) + n;
+      });
+    }
+    final rose = applyProgress({'plays': plays, 'night': night, 'artists': artists});
+    if (rose) _stats.progressDirty = true;
+    return rose;
+  }
+
+  /// Once per account on this phone: counts what the play log holds that
+  /// this phone's counters don't (plays from before the masks existed, or
+  /// from another phone). An empty log (a new account, or one not ready
+  /// yet right after signing in) is read again after 10 minutes at most,
+  /// not on every song.
+  Future<void> catchUpFromHistory() async {
+    final uid = _uid;
+    final load = historyLoader;
+    if (!_loaded || uid == null || load == null || _stats.historyApplied) return;
+    final now = _clock();
+    final last = _historyTriedAt;
+    if (_historyTriedFor == uid && last != null && now.difference(last) < const Duration(minutes: 10)) return;
+    _historyTriedFor = uid;
+    _historyTriedAt = now;
+    try {
+      final days = await load();
+      if (_uid != uid || days.isEmpty) return;
+      applyHistory(days);
+      _stats.historyApplied = true;
+      notifyListeners();
+      await _saveLocal();
+      unawaited(_maybeUploadProgress());
+    } catch (e) {
+      _log.warning('history catch-up failed: $e');
+    }
+  }
+
+  Future<void> _maybeUploadProgress() async {
+    if (!_stats.progressDirty) return;
+    final now = _clock().millisecondsSinceEpoch;
+    if (now - _stats.progressUploadedAt < progressUploadEvery.inMilliseconds) return;
+    final doc = _userDoc();
+    if (doc == null) return;
+    _stats.progressUploadedAt = now;
+    _stats.progressDirty = false;
+    try {
+      // Replaces the whole progress map: merging would keep artists that
+      // fell out of the top.
+      await doc.set({
+        'masks': {'progress': progressSnapshot()},
+      }, SetOptions(mergeFields: [FieldPath(const ['masks', 'progress'])]));
+    } catch (e) {
+      _stats.progressDirty = true;
+      _log.severe('progress backup error: $e');
+    }
+    unawaited(_saveLocal());
+  }
+
+  /// Unlocks the masks whose counted goals the counters reach.
+  void _checkCounters() {
+    if (_stats.plays >= 1) unlock('hajime');
+    if (_stats.plays >= 250) unlock('hyaku');
+    if (_stats.plays >= 2500) unlock('sen');
+    if (_stats.nightPlays >= 50) unlock('yoru');
+    if (_stats.rainSeconds >= rainGoalSeconds) unlock('ame');
+    if (_stats.artistPlays.values.any((n) => n >= 100)) unlock('oshi');
   }
 
   Future<void> _writeCloud(Map<String, dynamic> masks) async {
@@ -393,8 +557,10 @@ class MaskProvider extends ChangeNotifier {
     if (MoonCalculator.snapshot(now).isFullMoonWindow) unlock('mangetsu');
     _checkMoments(now);
     _checkWeekly();
+    _stats.progressDirty = true;
     notifyListeners();
     unawaited(_saveLocal());
+    unawaited(_maybeUploadProgress());
   }
 
   void onTrackStarted(Track track) {
@@ -458,6 +624,7 @@ class MaskProvider extends ChangeNotifier {
     final music = isMusicPlaying?.call() ?? false;
     if (rain) {
       _stats.rainSeconds += elapsed.inSeconds;
+      _stats.progressDirty = true;
       if (_stats.rainSeconds >= rainGoalSeconds) unlock('ame');
       _countWeekly('rain', elapsed.inSeconds);
     }
@@ -468,6 +635,7 @@ class MaskProvider extends ChangeNotifier {
     if (rain || music) {
       _checkWeekly();
       unawaited(_saveLocal());
+      unawaited(_maybeUploadProgress());
     }
   }
 
@@ -525,6 +693,11 @@ class _Stats {
   Set<String> wkAlbums = {};
   String? wkRewardId;
 
+  // Progress backup (see MaskProvider.progressSnapshot).
+  bool historyApplied = false;
+  int progressUploadedAt = 0;
+  bool progressDirty = false;
+
   int newArtistsSince(DateTime from) {
     final day = DateTime.utc(from.year, from.month, from.day).millisecondsSinceEpoch ~/ 86400000;
     return artistFirst.values.where((d) => d > 0 && d >= day).length;
@@ -554,6 +727,9 @@ class _Stats {
         'wkArtists': wkArtists,
         'wkAlbums': wkAlbums.toList(),
         'wkReward': wkRewardId,
+        'history': historyApplied,
+        'uploadedAt': progressUploadedAt,
+        'dirty': progressDirty,
       });
 
   static _Stats decode(String? raw) {
@@ -576,6 +752,9 @@ class _Stats {
       s.wkArtists = Map<String, int>.from(m['wkArtists'] ?? {});
       s.wkAlbums = {for (final a in (m['wkAlbums'] as List? ?? const [])) '$a'};
       s.wkRewardId = m['wkReward'] as String?;
+      s.historyApplied = m['history'] == true;
+      s.progressUploadedAt = m['uploadedAt'] is int ? m['uploadedAt'] as int : 0;
+      s.progressDirty = m['dirty'] == true;
     } catch (_) {}
     return s;
   }

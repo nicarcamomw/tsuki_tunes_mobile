@@ -48,6 +48,9 @@ class OniMask {
   final bool weekly;
   final Map<AppLanguage, String> names;
   final Map<AppLanguage, String> descriptions;
+  /// For secret masks: a riddle shown, still locked, once the user has
+  /// collected a few masks (MaskProvider.secretHintsShown).
+  final Map<AppLanguage, String>? hints;
 
   const OniMask({
     required this.id,
@@ -60,6 +63,7 @@ class OniMask {
     this.dye,
     this.goal,
     this.weekly = false,
+    this.hints,
   });
 
   String asset() => switch (art) {
@@ -72,6 +76,7 @@ class OniMask {
 
   String name(AppLanguage l) => names[l] ?? names[AppLanguage.es]!;
   String description(AppLanguage l) => descriptions[l] ?? descriptions[AppLanguage.es]!;
+  String? hint(AppLanguage l) => hints == null ? null : (hints![l] ?? hints![AppLanguage.es]);
 
 }
 
@@ -312,6 +317,11 @@ class MaskCatalog {
         AppLanguage.en: 'You were listening to music at 3:33 AM.',
         AppLanguage.ja: '午前3時33分に音楽を聴いていた。',
       },
+      hints: {
+        AppLanguage.es: 'Cuando el reloj repite tres veces el mismo número, algo despierta.',
+        AppLanguage.en: 'When the clock shows the same number three times, something wakes up.',
+        AppLanguage.ja: '時計が同じ数字を三つ並べるとき、何かが目を覚ます。',
+      },
     ),
     OniMask(
       id: 'chizuki',
@@ -329,6 +339,11 @@ class MaskCatalog {
         AppLanguage.es: 'Viste un eclipse lunar dentro de Tsuki.',
         AppLanguage.en: 'You saw a lunar eclipse inside Tsuki.',
         AppLanguage.ja: 'Tsukiの中で月食を見た。',
+      },
+      hints: const {
+        AppLanguage.es: 'A veces la luna se tiñe de rojo. Mírala desde aquí.',
+        AppLanguage.en: 'Sometimes the moon turns red. Watch it from here.',
+        AppLanguage.ja: '月が赤く染まる夜がある。ここから見届けよ。',
       },
     ),
     OniMask(
@@ -348,6 +363,11 @@ class MaskCatalog {
         AppLanguage.en: 'You played the same song 15 times in one day.',
         AppLanguage.ja: '1日に同じ曲を15回聴いた。',
       },
+      hints: const {
+        AppLanguage.es: 'Hay canciones que no puedes soltar. ¿Cuántas veces en un solo día?',
+        AppLanguage.en: "Some songs you just can't let go of. How many times in one day?",
+        AppLanguage.ja: '手放せない曲がある。一日に何度聴ける？',
+      },
     ),
     const OniMask(
       id: 'hannya',
@@ -364,6 +384,11 @@ class MaskCatalog {
         AppLanguage.es: 'Escuchaste música la noche de Halloween.',
         AppLanguage.en: 'You listened to music on Halloween night.',
         AppLanguage.ja: 'ハロウィンの夜に音楽を聴いた。',
+      },
+      hints: {
+        AppLanguage.es: 'Una noche al año, las máscaras salen a la calle.',
+        AppLanguage.en: 'One night a year, the masks walk the streets.',
+        AppLanguage.ja: '一年に一夜、面たちが街を歩く。',
       },
     ),
     OniMask(
@@ -382,6 +407,11 @@ class MaskCatalog {
         AppLanguage.es: 'Reuniste todas las máscaras de logros.',
         AppLanguage.en: 'You collected every achievement mask.',
         AppLanguage.ja: '実績の面をすべて集めた。',
+      },
+      hints: const {
+        AppLanguage.es: 'Reúne a todos los demás y él vendrá.',
+        AppLanguage.en: 'Gather all the others and it will come.',
+        AppLanguage.ja: '他のすべてを集めれば、それは来る。',
       },
     ),
     // Weekly challenge rewards, in the order they're handed out.
