@@ -108,9 +108,12 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
 
   final audio = context.readState(audioProvider);
   final library = context.readState(libraryProvider);
+  final profile = context.readState(profileControllerProvider);
   final result = await auth.deleteAccount(beforeDelete: () async {
     // Shown once Google sign-in is done: only the deletion is waited on.
     if (context.mounted) showProgress();
+    // A publish landing after the profile is deleted would bring it back.
+    profile.suspend();
     await audio.stop();
     // The Spotify link belongs to the person, not to this phone.
     await audio.spotify.disconnect();
@@ -120,14 +123,59 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
   });
   if (progressShown) navigator.pop();
 
+  if (result == AccountDeletionResult.deleted) {
+    await _closeAfterDeletion(navigator, locale);
+    router.go(AppPaths.login);
+    return;
+  }
   final message = switch (result) {
-    AccountDeletionResult.deleted => strings.deleteAccountDone,
     AccountDeletionResult.offline => strings.deleteAccountOffline,
+    AccountDeletionResult.notConfirmed => strings.deleteAccountNotConfirmed,
     AccountDeletionResult.failed => strings.deleteAccountFailed,
-    AccountDeletionResult.cancelled => null,
+    AccountDeletionResult.deleted || AccountDeletionResult.cancelled => null,
   };
   if (message != null) {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
   if (!auth.isLoggedIn) router.go(AppPaths.login);
+}
+
+/// Says the account and its data are gone, then closes the app on Android:
+/// what's still in memory (play log, masks, searches...) would otherwise
+/// be saved again the next time it changes. iOS doesn't allow an app to
+/// quit itself, so there it goes back to the sign-in screen.
+Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale) async {
+  final strings = locale.strings;
+  await showDialog<void>(
+    context: navigator.context,
+    barrierDismissible: false,
+    builder: (dialogCtx) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        backgroundColor: AppColors.bgCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: AppColors.border, width: 1.0),
+        ),
+        content: Text(
+          strings.deleteAccountClosing,
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              strings.deleteAccountCloseApp,
+              style: locale.getTextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (!kIsWeb && Platform.isAndroid) exit(0);
 }

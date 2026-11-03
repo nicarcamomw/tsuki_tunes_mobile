@@ -71,7 +71,23 @@ Restaurar crea una base **nueva** con el contenido del respaldo; la actual no se
 firebase firestore:databases:restore --backup projects/tsuki-tunes-web/locations/nam5/backups/<id> --database restaurada --project tsuki-tunes-web
 ```
 
-Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar.
+Para volver a usar esos datos: revisarlos en la base nueva y copiarlos a `(default)` (o borrar `(default)` y restaurar con ese nombre). La base restaurada se cobra aparte: borrarla al terminar. **Si se restaura un respaldo, volver a borrar las cuentas eliminadas después de su fecha** (ver abajo): la política de privacidad promete que lo borrado no vuelve.
+
+## Eliminar una cuenta a pedido (por correo)
+
+La app elimina la cuenta sola (Perfil → Eliminar cuenta). Quien no pueda usarla escribe a la dirección de `docs/delete-account.md`, que promete hacerlo en **30 días** y avisar por correo. Para hacerlo:
+
+1. Comprobar que el correo venga de la misma dirección de la cuenta.
+2. [Firebase Console](https://console.firebase.google.com/project/tsuki-tunes-web/authentication/users) → Authentication → buscar el correo → copiar el **UID**.
+3. Borrar sus datos (el CLI usa permisos de administrador, así que también borra el documento principal, que la app no puede):
+
+   ```bash
+   firebase firestore:delete users/<UID> --recursive --project tsuki-tunes-web
+   firebase firestore:delete profiles/<UID> --project tsuki-tunes-web
+   ```
+
+4. En Authentication, menú ⋮ de esa cuenta → **Borrar cuenta**.
+5. Responder el correo confirmando que se eliminó.
 
 ## Logging estructurado
 

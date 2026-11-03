@@ -818,5 +818,8 @@
   "spotifyLimitedNote": "Spotify ではこのアプリを使えるのは招待された一部のアカウントのみです。Spotify なしでは曲は30秒のプレビューで再生されます。",
   "spotifyNotRegisteredTitle": "Spotify の利用は制限されています",
   "spotifyNotRegisteredMessage": "現在 Spotify では、Tsuki Tunes を使えるのは招待された一部のアカウントのみで、お使いのアカウントは含まれていません。アカウントやプランの問題ではありません。\n\nアプリはこのまま使えます。曲は30秒のプレビューで再生されます。",
-  "spotifyNotRegisteredOk": "OK"
+  "spotifyNotRegisteredOk": "OK",
+  "deleteAccountNotConfirmed": "Google アカウントを確認できませんでした。同じアカウントを選んでもう一度お試しください。何も削除されていません。",
+  "deleteAccountClosing": "アカウントとデータを削除しました（この端末のデータも含む）。Tsuki Tunes を終了します。",
+  "deleteAccountCloseApp": "閉じる"
 }

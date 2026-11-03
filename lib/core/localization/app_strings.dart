@@ -2028,4 +2028,10 @@ class AppStrings {
   String get spotifyNotRegisteredMessage => _l.spotifyNotRegisteredMessage;
 
   String get spotifyNotRegisteredOk => _l.spotifyNotRegisteredOk;
+
+  String get deleteAccountNotConfirmed => _l.deleteAccountNotConfirmed;
+
+  String get deleteAccountClosing => _l.deleteAccountClosing;
+
+  String get deleteAccountCloseApp => _l.deleteAccountCloseApp;
 }

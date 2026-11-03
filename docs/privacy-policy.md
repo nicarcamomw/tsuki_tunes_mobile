@@ -80,8 +80,9 @@ A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada con
   - Tu historial.
   - Tu perfil público.
   - Tu cuenta de inicio de sesión.
-  - Lo que la app guardaba en el teléfono para esa cuenta.
+  - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, máscaras y cachés).
 - También puedes pedir la eliminación sin la app; mira [cómo eliminar tu cuenta](delete-account.md).
+- La base de datos se respalda una vez al día para recuperarla ante fallas, y cada copia se borra sola a los 98 días. Los datos de una cuenta eliminada pueden seguir en esas copias hasta 98 días.
 - Las estadísticas de uso y los reportes de errores no están vinculados a tu cuenta. Firebase los elimina automáticamente: los de Analytics después de un máximo de 14 meses y los de Crashlytics después de 90 días.
 
 ## 6. Tus derechos

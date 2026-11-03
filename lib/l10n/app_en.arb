@@ -818,5 +818,8 @@
   "spotifyLimitedNote": "Spotify only lets a few invited accounts use this app. Without Spotify, songs play as 30-second previews.",
   "spotifyNotRegisteredTitle": "Spotify access is limited",
   "spotifyNotRegisteredMessage": "For now Spotify only lets a few invited accounts use Tsuki Tunes, and yours is not one of them. It is not a problem with your account or your plan.\n\nYou can keep using the app as usual: songs play as 30-second previews.",
-  "spotifyNotRegisteredOk": "GOT IT"
+  "spotifyNotRegisteredOk": "GOT IT",
+  "deleteAccountNotConfirmed": "Your Google account could not be confirmed. Make sure you pick the same account and try again. Nothing was deleted.",
+  "deleteAccountClosing": "Your account and your data were deleted, including what was on this phone. Tsuki Tunes will now close.",
+  "deleteAccountCloseApp": "CLOSE"
 }

@@ -1,7 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/account_deletion_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
 import 'package:tsuki_tunes_mobile/data/local/app_database.dart';
 import 'package:tsuki_tunes_mobile/data/local/library_store.dart';
 
@@ -113,6 +115,55 @@ void main() {
       expect(await store.loadListened('other'), hasLength(2));
       expect(await store.loadPlaylists('other'), hasLength(1));
       expect(await store.loadFollowed('other'), hasLength(1));
+    });
+  });
+
+  group('the phone after the account is deleted', () {
+    late AppDatabase db;
+    late LibraryStore store;
+
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+      store = LibraryStore(db);
+    });
+    tearDown(() => db.close());
+
+    test('keeps the phone\'s settings, and nothing of the person', () async {
+      SharedPreferences.setMockInitialValues({
+        // Not tied to any account, and still theirs.
+        'play_log_v1': '[...]',
+        'search_history': ['metallica'],
+        'tsuki_birthday': '04-12',
+        'weather_place': 'Santiago',
+        'masks_unlocked_v1': '{}',
+        'tsuki_radar_watched': '[]',
+        'tsuki_playback_state': '{}',
+        // Kept under the account's id.
+        'tsuki_cached_playlists_me': '[]',
+        // About the phone.
+        'tsuki_app_language': 'es',
+        'tsuki_has_completed_onboarding': true,
+        'product_analytics_enabled': false,
+      });
+      await store.saveListened('me', [_song('a')]);
+      await store.saveListened('other', [_song('b')]);
+
+      await StorageService(localStore: store).clearAccountData('me');
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getKeys(), {
+        'tsuki_app_language',
+        'tsuki_has_completed_onboarding',
+        'product_analytics_enabled',
+      });
+      expect(await store.loadListened('me'), isEmpty);
+      // Another account's library on this phone is left for it.
+      expect(await store.loadListened('other'), hasLength(1));
+    });
+
+    test('clearing caches and notifications never stops the deletion', () async {
+      // No plugins in tests: every step fails, and is only logged.
+      await expectLater(AccountDeletionService.clearDeviceTraces(), completes);
     });
   });
 }

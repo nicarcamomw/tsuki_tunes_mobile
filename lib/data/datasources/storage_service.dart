@@ -417,9 +417,22 @@ class StorageService implements StorageContract {
 
   // --- Cached Followed Artists (per-user) ---
 
-  /// Removes all that this phone keeps for the account [uid] (deleted):
-  /// its library in the database, copies left in SharedPreferences and the
-  /// listened-songs file.
+  /// What's kept on the phone when an account is deleted: choices about
+  /// the phone and the app, nothing about the person or what they played.
+  static const deviceSettingKeys = {
+    'tsuki_app_language',
+    'tsuki_has_completed_onboarding',
+    'product_analytics_enabled',
+    'battery_guide_dismissed',
+    'asked_run_in_background',
+  };
+
+  /// Removes all that this phone keeps of the person whose account [uid]
+  /// is being deleted: the account's library in the database (and its
+  /// writes still waiting to be sent), and everything in SharedPreferences
+  /// but [deviceSettingKeys]. Much of that isn't tied to an account (play
+  /// log, searches, birthday, weather place, masks, radar...), and it's
+  /// all theirs.
   Future<void> clearAccountData(String uid) async {
     if (uid.isEmpty) return;
     try {
@@ -428,7 +441,7 @@ class StorageService implements StorageContract {
       _log.severe('clearing the account in the database failed: $e');
     }
     final prefs = await SharedPreferences.getInstance();
-    for (final key in prefs.getKeys().where((k) => k.endsWith('_$uid')).toList()) {
+    for (final key in prefs.getKeys().where((k) => !deviceSettingKeys.contains(k)).toList()) {
       await prefs.remove(key);
     }
     try {

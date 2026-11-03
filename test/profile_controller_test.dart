@@ -140,4 +140,25 @@ void main() {
       c.dispose();
     });
   });
+
+  test('an account being deleted publishes nothing more, even when it changes', () {
+    fakeAsync((async) {
+      final c = make();
+      async.flushMicrotasks();
+      c.suspend();
+
+      artists = ['SOAD', 'Tool'];
+      changes.notifyListeners();
+      elapse(async, const Duration(minutes: 15));
+      expect(repo.saved, isEmpty);
+
+      // Another account signing in on this phone publishes as usual.
+      uid = 'u2';
+      changes.notifyListeners();
+      async.flushMicrotasks();
+      elapse(async, const Duration(seconds: 21));
+      expect(repo.saved.single.stats.tracks, 2);
+      c.dispose();
+    });
+  });
 }

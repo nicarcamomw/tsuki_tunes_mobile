@@ -10,9 +10,9 @@ Tsuki Tunes es una app de Nicolás Cárcamo. Puedes eliminar tu cuenta y todos s
 
 1. Abre Tsuki Tunes y toca tu foto de perfil.
 2. Al final del perfil, toca **Eliminar cuenta**.
-3. Confirma, e inicia sesión con Google cuando te lo pida.
+3. Confirma, e inicia sesión con Google cuando te lo pida (con la misma cuenta).
 
-La eliminación es inmediata. Necesitas conexión a internet.
+La eliminación es inmediata y necesitas conexión a internet. Al terminar, la app se cierra para no volver a guardar nada de lo que tenía abierto.
 
 ## Sin la app
 
@@ -23,12 +23,14 @@ Escribe a **ni.carcamo.hernandez@gmail.com** desde el correo de la cuenta de Goo
 - Tu cuenta de inicio de sesión (nombre, correo y foto de Google).
 - Tus canciones escuchadas, playlists, artistas seguidos y el registro de reproducciones.
 - Tus estadísticas, tus máscaras y tu perfil público.
-- Lo que la app guardaba en el teléfono para esa cuenta (si la eliminas desde la app).
+- Si la eliminas desde la app, también lo que guardaba en tu teléfono: historial de reproducción y de búsquedas, cumpleaños, ciudad del clima, máscaras, artistas del radar, canciones guardadas en caché y notificaciones programadas. Solo se conservan el idioma de la app y tu elección sobre las estadísticas de uso.
 
 Tu conexión con Spotify también se desconecta. Tu cuenta de Spotify no se ve afectada.
 
-## Qué se conserva
+## Qué se conserva, y por cuánto tiempo
 
+- **Copias de seguridad:** la base de datos se respalda una vez al día para poder recuperarla si algo falla, y cada copia se borra sola a los **98 días**. Tus datos pueden seguir en esas copias hasta 98 días después de eliminar tu cuenta; no se usan para nada más.
+- **Un registro técnico vacío:** queda un registro con solo una marca de tiempo, sin tu nombre, correo ni ningún otro dato tuyo. Sirve para que la base de datos limite cuántas escrituras se hacen por segundo.
 - Las estadísticas de uso y los reportes de errores **no están vinculados a tu cuenta**. Firebase los elimina automáticamente: los de Analytics después de un máximo de 14 meses y los de Crashlytics después de 90 días.
 
 Más detalles en la [Política de Privacidad](privacy-policy.md).

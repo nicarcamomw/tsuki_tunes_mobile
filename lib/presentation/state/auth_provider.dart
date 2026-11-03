@@ -21,6 +21,9 @@ enum AccountDeletionResult {
   cancelled,
   /// No connection to Firestore: nothing was touched.
   offline,
+  /// Google sign-in failed (another account picked, Play services error):
+  /// nothing was touched, still signed in.
+  notConfirmed,
   /// Stopped partway; the person was signed out and can sign in and try
   /// again (what's already deleted stays deleted).
   failed,
@@ -197,7 +200,7 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       _log.severe('Re-authentication before deleting the account failed: $e');
-      return AccountDeletionResult.failed;
+      return AccountDeletionResult.notConfirmed;
     }
     final firestore = _firebase.db;
     try {
@@ -217,13 +220,20 @@ class AuthProvider extends ChangeNotifier {
     }
     try {
       await AccountDeletionService(firestore).deleteUserData(uid);
-      await getIt<StorageService>().clearAccountData(uid);
       await _firebase.deleteCurrentUser();
     } catch (e) {
       _log.severe('Account deletion stopped partway: $e');
       await logout();
       return AccountDeletionResult.failed;
     }
+    // The account is gone: now what this phone keeps of the person.
+    await getIt<StorageService>().clearAccountData(uid);
+    await AccountDeletionService.clearDeviceTraces();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_guestUidKey);
+    await prefs.remove(_guestModeKey);
+    _isGuest = false;
+    _guestUid = null;
     _user = null;
     notifyListeners();
     return AccountDeletionResult.deleted;

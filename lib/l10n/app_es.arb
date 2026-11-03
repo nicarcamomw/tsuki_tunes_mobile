@@ -1849,5 +1849,8 @@
   "spotifyLimitedNote": "Spotify solo deja usar esta app a unas pocas cuentas invitadas. Sin Spotify, las canciones suenan como fragmentos de 30 segundos.",
   "spotifyNotRegisteredTitle": "Spotify con acceso limitado",
   "spotifyNotRegisteredMessage": "Por ahora Spotify solo permite que unas pocas cuentas invitadas usen Tsuki Tunes, y la tuya no está entre ellas. No es un problema de tu cuenta ni de tu plan.\n\nPuedes seguir usando la app con normalidad: las canciones suenan como fragmentos de 30 segundos.",
-  "spotifyNotRegisteredOk": "ENTENDIDO"
+  "spotifyNotRegisteredOk": "ENTENDIDO",
+  "deleteAccountNotConfirmed": "No se pudo confirmar tu cuenta de Google. Asegúrate de elegir la misma cuenta e inténtalo de nuevo. No se borró nada.",
+  "deleteAccountClosing": "Tu cuenta y tus datos fueron eliminados, también los de este teléfono. Tsuki Tunes se cerrará para terminar.",
+  "deleteAccountCloseApp": "CERRAR"
 }

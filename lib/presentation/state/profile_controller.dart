@@ -98,6 +98,15 @@ class ProfileController extends ChangeNotifier {
     );
   }
 
+  /// Stops publishing for the account signed in now (it's being deleted):
+  /// a publish landing after its profile was deleted would bring it back.
+  void suspend() {
+    _suspendedFor = _account;
+    _timer?.cancel();
+  }
+
+  String? _suspendedFor;
+
   void _onChange() {
     final uid = _uid();
     if (uid != _account) {
@@ -155,6 +164,7 @@ class ProfileController extends ChangeNotifier {
       if (!force) return;
     }
     final uid = _account;
+    if (uid != null && uid == _suspendedFor) return;
     // Stats only once the library has loaded, never the zeros of a cold start.
     if (uid == null || !_ready || !_libraryLoaded()) return;
     final profile = current!;

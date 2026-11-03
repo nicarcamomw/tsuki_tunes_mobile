@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../core/logger.dart';
+import 'audio_precache_service.dart';
+import 'deezer_disk_cache.dart';
+import 'home_widget_service.dart';
 
 final _log = Log.named('AccountDeletion');
 
@@ -90,5 +94,25 @@ class AccountDeletionService {
       });
     }
     _log.info('Firestore data of the account deleted');
+  }
+
+  /// What else on the phone tells what the person listened to: the saved
+  /// song previews and catalog answers, scheduled notifications (Time
+  /// Machine, release radar) and the home screen player. Each is best
+  /// effort; none can stop the deletion.
+  static Future<void> clearDeviceTraces() async {
+    Future<void> attempt(String what, Future<void> Function() step) async {
+      try {
+        await step();
+      } catch (e) {
+        _log.warning('clearing $what failed: $e');
+      }
+    }
+
+    await attempt('the song previews', () async => AudioPrecacheService().clearCache());
+    await attempt('the catalog cache', DeezerDiskCache().clear);
+    await attempt('notifications', FlutterLocalNotificationsPlugin().cancelAll);
+    await attempt('the home screen player',
+        () => HomeWidgetService().updateTrack(null, isPlaying: false));
   }
 }
