@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/translation_service.dart';
 
 void main() {
@@ -24,8 +23,8 @@ void main() {
   Future<List<String>> translate(String trackId) => translation.translateLines(
         lines: ['hello', '', 'world'],
         trackId: trackId,
-        targetLang: AppLanguage.es,
-        sourceLanguageCode: 'en',
+        sourceCode: 'en',
+        targetCode: 'es',
       );
 
   test('a failed line is not saved, so the next try translates again', () async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
@@ -111,16 +112,77 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
         false;
   }
 
-  Future<void> _toggleTranslation() async {
+  /// Lists the languages to translate into ("Original" first) and shows
+  /// the lyrics in the one picked, under each line.
+  Future<void> _chooseTranslation() async {
     final locale = ref.read(localeProvider);
+    final strings = locale.strings;
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await widget.controller.toggleTranslation(
-      locale.currentLanguage,
-      confirmDownload: _confirmDownload,
+    final controller = widget.controller;
+    final current = controller.translatedTo;
+    final suggested = current ?? await LyricsController.lastTarget() ?? locale.currentLanguage.code;
+    if (!mounted) return;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.bgCard,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetCtx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetCtx).height * 0.7),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  strings.lyricsTranslateTo,
+                  style: locale.getTextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              for (final entry in [
+                MapEntry('', strings.lyricsOriginal),
+                ...LyricsController.translationTargets.entries,
+              ])
+                ListTile(
+                  dense: true,
+                  title: Text(
+                    entry.value,
+                    style: locale.getTextStyle(fontSize: 14, color: Colors.white),
+                  ),
+                  trailing: (entry.key.isEmpty ? current == null : entry.key == current)
+                      ? const Icon(Icons.check, color: AppColors.accent, size: 18)
+                      : entry.key == suggested && current == null
+                          ? const Icon(Icons.history, color: AppColors.textMuted, size: 16)
+                          : null,
+                  onTap: () => Navigator.pop(sheetCtx, entry.key),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
-    if (!ok) {
+    if (picked == null || !mounted) return;
+    if (picked.isEmpty) {
+      controller.hideTranslation();
+      return;
+    }
+    unawaited(LyricsController.rememberTarget(picked));
+    final outcome = await controller.translateTo(picked, confirmDownload: _confirmDownload);
+    final message = switch (outcome) {
+      TranslationOutcome.failed => strings.translationError,
+      TranslationOutcome.sameLanguage =>
+        strings.lyricsSameLanguage(LyricsController.translationTargets[picked] ?? picked),
+      TranslationOutcome.unknownLanguage => strings.lyricsUnknownLanguage,
+      TranslationOutcome.shown || TranslationOutcome.cancelled => null,
+    };
+    if (message != null) {
       messenger.showSnackBar(SnackBar(
-        content: Text(locale.strings.translationError),
+        content: Text(message),
         backgroundColor: AppColors.bgCard,
       ));
     }
@@ -193,7 +255,8 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                         return const SizedBox(height: 8);
                       }
                       final translating = widget.controller.translating;
-                      final translated = widget.controller.translation != null;
+                      final translatedTo = widget.controller.translatedTo;
+                      final translated = translatedTo != null;
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                         child: Row(
@@ -207,11 +270,12 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                             _Chip(
                               icon: Icons.translate,
                               label: translated
-                                  ? strings.lyricsOriginal
+                                  ? LyricsController.translationTargets[translatedTo] ??
+                                      strings.lyricsTranslate
                                   : strings.lyricsTranslate,
                               active: translated,
                               loading: translating,
-                              onTap: translating ? null : _toggleTranslation,
+                              onTap: translating ? null : _chooseTranslation,
                             ),
                           ],
                         ),

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/localization/app_language.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/translation_service.dart';
@@ -17,6 +17,18 @@ import 'audio_progress_selector.dart';
 
 
 final _log = Log.named('Lyrics');
+
+/// How asking for a translation ended.
+enum TranslationOutcome {
+  shown,
+  /// The user didn't want to download the language models.
+  cancelled,
+  /// The lyrics are already in the language asked for.
+  sameLanguage,
+  /// The song's language couldn't be recognized (or can't be translated).
+  unknownLanguage,
+  failed,
+}
 
 /// Lyrics of the playing track, shared by the card under the player and the
 /// full-screen view, so they load once and a translation carries over.
@@ -65,6 +77,7 @@ class LyricsController extends ChangeNotifier {
     _lyrics = null;
     _loading = true;
     _translated = null;
+    _translatedTo = null;
     _showTranslation = false;
     _translating = false;
     _notify();
@@ -89,55 +102,99 @@ class LyricsController extends ChangeNotifier {
     _notify();
   }
 
-  /// Switches the translation on or off. [confirmDownload] is asked first
-  /// when the translation models still have to be downloaded. Returns false
-  /// when translating failed.
-  Future<bool> toggleTranslation(
-    AppLanguage target, {
+  /// Languages lyrics can be translated into: code → name in itself.
+  static Map<String, String> get translationTargets => TranslationService.targets;
+
+  static const _lastTargetKey = 'lyrics_translate_to';
+
+  /// The language last chosen to translate into, if any.
+  static Future<String?> lastTarget() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString(_lastTargetKey);
+      return TranslationService.targets.containsKey(code) ? code : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> rememberTarget(String code) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastTargetKey, code);
+    } catch (_) {}
+  }
+
+  /// The language shown under each line, while a translation is on.
+  String? get translatedTo => _showTranslation ? _translatedTo : null;
+  String? _translatedTo;
+
+  /// Hides the translation (the original lines stay).
+  void hideTranslation() {
+    if (!_showTranslation) return;
+    _showTranslation = false;
+    _notify();
+  }
+
+  /// Shows the lyrics translated into [target] (a code from
+  /// TranslationService.targets) under each line. The song's language is
+  /// recognized first: nothing to do when it's already [target]. Models
+  /// still missing are downloaded after [confirmDownload] says yes.
+  Future<TranslationOutcome> translateTo(
+    String target, {
     required Future<bool> Function(int models) confirmDownload,
   }) async {
-    if (_showTranslation) {
-      _showTranslation = false;
-      _notify();
-      return true;
-    }
-    if (_translated != null) {
-      _showTranslation = true;
-      _notify();
-      return true;
-    }
     final trackId = _trackId;
-    if (trackId == null || !hasText) return true;
-
-    final service = TranslationService();
-    try {
-      final needed = await service.requiredModels(targetLang: target);
-      if (needed.isNotEmpty) {
-        if (!await confirmDownload(needed.length)) return true;
-        _translating = true;
-        _notify();
-        await service.downloadRequiredModels(targetLang: target);
-      }
-      _translating = true;
-      _notify();
-      final lines = await service.translateLines(
-        lines: lineTexts,
-        trackId: trackId,
-        targetLang: target,
-      );
-      if (_disposed || _trackId != trackId) return true;
-      _translated = lines;
+    if (trackId == null || !hasText) return TranslationOutcome.failed;
+    if (_translatedTo == target && _translated != null) {
       _showTranslation = true;
-      return true;
+      _notify();
+      return TranslationOutcome.shown;
+    }
+    final service = TranslationService();
+    _translating = true;
+    _notify();
+    try {
+      final lines = lineTexts;
+      final saved = await service.savedTranslation(trackId, target, lines.length);
+      if (saved != null) {
+        if (_disposed || _trackId != trackId) return TranslationOutcome.failed;
+        _show(saved, target);
+        return TranslationOutcome.shown;
+      }
+      final source = await service.detectLanguage(lines.join('\n'));
+      if (_disposed || _trackId != trackId) return TranslationOutcome.failed;
+      if (source == null) return TranslationOutcome.unknownLanguage;
+      if (source == target) return TranslationOutcome.sameLanguage;
+      final needed = await service.requiredModels(sourceCode: source, targetCode: target);
+      if (needed.isNotEmpty) {
+        if (!await confirmDownload(needed.length)) return TranslationOutcome.cancelled;
+        await service.downloadRequiredModels(sourceCode: source, targetCode: target);
+      }
+      final translated = await service.translateLines(
+        lines: lines,
+        trackId: trackId,
+        sourceCode: source,
+        targetCode: target,
+      );
+      if (_disposed || _trackId != trackId) return TranslationOutcome.failed;
+      _show(translated, target);
+      return TranslationOutcome.shown;
     } catch (e) {
       _log.severe('translation failed: $e');
-      return false;
+      return TranslationOutcome.failed;
     } finally {
       if (!_disposed && _trackId == trackId) {
         _translating = false;
         _notify();
       }
     }
+  }
+
+  void _show(List<String> lines, String target) {
+    _translated = lines;
+    _translatedTo = target;
+    _showTranslation = true;
   }
 
   void _notify() {

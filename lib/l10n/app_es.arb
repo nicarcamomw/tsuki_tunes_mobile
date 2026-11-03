@@ -702,7 +702,7 @@
   "translationError": "Error al traducir. Reintenta.",
   "downloadingModel": "// DESCARGANDO MODELO DE IDIOMA...",
   "downloadModelTitle": "Descargar modelo de idioma",
-  "downloadModelDesc": "Se necesita descargar ~{size} MB de datos. Solo se hace una vez y después funciona sin internet.",
+  "downloadModelDesc": "Se necesita descargar ~{size} MB por Wi-Fi (sin Wi-Fi, espera hasta que haya). Solo se hace una vez y después funciona sin internet.",
   "@downloadModelDesc": {
     "placeholders": {
       "size": {
@@ -1854,5 +1854,13 @@
   "deleteAccountClosing": "Tu cuenta y tus datos fueron eliminados, también los de este teléfono. Tsuki Tunes se cerrará para terminar.",
   "deleteAccountCloseApp": "CERRAR",
   "crossfadeGapless": "Sin pausa",
-  "lyricsPreviewNote": "Suena un fragmento de 30 s: la letra va sin sincronizar. Con Spotify sigue la canción."
+  "lyricsPreviewNote": "Suena un fragmento de 30 s: la letra va sin sincronizar. Con Spotify sigue la canción.",
+  "lyricsTranslateTo": "Traducir la letra a",
+  "lyricsSameLanguage": "La letra ya está en {language}.",
+  "@lyricsSameLanguage": {
+    "placeholders": {
+      "language": {"type": "String"}
+    }
+  },
+  "lyricsUnknownLanguage": "No se pudo reconocer el idioma de esta letra."
 }

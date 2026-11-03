@@ -63,7 +63,7 @@ La app usa estos servicios, cada uno con su propia política de privacidad:
 - [LRCLIB](https://lrclib.net/): letras de canciones.
 - [Open-Meteo](https://open-meteo.com/en/terms): clima, si lo activas.
 - Reconocimiento de voz de tu teléfono (normalmente [Google](https://policies.google.com/privacy)): búsqueda por voz, si la usas.
-- [Google ML Kit](https://developers.google.com/ml-kit/terms): traducción de letras, que se hace en el teléfono.
+- [Google ML Kit](https://developers.google.com/ml-kit/terms): reconocer el idioma de una letra y traducirla, en el teléfono (solo se descargan los idiomas que elijas).
 
 A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada consulta (por ejemplo, el título y el artista de una canción, o una ubicación redondeada), sin datos de tu cuenta.
 

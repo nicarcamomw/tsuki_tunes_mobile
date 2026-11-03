@@ -2038,4 +2038,10 @@ class AppStrings {
   String get crossfadeGapless => _l.crossfadeGapless;
 
   String get lyricsPreviewNote => _l.lyricsPreviewNote;
+
+  String get lyricsTranslateTo => _l.lyricsTranslateTo;
+
+  String lyricsSameLanguage(String language) => _l.lyricsSameLanguage(language);
+
+  String get lyricsUnknownLanguage => _l.lyricsUnknownLanguage;
 }

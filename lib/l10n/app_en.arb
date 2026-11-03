@@ -471,7 +471,7 @@
   "translationError": "Translation failed. Retry.",
   "downloadingModel": "// DOWNLOADING LANGUAGE MODEL...",
   "downloadModelTitle": "Download language model",
-  "downloadModelDesc": "Need to download ~{size} MB of data. This only happens once, then works offline.",
+  "downloadModelDesc": "About {size} MB need to be downloaded over Wi-Fi (without Wi-Fi it waits until there is). Only once; after that it works offline.",
   "downloadModelConfirm": "DOWNLOAD",
   "translatedTag": "TRANSLATED OFFLINE",
   "a11yTranslate": "Translate lyrics",
@@ -823,5 +823,8 @@
   "deleteAccountClosing": "Your account and your data were deleted, including what was on this phone. Tsuki Tunes will now close.",
   "deleteAccountCloseApp": "CLOSE",
   "crossfadeGapless": "No gap",
-  "lyricsPreviewNote": "A 30-second preview is playing: lyrics are not synced. With Spotify they follow the song."
+  "lyricsPreviewNote": "A 30-second preview is playing: lyrics are not synced. With Spotify they follow the song.",
+  "lyricsTranslateTo": "Translate the lyrics into",
+  "lyricsSameLanguage": "The lyrics are already in {language}.",
+  "lyricsUnknownLanguage": "The language of these lyrics could not be recognized."
 }
