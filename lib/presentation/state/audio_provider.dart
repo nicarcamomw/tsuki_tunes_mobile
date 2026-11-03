@@ -169,6 +169,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   StreamSubscription? _bufSub;
   StreamSubscription? _stateSub;
   StreamSubscription? _eventSub;
+  StreamSubscription<Track>? _advanceSub;
+  // A song is being looked up to join the current one gapless.
+  bool _gaplessPreparing = false;
   Timer? _spotifyPositionTimer;
   Timer? _retryTimer;
   int _retryCount = 0;
@@ -794,6 +797,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       if (!_spotifyActive) {
         _setPosition(pos);
         _checkCrossfade(pos);
+        _checkGapless(pos);
         if (_isPlaying) {
           _maybePersistPosition();
           _checkListenedThreshold();
@@ -839,6 +843,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _log.severe('playerStateStream error: $e');
       _handlePlaybackError(e);
     });
+
+    _advanceSub = _service.gaplessAdvances.listen(_onGaplessAdvance);
 
     _eventSub = _service.playbackEventStream.listen((_) {
       // Stream monitors native audio pipeline
@@ -1662,6 +1668,111 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     }
   }
 
+  /// How long before a song's end the next one joins it (gapless).
+  static const _gaplessLead = Duration(seconds: 15);
+
+  /// Songs join with no gap when there's no crossfade (set to 0 s) and they
+  /// play here: Spotify joins its own.
+  bool get _gaplessOn =>
+      _crossfadeSeconds == 0 &&
+      !_spotifyActive &&
+      !(_useSpotify && !_spotifyFallbackActive) &&
+      !_sleepCtrl.stopAfterCurrentTrack;
+
+  /// The song that should follow gapless now, or null: the queue's next
+  /// (the same one again with repeat-one), if it can play here.
+  Track? get _gaplessCandidate {
+    if (_q.isEmpty || _currentTrack == null) return null;
+    final Track next;
+    if (_q.repeatMode == PlaybackRepeatMode.one) {
+      next = _currentTrack!;
+    } else {
+      final idx = _q.peekNext();
+      if (idx == null) return null;
+      next = _q.tracks[idx];
+    }
+    if (next.previewUrl.isEmpty || !_canPlayOffline(next)) return null;
+    return next;
+  }
+
+  /// In the last seconds of a song, puts the next one right after it in the
+  /// player, so it starts with no gap. Checked on every position tick: the
+  /// queue can change in many ways (edits, shuffle, repeat, the radio
+  /// adding songs) and the song put there follows it.
+  void _checkGapless(Duration pos) {
+    final queued = _service.gaplessNext;
+    if (!_gaplessOn) {
+      if (queued != null && !_gaplessPreparing) {
+        unawaited(_service.setGaplessNext(null));
+      }
+      return;
+    }
+    if (_gaplessPreparing || _duration <= Duration.zero) return;
+    if (_duration - pos > _gaplessLead) return;
+    final want = _gaplessCandidate;
+    if (want?.id == queued?.id) return;
+    _gaplessPreparing = true;
+    final gen = _playGeneration;
+    unawaited(() async {
+      try {
+        final fresh = want == null ? null : await _withFreshPreview(want);
+        if (gen != _playGeneration) return;
+        await _service.setGaplessNext(fresh);
+      } catch (e) {
+        _log.fine('gapless next not prepared: $e');
+      } finally {
+        _gaplessPreparing = false;
+      }
+    }());
+  }
+
+  /// The player moved into the song queued gapless: move the queue and the
+  /// screen along, without a new play (which would add the gap back).
+  void _onGaplessAdvance(Track started) {
+    if (_spotifyActive) return;
+    final outgoing = _currentTrack;
+    Track next;
+    if (_q.repeatMode == PlaybackRepeatMode.one && outgoing?.id == started.id) {
+      next = outgoing!;
+    } else {
+      final idx = _q.advanceForCrossfade();
+      if (idx == null) {
+        // The queue ran out at the last moment: nothing should be playing.
+        _log.info('gapless song started after the queue ended, stopping');
+        unawaited(stop());
+        return;
+      }
+      next = _q.tracks[idx];
+      if (next.id != started.id) {
+        // The queue changed at the very last moment: play what it says now.
+        _log.info('gapless song no longer next, playing "${next.title}"');
+        unawaited(playTrack(next));
+        return;
+      }
+    }
+    _radioCtrl.registerLeaving(next, outgoing, _duration, _duration, completed: true);
+    if (outgoing != null) onTrackCompleted?.call(outgoing);
+    _currentTrack = next;
+    _setPosition(Duration.zero);
+    _duration = Duration(seconds: next.durationSeconds > 0 ? next.durationSeconds : 30);
+    _lastPlayStart = DateTime.now();
+    _playGeneration++;
+    _completionHandled = false;
+    _crossfadeTriggered = false;
+    _playStartPending = true;
+    _audioHeard();
+    _log.fine('Gapless into "${next.title}"');
+    notifyListeners();
+    onTrackStarted?.call(next);
+    unawaited(_ensureLoudness(next));
+    _prefetchNextTrack();
+    unawaited(_radioCtrl.topUp());
+    _persistPlaybackState();
+  }
+
+  @visibleForTesting
+  void checkGapless(Duration pos) => _checkGapless(pos);
+
   void _checkSpotifyCrossfade() {
     // Spotify handles crossfade natively in its own app. Triggering a
     // _playViaSpotify() call early causes an abrupt skip instead of a smooth
@@ -1737,6 +1848,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _bufSub?.cancel();
     _stateSub?.cancel();
     _eventSub?.cancel();
+    _advanceSub?.cancel();
     _stopPositionTimer();
     _retryTimer?.cancel();
     _sleepCtrl.dispose();

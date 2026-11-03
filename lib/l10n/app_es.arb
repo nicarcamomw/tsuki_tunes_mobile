@@ -329,7 +329,7 @@
     }
   },
   "crossfadeTitle": "Crossfade",
-  "crossfadeSubtitle": "Transición suave entre canciones. Spotify usa su propio crossfade.",
+  "crossfadeSubtitle": "Transición suave entre canciones. En 0 s se unen sin pausa. Spotify usa su propio crossfade.",
   "autoMarkTitle": "Marcar al escuchar",
   "autoMarkSubtitle": "Marca la canción al llegar al 80%",
   "precacheWifiTitle": "Precarga solo con Wi-Fi",
@@ -1852,5 +1852,6 @@
   "spotifyNotRegisteredOk": "ENTENDIDO",
   "deleteAccountNotConfirmed": "No se pudo confirmar tu cuenta de Google. Asegúrate de elegir la misma cuenta e inténtalo de nuevo. No se borró nada.",
   "deleteAccountClosing": "Tu cuenta y tus datos fueron eliminados, también los de este teléfono. Tsuki Tunes se cerrará para terminar.",
-  "deleteAccountCloseApp": "CERRAR"
+  "deleteAccountCloseApp": "CERRAR",
+  "crossfadeGapless": "Sin pausa"
 }

@@ -30,6 +30,12 @@ class _FakePlayer implements AudioPlayer {
   @override
   Stream<PlaybackEvent> get playbackEventStream => const Stream.empty();
   @override
+  Stream<SequenceState?> get sequenceStateStream => const Stream.empty();
+  @override
+  Future<Duration?> setAudioSource(AudioSource source,
+          {bool preload = true, int? initialIndex, Duration? initialPosition}) async =>
+      const Duration(seconds: 30);
+  @override
   Future<Duration?> setUrl(String url,
           {Map<String, String>? headers, Duration? initialPosition, bool preload = true, dynamic tag}) async =>
       const Duration(seconds: 30);

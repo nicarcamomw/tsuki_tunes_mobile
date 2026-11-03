@@ -43,6 +43,18 @@ class AudioPlayerService implements AudioPlayerContract {
   final StreamController<bool> _playingCtrl = StreamController<bool>.broadcast();
   final StreamController<PlaybackEvent> _eventCtrl = StreamController<PlaybackEvent>.broadcast();
 
+  // Gapless: the active deck plays a playlist, [song] or [song, next], so
+  // the player starts the next song the instant the current one ends, with
+  // no stop, load and start in between. The song after is added near the
+  // end (setGaplessNext); moving into it is announced on gaplessAdvances.
+  ConcatenatingAudioSource? _playlist;
+  AudioPlayer? _playlistOwner;
+  Track? _gaplessNext;
+  Object? _gaplessTag;
+  final StreamController<Track> _advanceCtrl = StreamController<Track>.broadcast();
+  StreamSubscription? _seqSubA;
+  StreamSubscription? _seqSubB;
+
   StreamSubscription? _posSub;
   StreamSubscription? _durSub;
   StreamSubscription? _bufSub;
@@ -57,6 +69,84 @@ class AudioPlayerService implements AudioPlayerContract {
     _activePlayer = _playerA;
     _standbyPlayer = _playerB;
     _hookActivePlayer(_activePlayer);
+    _seqSubA = _playerA.sequenceStateStream.listen((s) => _onSequence(_playerA, s));
+    _seqSubB = _playerB.sequenceStateStream.listen((s) => _onSequence(_playerB, s));
+  }
+
+  /// The song queued with [setGaplessNext], while it hasn't started.
+  @override
+  Track? get gaplessNext => _gaplessNext;
+
+  /// A queued song started by itself, right after the one before ended.
+  @override
+  Stream<Track> get gaplessAdvances => _advanceCtrl.stream;
+
+  static AudioSource _sourceFor(Track track, Object tag) {
+    final localPath = AudioPrecacheService().getCachedFilePath(track.id);
+    if (localPath != null && !kIsWeb) return AudioSource.file(localPath, tag: tag);
+    return AudioSource.uri(Uri.parse(track.previewUrl), tag: tag);
+  }
+
+  void _forgetGaplessNext() {
+    _gaplessNext = null;
+    _gaplessTag = null;
+  }
+
+  /// Puts [next] right after the song playing, so it follows with no gap;
+  /// null takes back what was put there. False when it can't: during a
+  /// crossfade, or on a deck a crossfade left without a playlist (the next
+  /// song then starts the usual way).
+  @override
+  Future<bool> setGaplessNext(Track? next) async {
+    final playlist = _playlist;
+    if (playlist == null || !identical(_playlistOwner, _activePlayer) || _isCrossfading) {
+      _forgetGaplessNext();
+      return false;
+    }
+    try {
+      final current = _activePlayer.currentIndex ?? 0;
+      if (playlist.length > current + 1) {
+        await playlist.removeRange(current + 1, playlist.length);
+      }
+      if (!identical(_playlist, playlist)) return false;
+      _forgetGaplessNext();
+      if (next == null || next.previewUrl.isEmpty) return false;
+      final tag = Object();
+      await playlist.add(_sourceFor(next, tag));
+      // A new song may have started meanwhile, in a playlist of its own.
+      if (!identical(_playlist, playlist)) return false;
+      _gaplessNext = next;
+      _gaplessTag = tag;
+      return true;
+    } catch (e) {
+      _log.warning('gapless next not queued: $e');
+      _forgetGaplessNext();
+      return false;
+    }
+  }
+
+  void _onSequence(AudioPlayer player, SequenceState? state) {
+    final tag = state?.currentSource?.tag;
+    final next = _gaplessNext;
+    if (tag == null || next == null || !identical(tag, _gaplessTag)) return;
+    if (!identical(player, _activePlayer)) return;
+    _forgetGaplessNext();
+    // The new song's own level and tempo, from its first note.
+    _loudnessRamp?.cancel();
+    _loudness = loudnessFor?.call(next) ?? 1.0;
+    unawaited(player.setVolume(_loudness.clamp(0.0, 1.0)));
+    _speedRamp?.cancel();
+    _speed = speedFor?.call(next) ?? 1.0;
+    unawaited(player.setSpeed(_speed));
+    // Only the song playing stays in the playlist.
+    final playlist = _playlist;
+    final index = state!.currentIndex;
+    if (playlist != null && index > 0) {
+      unawaited(playlist.removeRange(0, index).catchError((Object e) {
+        _log.fine('could not trim the playlist: $e');
+      }));
+    }
+    if (!_advanceCtrl.isClosed) _advanceCtrl.add(next);
   }
 
   void _hookActivePlayer(AudioPlayer player) {
@@ -121,8 +211,7 @@ class AudioPlayerService implements AudioPlayerContract {
     }
 
     _cancelCrossfade();
-
-    final localPath = AudioPrecacheService().getCachedFilePath(track.id);
+    _forgetGaplessNext();
 
     Object? lastError;
     for (var attempt = 1; attempt <= maxRetries; attempt++) {
@@ -134,15 +223,16 @@ class AudioPlayerService implements AudioPlayerContract {
         _speedRamp?.cancel();
         _speed = speedFor?.call(track) ?? 1.0;
         unawaited(_activePlayer.setSpeed(_speed));
-        if (localPath != null && !kIsWeb) {
-          _log.fine('Zero-latency play from pre-cached file: $localPath');
-          await _activePlayer.setFilePath(localPath);
-        } else {
-          await _activePlayer.setUrl(track.previewUrl);
-        }
-        if (initialPosition != null && initialPosition > Duration.zero) {
-          await _activePlayer.seek(initialPosition);
-        }
+        // A playlist of one, which the next song can join (gapless).
+        final playlist = ConcatenatingAudioSource(children: [_sourceFor(track, Object())]);
+        await _activePlayer.setAudioSource(
+          playlist,
+          initialPosition: initialPosition != null && initialPosition > Duration.zero
+              ? initialPosition
+              : null,
+        );
+        _playlist = playlist;
+        _playlistOwner = _activePlayer;
         _start(_activePlayer);
         return;
       } catch (e) {
@@ -164,6 +254,7 @@ class AudioPlayerService implements AudioPlayerContract {
     }
 
     _cancelCrossfade();
+    _forgetGaplessNext();
     _isCrossfading = true;
 
     final localPath = AudioPrecacheService().getCachedFilePath(nextTrack.id);
@@ -273,6 +364,7 @@ class AudioPlayerService implements AudioPlayerContract {
   @override
   Future<void> stop() async {
     _cancelCrossfade();
+    _forgetGaplessNext();
     await _activePlayer.stop();
     await _standbyPlayer.stop();
   }
@@ -336,6 +428,9 @@ class AudioPlayerService implements AudioPlayerContract {
     unawaited(_stateSub?.cancel());
     unawaited(_playingSub?.cancel());
     unawaited(_eventSub?.cancel());
+    unawaited(_seqSubA?.cancel());
+    unawaited(_seqSubB?.cancel());
+    await _advanceCtrl.close();
 
     await _positionCtrl.close();
     await _durationCtrl.close();

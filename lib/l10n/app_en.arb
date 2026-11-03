@@ -178,7 +178,7 @@
   "guessNoResults": "No results",
   "guessShareHeader": "Tsuki Tunes 🌙 Challenge #{day}",
   "crossfadeTitle": "Crossfade",
-  "crossfadeSubtitle": "Smooth transition between songs. Spotify uses its own crossfade.",
+  "crossfadeSubtitle": "Smooth transition between songs. At 0 s they join with no gap. Spotify uses its own crossfade.",
   "autoMarkTitle": "Mark when listened",
   "autoMarkSubtitle": "Marks the track at 80% played",
   "precacheWifiTitle": "Preload on Wi-Fi only",
@@ -821,5 +821,6 @@
   "spotifyNotRegisteredOk": "GOT IT",
   "deleteAccountNotConfirmed": "Your Google account could not be confirmed. Make sure you pick the same account and try again. Nothing was deleted.",
   "deleteAccountClosing": "Your account and your data were deleted, including what was on this phone. Tsuki Tunes will now close.",
-  "deleteAccountCloseApp": "CLOSE"
+  "deleteAccountCloseApp": "CLOSE",
+  "crossfadeGapless": "No gap"
 }

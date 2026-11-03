@@ -178,7 +178,7 @@
   "guessNoResults": "結果なし",
   "guessShareHeader": "Tsuki Tunes 🌙 チャレンジ #{day}",
   "crossfadeTitle": "クロスフェード",
-  "crossfadeSubtitle": "曲間をスムーズにつなぐ。Spotifyは独自のクロスフェードを使用。",
+  "crossfadeSubtitle": "曲間をスムーズにつなぐ。0秒では曲間の無音なしでつながります。Spotifyは独自のクロスフェードを使用。",
   "autoMarkTitle": "再生で既聴にする",
   "autoMarkSubtitle": "80%再生で既聴マーク",
   "precacheWifiTitle": "Wi-Fi時のみ先読み",
@@ -821,5 +821,6 @@
   "spotifyNotRegisteredOk": "OK",
   "deleteAccountNotConfirmed": "Google アカウントを確認できませんでした。同じアカウントを選んでもう一度お試しください。何も削除されていません。",
   "deleteAccountClosing": "アカウントとデータを削除しました（この端末のデータも含む）。Tsuki Tunes を終了します。",
-  "deleteAccountCloseApp": "閉じる"
+  "deleteAccountCloseApp": "閉じる",
+  "crossfadeGapless": "ギャップレス"
 }

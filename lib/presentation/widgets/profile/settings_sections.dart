@@ -150,7 +150,9 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
-            locale.strings.crossfadeSecondsLabel(audio.crossfadeSeconds),
+            audio.crossfadeSeconds == 0
+                ? locale.strings.crossfadeGapless
+                : locale.strings.crossfadeSecondsLabel(audio.crossfadeSeconds),
             style: locale.getTextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
