@@ -21,6 +21,41 @@ extension _MediaSession on AudioProvider {
     handler.onSkipToNext = next;
     handler.onSkipToPrevious = previous;
     handler.onSeek = (pos) => seek(pos);
+    handler.onSkipToQueueItem = (index) async {
+      if (index <= 0 || index >= _mediaQueueTracks.length) return;
+      await playTrack(_mediaQueueTracks[index]);
+    };
+  }
+
+  /// How many songs the system queue (Android Auto's "up next") shows: the
+  /// current one and the next ones in play order.
+  static const _mediaQueueMax = 50;
+
+  /// Gives the system the queue as it will play, so Android Auto can list
+  /// what's next and jump to a song. Only sent when it changed.
+  void _syncMediaQueue(TsukiAudioHandler handler) {
+    final current = _currentTrack;
+    final tracks = current == null
+        ? const <Track>[]
+        : [
+            current,
+            for (final i in _q.peekUpcoming(_mediaQueueMax - 1)) _q.tracks[i],
+          ];
+    final key = tracks.map((t) => t.id).join(',');
+    if (key == _mediaQueueKey) return;
+    _mediaQueueKey = key;
+    _mediaQueueTracks = tracks;
+    handler.queue.add([
+      for (final t in tracks)
+        MediaItem(
+          id: 'queue|${t.id}',
+          title: t.title,
+          artist: t.fullArtistName,
+          album: t.albumTitle,
+          artUri: AutoArtwork.uri(t.coverUrl),
+          duration: t.durationSeconds > 0 ? Duration(seconds: t.durationSeconds) : null,
+        ),
+    ]);
   }
 
   /// Keeps the player widget on the home screen showing the current song
@@ -67,6 +102,7 @@ extension _MediaSession on AudioProvider {
       return;
     }
     final track = _currentTrack;
+    _syncMediaQueue(handler);
 
     final itemKey = track == null
         ? null
@@ -121,6 +157,7 @@ extension _MediaSession on AudioProvider {
         MediaAction.skipToNext,
       },
       androidCompactActionIndices: const [0, 1, 2],
+      queueIndex: track == null ? null : 0,
       processingState: processing,
       playing: _isPlaying,
       updatePosition: _position,

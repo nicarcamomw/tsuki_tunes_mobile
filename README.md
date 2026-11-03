@@ -89,6 +89,14 @@ La app elimina la cuenta sola (Perfil → Eliminar cuenta). Quien no pueda usarl
 4. En Authentication, menú ⋮ de esa cuenta → **Borrar cuenta**.
 5. Responder el correo confirmando que se eliminó.
 
+## Android Auto
+
+La app es una app multimedia para Android Auto: `AudioService` (MediaBrowserService) entrega el menú (Recientes, Favoritos, Playlists, Top, búsqueda y "Ok Google, pon… en Tsuki Tunes") desde `AutoMediaLibrary`, y la cola desde `audio_media_session.dart`.
+
+- **Carátulas:** Android Auto solo carga imágenes `content://`. `ArtworkProvider.kt` descarga a la caché las portadas de Deezer y Spotify (solo esos servidores) y se las entrega (`AutoArtwork.uri`).
+- **Probarlo con una APK instalada desde GitHub:** Android Auto solo muestra apps instaladas desde Play Store. En el teléfono, abre Android Auto → Configuración → toca **Versión** 10 veces → menú ⋮ → **Configuración para desarrolladores** → activa **Fuentes desconocidas**.
+- **Con Spotify:** las canciones completas suenan en la app de Spotify. Si Android Auto cambia a la pantalla de Spotify cuando empieza a sonar, es porque Auto muestra la app que reproduce el audio; con los fragmentos de Deezer se queda en Tsuki Tunes.
+
 ## Seguridad
 
 - **Red:** solo HTTPS y solo las autoridades de certificación de Android, no las que instale el usuario. Eso impide leer el tráfico con un proxy. Está en `android/app/src/main/res/xml/network_security_config.xml` y lo vigila `test/network_security_test.dart`, que también falla si algún código acepta certificados inválidos.

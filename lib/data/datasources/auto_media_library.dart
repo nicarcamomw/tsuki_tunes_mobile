@@ -16,6 +16,22 @@ import 'storage_service.dart';
 
 final _log = Log.named('Auto');
 
+/// Album art Android Auto can show. Auto only loads artwork the app serves
+/// itself (content:// URIs), not https links, so covers go through the
+/// app's ArtworkProvider (android/.../ArtworkProvider.kt).
+class AutoArtwork {
+  /// `<applicationId>.artwork`, set at launch on Android. Null elsewhere
+  /// (and in tests): the plain link is used.
+  static String? authority;
+
+  static Uri? uri(String url) {
+    if (url.isEmpty) return null;
+    final a = authority;
+    if (a == null) return Uri.tryParse(url);
+    return Uri(scheme: 'content', host: a, path: '/art', queryParameters: {'u': url});
+  }
+}
+
 /// What Android Auto (and other media browsers) can browse and play.
 ///
 /// Everything is read from storage and the API, never from the widget tree:
@@ -178,7 +194,7 @@ class AutoMediaLibrary implements MediaLibrarySource {
         title: title,
         displaySubtitle: subtitle,
         playable: false,
-        artUri: art == null || art.isEmpty ? null : Uri.tryParse(art),
+        artUri: art == null ? null : AutoArtwork.uri(art),
       );
 
   List<MediaItem> _tracks(String listId, List<Track> tracks) {
@@ -190,7 +206,7 @@ class AutoMediaLibrary implements MediaLibrarySource {
           artist: t.fullArtistName,
           album: t.albumTitle,
           duration: t.durationSeconds > 0 ? Duration(seconds: t.durationSeconds) : null,
-          artUri: t.coverUrl.isEmpty ? null : Uri.tryParse(t.coverUrl),
+          artUri: AutoArtwork.uri(t.coverUrl),
           playable: true,
         )).toList();
   }

@@ -13,6 +13,7 @@ import '../../core/logger.dart';
 import '../../core/utils/deezer_preview.dart';
 import '../../data/datasources/audio_player_service.dart';
 import '../../data/datasources/audio_precache_service.dart';
+import '../../data/datasources/auto_media_library.dart' show AutoArtwork;
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/crash_reporter.dart';
 import '../../data/datasources/deezer_api_service.dart';
@@ -255,6 +256,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // the system extrapolates it from updatePosition + updateTime, so pushing
   // on every tick would only waste work.
   String? _mediaItemKey;
+  String? _mediaQueueKey;
+  List<Track> _mediaQueueTracks = const [];
   String? _mediaStateKey;
   // Where the lock-screen bar was put last, to tell when it drifted.
   Duration _mediaPostedPosition = Duration.zero;

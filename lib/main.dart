@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderContainer, UncontrolledProviderScope;
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_environment.dart';
@@ -112,6 +114,13 @@ void _deferredInit() {
     await Future.wait([_initCrashReporting(), DeezerDiskCache().init(), mediaFuture]);
     final handler = await mediaFuture;
     if (handler != null) {
+      // Album art for Android Auto's lists, served by ArtworkProvider.
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          final info = await PackageInfo.fromPlatform();
+          AutoArtwork.authority = '${info.packageName}.artwork';
+        } catch (_) {}
+      }
       _audio.attachDeferredMediaHandler(handler);
       handler.library = AutoMediaLibrary(
         // The app's storage: the library lives in its database.

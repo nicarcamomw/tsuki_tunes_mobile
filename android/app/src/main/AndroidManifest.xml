@@ -152,6 +152,14 @@
             android:name="google_analytics_default_allow_ad_personalization_signals"
             android:value="false" />
 
+        <!-- Android Auto: album art for its lists, which it only loads from
+             content:// URIs (ArtworkProvider; Deezer/Spotify covers only) -->
+        <provider
+            android:name=".ArtworkProvider"
+            android:authorities="${applicationId}.artwork"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
+
         <!-- Android Auto: media app (browse tree served by AudioService) -->
         <meta-data
             android:name="com.google.android.gms.car.application"

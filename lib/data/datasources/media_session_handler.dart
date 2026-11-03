@@ -22,6 +22,7 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> Function()? onSkipToNext;
   Future<void> Function()? onSkipToPrevious;
   Future<void> Function(Duration position)? onSeek;
+  Future<void> Function(int index)? onSkipToQueueItem;
 
   /// Browsing and voice commands from Android Auto.
   MediaLibrarySource? library;
@@ -65,6 +66,10 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> seek(Duration position) async => onSeek?.call(position);
+
+  /// A song picked in the queue Android Auto shows ([queue]).
+  @override
+  Future<void> skipToQueueItem(int index) async => onSkipToQueueItem?.call(index);
 
   /// The user swiped the app away from recents: stop like Spotify does.
   @override
