@@ -54,6 +54,25 @@ class MainActivity : AudioServiceActivity() {
                     }
                     "runsInBackground" -> result.success(ignoresBatteryOptimizations())
                     "integrity" -> result.success(deviceIntegrity())
+                    // The phone's media volume, which the sleep timer fades
+                    // when Spotify plays (Spotify's own can't be set).
+                    "mediaVolume" -> {
+                        val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        result.success(
+                            mapOf(
+                                "current" to audio.getStreamVolume(AudioManager.STREAM_MUSIC),
+                                "max" to audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                            )
+                        )
+                    }
+                    "setMediaVolume" -> {
+                        val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        val index = call.argument<Int>("index") ?: 0
+                        val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                        // No flags: no volume panel popping up while asleep.
+                        audio.setStreamVolume(AudioManager.STREAM_MUSIC, index.coerceIn(0, max), 0)
+                        result.success(null)
+                    }
                     "askToRunInBackground" -> result.success(askToRunInBackground())
                     else -> result.notImplemented()
                 }

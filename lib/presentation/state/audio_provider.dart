@@ -481,6 +481,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       service: _service,
       onStateChanged: notifyListeners,
       onStop: stop,
+      fullSongPlaying: () => _spotifyActive && !_spotifyFallbackActive,
+      isPlaying: () => _isPlaying,
     );
     _radioCtrl = AudioRadioController(
       queue: _q,
@@ -863,6 +865,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   @override
   Future<void> playTrack(Track track, {List<Track>? newQueue}) async {
+    unawaited(_sleepCtrl.restoreVolume());
     // Playing an album/playlist replaces the radio; picking within the
     // queue keeps it and teaches it whether the last song was skipped.
     if (newQueue != null) _radioCtrl.radio = null;
@@ -1090,6 +1093,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   @override
   Future<void> togglePlay() async {
+    // A media volume the sleep timer left down goes back first.
+    if (!_isPlaying) await _sleepCtrl.restoreVolume();
     if (_currentTrack == null && !_q.isEmpty) {
       await playTrack(_q.tracks.first);
       return;

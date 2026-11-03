@@ -30,6 +30,18 @@ class AudioPlayerService implements AudioPlayerContract {
   double _loudness = 1.0;
   Timer? _loudnessRamp;
 
+  /// A factor over every volume this service sets (the sleep timer's
+  /// fade-out), so a song starting mid-fade, a crossfade or a loudness
+  /// change keeps it instead of jumping back up.
+  double _master = 1.0;
+  double get masterVolume => _master;
+  set masterVolume(double value) {
+    _master = value.clamp(0.0, 1.0);
+    if (!_isCrossfading) unawaited(_activePlayer.setVolume(_level(_loudness)));
+  }
+
+  double _level(double loudness) => (loudness * _master).clamp(0.0, 1.0);
+
   /// Playback speed for a track (1.0 = normal). The pitch is kept, so small
   /// changes only shift the tempo.
   double Function(Track track)? speedFor;
@@ -134,7 +146,7 @@ class AudioPlayerService implements AudioPlayerContract {
     // The new song's own level and tempo, from its first note.
     _loudnessRamp?.cancel();
     _loudness = loudnessFor?.call(next) ?? 1.0;
-    unawaited(player.setVolume(_loudness.clamp(0.0, 1.0)));
+    unawaited(player.setVolume(_level(_loudness)));
     _speedRamp?.cancel();
     _speed = speedFor?.call(next) ?? 1.0;
     unawaited(player.setSpeed(_speed));
@@ -219,7 +231,7 @@ class AudioPlayerService implements AudioPlayerContract {
         await _activePlayer.stop();
         _loudnessRamp?.cancel();
         _loudness = loudnessFor?.call(track) ?? 1.0;
-        unawaited(_activePlayer.setVolume(_loudness));
+        unawaited(_activePlayer.setVolume(_level(_loudness)));
         _speedRamp?.cancel();
         _speed = speedFor?.call(track) ?? 1.0;
         unawaited(_activePlayer.setSpeed(_speed));
@@ -292,8 +304,8 @@ class AudioPlayerService implements AudioPlayerContract {
         currentStep++;
         final progress = (currentStep / totalSteps).clamp(0.0, 1.0);
 
-        outgoingPlayer.setVolume(((1.0 - progress) * outLevel).clamp(0.0, 1.0));
-        incomingPlayer.setVolume((progress * inLevel).clamp(0.0, 1.0));
+        outgoingPlayer.setVolume(_level((1.0 - progress) * outLevel));
+        incomingPlayer.setVolume(_level(progress * inLevel));
 
         if (currentStep >= totalSteps) {
           timer.cancel();
@@ -331,11 +343,11 @@ class AudioPlayerService implements AudioPlayerContract {
       outgoing.stop();
       outgoing.setVolume(1.0);
       _loudness = _incomingLoudness;
-      _activePlayer.setVolume(_loudness.clamp(0.0, 1.0));
+      _activePlayer.setVolume(_level(_loudness));
     } else {
       _standbyPlayer.stop();
       _standbyPlayer.setVolume(1.0);
-      _activePlayer.setVolume(_loudness);
+      _activePlayer.setVolume(_level(_loudness));
     }
   }
 
@@ -377,7 +389,7 @@ class AudioPlayerService implements AudioPlayerContract {
 
   @override
   Future<void> setVolume(double volume) async =>
-      await _activePlayer.setVolume((volume * _loudness).clamp(0.0, 1.0));
+      await _activePlayer.setVolume(_level(volume * _loudness));
 
   /// Re-reads [track]'s loudness (it may have arrived after playback began)
   /// and glides the volume there, so the change is not heard as a jump.
@@ -392,7 +404,7 @@ class AudioPlayerService implements AudioPlayerContract {
     _loudnessRamp = Timer.periodic(const Duration(milliseconds: 50), (t) {
       i++;
       _loudness = from + (target - from) * (i / steps);
-      _activePlayer.setVolume(_loudness.clamp(0.0, 1.0));
+      _activePlayer.setVolume(_level(_loudness));
       if (i >= steps) t.cancel();
     });
   }
