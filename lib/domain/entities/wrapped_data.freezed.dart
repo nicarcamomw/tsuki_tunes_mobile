@@ -581,6 +581,305 @@ as String?,
 
 
 /// @nodoc
+mixin _$WrappedAlbumEntry {
+
+@JsonKey(defaultValue: '') String get albumId;@JsonKey(defaultValue: '') String get title;@JsonKey(defaultValue: '') String get artistName;@JsonKey(defaultValue: '') String get coverUrl;@JsonKey(defaultValue: 0) int get playCount;/// The album's songs that were heard (ids).
+ List<String> get trackIds;/// Songs on the album, once known from the catalog (0 = unknown).
+ int get totalTracks;
+/// Create a copy of WrappedAlbumEntry
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WrappedAlbumEntryCopyWith<WrappedAlbumEntry> get copyWith => _$WrappedAlbumEntryCopyWithImpl<WrappedAlbumEntry>(this as WrappedAlbumEntry, _$identity);
+
+  /// Serializes this WrappedAlbumEntry to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as WrappedAlbumEntry;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WrappedAlbumEntry&&(identical(other.albumId, _this.albumId) || other.albumId == _this.albumId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.artistName, _this.artistName) || other.artistName == _this.artistName)&&(identical(other.coverUrl, _this.coverUrl) || other.coverUrl == _this.coverUrl)&&(identical(other.playCount, _this.playCount) || other.playCount == _this.playCount)&&const DeepCollectionEquality().equals(other.trackIds, _this.trackIds)&&(identical(other.totalTracks, _this.totalTracks) || other.totalTracks == _this.totalTracks));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as WrappedAlbumEntry;
+  return Object.hash(runtimeType,_this.albumId,_this.title,_this.artistName,_this.coverUrl,_this.playCount,const DeepCollectionEquality().hash(_this.trackIds),_this.totalTracks);
+}
+
+@override
+String toString() {
+  final _this = this as WrappedAlbumEntry;
+  return 'WrappedAlbumEntry(albumId: ${_this.albumId}, title: ${_this.title}, artistName: ${_this.artistName}, coverUrl: ${_this.coverUrl}, playCount: ${_this.playCount}, trackIds: ${_this.trackIds}, totalTracks: ${_this.totalTracks})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WrappedAlbumEntryCopyWith<$Res>  {
+  factory $WrappedAlbumEntryCopyWith(WrappedAlbumEntry value, $Res Function(WrappedAlbumEntry) _then) = _$WrappedAlbumEntryCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(defaultValue: '') String albumId,@JsonKey(defaultValue: '') String title,@JsonKey(defaultValue: '') String artistName,@JsonKey(defaultValue: '') String coverUrl,@JsonKey(defaultValue: 0) int playCount, List<String> trackIds, int totalTracks
+});
+
+
+
+
+}
+/// @nodoc
+class _$WrappedAlbumEntryCopyWithImpl<$Res>
+    implements $WrappedAlbumEntryCopyWith<$Res> {
+  _$WrappedAlbumEntryCopyWithImpl(this._self, this._then);
+
+  final WrappedAlbumEntry _self;
+  final $Res Function(WrappedAlbumEntry) _then;
+
+/// Create a copy of WrappedAlbumEntry
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? albumId = null,Object? title = null,Object? artistName = null,Object? coverUrl = null,Object? playCount = null,Object? trackIds = null,Object? totalTracks = null,}) {
+  return _then(WrappedAlbumEntry(
+albumId: null == albumId ? _self.albumId : albumId // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,artistName: null == artistName ? _self.artistName : artistName // ignore: cast_nullable_to_non_nullable
+as String,coverUrl: null == coverUrl ? _self.coverUrl : coverUrl // ignore: cast_nullable_to_non_nullable
+as String,playCount: null == playCount ? _self.playCount : playCount // ignore: cast_nullable_to_non_nullable
+as int,trackIds: null == trackIds ? _self.trackIds : trackIds // ignore: cast_nullable_to_non_nullable
+as List<String>,totalTracks: null == totalTracks ? _self.totalTracks : totalTracks // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WrappedAlbumEntry].
+extension WrappedAlbumEntryPatterns on WrappedAlbumEntry {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WrappedAlbumEntry value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WrappedAlbumEntry value)  $default,){
+final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WrappedAlbumEntry value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: '')  String albumId, @JsonKey(defaultValue: '')  String title, @JsonKey(defaultValue: '')  String artistName, @JsonKey(defaultValue: '')  String coverUrl, @JsonKey(defaultValue: 0)  int playCount,  List<String> trackIds,  int totalTracks)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry() when $default != null:
+return $default(_that.albumId,_that.title,_that.artistName,_that.coverUrl,_that.playCount,_that.trackIds,_that.totalTracks);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: '')  String albumId, @JsonKey(defaultValue: '')  String title, @JsonKey(defaultValue: '')  String artistName, @JsonKey(defaultValue: '')  String coverUrl, @JsonKey(defaultValue: 0)  int playCount,  List<String> trackIds,  int totalTracks)  $default,) {final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry():
+return $default(_that.albumId,_that.title,_that.artistName,_that.coverUrl,_that.playCount,_that.trackIds,_that.totalTracks);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(defaultValue: '')  String albumId, @JsonKey(defaultValue: '')  String title, @JsonKey(defaultValue: '')  String artistName, @JsonKey(defaultValue: '')  String coverUrl, @JsonKey(defaultValue: 0)  int playCount,  List<String> trackIds,  int totalTracks)?  $default,) {final _that = this;
+switch (_that) {
+case _WrappedAlbumEntry() when $default != null:
+return $default(_that.albumId,_that.title,_that.artistName,_that.coverUrl,_that.playCount,_that.trackIds,_that.totalTracks);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _WrappedAlbumEntry extends WrappedAlbumEntry {
+  const _WrappedAlbumEntry({@JsonKey(defaultValue: '') required this.albumId, @JsonKey(defaultValue: '') required this.title, @JsonKey(defaultValue: '') required this.artistName, @JsonKey(defaultValue: '') required this.coverUrl, @JsonKey(defaultValue: 0) required this.playCount,  List<String> trackIds = const <String>[], this.totalTracks = 0}): _trackIds = trackIds,super._();
+  factory _WrappedAlbumEntry.fromJson(Map<String, dynamic> json) => _$WrappedAlbumEntryFromJson(json);
+
+@override@JsonKey(defaultValue: '') final  String albumId;
+@override@JsonKey(defaultValue: '') final  String title;
+@override@JsonKey(defaultValue: '') final  String artistName;
+@override@JsonKey(defaultValue: '') final  String coverUrl;
+@override@JsonKey(defaultValue: 0) final  int playCount;
+/// The album's songs that were heard (ids).
+ final  List<String> _trackIds;
+/// The album's songs that were heard (ids).
+@override@JsonKey() List<String> get trackIds {
+  if (_trackIds is EqualUnmodifiableListView) return _trackIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_trackIds);
+}
+
+/// Songs on the album, once known from the catalog (0 = unknown).
+@override@JsonKey() final  int totalTracks;
+
+/// Create a copy of WrappedAlbumEntry
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WrappedAlbumEntryCopyWith<_WrappedAlbumEntry> get copyWith => __$WrappedAlbumEntryCopyWithImpl<_WrappedAlbumEntry>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$WrappedAlbumEntryToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _WrappedAlbumEntry&&(identical(other.albumId, albumId) || other.albumId == albumId)&&(identical(other.title, title) || other.title == title)&&(identical(other.artistName, artistName) || other.artistName == artistName)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.playCount, playCount) || other.playCount == playCount)&&const DeepCollectionEquality().equals(other.trackIds, _trackIds)&&(identical(other.totalTracks, totalTracks) || other.totalTracks == totalTracks));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,albumId,title,artistName,coverUrl,playCount,const DeepCollectionEquality().hash(_trackIds),totalTracks);
+}
+
+@override
+String toString() {
+    return 'WrappedAlbumEntry(albumId: $albumId, title: $title, artistName: $artistName, coverUrl: $coverUrl, playCount: $playCount, trackIds: $trackIds, totalTracks: $totalTracks)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WrappedAlbumEntryCopyWith<$Res> implements $WrappedAlbumEntryCopyWith<$Res> {
+  factory _$WrappedAlbumEntryCopyWith(_WrappedAlbumEntry value, $Res Function(_WrappedAlbumEntry) _then) = __$WrappedAlbumEntryCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(defaultValue: '') String albumId,@JsonKey(defaultValue: '') String title,@JsonKey(defaultValue: '') String artistName,@JsonKey(defaultValue: '') String coverUrl,@JsonKey(defaultValue: 0) int playCount, List<String> trackIds, int totalTracks
+});
+
+
+
+
+}
+/// @nodoc
+class __$WrappedAlbumEntryCopyWithImpl<$Res>
+    implements _$WrappedAlbumEntryCopyWith<$Res> {
+  __$WrappedAlbumEntryCopyWithImpl(this._self, this._then);
+
+  final _WrappedAlbumEntry _self;
+  final $Res Function(_WrappedAlbumEntry) _then;
+
+/// Create a copy of WrappedAlbumEntry
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? albumId = null,Object? title = null,Object? artistName = null,Object? coverUrl = null,Object? playCount = null,Object? trackIds = null,Object? totalTracks = null,}) {
+  return _then(_WrappedAlbumEntry(
+albumId: null == albumId ? _self.albumId : albumId // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,artistName: null == artistName ? _self.artistName : artistName // ignore: cast_nullable_to_non_nullable
+as String,coverUrl: null == coverUrl ? _self.coverUrl : coverUrl // ignore: cast_nullable_to_non_nullable
+as String,playCount: null == playCount ? _self.playCount : playCount // ignore: cast_nullable_to_non_nullable
+as int,trackIds: null == trackIds ? _self._trackIds : trackIds // ignore: cast_nullable_to_non_nullable
+as List<String>,totalTracks: null == totalTracks ? _self.totalTracks : totalTracks // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$WrappedFunFact {
 
 @JsonKey(defaultValue: '') String get key;@JsonKey(defaultValue: <String, dynamic>{}) Map<String, dynamic> get data;
@@ -870,7 +1169,11 @@ mixin _$WrappedData {
 /// only first listens were available ("discoveries"), where counts would
 /// all be 1 and must not be shown as plays.
 @JsonKey(fromJson: jsonIsTrue) bool get basedOnPlays;/// First day with recorded plays in [year], when [basedOnPlays].
-@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? get playsSince;
+@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? get playsSince;/// Most-played albums (two or more of their songs heard).
+ List<WrappedAlbumEntry> get topAlbums;/// Albums whose every song was heard in the period; filled after a
+/// catalog lookup (see WrappedService.withCompletedAlbums).
+ List<WrappedAlbumEntry> get completedAlbums;/// Most days in a row with music, and the first of them.
+ int get longestStreak;@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? get streakStart;
 /// Create a copy of WrappedData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -884,20 +1187,20 @@ $WrappedDataCopyWith<WrappedData> get copyWith => _$WrappedDataCopyWithImpl<Wrap
 @override
 bool operator ==(Object other) {
   final _this = this as WrappedData;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WrappedData&&(identical(other.year, _this.year) || other.year == _this.year)&&(identical(other.month, _this.month) || other.month == _this.month)&&(identical(other.activeDays, _this.activeDays) || other.activeDays == _this.activeDays)&&(identical(other.periodDays, _this.periodDays) || other.periodDays == _this.periodDays)&&(identical(other.previousMinutes, _this.previousMinutes) || other.previousMinutes == _this.previousMinutes)&&const DeepCollectionEquality().equals(other.topTracks, _this.topTracks)&&const DeepCollectionEquality().equals(other.topArtists, _this.topArtists)&&(identical(other.totalMinutesListened, _this.totalMinutesListened) || other.totalMinutesListened == _this.totalMinutesListened)&&(identical(other.totalTracksPlayed, _this.totalTracksPlayed) || other.totalTracksPlayed == _this.totalTracksPlayed)&&(identical(other.uniqueTracksCount, _this.uniqueTracksCount) || other.uniqueTracksCount == _this.uniqueTracksCount)&&(identical(other.uniqueArtistsCount, _this.uniqueArtistsCount) || other.uniqueArtistsCount == _this.uniqueArtistsCount)&&(identical(other.favoriteHour, _this.favoriteHour) || other.favoriteHour == _this.favoriteHour)&&const DeepCollectionEquality().equals(other.hourDistribution, _this.hourDistribution)&&const DeepCollectionEquality().equals(other.funFacts, _this.funFacts)&&(identical(other.generatedAt, _this.generatedAt) || other.generatedAt == _this.generatedAt)&&(identical(other.basedOnPlays, _this.basedOnPlays) || other.basedOnPlays == _this.basedOnPlays)&&(identical(other.playsSince, _this.playsSince) || other.playsSince == _this.playsSince));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WrappedData&&(identical(other.year, _this.year) || other.year == _this.year)&&(identical(other.month, _this.month) || other.month == _this.month)&&(identical(other.activeDays, _this.activeDays) || other.activeDays == _this.activeDays)&&(identical(other.periodDays, _this.periodDays) || other.periodDays == _this.periodDays)&&(identical(other.previousMinutes, _this.previousMinutes) || other.previousMinutes == _this.previousMinutes)&&const DeepCollectionEquality().equals(other.topTracks, _this.topTracks)&&const DeepCollectionEquality().equals(other.topArtists, _this.topArtists)&&(identical(other.totalMinutesListened, _this.totalMinutesListened) || other.totalMinutesListened == _this.totalMinutesListened)&&(identical(other.totalTracksPlayed, _this.totalTracksPlayed) || other.totalTracksPlayed == _this.totalTracksPlayed)&&(identical(other.uniqueTracksCount, _this.uniqueTracksCount) || other.uniqueTracksCount == _this.uniqueTracksCount)&&(identical(other.uniqueArtistsCount, _this.uniqueArtistsCount) || other.uniqueArtistsCount == _this.uniqueArtistsCount)&&(identical(other.favoriteHour, _this.favoriteHour) || other.favoriteHour == _this.favoriteHour)&&const DeepCollectionEquality().equals(other.hourDistribution, _this.hourDistribution)&&const DeepCollectionEquality().equals(other.funFacts, _this.funFacts)&&(identical(other.generatedAt, _this.generatedAt) || other.generatedAt == _this.generatedAt)&&(identical(other.basedOnPlays, _this.basedOnPlays) || other.basedOnPlays == _this.basedOnPlays)&&(identical(other.playsSince, _this.playsSince) || other.playsSince == _this.playsSince)&&const DeepCollectionEquality().equals(other.topAlbums, _this.topAlbums)&&const DeepCollectionEquality().equals(other.completedAlbums, _this.completedAlbums)&&(identical(other.longestStreak, _this.longestStreak) || other.longestStreak == _this.longestStreak)&&(identical(other.streakStart, _this.streakStart) || other.streakStart == _this.streakStart));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as WrappedData;
-  return Object.hash(runtimeType,_this.year,_this.month,_this.activeDays,_this.periodDays,_this.previousMinutes,const DeepCollectionEquality().hash(_this.topTracks),const DeepCollectionEquality().hash(_this.topArtists),_this.totalMinutesListened,_this.totalTracksPlayed,_this.uniqueTracksCount,_this.uniqueArtistsCount,_this.favoriteHour,const DeepCollectionEquality().hash(_this.hourDistribution),const DeepCollectionEquality().hash(_this.funFacts),_this.generatedAt,_this.basedOnPlays,_this.playsSince);
+  return Object.hashAll([runtimeType,_this.year,_this.month,_this.activeDays,_this.periodDays,_this.previousMinutes,const DeepCollectionEquality().hash(_this.topTracks),const DeepCollectionEquality().hash(_this.topArtists),_this.totalMinutesListened,_this.totalTracksPlayed,_this.uniqueTracksCount,_this.uniqueArtistsCount,_this.favoriteHour,const DeepCollectionEquality().hash(_this.hourDistribution),const DeepCollectionEquality().hash(_this.funFacts),_this.generatedAt,_this.basedOnPlays,_this.playsSince,const DeepCollectionEquality().hash(_this.topAlbums),const DeepCollectionEquality().hash(_this.completedAlbums),_this.longestStreak,_this.streakStart]);
 }
 
 @override
 String toString() {
   final _this = this as WrappedData;
-  return 'WrappedData(year: ${_this.year}, month: ${_this.month}, activeDays: ${_this.activeDays}, periodDays: ${_this.periodDays}, previousMinutes: ${_this.previousMinutes}, topTracks: ${_this.topTracks}, topArtists: ${_this.topArtists}, totalMinutesListened: ${_this.totalMinutesListened}, totalTracksPlayed: ${_this.totalTracksPlayed}, uniqueTracksCount: ${_this.uniqueTracksCount}, uniqueArtistsCount: ${_this.uniqueArtistsCount}, favoriteHour: ${_this.favoriteHour}, hourDistribution: ${_this.hourDistribution}, funFacts: ${_this.funFacts}, generatedAt: ${_this.generatedAt}, basedOnPlays: ${_this.basedOnPlays}, playsSince: ${_this.playsSince})';
+  return 'WrappedData(year: ${_this.year}, month: ${_this.month}, activeDays: ${_this.activeDays}, periodDays: ${_this.periodDays}, previousMinutes: ${_this.previousMinutes}, topTracks: ${_this.topTracks}, topArtists: ${_this.topArtists}, totalMinutesListened: ${_this.totalMinutesListened}, totalTracksPlayed: ${_this.totalTracksPlayed}, uniqueTracksCount: ${_this.uniqueTracksCount}, uniqueArtistsCount: ${_this.uniqueArtistsCount}, favoriteHour: ${_this.favoriteHour}, hourDistribution: ${_this.hourDistribution}, funFacts: ${_this.funFacts}, generatedAt: ${_this.generatedAt}, basedOnPlays: ${_this.basedOnPlays}, playsSince: ${_this.playsSince}, topAlbums: ${_this.topAlbums}, completedAlbums: ${_this.completedAlbums}, longestStreak: ${_this.longestStreak}, streakStart: ${_this.streakStart})';
 }
 
 
@@ -908,7 +1211,7 @@ abstract mixin class $WrappedDataCopyWith<$Res>  {
   factory $WrappedDataCopyWith(WrappedData value, $Res Function(WrappedData) _then) = _$WrappedDataCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(defaultValue: 0) int year,@JsonKey(includeIfNull: false) int? month, int activeDays, int periodDays,@JsonKey(includeIfNull: false) int? previousMinutes,@JsonKey(defaultValue: <WrappedTrackEntry>[]) List<WrappedTrackEntry> topTracks,@JsonKey(defaultValue: <WrappedArtistEntry>[]) List<WrappedArtistEntry> topArtists,@JsonKey(defaultValue: 0) int totalMinutesListened,@JsonKey(defaultValue: 0) int totalTracksPlayed,@JsonKey(defaultValue: 0) int uniqueTracksCount,@JsonKey(defaultValue: 0) int uniqueArtistsCount,@JsonKey(defaultValue: 0) int favoriteHour,@JsonKey(defaultValue: <int, int>{}) Map<int, int> hourDistribution,@JsonKey(defaultValue: <WrappedFunFact>[]) List<WrappedFunFact> funFacts,@JsonKey(fromJson: jsonDateOrNow) DateTime generatedAt,@JsonKey(fromJson: jsonIsTrue) bool basedOnPlays,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? playsSince
+@JsonKey(defaultValue: 0) int year,@JsonKey(includeIfNull: false) int? month, int activeDays, int periodDays,@JsonKey(includeIfNull: false) int? previousMinutes,@JsonKey(defaultValue: <WrappedTrackEntry>[]) List<WrappedTrackEntry> topTracks,@JsonKey(defaultValue: <WrappedArtistEntry>[]) List<WrappedArtistEntry> topArtists,@JsonKey(defaultValue: 0) int totalMinutesListened,@JsonKey(defaultValue: 0) int totalTracksPlayed,@JsonKey(defaultValue: 0) int uniqueTracksCount,@JsonKey(defaultValue: 0) int uniqueArtistsCount,@JsonKey(defaultValue: 0) int favoriteHour,@JsonKey(defaultValue: <int, int>{}) Map<int, int> hourDistribution,@JsonKey(defaultValue: <WrappedFunFact>[]) List<WrappedFunFact> funFacts,@JsonKey(fromJson: jsonDateOrNow) DateTime generatedAt,@JsonKey(fromJson: jsonIsTrue) bool basedOnPlays,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? playsSince, List<WrappedAlbumEntry> topAlbums, List<WrappedAlbumEntry> completedAlbums, int longestStreak,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? streakStart
 });
 
 
@@ -925,7 +1228,7 @@ class _$WrappedDataCopyWithImpl<$Res>
 
 /// Create a copy of WrappedData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? month = freezed,Object? activeDays = null,Object? periodDays = null,Object? previousMinutes = freezed,Object? topTracks = null,Object? topArtists = null,Object? totalMinutesListened = null,Object? totalTracksPlayed = null,Object? uniqueTracksCount = null,Object? uniqueArtistsCount = null,Object? favoriteHour = null,Object? hourDistribution = null,Object? funFacts = null,Object? generatedAt = null,Object? basedOnPlays = null,Object? playsSince = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? month = freezed,Object? activeDays = null,Object? periodDays = null,Object? previousMinutes = freezed,Object? topTracks = null,Object? topArtists = null,Object? totalMinutesListened = null,Object? totalTracksPlayed = null,Object? uniqueTracksCount = null,Object? uniqueArtistsCount = null,Object? favoriteHour = null,Object? hourDistribution = null,Object? funFacts = null,Object? generatedAt = null,Object? basedOnPlays = null,Object? playsSince = freezed,Object? topAlbums = null,Object? completedAlbums = null,Object? longestStreak = null,Object? streakStart = freezed,}) {
   return _then(WrappedData(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
 as int,month: freezed == month ? _self.month : month // ignore: cast_nullable_to_non_nullable
@@ -944,6 +1247,10 @@ as Map<int, int>,funFacts: null == funFacts ? _self.funFacts : funFacts // ignor
 as List<WrappedFunFact>,generatedAt: null == generatedAt ? _self.generatedAt : generatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,basedOnPlays: null == basedOnPlays ? _self.basedOnPlays : basedOnPlays // ignore: cast_nullable_to_non_nullable
 as bool,playsSince: freezed == playsSince ? _self.playsSince : playsSince // ignore: cast_nullable_to_non_nullable
+as DateTime?,topAlbums: null == topAlbums ? _self.topAlbums : topAlbums // ignore: cast_nullable_to_non_nullable
+as List<WrappedAlbumEntry>,completedAlbums: null == completedAlbums ? _self.completedAlbums : completedAlbums // ignore: cast_nullable_to_non_nullable
+as List<WrappedAlbumEntry>,longestStreak: null == longestStreak ? _self.longestStreak : longestStreak // ignore: cast_nullable_to_non_nullable
+as int,streakStart: freezed == streakStart ? _self.streakStart : streakStart // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -1029,10 +1336,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince,  List<WrappedAlbumEntry> topAlbums,  List<WrappedAlbumEntry> completedAlbums,  int longestStreak, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? streakStart)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WrappedData() when $default != null:
-return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince);case _:
+return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince,_that.topAlbums,_that.completedAlbums,_that.longestStreak,_that.streakStart);case _:
   return orElse();
 
 }
@@ -1050,10 +1357,10 @@ return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.p
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince,  List<WrappedAlbumEntry> topAlbums,  List<WrappedAlbumEntry> completedAlbums,  int longestStreak, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? streakStart)  $default,) {final _that = this;
 switch (_that) {
 case _WrappedData():
-return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince);case _:
+return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince,_that.topAlbums,_that.completedAlbums,_that.longestStreak,_that.streakStart);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1070,10 +1377,10 @@ return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.p
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(defaultValue: 0)  int year, @JsonKey(includeIfNull: false)  int? month,  int activeDays,  int periodDays, @JsonKey(includeIfNull: false)  int? previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[])  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[])  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0)  int totalMinutesListened, @JsonKey(defaultValue: 0)  int totalTracksPlayed, @JsonKey(defaultValue: 0)  int uniqueTracksCount, @JsonKey(defaultValue: 0)  int uniqueArtistsCount, @JsonKey(defaultValue: 0)  int favoriteHour, @JsonKey(defaultValue: <int, int>{})  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[])  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow)  DateTime generatedAt, @JsonKey(fromJson: jsonIsTrue)  bool basedOnPlays, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? playsSince,  List<WrappedAlbumEntry> topAlbums,  List<WrappedAlbumEntry> completedAlbums,  int longestStreak, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)  DateTime? streakStart)?  $default,) {final _that = this;
 switch (_that) {
 case _WrappedData() when $default != null:
-return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince);case _:
+return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.previousMinutes,_that.topTracks,_that.topArtists,_that.totalMinutesListened,_that.totalTracksPlayed,_that.uniqueTracksCount,_that.uniqueArtistsCount,_that.favoriteHour,_that.hourDistribution,_that.funFacts,_that.generatedAt,_that.basedOnPlays,_that.playsSince,_that.topAlbums,_that.completedAlbums,_that.longestStreak,_that.streakStart);case _:
   return null;
 
 }
@@ -1085,7 +1392,7 @@ return $default(_that.year,_that.month,_that.activeDays,_that.periodDays,_that.p
 @JsonSerializable()
 
 class _WrappedData extends WrappedData {
-  const _WrappedData({@JsonKey(defaultValue: 0) required this.year, @JsonKey(includeIfNull: false) this.month, this.activeDays = 0, this.periodDays = 0, @JsonKey(includeIfNull: false) this.previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[]) required  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[]) required  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0) required this.totalMinutesListened, @JsonKey(defaultValue: 0) required this.totalTracksPlayed, @JsonKey(defaultValue: 0) required this.uniqueTracksCount, @JsonKey(defaultValue: 0) required this.uniqueArtistsCount, @JsonKey(defaultValue: 0) required this.favoriteHour, @JsonKey(defaultValue: <int, int>{}) required  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[]) required  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow) required this.generatedAt, @JsonKey(fromJson: jsonIsTrue) this.basedOnPlays = false, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) this.playsSince}): _topTracks = topTracks,_topArtists = topArtists,_hourDistribution = hourDistribution,_funFacts = funFacts,super._();
+  const _WrappedData({@JsonKey(defaultValue: 0) required this.year, @JsonKey(includeIfNull: false) this.month, this.activeDays = 0, this.periodDays = 0, @JsonKey(includeIfNull: false) this.previousMinutes, @JsonKey(defaultValue: <WrappedTrackEntry>[]) required  List<WrappedTrackEntry> topTracks, @JsonKey(defaultValue: <WrappedArtistEntry>[]) required  List<WrappedArtistEntry> topArtists, @JsonKey(defaultValue: 0) required this.totalMinutesListened, @JsonKey(defaultValue: 0) required this.totalTracksPlayed, @JsonKey(defaultValue: 0) required this.uniqueTracksCount, @JsonKey(defaultValue: 0) required this.uniqueArtistsCount, @JsonKey(defaultValue: 0) required this.favoriteHour, @JsonKey(defaultValue: <int, int>{}) required  Map<int, int> hourDistribution, @JsonKey(defaultValue: <WrappedFunFact>[]) required  List<WrappedFunFact> funFacts, @JsonKey(fromJson: jsonDateOrNow) required this.generatedAt, @JsonKey(fromJson: jsonIsTrue) this.basedOnPlays = false, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) this.playsSince,  List<WrappedAlbumEntry> topAlbums = const <WrappedAlbumEntry>[],  List<WrappedAlbumEntry> completedAlbums = const <WrappedAlbumEntry>[], this.longestStreak = 0, @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) this.streakStart}): _topTracks = topTracks,_topArtists = topArtists,_hourDistribution = hourDistribution,_funFacts = funFacts,_topAlbums = topAlbums,_completedAlbums = completedAlbums,super._();
   factory _WrappedData.fromJson(Map<String, dynamic> json) => _$WrappedDataFromJson(json);
 
 @override@JsonKey(defaultValue: 0) final  int year;
@@ -1137,6 +1444,29 @@ class _WrappedData extends WrappedData {
 @override@JsonKey(fromJson: jsonIsTrue) final  bool basedOnPlays;
 /// First day with recorded plays in [year], when [basedOnPlays].
 @override@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) final  DateTime? playsSince;
+/// Most-played albums (two or more of their songs heard).
+ final  List<WrappedAlbumEntry> _topAlbums;
+/// Most-played albums (two or more of their songs heard).
+@override@JsonKey() List<WrappedAlbumEntry> get topAlbums {
+  if (_topAlbums is EqualUnmodifiableListView) return _topAlbums;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_topAlbums);
+}
+
+/// Albums whose every song was heard in the period; filled after a
+/// catalog lookup (see WrappedService.withCompletedAlbums).
+ final  List<WrappedAlbumEntry> _completedAlbums;
+/// Albums whose every song was heard in the period; filled after a
+/// catalog lookup (see WrappedService.withCompletedAlbums).
+@override@JsonKey() List<WrappedAlbumEntry> get completedAlbums {
+  if (_completedAlbums is EqualUnmodifiableListView) return _completedAlbums;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_completedAlbums);
+}
+
+/// Most days in a row with music, and the first of them.
+@override@JsonKey() final  int longestStreak;
+@override@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) final  DateTime? streakStart;
 
 /// Create a copy of WrappedData
 /// with the given fields replaced by the non-null parameter values.
@@ -1151,18 +1481,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _WrappedData&&(identical(other.year, year) || other.year == year)&&(identical(other.month, month) || other.month == month)&&(identical(other.activeDays, activeDays) || other.activeDays == activeDays)&&(identical(other.periodDays, periodDays) || other.periodDays == periodDays)&&(identical(other.previousMinutes, previousMinutes) || other.previousMinutes == previousMinutes)&&const DeepCollectionEquality().equals(other.topTracks, _topTracks)&&const DeepCollectionEquality().equals(other.topArtists, _topArtists)&&(identical(other.totalMinutesListened, totalMinutesListened) || other.totalMinutesListened == totalMinutesListened)&&(identical(other.totalTracksPlayed, totalTracksPlayed) || other.totalTracksPlayed == totalTracksPlayed)&&(identical(other.uniqueTracksCount, uniqueTracksCount) || other.uniqueTracksCount == uniqueTracksCount)&&(identical(other.uniqueArtistsCount, uniqueArtistsCount) || other.uniqueArtistsCount == uniqueArtistsCount)&&(identical(other.favoriteHour, favoriteHour) || other.favoriteHour == favoriteHour)&&const DeepCollectionEquality().equals(other.hourDistribution, _hourDistribution)&&const DeepCollectionEquality().equals(other.funFacts, _funFacts)&&(identical(other.generatedAt, generatedAt) || other.generatedAt == generatedAt)&&(identical(other.basedOnPlays, basedOnPlays) || other.basedOnPlays == basedOnPlays)&&(identical(other.playsSince, playsSince) || other.playsSince == playsSince));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _WrappedData&&(identical(other.year, year) || other.year == year)&&(identical(other.month, month) || other.month == month)&&(identical(other.activeDays, activeDays) || other.activeDays == activeDays)&&(identical(other.periodDays, periodDays) || other.periodDays == periodDays)&&(identical(other.previousMinutes, previousMinutes) || other.previousMinutes == previousMinutes)&&const DeepCollectionEquality().equals(other.topTracks, _topTracks)&&const DeepCollectionEquality().equals(other.topArtists, _topArtists)&&(identical(other.totalMinutesListened, totalMinutesListened) || other.totalMinutesListened == totalMinutesListened)&&(identical(other.totalTracksPlayed, totalTracksPlayed) || other.totalTracksPlayed == totalTracksPlayed)&&(identical(other.uniqueTracksCount, uniqueTracksCount) || other.uniqueTracksCount == uniqueTracksCount)&&(identical(other.uniqueArtistsCount, uniqueArtistsCount) || other.uniqueArtistsCount == uniqueArtistsCount)&&(identical(other.favoriteHour, favoriteHour) || other.favoriteHour == favoriteHour)&&const DeepCollectionEquality().equals(other.hourDistribution, _hourDistribution)&&const DeepCollectionEquality().equals(other.funFacts, _funFacts)&&(identical(other.generatedAt, generatedAt) || other.generatedAt == generatedAt)&&(identical(other.basedOnPlays, basedOnPlays) || other.basedOnPlays == basedOnPlays)&&(identical(other.playsSince, playsSince) || other.playsSince == playsSince)&&const DeepCollectionEquality().equals(other.topAlbums, _topAlbums)&&const DeepCollectionEquality().equals(other.completedAlbums, _completedAlbums)&&(identical(other.longestStreak, longestStreak) || other.longestStreak == longestStreak)&&(identical(other.streakStart, streakStart) || other.streakStart == streakStart));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,year,month,activeDays,periodDays,previousMinutes,const DeepCollectionEquality().hash(_topTracks),const DeepCollectionEquality().hash(_topArtists),totalMinutesListened,totalTracksPlayed,uniqueTracksCount,uniqueArtistsCount,favoriteHour,const DeepCollectionEquality().hash(_hourDistribution),const DeepCollectionEquality().hash(_funFacts),generatedAt,basedOnPlays,playsSince);
+    return Object.hashAll([runtimeType,year,month,activeDays,periodDays,previousMinutes,const DeepCollectionEquality().hash(_topTracks),const DeepCollectionEquality().hash(_topArtists),totalMinutesListened,totalTracksPlayed,uniqueTracksCount,uniqueArtistsCount,favoriteHour,const DeepCollectionEquality().hash(_hourDistribution),const DeepCollectionEquality().hash(_funFacts),generatedAt,basedOnPlays,playsSince,const DeepCollectionEquality().hash(_topAlbums),const DeepCollectionEquality().hash(_completedAlbums),longestStreak,streakStart]);
 }
 
 @override
 String toString() {
-    return 'WrappedData(year: $year, month: $month, activeDays: $activeDays, periodDays: $periodDays, previousMinutes: $previousMinutes, topTracks: $topTracks, topArtists: $topArtists, totalMinutesListened: $totalMinutesListened, totalTracksPlayed: $totalTracksPlayed, uniqueTracksCount: $uniqueTracksCount, uniqueArtistsCount: $uniqueArtistsCount, favoriteHour: $favoriteHour, hourDistribution: $hourDistribution, funFacts: $funFacts, generatedAt: $generatedAt, basedOnPlays: $basedOnPlays, playsSince: $playsSince)';
+    return 'WrappedData(year: $year, month: $month, activeDays: $activeDays, periodDays: $periodDays, previousMinutes: $previousMinutes, topTracks: $topTracks, topArtists: $topArtists, totalMinutesListened: $totalMinutesListened, totalTracksPlayed: $totalTracksPlayed, uniqueTracksCount: $uniqueTracksCount, uniqueArtistsCount: $uniqueArtistsCount, favoriteHour: $favoriteHour, hourDistribution: $hourDistribution, funFacts: $funFacts, generatedAt: $generatedAt, basedOnPlays: $basedOnPlays, playsSince: $playsSince, topAlbums: $topAlbums, completedAlbums: $completedAlbums, longestStreak: $longestStreak, streakStart: $streakStart)';
 }
 
 
@@ -1173,7 +1503,7 @@ abstract mixin class _$WrappedDataCopyWith<$Res> implements $WrappedDataCopyWith
   factory _$WrappedDataCopyWith(_WrappedData value, $Res Function(_WrappedData) _then) = __$WrappedDataCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(defaultValue: 0) int year,@JsonKey(includeIfNull: false) int? month, int activeDays, int periodDays,@JsonKey(includeIfNull: false) int? previousMinutes,@JsonKey(defaultValue: <WrappedTrackEntry>[]) List<WrappedTrackEntry> topTracks,@JsonKey(defaultValue: <WrappedArtistEntry>[]) List<WrappedArtistEntry> topArtists,@JsonKey(defaultValue: 0) int totalMinutesListened,@JsonKey(defaultValue: 0) int totalTracksPlayed,@JsonKey(defaultValue: 0) int uniqueTracksCount,@JsonKey(defaultValue: 0) int uniqueArtistsCount,@JsonKey(defaultValue: 0) int favoriteHour,@JsonKey(defaultValue: <int, int>{}) Map<int, int> hourDistribution,@JsonKey(defaultValue: <WrappedFunFact>[]) List<WrappedFunFact> funFacts,@JsonKey(fromJson: jsonDateOrNow) DateTime generatedAt,@JsonKey(fromJson: jsonIsTrue) bool basedOnPlays,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? playsSince
+@JsonKey(defaultValue: 0) int year,@JsonKey(includeIfNull: false) int? month, int activeDays, int periodDays,@JsonKey(includeIfNull: false) int? previousMinutes,@JsonKey(defaultValue: <WrappedTrackEntry>[]) List<WrappedTrackEntry> topTracks,@JsonKey(defaultValue: <WrappedArtistEntry>[]) List<WrappedArtistEntry> topArtists,@JsonKey(defaultValue: 0) int totalMinutesListened,@JsonKey(defaultValue: 0) int totalTracksPlayed,@JsonKey(defaultValue: 0) int uniqueTracksCount,@JsonKey(defaultValue: 0) int uniqueArtistsCount,@JsonKey(defaultValue: 0) int favoriteHour,@JsonKey(defaultValue: <int, int>{}) Map<int, int> hourDistribution,@JsonKey(defaultValue: <WrappedFunFact>[]) List<WrappedFunFact> funFacts,@JsonKey(fromJson: jsonDateOrNow) DateTime generatedAt,@JsonKey(fromJson: jsonIsTrue) bool basedOnPlays,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? playsSince, List<WrappedAlbumEntry> topAlbums, List<WrappedAlbumEntry> completedAlbums, int longestStreak,@JsonKey(fromJson: jsonDateOrNull, includeIfNull: false) DateTime? streakStart
 });
 
 
@@ -1190,7 +1520,7 @@ class __$WrappedDataCopyWithImpl<$Res>
 
 /// Create a copy of WrappedData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? year = null,Object? month = freezed,Object? activeDays = null,Object? periodDays = null,Object? previousMinutes = freezed,Object? topTracks = null,Object? topArtists = null,Object? totalMinutesListened = null,Object? totalTracksPlayed = null,Object? uniqueTracksCount = null,Object? uniqueArtistsCount = null,Object? favoriteHour = null,Object? hourDistribution = null,Object? funFacts = null,Object? generatedAt = null,Object? basedOnPlays = null,Object? playsSince = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? year = null,Object? month = freezed,Object? activeDays = null,Object? periodDays = null,Object? previousMinutes = freezed,Object? topTracks = null,Object? topArtists = null,Object? totalMinutesListened = null,Object? totalTracksPlayed = null,Object? uniqueTracksCount = null,Object? uniqueArtistsCount = null,Object? favoriteHour = null,Object? hourDistribution = null,Object? funFacts = null,Object? generatedAt = null,Object? basedOnPlays = null,Object? playsSince = freezed,Object? topAlbums = null,Object? completedAlbums = null,Object? longestStreak = null,Object? streakStart = freezed,}) {
   return _then(_WrappedData(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
 as int,month: freezed == month ? _self.month : month // ignore: cast_nullable_to_non_nullable
@@ -1209,6 +1539,10 @@ as Map<int, int>,funFacts: null == funFacts ? _self._funFacts : funFacts // igno
 as List<WrappedFunFact>,generatedAt: null == generatedAt ? _self.generatedAt : generatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,basedOnPlays: null == basedOnPlays ? _self.basedOnPlays : basedOnPlays // ignore: cast_nullable_to_non_nullable
 as bool,playsSince: freezed == playsSince ? _self.playsSince : playsSince // ignore: cast_nullable_to_non_nullable
+as DateTime?,topAlbums: null == topAlbums ? _self._topAlbums : topAlbums // ignore: cast_nullable_to_non_nullable
+as List<WrappedAlbumEntry>,completedAlbums: null == completedAlbums ? _self._completedAlbums : completedAlbums // ignore: cast_nullable_to_non_nullable
+as List<WrappedAlbumEntry>,longestStreak: null == longestStreak ? _self.longestStreak : longestStreak // ignore: cast_nullable_to_non_nullable
+as int,streakStart: freezed == streakStart ? _self.streakStart : streakStart // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }

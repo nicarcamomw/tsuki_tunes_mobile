@@ -22,6 +22,8 @@ import '../../domain/entities/wrapped_data.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
+import 'wrapped/story_image.dart';
 
 
 final _log = Log.named('Wrapped');
@@ -119,6 +121,20 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       }
     });
     if (!data.isEmpty) _startProgress();
+    unawaited(_findCompletedAlbums(data));
+  }
+
+  /// Which albums were heard whole needs the catalog (how many songs each
+  /// has): looked up after the recap shows, then the albums slide updates.
+  Future<void> _findCompletedAlbums(WrappedData data) async {
+    if (!data.topAlbums.any((a) => a.tracksHeard >= 5)) return;
+    final getAlbum = ref.read(getAlbumProvider);
+    final done = await WrappedService().withCompletedAlbums(data, getAlbum.call);
+    if (!mounted || done.completedAlbums.isEmpty) return;
+    setState(() {
+      _data = done;
+      _slides = _buildSlides(done);
+    });
   }
 
   void _startProgress() {
@@ -148,8 +164,14 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
     setState(() => _sharing = true);
     _progress.stop();
     try {
-      final image = await boundary.toImage(pixelRatio: 3);
-      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      // Sharp at 1080 px wide whatever the screen, then laid out as a
+      // 1080×1920 story (what Instagram and WhatsApp stories expect).
+      final pixelRatio = (1080 / boundary.size.width).clamp(2.0, 4.0);
+      final slide = await boundary.toImage(pixelRatio: pixelRatio);
+      final story = await composeStory(slide, footer: 'TSUKI TUNES  ·  ${ref.read(stringsProvider).wrappedPeriod(widget.year, widget.month)}');
+      slide.dispose();
+      final bytes = await story.toByteData(format: ui.ImageByteFormat.png);
+      story.dispose();
       if (bytes == null) return;
       final dir = await getTemporaryDirectory();
       final tag = _monthly ? '${widget.year}_${widget.month}' : '${widget.year}';
@@ -203,6 +225,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       (k) => _MinutesSlide(c: ctx, shareKey: k),
       if (d.topTracks.isNotEmpty) (k) => _TopSongSlide(c: ctx, shareKey: k),
       if (d.topArtists.isNotEmpty) (k) => _TopArtistSlide(c: ctx, shareKey: k),
+      if (d.topAlbums.isNotEmpty) (k) => _TopAlbumSlide(c: ctx, shareKey: k),
       if (d.hourDistribution.isNotEmpty) (k) => _HourSlide(c: ctx, shareKey: k),
       (k) => _AuraSlide(c: ctx, shareKey: k),
       if (d.funFacts.isNotEmpty) (k) => _FactsSlide(c: ctx, shareKey: k),
@@ -726,6 +749,20 @@ class _MinutesSlide extends StatelessWidget {
             const SizedBox(height: 8),
             _DaysBar(active: d.activeDays, total: d.periodDays),
           ],
+          if (d.longestStreak >= 2) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.local_fire_department_rounded, size: 18, color: AppColors.warning),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(strings.wrappedStreak(d.longestStreak, d.streakStart),
+                      maxLines: 2,
+                      style: c.text(12, weight: FontWeight.w700, color: AppColors.textSecondary)),
+                ),
+              ],
+            ).animate().fadeIn(delay: 1600.ms),
+          ],
         ],
       ),
     );
@@ -1011,6 +1048,151 @@ class _TopArtistSlide extends StatelessWidget {
   }
 }
 
+/// The most-played albums, and the ones heard whole.
+class _TopAlbumSlide extends StatelessWidget {
+  final _SlideContext c;
+  final GlobalKey shareKey;
+  const _TopAlbumSlide({required this.c, required this.shareKey});
+
+  static const _tint = AppColors.warning;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = c.data;
+    final strings = c.strings;
+    final top = d.topAlbums.first;
+    final done = d.completedAlbums;
+    final rest = d.topAlbums.skip(1).take(done.isEmpty ? 4 : 2).toList();
+    String detail(WrappedAlbumEntry a) => d.basedOnPlays
+        ? '${strings.wrappedPlays(a.playCount)} · ${strings.wrappedAlbumSongs(a.tracksHeard)}'
+        : strings.wrappedDiscoveredSongs(a.tracksHeard);
+    return _Backdrop(
+      shareKey: shareKey,
+      tint: _tint,
+      coverUrl: top.coverUrl,
+      kanji: '盤',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Tag(c, strings.wrappedTopAlbumsLabel, color: _tint),
+          const SizedBox(height: 22),
+          Center(
+            child: LayoutBuilder(builder: (context, box) {
+              final size = math.min(box.maxWidth * 0.5, 190.0);
+              return _Cover(top.coverUrl, size: size, radius: 4, glow: true);
+            }),
+          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
+          const SizedBox(height: 18),
+          Center(
+            child: Text(top.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: c.text(24, weight: FontWeight.w900, height: 1.15)),
+          ).animate().fadeIn(delay: 300.ms),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(top.artistName,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: c.text(15, weight: FontWeight.w600, color: AppColors.textSecondary)),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(detail(top),
+                textAlign: TextAlign.center,
+                style: c.text(12, weight: FontWeight.w700, color: _tint)),
+          ).animate().fadeIn(delay: 500.ms),
+          const Spacer(),
+          if (rest.isNotEmpty) ...[
+            Text(strings.wrappedRunnersUp,
+                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+            const SizedBox(height: 8),
+            for (var i = 0; i < rest.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 26,
+                      child: Text('${i + 2}', style: c.text(16, weight: FontWeight.w900, color: _tint)),
+                    ),
+                    _Cover(rest[i].coverUrl, size: 38, radius: 3),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(rest[i].title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: c.text(13, weight: FontWeight.w700)),
+                          Text('${rest[i].artistName} · ${detail(rest[i])}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: c.text(11, weight: FontWeight.w500, color: AppColors.textMuted)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
+          ],
+          if (done.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _tint.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _tint.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.verified_rounded, size: 16, color: _tint),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(strings.wrappedCompletedAlbums,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: c.text(10, weight: FontWeight.w800, color: _tint, spacing: 1.6)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (final a in done.take(5))
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _Cover(a.coverUrl, size: 44, radius: 3),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    done.length == 1
+                        ? '${done.first.title} · ${strings.wrappedCompletedCount(1)}'
+                        : strings.wrappedCompletedCount(done.length),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: c.text(12, weight: FontWeight.w600, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2, end: 0),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _HourSlide extends StatelessWidget {
   final _SlideContext c;
   final GlobalKey shareKey;
@@ -1078,8 +1260,14 @@ class _HourSlide extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Shrink rather than overflow on narrow phones ("12:00 AM" ×5).
               for (final h in const [0, 6, 12, 18, 23])
-                Text(strings.wrappedHourLabel(h), style: c.text(9, color: AppColors.textMuted)),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(strings.wrappedHourLabel(h), style: c.text(9, color: AppColors.textMuted)),
+                  ),
+                ),
             ],
           ),
           const Spacer(),
@@ -1403,6 +1591,13 @@ class _SummarySlide extends StatelessWidget {
                                           label: strings.wrappedFavoriteHour,
                                           value: strings.wrappedHourLabel(d.favoriteHour)),
                                     ),
+                                    if (d.longestStreak >= 2)
+                                      Expanded(
+                                        child: _SummaryNumber(
+                                            c: c,
+                                            label: strings.wrappedStreakLabel,
+                                            value: strings.wrappedStreakValue(d.longestStreak)),
+                                      ),
                                   ],
                                 ),
                                 const SizedBox(height: 14),

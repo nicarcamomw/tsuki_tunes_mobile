@@ -1581,6 +1581,53 @@ class AppStrings {
           },
       };
 
+  String get wrappedTopAlbumsLabel => switch (language) {
+        AppLanguage.es => 'TUS ÁLBUMES',
+        AppLanguage.en => 'YOUR ALBUMS',
+        AppLanguage.ja => 'あなたのアルバム',
+      };
+
+  /// "8 canciones distintas" under an album.
+  String wrappedAlbumSongs(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 canción' : '$count canciones distintas',
+        AppLanguage.en => count == 1 ? '1 song' : '$count different songs',
+        AppLanguage.ja => '$count曲',
+      };
+
+  String get wrappedCompletedAlbums => switch (language) {
+        AppLanguage.es => 'ESCUCHASTE COMPLETOS',
+        AppLanguage.en => 'HEARD FROM START TO END',
+        AppLanguage.ja => '全曲聴いたアルバム',
+      };
+
+  String wrappedCompletedCount(int count) => switch (language) {
+        AppLanguage.es => count == 1 ? '1 álbum entero, todas sus canciones' : '$count álbumes enteros, todas sus canciones',
+        AppLanguage.en => count == 1 ? '1 whole album, every song' : '$count whole albums, every song',
+        AppLanguage.ja => '$count枚のアルバムを全曲',
+      };
+
+  String get wrappedStreakLabel => switch (language) {
+        AppLanguage.es => 'RACHA',
+        AppLanguage.en => 'STREAK',
+        AppLanguage.ja => '連続',
+      };
+
+  /// "12 d" in the recap card.
+  String wrappedStreakValue(int days) => switch (language) {
+        AppLanguage.ja => '$days日',
+        _ => '$days d',
+      };
+
+  /// "Racha más larga: 12 días seguidos, desde el 3 de octubre de 2026".
+  String wrappedStreak(int days, DateTime? from) {
+    final since = from == null ? null : longDate(from);
+    return switch (language) {
+      AppLanguage.es => 'Racha más larga: $days días seguidos${since == null ? '' : ', desde el $since'}',
+      AppLanguage.en => 'Longest streak: $days days in a row${since == null ? '' : ', from $since'}',
+      AppLanguage.ja => '最長$days日連続${since == null ? '' : '（$sinceから）'}',
+    };
+  }
+
   String get wrappedSummaryTitle => switch (language) {
         AppLanguage.es => 'TU RESUMEN',
         AppLanguage.en => 'YOUR RECAP',

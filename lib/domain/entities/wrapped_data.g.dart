@@ -43,6 +43,29 @@ Map<String, dynamic> _$WrappedArtistEntryToJson(_WrappedArtistEntry instance) =>
       'coverUrl': instance.coverUrl,
     };
 
+_WrappedAlbumEntry _$WrappedAlbumEntryFromJson(Map json) => _WrappedAlbumEntry(
+  albumId: json['albumId'] as String? ?? '',
+  title: json['title'] as String? ?? '',
+  artistName: json['artistName'] as String? ?? '',
+  coverUrl: json['coverUrl'] as String? ?? '',
+  playCount: (json['playCount'] as num?)?.toInt() ?? 0,
+  trackIds:
+      (json['trackIds'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const <String>[],
+  totalTracks: (json['totalTracks'] as num?)?.toInt() ?? 0,
+);
+
+Map<String, dynamic> _$WrappedAlbumEntryToJson(_WrappedAlbumEntry instance) =>
+    <String, dynamic>{
+      'albumId': instance.albumId,
+      'title': instance.title,
+      'artistName': instance.artistName,
+      'coverUrl': instance.coverUrl,
+      'playCount': instance.playCount,
+      'trackIds': instance.trackIds,
+      'totalTracks': instance.totalTracks,
+    };
+
 _WrappedFunFact _$WrappedFunFactFromJson(Map json) => _WrappedFunFact(
   key: json['key'] as String? ?? '',
   data: (json['data'] as Map?)?.map((k, e) => MapEntry(k as String, e)) ?? {},
@@ -96,27 +119,50 @@ _WrappedData _$WrappedDataFromJson(Map json) => _WrappedData(
       ? false
       : jsonIsTrue(json['basedOnPlays']),
   playsSince: jsonDateOrNull(json['playsSince']),
+  topAlbums:
+      (json['topAlbums'] as List<dynamic>?)
+          ?.map(
+            (e) =>
+                WrappedAlbumEntry.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList() ??
+      const <WrappedAlbumEntry>[],
+  completedAlbums:
+      (json['completedAlbums'] as List<dynamic>?)
+          ?.map(
+            (e) =>
+                WrappedAlbumEntry.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList() ??
+      const <WrappedAlbumEntry>[],
+  longestStreak: (json['longestStreak'] as num?)?.toInt() ?? 0,
+  streakStart: jsonDateOrNull(json['streakStart']),
 );
 
-Map<String, dynamic> _$WrappedDataToJson(_WrappedData instance) =>
-    <String, dynamic>{
-      'year': instance.year,
-      'month': ?instance.month,
-      'activeDays': instance.activeDays,
-      'periodDays': instance.periodDays,
-      'previousMinutes': ?instance.previousMinutes,
-      'topTracks': instance.topTracks.map((e) => e.toJson()).toList(),
-      'topArtists': instance.topArtists.map((e) => e.toJson()).toList(),
-      'totalMinutesListened': instance.totalMinutesListened,
-      'totalTracksPlayed': instance.totalTracksPlayed,
-      'uniqueTracksCount': instance.uniqueTracksCount,
-      'uniqueArtistsCount': instance.uniqueArtistsCount,
-      'favoriteHour': instance.favoriteHour,
-      'hourDistribution': instance.hourDistribution.map(
-        (k, e) => MapEntry(k.toString(), e),
-      ),
-      'funFacts': instance.funFacts.map((e) => e.toJson()).toList(),
-      'generatedAt': instance.generatedAt.toIso8601String(),
-      'basedOnPlays': instance.basedOnPlays,
-      'playsSince': ?instance.playsSince?.toIso8601String(),
-    };
+Map<String, dynamic> _$WrappedDataToJson(
+  _WrappedData instance,
+) => <String, dynamic>{
+  'year': instance.year,
+  'month': ?instance.month,
+  'activeDays': instance.activeDays,
+  'periodDays': instance.periodDays,
+  'previousMinutes': ?instance.previousMinutes,
+  'topTracks': instance.topTracks.map((e) => e.toJson()).toList(),
+  'topArtists': instance.topArtists.map((e) => e.toJson()).toList(),
+  'totalMinutesListened': instance.totalMinutesListened,
+  'totalTracksPlayed': instance.totalTracksPlayed,
+  'uniqueTracksCount': instance.uniqueTracksCount,
+  'uniqueArtistsCount': instance.uniqueArtistsCount,
+  'favoriteHour': instance.favoriteHour,
+  'hourDistribution': instance.hourDistribution.map(
+    (k, e) => MapEntry(k.toString(), e),
+  ),
+  'funFacts': instance.funFacts.map((e) => e.toJson()).toList(),
+  'generatedAt': instance.generatedAt.toIso8601String(),
+  'basedOnPlays': instance.basedOnPlays,
+  'playsSince': ?instance.playsSince?.toIso8601String(),
+  'topAlbums': instance.topAlbums.map((e) => e.toJson()).toList(),
+  'completedAlbums': instance.completedAlbums.map((e) => e.toJson()).toList(),
+  'longestStreak': instance.longestStreak,
+  'streakStart': ?instance.streakStart?.toIso8601String(),
+};

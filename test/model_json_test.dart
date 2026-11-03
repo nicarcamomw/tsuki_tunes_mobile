@@ -400,6 +400,9 @@ void main() {
         ],
         'generatedAt': '2026-12-01T00:00:00.000Z',
         'basedOnPlays': false,
+        'topAlbums': [],
+        'completedAlbums': [],
+        'longestStreak': 0,
       });
       expect(WrappedData.fromJson(data.toJson()).toJson(), data.toJson());
     });

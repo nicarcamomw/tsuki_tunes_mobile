@@ -34,6 +34,31 @@ abstract class WrappedArtistEntry with _$WrappedArtistEntry {
       _$WrappedArtistEntryFromJson(json);
 }
 
+/// An album of the period: plays of its songs, and which of them were heard.
+@freezed
+abstract class WrappedAlbumEntry with _$WrappedAlbumEntry {
+  const WrappedAlbumEntry._();
+
+  const factory WrappedAlbumEntry({
+    @JsonKey(defaultValue: '') required String albumId,
+    @JsonKey(defaultValue: '') required String title,
+    @JsonKey(defaultValue: '') required String artistName,
+    @JsonKey(defaultValue: '') required String coverUrl,
+    @JsonKey(defaultValue: 0) required int playCount,
+
+    /// The album's songs that were heard (ids).
+    @Default(<String>[]) List<String> trackIds,
+
+    /// Songs on the album, once known from the catalog (0 = unknown).
+    @Default(0) int totalTracks,
+  }) = _WrappedAlbumEntry;
+
+  factory WrappedAlbumEntry.fromJson(Map<String, dynamic> json) =>
+      _$WrappedAlbumEntryFromJson(json);
+
+  int get tracksHeard => trackIds.length;
+}
+
 @freezed
 abstract class WrappedFunFact with _$WrappedFunFact {
   const factory WrappedFunFact({
@@ -86,6 +111,18 @@ abstract class WrappedData with _$WrappedData {
     /// First day with recorded plays in [year], when [basedOnPlays].
     @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)
     DateTime? playsSince,
+
+    /// Most-played albums (two or more of their songs heard).
+    @Default(<WrappedAlbumEntry>[]) List<WrappedAlbumEntry> topAlbums,
+
+    /// Albums whose every song was heard in the period; filled after a
+    /// catalog lookup (see WrappedService.withCompletedAlbums).
+    @Default(<WrappedAlbumEntry>[]) List<WrappedAlbumEntry> completedAlbums,
+
+    /// Most days in a row with music, and the first of them.
+    @Default(0) int longestStreak,
+    @JsonKey(fromJson: jsonDateOrNull, includeIfNull: false)
+    DateTime? streakStart,
   }) = _WrappedData;
 
   factory WrappedData.fromJson(Map<String, dynamic> json) =>

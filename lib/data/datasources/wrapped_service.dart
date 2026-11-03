@@ -1,3 +1,4 @@
+import '../../domain/entities/album.dart';
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/wrapped_data.dart';
 import '../repositories/library_repository_impl.dart';
@@ -95,24 +96,109 @@ class WrappedService {
     final active = data.basedOnPlays
         ? days.where((d) => d.totalPlays > 0).length
         : data.activeDays;
-    return WrappedData(
+    final streak = data.basedOnPlays
+        ? longestStreak([for (final d in days) if (d.totalPlays > 0) d.date])
+        : (data.longestStreak, data.streakStart);
+    return data.copyWith(
       year: year,
       month: month,
       activeDays: active,
       periodDays: total,
-      topTracks: data.topTracks,
-      topArtists: data.topArtists,
-      totalMinutesListened: data.totalMinutesListened,
-      totalTracksPlayed: data.totalTracksPlayed,
-      uniqueTracksCount: data.uniqueTracksCount,
-      uniqueArtistsCount: data.uniqueArtistsCount,
-      favoriteHour: data.favoriteHour,
-      hourDistribution: data.hourDistribution,
-      funFacts: data.funFacts,
-      generatedAt: data.generatedAt,
-      basedOnPlays: data.basedOnPlays,
-      playsSince: data.playsSince,
+      longestStreak: streak.$1,
+      streakStart: streak.$2,
     );
+  }
+
+  /// The most days in a row among [dates] ('yyyy-MM-dd'), and the first of
+  /// them; (0, null) when there are none.
+  static (int, DateTime?) longestStreak(Iterable<String> dates) {
+    final sorted = {
+      for (final d in dates)
+        if (DateTime.tryParse(d) case final t?) DateTime.utc(t.year, t.month, t.day),
+    }.toList()
+      ..sort();
+    if (sorted.isEmpty) return (0, null);
+    var best = 1, run = 1;
+    var bestStart = sorted.first, runStart = sorted.first;
+    for (var i = 1; i < sorted.length; i++) {
+      if (sorted[i].difference(sorted[i - 1]).inDays == 1) {
+        run++;
+      } else {
+        run = 1;
+        runStart = sorted[i];
+      }
+      if (run > best) {
+        best = run;
+        bestStart = runStart;
+      }
+    }
+    return (best, DateTime(bestStart.year, bestStart.month, bestStart.day));
+  }
+
+  /// Most-played albums: songs grouped by album, ranked by plays. Only
+  /// albums with two or more different songs heard count; one song played
+  /// many times is a top song, not an album.
+  static List<WrappedAlbumEntry> topAlbumsOf(
+    Iterable<({String trackId, String albumId, String albumTitle, String artistName, String coverUrl, int plays})> songs, {
+    int limit = 5,
+  }) {
+    final albums = <String, _AlbumAgg>{};
+    for (final s in songs) {
+      if (s.albumId.isEmpty && s.albumTitle.isEmpty) continue;
+      final key = s.albumId.isNotEmpty ? s.albumId : '${s.albumTitle}|${s.artistName}';
+      final agg = albums.putIfAbsent(key, () => _AlbumAgg(s.albumId, s.albumTitle, s.artistName, s.coverUrl));
+      agg.plays += s.plays;
+      agg.tracks.add(s.trackId);
+      if (agg.cover.isEmpty) agg.cover = s.coverUrl;
+      if (agg.title.isEmpty) agg.title = s.albumTitle;
+    }
+    final ranked = albums.values.where((a) => a.tracks.length >= 2 && a.title.isNotEmpty).toList()
+      ..sort((a, b) {
+        final c = b.plays.compareTo(a.plays);
+        return c != 0 ? c : b.tracks.length.compareTo(a.tracks.length);
+      });
+    return [
+      for (final a in ranked.take(limit))
+        WrappedAlbumEntry(
+          albumId: a.id,
+          title: a.title,
+          artistName: a.artist,
+          coverUrl: a.cover,
+          playCount: a.plays,
+          trackIds: a.tracks.toList(),
+        ),
+    ];
+  }
+
+  /// [data] with the albums heard whole: the catalog says how many songs
+  /// each has. Like the "kanpeki" mask, only real albums (not singles or
+  /// EPs) of five songs or more. Looks up at most [maxLookups] albums, those
+  /// with the most songs heard; any that can't be looked up are skipped.
+  Future<WrappedData> withCompletedAlbums(
+    WrappedData data,
+    Future<Album?> Function(String albumId) lookup, {
+    int maxLookups = 8,
+  }) async {
+    final candidates = data.topAlbums.where((a) => a.albumId.isNotEmpty && a.tracksHeard >= 5).toList()
+      ..sort((a, b) => b.tracksHeard.compareTo(a.tracksHeard));
+    final completed = <WrappedAlbumEntry>[];
+    for (final a in candidates.take(maxLookups)) {
+      final Album? album;
+      try {
+        album = await lookup(a.albumId);
+      } catch (_) {
+        continue;
+      }
+      if (album == null || album.recordType != 'album' || album.tracksCount < 5) continue;
+      final heard = a.trackIds.toSet();
+      // The tracklist when the catalog gave it (same songs, not just as
+      // many), else the count.
+      final whole = album.tracks.isNotEmpty
+          ? album.tracks.every((t) => heard.contains(t.id)) && heard.length >= album.tracksCount
+          : heard.length >= album.tracksCount;
+      if (whole) completed.add(a.copyWith(totalTracks: album.tracksCount));
+    }
+    return data.copyWith(completedAlbums: completed);
   }
 
   WrappedData _empty(int year) => WrappedData(
@@ -223,10 +309,23 @@ class WrappedService {
     }
     _addWeekendWarrior(weekend, weekday, facts);
 
+    final topAlbums = topAlbumsOf([
+      for (final a in ranked)
+        (
+          trackId: a.meta.id,
+          albumId: a.meta.albumId,
+          albumTitle: a.meta.albumTitle,
+          artistName: a.meta.artistName,
+          coverUrl: a.meta.coverUrl,
+          plays: a.plays,
+        ),
+    ], limit: 20);
+
     return WrappedData(
       year: year,
       topTracks: topTracks,
       topArtists: topArtists,
+      topAlbums: topAlbums,
       totalMinutesListened: totalSeconds ~/ 60,
       totalTracksPlayed: totalPlays,
       uniqueTracksCount: tracks.length,
@@ -317,10 +416,27 @@ class WrappedService {
     }
     _addWeekendWarrior(weekend, weekday, facts);
 
+    final dayKeys = {for (final t in yearTracks) PlayDay.keyFor(t.listenedAt!)};
+    final streak = longestStreak(dayKeys);
+    final topAlbums = topAlbumsOf([
+      for (final t in yearTracks)
+        (
+          trackId: t.trackId,
+          albumId: t.albumId,
+          albumTitle: t.albumTitle,
+          artistName: t.artistName,
+          coverUrl: t.coverUrl,
+          plays: 1,
+        ),
+    ], limit: 20);
+
     return WrappedData(
       year: year,
       topTracks: topTracks,
       topArtists: topArtists,
+      topAlbums: topAlbums,
+      longestStreak: streak.$1,
+      streakStart: streak.$2,
       totalMinutesListened:
           yearTracks.fold<int>(0, (s, t) => s + t.duration) ~/ 60,
       totalTracksPlayed: yearTracks.length,
@@ -331,9 +447,7 @@ class WrappedService {
       funFacts: facts,
       generatedAt: DateTime.now(),
       basedOnPlays: false,
-      activeDays: {
-        for (final t in yearTracks) PlayDay.keyFor(t.listenedAt!)
-      }.length,
+      activeDays: dayKeys.length,
     );
   }
 
@@ -436,4 +550,14 @@ class _ArtistAgg {
   int totalSeconds = 0;
   String? cover;
   _ArtistAgg(this.name);
+}
+
+class _AlbumAgg {
+  final String id;
+  String title;
+  final String artist;
+  String cover;
+  int plays = 0;
+  final Set<String> tracks = {};
+  _AlbumAgg(this.id, this.title, this.artist, this.cover);
 }
