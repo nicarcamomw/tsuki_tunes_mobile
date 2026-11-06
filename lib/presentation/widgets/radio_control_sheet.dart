@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/image_cache_size.dart';
+import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/song_radio.dart';
 import '../state/app_providers.dart';
@@ -35,6 +36,25 @@ Future<void> startRadioWithFeedback(
   );
 }
 
+/// Starts [artist]'s radio and tells the user how it went.
+Future<void> startArtistRadioWithFeedback(
+  BuildContext context,
+  Artist artist, {
+  double bottomMargin = 12,
+}) async {
+  unawaited(HapticFeedback.mediumImpact());
+  final locale = context.readState(localeProvider);
+  final messenger = ScaffoldMessenger.of(context);
+  final ok = await context.readState(startArtistRadioProvider)(artist);
+  _snack(
+    messenger,
+    locale,
+    ok ? locale.strings.artistRadioStarted(artist.name) : locale.strings.radioNoResults,
+    bottomMargin: bottomMargin,
+    icon: ok ? Icons.sensors : Icons.sensors_off,
+  );
+}
+
 Future<void> showRadioControlSheet(BuildContext context) {
   return SwipeableSheet.show(
     context,
@@ -51,6 +71,8 @@ String? radioReasonLabel(AppStrings strings, RadioReason? reason) {
     RadioSource.seed => null,
     RadioSource.lastfm => '${strings.radioReasonLastFm(reason.seedTitle)} · LAST.FM',
     RadioSource.deezer => '${strings.radioReasonDeezer(reason.seedArtist)} · DEEZER',
+    RadioSource.artistTop => strings.radioReasonArtistTop(reason.seedArtist),
+    RadioSource.related => strings.radioReasonRelated(reason.seedArtist),
   };
 }
 
@@ -105,6 +127,7 @@ class _RadioControlSheet extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final seed = ref.watch(audioProvider.select((a) => a.radioSeed));
+    final radioArtist = ref.watch(audioProvider.select((a) => a.radioArtist));
     final current = ref.watch(currentTrackProvider);
 
     if (seed == null) {
@@ -150,10 +173,10 @@ class _RadioControlSheet extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                   child: SizedBox.square(
                     dimension: 56,
-                    child: seed.coverUrl.isNotEmpty
+                    child: (radioArtist?.pictureUrl ?? seed.coverUrl).isNotEmpty
                         ? CachedNetworkImage(
                             memCacheWidth: imageCacheSize(context, 56),
-                            imageUrl: seed.coverUrl, fit: BoxFit.cover)
+                            imageUrl: radioArtist?.pictureUrl ?? seed.coverUrl, fit: BoxFit.cover)
                         : Container(color: AppColors.bgMid),
                   ),
                 ),
@@ -180,7 +203,7 @@ class _RadioControlSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        strings.radioBasedOn(seed.title),
+                        radioArtist != null ? strings.artistRadioOf(radioArtist.name) : strings.radioBasedOn(seed.title),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
@@ -189,7 +212,7 @@ class _RadioControlSheet extends ConsumerWidget {
                           color: AppColors.textBright,
                         ),
                       ),
-                      Text(
+                      if (radioArtist == null) Text(
                         seed.fullArtistName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

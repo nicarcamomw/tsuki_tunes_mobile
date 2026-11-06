@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:math';
 
+import '../entities/artist.dart';
 import '../entities/similar_track.dart';
 import '../entities/track.dart';
 
 enum RadioMode { familiar, balanced, adventurous }
 
-enum RadioSource { seed, lastfm, deezer }
+/// Where a radio song came from. [artistTop]: the artist radio's own artist
+/// (its top songs); [related]: the top songs of an artist like them.
+enum RadioSource { seed, lastfm, deezer, artistTop, related }
 
 /// Why a track is in the radio: shown in the queue ("Similar to X").
 class RadioReason {
@@ -20,6 +23,8 @@ typedef SimilarTracksFetcher = Future<List<SimilarTrack>> Function(
     String artist, String title);
 typedef ArtistRadioFetcher = Future<List<Track>> Function(String artistId);
 typedef TrackSearcher = Future<List<Track>> Function(String query);
+typedef TopTracksFetcher = Future<List<Track>> Function(String artistId);
+typedef RelatedArtistsFetcher = Future<List<Artist>> Function(String artistId);
 
 class _Candidate {
   final Track track;
@@ -35,6 +40,10 @@ class _Candidate {
 ///
 /// Pure logic: the song sources are passed in, so it has no Flutter,
 /// network or Last.fm/Deezer dependency.
+///
+/// An artist radio ([artist] set) also plays that artist's top songs and
+/// walks through their related artists' top songs: familiar stays close to
+/// the artist, adventurous reaches further down the related list.
 class SongRadio {
   SongRadio({
     required this.seed,
@@ -44,10 +53,15 @@ class SongRadio {
     TrackSearcher? search,
     bool? useLastFm,
     Random? random,
+    this.artist,
+    TopTracksFetcher? topTracks,
+    RelatedArtistsFetcher? related,
   })  : _mode = mode,
         _similar = similar ?? _noSimilar,
         _artistRadio = artistRadio ?? _noTracks,
         _search = search ?? _noTracks,
+        _topTracks = topTracks ?? _noTracks,
+        _related = related ?? _noArtists,
         usesLastFm = useLastFm ?? false,
         _rng = random ?? Random() {
     _seedArtistKey = artistKeyOf(seed);
@@ -58,9 +72,19 @@ class SongRadio {
 
   final Track seed;
   final bool usesLastFm;
+
+  /// The artist of an artist radio; null for a song radio.
+  final Artist? artist;
+  bool get isArtistRadio => artist != null;
+
   final SimilarTracksFetcher _similar;
   final ArtistRadioFetcher _artistRadio;
   final TrackSearcher _search;
+  final TopTracksFetcher _topTracks;
+  final RelatedArtistsFetcher _related;
+  List<Track>? _ownTop;
+  List<Artist>? _relatedArtists;
+  int _relatedNext = 0;
   final Random _rng;
   RadioMode _mode;
   late final String _seedArtistKey;
@@ -131,6 +155,8 @@ class SongRadio {
       'heard': lastN(_heardArtists, 300),
       'usedIds': lastN(_usedIds, 500),
       'usedKeys': lastN(_usedKeys, 500),
+      if (artist case final a?) 'artist': {'id': a.id, 'name': a.name, 'pic': a.pictureUrl},
+      'relNext': _relatedNext,
     };
   }
 
@@ -142,9 +168,12 @@ class SongRadio {
     TrackSearcher? search,
     bool? useLastFm,
     Random? random,
+    TopTracksFetcher? topTracks,
+    RelatedArtistsFetcher? related,
   }) {
     try {
       final seedRaw = json['seed'];
+      final artistRaw = json['artist'];
       if (seedRaw is! Map || json['v'] != _persistVersion) return null;
       final modeIndex = json['mode'];
       final radio = SongRadio(
@@ -157,7 +186,13 @@ class SongRadio {
         search: search,
         useLastFm: useLastFm,
         random: random,
+        artist: artistRaw is Map && '${artistRaw['id'] ?? ''}'.isNotEmpty
+            ? Artist(id: '${artistRaw['id']}', name: '${artistRaw['name'] ?? ''}', pictureUrl: '${artistRaw['pic'] ?? ''}')
+            : null,
+        topTracks: topTracks,
+        related: related,
       );
+      if (json['relNext'] case final int n) radio._relatedNext = n;
 
       final reasons = json['reasons'];
       if (reasons is Map) {
@@ -283,9 +318,11 @@ class SongRadio {
     _forcedSeed = null;
     _seedUses.update(from.id, (v) => v + 1, ifAbsent: () => 1);
 
-    final results = await Future.wait([_fromLastFm(from), _fromDeezer(from)]);
+    final results = await Future.wait([_fromLastFm(from), _fromDeezer(from), _fromArtist()]);
     final lastfm = results[0];
     final deezer = results[1];
+    // The artist radio's own picks first: they lead each refill.
+    results[2].forEach(_admit);
     final (lfStep, dzStep) = switch (_mode) {
       RadioMode.familiar => (2, 1),
       RadioMode.balanced => (1, 1),
@@ -324,6 +361,65 @@ class SongRadio {
       if (roll <= 0) return pool[i];
     }
     return pool.last;
+  }
+
+  /// An artist radio's picks: a few of the artist's top songs, then the
+  /// top songs of the next related artists on the list.
+  Future<List<_Candidate>> _fromArtist() async {
+    final a = artist;
+    if (a == null) return const [];
+    final out = <_Candidate>[];
+
+    final own = _ownTop ??= await _safe(() => _topTracks(a.id));
+    final ownTake = switch (_mode) {
+      RadioMode.familiar => 4,
+      RadioMode.balanced => 2,
+      RadioMode.adventurous => 1,
+    };
+    final ownReason = RadioReason(RadioSource.artistTop, '', a.name);
+    var taken = 0;
+    for (var i = 0; i < own.length && taken < ownTake; i++) {
+      final t = own[i];
+      if (_usedIds.contains(t.id) || _usedKeys.contains(songKey(t))) continue;
+      out.add(_Candidate(t, ownReason, _score(t, 0.65 - i * 0.01)));
+      taken++;
+    }
+
+    final related = _relatedArtists ??= await _safe(() => _related(a.id));
+    if (related.isEmpty) return out;
+    // How far down the related list the radio reaches, and how many of
+    // them each refill visits.
+    final (reach, visits) = switch (_mode) {
+      RadioMode.familiar => (6, 1),
+      RadioMode.balanced => (12, 2),
+      RadioMode.adventurous => (25, 3),
+    };
+    final pool = related.take(reach).toList();
+    for (var v = 0; v < visits; v++) {
+      final next = pool[_relatedNext++ % pool.length];
+      if (_banned.contains(next.id)) continue;
+      final tops = await _safe(() => _topTracks(next.id));
+      final fresh = [
+        for (final t in tops.take(10))
+          if (!_usedIds.contains(t.id) && !_usedKeys.contains(songKey(t))) t,
+      ];
+      if (fresh.isEmpty) continue;
+      final reason = RadioReason(RadioSource.related, next.name, a.name);
+      // A hit and one deeper cut from each.
+      final picks = [fresh.first, if (fresh.length > 1) fresh[1 + _rng.nextInt(fresh.length - 1)]];
+      for (final t in picks) {
+        out.add(_Candidate(t, reason, _score(t, 0.5)));
+      }
+    }
+    return out;
+  }
+
+  static Future<List<T>> _safe<T>(Future<List<T>> Function() fetch) async {
+    try {
+      return await fetch();
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<List<_Candidate>> _fromDeezer(Track from) async {
@@ -548,6 +644,7 @@ class SongRadio {
   // Deezer in (see AudioRadioController).
   static Future<List<SimilarTrack>> _noSimilar(String artist, String title) async => const [];
   static Future<List<Track>> _noTracks(String _) async => const [];
+  static Future<List<Artist>> _noArtists(String _) async => const [];
 
   static String primaryArtist(Track t) {
     if (t.contributors.isNotEmpty && t.contributors.first.name.isNotEmpty) {

@@ -162,6 +162,9 @@ class _ArtistInfoSection extends StatelessWidget {
   final VoidCallback onToggleFollow;
   final bool reduceMotion;
 
+  /// Starts the artist's endless radio.
+  final VoidCallback onStartRadio;
+
   const _ArtistInfoSection({
     required this.artist,
     required this.locale,
@@ -173,6 +176,7 @@ class _ArtistInfoSection extends StatelessWidget {
     required this.isFollowed,
     required this.onToggleFollow,
     required this.reduceMotion,
+    required this.onStartRadio,
   });
 
   @override
@@ -184,10 +188,16 @@ class _ArtistInfoSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildStatsRow(strings),
-          if (canFollow) ...[
-            const SizedBox(height: 14),
-            _buildFollowButton(strings),
-          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              if (canFollow) ...[
+                _buildFollowButton(strings),
+                const SizedBox(width: 10),
+              ],
+              _buildRadioButton(strings),
+            ],
+          ),
           _buildBreakdown(strings),
           if (tags.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -349,6 +359,44 @@ class _ArtistInfoSection extends StatelessWidget {
         ),
       ),
     ),
+    );
+  }
+
+  /// The artist's endless radio: their hits, then artists like them.
+  Widget _buildRadioButton(AppStrings strings) {
+    return Semantics(
+      button: true,
+      label: strings.a11yArtistRadio(artist.name),
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onStartRadio,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: [
+              BoxShadow(color: AppColors.accentGlow.withValues(alpha: 0.35), blurRadius: 10),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sensors, size: 15, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
+                strings.artistRadioButton,
+                style: locale.getTextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

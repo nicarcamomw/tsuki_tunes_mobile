@@ -27,6 +27,7 @@ import '../../data/datasources/screen_service.dart';
 import '../../data/datasources/spotify_service.dart';
 import '../../data/datasources/spotify_web_player.dart';
 import '../../data/datasources/storage_service.dart';
+import '../../domain/entities/artist.dart';
 import '../../domain/entities/playback_error.dart';
 import '../../domain/entities/repeat_mode.dart';
 import '../../domain/entities/smart_shuffle.dart';
@@ -1651,6 +1652,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
           _persistPlaybackState();
         },
       );
+
+  @override
+  Future<bool> startArtistRadio(Artist artist) => _radioCtrl.startArtist(
+        artist,
+        currentTrack: _currentTrack,
+        playTrack: playTrack,
+        clearQueue: () {
+          _prefetchedTargetTrackId = null;
+          _q.clear(keep: _currentTrack);
+          _persistPlaybackState();
+        },
+      );
+
+  /// The artist of the artist radio playing, if one is.
+  Artist? get radioArtist => _radioCtrl.artist;
 
   void stopRadio() => _radioCtrl.stop();
 

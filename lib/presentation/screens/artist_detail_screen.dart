@@ -27,6 +27,7 @@ import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/radio_control_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 
@@ -249,6 +250,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 final followed = await ref.read(toggleFollowArtistProvider)(_artist);
                 if (followed) unawaited(_announceRadar(strings));
               },
+              onStartRadio: () => startArtistRadioWithFeedback(context, _artist, bottomMargin: 90),
               reduceMotion: _reduceMotion,
             ),
           ),

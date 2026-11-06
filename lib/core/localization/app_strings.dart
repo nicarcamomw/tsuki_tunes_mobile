@@ -370,6 +370,39 @@ class AppStrings {
   String maskRarity(MaskRarity r) => _l.maskRarity(r.name);
 
   // --- Tsuki Lore ---
+  // ── Artist radio ──
+  String get artistRadioButton => switch (language) {
+        AppLanguage.es => 'RADIO',
+        AppLanguage.en => 'RADIO',
+        AppLanguage.ja => 'ラジオ',
+      };
+  String artistRadioOf(String artist) => switch (language) {
+        AppLanguage.es => 'Radio de $artist',
+        AppLanguage.en => '$artist radio',
+        AppLanguage.ja => '$artistのラジオ',
+      };
+  String artistRadioStarted(String artist) => switch (language) {
+        AppLanguage.es => 'Radio de $artist en marcha: sus éxitos y artistas parecidos',
+        AppLanguage.en => '$artist radio is on: their hits and artists like them',
+        AppLanguage.ja => '$artistのラジオを開始:ヒット曲と似たアーティスト',
+      };
+  String a11yArtistRadio(String artist) => switch (language) {
+        AppLanguage.es => 'Iniciar la radio de $artist',
+        AppLanguage.en => 'Start $artist radio',
+        AppLanguage.ja => '$artistのラジオを開始',
+      };
+  /// Why a song is in an artist radio.
+  String radioReasonArtistTop(String artist) => switch (language) {
+        AppLanguage.es => 'Lo más escuchado de $artist',
+        AppLanguage.en => 'Top song by $artist',
+        AppLanguage.ja => '$artistの人気曲',
+      };
+  String radioReasonRelated(String artist) => switch (language) {
+        AppLanguage.es => 'Parecido a $artist',
+        AppLanguage.en => 'Like $artist',
+        AppLanguage.ja => '$artistに似ている',
+      };
+
   // ── Daily streak ──
   String get streakTitle => switch (language) {
         AppLanguage.es => 'RACHA',

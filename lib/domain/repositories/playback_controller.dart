@@ -1,3 +1,4 @@
+import '../entities/artist.dart';
 import '../entities/track.dart';
 
 /// The player, as the rest of the app drives it: what plays, the queue and
@@ -18,4 +19,8 @@ abstract interface class PlaybackController {
 
   /// Starts an endless radio of songs like [seed]. False if it found none.
   Future<bool> startRadio(Track seed);
+
+  /// Starts an endless radio of [artist]: their top songs and those of
+  /// artists like them. False if it found none.
+  Future<bool> startArtistRadio(Artist artist);
 }

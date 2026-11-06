@@ -84,6 +84,8 @@ import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_track.dart'
     as _i373;
 import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_tracks.dart'
     as _i639;
+import 'package:tsuki_tunes_mobile/domain/usecases/playback/start_artist_radio.dart'
+    as _i469;
 import 'package:tsuki_tunes_mobile/domain/usecases/playback/start_radio.dart'
     as _i1002;
 import 'package:tsuki_tunes_mobile/domain/usecases/playlists/add_track_to_playlist.dart'
@@ -214,6 +216,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i639.PlayTracks>(
       () => _i639.PlayTracks(gh<_i802.PlaybackController>()),
+    );
+    gh.factory<_i469.StartArtistRadio>(
+      () => _i469.StartArtistRadio(gh<_i802.PlaybackController>()),
     );
     gh.factory<_i1002.StartRadio>(
       () => _i1002.StartRadio(gh<_i802.PlaybackController>()),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/lastfm_service.dart';
+import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart';
@@ -55,6 +57,27 @@ class AudioRadioController {
             useLastFm: LastFmService.isConfigured,
           );
 
+  /// Makes artist radios: the song radio plus the artist's top songs and
+  /// their related artists' top songs.
+  static SongRadio Function(Track seed, RadioMode mode, Artist artist) artistRadioFactory =
+      (seed, mode, artist) => SongRadio(
+            seed: seed,
+            mode: mode,
+            similar: LastFmService.getSimilarTracks,
+            artistRadio: DeezerApiService().getArtistRadio,
+            search: _searchCatalog,
+            useLastFm: LastFmService.isConfigured,
+            artist: artist,
+            topTracks: _topTracks,
+            related: DeezerApiService().getRelatedArtists,
+          );
+
+  /// An artist's top songs, for artist radios; tests swap it.
+  static Future<List<Track>> Function(String artistId) topTracksOf = _topTracks;
+
+  static Future<List<Track>> _topTracks(String artistId) =>
+      DeezerApiService().getArtistTopTracks(artistId, limit: 25);
+
   static Future<List<Track>> _searchCatalog(String query) async {
     try {
       return await DeezerApiService().searchTracks(query, limit: 6);
@@ -65,6 +88,9 @@ class AudioRadioController {
 
   bool get isActive => radio != null;
   Track? get seed => radio?.seed;
+
+  /// The artist of an artist radio, null for a song radio.
+  Artist? get artist => radio?.artist;
   RadioMode get mode => radio?.mode ?? _modePref;
   RadioStatus get status => _status;
   bool get usesLastFm => radio?.usesLastFm ?? false;
@@ -81,6 +107,8 @@ class AudioRadioController {
       artistRadio: DeezerApiService().getArtistRadio,
       search: _searchCatalog,
       useLastFm: LastFmService.isConfigured,
+      topTracks: _topTracks,
+      related: DeezerApiService().getRelatedArtists,
     );
     if (restored != null) {
       restored.markQueued(queue);
@@ -95,9 +123,10 @@ class AudioRadioController {
     required Track? currentTrack,
     required Future<void> Function(Track, {List<Track>? newQueue}) playTrack,
     required void Function() clearQueue,
+    Artist? artist,
   }) async {
     await _loadModePref();
-    final newRadio = radioFactory(seed, _modePref);
+    final newRadio = artist == null ? radioFactory(seed, _modePref) : artistRadioFactory(seed, _modePref, artist);
     _topUpFuture = null;
     _status = RadioStatus.loading;
 
@@ -118,6 +147,26 @@ class AudioRadioController {
       _onStateChanged();
     }
     return added;
+  }
+
+  /// Starts [artist]'s radio from one of their three biggest songs. False
+  /// when the artist has no playable top songs.
+  Future<bool> startArtist(
+    Artist artist, {
+    required Track? currentTrack,
+    required Future<void> Function(Track, {List<Track>? newQueue}) playTrack,
+    required void Function() clearQueue,
+  }) async {
+    List<Track> top;
+    try {
+      top = await topTracksOf(artist.id);
+    } catch (_) {
+      top = const [];
+    }
+    final playable = [for (final t in top) if (t.previewUrl.isNotEmpty) t];
+    if (playable.isEmpty) return false;
+    final seed = playable[DateTime.now().microsecond % min(3, playable.length)];
+    return start(seed, currentTrack: currentTrack, playTrack: playTrack, clearQueue: clearQueue, artist: artist);
   }
 
   /// Keeps the music going past the end of what's playing: a radio seeded

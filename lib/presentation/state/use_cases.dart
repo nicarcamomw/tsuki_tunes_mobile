@@ -19,6 +19,7 @@ import '../../domain/usecases/playback/add_to_queue.dart';
 import '../../domain/usecases/playback/play_next.dart';
 import '../../domain/usecases/playback/play_track.dart';
 import '../../domain/usecases/playback/play_tracks.dart';
+import '../../domain/usecases/playback/start_artist_radio.dart';
 import '../../domain/usecases/playback/start_radio.dart';
 import '../../domain/usecases/playlists/add_track_to_playlist.dart';
 import '../../domain/usecases/playlists/create_playlist.dart';
@@ -75,6 +76,7 @@ final playNextProvider = Provider((ref) => PlayNext(ref.watch(playbackController
 final addToQueueProvider = Provider((ref) => AddToQueue(ref.watch(playbackControllerProvider)));
 
 final startRadioProvider = Provider((ref) => StartRadio(ref.watch(playbackControllerProvider)));
+final startArtistRadioProvider = Provider((ref) => StartArtistRadio(ref.watch(playbackControllerProvider)));
 
 // --- Playlists
 

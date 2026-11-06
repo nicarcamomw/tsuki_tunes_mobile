@@ -43,7 +43,7 @@ class _QueueView extends StatelessWidget {
     };
     return Semantics(
       button: true,
-      label: '${strings.a11yRadio}. ${strings.radioBasedOn(seed.title)}',
+      label: '${strings.a11yRadio}. ${audio.radioArtist != null ? strings.artistRadioOf(audio.radioArtist!.name) : strings.radioBasedOn(seed.title)}',
       excludeSemantics: true,
       child: InkWell(
         onTap: () {
@@ -76,7 +76,7 @@ class _QueueView extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      strings.radioBasedOn(seed.title),
+                      audio.radioArtist != null ? strings.artistRadioOf(audio.radioArtist!.name) : strings.radioBasedOn(seed.title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(

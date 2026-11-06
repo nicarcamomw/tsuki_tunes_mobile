@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart';
 import 'package:tsuki_tunes_mobile/domain/usecases/playback/add_to_queue.dart';
@@ -59,6 +60,9 @@ class _FakePlayer implements PlaybackController {
 
   @override
   Future<bool> startRadio(Track seed) async => true;
+
+  @override
+  Future<bool> startArtistRadio(Artist artist) async => true;
 }
 
 void main() {

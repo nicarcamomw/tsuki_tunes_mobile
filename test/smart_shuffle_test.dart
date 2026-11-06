@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_queue.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/song_radio.dart';
@@ -144,6 +145,47 @@ void main() {
       expect(audio.cycleShuffle(), ShuffleMode.off);
       expect(audio.queue.map((t) => t.id).where((id) => id.startsWith('r')),
           isEmpty);
+    });
+  });
+
+  group('artist radio', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+        (_) async => null,
+      );
+      Future<List<Track>> top(String id) async => [
+            for (var i = 0; i < 6; i++) _t('$id-$i', artist: id, preview: 'https://x/$id-$i.mp3'),
+          ];
+      AudioRadioController.topTracksOf = top;
+      AudioRadioController.artistRadioFactory = (seed, mode, artist) => SongRadio(
+            seed: seed,
+            mode: mode,
+            artist: artist,
+            topTracks: top,
+            related: (_) async => [for (var i = 0; i < 4; i++) Artist(id: 'rel$i', name: 'Rel $i', pictureUrl: '')],
+          );
+    });
+
+    test('the artist page\'s radio plays one of their hits and fills the queue', () async {
+      final audio = AudioProvider(service: _SilentPlayer());
+      const artist = Artist(id: 'lp', name: 'Linkin Park', pictureUrl: '');
+      expect(await audio.startArtistRadio(artist), isTrue);
+      expect(audio.currentTrack!.id, anyOf('lp-0', 'lp-1', 'lp-2'));
+      expect(audio.radioArtist?.name, 'Linkin Park');
+      final queued = audio.queue.map((t) => t.artistId).toSet();
+      expect(queued, contains('lp'));
+      expect(queued.any((a) => a.startsWith('rel')), isTrue);
+      audio.dispose();
+    });
+
+    test('an artist with nothing playable starts nothing', () async {
+      AudioRadioController.topTracksOf = (_) async => const [];
+      final audio = AudioProvider(service: _SilentPlayer());
+      expect(await audio.startArtistRadio(const Artist(id: 'x', name: 'X', pictureUrl: '')), isFalse);
+      expect(audio.radioArtist, isNull);
+      audio.dispose();
     });
   });
 }
