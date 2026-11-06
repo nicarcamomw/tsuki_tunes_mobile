@@ -6,6 +6,7 @@ import '../../core/utils/image_cache_size.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'oni_mask_art.dart';
+import 'player_tint.dart';
 
 class OniMaskIcon extends ConsumerStatefulWidget {
   final bool isActive;
@@ -123,8 +124,8 @@ class _OniMaskIconState extends ConsumerState<OniMaskIcon>
       builder: (context, _) {
         final t = _glowAnimation.value;
         final borderColor = Color.lerp(
-          AppColors.accent.withValues(alpha: 0.4),
-          AppColors.accent,
+          PlayerTint.of(context).withValues(alpha: 0.4),
+          PlayerTint.of(context),
           t,
         )!;
         final maskColor = Color.lerp(
@@ -144,7 +145,7 @@ class _OniMaskIconState extends ConsumerState<OniMaskIcon>
             boxShadow: t > 0.01
                 ? [
                     BoxShadow(
-                      color: AppColors.accentGlow.withValues(alpha: t * 0.6),
+                      color: PlayerTint.glowOf(context).withValues(alpha: t * 0.6),
                       blurRadius: 6 * t,
                     ),
                   ]

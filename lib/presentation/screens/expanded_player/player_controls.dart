@@ -57,7 +57,7 @@ class _PlayerControls extends StatelessWidget {
               icon: ShuffleModeIcon(
                 mode: shuffleMode,
                 size: 22,
-                color: isShuffle ? AppColors.accent : AppColors.textSecondary,
+                color: isShuffle ? PlayerTint.of(context) : AppColors.textSecondary,
               ),
               on: isShuffle,
             ),
@@ -114,7 +114,7 @@ class _PlayerControls extends StatelessWidget {
                     : Icons.repeat,
                 size: 22,
                 color: repeatMode != PlaybackRepeatMode.off
-                    ? AppColors.accent
+                    ? PlayerTint.of(context)
                     : AppColors.textSecondary,
               ),
               on: repeatMode != PlaybackRepeatMode.off,
@@ -146,9 +146,9 @@ class _ModeIcon extends StatelessWidget {
               margin: const EdgeInsets.only(top: 4),
               width: 4,
               height: 4,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.accent,
+                color: PlayerTint.of(context),
               ),
             ),
         ],

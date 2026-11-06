@@ -115,11 +115,11 @@ class _IsolatedProgressBar extends ConsumerWidget {
         total: duration,
         buffered: buffered,
         onSeek: context.readState(audioProvider).seek,
-        progressBarColor: AppColors.accent,
+        progressBarColor: PlayerTint.of(context),
         baseBarColor: AppColors.border,
         bufferedBarColor: AppColors.borderGlow,
-        thumbColor: AppColors.accent,
-        thumbGlowColor: AppColors.accentGlow,
+        thumbColor: PlayerTint.of(context),
+        thumbGlowColor: PlayerTint.glowOf(context),
         thumbRadius: 7.0,
         timeLabelTextStyle: locale.getTextStyle(
           fontSize: 11,
@@ -178,10 +178,10 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
         height: 68,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.accent,
+          color: PlayerTint.of(context),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentGlow,
+              color: PlayerTint.glowOf(context),
               blurRadius: 18 + 12 * _glow.value,
               spreadRadius: 2 + 4 * _glow.value,
             ),

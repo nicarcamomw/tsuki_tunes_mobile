@@ -22,8 +22,10 @@ import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/oni_mask_colors.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
+import '../widgets/player_tint.dart';
 import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
@@ -201,8 +203,14 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     Navigator.of(context).pop();
   }
 
+  /// An equipped UL or DS mask tints the player with its aura.
   @override
   Widget build(BuildContext context) {
+    final aura = ref.watch(maskProvider.select((m) => m.equipped?.playerAura));
+    return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
+  }
+
+  Widget _buildTinted(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final audio = ref.read(audioProvider);
@@ -338,7 +346,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
                         style: locale.getTextStyle(
                           fontSize: 9,
-                          color: AppColors.accent,
+                          color: PlayerTint.of(context),
                           letterSpacing: 2,
                         ),
                       ),
@@ -404,7 +412,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       style: locale.getTextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
+                        color: PlayerTint.of(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

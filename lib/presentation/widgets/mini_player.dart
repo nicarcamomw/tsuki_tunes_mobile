@@ -12,7 +12,9 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
+import 'oni_mask_colors.dart';
 import 'oni_mask_icon.dart';
+import 'player_tint.dart';
 import 'tap_scale.dart';
 
 class MiniPlayer extends ConsumerStatefulWidget {
@@ -122,8 +124,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
         .whenComplete(() => NavigationEvents.isPlayerExpanded.value = false);
   }
 
+  /// An equipped UL or DS mask tints the player with its aura.
   @override
   Widget build(BuildContext context) {
+    final aura = ref.watch(maskProvider.select((m) => m.equipped?.playerAura));
+    return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
+  }
+
+  Widget _buildTinted(BuildContext context) {
     final audio = ref.read(audioProvider);
     final (track, isPlaying, isBuffering, spotifyFallbackActive) =
         ref.watch(audioProvider.select(
@@ -155,12 +163,12 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
             margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.accent, width: 1.2),
-              boxShadow: const [
+              border: Border.all(color: PlayerTint.of(context), width: 1.2),
+              boxShadow: [
                 BoxShadow(
-                  color: AppColors.accentGlow,
+                  color: PlayerTint.glowOf(context),
                   blurRadius: 12,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -238,7 +246,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                               style: locale.getTextStyle(
                                                 fontSize: 11,
                                                 color: spotifyFallbackActive
-                                                    ? AppColors.accent
+                                                    ? PlayerTint.of(context)
                                                         .withValues(alpha: 0.7)
                                                     : AppColors.textSecondary,
                                               ),
@@ -283,14 +291,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                             onTap: isBuffering ? null : audio.togglePlay,
                             scaleDown: 0.85,
                             child: isBuffering
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 1.8,
                                       valueColor:
                                           AlwaysStoppedAnimation<Color>(
-                                        AppColors.accent,
+                                        PlayerTint.of(context),
                                       ),
                                     ),
                                   )
@@ -299,7 +307,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                         ? Icons.pause_circle_filled
                                         : Icons.play_circle_filled,
                                     size: 32,
-                                    color: AppColors.accent,
+                                    color: PlayerTint.of(context),
                                   ),
                           ),
                           const SizedBox(width: 8),
@@ -398,13 +406,13 @@ class _BreathingCoverState extends State<_BreathingCover>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
             border: Border.all(
-              color: AppColors.accent.withValues(alpha: borderAlpha),
+              color: PlayerTint.of(context).withValues(alpha: borderAlpha),
               width: 1.5,
             ),
             boxShadow: widget.isPlaying
                 ? [
                     BoxShadow(
-                      color: AppColors.accent.withValues(alpha: glowAlpha),
+                      color: PlayerTint.of(context).withValues(alpha: glowAlpha),
                       blurRadius: 8 + 4 * t,
                     ),
                   ]
@@ -430,17 +438,17 @@ class _BreathingCoverState extends State<_BreathingCover>
                           Container(color: AppColors.bgMid),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.bgMid,
-                        child: const Icon(
+                        child: Icon(
                           Icons.music_note,
-                          color: AppColors.accent,
+                          color: PlayerTint.of(context),
                         ),
                       ),
                     )
                   : Container(
                       color: AppColors.bgMid,
-                      child: const Icon(
+                      child: Icon(
                         Icons.music_note,
-                        color: AppColors.accent,
+                        color: PlayerTint.of(context),
                       ),
                     ),
             ),
@@ -583,7 +591,7 @@ class _MiniProgressBar extends StatelessWidget {
         value: progress,
         minHeight: 2.5,
         backgroundColor: AppColors.border,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+        valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
       ),
     );
   }
