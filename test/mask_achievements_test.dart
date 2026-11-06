@@ -163,6 +163,25 @@ void main() {
       expect(masks.isUnlocked('jiki'), isTrue);
     });
 
+    test('coming back 3 times: Kitsune de Porcelana', () {
+      // The first time is not a comeback: four visits, three returns.
+      for (var i = 0; i < 4; i++) {
+        now = DateTime(2026, 1 + i * 2, 1, 12);
+        play(1, prefix: 'c$i-');
+        if (i == 2) expect(masks.progress('kitsune_jiki'), (2, 3));
+      }
+      expect(masks.isUnlocked('kitsune_jiki'), isTrue);
+    });
+
+    test('100 songs after midnight: Kitsunebi', () {
+      now = DateTime(2026, 11, 12, 2);
+      play(99);
+      expect(masks.isUnlocked('yoru'), isTrue);
+      expect(masks.isUnlocked('kitsunebi'), isFalse);
+      play(1, prefix: 'x');
+      expect(masks.isUnlocked('kitsunebi'), isTrue);
+    });
+
     test('9 different full moons: Kitsune', () {
       var moons = 0;
       var day = DateTime(2025, 1, 1, 22);
@@ -297,6 +316,21 @@ void main() {
       expect(masks.isUnlocked('ou'), isFalse);
       masks.unlock(ids[48]);
       expect(masks.isUnlocked('ou'), isTrue);
+    });
+
+    test('the 75th mask brings the Kitsune King', () {
+      final ids = [
+        for (final m in MaskCatalog.all)
+          if (m.counter != 'masks' && m.id != 'oni') m.id,
+      ];
+      for (final id in ids.take(72)) {
+        masks.unlock(id);
+      }
+      // 72 + the Oni King = 73.
+      expect(masks.isUnlocked('ou'), isTrue);
+      expect(masks.isUnlocked('kitsune_ou'), isFalse);
+      masks.unlock(ids[72]);
+      expect(masks.isUnlocked('kitsune_ou'), isTrue, reason: '74 + itself');
     });
 
     test('El Oni still asks for the original achievements only', () {

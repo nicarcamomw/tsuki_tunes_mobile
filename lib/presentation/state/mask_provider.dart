@@ -144,6 +144,7 @@ class MaskProvider extends ChangeNotifier {
           .length,
       'artistMax' => _stats.artistPlays.values.fold<int>(0, (a, b) => b > a ? b : a),
       'masks' => _unlocked.length,
+      'night' => _stats.nightPlays,
       _ => c[key] ?? 0,
     };
   }
@@ -593,11 +594,14 @@ class MaskProvider extends ChangeNotifier {
       _unlocked['oni'] = at;
       newly.add('oni');
     }
-    // The Oni King comes with the 50th mask.
-    final king = MaskCatalog.byId('ou');
-    if (king != null && !_unlocked.containsKey('ou') && _unlocked.length >= king.goal!) {
-      _unlocked['ou'] = at;
-      newly.add('ou');
+    // The collectors' masks (Rey Oni at 50, Rey Kitsune at 75) come with
+    // the mask that reaches their count, and count themselves too.
+    for (final m in MaskCatalog.all) {
+      if (m.counter != 'masks' || _unlocked.containsKey(m.id)) continue;
+      if (_unlocked.length >= m.goal!) {
+        _unlocked[m.id] = at;
+        newly.add(m.id);
+      }
     }
     _celebrations.addAll(newly);
     _equipped ??= id;
@@ -689,7 +693,10 @@ class MaskProvider extends ChangeNotifier {
     final day = _epochDay(now);
     final last = _stats.lastDay;
     if (day == last) return;
-    if (last > 0 && day - last >= comebackDays) unlock('jiki');
+    if (last > 0 && day - last >= comebackDays) {
+      _bump('comebacks');
+      unlock('jiki');
+    }
     _stats.streak = last > 0 && day - last == 1 ? _stats.streak + 1 : 1;
     _stats.lastDay = day;
     if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
