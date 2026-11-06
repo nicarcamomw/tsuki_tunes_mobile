@@ -1663,6 +1663,24 @@ class MaskCatalog {
         AppLanguage.ja: '3回の満月に音楽を聴く。額の月のように。',
       },
     ),
+    const OniMask(
+      id: 'kemuri_kanmuri',
+      kanji: '煙',
+      image: 'assets/images/masks/ssr/kemuri_kanmuri.webp',
+      rarity: MaskRarity.ssr,
+      counter: 'albums',
+      goal: 60,
+      names: {
+        AppLanguage.es: 'Corona de Humo',
+        AppLanguage.en: 'Smoke Crown',
+        AppLanguage.ja: '煙の冠',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 60 álbumes completos, en orden y sin saltar canciones.',
+        AppLanguage.en: 'Play 60 whole albums in order, without skipping.',
+        AppLanguage.ja: 'アルバムを60枚、順番に飛ばさず聴く。',
+      },
+    ),
   ];
 
   static const _weeklyDescription = {
