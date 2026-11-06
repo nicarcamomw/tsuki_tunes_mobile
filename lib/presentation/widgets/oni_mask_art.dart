@@ -139,7 +139,7 @@ class OniMaskArt extends StatelessWidget {
   }
 }
 
-/// A slow golden light sweeping around the frame of the legendary mask.
+/// A slow golden light sweeping around the frame of the UL masks.
 class _LegendaryShimmer extends StatefulWidget {
   final double size;
   final Widget child;

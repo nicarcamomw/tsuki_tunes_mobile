@@ -48,6 +48,9 @@ void main() {
 
   tearDown(() => masks.dispose());
 
+  /// Goals come from the catalog: rarities (and so goals) get tuned.
+  int goal(String id) => MaskCatalog.byId(id)!.goal!;
+
   void play(int n, {String prefix = 'p', String artist = 'Artist'}) {
     for (var i = 0; i < n; i++) {
       masks.onPlayCounted(_t('$prefix$i', artist: artist));
@@ -55,18 +58,19 @@ void main() {
   }
 
   group('music styles', () {
-    test('50 metal songs: Oni de Acero, with progress on the way', () {
-      for (var i = 0; i < 49; i++) {
+    test('metal songs: Oni de Acero, with progress on the way', () {
+      final n = goal('tetsu');
+      for (var i = 0; i < n - 1; i++) {
         masks.onStyle(const StyleInfo(styles: {MusicStyle.metal}));
       }
-      expect(masks.progress('tetsu'), (49, 50));
+      expect(masks.progress('tetsu'), (n - 1, n));
       expect(masks.isUnlocked('tetsu'), isFalse);
       masks.onStyle(const StyleInfo(styles: {MusicStyle.metal}));
       expect(masks.isUnlocked('tetsu'), isTrue);
     });
 
     test('a song counts for every family it belongs to', () {
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < goal('kumo'); i++) {
         masks.onStyle(const StyleInfo(styles: {MusicStyle.rock, MusicStyle.indie}));
       }
       expect(masks.isUnlocked('sabi'), isTrue);
@@ -88,12 +92,15 @@ void main() {
       expect(masks.isUnlocked('niji'), isTrue);
     });
 
-    test('10 different countries: Jade; the same one twice counts once', () {
-      for (final c in ['JP', 'JP', 'KR', 'CL', 'AR', 'MX', 'US', 'GB', 'SE', 'FR']) {
+    test('different countries: Jade; the same one twice counts once', () {
+      final n = goal('hisui');
+      const all = ['JP', 'KR', 'CL', 'AR', 'MX', 'US', 'GB', 'SE', 'FR', 'BR', 'DE', 'IT'];
+      masks.onStyle(const StyleInfo(countries: {'JP'}));
+      for (final c in all.take(n - 1)) {
         masks.onStyle(StyleInfo(countries: {c}));
       }
-      expect(masks.progress('hisui'), (9, 10));
-      masks.onStyle(const StyleInfo(countries: {'BR'}));
+      expect(masks.progress('hisui'), (n - 1, n));
+      masks.onStyle(StyleInfo(countries: {all[n - 1]}));
       expect(masks.isUnlocked('hisui'), isTrue);
     });
 
@@ -113,12 +120,16 @@ void main() {
   group('what the song is', () {
     test('fast, hits, hidden gems and explicit songs', () {
       masks.bpmOf = (id) => id.startsWith('fast') ? 172 : 98;
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < goal('homura'); i++) {
         masks.onPlayCounted(_t('fast$i'));
+      }
+      for (var i = 0; i < goal('kin_oni'); i++) {
         masks.onPlayCounted(_t('hit$i', rank: 900000));
+      }
+      for (var i = 0; i < goal('doku'); i++) {
         masks.onPlayCounted(_t('exp$i', explicit: true));
       }
-      for (var i = 0; i < 30; i++) {
+      for (var i = 0; i < goal('meisai'); i++) {
         masks.onPlayCounted(_t('gem$i', rank: 42000));
       }
       expect(masks.isUnlocked('homura'), isTrue);
@@ -129,9 +140,9 @@ void main() {
 
     test('unknown rank or tempo counts for nothing', () {
       play(60);
-      expect(masks.progress('homura'), (0, 50));
-      expect(masks.progress('kin_oni'), (0, 50));
-      expect(masks.progress('meisai'), (0, 30));
+      for (final id in ['homura', 'kin_oni', 'meisai']) {
+        expect(masks.progress(id), (0, goal(id)));
+      }
     });
   });
 
@@ -207,12 +218,13 @@ void main() {
       expect(masks.isUnlocked('kitsune'), isTrue);
     });
 
-    test('the sleep timer, 10 nights (twice a night counts once): Oni de Sombra', () {
-      for (var d = 0; d < 10; d++) {
+    test('sleep-timer nights (twice a night counts once): Oni de Sombra', () {
+      final n = goal('yami');
+      for (var d = 0; d < n; d++) {
         now = DateTime(2026, 2, 1 + d, 23);
         masks.onSleepTimerFinished();
         masks.onSleepTimerFinished();
-        if (d == 8) expect(masks.progress('yami'), (9, 10));
+        if (d == n - 2) expect(masks.progress('yami'), (n - 1, n));
       }
       expect(masks.isUnlocked('yami'), isTrue);
     });
@@ -246,15 +258,17 @@ void main() {
   group('the app\'s sounds and the weather', () {
     test('hours with campfire, waves and wind', () {
       masks.ambientOn = () => {'fire', 'waves', 'wind'};
-      for (var h = 0; h < 10; h++) {
+      final fire = goal('yougan');
+      for (var h = 0; h < goal('umi'); h++) {
         masks.tick(const Duration(hours: 1));
-        if (h == 4) {
+        if (h == fire - 1) {
           expect(masks.isUnlocked('yougan'), isTrue);
-          expect(masks.isUnlocked('fubuki'), isTrue);
+          expect(masks.isUnlocked('fubuki'), goal('fubuki') <= fire);
           expect(masks.isUnlocked('umi'), isFalse);
         }
       }
       expect(masks.isUnlocked('umi'), isTrue);
+      expect(masks.isUnlocked('fubuki'), isTrue);
     });
 
     test('a real storm or 3 h of storm sound: Rayo; 5 °C or less: Escarcha', () {
@@ -286,10 +300,10 @@ void main() {
       expect(masks.isUnlocked('geisha'), isTrue);
     });
 
-    test('10 running sessions of 5 minutes or more: Kabuto', () {
+    test('running sessions of 5 minutes or more: Kabuto', () {
       masks.onRunFinished(const Duration(minutes: 2));
-      expect(masks.progress('kabuto'), (0, 10));
-      for (var i = 0; i < 10; i++) {
+      expect(masks.progress('kabuto'), (0, goal('kabuto')));
+      for (var i = 0; i < goal('kabuto'); i++) {
         masks.onRunFinished(const Duration(minutes: 25));
       }
       expect(masks.isUnlocked('kabuto'), isTrue);

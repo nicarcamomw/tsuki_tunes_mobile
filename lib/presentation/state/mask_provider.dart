@@ -587,7 +587,7 @@ class MaskProvider extends ChangeNotifier {
     final at = _clock();
     final newly = [id];
     _unlocked[id] = at;
-    // The legendary one asks for the original achievement masks.
+    // El Oni asks for the original achievement masks.
     if (id != 'oni' &&
         !_unlocked.containsKey('oni') &&
         MaskCatalog.oniSet.every((m) => _unlocked.containsKey(m.id))) {
