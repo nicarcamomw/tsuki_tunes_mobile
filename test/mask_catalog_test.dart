@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
+import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/oni_mask.dart';
+import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
 
 void main() {
   test('every mask\'s image is in the app', () {
@@ -38,5 +41,17 @@ void main() {
     final ultra =
         MaskCatalog.all.where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal').length;
     expect(MaskCatalog.byId('ochigami')!.goal, ultra);
+  });
+
+  test('the Chosen is one alone: Kitsune, a UL of her own kind', () {
+    final chosen = MaskCatalog.all.where((m) => m.chosen).toList();
+    expect(chosen.map((m) => m.id), ['kitsune']);
+    expect(chosen.single.rarity, MaskRarity.ul);
+    expect(chosen.single.divine, isFalse);
+    const es = AppStrings(AppLanguage.es);
+    expect(es.maskTierName(chosen.single), 'LA ELEGIDA');
+    expect(es.maskTierName(MaskCatalog.byId('tenshi')!), 'DIVINA');
+    // Still one of the eight Ultras.
+    expect(TsukiLore.ultras, contains('kitsune'));
   });
 }

@@ -114,6 +114,18 @@ class OniMaskArt extends StatelessWidget {
               bottom: size * 0.07,
               child: Icon(Icons.lock_rounded, size: size * 0.16, color: AppColors.textMuted),
             ),
+          // Their own kind: a divine Face, or the Chosen.
+          if (unlocked && size >= 56 && (mask.divine || mask.chosen))
+            Positioned(
+              right: size * 0.07,
+              top: size * 0.06,
+              child: Icon(
+                mask.chosen ? Icons.flare_rounded : Icons.auto_awesome_rounded,
+                size: size * 0.13,
+                color: color,
+                shadows: [Shadow(color: color.withValues(alpha: 0.8), blurRadius: 8)],
+              ),
+            ),
           if (unlocked && size >= 56)
             Positioned(
               left: size * 0.08,
@@ -133,18 +145,32 @@ class OniMaskArt extends StatelessWidget {
     );
 
     if (unlocked && mask.rarity == MaskRarity.ul) {
-      return _LegendaryShimmer(size: size, child: box);
+      return _LegendaryShimmer(
+        size: size,
+        // Divine Faces shine white and gold; the Chosen, crimson.
+        colors: mask.chosen
+            ? const [Color(0xFFFF8A9A), Color(0xFFFF1E3C)]
+            : mask.divine
+                ? const [Color(0xFFFFFFFF), Color(0xFFFFE9A8)]
+                : const [Color(0xFFFFE9A8), Color(0xFFFFC94A)],
+        twin: mask.divine || mask.chosen,
+        child: box,
+      );
     }
     return box;
   }
 }
 
-/// A slow golden light sweeping around the frame of the UL masks.
+/// A slow light sweeping around the frame of the UL masks: golden, or in
+/// their own [colors]. [twin]: two lights and a halo, for the divine Faces
+/// and the Chosen.
 class _LegendaryShimmer extends StatefulWidget {
   final double size;
   final Widget child;
+  final List<Color> colors;
+  final bool twin;
 
-  const _LegendaryShimmer({required this.size, required this.child});
+  const _LegendaryShimmer({required this.size, required this.child, required this.colors, this.twin = false});
 
   @override
   State<_LegendaryShimmer> createState() => _LegendaryShimmerState();
@@ -172,7 +198,7 @@ class _LegendaryShimmerState extends State<_LegendaryShimmer>
     return AnimatedBuilder(
       animation: _c,
       builder: (_, child) => CustomPaint(
-        foregroundPainter: _ShimmerPainter(_c.value, widget.size),
+        foregroundPainter: _ShimmerPainter(_c.value, widget.size, widget.colors, widget.twin),
         child: child,
       ),
       child: widget.child,
@@ -183,13 +209,29 @@ class _LegendaryShimmerState extends State<_LegendaryShimmer>
 class _ShimmerPainter extends CustomPainter {
   final double t;
   final double s;
+  final List<Color> colors;
+  final bool twin;
 
-  _ShimmerPainter(this.t, this.s);
+  _ShimmerPainter(this.t, this.s, this.colors, this.twin);
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect.deflate(1), Radius.circular(s * 0.2));
+    final light = colors.first, deep = colors.last;
+    final clear = deep.withValues(alpha: 0);
+    if (twin) {
+      // A halo that breathes around the frame.
+      final glow = 0.25 + 0.2 * sin(t * 2 * pi);
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = max(2.0, s * 0.04)
+          ..color = deep.withValues(alpha: glow)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, max(2, s * 0.05)),
+      );
+    }
     canvas.drawRRect(
       rrect,
       Paint()
@@ -197,18 +239,16 @@ class _ShimmerPainter extends CustomPainter {
         ..strokeWidth = max(1.5, s * 0.025)
         ..shader = SweepGradient(
           transform: GradientRotation(t * 2 * pi),
-          colors: const [
-            Color(0x00FFC94A),
-            Color(0xFFFFE9A8),
-            Color(0xFFFFC94A),
-            Color(0x00FFC94A),
-            Color(0x00FFC94A),
-          ],
-          stops: const [0.0, 0.08, 0.16, 0.3, 1.0],
+          colors: twin
+              ? [clear, light, deep, clear, clear, light, deep, clear, clear]
+              : [clear, light, deep, clear, clear],
+          stops: twin
+              ? const [0.0, 0.08, 0.16, 0.3, 0.5, 0.58, 0.66, 0.8, 1.0]
+              : const [0.0, 0.08, 0.16, 0.3, 1.0],
         ).createShader(rect),
     );
   }
 
   @override
-  bool shouldRepaint(_ShimmerPainter old) => old.t != t;
+  bool shouldRepaint(_ShimmerPainter old) => old.t != t || old.colors != colors;
 }

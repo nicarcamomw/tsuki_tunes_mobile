@@ -5,6 +5,8 @@ import '../../domain/entities/oni_mask.dart';
 /// The color of each rarity, for frames, glows and progress bars.
 extension OniMaskColors on OniMask {
   Color get rarityColor => switch (rarity) {
+        _ when chosen => const Color(0xFFFF1E3C),
+        _ when divine => const Color(0xFFFFE9A8),
         MaskRarity.r => const Color(0xFF4FA8FF),
         MaskRarity.sr => const Color(0xFFB026FF),
         MaskRarity.ssr => const Color(0xFFFFC94A),
@@ -16,7 +18,8 @@ extension OniMaskColors on OniMask {
 /// The colour an equipped UL or DS mask gives the player, picked from its
 /// art (its most vivid colour, tuned so masks look apart).
 const _aura = <String, Color>{
-  'kitsune': Color(0xFFE8384F),
+  // The Chosen: crimson, the colour of her kind.
+  'kitsune': Color(0xFFFF1E3C),
   'ou': Color(0xFFE0A84A),
   'niji': Color(0xFFA06CFF),
   'ryuuou': Color(0xFFD8A25F),

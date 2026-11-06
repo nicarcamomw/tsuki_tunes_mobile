@@ -871,6 +871,14 @@ class AppStrings {
   /// "SÚPER RARA" for SR.
   String maskRarityName(MaskRarity r) => _l.maskRarityName(r.name);
 
+  /// The tier under a being's name: its rarity, or its own kind for the
+  /// divine ones and the Chosen.
+  String maskTierName(OniMask m) => m.chosen
+      ? _es('LA ELEGIDA', 'THE CHOSEN', '選ばれし者')
+      : m.divine
+          ? _es('DIVINA', 'DIVINE', '神')
+          : maskRarityName(m.rarity);
+
   String get masksProfileRow => _l.masksProfileRow;
 
   // --- Moon ---

@@ -402,7 +402,7 @@ class _MaskDetail extends ConsumerWidget {
                 border: Border.all(color: color.withValues(alpha: 0.5)),
               ),
               child: Text(
-                '${unlocked ? '${mask.kanji} · ' : ''}${strings.maskRarity(mask.rarity)} · ${strings.maskRarityName(mask.rarity)}',
+                '${unlocked ? '${mask.kanji} · ' : ''}${strings.maskRarity(mask.rarity)} · ${strings.maskTierName(mask)}',
                 style: locale.getTextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,

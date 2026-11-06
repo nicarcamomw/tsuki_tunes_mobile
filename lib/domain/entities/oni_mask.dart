@@ -61,6 +61,10 @@ class OniMask {
 
   /// A divine mask: UL with a divine trait (its own color, a halo).
   final bool divine;
+
+  /// The Chosen: a UL of its own kind, the only one. Destiny chose her to
+  /// rule the seven divine Faces (the Crimson Queen, Kitsune).
+  final bool chosen;
   final Map<AppLanguage, String> names;
   final Map<AppLanguage, String> descriptions;
   /// For secret masks: a riddle shown, still locked, once the user has
@@ -81,9 +85,11 @@ class OniMask {
     this.counter,
     this.weekly = false,
     this.divine = false,
+    this.chosen = false,
     this.hints,
   })  : assert((art == null) != (image == null), 'a mask has an art or its own image'),
-        assert(!divine || rarity == MaskRarity.ul, 'divine masks are UL');
+        assert(!divine || rarity == MaskRarity.ul, 'divine masks are UL'),
+        assert(!chosen || (rarity == MaskRarity.ul && !divine), 'the Chosen is a UL of her own kind');
 
   String asset() => image ?? switch (art!) {
         MaskArt.tengu => 'assets/images/tengu.png',
@@ -1294,6 +1300,7 @@ class MaskCatalog {
       kanji: '狐',
       image: 'assets/images/masks/ul/kitsune.webp',
       rarity: MaskRarity.ul,
+      chosen: true,
       counter: 'moons',
       goal: 9,
       names: {
