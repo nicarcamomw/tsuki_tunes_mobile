@@ -1970,6 +1970,133 @@ class MaskCatalog {
         AppLanguage.ja: '波の音と30時間聴く。',
       },
     ),
+    // Batch 5: skulls, stone and an imperial oni.
+    const OniMask(
+      id: 'runa',
+      kanji: '符',
+      image: 'assets/images/masks/ssr/runa.webp',
+      rarity: MaskRarity.ssr,
+      counter: 'style:metal',
+      goal: 200,
+      names: {
+        AppLanguage.es: 'Caballero Rúnico',
+        AppLanguage.en: 'Rune Knight',
+        AppLanguage.ja: '符の騎士',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 200 canciones de metal.',
+        AppLanguage.en: 'Listen to 200 metal songs.',
+        AppLanguage.ja: 'メタルを200曲聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'iwa',
+      kanji: '岩',
+      image: 'assets/images/masks/r/iwa.webp',
+      rarity: MaskRarity.r,
+      counter: 'amb:fire',
+      goal: 5,
+      names: {
+        AppLanguage.es: 'Golem de Magma',
+        AppLanguage.en: 'Magma Golem',
+        AppLanguage.ja: '溶岩の巨人',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 5 horas con el sonido de fogata.',
+        AppLanguage.en: 'Listen for 5 hours with the campfire sound.',
+        AppLanguage.ja: '焚き火の音と5時間聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'dokuro',
+      kanji: '髑',
+      image: 'assets/images/masks/sr/dokuro.webp',
+      rarity: MaskRarity.sr,
+      counter: 'night',
+      goal: 120,
+      names: {
+        AppLanguage.es: 'Calavera Cibernética',
+        AppLanguage.en: 'Cyber Skull',
+        AppLanguage.ja: '機械髑髏',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 120 canciones entre la medianoche y las 5 AM.',
+        AppLanguage.en: 'Listen to 120 songs between midnight and 5 AM.',
+        AppLanguage.ja: '深夜0時から5時の間に120曲聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'ishiryuu',
+      kanji: '竜',
+      image: 'assets/images/masks/ssr/ishiryuu.webp',
+      rarity: MaskRarity.ssr,
+      counter: 'streak',
+      goal: 60,
+      names: {
+        AppLanguage.es: 'Dragón de Piedra',
+        AppLanguage.en: 'Stone Dragon',
+        AppLanguage.ja: '石竜',
+      },
+      descriptions: {
+        AppLanguage.es: 'Racha de 60 días seguidos con música.',
+        AppLanguage.en: 'A 60-day streak of music.',
+        AppLanguage.ja: '60日連続で音楽を聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'mikado',
+      kanji: '帝',
+      image: 'assets/images/masks/ssr/mikado.webp',
+      rarity: MaskRarity.ssr,
+      counter: 'hits',
+      goal: 250,
+      names: {
+        AppLanguage.es: 'Oni Imperial',
+        AppLanguage.en: 'Imperial Oni',
+        AppLanguage.ja: '帝鬼',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 250 grandes éxitos.',
+        AppLanguage.en: 'Listen to 250 big hits.',
+        AppLanguage.ja: '大ヒット曲を250曲聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'hyou',
+      kanji: '豹',
+      image: 'assets/images/masks/sr/hyou.webp',
+      rarity: MaskRarity.sr,
+      counter: 'style:hiphop',
+      goal: 100,
+      names: {
+        AppLanguage.es: 'Pantera Neón',
+        AppLanguage.en: 'Neon Panther',
+        AppLanguage.ja: 'ネオン豹',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 100 canciones de hip-hop o rap.',
+        AppLanguage.en: 'Listen to 100 hip-hop or rap songs.',
+        AppLanguage.ja: 'ヒップホップ・ラップを100曲聴く。',
+      },
+    ),
+    const OniMask(
+      id: 'samurai_jouki',
+      kanji: '侍',
+      image: 'assets/images/masks/ssr/samurai_jouki.webp',
+      rarity: MaskRarity.ssr,
+      counter: 'style:jazz',
+      goal: 300,
+      names: {
+        AppLanguage.es: 'Samurái de Vapor',
+        AppLanguage.en: 'Steam Samurai',
+        AppLanguage.ja: '蒸気侍',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escucha 300 canciones de jazz, soul o blues.',
+        AppLanguage.en: 'Listen to 300 jazz, soul or blues songs.',
+        AppLanguage.ja: 'ジャズ・ソウル・ブルースを300曲聴く。',
+      },
+    ),
   ];
 
   static const _weeklyDescription = {
