@@ -173,13 +173,21 @@ void main() {
       expect(masks.isUnlocked('kitsune_jiki'), isTrue);
     });
 
-    test('100 songs after midnight: Kitsunebi', () {
+    test('50 songs after midnight under the full moon: Kitsunebi (UL)', () {
+      // Late nights without a full moon don't count.
       now = DateTime(2026, 11, 12, 2);
-      play(99);
-      expect(masks.isUnlocked('yoru'), isTrue);
+      play(60);
+      expect(masks.progress('kitsunebi'), (0, 50));
+      var day = DateTime(2026, 1, 1, 2);
+      while (!MoonCalculator.snapshot(day).isFullMoonWindow) {
+        day = day.add(const Duration(days: 1));
+      }
+      now = day;
+      play(49, prefix: 'f');
       expect(masks.isUnlocked('kitsunebi'), isFalse);
-      play(1, prefix: 'x');
+      play(1, prefix: 'g');
       expect(masks.isUnlocked('kitsunebi'), isTrue);
+      expect(MaskCatalog.byId('kitsunebi')!.rarity, MaskRarity.ul);
     });
 
     test('9 different full moons: Kitsune', () {

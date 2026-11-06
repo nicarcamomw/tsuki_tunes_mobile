@@ -1576,19 +1576,19 @@ class MaskCatalog {
     const OniMask(
       id: 'kitsunebi',
       kanji: '宵',
-      image: 'assets/images/masks/r/kitsunebi.webp',
-      rarity: MaskRarity.r,
-      counter: 'night',
-      goal: 100,
+      image: 'assets/images/masks/ul/kitsunebi.webp',
+      rarity: MaskRarity.ul,
+      counter: 'moonNight',
+      goal: 50,
       names: {
         AppLanguage.es: 'Kitsunebi',
         AppLanguage.en: 'Foxfire',
         AppLanguage.ja: '狐火',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 100 canciones entre la medianoche y las 5 AM, cuando arde el fuego del zorro.',
-        AppLanguage.en: 'Listen to 100 songs between midnight and 5 AM, when the foxfire burns.',
-        AppLanguage.ja: '深夜0時から5時の間に100曲聴く。狐火が灯る頃。',
+        AppLanguage.es: 'Escucha 50 canciones de madrugada (entre la medianoche y las 5 AM) en noches de luna llena, cuando arde el fuego del zorro.',
+        AppLanguage.en: 'Listen to 50 songs between midnight and 5 AM on full-moon nights, when the foxfire burns.',
+        AppLanguage.ja: '満月の夜、深夜0時から5時の間に50曲聴く。狐火が灯る頃。',
       },
     ),
     const OniMask(

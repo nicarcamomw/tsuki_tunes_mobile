@@ -674,6 +674,8 @@ class MaskProvider extends ChangeNotifier {
     if (MoonCalculator.snapshot(now).isFullMoonWindow) {
       unlock('mangetsu');
       _bumpDistinct('moons', '${lunationOf(now)}');
+      // Kitsunebi: late night under the full moon.
+      if (now.hour < 5) _bump('moonNight');
     }
     _countDay(now);
     _countSong(track);
