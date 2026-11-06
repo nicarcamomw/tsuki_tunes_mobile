@@ -58,6 +58,8 @@ dependencies:
   # Release radar: daily background check + local notifications
   workmanager: ^0.10.10
   flutter_local_notifications: ^19.4.2
+  # Quiet reminders at a set time (the daily streak).
+  timezone: ^0.10.1
 
   # Offline Translation (Google ML Kit)
   google_mlkit_translation: ^0.13.0

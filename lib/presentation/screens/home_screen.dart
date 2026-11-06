@@ -12,6 +12,7 @@ import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/release_radar_service.dart';
+import '../../data/datasources/streak_reminder.dart';
 import '../../data/datasources/time_machine_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
@@ -28,11 +29,13 @@ import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
+import '../widgets/streak_card.dart';
 import '../widgets/weekly_challenges_card.dart';
 import '../widgets/wrapped_picker_sheet.dart';
 import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
 import 'run_mode_screen.dart';
+import 'streak_screen.dart';
 import 'time_machine_screen.dart';
 
 part 'home/affinity_sheet.dart';
@@ -79,6 +82,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (payload == null) return;
     if (payload == TimeMachineService.payload) {
       unawaited(const TimeMachineRoute().push(context));
+    } else if (payload == StreakReminder.payload) {
+      unawaited(StreakScreen.open(context));
     } else {
       unawaited(const ReleaseRadarRoute().push(context));
     }
@@ -363,7 +368,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               SliverToBoxAdapter(child: _buildFeatureCards(locale)),
 
-              // A reason to come back: this week's challenges and their mask.
+              // Reasons to come back: the daily streak, and this week's
+              // challenges and their mask.
+              if (isLoggedIn) const SliverToBoxAdapter(child: StreakCard()),
               const SliverToBoxAdapter(child: WeeklyChallengesCard(compact: true)),
 
               if (isLoggedIn && listenedCount > 0)

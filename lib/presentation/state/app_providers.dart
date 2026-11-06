@@ -14,6 +14,7 @@ import '../../data/datasources/play_history.dart';
 import '../../data/datasources/product_analytics.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
+import '../../data/datasources/streak_reminder.dart';
 import '../../data/datasources/style_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
@@ -93,9 +94,15 @@ final ambientProvider = ChangeNotifierProvider<AmbientProvider>((ref) {
   return AmbientProvider(labelFor: (sound) => ref.read(stringsProvider).ambientName(sound));
 });
 
+/// The daily streak's quiet evening reminder (on unless turned off).
+final streakReminderProvider = Provider<StreakReminder>((ref) => StreakReminder.shared);
+
 /// Masks belong to the signed-in account (null while signed out or guest).
 final maskProvider = ChangeNotifierProvider<MaskProvider>((ref) {
   final masks = MaskProvider();
+  // The streak's evening reminder follows the run (it changes nothing
+  // when the run hasn't changed).
+  masks.addListener(() => unawaited(StreakReminder.shared.sync(masks.streakForReminder)));
   final auth = ref.read(authProvider);
   _follow(ref, auth, () => masks.setUser(auth.isAuthenticated ? auth.uid : null));
   return masks;

@@ -370,6 +370,166 @@ class AppStrings {
   String maskRarity(MaskRarity r) => _l.maskRarity(r.name);
 
   // --- Tsuki Lore ---
+  // ── Daily streak ──
+  String get streakTitle => switch (language) {
+        AppLanguage.es => 'RACHA',
+        AppLanguage.en => 'STREAK',
+        AppLanguage.ja => '連続記録',
+      };
+  /// "DAY" / "DAYS" under the big number.
+  String streakUnit(int n) => switch (language) {
+        AppLanguage.es => n == 1 ? 'DÍA' : 'DÍAS',
+        AppLanguage.en => n == 1 ? 'DAY' : 'DAYS',
+        AppLanguage.ja => '日',
+      };
+  String streakDays(int n) => switch (language) {
+        AppLanguage.es => n == 1 ? '1 día' : '$n días',
+        AppLanguage.en => n == 1 ? '1 day' : '$n days',
+        AppLanguage.ja => '$n日',
+      };
+  String get streakInARow => switch (language) {
+        AppLanguage.es => 'seguidos con música',
+        AppLanguage.en => 'in a row with music',
+        AppLanguage.ja => '連続で音楽',
+      };
+  /// Where today stands: [state] is a StreakState's name.
+  String streakStateText(String state, {int shields = 0}) => switch (language) {
+        AppLanguage.es => switch (state) {
+            'done' => 'Hoy ya sumaste. Vuelve mañana para seguir.',
+            'atRisk' => 'Escucha una canción hoy para mantenerla.',
+            'shielded' => 'Un escudo lunar cubre el día que faltaste. Escucha hoy para seguir.',
+            'lost' => 'Tu racha se apagó. Una canción hoy empieza otra.',
+            _ => 'Escucha una canción al día para empezar tu racha.',
+          },
+        AppLanguage.en => switch (state) {
+            'done' => 'Today counts. Come back tomorrow to keep going.',
+            'atRisk' => 'Play one song today to keep it alive.',
+            'shielded' => 'A moon shield covers the day you missed. Listen today to keep going.',
+            'lost' => 'Your streak went out. One song today starts a new one.',
+            _ => 'Play one song a day to start your streak.',
+          },
+        AppLanguage.ja => switch (state) {
+            'done' => '今日の分は達成。また明日。',
+            'atRisk' => '今日1曲聴けば記録が続きます。',
+            'shielded' => '月の盾が休んだ日を守りました。今日聴いて続けよう。',
+            'lost' => '記録が途切れました。今日の1曲から再スタート。',
+            _ => '毎日1曲聴いて記録を始めよう。',
+          },
+      };
+  /// The short line on Home.
+  String streakStateShort(String state) => switch (language) {
+        AppLanguage.es => switch (state) {
+            'done' => 'Hoy ya sumaste ✓',
+            'atRisk' => 'Escucha algo hoy para no perderla',
+            'shielded' => 'Te cubre un escudo lunar',
+            'lost' => 'Empieza una nueva hoy',
+            _ => 'Una canción al día',
+          },
+        AppLanguage.en => switch (state) {
+            'done' => 'Today counts ✓',
+            'atRisk' => 'Play something today to keep it',
+            'shielded' => 'A moon shield has you covered',
+            'lost' => 'Start a new one today',
+            _ => 'One song a day',
+          },
+        AppLanguage.ja => switch (state) {
+            'done' => '今日は達成 ✓',
+            'atRisk' => '今日聴いて記録をキープ',
+            'shielded' => '月の盾が守っています',
+            'lost' => '今日から再スタート',
+            _ => '1日1曲',
+          },
+      };
+  String get streakBest => switch (language) {
+        AppLanguage.es => 'MEJOR RACHA',
+        AppLanguage.en => 'BEST STREAK',
+        AppLanguage.ja => '最高記録',
+      };
+  String get streakShields => switch (language) {
+        AppLanguage.es => 'ESCUDOS',
+        AppLanguage.en => 'SHIELDS',
+        AppLanguage.ja => '盾',
+      };
+  String get streakThisMonth => switch (language) {
+        AppLanguage.es => 'DÍAS ESTE MES',
+        AppLanguage.en => 'DAYS THIS MONTH',
+        AppLanguage.ja => '今月の日数',
+      };
+  String get streakCalendar => switch (language) {
+        AppLanguage.es => 'ÚLTIMAS 5 SEMANAS',
+        AppLanguage.en => 'LAST 5 WEEKS',
+        AppLanguage.ja => '直近5週間',
+      };
+  /// Monday to Sunday, one letter each.
+  List<String> get streakWeekdays => switch (language) {
+        AppLanguage.es => const ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+        AppLanguage.en => const ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+        AppLanguage.ja => const ['月', '火', '水', '木', '金', '土', '日'],
+      };
+  String get streakGoalsTitle => switch (language) {
+        AppLanguage.es => 'METAS',
+        AppLanguage.en => 'GOALS',
+        AppLanguage.ja => '目標',
+      };
+  String streakGoalLeft(int left) => switch (language) {
+        AppLanguage.es => left == 1 ? 'falta 1 día' : 'faltan $left días',
+        AppLanguage.en => left == 1 ? '1 day to go' : '$left days to go',
+        AppLanguage.ja => 'あと$left日',
+      };
+  String get streakGoalReached => switch (language) {
+        AppLanguage.es => 'Lograda',
+        AppLanguage.en => 'Reached',
+        AppLanguage.ja => '達成',
+      };
+  String get streakShieldTitle => switch (language) {
+        AppLanguage.es => 'ESCUDO LUNAR',
+        AppLanguage.en => 'MOON SHIELD',
+        AppLanguage.ja => '月の盾',
+      };
+  String streakShieldText(int every, int max) => switch (language) {
+        AppLanguage.es =>
+          'Cada $every días seguidos ganas un escudo (máximo $max). Si un día no escuchas nada, el escudo lo cubre y tu racha sigue.',
+        AppLanguage.en =>
+          'Every $every days in a row you earn a shield (up to $max). If you miss a day, the shield covers it and your streak goes on.',
+        AppLanguage.ja => '$every日連続ごとに盾を1つ獲得(最大$max個)。聴けなかった日は盾が守り、記録は続きます。',
+      };
+  String get streakReminderTitle => switch (language) {
+        AppLanguage.es => 'Recordatorio suave',
+        AppLanguage.en => 'Gentle reminder',
+        AppLanguage.ja => 'やさしいリマインダー',
+      };
+  String streakReminderSubtitle(int hour) => switch (language) {
+        AppLanguage.es =>
+          'Un solo aviso a las $hour:00, sin sonido, solo si ese día aún no escuchas nada.',
+        AppLanguage.en => 'One notice at $hour:00, silent, only if you haven\'t played anything that day.',
+        AppLanguage.ja => '$hour:00に1回だけ、無音で。その日まだ聴いていない時だけ。',
+      };
+  String streakNotifTitle(int n) => switch (language) {
+        AppLanguage.es => 'Tu racha de $n días sigue viva 🔥',
+        AppLanguage.en => 'Your $n-day streak is still alive 🔥',
+        AppLanguage.ja => '$n日連続の記録はまだ続いています 🔥',
+      };
+  String get streakNotifBody => switch (language) {
+        AppLanguage.es => 'Una canción basta para mantenerla hoy.',
+        AppLanguage.en => 'One song is enough to keep it today.',
+        AppLanguage.ja => '今日は1曲聴くだけでキープできます。',
+      };
+  String get streakChannelName => switch (language) {
+        AppLanguage.es => 'Racha diaria',
+        AppLanguage.en => 'Daily streak',
+        AppLanguage.ja => '連続記録',
+      };
+  String get streakChannelDescription => switch (language) {
+        AppLanguage.es => 'Un aviso suave cuando tu racha está por apagarse',
+        AppLanguage.en => 'A gentle notice when your streak is about to go out',
+        AppLanguage.ja => '記録が途切れそうな時のやさしいお知らせ',
+      };
+  String get a11yStreak => switch (language) {
+        AppLanguage.es => 'Abrir tu racha diaria',
+        AppLanguage.en => 'Open your daily streak',
+        AppLanguage.ja => '連続記録を開く',
+      };
+
   String get loreTitle => 'TSUKI LORE';
   String get loreSubtitle => switch (language) {
         AppLanguage.es => 'La historia del centro del universo',

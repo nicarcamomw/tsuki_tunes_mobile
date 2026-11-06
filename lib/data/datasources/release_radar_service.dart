@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart'
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:workmanager/workmanager.dart';
 
 import '../../core/constants/api_endpoints.dart';
@@ -499,6 +500,60 @@ class ReleaseRadarService {
       );
     } catch (e) {
       _log.severe('show failed: $e');
+    }
+  }
+
+  /// A quiet notification at [at] (local time), replacing any with [id]:
+  /// no sound, no vibration, no pop-up, just a line in the shade.
+  Future<void> scheduleQuietNotification({
+    required int id,
+    required DateTime at,
+    required String title,
+    required String body,
+    required String payload,
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
+  }) async {
+    if (!isSupported) return;
+    try {
+      await _initNotifications(foreground: true);
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        // An instant: the reminder is set again every day, so the zone's
+        // rules (summer time) never come into it.
+        tz.TZDateTime.from(at, tz.UTC),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: channelDescription,
+            importance: Importance.low,
+            priority: Priority.low,
+            playSound: false,
+            enableVibration: false,
+            color: const Color(0xFFFF1919),
+            styleInformation: BigTextStyleInformation(body),
+          ),
+          iOS: const DarwinNotificationDetails(presentSound: false),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        payload: payload,
+      );
+    } catch (e) {
+      _log.severe('schedule failed: $e');
+    }
+  }
+
+  Future<void> cancelNotification(int id) async {
+    if (!isSupported) return;
+    try {
+      await _initNotifications(foreground: true);
+      await _notifications.cancel(id);
+    } catch (e) {
+      _log.fine('cancel failed: $e');
     }
   }
 

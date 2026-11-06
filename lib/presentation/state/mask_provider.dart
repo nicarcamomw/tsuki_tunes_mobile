@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -514,6 +515,7 @@ class MaskProvider extends ChangeNotifier {
     });
     // The streak goes on from the last day in the log.
     final days0 = [for (final d in dates) if (DateTime.tryParse(d) case final t?) _epochDay(t)]..sort();
+    days0.forEach(_stats.addDay);
     if (days0.isNotEmpty && days0.last > _stats.lastDay) {
       var run = 1;
       for (var i = days0.length - 1; i > 0 && days0[i] - days0[i - 1] == 1; i--) {
@@ -714,15 +716,75 @@ class MaskProvider extends ChangeNotifier {
   void _countDay(DateTime now) {
     final day = _epochDay(now);
     final last = _stats.lastDay;
+    _stats.addDay(day);
     if (day == last) return;
     if (last > 0 && day - last >= comebackDays) {
       _bump('comebacks');
       unlock('jiki');
     }
-    _stats.streak = last > 0 && day - last == 1 ? _stats.streak + 1 : 1;
+    final missed = last > 0 ? day - last - 1 : 0;
+    if (last > 0 && missed == 0) {
+      _stats.streak++;
+    } else if (last > 0 && missed > 0 && missed <= _stats.shields && _stats.streak > 0) {
+      // Moon shields cover the days missed: the run goes on.
+      _stats.shields -= missed;
+      for (var d = last + 1; d < day; d++) {
+        _stats.shielded.add(d);
+      }
+      _stats.streak++;
+    } else {
+      _stats.streak = 1;
+    }
+    if (_stats.streak % shieldEvery == 0 && _stats.shields < maxShields) _stats.shields++;
     _stats.lastDay = day;
     if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
   }
+
+  // ── Daily streak ──
+
+  /// A moon shield is earned every this many days in a row, up to [maxShields].
+  static const int shieldEvery = 7;
+  static const int maxShields = 2;
+
+  /// Streak goals shown on the streak screen.
+  static const streakGoals = [3, 7, 14, 30, 45, 60, 100, 180, 365];
+
+  int get _today => _epochDay(_clock());
+
+  /// Days in a row with music, while the run is alive: it is still alive
+  /// the day after the last one with music, and on the days shields cover.
+  int get dayStreak {
+    final last = _stats.lastDay;
+    if (last <= 0 || _stats.streak <= 0) return 0;
+    final missed = _today - last - 1;
+    return missed <= _stats.shields ? _stats.streak : 0;
+  }
+
+  /// The longest run ever.
+  int get bestStreak => max(_stats.c['streak'] ?? 0, dayStreak);
+
+  int get shields => _stats.shields;
+
+  /// Where today stands for the streak.
+  StreakState get streakState {
+    final last = _stats.lastDay;
+    if (dayStreak == 0) return last > 0 ? StreakState.lost : StreakState.none;
+    final gap = _today - last;
+    if (gap <= 0) return StreakState.done;
+    return gap == 1 ? StreakState.atRisk : StreakState.shielded;
+  }
+
+  /// Whether music played on [day] (an epoch day), or a shield covered it.
+  bool playedOn(int day) => _stats.days.contains(day);
+  bool shieldedOn(int day) => _stats.shielded.contains(day);
+
+  /// Today as an epoch day (days since 1970-01-01 in local dates).
+  int get todayEpoch => _today;
+
+  /// The first day without music since the run began: [StreakReminder]
+  /// reminds that evening. Null with no run worth keeping.
+  ({int streak, int lastDay})? get streakForReminder =>
+      dayStreak > 0 ? (streak: _stats.streak, lastDay: _stats.lastDay) : null;
 
   /// Counters that are collections of masks: checked on every unlock.
   static const _collectors = {'masks', 'divine', 'ultra'};
@@ -982,6 +1044,19 @@ class _Stats {
   int lastDay = 0;
   int streak = 0;
 
+  /// Days with music (epoch days, the last [keptDays]), moon shields in
+  /// hand and the days they covered.
+  Set<int> days = {};
+  int shields = 0;
+  Set<int> shielded = {};
+  static const int keptDays = 400;
+
+  void addDay(int day) {
+    days.add(day);
+    days.removeWhere((d) => d <= day - keptDays);
+    shielded.removeWhere((d) => d <= day - keptDays);
+  }
+
   /// The music session going on now (marathon), and the pause in it.
   int sessionSec = 0;
   int idleSec = 0;
@@ -1025,6 +1100,9 @@ class _Stats {
         'seen': {for (final e in seen.entries) e.key: e.value.toList()},
         'lastDay': lastDay,
         'dayStreak': streak,
+        'days': days.toList(),
+        'shields': shields,
+        'shielded': shielded.toList(),
         'session': sessionSec,
         'idle': idleSec,
         'history': historyApplied,
@@ -1065,6 +1143,9 @@ class _Stats {
       };
       s.lastDay = m['lastDay'] ?? 0;
       s.streak = m['dayStreak'] ?? 0;
+      s.days = {for (final d in (m['days'] as List? ?? const [])) d as int};
+      s.shields = m['shields'] ?? 0;
+      s.shielded = {for (final d in (m['shielded'] as List? ?? const [])) d as int};
       s.sessionSec = m['session'] ?? 0;
       s.idleSec = m['idle'] ?? 0;
       s.historyApplied = m['history'] == true;
@@ -1074,3 +1155,8 @@ class _Stats {
     return s;
   }
 }
+
+/// Today, for the daily streak: music already played ([done]), not yet but
+/// yesterday had ([atRisk]), days missed but covered by shields
+/// ([shielded]), the run broken ([lost]) or never started ([none]).
+enum StreakState { done, atRisk, shielded, lost, none }

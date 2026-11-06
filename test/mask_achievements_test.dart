@@ -148,16 +148,17 @@ void main() {
   });
 
   group('habits', () {
-    test('30 days in a row: Bushi; a missed day starts the run over', () {
+    test('30 days in a row: Bushi; days missed beyond the moon shields start over', () {
       for (var d = 0; d < 20; d++) {
         now = DateTime(2026, 1, 1 + d, 20);
         play(1, prefix: 'd$d-');
       }
-      now = DateTime(2026, 1, 23, 20); // skipped the 21st and 22nd
+      // 20 days earned the two shields; three days missed is one too many.
+      now = DateTime(2026, 1, 24, 20);
       play(1, prefix: 'gap');
       expect(masks.progress('bushi'), (20, 30), reason: 'the best run is kept');
       for (var d = 0; d < 30; d++) {
-        now = DateTime(2026, 1, 24 + d, 20);
+        now = DateTime(2026, 1, 25 + d, 20);
         play(1, prefix: 'e$d-');
       }
       expect(masks.isUnlocked('bushi'), isTrue);
