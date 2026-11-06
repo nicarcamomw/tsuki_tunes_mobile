@@ -103,15 +103,17 @@ class GuessGame {
     return sameArtist ? GuessOutcome.rightArtist : GuessOutcome.wrong;
   }
 
-  static String emojiRow(List<GuessOutcome> outcomes) {
+  /// The attempts as plain symbols (no emoji): ● right, ◐ right artist,
+  /// ○ wrong, – skipped, · not used.
+  static String resultRow(List<GuessOutcome> outcomes) {
     final cells = outcomes.map((o) => switch (o) {
-          GuessOutcome.skipped => '⬛',
-          GuessOutcome.wrong => '🟥',
-          GuessOutcome.rightArtist => '🟨',
-          GuessOutcome.correct => '🟩',
+          GuessOutcome.skipped => '–',
+          GuessOutcome.wrong => '○',
+          GuessOutcome.rightArtist => '◐',
+          GuessOutcome.correct => '●',
         });
-    final unused = List.filled(max(0, maxAttempts - outcomes.length), '⬜');
-    return '🔊${[...cells, ...unused].join()}';
+    final unused = List.filled(max(0, maxAttempts - outcomes.length), '·');
+    return [...cells, ...unused].join(' ');
   }
 
   static bool isWon(List<GuessOutcome> outcomes) =>
@@ -125,7 +127,7 @@ class GuessGame {
     required List<GuessOutcome> outcomes,
   }) {
     final score = isWon(outcomes) ? '${outcomes.length}' : 'X';
-    return '$header  $score/$maxAttempts\n${emojiRow(outcomes)}';
+    return '$header  $score/$maxAttempts\n${resultRow(outcomes)}';
   }
 }
 

@@ -584,8 +584,8 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final header = _mode == GuessMode.daily
         ? strings.guessShareHeader(_today)
         : _mode == GuessMode.artist
-            ? 'Tsuki Tunes 🌙 · ${_artist?.name ?? ''}'
-            : 'Tsuki Tunes 🌙 ${_modeLabel(_mode)}';
+            ? 'Tsuki Tunes · ${_artist?.name ?? ''}'
+            : 'Tsuki Tunes · ${_modeLabel(_mode)}';
     Clipboard.setData(ClipboardData(
       text: GuessGame.shareText(header: header, outcomes: _outcomes),
     ));

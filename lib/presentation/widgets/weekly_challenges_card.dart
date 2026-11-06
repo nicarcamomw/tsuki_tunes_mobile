@@ -144,9 +144,18 @@ class WeeklyChallengesCard extends ConsumerWidget {
                     children: [
                       _RewardPreview(mask: prize, size: 56, won: prizeWon),
                       const SizedBox(height: 4),
-                      Text(
-                        prizeWon ? '✓ ${strings.maskRarity(prize.rarity)}' : '$needs/3 · ${strings.maskRarity(prize.rarity)}',
-                        style: t(9.5, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (prizeWon) ...[
+                            const Icon(Icons.check_rounded, size: 11, color: AppColors.neonGreen),
+                            const SizedBox(width: 2),
+                          ],
+                          Text(
+                            prizeWon ? strings.maskRarity(prize.rarity) : '$needs/3 · ${strings.maskRarity(prize.rarity)}',
+                            style: t(9.5, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -94,12 +94,12 @@ void main() {
   });
 
   group('results', () {
-    test('share text shows score and emoji row', () {
+    test('share text shows score and the attempts, without emoji', () {
       final text = GuessGame.shareText(
-        header: 'Tsuki Tunes 🌙 Reto #3',
+        header: 'Tsuki Tunes · Reto #3',
         outcomes: [GuessOutcome.skipped, GuessOutcome.rightArtist, GuessOutcome.correct],
       );
-      expect(text, 'Tsuki Tunes 🌙 Reto #3  3/6\n🔊⬛🟨🟩⬜⬜⬜');
+      expect(text, 'Tsuki Tunes · Reto #3  3/6\n– ◐ ● · · ·');
     });
 
     test('a lost game scores X', () {

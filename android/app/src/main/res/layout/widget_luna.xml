@@ -8,14 +8,13 @@
     android:gravity="center_horizontal"
     android:background="@drawable/widget_luna_bg">
 
-    <!-- Moon emoji (large) -->
-    <TextView
-        android:id="@+id/txt_moon_emoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <!-- Today's moon, drawn by its phase -->
+    <ImageView
+        android:id="@+id/img_moon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_marginTop="8dp"
-        android:text="🌙"
-        android:textSize="48sp" />
+        android:contentDescription="@null" />
 
     <!-- Moon phase name (Japanese) -->
     <TextView

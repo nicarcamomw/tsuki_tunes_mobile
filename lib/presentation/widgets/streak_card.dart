@@ -81,13 +81,23 @@ class StreakCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        strings.streakStateShort(state.name),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: t(10.5,
-                            w: FontWeight.w600,
-                            c: state == StreakState.atRisk ? AppColors.warning : AppColors.textSecondary),
+                      Row(
+                        children: [
+                          if (state == StreakState.done) ...[
+                            const Icon(Icons.check_circle_rounded, size: 12, color: AppColors.neonGreen),
+                            const SizedBox(width: 4),
+                          ],
+                          Flexible(
+                            child: Text(
+                              strings.streakStateShort(state.name),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: t(10.5,
+                                  w: FontWeight.w600,
+                                  c: state == StreakState.atRisk ? AppColors.warning : AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

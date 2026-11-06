@@ -419,21 +419,21 @@ class AppStrings {
   /// The short line on Home.
   String streakStateShort(String state) => switch (language) {
         AppLanguage.es => switch (state) {
-            'done' => 'Hoy ya sumaste ✓',
+            'done' => 'Hoy ya sumaste',
             'atRisk' => 'Escucha algo hoy para no perderla',
             'shielded' => 'Te cubre un escudo lunar',
             'lost' => 'Empieza una nueva hoy',
             _ => 'Una canción al día',
           },
         AppLanguage.en => switch (state) {
-            'done' => 'Today counts ✓',
+            'done' => 'Today counts',
             'atRisk' => 'Play something today to keep it',
             'shielded' => 'A moon shield has you covered',
             'lost' => 'Start a new one today',
             _ => 'One song a day',
           },
         AppLanguage.ja => switch (state) {
-            'done' => '今日は達成 ✓',
+            'done' => '今日は達成',
             'atRisk' => '今日聴いて記録をキープ',
             'shielded' => '月の盾が守っています',
             'lost' => '今日から再スタート',
@@ -505,9 +505,9 @@ class AppStrings {
         AppLanguage.ja => '$hour:00に1回だけ、無音で。その日まだ聴いていない時だけ。',
       };
   String streakNotifTitle(int n) => switch (language) {
-        AppLanguage.es => 'Tu racha de $n días sigue viva 🔥',
-        AppLanguage.en => 'Your $n-day streak is still alive 🔥',
-        AppLanguage.ja => '$n日連続の記録はまだ続いています 🔥',
+        AppLanguage.es => 'Tu racha de $n días sigue viva',
+        AppLanguage.en => 'Your $n-day streak is still alive',
+        AppLanguage.ja => '$n日連続の記録はまだ続いています',
       };
   String get streakNotifBody => switch (language) {
         AppLanguage.es => 'Una canción basta para mantenerla hoy.',

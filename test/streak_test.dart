@@ -160,7 +160,7 @@ void main() {
       await pumpIn(tester, const Scaffold(body: StreakCard()));
       expect(tester.takeException(), isNull);
       expect(find.text('RACHA · 4 DÍAS'), findsOneWidget);
-      expect(find.text('Hoy ya sumaste ✓'), findsOneWidget);
+      expect(find.text('Hoy ya sumaste'), findsOneWidget);
 
       await tester.tap(find.byType(StreakCard));
       await tester.pumpAndSettle();

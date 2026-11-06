@@ -222,7 +222,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     line ??= widget.controller.lineTexts
         .firstWhere((l) => l.trim().isNotEmpty, orElse: () => '');
     final quote = line.isEmpty ? '' : '"$line"\n\n';
-    Share.share('$quote— ${track.title} · ${track.fullArtistName}\n🌙 Tsuki Tunes');
+    Share.share('$quote— ${track.title} · ${track.fullArtistName}\nTsuki Tunes');
   }
 
   @override

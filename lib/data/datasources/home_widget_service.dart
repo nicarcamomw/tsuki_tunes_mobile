@@ -72,9 +72,10 @@ class HomeWidgetService {
     final phase = MoonPhaseCalculator.phase(now);
     final illum = MoonPhaseCalculator.illumination(now);
     await Future.wait([
+      // The widget draws the moon from where it is in its cycle (0-1).
       HomeWidget.saveWidgetData(
-        'moon_emoji',
-        MoonPhaseCalculator.emoji(phase),
+        'moon_phase',
+        (MoonPhaseCalculator.age(now) / MoonPhaseCalculator.synodicMonth).toStringAsFixed(3),
       ),
       HomeWidget.saveWidgetData(
         'moon_name_jp',

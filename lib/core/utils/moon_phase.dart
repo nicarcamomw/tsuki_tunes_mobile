@@ -13,6 +13,9 @@ enum MoonPhase {
 
 class MoonPhaseCalculator {
   static const _synodicMonth = 29.53058770576;
+
+  /// Days from one new moon to the next.
+  static const double synodicMonth = _synodicMonth;
   static const _knownNewMoon = 2451550.1; // Jan 6, 2000 18:14 UTC (JD)
 
   static double _toJulianDay(DateTime dt) {
@@ -58,27 +61,6 @@ class MoonPhaseCalculator {
     if (fraction < 0.784) return MoonPhase.lastQuarter;
     if (fraction < 0.966) return MoonPhase.waningCrescent;
     return MoonPhase.newMoon;
-  }
-
-  static String emoji(MoonPhase p) {
-    switch (p) {
-      case MoonPhase.newMoon:
-        return '🌑';
-      case MoonPhase.waxingCrescent:
-        return '🌒';
-      case MoonPhase.firstQuarter:
-        return '🌓';
-      case MoonPhase.waxingGibbous:
-        return '🌔';
-      case MoonPhase.fullMoon:
-        return '🌕';
-      case MoonPhase.waningGibbous:
-        return '🌖';
-      case MoonPhase.lastQuarter:
-        return '🌗';
-      case MoonPhase.waningCrescent:
-        return '🌘';
-    }
   }
 
   static String japaneseName(MoonPhase p) {

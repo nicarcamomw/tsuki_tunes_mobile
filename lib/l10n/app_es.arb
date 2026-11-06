@@ -233,7 +233,7 @@
   },
   "moonMixPlay": "REPRODUCIR",
   "moonMixSave": "GUARDAR PLAYLIST",
-  "moonMixPlaylistName": "🌕 Luna llena · {date}",
+  "moonMixPlaylistName": "Luna llena · {date}",
   "@moonMixPlaylistName": {
     "placeholders": {
       "date": {
@@ -320,7 +320,7 @@
   },
   "guessLibraryTooSmall": "Guarda o escucha más canciones para jugar con tu biblioteca. Por ahora juegas con el top mundial.",
   "guessNoResults": "Sin resultados",
-  "guessShareHeader": "Tsuki Tunes 🌙 Reto #{day}",
+  "guessShareHeader": "Tsuki Tunes · Reto #{day}",
   "@guessShareHeader": {
     "placeholders": {
       "day": {
@@ -771,7 +771,7 @@
   },
   "wrappedFavoriteHour": "TU HORA FAVORITA",
   "wrappedFunFacts": "DATOS CURIOSOS",
-  "wrappedFactLateNight": "Tu canción del 3 AM fue \"{title}\" de {artist} 🌙",
+  "wrappedFactLateNight": "Tu canción del 3 AM fue \"{title}\" de {artist}",
   "@wrappedFactLateNight": {
     "placeholders": {
       "title": {
@@ -782,7 +782,7 @@
       }
     }
   },
-  "wrappedFactNightOwl": "El {pct}% de tu música fue de noche. ¿Dormiste bien? 😴",
+  "wrappedFactNightOwl": "El {pct}% de tu música fue de noche. ¿Dormiste bien?",
   "@wrappedFactNightOwl": {
     "placeholders": {
       "pct": {
@@ -790,7 +790,7 @@
       }
     }
   },
-  "wrappedFactEarlyBird": "El {pct}% de tu música fue tempranito. ¡Madrugador! 🐦",
+  "wrappedFactEarlyBird": "El {pct}% de tu música fue tempranito. ¡Madrugador!",
   "@wrappedFactEarlyBird": {
     "placeholders": {
       "pct": {
@@ -874,7 +874,7 @@
   "radarChecking": "ESCANEANDO...",
   "radarEmptyNoArtistsTitle": "SIGUE ARTISTAS",
   "radarEmptyNoReleasesTitle": "SIN LANZAMIENTOS RECIENTES",
-  "radarNotifMany": "🔥 {count} lanzamientos nuevos",
+  "radarNotifMany": "{count} lanzamientos nuevos",
   "@radarNotifMany": {
     "placeholders": {
       "count": {
@@ -953,7 +953,7 @@
   "timeMachineNoHistory": "Aún no hay días con historial para viajar.",
   "timeMachineNotifyToggle": "Recuerdos ocasionales",
   "timeMachineNotifyToggleSubtitle": "Como mucho uno por semana, solo de días memorables",
-  "timeMachineNotifRepeat": "Hace 1 año no parabas de escuchar «{title}» 👀",
+  "timeMachineNotifRepeat": "Hace 1 año no parabas de escuchar «{title}»",
   "@timeMachineNotifRepeat": {
     "placeholders": {
       "title": {
@@ -961,7 +961,7 @@
       }
     }
   },
-  "timeMachineNotifPlayed": "Hace 1 año sonaba «{title}» 👀",
+  "timeMachineNotifPlayed": "Hace 1 año sonaba «{title}»",
   "@timeMachineNotifPlayed": {
     "placeholders": {
       "title": {
@@ -969,7 +969,7 @@
       }
     }
   },
-  "timeMachineNotifDiscovered": "Hace 1 año descubriste «{title}» 👀",
+  "timeMachineNotifDiscovered": "Hace 1 año descubriste «{title}»",
   "@timeMachineNotifDiscovered": {
     "placeholders": {
       "title": {
@@ -1257,7 +1257,7 @@
     }
   },
   "guessLoadError": "No se pudo cargar la canción",
-  "guessDailyDone": "Reto de hoy completado ✓",
+  "guessDailyDone": "Reto de hoy completado",
   "languageCardSubtitle": "{target, select, es{Español (Latinoamérica) · Predeterminado} en{Inglés (Internacional) · Global} other{Japonés (日本語) · Kanji HUD & Cyber}}",
   "@languageCardSubtitle": {
     "placeholders": {
@@ -1396,7 +1396,7 @@
       }
     }
   },
-  "wrappedFactMarathon": "Tu día maratón: {count} canciones el {date} 🔥",
+  "wrappedFactMarathon": "Tu día maratón: {count} canciones el {date}",
   "@wrappedFactMarathon": {
     "placeholders": {
       "date": {
@@ -1407,7 +1407,7 @@
       }
     }
   },
-  "wrappedFactLoyal": "Fan incondicional de {artist} con {count} reproducciones 💎",
+  "wrappedFactLoyal": "Fan incondicional de {artist} con {count} reproducciones",
   "@wrappedFactLoyal": {
     "placeholders": {
       "artist": {
@@ -1418,7 +1418,7 @@
       }
     }
   },
-  "wrappedFactDawn": "Escuchaste {count} canciones al amanecer (5-7 AM) 🌅",
+  "wrappedFactDawn": "Escuchaste {count} canciones al amanecer (5-7 AM)",
   "@wrappedFactDawn": {
     "placeholders": {
       "count": {
@@ -1426,7 +1426,7 @@
       }
     }
   },
-  "wrappedFactOneHit": "\"{title}\" de {artist} en repeat: {count} veces 🔄",
+  "wrappedFactOneHit": "\"{title}\" de {artist} en repeat: {count} veces",
   "@wrappedFactOneHit": {
     "placeholders": {
       "title": {
@@ -1440,7 +1440,7 @@
       }
     }
   },
-  "wrappedFactWeekend": "Fin de semana pro: ~{weekendAvg} canciones/día vs ~{weekdayAvg} entre semana 🎉",
+  "wrappedFactWeekend": "Fin de semana pro: ~{weekendAvg} canciones/día vs ~{weekdayAvg} entre semana",
   "@wrappedFactWeekend": {
     "placeholders": {
       "weekendAvg": {
@@ -1546,7 +1546,7 @@
       }
     }
   },
-  "radarNotifSingle": "{type, select, single{🔥 {artist} sacó un single nuevo} ep{🔥 {artist} sacó un EP nuevo} other{🔥 {artist} sacó un álbum nuevo}}",
+  "radarNotifSingle": "{type, select, single{{artist} sacó un single nuevo} ep{{artist} sacó un EP nuevo} other{{artist} sacó un álbum nuevo}}",
   "@radarNotifSingle": {
     "placeholders": {
       "artist": {
@@ -1621,7 +1621,7 @@
       }
     }
   },
-  "wrappedFactMarathonDiscovery": "Tu día de descubrimientos: {count} canciones nuevas el {date} 🔥",
+  "wrappedFactMarathonDiscovery": "Tu día de descubrimientos: {count} canciones nuevas el {date}",
   "@wrappedFactMarathonDiscovery": {
     "placeholders": {
       "date": {
@@ -1632,7 +1632,7 @@
       }
     }
   },
-  "wrappedFactLoyalDiscovery": "Fan incondicional de {artist}: descubriste {count} de sus canciones 💎",
+  "wrappedFactLoyalDiscovery": "Fan incondicional de {artist}: descubriste {count} de sus canciones",
   "@wrappedFactLoyalDiscovery": {
     "placeholders": {
       "artist": {
@@ -1652,7 +1652,7 @@
       }
     }
   },
-  "timeMachineHeadlineRepeat": "No parabas de escuchar esto 👀",
+  "timeMachineHeadlineRepeat": "No parabas de escuchar esto",
   "timeMachineTimesDay": "{count, plural, =1{Una vez ese día} other{{count} veces ese día}}",
   "@timeMachineTimesDay": {
     "placeholders": {
@@ -1830,7 +1830,7 @@
   "profilePublicHint": "Cualquiera con el enlace puede verlo",
   "profilePrivateHint": "Solo tú lo ves",
   "profileShare": "COMPARTIR PERFIL",
-  "profileShareText": "Mi perfil en Tsuki Tunes 🌙 {link}",
+  "profileShareText": "Mi perfil en Tsuki Tunes: {link}",
   "@profileShareText": {
     "placeholders": {
       "link": {
