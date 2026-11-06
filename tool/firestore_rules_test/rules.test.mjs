@@ -133,6 +133,17 @@ test('mask progress backup: counters and up to 50 artists', async () => {
   await assertFails(setDoc(doc(db, 'users/alice'),
     { masks: { progress: { artists: 'many' } } },
     { mergeFields: ['masks.progress'] }));
+  // Styles and the newer masks' counters.
+  await assertSucceeds(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { plays: 300, styles: { metal: 40, rock: 12 }, c: { streak: 9, 'amb:fire': 3600 } } } },
+    { mergeFields: ['masks.progress'] }));
+  const many = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, i]));
+  await assertFails(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { styles: many(25) } } },
+    { mergeFields: ['masks.progress'] }));
+  await assertFails(setDoc(doc(db, 'users/alice'),
+    { masks: { progress: { c: many(41) } } },
+    { mergeFields: ['masks.progress'] }));
 });
 
 test('oversized fields are rejected', async () => {

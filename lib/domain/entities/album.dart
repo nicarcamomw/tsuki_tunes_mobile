@@ -22,6 +22,9 @@ abstract class Album with _$Album {
     @Default(0) int fansCount,
     @Default(0) int tracksCount,
     String? link,
+    /// Deezer's genre names for the album ("Rock", "Rap/Hip Hop"...).
+    /// Left out of the stored JSON while empty.
+    @JsonKey(includeIfNull: false, toJson: _genresToJson) @Default([]) List<String> genres,
     // Left out of the stored JSON while empty.
     @JsonKey(includeIfNull: false, toJson: _tracksToJson)
     @Default([])
@@ -64,6 +67,11 @@ abstract class Album with _$Album {
       tracksCount:
           json['nb_tracks'] is int ? json['nb_tracks'] : parsedTracks.length,
       link: json['link'],
+      genres: [
+        if (json['genres'] is Map && json['genres']['data'] is List)
+          for (final g in json['genres']['data'] as List)
+            if (g is Map && g['name'] is String) g['name'] as String,
+      ],
       tracks: parsedTracks,
     );
   }
@@ -81,3 +89,5 @@ abstract class Album with _$Album {
 
 List<Map<String, dynamic>>? _tracksToJson(List<Track> tracks) =>
     tracks.isEmpty ? null : [for (final t in tracks) t.toJson()];
+
+List<String>? _genresToJson(List<String> genres) => genres.isEmpty ? null : genres;

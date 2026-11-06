@@ -106,11 +106,16 @@ service cloud.firestore {
           && (!isWritten('masks') || !('equipped' in d.masks)
               || d.masks.equipped == null
               || (d.masks.equipped is string && d.masks.equipped.size() <= 40))
-          // Progress backup: a few counters and the top artists' plays.
+          // Progress backup: a few counters, the top artists' plays, plays
+          // per music style and the counters of the newer masks.
           && (!isWritten('masks') || !('progress' in d.masks)
               || (d.masks.progress is map && d.masks.progress.size() <= 10
                   && d.masks.progress.get('artists', {}) is map
-                  && d.masks.progress.get('artists', {}).size() <= 50));
+                  && d.masks.progress.get('artists', {}).size() <= 50
+                  && d.masks.progress.get('styles', {}) is map
+                  && d.masks.progress.get('styles', {}).size() <= 24
+                  && d.masks.progress.get('c', {}) is map
+                  && d.masks.progress.get('c', {}).size() <= 40));
     }
 
     // users/{uid}/listenedTracks/{trackId}

@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/firebase_service.dart';
+import '../../data/datasources/weather_service.dart';
+import '../../data/datasources/wrapped_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/play_day.dart';
@@ -15,6 +17,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/moon_calculator.dart';
+import '../../domain/logic/music_styles.dart';
 
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';
@@ -62,6 +65,25 @@ class MaskProvider extends ChangeNotifier {
   bool Function()? isRainPlaying;
   bool Function()? isMusicPlaying;
 
+  /// The ambient sounds playing now, by name ('fire', 'waves'...).
+  Set<String> Function()? ambientOn;
+
+  /// A song's music style (looked up once per artist), its tempo when
+  /// known, and the weather where the user is (null when it's off).
+  Future<StyleInfo> Function(Track track)? styleOf;
+  double? Function(String trackId)? bpmOf;
+  WeatherNow? Function()? weatherNow;
+
+  /// Songs this fast count as "fast" (Llama de Cobre).
+  static const double fastBpm = 150;
+
+  /// Deezer's rank (0 to about 1,000,000): hits above, hidden gems below.
+  static const int hitRank = 750000;
+  static const int hiddenRank = 150000;
+
+  /// Plays of each of the 12 main styles the rainbow mask asks for.
+  static const int perStyleForRainbow = 10;
+
   /// The account's play log for the last year. Set by the app's wiring.
   Future<List<PlayDay>> Function()? historyLoader;
   String? _historyTriedFor;
@@ -105,16 +127,70 @@ class MaskProvider extends ChangeNotifier {
       'ame' => _stats.rainSeconds ~/ 3600,
       'yoru' => _stats.nightPlays,
       'ren' => _stats.guessStreak,
-      _ => 0,
+      _ => mask.counter == null ? 0 : counterValue(mask.counter!),
     };
     return (current.clamp(0, goal), goal);
   }
 
+  /// What a mask's [OniMask.counter] has reached, in its goal's units.
+  int counterValue(String key) {
+    final c = _stats.c;
+    if (key.startsWith('style:')) return _stats.styles[key.substring(6)] ?? 0;
+    // Ambient time is kept in seconds, goals are in hours.
+    if (key.startsWith('amb:')) return (c[key] ?? 0) ~/ 3600;
+    return switch (key) {
+      'styles12' => MusicStyles.main
+          .where((s) => (_stats.styles[s.name] ?? 0) >= perStyleForRainbow)
+          .length,
+      'artistMax' => _stats.artistPlays.values.fold<int>(0, (a, b) => b > a ? b : a),
+      'masks' => _unlocked.length,
+      _ => c[key] ?? 0,
+    };
+  }
+
+  /// Unlocks the masks whose counted goals the counters reach.
+  void _checkCounterMasks() {
+    for (final m in MaskCatalog.all) {
+      final key = m.counter;
+      final goal = m.goal;
+      if (key == null || goal == null || _unlocked.containsKey(m.id)) continue;
+      if (counterValue(key) >= goal) unlock(m.id);
+    }
+  }
+
+  void _bump(String key, [int by = 1]) {
+    _stats.c[key] = (_stats.c[key] ?? 0) + by;
+    _stats.progressDirty = true;
+  }
+
+  /// Counts [id] under [key] once ever (distinct songs, nights, albums...).
+  void _bumpDistinct(String key, String id) {
+    final seen = _stats.seen.putIfAbsent(key, () => <String>{});
+    if (!seen.add(id)) return;
+    // Only recent ids are kept: enough to not count one twice in a row.
+    if (seen.length > 120) seen.remove(seen.first);
+    _bump(key);
+  }
+
   // ── Weekly challenges ──
 
-  /// This week's three challenges.
-  List<WeeklyChallenge> get weeklyChallenges =>
-      WeeklyChallenge.forWeek(WeeklyChallenge.weekOf(_clock()));
+  /// This week's three challenges. The last one follows the week's theme:
+  /// songs of the style the SR prize is about.
+  List<WeeklyChallenge> get weeklyChallenges {
+    final base = WeeklyChallenge.forWeek(WeeklyChallenge.weekOf(_clock()));
+    final theme = weeklyTheme;
+    if (theme == null) return base;
+    return [...base.take(2), WeeklyChallenge.ofStyle(theme)];
+  }
+
+  /// The style this week is about, from its prizes (null when none has one).
+  MusicStyle? get weeklyTheme {
+    for (final prize in [weeklyRewardFor(MaskRarity.sr), weeklyRewardFor(MaskRarity.r)]) {
+      final theme = MaskCatalog.weeklyThemes[prize?.id];
+      if (theme != null) return theme;
+    }
+    return null;
+  }
 
   /// How far [c] is this week (capped at its target).
   int weeklyProgress(WeeklyChallenge c) {
@@ -133,6 +209,7 @@ class MaskProvider extends ChangeNotifier {
       ChallengeKind.guess => w.wk['guess'] ?? 0,
       ChallengeKind.oneArtist =>
         w.wkArtists.values.fold<int>(0, (a, b) => b > a ? b : a),
+      ChallengeKind.style => w.wk['style:${c.style?.name}'] ?? 0,
     };
     return value.clamp(0, c.target);
   }
@@ -141,13 +218,14 @@ class MaskProvider extends ChangeNotifier {
 
   int get weeklyDoneCount => weeklyChallenges.where(weeklyDone).length;
 
-  /// The mask this week's challenges give: the one already won this week,
-  /// or the next weekly mask not collected yet. Null when all are.
-  OniMask? get weeklyReward {
+  /// Two challenges done give an R, all three an SR: the week's prize of
+  /// each, the one already won this week or the next weekly mask of that
+  /// rarity not collected yet. Null when all are.
+  OniMask? weeklyRewardFor(MaskRarity rarity) {
     _ensureWeek(_clock());
-    final won = MaskCatalog.byId(_stats.wkRewardId);
+    final won = MaskCatalog.byId(_stats.wkRewards[rarity.name]);
     if (won != null) return won;
-    final masks = MaskCatalog.weekly;
+    final masks = [for (final m in MaskCatalog.weekly) if (m.rarity == rarity) m];
     if (masks.isEmpty) return null;
     final start = _stats.week % masks.length;
     for (var i = 0; i < masks.length; i++) {
@@ -157,11 +235,14 @@ class MaskProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Whether this week's reward has been won.
-  bool get weeklyRewardWon {
+  /// Whether this week's prize of [rarity] has been won.
+  bool weeklyRewardWonFor(MaskRarity rarity) {
     _ensureWeek(_clock());
-    return _stats.wkRewardId != null;
+    return _stats.wkRewards.containsKey(rarity.name);
   }
+
+  /// Challenges done this week that each prize needs.
+  static const weeklyNeeds = {MaskRarity.r: 2, MaskRarity.sr: 3};
 
   /// Time until the challenges change (next Monday, local midnight).
   Duration get weekTimeLeft {
@@ -179,7 +260,7 @@ class MaskProvider extends ChangeNotifier {
     _stats.wkDays = {};
     _stats.wkArtists = {};
     _stats.wkAlbums = {};
-    _stats.wkRewardId = null;
+    _stats.wkRewards = {};
   }
 
   void _countWeekly(String key, [int by = 1]) {
@@ -187,14 +268,16 @@ class MaskProvider extends ChangeNotifier {
     _stats.wk[key] = (_stats.wk[key] ?? 0) + by;
   }
 
-  /// Hands out the week's mask once its three challenges are done.
+  /// Hands out the week's prizes as their challenges get done.
   void _checkWeekly() {
-    if (_stats.wkRewardId != null) return;
-    if (!weeklyChallenges.every(weeklyDone)) return;
-    final reward = weeklyReward;
-    if (reward == null) return;
-    _stats.wkRewardId = reward.id;
-    unlock(reward.id);
+    final done = weeklyDoneCount;
+    for (final entry in weeklyNeeds.entries) {
+      if (done < entry.value || weeklyRewardWonFor(entry.key)) continue;
+      final reward = weeklyRewardFor(entry.key);
+      if (reward == null) continue;
+      _stats.wkRewards[entry.key.name] = reward.id;
+      unlock(reward.id);
+    }
   }
 
   /// Fraction 0..1 for the rain goal, which counts seconds.
@@ -344,6 +427,8 @@ class MaskProvider extends ChangeNotifier {
       'artists': {
         for (final e in top) (e.key.length > 100 ? e.key.substring(0, 100) : e.key): e.value,
       },
+      'styles': Map<String, int>.of(_stats.styles),
+      'c': Map<String, int>.of(_stats.c),
     };
   }
 
@@ -364,19 +449,26 @@ class MaskProvider extends ChangeNotifier {
     _stats.plays = higher(_stats.plays, read('plays'));
     _stats.nightPlays = higher(_stats.nightPlays, read('night'));
     _stats.rainSeconds = higher(_stats.rainSeconds, read('rain'));
-    final artists = cloud['artists'];
-    if (artists is Map) {
-      artists.forEach((k, v) {
+    void mergeInto(Map<String, int> local, Object? other) {
+      if (other is! Map) return;
+      other.forEach((k, v) {
         if (v is! num) return;
         final key = '$k';
-        _stats.artistPlays[key] = higher(_stats.artistPlays[key] ?? 0, v.toInt());
+        local[key] = higher(local[key] ?? 0, v.toInt());
       });
     }
+
+    mergeInto(_stats.artistPlays, cloud['artists']);
+    mergeInto(_stats.styles, cloud['styles']);
+    mergeInto(_stats.c, cloud['c']);
     // This phone had more: the backup is behind.
     if (_stats.plays > read('plays') || _stats.nightPlays > read('night') || _stats.rainSeconds > read('rain')) {
       _stats.progressDirty = true;
     }
-    if (rose) _checkCounters();
+    if (rose) {
+      _checkCounters();
+      _checkCounterMasks();
+    }
     return rose;
   }
 
@@ -397,7 +489,24 @@ class MaskProvider extends ChangeNotifier {
         if (key.isNotEmpty) artists[key] = (artists[key] ?? 0) + n;
       });
     }
-    final rose = applyProgress({'plays': plays, 'night': night, 'artists': artists});
+    final dates = [for (final d in days) if (d.totalPlays > 0) d.date];
+    final (best, _) = WrappedService.longestStreak(dates);
+    final rose = applyProgress({
+      'plays': plays,
+      'night': night,
+      'artists': artists,
+      'c': {'streak': best},
+    });
+    // The streak goes on from the last day in the log.
+    final days0 = [for (final d in dates) if (DateTime.tryParse(d) case final t?) _epochDay(t)]..sort();
+    if (days0.isNotEmpty && days0.last > _stats.lastDay) {
+      var run = 1;
+      for (var i = days0.length - 1; i > 0 && days0[i] - days0[i - 1] == 1; i--) {
+        run++;
+      }
+      _stats.lastDay = days0.last;
+      _stats.streak = run;
+    }
     if (rose) _stats.progressDirty = true;
     return rose;
   }
@@ -476,15 +585,19 @@ class MaskProvider extends ChangeNotifier {
     if (_unlocked.containsKey(id) || MaskCatalog.byId(id) == null) return;
     final at = _clock();
     final newly = [id];
-    // The legendary one asks for the achievement masks, not the weekly ones.
-    final allOthers = MaskCatalog.all.where((m) => m.id != 'oni' && !m.weekly);
     _unlocked[id] = at;
+    // The legendary one asks for the original achievement masks.
     if (id != 'oni' &&
-        !MaskCatalog.byId(id)!.weekly &&
         !_unlocked.containsKey('oni') &&
-        allOthers.every((m) => _unlocked.containsKey(m.id))) {
+        MaskCatalog.oniSet.every((m) => _unlocked.containsKey(m.id))) {
       _unlocked['oni'] = at;
       newly.add('oni');
+    }
+    // The Oni King comes with the 50th mask.
+    final king = MaskCatalog.byId('ou');
+    if (king != null && !_unlocked.containsKey('ou') && _unlocked.length >= king.goal!) {
+      _unlocked['ou'] = at;
+      newly.add('ou');
     }
     _celebrations.addAll(newly);
     _equipped ??= id;
@@ -554,13 +667,113 @@ class MaskProvider extends ChangeNotifier {
     if ((_stats.artistPlays[artist] ?? 0) >= 100) unlock('oshi');
     if (_stats.newArtistsSince(now.subtract(const Duration(days: 7))) >= 20) unlock('tabibito');
     if (todayCount >= 15) unlock('shuchaku');
-    if (MoonCalculator.snapshot(now).isFullMoonWindow) unlock('mangetsu');
+    if (MoonCalculator.snapshot(now).isFullMoonWindow) {
+      unlock('mangetsu');
+      _bumpDistinct('moons', '${lunationOf(now)}');
+    }
+    _countDay(now);
+    _countSong(track);
+    _checkWeather();
     _checkMoments(now);
+    _checkCounterMasks();
     _checkWeekly();
     _stats.progressDirty = true;
     notifyListeners();
     unawaited(_saveLocal());
     unawaited(_maybeUploadProgress());
+    _lookUpStyle(track);
+  }
+
+  /// Days in a row with music, and coming back after a long time away.
+  void _countDay(DateTime now) {
+    final day = _epochDay(now);
+    final last = _stats.lastDay;
+    if (day == last) return;
+    if (last > 0 && day - last >= comebackDays) unlock('jiki');
+    _stats.streak = last > 0 && day - last == 1 ? _stats.streak + 1 : 1;
+    _stats.lastDay = day;
+    if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
+  }
+
+  /// Away this many days, then back: Porcelana.
+  static const int comebackDays = 14;
+
+  /// What the song itself is: fast, a hit or a hidden gem, explicit.
+  void _countSong(Track track) {
+    final bpm = bpmOf?.call(track.id);
+    if (bpm != null && bpm >= fastBpm) _bump('fast');
+    final rank = track.rank;
+    if (rank != null && rank > 0) {
+      if (rank >= hitRank) _bump('hits');
+      if (rank <= hiddenRank) _bump('hidden');
+    }
+    if (track.isExplicit) _bump('explicit');
+  }
+
+  void _checkWeather() {
+    final w = weatherNow?.call();
+    if (w == null) return;
+    if (w.temperature <= 5) unlock('tsurara');
+    if (w.sky == Sky.storm) unlock('inazuma');
+  }
+
+  /// The style arrives later (looked up once per artist), and counts then.
+  void _lookUpStyle(Track track) {
+    final lookup = styleOf;
+    if (lookup == null) return;
+    unawaited(lookup(track).then(onStyle).catchError((Object e) {
+      _log.fine('style lookup failed: $e');
+    }));
+  }
+
+  /// A counted song's style, once known.
+  @visibleForTesting
+  void onStyle(StyleInfo info) {
+    if (info.isEmpty) return;
+    for (final s in info.styles) {
+      _stats.styles[s.name] = (_stats.styles[s.name] ?? 0) + 1;
+      _countWeekly('style:${s.name}');
+    }
+    for (final country in info.countries) {
+      _bumpDistinct('countries', country);
+    }
+    _stats.progressDirty = true;
+    _checkCounterMasks();
+    _checkWeekly();
+    notifyListeners();
+    unawaited(_saveLocal());
+  }
+
+  /// Full moons are told apart by lunation: synodic months since a known
+  /// new moon (6 January 2000, 18:14 UTC).
+  static int lunationOf(DateTime t) {
+    final ref = DateTime.utc(2000, 1, 6, 18, 14);
+    return (t.toUtc().difference(ref).inMinutes / (29.530588 * 24 * 60)).floor();
+  }
+
+  /// The full-screen lyrics showed [trackId]'s synced lyrics.
+  void onLyricsShown(String trackId) {
+    _bumpDistinct('lyrics', trackId);
+    _checkCounterMasks();
+    notifyListeners();
+    unawaited(_saveLocal());
+  }
+
+  /// A running session ended after [elapsed]. Short tries don't count.
+  void onRunFinished(Duration elapsed) {
+    if (elapsed < const Duration(minutes: 5)) return;
+    _bump('runs');
+    _checkCounterMasks();
+    notifyListeners();
+    unawaited(_saveLocal());
+  }
+
+  /// The sleep timer stopped the music: one night (counted once a day).
+  void onSleepTimerFinished() {
+    _bumpDistinct('sleep', '${_epochDay(_clock())}');
+    _checkCounterMasks();
+    notifyListeners();
+    unawaited(_saveLocal());
   }
 
   void onTrackStarted(Track track) {
@@ -591,7 +804,7 @@ class MaskProvider extends ChangeNotifier {
         unawaited(_saveLocal());
       }
     }
-    if (_runTracks.length >= 5 && !isUnlocked('kanpeki')) {
+    if (_runTracks.length >= 5) {
       unawaited(_checkAlbumRun(track.albumId, _runTracks.length));
     }
   }
@@ -600,7 +813,13 @@ class MaskProvider extends ChangeNotifier {
     try {
       final album = await _albumLookup(albumId);
       if (album == null || album.recordType != 'album' || album.tracksCount < 5) return;
-      if (completed >= album.tracksCount) unlock('kanpeki');
+      if (completed >= album.tracksCount) {
+        unlock('kanpeki');
+        _bumpDistinct('albums', albumId);
+        _checkCounterMasks();
+        notifyListeners();
+        unawaited(_saveLocal());
+      }
     } catch (_) {}
   }
 
@@ -632,12 +851,36 @@ class MaskProvider extends ChangeNotifier {
       _checkMoments(_clock());
       _countWeekly('sec', elapsed.inSeconds);
     }
-    if (rain || music) {
+    final sounds = ambientOn?.call() ?? const <String>{};
+    for (final sound in sounds) {
+      _bump('amb:$sound', elapsed.inSeconds);
+    }
+    _countMarathon(music, elapsed);
+    if (sounds.isNotEmpty || music) _checkCounterMasks();
+    if (rain || music || sounds.isNotEmpty) {
       _checkWeekly();
       unawaited(_saveLocal());
       unawaited(_maybeUploadProgress());
     }
   }
+
+  /// Music in a row: pauses up to [marathonBreak] don't end the session.
+  void _countMarathon(bool music, Duration elapsed) {
+    if (music) {
+      _stats.sessionSec += elapsed.inSeconds;
+      _stats.idleSec = 0;
+      final minutes = _stats.sessionSec ~/ 60;
+      if (minutes > (_stats.c['marathon'] ?? 0)) _stats.c['marathon'] = minutes;
+    } else if (_stats.sessionSec > 0) {
+      _stats.idleSec += elapsed.inSeconds;
+      if (_stats.idleSec >= marathonBreak.inSeconds) {
+        _stats.sessionSec = 0;
+        _stats.idleSec = 0;
+      }
+    }
+  }
+
+  static const marathonBreak = Duration(minutes: 10);
 
   void _checkMoments(DateTime now) {
     if (now.hour == 3 && now.minute == 33) unlock('sanji');
@@ -691,7 +934,25 @@ class _Stats {
   Set<int> wkDays = {};
   Map<String, int> wkArtists = {};
   Set<String> wkAlbums = {};
-  String? wkRewardId;
+  /// This week's prizes won, by rarity name ('r', 'sr').
+  Map<String, String> wkRewards = {};
+
+  /// Plays per music style family (MusicStyle.name).
+  Map<String, int> styles = {};
+
+  /// Counters behind the masks with their own achievements (OniMask.counter).
+  Map<String, int> c = {};
+
+  /// Recent ids already counted under a counter (lyrics, albums, nights...).
+  Map<String, Set<String>> seen = {};
+
+  /// Days in a row: the last day with music (epoch day) and the run so far.
+  int lastDay = 0;
+  int streak = 0;
+
+  /// The music session going on now (marathon), and the pause in it.
+  int sessionSec = 0;
+  int idleSec = 0;
 
   // Progress backup (see MaskProvider.progressSnapshot).
   bool historyApplied = false;
@@ -726,7 +987,14 @@ class _Stats {
         'wkDays': wkDays.toList(),
         'wkArtists': wkArtists,
         'wkAlbums': wkAlbums.toList(),
-        'wkReward': wkRewardId,
+        'wkRewards': wkRewards,
+        'styles': styles,
+        'c': c,
+        'seen': {for (final e in seen.entries) e.key: e.value.toList()},
+        'lastDay': lastDay,
+        'dayStreak': streak,
+        'session': sessionSec,
+        'idle': idleSec,
         'history': historyApplied,
         'uploadedAt': progressUploadedAt,
         'dirty': progressDirty,
@@ -751,7 +1019,22 @@ class _Stats {
       s.wkDays = {for (final d in (m['wkDays'] as List? ?? const [])) d as int};
       s.wkArtists = Map<String, int>.from(m['wkArtists'] ?? {});
       s.wkAlbums = {for (final a in (m['wkAlbums'] as List? ?? const [])) '$a'};
-      s.wkRewardId = m['wkReward'] as String?;
+      s.wkRewards = Map<String, String>.from(m['wkRewards'] ?? {});
+      // Before two prizes a week, the one prize was the full-week one.
+      if (m['wkReward'] is String && s.wkRewards.isEmpty) {
+        final old = MaskCatalog.byId(m['wkReward'] as String);
+        if (old != null) s.wkRewards[old.rarity.name] = old.id;
+      }
+      s.styles = Map<String, int>.from(m['styles'] ?? {});
+      s.c = Map<String, int>.from(m['c'] ?? {});
+      s.seen = {
+        for (final e in (m['seen'] as Map? ?? const {}).entries)
+          '${e.key}': {for (final v in (e.value as List? ?? const [])) '$v'},
+      };
+      s.lastDay = m['lastDay'] ?? 0;
+      s.streak = m['dayStreak'] ?? 0;
+      s.sessionSec = m['session'] ?? 0;
+      s.idleSec = m['idle'] ?? 0;
       s.historyApplied = m['history'] == true;
       s.progressUploadedAt = m['uploadedAt'] is int ? m['uploadedAt'] as int : 0;
       s.progressDirty = m['dirty'] == true;

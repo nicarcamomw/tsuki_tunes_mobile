@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Album {
 
-@JsonKey(fromJson: jsonString) String get id;@JsonKey(defaultValue: 'Unknown Album') String get title;@JsonKey(defaultValue: '') String get coverUrl; String? get coverXl;@JsonKey(fromJson: jsonString) String get artistId;@JsonKey(defaultValue: 'Unknown Artist') String get artistName; String get releaseDate; String get recordType; int get fansCount; int get tracksCount; String? get link;@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> get tracks;
+@JsonKey(fromJson: jsonString) String get id;@JsonKey(defaultValue: 'Unknown Album') String get title;@JsonKey(defaultValue: '') String get coverUrl; String? get coverXl;@JsonKey(fromJson: jsonString) String get artistId;@JsonKey(defaultValue: 'Unknown Artist') String get artistName; String get releaseDate; String get recordType; int get fansCount; int get tracksCount; String? get link;/// Deezer's genre names for the album ("Rock", "Rap/Hip Hop"...).
+/// Left out of the stored JSON while empty.
+@JsonKey(includeIfNull: false, toJson: _genresToJson) List<String> get genres;@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> get tracks;
 /// Create a copy of Album
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +32,20 @@ $AlbumCopyWith<Album> get copyWith => _$AlbumCopyWithImpl<Album>(this as Album, 
 @override
 bool operator ==(Object other) {
   final _this = this as Album;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Album&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.coverUrl, _this.coverUrl) || other.coverUrl == _this.coverUrl)&&(identical(other.coverXl, _this.coverXl) || other.coverXl == _this.coverXl)&&(identical(other.artistId, _this.artistId) || other.artistId == _this.artistId)&&(identical(other.artistName, _this.artistName) || other.artistName == _this.artistName)&&(identical(other.releaseDate, _this.releaseDate) || other.releaseDate == _this.releaseDate)&&(identical(other.recordType, _this.recordType) || other.recordType == _this.recordType)&&(identical(other.fansCount, _this.fansCount) || other.fansCount == _this.fansCount)&&(identical(other.tracksCount, _this.tracksCount) || other.tracksCount == _this.tracksCount)&&(identical(other.link, _this.link) || other.link == _this.link)&&const DeepCollectionEquality().equals(other.tracks, _this.tracks));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Album&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.coverUrl, _this.coverUrl) || other.coverUrl == _this.coverUrl)&&(identical(other.coverXl, _this.coverXl) || other.coverXl == _this.coverXl)&&(identical(other.artistId, _this.artistId) || other.artistId == _this.artistId)&&(identical(other.artistName, _this.artistName) || other.artistName == _this.artistName)&&(identical(other.releaseDate, _this.releaseDate) || other.releaseDate == _this.releaseDate)&&(identical(other.recordType, _this.recordType) || other.recordType == _this.recordType)&&(identical(other.fansCount, _this.fansCount) || other.fansCount == _this.fansCount)&&(identical(other.tracksCount, _this.tracksCount) || other.tracksCount == _this.tracksCount)&&(identical(other.link, _this.link) || other.link == _this.link)&&const DeepCollectionEquality().equals(other.genres, _this.genres)&&const DeepCollectionEquality().equals(other.tracks, _this.tracks));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Album;
-  return Object.hash(runtimeType,_this.id,_this.title,_this.coverUrl,_this.coverXl,_this.artistId,_this.artistName,_this.releaseDate,_this.recordType,_this.fansCount,_this.tracksCount,_this.link,const DeepCollectionEquality().hash(_this.tracks));
+  return Object.hash(runtimeType,_this.id,_this.title,_this.coverUrl,_this.coverXl,_this.artistId,_this.artistName,_this.releaseDate,_this.recordType,_this.fansCount,_this.tracksCount,_this.link,const DeepCollectionEquality().hash(_this.genres),const DeepCollectionEquality().hash(_this.tracks));
 }
 
 @override
 String toString() {
   final _this = this as Album;
-  return 'Album(id: ${_this.id}, title: ${_this.title}, coverUrl: ${_this.coverUrl}, coverXl: ${_this.coverXl}, artistId: ${_this.artistId}, artistName: ${_this.artistName}, releaseDate: ${_this.releaseDate}, recordType: ${_this.recordType}, fansCount: ${_this.fansCount}, tracksCount: ${_this.tracksCount}, link: ${_this.link}, tracks: ${_this.tracks})';
+  return 'Album(id: ${_this.id}, title: ${_this.title}, coverUrl: ${_this.coverUrl}, coverXl: ${_this.coverXl}, artistId: ${_this.artistId}, artistName: ${_this.artistName}, releaseDate: ${_this.releaseDate}, recordType: ${_this.recordType}, fansCount: ${_this.fansCount}, tracksCount: ${_this.tracksCount}, link: ${_this.link}, genres: ${_this.genres}, tracks: ${_this.tracks})';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $AlbumCopyWith<$Res>  {
   factory $AlbumCopyWith(Album value, $Res Function(Album) _then) = _$AlbumCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(fromJson: jsonString) String id,@JsonKey(defaultValue: 'Unknown Album') String title,@JsonKey(defaultValue: '') String coverUrl, String? coverXl,@JsonKey(fromJson: jsonString) String artistId,@JsonKey(defaultValue: 'Unknown Artist') String artistName, String releaseDate, String recordType, int fansCount, int tracksCount, String? link,@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> tracks
+@JsonKey(fromJson: jsonString) String id,@JsonKey(defaultValue: 'Unknown Album') String title,@JsonKey(defaultValue: '') String coverUrl, String? coverXl,@JsonKey(fromJson: jsonString) String artistId,@JsonKey(defaultValue: 'Unknown Artist') String artistName, String releaseDate, String recordType, int fansCount, int tracksCount, String? link,@JsonKey(includeIfNull: false, toJson: _genresToJson) List<String> genres,@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> tracks
 });
 
 
@@ -71,7 +73,7 @@ class _$AlbumCopyWithImpl<$Res>
 
 /// Create a copy of Album
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? coverUrl = null,Object? coverXl = freezed,Object? artistId = null,Object? artistName = null,Object? releaseDate = null,Object? recordType = null,Object? fansCount = null,Object? tracksCount = null,Object? link = freezed,Object? tracks = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? coverUrl = null,Object? coverXl = freezed,Object? artistId = null,Object? artistName = null,Object? releaseDate = null,Object? recordType = null,Object? fansCount = null,Object? tracksCount = null,Object? link = freezed,Object? genres = null,Object? tracks = null,}) {
   return _then(Album(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -84,7 +86,8 @@ as String,recordType: null == recordType ? _self.recordType : recordType // igno
 as String,fansCount: null == fansCount ? _self.fansCount : fansCount // ignore: cast_nullable_to_non_nullable
 as int,tracksCount: null == tracksCount ? _self.tracksCount : tracksCount // ignore: cast_nullable_to_non_nullable
 as int,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
-as String?,tracks: null == tracks ? _self.tracks : tracks // ignore: cast_nullable_to_non_nullable
+as String?,genres: null == genres ? _self.genres : genres // ignore: cast_nullable_to_non_nullable
+as List<String>,tracks: null == tracks ? _self.tracks : tracks // ignore: cast_nullable_to_non_nullable
 as List<Track>,
   ));
 }
@@ -170,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _genresToJson)  List<String> genres, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Album() when $default != null:
-return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.tracks);case _:
+return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.genres,_that.tracks);case _:
   return orElse();
 
 }
@@ -191,10 +194,10 @@ return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _genresToJson)  List<String> genres, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)  $default,) {final _that = this;
 switch (_that) {
 case _Album():
-return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.tracks);case _:
+return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.genres,_that.tracks);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +214,10 @@ return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: jsonString)  String id, @JsonKey(defaultValue: 'Unknown Album')  String title, @JsonKey(defaultValue: '')  String coverUrl,  String? coverXl, @JsonKey(fromJson: jsonString)  String artistId, @JsonKey(defaultValue: 'Unknown Artist')  String artistName,  String releaseDate,  String recordType,  int fansCount,  int tracksCount,  String? link, @JsonKey(includeIfNull: false, toJson: _genresToJson)  List<String> genres, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks)?  $default,) {final _that = this;
 switch (_that) {
 case _Album() when $default != null:
-return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.tracks);case _:
+return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId,_that.artistName,_that.releaseDate,_that.recordType,_that.fansCount,_that.tracksCount,_that.link,_that.genres,_that.tracks);case _:
   return null;
 
 }
@@ -226,7 +229,7 @@ return $default(_that.id,_that.title,_that.coverUrl,_that.coverXl,_that.artistId
 @JsonSerializable()
 
 class _Album extends Album {
-  const _Album({@JsonKey(fromJson: jsonString) required this.id, @JsonKey(defaultValue: 'Unknown Album') required this.title, @JsonKey(defaultValue: '') required this.coverUrl, this.coverXl, @JsonKey(fromJson: jsonString) required this.artistId, @JsonKey(defaultValue: 'Unknown Artist') required this.artistName, this.releaseDate = '', this.recordType = 'album', this.fansCount = 0, this.tracksCount = 0, this.link, @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks = const []}): _tracks = tracks,super._();
+  const _Album({@JsonKey(fromJson: jsonString) required this.id, @JsonKey(defaultValue: 'Unknown Album') required this.title, @JsonKey(defaultValue: '') required this.coverUrl, this.coverXl, @JsonKey(fromJson: jsonString) required this.artistId, @JsonKey(defaultValue: 'Unknown Artist') required this.artistName, this.releaseDate = '', this.recordType = 'album', this.fansCount = 0, this.tracksCount = 0, this.link, @JsonKey(includeIfNull: false, toJson: _genresToJson)  List<String> genres = const [], @JsonKey(includeIfNull: false, toJson: _tracksToJson)  List<Track> tracks = const []}): _genres = genres,_tracks = tracks,super._();
   factory _Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
 
 @override@JsonKey(fromJson: jsonString) final  String id;
@@ -240,6 +243,17 @@ class _Album extends Album {
 @override@JsonKey() final  int fansCount;
 @override@JsonKey() final  int tracksCount;
 @override final  String? link;
+/// Deezer's genre names for the album ("Rock", "Rap/Hip Hop"...).
+/// Left out of the stored JSON while empty.
+ final  List<String> _genres;
+/// Deezer's genre names for the album ("Rock", "Rap/Hip Hop"...).
+/// Left out of the stored JSON while empty.
+@override@JsonKey(includeIfNull: false, toJson: _genresToJson) List<String> get genres {
+  if (_genres is EqualUnmodifiableListView) return _genres;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_genres);
+}
+
  final  List<Track> _tracks;
 @override@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> get tracks {
   if (_tracks is EqualUnmodifiableListView) return _tracks;
@@ -261,18 +275,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Album&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.coverXl, coverXl) || other.coverXl == coverXl)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.artistName, artistName) || other.artistName == artistName)&&(identical(other.releaseDate, releaseDate) || other.releaseDate == releaseDate)&&(identical(other.recordType, recordType) || other.recordType == recordType)&&(identical(other.fansCount, fansCount) || other.fansCount == fansCount)&&(identical(other.tracksCount, tracksCount) || other.tracksCount == tracksCount)&&(identical(other.link, link) || other.link == link)&&const DeepCollectionEquality().equals(other.tracks, _tracks));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Album&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.coverXl, coverXl) || other.coverXl == coverXl)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.artistName, artistName) || other.artistName == artistName)&&(identical(other.releaseDate, releaseDate) || other.releaseDate == releaseDate)&&(identical(other.recordType, recordType) || other.recordType == recordType)&&(identical(other.fansCount, fansCount) || other.fansCount == fansCount)&&(identical(other.tracksCount, tracksCount) || other.tracksCount == tracksCount)&&(identical(other.link, link) || other.link == link)&&const DeepCollectionEquality().equals(other.genres, _genres)&&const DeepCollectionEquality().equals(other.tracks, _tracks));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,title,coverUrl,coverXl,artistId,artistName,releaseDate,recordType,fansCount,tracksCount,link,const DeepCollectionEquality().hash(_tracks));
+    return Object.hash(runtimeType,id,title,coverUrl,coverXl,artistId,artistName,releaseDate,recordType,fansCount,tracksCount,link,const DeepCollectionEquality().hash(_genres),const DeepCollectionEquality().hash(_tracks));
 }
 
 @override
 String toString() {
-    return 'Album(id: $id, title: $title, coverUrl: $coverUrl, coverXl: $coverXl, artistId: $artistId, artistName: $artistName, releaseDate: $releaseDate, recordType: $recordType, fansCount: $fansCount, tracksCount: $tracksCount, link: $link, tracks: $tracks)';
+    return 'Album(id: $id, title: $title, coverUrl: $coverUrl, coverXl: $coverXl, artistId: $artistId, artistName: $artistName, releaseDate: $releaseDate, recordType: $recordType, fansCount: $fansCount, tracksCount: $tracksCount, link: $link, genres: $genres, tracks: $tracks)';
 }
 
 
@@ -283,7 +297,7 @@ abstract mixin class _$AlbumCopyWith<$Res> implements $AlbumCopyWith<$Res> {
   factory _$AlbumCopyWith(_Album value, $Res Function(_Album) _then) = __$AlbumCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(fromJson: jsonString) String id,@JsonKey(defaultValue: 'Unknown Album') String title,@JsonKey(defaultValue: '') String coverUrl, String? coverXl,@JsonKey(fromJson: jsonString) String artistId,@JsonKey(defaultValue: 'Unknown Artist') String artistName, String releaseDate, String recordType, int fansCount, int tracksCount, String? link,@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> tracks
+@JsonKey(fromJson: jsonString) String id,@JsonKey(defaultValue: 'Unknown Album') String title,@JsonKey(defaultValue: '') String coverUrl, String? coverXl,@JsonKey(fromJson: jsonString) String artistId,@JsonKey(defaultValue: 'Unknown Artist') String artistName, String releaseDate, String recordType, int fansCount, int tracksCount, String? link,@JsonKey(includeIfNull: false, toJson: _genresToJson) List<String> genres,@JsonKey(includeIfNull: false, toJson: _tracksToJson) List<Track> tracks
 });
 
 
@@ -300,7 +314,7 @@ class __$AlbumCopyWithImpl<$Res>
 
 /// Create a copy of Album
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? coverUrl = null,Object? coverXl = freezed,Object? artistId = null,Object? artistName = null,Object? releaseDate = null,Object? recordType = null,Object? fansCount = null,Object? tracksCount = null,Object? link = freezed,Object? tracks = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? coverUrl = null,Object? coverXl = freezed,Object? artistId = null,Object? artistName = null,Object? releaseDate = null,Object? recordType = null,Object? fansCount = null,Object? tracksCount = null,Object? link = freezed,Object? genres = null,Object? tracks = null,}) {
   return _then(_Album(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -313,7 +327,8 @@ as String,recordType: null == recordType ? _self.recordType : recordType // igno
 as String,fansCount: null == fansCount ? _self.fansCount : fansCount // ignore: cast_nullable_to_non_nullable
 as int,tracksCount: null == tracksCount ? _self.tracksCount : tracksCount // ignore: cast_nullable_to_non_nullable
 as int,link: freezed == link ? _self.link : link // ignore: cast_nullable_to_non_nullable
-as String?,tracks: null == tracks ? _self._tracks : tracks // ignore: cast_nullable_to_non_nullable
+as String?,genres: null == genres ? _self._genres : genres // ignore: cast_nullable_to_non_nullable
+as List<String>,tracks: null == tracks ? _self._tracks : tracks // ignore: cast_nullable_to_non_nullable
 as List<Track>,
   ));
 }

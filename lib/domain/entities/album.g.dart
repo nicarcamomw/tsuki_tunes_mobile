@@ -18,6 +18,9 @@ _Album _$AlbumFromJson(Map json) => _Album(
   fansCount: (json['fansCount'] as num?)?.toInt() ?? 0,
   tracksCount: (json['tracksCount'] as num?)?.toInt() ?? 0,
   link: json['link'] as String?,
+  genres:
+      (json['genres'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
   tracks:
       (json['tracks'] as List<dynamic>?)
           ?.map((e) => Track.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -37,5 +40,6 @@ Map<String, dynamic> _$AlbumToJson(_Album instance) => <String, dynamic>{
   'fansCount': instance.fansCount,
   'tracksCount': instance.tracksCount,
   'link': instance.link,
+  'genres': ?_genresToJson(instance.genres),
   'tracks': ?_tracksToJson(instance.tracks),
 };

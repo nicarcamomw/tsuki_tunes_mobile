@@ -4,7 +4,7 @@ title: Política de Privacidad — Tsuki Tunes
 
 # Política de Privacidad — Tsuki Tunes
 
-**Última actualización:** 2 de noviembre de 2026
+**Última actualización:** 6 de noviembre de 2026
 
 Tsuki Tunes ("la app") es un reproductor de música desarrollado por Nicolás Cárcamo ("nosotros", "nos"). Esta política explica qué datos recopilamos, para qué los usamos, con quién se comparten y qué derechos tienes.
 
@@ -17,13 +17,13 @@ Tsuki Tunes ("la app") es un reproductor de música desarrollado por Nicolás C�
 ### Tu biblioteca y actividad en la app
 Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - Canciones escuchadas, playlists, artistas seguidos y el registro diario de reproducciones.
-- Estadísticas de escucha y las máscaras que desbloqueaste.
+- Estadísticas de escucha, tu avance hacia las máscaras (por ejemplo, cuántas canciones escuchaste de cada estilo musical o tu racha de días seguidos) y las máscaras que desbloqueaste.
 
 ### Perfil público (opcional)
 - Si activas tu **perfil público**, otras personas pueden ver tu nombre, tu foto, tu máscara, tus estadísticas y tus artistas más escuchados. Viene **desactivado**, y puedes desactivarlo cuando quieras.
 
 ### Ubicación aproximada (opcional)
-- Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad.
+- Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad. Con el clima activado, dos máscaras se consiguen escuchando con tormenta o con frío: eso se revisa en el teléfono y no se guarda el clima.
 
 ### Micrófono (opcional)
 - La **búsqueda por voz** usa el micrófono solo mientras la estás usando. El audio lo procesa el servicio de reconocimiento de voz de tu teléfono, que normalmente es de Google, para convertirlo en texto. Tsuki Tunes no guarda ni envía el audio a ningún otro lugar. Solo usa el texto para buscar.
@@ -42,7 +42,7 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - **No vemos tu contraseña de Spotify.** El inicio de sesión se hace directamente con Spotify (OAuth). Los tokens de acceso se guardan cifrados **solo en tu teléfono**, y se borran cuando desconectas Spotify o cierras sesión.
 
 ### Datos que se guardan solo en tu teléfono
-- Tu fecha de cumpleaños (si la indicas), tus preferencias, el historial de búsqueda y los fragmentos de canciones y carátulas guardados en caché para reproducirlos más rápido.
+- Tu fecha de cumpleaños (si la indicas), tus preferencias, el historial de búsqueda, los estilos musicales de los artistas que escuchas y los fragmentos de canciones y carátulas guardados en caché para reproducirlos más rápido.
 
 ## 2. Datos que NO recopilamos
 
@@ -59,7 +59,7 @@ La app usa estos servicios, cada uno con su propia política de privacidad:
 - [Inicio de sesión con Google](https://policies.google.com/privacy): si eliges entrar con Google.
 - [Spotify](https://www.spotify.com/legal/privacy-policy/): reproducción completa, si conectas tu cuenta.
 - [Deezer](https://www.deezer.com/legal/personal-datas): catálogo y fragmentos de canciones de 30 segundos.
-- [Last.fm](https://www.last.fm/legal/privacy): canciones similares para la radio.
+- [Last.fm](https://www.last.fm/legal/privacy): canciones similares para la radio, y los estilos musicales de cada artista que escuchas (para las máscaras).
 - [LRCLIB](https://lrclib.net/): letras de canciones.
 - [Open-Meteo](https://open-meteo.com/en/terms): clima, si lo activas.
 - Reconocimiento de voz de tu teléfono (normalmente [Google](https://policies.google.com/privacy)): búsqueda por voz, si la usas.
@@ -81,7 +81,7 @@ A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada con
   - Tu historial.
   - Tu perfil público.
   - Tu cuenta de inicio de sesión.
-  - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, máscaras y cachés).
+  - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, máscaras, estilos de artistas y cachés).
 - También puedes pedir la eliminación sin la app; mira [cómo eliminar tu cuenta](delete-account.md).
 - La base de datos se respalda una vez al día para recuperarla ante fallas, y cada copia se borra sola a los 98 días. Los datos de una cuenta eliminada pueden seguir en esas copias hasta 98 días.
 - Las estadísticas de uso y los reportes de errores no están vinculados a tu cuenta. Firebase los elimina automáticamente: los de Analytics después de un máximo de 14 meses y los de Crashlytics después de 90 días.

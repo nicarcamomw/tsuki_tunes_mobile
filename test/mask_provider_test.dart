@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/music_styles.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 
 Track _t(String id, {String artist = 'Artist', String albumId = ''}) => Track(
@@ -277,17 +278,24 @@ void main() {
       expect(masks.weeklyProgress(const WeeklyChallenge(ChallengeKind.plays, 40)), 0);
     });
 
-    test('completing the three gives the week\'s mask, once', () {
-      final challenges = masks.weeklyChallenges;
-      final reward = masks.weeklyReward!;
-      expect(reward.weekly, isTrue);
-      expect(masks.isUnlocked(reward.id), isFalse);
+    test('two challenges give an R, all three an SR; one is about a style', () {
+      final r = masks.weeklyRewardFor(MaskRarity.r)!;
+      final sr = masks.weeklyRewardFor(MaskRarity.sr)!;
+      expect(r.weekly && sr.weekly, isTrue);
+      expect(r.rarity, MaskRarity.r);
+      expect(sr.rarity, MaskRarity.sr);
 
-      // Do whatever this week asks, generously.
+      // The third challenge follows the SR prize's theme.
+      final theme = MaskCatalog.weeklyThemes[sr.id]!;
+      final challenges = masks.weeklyChallenges;
+      expect(challenges.last, WeeklyChallenge.ofStyle(theme));
+      expect(masks.weeklyTheme, theme);
+
+      // Do whatever this week asks, generously; the style one last.
       masks.seedKnownArtists(const []);
       masks.isMusicPlaying = () => true;
       masks.isRainPlaying = () => true;
-      for (var d = 0; d < 6 && !masks.weeklyRewardWon; d++) {
+      for (var d = 0; d < 6 && masks.weeklyDoneCount < 2; d++) {
         final day = DateTime(2026, 11, 9 + d);
         for (final hour in [3, 7, 15]) {
           now = DateTime(day.year, day.month, day.day, hour);
@@ -304,10 +312,19 @@ void main() {
           }
         }
       }
-      expect(challenges.every(masks.weeklyDone), isTrue);
-      expect(masks.isUnlocked(reward.id), isTrue);
-      expect(masks.weeklyRewardWon, isTrue);
-      expect(masks.weeklyReward?.id, reward.id);
+      expect(masks.weeklyDoneCount, 2);
+      expect(masks.isUnlocked(r.id), isTrue);
+      expect(masks.weeklyRewardWonFor(MaskRarity.r), isTrue);
+      expect(masks.isUnlocked(sr.id), isFalse);
+      expect(masks.weeklyRewardFor(MaskRarity.r)?.id, r.id, reason: 'the week keeps its prize');
+
+      for (var i = 0; i < 15; i++) {
+        masks.onStyle(StyleInfo(styles: {theme}));
+      }
+      expect(masks.weeklyDoneCount, 3);
+      expect(masks.isUnlocked(sr.id), isTrue);
+      expect(masks.weeklyRewardWonFor(MaskRarity.sr), isTrue);
+      expect(masks.weeklyChallenges.last, WeeklyChallenge.ofStyle(theme), reason: 'theme stays all week');
     });
 
     test('the legendary Oni does not need the weekly masks', () {

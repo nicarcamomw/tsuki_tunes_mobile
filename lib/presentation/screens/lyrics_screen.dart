@@ -51,6 +51,29 @@ class LyricsScreen extends ConsumerStatefulWidget {
 }
 
 class _LyricsScreenState extends ConsumerState<LyricsScreen> {
+  String? _countedFor;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_countLyrics);
+    _countLyrics();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_countLyrics);
+    super.dispose();
+  }
+
+  /// Synced lyrics seen full screen count toward the Geisha mask, once per
+  /// song.
+  void _countLyrics() {
+    final id = widget.controller.trackId;
+    if (id == null || id == _countedFor || widget.controller.lyrics?.isSynced != true) return;
+    _countedFor = id;
+    ref.read(maskProvider).onLyricsShown(id);
+  }
 
   void _syncTrack(Track track) {
     if (widget.controller.trackId != track.id) {

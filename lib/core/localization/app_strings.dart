@@ -9,6 +9,7 @@ import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/moon_calculator.dart';
+import '../../domain/logic/music_styles.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'app_language.dart';
 
@@ -1377,7 +1378,76 @@ class AppStrings {
   String get a11yWrapped => _l.a11yWrapped;
 
   // --- Weekly challenges ---
-  String weeklyChallengeText(ChallengeKind kind, int n) => switch (language) {
+  /// A challenge, in words ("Escucha 15 canciones de rock").
+  String weeklyChallengeText(WeeklyChallenge c) => c.kind == ChallengeKind.style
+      ? _styleChallenge(c.style!, c.target)
+      : _challengeText(c.kind, c.target);
+
+  String _styleChallenge(MusicStyle style, int n) => switch (language) {
+        AppLanguage.es => 'Escucha $n canciones de ${musicStyleName(style)}',
+        AppLanguage.en => 'Listen to $n ${musicStyleName(style)} songs',
+        AppLanguage.ja => '${musicStyleName(style)}を$n曲聴く',
+      };
+
+  /// A style family's name, as challenges and masks say it.
+  String musicStyleName(MusicStyle s) => switch (language) {
+        AppLanguage.es => switch (s) {
+            MusicStyle.metal => 'metal',
+            MusicStyle.rock => 'rock',
+            MusicStyle.punk => 'punk',
+            MusicStyle.electronic => 'electrónica',
+            MusicStyle.hiphop => 'hip-hop',
+            MusicStyle.pop => 'pop',
+            MusicStyle.latin => 'urbano latino',
+            MusicStyle.jpop => 'J-pop o anime',
+            MusicStyle.kpop => 'K-pop',
+            MusicStyle.lofi => 'lo-fi',
+            MusicStyle.jazz => 'jazz o soul',
+            MusicStyle.classical => 'clásica o instrumental',
+            MusicStyle.synthwave => 'synthwave',
+            MusicStyle.vocaloid => 'Vocaloid o hyperpop',
+            MusicStyle.folk => 'folk',
+            MusicStyle.indie => 'indie',
+          },
+        AppLanguage.en => switch (s) {
+            MusicStyle.metal => 'metal',
+            MusicStyle.rock => 'rock',
+            MusicStyle.punk => 'punk',
+            MusicStyle.electronic => 'electronic',
+            MusicStyle.hiphop => 'hip-hop',
+            MusicStyle.pop => 'pop',
+            MusicStyle.latin => 'Latin urban',
+            MusicStyle.jpop => 'J-pop or anime',
+            MusicStyle.kpop => 'K-pop',
+            MusicStyle.lofi => 'lo-fi',
+            MusicStyle.jazz => 'jazz or soul',
+            MusicStyle.classical => 'classical or instrumental',
+            MusicStyle.synthwave => 'synthwave',
+            MusicStyle.vocaloid => 'Vocaloid or hyperpop',
+            MusicStyle.folk => 'folk',
+            MusicStyle.indie => 'indie',
+          },
+        AppLanguage.ja => switch (s) {
+            MusicStyle.metal => 'メタル',
+            MusicStyle.rock => 'ロック',
+            MusicStyle.punk => 'パンク',
+            MusicStyle.electronic => 'エレクトロニック',
+            MusicStyle.hiphop => 'ヒップホップ',
+            MusicStyle.pop => 'ポップ',
+            MusicStyle.latin => 'ラテン・アーバン',
+            MusicStyle.jpop => 'J-POP・アニメ',
+            MusicStyle.kpop => 'K-POP',
+            MusicStyle.lofi => 'ローファイ',
+            MusicStyle.jazz => 'ジャズ・ソウル',
+            MusicStyle.classical => 'クラシック・インスト',
+            MusicStyle.synthwave => 'シンセウェイヴ',
+            MusicStyle.vocaloid => 'ボカロ・ハイパーポップ',
+            MusicStyle.folk => 'フォーク',
+            MusicStyle.indie => 'インディー',
+          },
+      };
+
+  String _challengeText(ChallengeKind kind, int n) => switch (language) {
         AppLanguage.es => switch (kind) {
             ChallengeKind.newArtists => 'Escucha $n artistas nuevos',
             ChallengeKind.minutes => 'Escucha $n minutos de música',
@@ -1389,6 +1459,7 @@ class AppStrings {
             ChallengeKind.album => n == 1 ? 'Escucha un álbum en orden (5+ canciones seguidas)' : 'Escucha $n álbumes en orden',
             ChallengeKind.guess => 'Gana $n desafíos de Adivina la canción',
             ChallengeKind.oneArtist => 'Escucha $n canciones de un mismo artista',
+            ChallengeKind.style => 'Escucha $n canciones',
           },
         AppLanguage.en => switch (kind) {
             ChallengeKind.newArtists => 'Listen to $n new artists',
@@ -1401,6 +1472,7 @@ class AppStrings {
             ChallengeKind.album => n == 1 ? 'Play an album in order (5+ songs in a row)' : 'Play $n albums in order',
             ChallengeKind.guess => 'Win $n Guess the song challenges',
             ChallengeKind.oneArtist => 'Listen to $n songs by one artist',
+            ChallengeKind.style => 'Listen to $n songs',
           },
         AppLanguage.ja => switch (kind) {
             ChallengeKind.newArtists => '新しいアーティストを$n人聴く',
@@ -1413,6 +1485,7 @@ class AppStrings {
             ChallengeKind.album => 'アルバムを順番に聴く（5曲以上連続）',
             ChallengeKind.guess => '曲当てチャレンジに$n回勝つ',
             ChallengeKind.oneArtist => '同じアーティストの曲を$n曲聴く',
+            ChallengeKind.style => '$n曲聴く',
           },
       };
 
@@ -1436,16 +1509,26 @@ class AppStrings {
     };
   }
 
-  String weeklyRewardHint(String mask) => switch (language) {
-        AppLanguage.es => 'Completa los 3 y gana «$mask», una máscara que solo se consigue con los desafíos semanales.',
-        AppLanguage.en => 'Complete all 3 to win “$mask”, a mask you can only get from weekly challenges.',
-        AppLanguage.ja => '3つすべて達成で「$mask」を獲得。週間チャレンジ限定の面。',
+  /// The week's two prizes: an R for two challenges, an SR for all three.
+  String weeklyPrizes(String? rMask, String? srMask) => switch (language) {
+        AppLanguage.es => [
+            if (rMask != null) '2 desafíos: «$rMask»',
+            if (srMask != null) '3 desafíos: «$srMask»',
+          ].join(' · '),
+        AppLanguage.en => [
+            if (rMask != null) '2 challenges: “$rMask”',
+            if (srMask != null) '3 challenges: “$srMask”',
+          ].join(' · '),
+        AppLanguage.ja => [
+            if (rMask != null) '2つ達成：「$rMask」',
+            if (srMask != null) '3つ達成：「$srMask」',
+          ].join('・'),
       };
 
-  String weeklyRewardWon(String mask) => switch (language) {
-        AppLanguage.es => '¡Ganaste «$mask» esta semana! El lunes llegan desafíos nuevos.',
-        AppLanguage.en => 'You won “$mask” this week! New challenges arrive on Monday.',
-        AppLanguage.ja => '今週は「$mask」を獲得！月曜日に新しいチャレンジ。',
+  String get weeklyPrizesHint => switch (language) {
+        AppLanguage.es => 'Máscaras que solo se consiguen con los desafíos semanales.',
+        AppLanguage.en => 'Masks you can only get from weekly challenges.',
+        AppLanguage.ja => '週間チャレンジ限定の面。',
       };
 
   String get weeklyAllCollected => switch (language) {

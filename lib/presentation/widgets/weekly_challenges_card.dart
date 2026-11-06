@@ -19,10 +19,12 @@ IconData _iconFor(ChallengeKind kind) => switch (kind) {
       ChallengeKind.album => Icons.album_rounded,
       ChallengeKind.guess => Icons.quiz_outlined,
       ChallengeKind.oneArtist => Icons.favorite_border_rounded,
+      ChallengeKind.style => Icons.graphic_eq_rounded,
     };
 
-/// This week's three challenges and the mask they give. [compact] is the
-/// one-line version for Home, which opens the mask collection.
+/// This week's three challenges and the masks they give: an R for two, an
+/// SR for all three. [compact] is the one-line version for Home, which
+/// opens the mask collection.
 class WeeklyChallengesCard extends ConsumerWidget {
   final bool compact;
 
@@ -34,9 +36,15 @@ class WeeklyChallengesCard extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final challenges = masks.weeklyChallenges;
-    final reward = masks.weeklyReward;
-    final won = masks.weeklyRewardWon;
+    final rPrize = masks.weeklyRewardFor(MaskRarity.r);
+    final srPrize = masks.weeklyRewardFor(MaskRarity.sr);
+    final rWon = masks.weeklyRewardWonFor(MaskRarity.r);
+    final srWon = masks.weeklyRewardWonFor(MaskRarity.sr);
+    // Home shows the next prize to chase.
+    final reward = (!rWon ? rPrize : null) ?? srPrize ?? rPrize;
+    final won = reward == null ? false : (reward == srPrize ? srWon : rWon);
     final done = masks.weeklyDoneCount;
+    final lang = locale.currentLanguage;
 
     TextStyle t(double size, {FontWeight w = FontWeight.w700, Color c = AppColors.textBright, double? spacing}) =>
         locale.getTextStyle(fontSize: size, fontWeight: w, color: c, letterSpacing: spacing);
@@ -99,9 +107,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        won && reward != null
-                            ? reward.name(locale.currentLanguage)
-                            : strings.weeklyDoneCount(done),
+                        won ? reward.name(lang) : strings.weeklyDoneCount(done),
                         style: t(10.5, w: FontWeight.w600, c: AppColors.textSecondary),
                       ),
                     ],
@@ -132,15 +138,25 @@ class WeeklyChallengesCard extends ConsumerWidget {
           const Divider(color: AppColors.border, height: 18),
           Row(
             children: [
-              if (reward != null) _RewardPreview(mask: reward, size: 64, won: won),
-              if (reward != null) const SizedBox(width: 12),
+              for (final (prize, prizeWon, needs) in [(rPrize, rWon, 2), (srPrize, srWon, 3)])
+                if (prize != null) ...[
+                  Column(
+                    children: [
+                      _RewardPreview(mask: prize, size: 56, won: prizeWon),
+                      const SizedBox(height: 4),
+                      Text(
+                        prizeWon ? '✓ ${strings.maskRarity(prize.rarity)}' : '$needs/3 · ${strings.maskRarity(prize.rarity)}',
+                        style: t(9.5, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 10),
+                ],
               Expanded(
                 child: Text(
-                  reward == null
+                  rPrize == null && srPrize == null
                       ? strings.weeklyAllCollected
-                      : won
-                          ? strings.weeklyRewardWon(reward.name(locale.currentLanguage))
-                          : strings.weeklyRewardHint(reward.name(locale.currentLanguage)),
+                      : '${strings.weeklyPrizes(rPrize?.name(lang), srPrize?.name(lang))}\n${strings.weeklyPrizesHint}',
                   style: t(11.5, w: FontWeight.w600, c: AppColors.textSecondary),
                 ),
               ),
@@ -184,7 +200,7 @@ class _ChallengeRow extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  strings.weeklyChallengeText(challenge.kind, challenge.target),
+                  strings.weeklyChallengeText(challenge),
                   style: locale.getTextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,

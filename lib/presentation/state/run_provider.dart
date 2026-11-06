@@ -219,8 +219,12 @@ class RunProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Told how long each session lasted when it ends (mask achievements).
+  void Function(Duration elapsed)? onSessionEnded;
+
   Future<void> stop() async {
     if (!_active) return;
+    onSessionEnded?.call(elapsed);
     _active = false;
     _timer?.cancel();
     _timer = null;

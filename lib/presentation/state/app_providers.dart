@@ -14,6 +14,7 @@ import '../../data/datasources/play_history.dart';
 import '../../data/datasources/product_analytics.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
+import '../../data/datasources/style_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
@@ -147,12 +148,24 @@ final playbackWiringProvider = Provider<void>((ref) {
     library.recordPlay(track);
   };
   player.onTrackCompleted = masks.onTrackCompleted;
-  player.onSleepTimerFinished = ambient.onSleepTimerFinished;
+  player.onSleepTimerFinished = () {
+    ambient.onSleepTimerFinished();
+    masks.onSleepTimerFinished();
+  };
   player.onAmbientPlay = ambient.resumeAll;
   player.onAmbientPause = ambient.pauseAll;
   player.onAmbientStop = ambient.stopAll;
   ambient.onMediaStateChanged = player.setAmbientMediaState;
   masks.isMusicPlaying = () => player.isPlaying;
+  // What the masks' achievements read: each song's style and tempo, the
+  // ambient sounds on, and the weather (only when the user turned it on).
+  masks.styleOf = StyleService.shared.styleOf;
+  masks.bpmOf = BpmService.shared.cached;
+  masks.ambientOn = () => ambient.isPlaying
+      ? {for (final s in AmbientSound.values) if (ambient.isOn(s)) s.name}
+      : const <String>{};
+  final weather = ref.read(weatherProvider);
+  masks.weatherNow = () => weather.enabled ? weather.current : null;
   masks.isRainPlaying = () =>
       ambient.isPlaying && (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
   final lyrics = getIt<LyricsService>();
@@ -213,7 +226,9 @@ final playbackWiringProvider = Provider<void>((ref) {
 });
 
 final runProvider = ChangeNotifierProvider<RunProvider>((ref) {
-  return RunProvider()..attach(ref.read(audioProvider), ref.read(libraryProvider));
+  return RunProvider()
+    ..attach(ref.read(audioProvider), ref.read(libraryProvider))
+    ..onSessionEnded = (elapsed) => ref.read(maskProvider).onRunFinished(elapsed);
 });
 
 /// Has to listen from launch once switched on, so the app reads it at start.

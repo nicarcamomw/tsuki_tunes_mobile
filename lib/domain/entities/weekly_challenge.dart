@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import '../logic/music_styles.dart';
+
 /// What a weekly challenge counts.
 enum ChallengeKind {
   /// Artists heard for the first time.
@@ -31,13 +33,30 @@ enum ChallengeKind {
 
   /// Songs by one same artist.
   oneArtist,
+
+  /// Songs of one music style ([WeeklyChallenge.style]): the week's theme,
+  /// set by the mask it gives.
+  style,
 }
 
 class WeeklyChallenge {
   final ChallengeKind kind;
   final int target;
 
-  const WeeklyChallenge(this.kind, this.target);
+  /// For [ChallengeKind.style] challenges.
+  final MusicStyle? style;
+
+  const WeeklyChallenge(this.kind, this.target, {this.style});
+
+  /// The themed challenge: [target] songs of [style].
+  const WeeklyChallenge.ofStyle(MusicStyle this.style, {this.target = 15}) : kind = ChallengeKind.style;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WeeklyChallenge && other.kind == kind && other.target == target && other.style == style;
+
+  @override
+  int get hashCode => Object.hash(kind, target, style);
 
   static const pool = [
     WeeklyChallenge(ChallengeKind.newArtists, 3),

@@ -5,6 +5,7 @@ import '../../core/logger.dart';
 import 'audio_precache_service.dart';
 import 'deezer_disk_cache.dart';
 import 'home_widget_service.dart';
+import 'style_service.dart';
 
 final _log = Log.named('AccountDeletion');
 
@@ -111,6 +112,7 @@ class AccountDeletionService {
 
     await attempt('the song previews', () async => AudioPrecacheService().clearCache());
     await attempt('the catalog cache', DeezerDiskCache().clear);
+    await attempt('the artist styles', StyleService.shared.clear);
     await attempt('notifications', FlutterLocalNotificationsPlugin().cancelAll);
     await attempt('the home screen player',
         () => HomeWidgetService().updateTrack(null, isPlaying: false));
