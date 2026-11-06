@@ -41,9 +41,12 @@ class _Candidate {
 /// Pure logic: the song sources are passed in, so it has no Flutter,
 /// network or Last.fm/Deezer dependency.
 ///
-/// An artist radio ([artist] set) also plays that artist's top songs and
-/// walks through their related artists' top songs: familiar stays close to
-/// the artist, adventurous reaches further down the related list.
+/// With [artist] set it also plays that artist's top songs and walks
+/// through their related artists' top songs: familiar stays close to the
+/// artist, adventurous reaches further down the related list. A song radio
+/// does this too, with the song's artist ([artistLed] false: fewer of the
+/// artist's own songs, since it started from a song); an artist radio
+/// ([artistLed] true) is led by them.
 class SongRadio {
   SongRadio({
     required this.seed,
@@ -54,6 +57,7 @@ class SongRadio {
     bool? useLastFm,
     Random? random,
     this.artist,
+    this.artistLed = true,
     TopTracksFetcher? topTracks,
     RelatedArtistsFetcher? related,
   })  : _mode = mode,
@@ -73,9 +77,13 @@ class SongRadio {
   final Track seed;
   final bool usesLastFm;
 
-  /// The artist of an artist radio; null for a song radio.
+  /// The artist whose top songs and related artists the radio mixes in.
   final Artist? artist;
-  bool get isArtistRadio => artist != null;
+
+  /// Whether the radio was started from the artist (an artist radio) rather
+  /// than from one of their songs.
+  final bool artistLed;
+  bool get isArtistRadio => artist != null && artistLed;
 
   final SimilarTracksFetcher _similar;
   final ArtistRadioFetcher _artistRadio;
@@ -156,6 +164,7 @@ class SongRadio {
       'usedIds': lastN(_usedIds, 500),
       'usedKeys': lastN(_usedKeys, 500),
       if (artist case final a?) 'artist': {'id': a.id, 'name': a.name, 'pic': a.pictureUrl},
+      'led': artistLed,
       'relNext': _relatedNext,
     };
   }
@@ -189,6 +198,7 @@ class SongRadio {
         artist: artistRaw is Map && '${artistRaw['id'] ?? ''}'.isNotEmpty
             ? Artist(id: '${artistRaw['id']}', name: '${artistRaw['name'] ?? ''}', pictureUrl: '${artistRaw['pic'] ?? ''}')
             : null,
+        artistLed: json['led'] != false,
         topTracks: topTracks,
         related: related,
       );
@@ -372,9 +382,9 @@ class SongRadio {
 
     final own = _ownTop ??= await _safe(() => _topTracks(a.id));
     final ownTake = switch (_mode) {
-      RadioMode.familiar => 4,
-      RadioMode.balanced => 2,
-      RadioMode.adventurous => 1,
+      RadioMode.familiar => artistLed ? 4 : 2,
+      RadioMode.balanced => artistLed ? 2 : 1,
+      RadioMode.adventurous => artistLed ? 1 : 0,
     };
     final ownReason = RadioReason(RadioSource.artistTop, '', a.name);
     var taken = 0;

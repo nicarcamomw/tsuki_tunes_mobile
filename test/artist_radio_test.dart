@@ -112,4 +112,26 @@ void main() {
     expect(radio.isArtistRadio, isFalse);
     expect(radio.toJson().containsKey('artist'), isFalse);
   });
+
+  test('a song radio mixes in its artist and their related artists too, led by the song', () async {
+    final radio = SongRadio(
+      seed: _t('lp-5', 'lp', 'Linkin Park'),
+      artist: _linkin,
+      artistLed: false,
+      topTracks: _top,
+      related: _related,
+      random: Random(3),
+    );
+    expect(radio.isArtistRadio, isFalse);
+    final batch = await radio.nextBatch(count: 12);
+    expect(batch.where((t) => t.artistId.startsWith('r')), isNotEmpty);
+    // Fewer of the artist's own songs than their artist radio plays.
+    final artistRadio = _radio(RadioMode.balanced);
+    final led = await artistRadio.nextBatch(count: 12);
+    expect(batch.where((t) => t.artistId == 'lp').length,
+        lessThanOrEqualTo(led.where((t) => t.artistId == 'lp').length));
+    final restored = SongRadio.fromJson(radio.toJson(), topTracks: _top, related: _related)!;
+    expect(restored.isArtistRadio, isFalse);
+    expect(restored.artist?.id, 'lp');
+  });
 }

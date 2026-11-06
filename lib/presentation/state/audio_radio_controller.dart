@@ -47,6 +47,9 @@ class AudioRadioController {
 
   /// Makes the radios (and smart shuffle's recommendations); tests swap
   /// it for fake song sources.
+  /// A song radio works like an artist radio of the song's artist, led by
+  /// the song: it also mixes in that artist's top songs and their related
+  /// artists'.
   static SongRadio Function(Track seed, RadioMode mode) radioFactory =
       (seed, mode) => SongRadio(
             seed: seed,
@@ -55,6 +58,12 @@ class AudioRadioController {
             artistRadio: DeezerApiService().getArtistRadio,
             search: _searchCatalog,
             useLastFm: LastFmService.isConfigured,
+            artist: seed.artistId.isEmpty
+                ? null
+                : Artist(id: seed.artistId, name: SongRadio.primaryArtist(seed), pictureUrl: ''),
+            artistLed: false,
+            topTracks: _topTracks,
+            related: DeezerApiService().getRelatedArtists,
           );
 
   /// Makes artist radios: the song radio plus the artist's top songs and
@@ -90,7 +99,7 @@ class AudioRadioController {
   Track? get seed => radio?.seed;
 
   /// The artist of an artist radio, null for a song radio.
-  Artist? get artist => radio?.artist;
+  Artist? get artist => (radio?.isArtistRadio ?? false) ? radio!.artist : null;
   RadioMode get mode => radio?.mode ?? _modePref;
   RadioStatus get status => _status;
   bool get usesLastFm => radio?.usesLastFm ?? false;
