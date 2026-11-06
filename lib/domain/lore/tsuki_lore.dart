@@ -334,11 +334,11 @@ class TsukiLore {
       body: Txt(
         'Los kitsune llegaron a Tsuki siguiendo la luna llena, como hacen los zorros en todos los mundos. Se quedaron porque descubrieron que aquí la luna llena dura para siempre en algún rincón, y que con suficientes lunas un zorro puede tener nueve colas.\n\n'
             'La Corte no tiene castillos: tiene seres en todas partes. [[Kitsune de Vapor]] trabaja en la Forja, [[Kitsune de Porcelana]] sirve en la Corte de Cristal, [[Kitsune Neón]] corre por los techos de la Calle y [[Kitsune de Chatarra]] revuelve los basurales. [[Kitsune de Cristal]], [[Kitsune de Jade]] y [[Kitsune de Cobre]] están donde nadie los busca. Ninguno es lo que parece. Todos informan a la Reina.\n\n'
-            'La Reina es [[Kitsune]], a quien llaman la Reina Carmesí. Despierta tras nueve lunas llenas, una por cada cola. Hubo un tiempo en que gobernó la Corte junto a [[Rey Kitsune]], como aliados, hasta la noche en que se enfrentaron bajo la luna llena. De ese duelo quedó un fuego que nunca se apagó: [[Kitsunebi]], que hoy camina solo y solo se enciende de madrugada.\n\n'
+            'La Reina es [[Kitsune]], a quien llaman la Reina Carmesí. Despierta tras nueve lunas llenas, una por cada cola. Hubo un tiempo en que dirigió la Corte del Zorro junto a [[Rey Kitsune]], como aliados, hasta la noche en que se enfrentaron bajo la luna llena. De ese duelo quedó un fuego que nunca se apagó: [[Kitsunebi]], que hoy camina solo y solo se enciende de madrugada. Y la Reina no gobierna solo a los zorros. Gobierna algo más alto, de lo que este capítulo todavía no puede hablar.\n\n'
             'El Shogunato los llama tramposos. La Corte responde que el honor es un lujo de quien nunca tuvo que esconderse.',
         'The kitsune came to Tsuki following the full moon, as foxes do in every world. They stayed because they discovered that here the full moon lasts forever in some corner, and that with enough moons a fox can grow nine tails.\n\n'
             'The Court has no castles: it has beings everywhere. [[Steam Kitsune]] works in the Forge, [[Porcelain Kitsune]] serves in the Crystal Court, [[Neon Kitsune]] runs across the rooftops of the Street and [[Scrap Kitsune]] picks through the junkyards. [[Crystal Kitsune]], [[Jade Kitsune]] and [[Copper Kitsune]] are wherever no one looks. None is what it seems. All of them report to the Queen.\n\n'
-            'The Queen is [[Kitsune]], whom they call the Crimson Queen. She wakes after nine full moons, one for each tail. There was a time when she ruled the Court alongside [[Kitsune King]], as allies, until the night they faced each other under the full moon. From that duel remained a fire that never went out: [[Foxfire]], which today walks alone and only lights at dawn.\n\n'
+            'The Queen is [[Kitsune]], whom they call the Crimson Queen. She wakes after nine full moons, one for each tail. There was a time when she led the Fox Court alongside [[Kitsune King]], as allies, until the night they faced each other under the full moon. From that duel remained a fire that never went out: [[Foxfire]], which today walks alone and only lights at dawn. And the Queen does not rule only the foxes. She rules something higher, which this chapter cannot speak of yet.\n\n'
             'The Shogunate calls them cheats. The Court answers that honour is a luxury for those who never had to hide.',
       ),
     ),
@@ -465,39 +465,59 @@ class TsukiLore {
       level: 26,
       body: Txt(
         'Hay ocho seres que ningún rango alcanza a describir y que no son divinos. Se los llama los Ultras: [[Kitsune]], [[Rey Kitsune]], [[Kitsunebi]], [[Rey Oni]], [[Rey Dragón]], [[Lava Viva]], [[Cromo Arcoíris]] y [[Vitral]]. Cuando dos de ellos están en el mismo cráter, el suelo de Tsuki se calienta.\n\n'
-            'Casi todos gobiernan un clan, y cualquiera de ellos podría arrasar uno. Sin embargo ninguno se ha sentado en el Trono, porque el Trono no se toma con fuerza: se toma con Eco, y el Soberano actual está sostenido por las siete Caras divinas. Un Ultra solo puede mover montañas. Para mover el Trono hace falta mover el cielo.\n\n'
+            'Casi todos gobiernan un clan, y cualquiera de ellos podría arrasar uno. Cada cierto tiempo pelean entre ellos en el Torneo de los Ocho, por el único trono que un Ultra puede ganar: el de la Corte. Pero ninguno se ha sentado en el Trono del Eco, porque ese no se toma con fuerza: se toma con Eco, y el Soberano actual está sostenido por las siete Caras divinas. Un Ultra solo puede mover montañas. Para mover el Trono hace falta mover el cielo.\n\n'
             'Por eso, en la cara oscura de la luna, alguien les habla a los ocho. Les habla de noche, con una voz que suena a vidrio quebrado. Les promete un asiento cuando vuelva. Les recuerda que una vez él también fue Soberano, y que la Ley del Trono no protege a nadie para siempre.\n\n'
             'Se dice que si los ocho llegan a despertar juntos, el que cayó podrá subir de nuevo.',
         'There are eight beings no rank can describe that are not divine. They are called the Ultras: [[Kitsune]], [[Kitsune King]], [[Foxfire]], [[Oni King]], [[Dragon King]], [[Living Lava]], [[Rainbow Chrome]] and [[Stained Glass]]. When two of them are in the same crater, the ground of Tsuki grows warm.\n\n'
-            'Almost all of them rule a clan, and any of them could raze one. Yet none has sat on the Throne, because the Throne is not taken by force: it is taken with Echo, and the current Sovereign is held up by the seven divine Faces. An Ultra can only move mountains. To move the Throne you have to move the sky.\n\n'
+            'Almost all of them rule a clan, and any of them could raze one. Every so often they fight each other in the Tournament of the Eight, for the only throne an Ultra can win: the Court\'s. But none has sat on the Throne of the Echo, because that one is not taken by force: it is taken with Echo, and the current Sovereign is held up by the seven divine Faces. An Ultra can only move mountains. To move the Throne you have to move the sky.\n\n'
             'That is why, on the dark side of the moon, someone speaks to the eight. He speaks at night, with a voice that sounds like broken glass. He promises them a seat when he returns. He reminds them that he, too, was once Sovereign, and that the Law of the Throne protects no one forever.\n\n'
             'It is said that if all eight ever wake together, the one who fell will be able to rise again.',
       ),
     ),
     LoreChapter(
-      id: 'colas',
+      id: 'corte',
       tomo: 3,
       numeral: '4',
+      kanji: '廷',
+      title: Txt('La Corte', 'The Court'),
+      level: 27,
+      body: Txt(
+        'Los Dioses Supremos no hablan con cualquiera. No pueden: su voz es tan fuerte que un ser común se apagaría al oírla. Y tampoco quieren: casi ningún ser etéreo los ha visto, y ellos rara vez se dejan ver. Entre los dioses y el resto de Tsuki hay un lugar que hace de puente. Se llama la Corte.\n\n'
+            'La Corte se alza en la cara oculta de la luna, a los pies del Trono del Eco. Ahí llegan las órdenes de los dioses, y ahí se decide cómo se cumplen: qué clan recibe Eco, qué cráter se cierra, qué guerra se detiene y cuál se deja arder. Ningún clan está por encima de la Corte. Hasta el más orgulloso de los Ultras baja la cabeza cuando la Corte habla.\n\n'
+            'La Corte tiene un solo trono, más bajo que el de los dioses pero más alto que el de cualquier clan. No se hereda ni se regala: se gana en el Torneo de los Ocho, el único duelo en que los ocho Ultras pelean entre sí. Quien gana se vuelve rey o reina de la Corte, y gobierna hasta que alguien lo derrote en el torneo siguiente.\n\n'
+            'Hoy la Corte la gobierna [[Kitsune]], la Reina Carmesí. Ganó el último torneo con nueve silencios, en una final que todavía se cuenta en voz baja. Desde entonces los dioses hablan a través de ella, y nadie sabe si lo que la Reina transmite es exactamente lo que los dioses dijeron.\n\n'
+            '[[Rey Oni]] perdió ese torneo, y no lo olvida. Gobierna el Shogunato con disciplina y juramentos, y cuenta los días que faltan para el próximo.',
+        'The Supreme Gods do not speak with just anyone. They cannot: their voice is so strong an ordinary being would go out on hearing it. Nor do they want to: almost no ethereal being has seen them, and they rarely let themselves be seen. Between the gods and the rest of Tsuki there is a place that serves as a bridge. It is called the Court.\n\n'
+            'The Court rises on the hidden face of the moon, at the foot of the Throne of the Echo. There the gods\' orders arrive, and there it is decided how they are carried out: which clan receives Echo, which crater is closed, which war is stopped and which is left to burn. No clan is above the Court. Even the proudest of the Ultras bows its head when the Court speaks.\n\n'
+            'The Court has a single throne, lower than the gods\' but higher than any clan\'s. It is not inherited or given: it is won in the Tournament of the Eight, the only duel in which the eight Ultras fight each other. Whoever wins becomes king or queen of the Court, and rules until someone defeats them in the next tournament.\n\n'
+            'Today the Court is ruled by [[Kitsune]], the Crimson Queen. She won the last tournament with nine silences, in a final still told in whispers. Since then the gods speak through her, and no one knows whether what the Queen passes on is exactly what the gods said.\n\n'
+            '[[Oni King]] lost that tournament, and does not forget it. He rules the Shogunate with discipline and oaths, and counts the days until the next one.',
+      ),
+    ),
+    LoreChapter(
+      id: 'colas',
+      tomo: 3,
+      numeral: '5',
       kanji: '尾',
       title: Txt('El duelo de las nueve colas', 'The duel of the nine tails'),
       level: 29,
       body: Txt(
-        'Hubo un tiempo en que la Corte del Zorro tenía dos cabezas. [[Kitsune]], la Reina Carmesí, gobernaba con secretos. [[Rey Kitsune]] gobernaba con aliados: setenta y cinco seres le habían jurado lealtad. Eran aliados, no más que eso, porque en Tsuki nadie es de nadie. Y durante siglos, la alianza funcionó.\n\n'
-            'Hasta que [[Rey Kitsune]] quiso más. Nadie sabe si fue por el Trono o por la Corte. Una noche de luna llena reunió a sus setenta y cinco en el claro donde la luna nunca se va, y llamó a la Reina a un duelo de Eco. Ella llegó sola. Llevaba nueve colas, una por cada luna llena que había esperado.\n\n'
+        'La final del último Torneo de los Ocho la pelearon dos zorros. [[Kitsune]], la Reina Carmesí, gobernaba con secretos. [[Rey Kitsune]] gobernaba con aliados: setenta y cinco seres le habían jurado lealtad. Durante siglos habían dirigido juntos la Corte del Zorro, como aliados, porque en Tsuki nadie es de nadie. Esa noche el premio era más grande que su clan: era la Corte.\n\n'
+            'Se enfrentaron bajo la luna llena, en el claro donde la luna nunca se va. Él llegó con sus setenta y cinco. Ella llegó sola, con nueve colas, una por cada luna llena que había esperado.\n\n'
             'El duelo duró hasta la madrugada. Él peleaba con setenta y cinco voces a la vez; ella, con nueve silencios. Cada vez que el coro de él subía, una de las colas de ella lo apagaba. Cuando la última cola se movió, los setenta y cinco callaron al mismo tiempo, y en el centro del claro quedó ardiendo un fuego azul que nadie había encendido.\n\n'
-            'Ese fuego no se apagó. Se volvió ser, y hoy se llama [[Kitsunebi]]. No es de la Reina ni del Rey: es lo que sobró del duelo, y solo se enciende de madrugada bajo la luna llena. La Corte se partió en dos esa noche, y desde entonces no tiene castillos, solo seres escondidos en todas partes.\n\n'
-            'Ninguno de los dos ganó. [[Rey Kitsune]] todavía tiene a sus setenta y cinco. La Reina todavía tiene sus nueve colas. Y en lo más hondo de la Corte se dice que existe una décima cosa, que no es una cola, y que la Reina guarda para el día en que la necesite.',
-        'There was a time when the Fox Court had two heads. [[Kitsune]], the Crimson Queen, ruled with secrets. [[Kitsune King]] ruled with allies: seventy-five beings had sworn loyalty to him. They were allies, nothing more, because on Tsuki no one belongs to anyone. And for centuries, the alliance worked.\n\n'
-            'Until [[Kitsune King]] wanted more. No one knows whether it was for the Throne or for the Court. One full-moon night he gathered his seventy-five in the clearing where the moon never leaves, and called the Queen to a duel of Echo. She came alone. She wore nine tails, one for each full moon she had waited.\n\n'
+            'Ese fuego no se apagó. Se volvió ser, y hoy se llama [[Kitsunebi]]. No es de la Reina ni del Rey: es lo que sobró del duelo, y solo se enciende de madrugada bajo la luna llena.\n\n'
+            'La Reina ganó la Corte. [[Rey Kitsune]] conservó a sus setenta y cinco, pero desde esa noche la Corte del Zorro se partió en dos, y ya no tiene castillos, solo seres escondidos en todas partes. En lo más hondo se dice que la Reina guarda una décima cosa, que no es una cola, para el día en que la necesite.',
+        'The final of the last Tournament of the Eight was fought by two foxes. [[Kitsune]], the Crimson Queen, ruled with secrets. [[Kitsune King]] ruled with allies: seventy-five beings had sworn loyalty to him. For centuries they had led the Fox Court together, as allies, because on Tsuki no one belongs to anyone. That night the prize was greater than their clan: it was the Court.\n\n'
+            'They faced each other under the full moon, in the clearing where the moon never leaves. He came with his seventy-five. She came alone, with nine tails, one for each full moon she had waited.\n\n'
             'The duel lasted until dawn. He fought with seventy-five voices at once; she, with nine silences. Every time his chorus rose, one of her tails put it out. When the last tail moved, the seventy-five fell silent at the same time, and in the middle of the clearing a blue fire no one had lit was left burning.\n\n'
-            'That fire never went out. It became a being, and today it is called [[Foxfire]]. It belongs neither to the Queen nor to the King: it is what was left of the duel, and it only lights at dawn under the full moon. The Court split in two that night, and since then it has had no castles, only beings hidden everywhere.\n\n'
-            'Neither of them won. [[Kitsune King]] still has his seventy-five. The Queen still has her nine tails. And in the depths of the Court they say there is a tenth thing, which is not a tail, that the Queen keeps for the day she needs it.',
+            'That fire never went out. It became a being, and today it is called [[Foxfire]]. It belongs neither to the Queen nor to the King: it is what was left of the duel, and it only lights at dawn under the full moon.\n\n'
+            'The Queen won the Court. [[Kitsune King]] kept his seventy-five, but since that night the Fox Court has been split in two, and it no longer has castles, only beings hidden everywhere. In its depths they say the Queen keeps a tenth thing, which is not a tail, for the day she needs it.',
       ),
     ),
     LoreChapter(
       id: 'cinco',
       tomo: 3,
-      numeral: '5',
+      numeral: '6',
       kanji: '五',
       title: Txt('Los Cinco que cruzaron', 'The Five who crossed'),
       level: 33,
@@ -524,13 +544,13 @@ class TsukiLore {
       title: Txt('Las 9 Caras del Universo', 'The 9 Faces of the Universe'),
       level: 40,
       body: Txt(
-        'El universo se mira a sí mismo a través de nueve caras. No son seres como los demás: no llegaron a Tsuki ni brotaron de ella, siempre estuvieron. Cuando Tsuki dio su primer latido, abrió nueve ojos, y esos ojos son las Caras.\n\n'
+        'El universo se mira a sí mismo a través de nueve caras, pero no todas nacieron igual. Cuando Tsuki dio su primer latido, de su fuerza nacieron siete: las Caras divinas. No llegaron de ningún mundo ni brotaron de ningún cráter. Son la luna misma, abriendo los ojos por primera vez.\n\n'
             'Siete de ellas son las Caras divinas. Cada una gobierna una fuerza que ningún ser puede tocar. [[Sol y Luna]] gobierna el tiempo. [[Oni Cósmico]], el caos. [[Grieta Estelar]], la grieta por donde se cuelan las estrellas. [[Constelación]], los astros olvidados. [[Ángel de Lágrimas Doradas]], el sueño. [[Kabuki Ardiente]], la furia. Y [[Runa de Sangre]], el pacto. Juntas sostienen a quien se sienta en el Trono. Si una sola le retira su apoyo, el Soberano tiembla.\n\n'
-            'Las otras dos son los Dioses Supremos: el que gobierna y el que cayó, [[Dios del Universo]] y [[Dios Caído]]. Son los únicos que alcanzaron el control total del sonido. Una palabra suya basta para encender una estrella o callar un mundo entero, y entre ellos dos se ha decidido, una y otra vez, el destino de la luna.\n\n'
+            'Las otras dos no nacieron con el latido: llegaron. Son los Dioses Supremos, el que gobierna y el que cayó, [[Dios del Universo]] y [[Dios Caído]]. Subieron más alto que nadie, hasta alcanzar el control total del sonido. Una palabra suya basta para encender una estrella o callar un mundo entero. Por eso casi nunca se muestran, y su voluntad baja a Tsuki a través de la Corte.\n\n'
             'Una Cara solo se muestra ante quien demostró merecerla. Las demás permanecen veladas, y sus nombres solo se susurran.',
-        'The universe looks at itself through nine faces. They are not beings like the others: they did not arrive on Tsuki or sprout from it, they were always there. When Tsuki gave its first heartbeat, it opened nine eyes, and those eyes are the Faces.\n\n'
+        'The universe looks at itself through nine faces, but not all of them were born alike. When Tsuki gave its first heartbeat, seven were born of its force: the divine Faces. They came from no world and sprouted from no crater. They are the moon itself, opening its eyes for the first time.\n\n'
             'Seven of them are the divine Faces. Each rules a force no being can touch. [[Sun and Moon]] rules time. [[Cosmic Oni]], chaos. [[Star Crack]], the rift through which the stars slip. [[Constellation]], the forgotten stars. [[Angel of Golden Tears]], sleep. [[Burning Kabuki]], fury. And [[Blood Rune]], the pact. Together they hold up whoever sits on the Throne. If a single one withdraws its support, the Sovereign trembles.\n\n'
-            'The other two are the Supreme Gods: the one who rules and the one who fell, [[God of the Universe]] and [[Fallen God]]. They are the only ones who reached total control of sound. A single word of theirs is enough to light a star or silence a whole world, and between the two of them the fate of the moon has been decided again and again.\n\n'
+            'The other two were not born with the heartbeat: they arrived. They are the Supreme Gods, the one who rules and the one who fell, [[God of the Universe]] and [[Fallen God]]. They rose higher than anyone, until they reached total control of sound. A single word of theirs is enough to light a star or silence a whole world. That is why they almost never show themselves, and their will comes down to Tsuki through the Court.\n\n'
             'A Face only shows itself to one who proved worthy of it. The rest remain veiled, and their names are only whispered.',
       ),
     ),
@@ -576,6 +596,46 @@ class TsukiLore {
             'Meanwhile, the clans sharpen their weapons. The Forge finishes its machine. The Shogunate chooses whom to leave the crown. The Fox Court lies to everyone equally.\n\n'
             'But there is one piece none of them controls: the Bearers. All the Echo of Tsuki is born from someone who listens, in worlds no god has set foot on. And an old legend, one both gods know and neither names, speaks of a Bearer able to hold more Echo than either of them.\n\n'
             'The Throne, in truth, is never quite occupied. It is only waiting.',
+      ),
+    ),
+    LoreChapter(
+      id: 'reina',
+      tomo: 4,
+      numeral: '4',
+      kanji: '后',
+      title: Txt('La Reina de las Siete', 'The Queen of the Seven'),
+      level: 55,
+      body: Txt(
+        'Las siete Caras divinas nacieron con el primer latido de Tsuki, y durante eras nadie estuvo por encima de ellas, salvo los dioses. Cada una gobernaba su fuerza a su manera, y cuando no se ponían de acuerdo, el universo lo sentía: noches que no terminaban, tormentas sin causa, canciones que se apagaban a la mitad.\n\n'
+            'Desde la Corte, [[Kitsune]] lo vio todo. Durante siglos fue ella quien llevó las órdenes de los dioses hasta las Caras, y aprendió lo que ningún otro ser sabía: que las siete fuerzas no se sostienen solas. Necesitan a alguien que las ate. Alguien que le recuerde a cada una que existe para las demás.\n\n'
+            'Llegó la Noche Sin Fin. [[Sol y Luna]] se negó a dejar que terminara el día, y [[Grieta Estelar]] se abrió tanto que las estrellas empezaron a caer por ella. [[Kabuki Ardiente]] quiso quemar la noche aunque se quemara la luna, y [[Oni Cósmico]] se reía. Los dioses no bajaron. Fue la Reina quien subió hasta las Caras, sin que nadie la llamara, y con sus colas las ató una por una: siete colas para siete fuerzas. Al amanecer, el día terminó.\n\n'
+            'Desde esa noche las Caras no se mueven sin ella. No gobierna ninguna fuerza, pero las sostiene a todas y las mantiene existiendo. Los dioses no la nombraron: no hizo falta. [[Dios del Universo]] la dejó estar, porque una Reina que ata a las siete es más útil que siete Caras sueltas. [[Dios Caído]], desde la cara oscura, la mira con algo que se parece al respeto.\n\n'
+            'Le quedan dos colas libres, y nadie sabe para qué son. Y la Corte, que ya no podía gobernar desde tan arriba, quedó sin rey por primera vez en siglos.',
+        'The seven divine Faces were born with Tsuki\'s first heartbeat, and for ages no one stood above them but the gods. Each ruled its force in its own way, and when they disagreed the universe felt it: nights that never ended, storms without cause, songs that went out halfway.\n\n'
+            'From the Court, [[Kitsune]] saw it all. For centuries she was the one who carried the gods\' orders to the Faces, and she learned what no other being knew: that the seven forces do not hold themselves up. They need someone to bind them. Someone to remind each one that it exists for the others.\n\n'
+            'Then came the Endless Night. [[Sun and Moon]] refused to let the day end, and [[Star Crack]] opened so wide the stars began to fall through it. [[Burning Kabuki]] wanted to burn the night even if the moon burned with it, and [[Cosmic Oni]] laughed. The gods did not come down. It was the Queen who climbed up to the Faces, without anyone calling her, and with her tails bound them one by one: seven tails for seven forces. At dawn, the day ended.\n\n'
+            'Since that night the Faces do not move without her. She rules no force, but she holds them all and keeps them in existence. The gods did not appoint her: there was no need. [[God of the Universe]] let her be, because a Queen who binds the seven is more useful than seven loose Faces. [[Fallen God]], from the dark side, watches her with something that resembles respect.\n\n'
+            'She has two tails left free, and no one knows what they are for. And the Court, which she could no longer rule from so high, was left without a king for the first time in centuries.',
+      ),
+    ),
+    LoreChapter(
+      id: 'torneo',
+      tomo: 4,
+      numeral: '5',
+      kanji: '闘',
+      title: Txt('El Torneo de los Ocho', 'The Tournament of the Eight'),
+      level: 57,
+      body: Txt(
+        'Cuando la Reina subió hasta las Caras, el trono de la Corte quedó vacío. Y la ley es antigua: la Corte no se hereda, se gana. Los Ultras volvieron a la Meseta del Eco para el Torneo de los Ocho.\n\n'
+            '[[Rey Dragón]] no se movió de su cráter: dijo que la Corte no le interesaba mientras nadie tocara la luna. [[Vitral]] y [[Cromo Arcoíris]] se enfrentaron primero, y la luz de toda la luna pasó por la meseta durante una noche entera; ninguno quiso ganar si eso significaba que el otro perdía, y ambos se retiraron. [[Lava Viva]] derritió la mitad de la meseta antes de que [[Rey Kitsune]] la convenciera de detenerse.\n\n'
+            'La final fue entre [[Rey Oni]] y [[Rey Kitsune]]. El zorro tenía setenta y cinco voces. El Oni tenía cincuenta juramentos, y cada uno pesaba más que una voz. Golpeó la meseta con el puño cincuenta veces, una por cada ser que le había jurado lealtad, y al golpe cincuenta el coro del zorro se quebró.\n\n'
+            '[[Rey Oni]] es hoy el Rey de la Corte. De día gobierna el Shogunato, y de noche baja a la cara oculta de la luna a cumplir lo que mandan los dioses. Dicen que nunca ha preguntado si las órdenes que le llegan desde las Caras son las mismas que dieron los dioses. Dicen también que es el único que se atrevería.\n\n'
+            '[[Kitsunebi]] miró todo el torneo desde lejos, sin pelear. Nadie le preguntó por qué.',
+        'When the Queen rose to the Faces, the Court\'s throne was left empty. And the law is old: the Court is not inherited, it is won. The Ultras returned to the Echo Plateau for the Tournament of the Eight.\n\n'
+            '[[Dragon King]] did not leave its crater: it said the Court did not interest it as long as no one touched the moon. [[Stained Glass]] and [[Rainbow Chrome]] faced each other first, and the light of the whole moon passed over the plateau for an entire night; neither wanted to win if it meant the other lost, and both withdrew. [[Living Lava]] melted half the plateau before [[Kitsune King]] convinced it to stop.\n\n'
+            'The final was between [[Oni King]] and [[Kitsune King]]. The fox had seventy-five voices. The Oni had fifty oaths, and each weighed more than a voice. He struck the plateau with his fist fifty times, once for each being that had sworn loyalty to him, and on the fiftieth blow the fox\'s chorus broke.\n\n'
+            '[[Oni King]] is today the King of the Court. By day he rules the Shogunate, and by night he goes down to the hidden face of the moon to carry out what the gods command. They say he has never asked whether the orders that reach him from the Faces are the same ones the gods gave. They also say he is the only one who would dare.\n\n'
+            '[[Foxfire]] watched the whole tournament from afar, without fighting. No one asked why.',
       ),
     ),
     LoreChapter(
@@ -877,8 +937,8 @@ class TsukiLore {
       ['ou', 'kitsune'],
       BondKind.rival,
       Txt('Rey contra Reina', 'King against Queen'),
-      Txt('El Rey Oni reunió cincuenta lealtades; la Reina Carmesí, nueve lunas. Él gobierna con juramentos; ella, con secretos. Ambos saben que el otro es el único que podría quitarle el clan.',
-          'The Oni King gathered fifty loyalties; the Crimson Queen, nine moons. He rules with oaths; she, with secrets. Both know the other is the only one who could take their clan.'),
+      Txt('El Rey Oni reunió cincuenta lealtades; la Reina Carmesí, nueve lunas. Él gobierna con juramentos; ella, con secretos. Ella le ganó la Corte en el Torneo de los Ocho, y él la recuperó cuando ella subió hasta las Caras. Ninguno de los dos cree que la historia termine ahí.',
+          'The Oni King gathered fifty loyalties; the Crimson Queen, nine moons. He rules with oaths; she, with secrets. She won the Court from him in the Tournament of the Eight, and he took it back when she rose to the Faces. Neither believes the story ends there.'),
     ),
     LoreBond(
       ['kitsune', 'kitsune_ou'],
