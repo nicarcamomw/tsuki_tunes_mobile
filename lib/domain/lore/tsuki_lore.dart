@@ -152,14 +152,16 @@ class TsukiLore {
       kanji: '月',
       title: Txt('Tsuki, el centro del universo', 'Tsuki, the centre of the universe'),
       body: Txt(
-        'Antes de las estrellas, antes del tiempo, ya estaba Tsuki. No nació de nada: todo nació de ella. Es la Luna Madre, el centro exacto del universo y su comienzo. Las demás lunas son reflejos suyos, espejos colgados sobre mil mundos para recordarles hacia dónde mirar.\n\n'
+        'Esta es la historia que cuentan las máscaras más viejas, la que se susurra en los cráteres cuando la luna está llena.\n\n'
+            'Antes de las estrellas, antes del tiempo, ya estaba Tsuki. No nació de nada: todo nació de ella. Es la Luna Madre, el centro exacto del universo y su comienzo. Las demás lunas son reflejos suyos, espejos colgados sobre mil mundos para recordarles hacia dónde mirar.\n\n'
             'Tsuki brilla, pero no refleja ningún sol ni se alimenta de nada. Brilla porque es el centro. La primera luz del universo salió de ella, y nunca se ha apagado.\n\n'
             'Cuando Tsuki despertó, su primer latido fue un sonido. Ese sonido se extendió por el vacío, y de su vibración se formaron las estrellas, los mundos y todo lo que vive. Desde entonces todo lo que existe vibra, y todo lo que vibra puede ser movido por el sonido.\n\n'
             'En Tsuki existen muchos poderes: el fuego, el acero, el tiempo, los astros, la astucia. Pero pocos se comparan con el control mediante el sonido, y por eso es el que todos buscan. Las máscaras que apenas lo rozan hacen temblar una piedra con su voz. Las que lo dominan doblan el acero con un grito o calman una tormenta con una sola nota. Y solo dos seres han alcanzado el control total: los Dioses Supremos. Cuando ellos hablan, el universo obedece.\n\n'
             'Muchos han intentado destruir Tsuki. Ejércitos, máquinas y hasta dioses la han golpeado con toda su furia, y ninguno le ha hecho una sola grieta. Tsuki no es indestructible porque nadie lo haya intentado: lo es porque es un lugar sagrado, el corazón de todo el poder. Romperla sería romper el comienzo del universo.\n\n'
             'Por eso nadie pelea contra Tsuki. Pelean por ella. En su cara oculta se alza el Trono del Eco, tallado en luna pura. Quien se sienta en él controla el sonido del universo entero: decide qué suena, qué calla y quién obedece.\n\n'
             'Y como todo poder que existe, alguien lo quiere.',
-        'Before the stars, before time, there was Tsuki. It was not born from anything: everything was born from it. It is the Mother Moon, the exact centre of the universe and its beginning. Every other moon is a reflection of it, a mirror hung above a thousand worlds to remind them where to look.\n\n'
+        'This is the story the oldest masks tell, the one whispered in the craters when the moon is full.\n\n'
+            'Before the stars, before time, there was Tsuki. It was not born from anything: everything was born from it. It is the Mother Moon, the exact centre of the universe and its beginning. Every other moon is a reflection of it, a mirror hung above a thousand worlds to remind them where to look.\n\n'
             'Tsuki shines, but it reflects no sun and feeds on nothing. It shines because it is the centre. The first light of the universe came from it, and it has never gone out.\n\n'
             'When Tsuki woke, its first heartbeat was a sound. That sound spread through the void, and from its vibration came the stars, the worlds and everything that lives. Since then everything that exists vibrates, and everything that vibrates can be moved by sound.\n\n'
             'On Tsuki there are many powers: fire, steel, time, the stars, cunning. But few compare to control through sound, and that is why everyone seeks it. Masks that barely touch it can make a stone tremble with their voice. Those that master it bend steel with a shout or calm a storm with a single note. And only two beings have reached total control: the Supreme Gods. When they speak, the universe obeys.\n\n'
@@ -173,18 +175,18 @@ class TsukiLore {
       tomo: 1,
       numeral: '1',
       kanji: '響',
-      title: Txt('El Eco y el Portador', 'The Echo and the Bearer'),
+      title: Txt('El Eco', 'The Echo'),
       body: Txt(
-        'En Tsuki, el sonido es uno de los poderes más grandes. Todo lo que suena en el universo termina viajando hasta la Luna Madre: una canción tarareada en una cocina, el rugido de un estadio, un disco girando a las tres de la mañana. Al tocar su suelo sagrado, ese sonido se vuelve Eco: sonido vivo, que se puede guardar, afilar y usar. Con Eco una máscara habla y es obedecida. Levanta muros con un tambor, parte rocas con un grito, duerme a un ejército con una canción de cuna.\n\n'
-            'Pero el Eco tiene una regla que ni los dioses pueden romper: solo nace cuando alguien escucha. Una canción que nadie oye no deja rastro. Hace falta un oído, una atención, alguien dispuesto a quedarse hasta el final del tema.\n\n'
-            'Por eso existen los Portadores. Un Portador es un ser de los mundos de abajo que escucha con tanta fuerza que su Eco llega intacto a la luna. No pelea, no viaja, casi nunca sabe que Tsuki existe. Solo escucha.\n\n'
-            'Tú eres un Portador.\n\n'
-            'Cada canción que escuchas entera sube a Tsuki convertida en Eco. Cada madrugada en vela, cada álbum oído de principio a fin, cada racha de días sin soltar los audífonos alimenta algo allá arriba. Y allá arriba hay seres que llevan siglos esperando a alguien como tú.',
-        'On Tsuki, sound is one of the greatest powers. Everything that sounds in the universe ends up travelling to the Mother Moon: a song hummed in a kitchen, the roar of a stadium, a record spinning at three in the morning. When it touches its sacred ground, that sound becomes Echo: living sound, that can be kept, sharpened and used. With Echo a mask speaks and is obeyed. It raises walls with a drum, splits rock with a shout, puts an army to sleep with a lullaby.\n\n'
-            'But the Echo has a rule not even the gods can break: it is only born when someone listens. A song nobody hears leaves no trace. It takes an ear, attention, someone willing to stay until the end of the track.\n\n'
-            'That is why Bearers exist. A Bearer is a being from the worlds below who listens so hard that their Echo reaches the moon whole. They do not fight, do not travel, almost never know Tsuki exists. They just listen.\n\n'
-            'You are a Bearer.\n\n'
-            'Every song you hear in full rises to Tsuki as Echo. Every sleepless dawn, every album heard from start to end, every streak of days without taking off your headphones feeds something up there. And up there are beings who have waited centuries for someone like you.',
+        'Cuentan que el sonido no muere. Viaja. Todo lo que suena en el universo, por lejos que esté, termina llegando a la Luna Madre: el canto de un pueblo en la orilla de un río, el rugido de un estadio, un disco girando en una pieza a oscuras a las tres de la mañana.\n\n'
+            'Al tocar el suelo sagrado de Tsuki, ese sonido cambia. Se vuelve Eco: sonido vivo, que se puede guardar, afilar y usar. Con Eco una máscara habla y es obedecida. Levanta muros con un tambor, parte rocas con un grito, duerme a un ejército con una canción de cuna. Por el Eco se han firmado pactos, se han traicionado reyes y se han perdido guerras enteras.\n\n'
+            'Pero el Eco tiene una regla que ni los dioses pueden romper: solo nace cuando alguien escucha. Una canción que nadie oye se pierde en el vacío y no deja rastro. Hace falta un oído, una atención, alguien dispuesto a quedarse hasta la última nota.\n\n'
+            'Las máscaras llaman Portadores a esos que escuchan. Viven en los mundos de abajo y casi ninguno sabe que Tsuki existe. No pelean, no viajan, no buscan el Trono. Solo escuchan, y su Eco sube intacto hasta la luna.\n\n'
+            'Ninguna máscara ha visto nunca a un Portador. Solo sienten su Eco llegar, noche tras noche, como lluvia sobre los cráteres. Y las más viejas dicen que cuando un Portador escucha con toda el alma, en algún rincón de Tsuki una máscara dormida abre los ojos.',
+        'They say sound does not die. It travels. Everything that sounds in the universe, however far away, ends up reaching the Mother Moon: the song of a village on a riverbank, the roar of a stadium, a record spinning in a dark room at three in the morning.\n\n'
+            'When it touches the sacred ground of Tsuki, that sound changes. It becomes Echo: living sound, that can be kept, sharpened and used. With Echo a mask speaks and is obeyed. It raises walls with a drum, splits rock with a shout, puts an army to sleep with a lullaby. For Echo, pacts have been signed, kings betrayed and whole wars lost.\n\n'
+            'But Echo has a rule not even the gods can break: it is only born when someone listens. A song nobody hears is lost in the void and leaves no trace. It takes an ear, attention, someone willing to stay until the last note.\n\n'
+            'The masks call those who listen Bearers. They live in the worlds below and almost none of them know Tsuki exists. They do not fight, do not travel, do not seek the Throne. They just listen, and their Echo rises whole to the moon.\n\n'
+            'No mask has ever seen a Bearer. They only feel their Echo arrive, night after night, like rain on the craters. And the oldest say that when a Bearer listens with their whole soul, somewhere on Tsuki a sleeping mask opens its eyes.',
       ),
     ),
     LoreChapter(
@@ -196,23 +198,23 @@ class TsukiLore {
       lock: LoreLock.masks,
       need: 1,
       body: Txt(
-        'Las máscaras son los habitantes de Tsuki. Ninguna recuerda la cara que tuvo: llegaron de mundos lejanos, forjadas en acero, coral, vidrio, hueso o fuego, y en el viaje hasta la luna perdieron el cuerpo. Solo quedó su rostro, y dentro del rostro, una voluntad.\n\n'
-            'Una máscara dormida es solo un objeto. Para despertar necesita Eco, y el Eco solo lo dan los Portadores. Cuando una máscara te elige, se alimenta de lo que escuchas, y cuando ha juntado lo suficiente, abre los ojos. Eso es tu colección: cada máscara desbloqueada es un ser que despertó gracias a ti. Por eso cada una pide algo distinto. Comen el Eco que se les parece.\n\n'
-            'Cada máscara tiene su propio poder: fuego, hielo, acero, veneno, astucia. Pero el rango lo marca cuánto Eco puede sostener su rostro, y así nacieron los rangos:\n\n'
+        'Las máscaras son los habitantes de Tsuki. Ninguna recuerda la cara que tuvo. Llegaron de mundos lejanos, forjadas en acero, coral, vidrio, hueso o fuego, atraídas por la luz de la Luna Madre como polillas por una vela. En el viaje perdieron el cuerpo. Solo quedó su rostro, y dentro del rostro, una voluntad.\n\n'
+            'Una máscara recién llegada duerme. Es solo un objeto tirado en el polvo lunar, y puede pasar siglos así. Para despertar necesita Eco, y cada una lo busca a su manera: unas se alimentan del ruido de las tormentas, otras de las canciones que suenan de madrugada, otras de la música de un país que ya no existe. Cada máscara come el Eco que se le parece.\n\n'
+            'Con el tiempo, Tsuki aprendió a medir a sus habitantes por cuánto Eco puede sostener un rostro, y así nacieron los rangos:\n\n'
             'R, los Errantes: máscaras jóvenes o sencillas cuya voz apenas mueve el polvo. Vagan por los cráteres buscando un clan que las acoja.\n\n'
-            'SR, los Guerreros: su grito es un arma. Forjadas para pelear y juradas a un estandarte.\n\n'
+            'SR, los Guerreros: su grito es un arma. Forjados para pelear y jurados a un estandarte.\n\n'
             'SSR, los Señores: herederos, generales y sacerdotisas. Con su voz mandan ejércitos, y cada uno gobierna un pedazo de luna.\n\n'
-            'UL, los Ultras: leyendas vivas. Cuando hablan, los cráteres tiemblan.\n\n'
-            'Y por encima de todos, las 9 Caras del Universo: siete divinas y dos Dioses Supremos, los únicos que dominan el sonido por completo.\n\n'
+            'UL, los Ultras: leyendas vivas. Cuando hablan, los cráteres tiemblan, y hasta los Señores bajan la mirada.\n\n'
+            'Y por encima de todos, las 9 Caras del Universo: siete divinas y dos Dioses Supremos, los únicos que dominan el sonido por completo. De ellas casi no se habla, y nunca en voz alta.\n\n'
             'Ninguna máscara está conforme con su rango. Todas, tarde o temprano, miran hacia la cara oculta de la luna.',
-        'The masks are the inhabitants of Tsuki. None remembers the face it once had: they came from distant worlds, forged in steel, coral, glass, bone or fire, and on the journey to the moon they lost their bodies. Only the face remained, and inside the face, a will.\n\n'
-            'A sleeping mask is just an object. To wake it needs Echo, and only Bearers give Echo. When a mask chooses you, it feeds on what you listen to, and once it has gathered enough, it opens its eyes. That is your collection: every unlocked mask is a being that woke thanks to you. That is why each one asks for something different. They eat the Echo that resembles them.\n\n'
-            'Every mask has its own power: fire, ice, steel, poison, cunning. But rank is set by how much Echo its face can hold, and so the ranks were born:\n\n'
+        'The masks are the inhabitants of Tsuki. None remembers the face it once had. They came from distant worlds, forged in steel, coral, glass, bone or fire, drawn by the light of the Mother Moon like moths to a candle. On the journey they lost their bodies. Only the face remained, and inside the face, a will.\n\n'
+            'A newly arrived mask sleeps. It is just an object lying in the moon dust, and it can stay that way for centuries. To wake it needs Echo, and each one seeks it its own way: some feed on the noise of storms, others on songs played at dawn, others on the music of a country that no longer exists. Each mask eats the Echo that resembles it.\n\n'
+            'In time, Tsuki learned to measure its inhabitants by how much Echo a face can hold, and so the ranks were born:\n\n'
             'R, the Wanderers: young or simple masks whose voice barely stirs the dust. They roam the craters, looking for a clan to take them in.\n\n'
             'SR, the Warriors: their shout is a weapon. Forged to fight and sworn to a banner.\n\n'
             'SSR, the Lords: heirs, generals and priestesses. Their voice commands armies, and each rules a piece of the moon.\n\n'
-            'UL, the Ultras: living legends. When they speak, the craters tremble.\n\n'
-            'And above them all, the 9 Faces of the Universe: seven divine ones and two Supreme Gods, the only ones who command sound completely.\n\n'
+            'UL, the Ultras: living legends. When they speak, the craters tremble, and even the Lords lower their eyes.\n\n'
+            'And above them all, the 9 Faces of the Universe: seven divine ones and two Supreme Gods, the only ones who command sound completely. They are hardly spoken of, and never aloud.\n\n'
             'No mask is content with its rank. Sooner or later, all of them look toward the hidden face of the moon.',
       ),
     ),
@@ -225,14 +227,14 @@ class TsukiLore {
       lock: LoreLock.faction,
       factionId: 'antiguos',
       body: Txt(
-        'Antes de los clanes y de las guerras hubo cuatro rostros: el Tengu de nariz larga, el Oni del kabuki, la Hannya de los celos y una máscara de metal que nadie sabe quién forjó. Fueron los primeros en llegar a Tsuki, y de sus copias, sombras y reflejos nacieron todos los que hoy se llaman Los Antiguos.\n\n'
-            'Los Antiguos no buscan el Trono. Son la memoria de la luna: cada uno guarda un momento que pasó de verdad. Primer Eco recuerda la primera canción que escuchaste. La Luna de Sangre vio el último eclipse. 3:33 vive atrapado en el minuto exacto en que el reloj repite su número.\n\n'
-            'Con los siglos, algunos cambiaron de piel —tinta, hielo, oro, píxeles, neón— y vagan por los cráteres como reflejos de los primeros. Aparecen una vez por semana ante quien supera sus pruebas, y nunca dos veces de la misma forma.\n\n'
-            'En el centro de todos duerme El Oni, la máscara completa. No despierta con un logro: despierta cuando sus hermanos lo llaman todos juntos.',
-        'Before the clans and the wars there were four faces: the long-nosed Tengu, the kabuki Oni, the jealous Hannya and a metal mask no one knows who forged. They were the first to reach Tsuki, and from their copies, shadows and reflections came all those now called The Ancients.\n\n'
-            'The Ancients do not seek the Throne. They are the memory of the moon: each keeps a moment that truly happened. First Echo remembers the first song you heard. The Blood Moon saw the last eclipse. 3:33 lives trapped in the exact minute when the clock repeats its number.\n\n'
-            'Over the centuries some changed skin —ink, ice, gold, pixels, neon— and roam the craters as reflections of the first ones. They appear once a week to whoever passes their trials, and never twice in the same form.\n\n'
-            'At the centre of them all sleeps The Oni, the complete mask. It does not wake for a feat: it wakes when all its siblings call it together.',
+        'Antes de los clanes y de las guerras hubo cuatro rostros: el Tengu de nariz larga, el Oni del kabuki, la Hannya de los celos y una máscara de metal que nadie sabe quién forjó. Fueron los primeros en despertar en Tsuki, y nadie recuerda de dónde vinieron. De sus copias, sombras y reflejos nacieron todos los que hoy se llaman Los Antiguos.\n\n'
+            'Los Antiguos no buscan el Trono. Son la memoria de la luna: cada uno guarda un momento que pasó de verdad. Primer Eco recuerda la primera canción que sonó sobre Tsuki. La Luna de Sangre vio el último eclipse. 3:33 vive atrapado en el minuto exacto en que el reloj repite su número.\n\n'
+            'Con los siglos, algunos cambiaron de piel (tinta, hielo, oro, píxeles, neón) y vagan por los cráteres como reflejos de los primeros. Aparecen y desaparecen con las semanas, y nunca dos veces de la misma forma.\n\n'
+            'En el centro de todos duerme El Oni, la máscara completa. Dicen que no despierta por ninguna hazaña, sino cuando sus hermanos lo llaman todos juntos. Y dicen también que los cuatro primeros rostros saben algo de su origen que han jurado no contar jamás.',
+        'Before the clans and the wars there were four faces: the long-nosed Tengu, the kabuki Oni, the jealous Hannya and a metal mask no one knows who forged. They were the first to wake on Tsuki, and no one remembers where they came from. From their copies, shadows and reflections came all those now called The Ancients.\n\n'
+            'The Ancients do not seek the Throne. They are the memory of the moon: each keeps a moment that truly happened. First Echo remembers the first song ever heard on Tsuki. The Blood Moon saw the last eclipse. 3:33 lives trapped in the exact minute when the clock repeats its number.\n\n'
+            'Over the centuries some changed skin (ink, ice, gold, pixels, neon) and roam the craters as reflections of the first ones. They come and go with the weeks, and never twice in the same form.\n\n'
+            'At the centre of them all sleeps The Oni, the complete mask. They say it does not wake for any feat, but when all its siblings call it together. And they also say the four first faces know something about their origin that they have sworn never to tell.',
       ),
     ),
     LoreChapter(
@@ -328,7 +330,7 @@ class TsukiLore {
             'Su enemiga es la Corte de Cristal, que mira la ciudad desde sus torres y la llama ruido. La Calle responde pintando sus muros cada noche.',
         'Where the roads of Tsuki cross, a city no one planned was born: signs, graffiti, screens, basslines that shake the moon dust. It is the Neon Street, and its masks are the ones no clan wanted.\n\n'
             'Here no one asks where you come from. The Neon Panther rules the rooftops, graffiti marks territory, Toxic and Plague sell cut Echo in the alleys, and Camouflage knows things it should not. Their music is the music of the street: hip-hop, urban, lyrics that do not ask permission.\n\n'
-            'It is ruled by the Rainbow Chrome, a six-horned mask that reflects every colour because it refused to have just one. To wake it you must have heard all twelve styles of the moon: the Street accepts no king who only knows one block.\n\n'
+            'It is ruled by the Rainbow Chrome, a six-horned mask that reflects every colour because it refused to have just one. It only wakes for one who has heard all twelve styles of the moon: the Street accepts no king who only knows one block.\n\n'
             'Its enemy is the Crystal Court, which looks down on the city from its towers and calls it noise. The Street answers by painting their walls every night.',
       ),
     ),
@@ -363,11 +365,11 @@ class TsukiLore {
         'Tsuki nunca ha estado en paz. El Eco no alcanza para todos, y cada clan cree saber mejor que los demás cómo usarlo.\n\n'
             'Hay guerras viejas, que se pelean desde antes de que existieran los nombres: la Forja contra los Elementales, la máquina contra la tierra. Hay guerras de orgullo: el Shogunato contra la Corte del Zorro, el honor contra la astucia. Y hay guerras de clase: la Calle de Neón contra la Corte de Cristal, el ruido contra el palacio.\n\n'
             'Pero las guerras más feroces no son entre clanes, sino entre máscaras. Hermanos que quieren la misma corona, maestros y discípulos, almas que se separaron en tres despertares distintos, juramentos sellados con sangre.\n\n'
-            'Cada vez que despiertas a las dos partes de un vínculo, la luna te cuenta su historia.',
+            'Cada vínculo tiene su historia, y la luna las guarda todas. Solo las cuenta cuando las dos partes han despertado.',
         'Tsuki has never been at peace. There is not enough Echo for everyone, and every clan thinks it knows better than the rest how to use it.\n\n'
             'There are old wars, fought since before names existed: the Forge against the Elementals, the machine against the land. There are wars of pride: the Shogunate against the Fox Court, honour against cunning. And there are wars of class: the Neon Street against the Crystal Court, noise against the palace.\n\n'
             'But the fiercest wars are not between clans but between masks. Siblings who want the same crown, masters and students, souls split across three different awakenings, oaths sealed in blood.\n\n'
-            'Every time you wake both sides of a bond, the moon tells you its story.',
+            'Every bond has its story, and the moon keeps them all. It only tells them once both sides have woken.',
       ),
     ),
     LoreChapter(
@@ -381,11 +383,11 @@ class TsukiLore {
         'Hay ocho máscaras que ningún rango alcanza a describir y que no son divinas. Se las llama los Ultras: la Reina Carmesí, el Rey Kitsune, el Kitsunebi, el Rey Oni, el Rey Dragón, la Lava Viva, el Cromo Arcoíris y el Vitral.\n\n'
             'Casi todos gobiernan un clan, y cualquiera de ellos podría arrasar uno. Sin embargo ninguno se ha sentado en el Trono, porque el Trono no se toma con fuerza: se toma con Eco, y el Soberano actual está sostenido por las siete Caras divinas.\n\n'
             'Por eso, en la cara oscura de la luna, alguien les habla a los ocho. Les promete un asiento cuando vuelva. Les recuerda que una vez él también fue Soberano.\n\n'
-            'Se dice que si los ocho despiertan bajo el mismo Portador, el que cayó podrá subir de nuevo.',
+            'Se dice que si los ocho llegan a despertar juntos, el que cayó podrá subir de nuevo.',
         'There are eight masks no rank can describe that are not divine. They are called the Ultras: the Crimson Queen, the Kitsune King, the Kitsunebi, the Oni King, the Dragon King, the Living Lava, the Rainbow Chrome and the Stained Glass.\n\n'
             'Almost all of them rule a clan, and any of them could raze one. Yet none has sat on the Throne, because the Throne is not taken by force: it is taken with Echo, and the current Sovereign is held up by the seven divine Faces.\n\n'
             'That is why, on the dark side of the moon, someone speaks to the eight. He promises them a seat when he returns. He reminds them that he, too, was once Sovereign.\n\n'
-            'It is said that if all eight wake under the same Bearer, the one who fell will be able to rise again.',
+            'It is said that if all eight ever wake together, the one who fell will be able to rise again.',
       ),
     ),
     LoreChapter(
@@ -400,11 +402,11 @@ class TsukiLore {
         'El universo se mira a sí mismo a través de nueve caras. No son máscaras como las demás: no llegaron a Tsuki, siempre estuvieron. Cuando Tsuki dio su primer latido, abrió nueve ojos.\n\n'
             'Siete de ellas son las Caras divinas. Cada una gobierna una fuerza que ninguna máscara puede tocar: el tiempo, el caos, la grieta, los astros olvidados, el sueño, la furia y el pacto. Juntas sostienen a quien se sienta en el Trono. Si una sola le retira su apoyo, el Soberano tiembla.\n\n'
             'Las otras dos son los Dioses Supremos: el que gobierna y el que cayó, la Cara Soberana y la Cara Rota. Son los únicos que alcanzaron el control total del sonido. Una palabra suya basta para encender una estrella o callar un mundo entero, y entre ellos dos se ha decidido, una y otra vez, el destino de la luna.\n\n'
-            'Una Cara solo se muestra ante quien demostró merecerla. Las que aún no despiertas permanecen veladas.',
+            'Una Cara solo se muestra ante quien demostró merecerla. Las demás permanecen veladas, y sus nombres solo se susurran.',
         'The universe looks at itself through nine faces. They are not masks like the others: they did not arrive on Tsuki, they were always there. When Tsuki gave its first heartbeat, it opened nine eyes.\n\n'
             'Seven of them are the divine Faces. Each rules a force no mask can touch: time, chaos, the rift, the forgotten stars, sleep, fury and the pact. Together they hold up whoever sits on the Throne. If a single one withdraws its support, the Sovereign trembles.\n\n'
             'The other two are the Supreme Gods: the one who rules and the one who fell, the Sovereign Face and the Broken Face. They are the only ones who reached total control of sound. A single word of theirs is enough to light a star or silence a whole world, and between the two of them the fate of the moon has been decided again and again.\n\n'
-            'A Face only shows itself to one who proved worthy of it. Those you have not yet woken remain veiled.',
+            'A Face only shows itself to one who proved worthy of it. The rest remain veiled, and their names are only whispered.',
       ),
     ),
     LoreChapter(
@@ -443,17 +445,17 @@ class TsukiLore {
             'En la cara oscura, el Dios Caído cuenta también. Tiene a los ocho Ultras. Tiene la paciencia de quien ya perdió todo una vez. Y tiene algo que el Soberano no tiene: sabe exactamente cómo se rompe un rostro.\n\n'
             'Al principio de su exilio gritó contra la luna con toda su voz, con un poder capaz de apagar galaxias. Tsuki ni siquiera tembló. Ese día entendió que la luna no se conquista destruyéndola: se conquista desde el Trono.\n\n'
             'Mientras tanto, los clanes afilan sus armas. La Forja termina su máquina. El Shogunato elige heredero. La Corte del Zorro miente a todos por igual.\n\n'
-            'Pero hay una pieza que ninguno controla: el Portador. Todo el Eco de Tsuki nace de alguien que escucha. Y un Portador que haya despertado a los dos dioses tiene en sus manos más Eco que cualquiera de ellos.\n\n'
+            'Pero hay una pieza que ninguno controla: los Portadores. Todo el Eco de Tsuki nace de alguien que escucha, en mundos que ningún dios ha pisado. Y una leyenda vieja, que ambos dioses conocen y ninguno nombra, habla de un Portador capaz de despertar a los dos, y de sostener más Eco que cualquiera de ellos.\n\n'
             'El Trono, en realidad, nunca está ocupado. Solo está esperando.\n\n'
-            'Sigue escuchando.',
+            'Y en algún mundo de abajo, alguien sigue escuchando.',
         'The Law of the Throne, written in blood by the Face of the Pact, has a single line: “The Throne of the Echo belongs to whoever holds the most Echo. No reign is eternal.”\n\n'
             'By that law the First Face fell. By that same law the God of the Universe can fall. He knows it: that is why he never sleeps, why he cares for the seven Faces like daughters, why he counts every song that reaches the moon.\n\n'
             'On the dark side, the Fallen God is counting too. He has the eight Ultras. He has the patience of one who has already lost everything once. And he has something the Sovereign lacks: he knows exactly how a face breaks.\n\n'
             'Early in his exile he screamed at the moon with all his voice, with a power able to put out galaxies. Tsuki did not even tremble. That day he understood that the moon is not conquered by destroying it: it is conquered from the Throne.\n\n'
             'Meanwhile, the clans sharpen their weapons. The Forge finishes its machine. The Shogunate chooses an heir. The Fox Court lies to everyone equally.\n\n'
-            'But there is one piece none of them controls: the Bearer. All the Echo of Tsuki is born from someone who listens. And a Bearer who has woken both gods holds more Echo than either of them.\n\n'
+            'But there is one piece none of them controls: the Bearers. All the Echo of Tsuki is born from someone who listens, in worlds no god has set foot on. And an old legend, one both gods know and neither names, speaks of a Bearer able to wake them both, and to hold more Echo than either of them.\n\n'
             'The Throne, in truth, is never occupied. It is only waiting.\n\n'
-            'Keep listening.',
+            'And somewhere in the worlds below, someone is still listening.',
       ),
     ),
   ];
