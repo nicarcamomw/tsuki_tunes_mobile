@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_language.dart';
+import '../../domain/lore/tsuki_lore.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import '../widgets/eco_widgets.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/oni_mask_colors.dart';
 import '../widgets/swipeable_sheet.dart';
@@ -123,6 +126,7 @@ class MaskCollectionScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SliverToBoxAdapter(child: EcoLevelCard(margin: EdgeInsets.fromLTRB(16, 0, 16, 16))),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -221,7 +225,9 @@ class _MaskTile extends ConsumerWidget {
     final strings = locale.strings;
     final unlocked = masks.isUnlocked(mask.id);
     final isEquipped = masks.equipped?.id == mask.id;
-    final hidden = mask.secret && !unlocked;
+    // From level 90 the beings still asleep can be seen.
+    final seen = !unlocked && masks.hasFeature(EcoFeature.seeBeings);
+    final hidden = mask.secret && !unlocked && !seen;
     final progress = unlocked ? null : masks.progress(mask.id);
 
     return Semantics(
@@ -238,7 +244,10 @@ class _MaskTile extends ConsumerWidget {
               builder: (_, c) => Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  OniMaskArt(mask: mask, size: c.maxWidth, unlocked: unlocked),
+                  if (seen)
+                    Opacity(opacity: 0.5, child: OniMaskArt(mask: mask, size: c.maxWidth, unlocked: true))
+                  else
+                    OniMaskArt(mask: mask, size: c.maxWidth, unlocked: unlocked),
                   if (isEquipped)
                     Positioned(
                       right: -4,
@@ -345,10 +354,12 @@ class _MaskDetail extends ConsumerWidget {
     final strings = locale.strings;
     final lang = locale.currentLanguage;
     final unlocked = masks.isUnlocked(mask.id);
-    final hidden = mask.secret && !unlocked;
+    final seen = !unlocked && masks.hasFeature(EcoFeature.seeBeings);
+    final hidden = mask.secret && !unlocked && !seen;
     final isEquipped = masks.equipped?.id == mask.id;
     final progress = unlocked ? null : masks.progress(mask.id);
     final at = masks.unlockedAt(mask.id);
+    final whisper = _whisperOf(mask, lang);
     final rColor = mask.rarityColor;
     final color = unlocked ? rColor : AppColors.textMuted;
 
@@ -368,7 +379,10 @@ class _MaskDetail extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            OniMaskArt(mask: mask, size: 168, unlocked: unlocked),
+            if (seen)
+              Opacity(opacity: 0.5, child: OniMaskArt(mask: mask, size: 168, unlocked: true))
+            else
+              OniMaskArt(mask: mask, size: 168, unlocked: unlocked),
             const SizedBox(height: 16),
             Text(
               hidden ? strings.maskSecretName : mask.name(lang),
@@ -522,6 +536,17 @@ class _MaskDetail extends ConsumerWidget {
                 ),
               ),
             ],
+            // From level 75 an awakened being can be heard.
+            if (unlocked && whisper != null) ...[
+              const SizedBox(height: 14),
+              _Whisper(
+                text: masks.hasFeature(EcoFeature.hearBeings)
+                    ? '«$whisper»'
+                    : strings.ecoWhisperLocked(EcoFeature.hearBeings.level),
+                heard: masks.hasFeature(EcoFeature.hearBeings),
+                color: rColor,
+              ),
+            ],
             if (at != null) ...[
               const SizedBox(height: 10),
               Text(
@@ -535,6 +560,8 @@ class _MaskDetail extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
+                    final top = mask.rarity == MaskRarity.ul || mask.rarity == MaskRarity.dios;
+                    if (!isEquipped && top && !ecoAllows(context, EcoFeature.ultraEquip)) return;
                     HapticFeedback.mediumImpact();
                     if (isEquipped) {
                       masks.unequip();
@@ -558,6 +585,61 @@ class _MaskDetail extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// What a being whispers to those who can hear it: its clan's motto, or
+/// for the Faces of the Universe, the first words of their legend.
+String? _whisperOf(OniMask mask, AppLanguage lang) {
+  final clan = TsukiLore.factionOf(mask.id);
+  if (clan != null) return clan.motto.of(lang).replaceAll(RegExp('[«»“”]'), '');
+  for (final f in TsukiLore.faces) {
+    if (f.mask == mask.id) return f.text.of(lang).split('. ').first.replaceAll(RegExp(r'\.$'), '');
+  }
+  return null;
+}
+
+class _Whisper extends ConsumerWidget {
+  final String text;
+  final bool heard;
+  final Color color;
+  const _Whisper({required this.text, required this.heard, required this.color});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final strings = locale.strings;
+    final tone = heard ? color : AppColors.textMuted;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(heard ? Icons.hearing_rounded : Icons.hearing_disabled_rounded, size: 13, color: tone),
+              const SizedBox(width: 6),
+              Text(strings.ecoWhisper,
+                  style: locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: tone, letterSpacing: 1.4)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: locale
+                .getTextStyle(fontSize: 13, color: heard ? AppColors.textPrimary : AppColors.textMuted, height: 1.35)
+                .copyWith(fontStyle: heard ? FontStyle.italic : FontStyle.normal),
+          ),
+        ],
       ),
     );
   }

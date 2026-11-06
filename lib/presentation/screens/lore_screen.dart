@@ -25,6 +25,7 @@ class LoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final owned = ref.watch(maskProvider).unlockedIds;
+    final level = ref.watch(maskProvider.select((m) => m.level));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;
@@ -44,7 +45,7 @@ class LoreScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
         children: [
-          _Header(locale: locale, strings: strings, open: TsukiLore.openCount(owned), total: TsukiLore.releasedCount()),
+          _Header(locale: locale, strings: strings, open: TsukiLore.openCount(owned, level: level), total: TsukiLore.releasedCount(level)),
           for (final tomo in TsukiLore.tomos) ...[
             const SizedBox(height: 22),
             Row(
@@ -66,11 +67,11 @@ class LoreScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 10),
-            if (tomo.number > TsukiLore.releasedTomos)
-              _ComingSoon(locale: locale, strings: strings)
+            if (!EcoLevels.tomoOpen(tomo.number, level))
+              _ComingSoon(locale: locale, strings: strings, level: EcoLevels.tomoLevels[tomo.number]!)
             else
               for (final c in TsukiLore.chaptersOf(tomo.number))
-                _ChapterTile(chapter: c, open: TsukiLore.isOpen(c, owned)),
+                _ChapterTile(chapter: c, open: TsukiLore.isOpen(c, owned, level: level)),
           ],
         ],
       ),
@@ -143,7 +144,10 @@ class _Header extends StatelessWidget {
 class _ComingSoon extends StatelessWidget {
   final LocaleProvider locale;
   final AppStrings strings;
-  const _ComingSoon({required this.locale, required this.strings});
+
+  /// The Eco level that opens the volume.
+  final int level;
+  const _ComingSoon({required this.locale, required this.strings, required this.level});
 
   @override
   Widget build(BuildContext context) {
@@ -156,15 +160,15 @@ class _ComingSoon extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.hourglass_top_rounded, size: 18, color: AppColors.textMuted),
+          const Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.textMuted),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(strings.loreComingSoon,
+                Text(strings.ecoOpensAt(level),
                     style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
-                Text(strings.loreComingSoonHint,
+                Text(strings.ecoLockedBody,
                     style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
               ],
             ),
@@ -178,6 +182,7 @@ class _ComingSoon extends StatelessWidget {
 /// What a locked chapter asks for.
 String _requirement(AppStrings strings, LoreChapter c, AppLanguage lang) => switch (c.lock) {
       LoreLock.free => '',
+      LoreLock.level => strings.ecoOpensAt(c.need),
       LoreLock.masks => strings.loreNeedMasks(c.need),
       LoreLock.faction => strings.loreNeedFaction(TsukiLore.faction(c.factionId)!.name.of(lang)),
       LoreLock.ultra => strings.loreNeedUltra,

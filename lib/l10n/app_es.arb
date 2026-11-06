@@ -182,11 +182,11 @@
   "rainOfferPreparing": "Buscando tus canciones tranquilas…",
   "shakeSkipTitle": "Agitar para saltar",
   "shakeSkipSubtitle": "Agita el teléfono con firmeza para pasar a la siguiente canción. Funciona con la app abierta y se pausa en Modo Run.",
-  "masksTitle": "MÁSCARAS ONI",
-  "masksNoneYet": "Aún sin máscara",
-  "masksEquippedHint": "Tu máscara equipada marca tus canciones escuchadas y aparece en tu perfil.",
+  "masksTitle": "SERES ETÉREOS",
+  "masksNoneYet": "Aún no portas ningún ser",
+  "masksEquippedHint": "El ser etéreo que portas marca tus canciones escuchadas con su máscara y aparece en tu perfil.",
   "maskSecretName": "???",
-  "maskSecretHint": "Máscara secreta. Nadie sabe cómo conseguirla… todavía.",
+  "maskSecretHint": "Ser etéreo secreto. Nadie sabe cómo despertarlo… todavía.",
   "maskEquip": "EQUIPAR",
   "maskHowToUnlock": "CÓMO CONSEGUIRLA",
   "maskLocked": "Aún bloqueada",
@@ -200,8 +200,8 @@
       }
     }
   },
-  "maskUnlockedTitle": "MÁSCARA DESBLOQUEADA",
-  "masksProfileRow": "Colección de máscaras",
+  "maskUnlockedTitle": "SER ETÉREO DESPIERTO",
+  "masksProfileRow": "Seres etéreos",
   "moonIlluminated": "{percent}% iluminada",
   "@moonIlluminated": {
     "placeholders": {
@@ -1847,7 +1847,7 @@
   "analyticsSettingSubtitle": "Qué funciones se usan, para mejorar la app. Sin canciones, búsquedas ni nombres.",
   "deleteAccountOption": "ELIMINAR CUENTA",
   "deleteAccountConfirmTitle": "Eliminar cuenta",
-  "deleteAccountConfirmMessage": "Se borrarán para siempre tu cuenta de Tsuki Tunes y sus datos: historial, playlists, artistas seguidos, máscaras y perfil público. Te pediremos iniciar sesión con Google para confirmar. No se puede deshacer.",
+  "deleteAccountConfirmMessage": "Se borrarán para siempre tu cuenta de Tsuki Tunes y sus datos: historial, playlists, artistas seguidos, seres etéreos y perfil público. Te pediremos iniciar sesión con Google para confirmar. No se puede deshacer.",
   "deleteAccountConfirm": "ELIMINAR",
   "deleteAccountInProgress": "Eliminando tu cuenta…",
   "deleteAccountDone": "Tu cuenta y tus datos fueron eliminados.",

@@ -13,7 +13,9 @@ class _AmbientButton extends ConsumerWidget {
     final active = count > 0;
     return TapScale(
       semanticLabel: locale.strings.ambientTitle,
-      onTap: () => AmbientMixerSheet.show(context),
+      onTap: () {
+        if (ecoAllows(context, EcoFeature.ambient)) AmbientMixerSheet.show(context);
+      },
       scaleDown: 0.85,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

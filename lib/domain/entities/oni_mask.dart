@@ -405,8 +405,8 @@ class MaskCatalog {
         AppLanguage.ja: 'ハロウィンの夜に音楽を聴いた。',
       },
       hints: {
-        AppLanguage.es: 'Una noche al año, las máscaras salen a la calle.',
-        AppLanguage.en: 'One night a year, the masks walk the streets.',
+        AppLanguage.es: 'Una noche al año, los seres etéreos salen a la calle.',
+        AppLanguage.en: 'One night a year, the ethereal beings walk the streets.',
         AppLanguage.ja: '一年に一夜、面たちが街を歩く。',
       },
     ),
@@ -423,7 +423,7 @@ class MaskCatalog {
         AppLanguage.ja: '鬼',
       },
       descriptions: const {
-        AppLanguage.es: 'Reuniste todas las máscaras de logros.',
+        AppLanguage.es: 'Despertaste a todos los seres de logros.',
         AppLanguage.en: 'You collected every achievement mask.',
         AppLanguage.ja: '実績の面をすべて集めた。',
       },
@@ -1320,8 +1320,8 @@ class MaskCatalog {
         AppLanguage.ja: '鬼王',
       },
       descriptions: {
-        AppLanguage.es: 'Reúne 50 máscaras.',
-        AppLanguage.en: 'Collect 50 masks.',
+        AppLanguage.es: 'Despierta 50 seres etéreos.',
+        AppLanguage.en: 'Wake 50 ethereal beings.',
         AppLanguage.ja: '面を50枚集める。',
       },
     ),
@@ -1610,8 +1610,8 @@ class MaskCatalog {
         AppLanguage.ja: '狐王',
       },
       descriptions: {
-        AppLanguage.es: 'Reúne 75 máscaras.',
-        AppLanguage.en: 'Collect 75 masks.',
+        AppLanguage.es: 'Despierta 75 seres etéreos.',
+        AppLanguage.en: 'Wake 75 ethereal beings.',
         AppLanguage.ja: '面を75枚集める。',
       },
     ),
@@ -2378,8 +2378,8 @@ class MaskCatalog {
         AppLanguage.ja: '宇宙神',
       },
       descriptions: {
-        AppLanguage.es: 'Reúne las 7 máscaras divinas. Quien las tiene todas sostiene el universo.',
-        AppLanguage.en: 'Collect the 7 divine masks. Whoever holds them all holds the universe.',
+        AppLanguage.es: 'Despierta a los 7 seres divinos. Quien los tiene a todos sostiene el universo.',
+        AppLanguage.en: 'Wake the 7 divine beings. Whoever holds them all holds the universe.',
         AppLanguage.ja: '7つの神の面をすべて集める。すべてを持つ者が宇宙を支える。',
       },
     ),
@@ -2396,9 +2396,29 @@ class MaskCatalog {
         AppLanguage.ja: '堕ちた神',
       },
       descriptions: {
-        AppLanguage.es: 'Reúne las 8 máscaras ultra que no son divinas. El que cayó del cielo reina sobre ellas.',
-        AppLanguage.en: 'Collect the 8 ultra masks that are not divine. The one who fell from the sky rules over them.',
+        AppLanguage.es: 'Despierta a los 8 seres ultra que no son divinos. El que cayó del cielo reina sobre ellos.',
+        AppLanguage.en: 'Wake the 8 ultra beings that are not divine. The one who fell from the sky rules over them.',
         AppLanguage.ja: '神ではない8つのウルトラの面を集める。天から堕ちた者がそれらを統べる。',
+      },
+    ),
+    // The Bearer's own mask: level 100 of Eco, when the Bearer crosses over
+    // and becomes an ethereal being. No clan, no faction: their own.
+    const OniMask(
+      id: 'portador',
+      kanji: '霊',
+      image: 'assets/images/masks/ul/portador.webp',
+      rarity: MaskRarity.ul,
+      counter: 'level',
+      goal: 100,
+      names: {
+        AppLanguage.es: 'Máscara Etérea',
+        AppLanguage.en: 'Ethereal Mask',
+        AppLanguage.ja: '霊の面',
+      },
+      descriptions: {
+        AppLanguage.es: 'Llega al nivel 100 de Eco. El Portador cruza, se vuelve un ser etéreo y recibe su propia máscara.',
+        AppLanguage.en: 'Reach Eco level 100. The Bearer crosses over, becomes an ethereal being and receives a mask of their own.',
+        AppLanguage.ja: 'エコーレベル100に到達する。運び手は境を越えて霊なる者となり、自分だけの面を得る。',
       },
     ),
   ];

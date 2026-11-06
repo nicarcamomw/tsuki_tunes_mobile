@@ -58,12 +58,12 @@ void main() {
     masks.unlock('mimi');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
-    expect(find.text('MÁSCARA DESBLOQUEADA'), findsOneWidget);
+    expect(find.text('SER ETÉREO DESPIERTO'), findsOneWidget);
     expect(find.textContaining('Oído Absoluto'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
-    expect(find.text('MÁSCARA DESBLOQUEADA'), findsNothing);
+    expect(find.text('SER ETÉREO DESPIERTO'), findsNothing);
     expect(masks.pendingCelebration, isNull);
 
     await tester.pumpWidget(const SizedBox());

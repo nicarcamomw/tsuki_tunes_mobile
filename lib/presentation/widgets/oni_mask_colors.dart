@@ -33,6 +33,8 @@ const _aura = <String, Color>{
   'chirune': Color(0xFFFF2E4A),
   'uchuu_shin': Color(0xFFFFC94A),
   'ochigami': Color(0xFFFF8A3D),
+  // The Bearer's own mask: moonlight.
+  'portador': Color(0xFFE8F0FF),
 };
 
 extension OniMaskAura on OniMask {

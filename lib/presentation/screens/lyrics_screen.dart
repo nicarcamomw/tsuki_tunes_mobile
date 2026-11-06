@@ -13,6 +13,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/audio_progress_selector.dart';
+import '../widgets/eco_widgets.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/tap_scale.dart';
 
@@ -138,6 +139,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
   /// Lists the languages to translate into ("Original" first) and shows
   /// the lyrics in the one picked, under each line.
   Future<void> _chooseTranslation() async {
+    if (!ecoAllows(context, EcoFeature.lyricsTranslate)) return;
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final messenger = ScaffoldMessenger.of(context);

@@ -14,6 +14,7 @@ import '../state/app_providers.dart';
 import '../state/moon_provider.dart';
 import '../state/use_cases.dart';
 import 'cyber_glitch_text.dart';
+import 'eco_widgets.dart';
 import 'moon_glyph.dart';
 import 'swipeable_sheet.dart';
 
@@ -189,7 +190,7 @@ class MoonSheet extends ConsumerWidget {
             ),
 
             const SizedBox(height: 22),
-            _FullMoonMixCard(snapshot: s, history: history),
+            EcoLocked(feature: EcoFeature.moonMix, child: _FullMoonMixCard(snapshot: s, history: history)),
 
             const SizedBox(height: 22),
             Text(

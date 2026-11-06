@@ -12,6 +12,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
+import 'eco_widgets.dart';
 import 'oni_mask_colors.dart';
 import 'oni_mask_icon.dart';
 import 'player_tint.dart';
@@ -127,7 +128,11 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
   /// An equipped UL or DS mask tints the player with its aura.
   @override
   Widget build(BuildContext context) {
-    final aura = ref.watch(maskProvider.select((m) => m.equipped?.playerAura));
+    // A UL or DS being's aura (from level 30), else the colour the levels
+    // opened and the user chose, else the app's red.
+    final aura = ref.watch(maskProvider.select((m) =>
+        (m.hasFeature(EcoFeature.ultraEquip) ? m.equipped?.playerAura : null) ??
+        (m.playerColor == null ? null : Color(m.playerColor!.argb))));
     return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
   }
 

@@ -21,6 +21,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
+import '../widgets/eco_widgets.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_colors.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -100,6 +101,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   }
 
   void _openLyrics() {
+    if (!ecoAllows(context, EcoFeature.lyrics)) return;
     HapticFeedback.selectionClick();
     Navigator.of(context).push(
       LyricsScreen.route(controller: _lyrics),
@@ -206,7 +208,11 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   /// An equipped UL or DS mask tints the player with its aura.
   @override
   Widget build(BuildContext context) {
-    final aura = ref.watch(maskProvider.select((m) => m.equipped?.playerAura));
+    // A UL or DS being's aura (from level 30), else the colour the levels
+    // opened and the user chose, else the app's red.
+    final aura = ref.watch(maskProvider.select((m) =>
+        (m.hasFeature(EcoFeature.ultraEquip) ? m.equipped?.playerAura : null) ??
+        (m.playerColor == null ? null : Color(m.playerColor!.argb))));
     return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
   }
 

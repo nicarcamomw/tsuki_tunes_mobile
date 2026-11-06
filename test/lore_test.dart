@@ -13,7 +13,11 @@ void main() {
     test('every mask outside the 9 Faces belongs to exactly one clan', () {
       for (final m in MaskCatalog.all) {
         final clans = TsukiLore.factions.where((f) => f.members.contains(m.id)).length;
-        final outside = m.divine || m.rarity == MaskRarity.dios || (m.counter?.startsWith('clan:') ?? false);
+        // The 9 Faces, the clan masks and the Bearer's own belong to none.
+        final outside = m.divine ||
+            m.rarity == MaskRarity.dios ||
+            m.counter == 'level' ||
+            (m.counter?.startsWith('clan:') ?? false);
         expect(clans, outside ? 0 : 1, reason: m.id);
       }
     });
@@ -58,17 +62,27 @@ void main() {
   });
 
   group('what opens', () {
-    test('the prologue and chapter I from the start; II with a first mask', () {
-      final open = {for (final c in TsukiLore.chapters) if (TsukiLore.isOpen(c, {})) c.id};
+    test('the prologue and chapter I from the start; II with a first being', () {
+      final open = {for (final c in TsukiLore.chapters) if (TsukiLore.isOpen(c, {}, level: 1)) c.id};
       expect(open, {'prologo', 'eco'});
-      expect(TsukiLore.isOpen(TsukiLore.chapters.firstWhere((c) => c.id == 'mascaras'), {'hajime'}), isTrue);
-      expect(TsukiLore.isOpen(TsukiLore.chapters.firstWhere((c) => c.id == 'antiguos'), {'hajime'}), isTrue);
+      expect(TsukiLore.isOpen(TsukiLore.chapters.firstWhere((c) => c.id == 'mascaras'), {'hajime'}, level: 1), isTrue);
+      expect(TsukiLore.isOpen(TsukiLore.chapters.firstWhere((c) => c.id == 'antiguos'), {'hajime'}, level: 1), isTrue);
     });
 
-    test('only released volumes open, whatever masks there are', () {
+    test('the legend of the Bearers opens at level 5', () {
+      final c = TsukiLore.chapters.firstWhere((c) => c.id == 'portadores');
+      expect(TsukiLore.isOpen(c, {}, level: 4), isFalse);
+      expect(TsukiLore.isOpen(c, {}, level: 5), isTrue);
+    });
+
+    test('each volume opens at its Eco level, whatever beings there are', () {
       final all = {for (final m in MaskCatalog.all) m.id};
-      for (final c in TsukiLore.chapters) {
-        expect(TsukiLore.isOpen(c, all), c.tomo <= TsukiLore.releasedTomos, reason: c.id);
+      for (final level in [1, 9, 10, 19, 20, 39, 40, 100]) {
+        for (final c in TsukiLore.chapters) {
+          final byLevel = c.lock != LoreLock.level || level >= c.need;
+          expect(TsukiLore.isOpen(c, all, level: level), level >= EcoLevels.tomoLevels[c.tomo]! && byLevel,
+              reason: '${c.id} at $level');
+        }
       }
     });
 
@@ -96,8 +110,12 @@ void main() {
     await tester.pump();
     expect(find.text('TSUKI LORE'), findsOneWidget);
     expect(find.text('La Luna Madre'), findsOneWidget);
-    expect(find.text('Próximamente'), findsWidgets);
-    expect(find.text('4 de 4 capítulos abiertos'), findsOneWidget);
+    // The other volumes open with the Eco levels; the legend of the
+    // Bearers at level 5.
+    expect(find.text('4 de 5 capítulos abiertos'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Se abre en el nivel 10'), 300);
+    expect(find.text('Se abre en el nivel 10'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Los Antiguos'), -300);
 
     await tester.tap(find.text('Los Antiguos'));
     await tester.pumpAndSettle();

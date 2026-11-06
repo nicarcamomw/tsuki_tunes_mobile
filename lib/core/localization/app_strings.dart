@@ -8,6 +8,7 @@ import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
 import '../../domain/logic/cadence_detector.dart';
+import '../../domain/logic/eco_levels.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -348,9 +349,9 @@ class AppStrings {
 
   /// Under a secret mask while its riddle is still hidden.
   String maskRiddleAfter(int count) => switch (language) {
-        AppLanguage.es => 'Consigue $count máscaras para ver una pista.',
-        AppLanguage.en => 'Collect $count masks to see a riddle.',
-        AppLanguage.ja => '$count個の面を集めると手がかりが見える。',
+        AppLanguage.es => 'Despierta $count seres etéreos para ver una pista.',
+        AppLanguage.en => 'Wake $count ethereal beings to see a riddle.',
+        AppLanguage.ja => '霊なる者を$count体目覚めさせると手がかりが見える。',
       };
 
   String get maskEquip => _l.maskEquip;
@@ -370,6 +371,126 @@ class AppStrings {
   String maskRarity(MaskRarity r) => _l.maskRarity(r.name);
 
   // --- Tsuki Lore ---
+  // ── Eco levels ──
+  String _es(String es, String en, String ja) => switch (language) {
+        AppLanguage.es => es,
+        AppLanguage.en => en,
+        AppLanguage.ja => ja,
+      };
+
+  String get ecoTitle => _es('NIVELES DE ECO', 'ECO LEVELS', 'エコーレベル');
+  String ecoLevel(int n) => _es('Nivel $n', 'Level $n', 'レベル$n');
+  String ecoLevelShort(int n) => _es('NV $n', 'LV $n', 'LV $n');
+
+  /// "12.430" (es) / "12,430" (en): Eco amounts.
+  String ecoAmount(int n) {
+    final digits = '$n';
+    final sep = language == AppLanguage.es ? '.' : ',';
+    final out = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) out.write(sep);
+      out.write(digits[i]);
+    }
+    return '$out Eco';
+  }
+
+  String ecoToNext(int missing, int next) => _es(
+      'Te faltan ${ecoAmount(missing)} para el nivel $next',
+      '${ecoAmount(missing)} to level $next',
+      'レベル$nextまであと${ecoAmount(missing)}');
+
+  String ecoRankName(EcoRank r) => switch (r) {
+        EcoRank.errante => _es('Errante', 'Wanderer', '放浪者'),
+        EcoRank.guerrero => _es('Guerrero', 'Warrior', '戦士'),
+        EcoRank.senor => _es('Señor', 'Lord', '領主'),
+        EcoRank.ultra => _es('Ultra', 'Ultra', 'ウルトラ'),
+        EcoRank.cara => _es('Cara', 'Face', '顔'),
+        EcoRank.portador => _es('Portador', 'Bearer', '運び手'),
+        EcoRank.oyente => _es('Oyente de lo Etéreo', 'Hearer of the Ethereal', '霊を聴く者'),
+        EcoRank.vidente => _es('Vidente de lo Etéreo', 'Seer of the Ethereal', '霊を視る者'),
+        EcoRank.etereo => _es('Ser Etéreo', 'Ethereal Being', '霊なる者'),
+      };
+
+  String ecoFeatureName(EcoFeature f) => switch (f) {
+        EcoFeature.lyrics => _es('Letras sincronizadas', 'Synced lyrics', '同期歌詞'),
+        EcoFeature.artistRadio => _es('Radio por artista', 'Artist radio', 'アーティストラジオ'),
+        EcoFeature.streak => _es('Racha diaria', 'Daily streak', '連続記録'),
+        EcoFeature.wrapped => _es('Wrapped', 'Wrapped', 'Wrapped'),
+        EcoFeature.guessSong => _es('Adivina la canción', 'Guess the song', '曲当てゲーム'),
+        EcoFeature.weekly => _es('Desafíos semanales', 'Weekly challenges', '週間チャレンジ'),
+        EcoFeature.listeningClock => _es('Reloj de escucha', 'Listening clock', 'リスニング時計'),
+        EcoFeature.lyricsTranslate => _es('Traducir letras', 'Translate lyrics', '歌詞の翻訳'),
+        EcoFeature.ambient => _es('Mezclador de ambiente', 'Ambient mixer', '環境音ミキサー'),
+        EcoFeature.running => _es('Modo Running', 'Running mode', 'ランニングモード'),
+        EcoFeature.radioFamiliar => _es('Radio en modo Familiar', 'Radio in Familiar mode', 'ラジオ:おなじみモード'),
+        EcoFeature.timeMachine => _es('Máquina del Tiempo', 'Time Machine', 'タイムマシン'),
+        EcoFeature.rabbitHole => _es('Madriguera de artistas', 'Artist rabbit hole', 'アーティストの迷宮'),
+        EcoFeature.bpmFlow => _es('Cola por ritmo (BPM)', 'Queue by tempo (BPM)', 'テンポ順キュー'),
+        EcoFeature.moonMix => _es('Mezcla de luna llena', 'Full moon mix', '満月ミックス'),
+        EcoFeature.radioAdventurous => _es('Radio en modo Aventurero', 'Radio in Adventurous mode', 'ラジオ:冒険モード'),
+        EcoFeature.smartShuffle => _es('Aleatorio con recomendaciones', 'Shuffle with recommendations', 'おすすめ入りシャッフル'),
+        EcoFeature.ultraEquip => _es('Portar seres UL y DS, con su aura en el reproductor',
+            'Wear UL and DS beings, with their aura on the player', 'ULとDSの霊をまとい、プレーヤーにオーラ'),
+        EcoFeature.hearBeings => _es('Escuchar a los seres etéreos', 'Hear the ethereal beings', '霊なる者の声を聴く'),
+        EcoFeature.seeBeings => _es('Ver a los seres etéreos', 'See the ethereal beings', '霊なる者を視る'),
+        EcoFeature.ethereal => _es('Volverte un ser etéreo', 'Become an ethereal being', '霊なる者になる'),
+      };
+
+  String ecoTomoName(int tomo) => _es('Tsuki Lore · Tomo ${_roman(tomo)}', 'Tsuki Lore · Volume ${_roman(tomo)}',
+      'Tsuki Lore・第${_roman(tomo)}巻');
+  static String _roman(int n) => const ['', 'I', 'II', 'III', 'IV', 'V'][n.clamp(0, 5)];
+
+  String ecoColorName(EcoColor c) => c.name.of(language);
+
+  /// One line for a level's reward.
+  String ecoRewardLabel(EcoReward r) => switch (r.kind) {
+        EcoRewardKind.start => _es('Escuchar, buscar, tu biblioteca y la radio por canción',
+            'Listening, search, your library and song radio', '再生、検索、ライブラリ、曲ラジオ'),
+        EcoRewardKind.feature => ecoFeatureName(r.feature!),
+        EcoRewardKind.sound => _es('Sonido de ambiente: ${ambientName(r.sound!)}',
+            'Ambient sound: ${ambientName(r.sound!)}', '環境音:${ambientName(r.sound!)}'),
+        EcoRewardKind.tomo => ecoTomoName(r.tomo!),
+        EcoRewardKind.color => _es('Color del reproductor: ${ecoColorName(r.color!)}',
+            'Player colour: ${ecoColorName(r.color!)}', 'プレーヤーの色:${ecoColorName(r.color!)}'),
+        EcoRewardKind.rank => _es('Nuevo rango: ${ecoRankName(r.rank!)}', 'New rank: ${ecoRankName(r.rank!)}',
+            '新しいランク:${ecoRankName(r.rank!)}'),
+        EcoRewardKind.fragment => _es('Fragmento de la leyenda', 'Fragment of the legend', '伝説の断片'),
+      };
+
+  String get ecoLevelUp => _es('SUBISTE DE NIVEL', 'LEVEL UP', 'レベルアップ');
+  String get ecoNowOpen => _es('Se abre', 'Now open', '解放');
+  String ecoMore(int n) => _es('y $n más', 'and $n more', 'ほか$n件');
+  String ecoOpensAt(int level) => _es('Se abre en el nivel $level', 'Opens at level $level', 'レベル$levelで解放');
+  String get ecoLockedBody => _es(
+      'Gana Eco escuchando música para subir de nivel. Cada nivel abre algo nuevo.',
+      'Earn Eco by listening to music to level up. Every level opens something new.',
+      '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
+  String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
+  String get ecoHowTitle => _es('CÓMO SE GANA ECO', 'HOW TO EARN ECO', 'エコーの集め方');
+  List<(String, String)> get ecoHowItems => [
+        (_es('Cada canción escuchada', 'Each song heard', '1曲ごと'), '+10'),
+        (_es('Cada álbum completo', 'Each whole album', 'アルバム1枚まるごと'), '+100'),
+        (_es('Cada día con música (más con racha)', 'Each day with music (more on a streak)', '音楽のある日(連続でさらに)'), '+50 / +200'),
+        (_es('Cada desafío semanal', 'Each weekly challenge', '週間チャレンジ1つ'), '+150'),
+        (_es('Ganar el reto diario', 'Winning the daily game', 'デイリーゲームに勝つ'), '+40'),
+        (_es('Despertar un ser etéreo (según su rango)', 'Awakening an ethereal being (by rank)', '霊なる者を目覚めさせる(ランク別)'),
+            '+100 / +4.000'),
+      ];
+  String get ecoAllLevels => _es('LOS 100 NIVELES', 'THE 100 LEVELS', '全100レベル');
+  String get ecoLegendTitle => _es('NIVEL 100+ · DIOS SUPREMO', 'LEVEL 100+ · SUPREME GOD', 'レベル100+・至高神');
+  String get ecoLegendText => _es(
+      'Cuenta la leyenda que más allá del nivel 100 está el nivel de los Dioses Supremos. Muchos Portadores llegaron a escuchar a los seres etéreos; menos llegaron a verlos; contados con los dedos escogieron cruzar y se volvieron seres etéreos. Pero ningún Portador ha alcanzado jamás el nivel de un Dios Supremo. El día que alguien lo logre, el equilibrio se romperá.',
+      'Legend says that beyond level 100 lies the level of the Supreme Gods. Many Bearers came to hear the ethereal beings; fewer came to see them; few enough to count on one hand chose to cross over and became ethereal beings. But no Bearer has ever reached the level of a Supreme God. The day someone does, the balance will break.',
+      '伝説によれば、レベル100の先には至高神のレベルがある。多くの運び手が霊なる者の声を聴き、より少ない者がその姿を視た。指で数えるほどの者だけが境を越え、霊なる者となった。だが至高神の域に達した運び手はいない。それが成された日、均衡は崩れる。');
+  String get ecoLegendNever => _es('Nunca alcanzado', 'Never reached', '未踏');
+  String get ecoBalanceBroken => _es('El equilibrio se ha roto.', 'The balance is broken.', '均衡は崩れた。');
+  String get ecoPlayerColor => _es('COLOR DEL REPRODUCTOR', 'PLAYER COLOUR', 'プレーヤーの色');
+  String get ecoColorDefault => _es('Rojo Tsuki', 'Tsuki red', 'ツキの赤');
+  String get ecoWhisper => _es('SU SUSURRO', 'ITS WHISPER', 'そのささやき');
+  String ecoWhisperLocked(int level) =>
+      _es('En el nivel $level podrás escuchar su voz.', 'At level $level you will hear its voice.', 'レベル$levelでその声が聴こえる。');
+  String get a11yEcoLevels => _es('Abrir los niveles de Eco', 'Open the Eco levels', 'エコーレベルを開く');
+
   // ── Artist radio ──
   String get artistRadioButton => switch (language) {
         AppLanguage.es => 'RADIO',
@@ -570,9 +691,9 @@ class AppStrings {
         AppLanguage.ja => '宇宙の中心の物語',
       };
   String get loreButton => switch (language) {
-        AppLanguage.es => 'TSUKI LORE · La historia de las máscaras',
-        AppLanguage.en => 'TSUKI LORE · The story of the masks',
-        AppLanguage.ja => 'TSUKI LORE・面の物語',
+        AppLanguage.es => 'TSUKI LORE · La historia de los seres etéreos',
+        AppLanguage.en => 'TSUKI LORE · The story of the ethereal beings',
+        AppLanguage.ja => 'TSUKI LORE・霊なる者の物語',
       };
   String loreChaptersOpen(int open, int total) => switch (language) {
         AppLanguage.es => '$open de $total capítulos abiertos',
@@ -600,13 +721,13 @@ class AppStrings {
         AppLanguage.ja => 'この巻は今後のアップデートで公開されます。',
       };
   String loreNeedMasks(int n) => switch (language) {
-        AppLanguage.es => n == 1 ? 'Despierta tu primera máscara' : 'Despierta $n máscaras',
-        AppLanguage.en => n == 1 ? 'Wake your first mask' : 'Wake $n masks',
+        AppLanguage.es => n == 1 ? 'Despierta tu primer ser etéreo' : 'Despierta $n seres etéreos',
+        AppLanguage.en => n == 1 ? 'Wake your first ethereal being' : 'Wake $n ethereal beings',
         AppLanguage.ja => '面を$n枚目覚めさせる',
       };
   String loreNeedFaction(String clan) => switch (language) {
-        AppLanguage.es => 'Despierta una máscara de $clan',
-        AppLanguage.en => 'Wake a mask of $clan',
+        AppLanguage.es => 'Despierta un ser de $clan',
+        AppLanguage.en => 'Wake a being of $clan',
         AppLanguage.ja => '$clanの面を1枚目覚めさせる',
       };
   String get loreNeedUltra => switch (language) {
@@ -655,8 +776,8 @@ class AppStrings {
         AppLanguage.ja => '一族の面',
       };
   String get loreRewardHint => switch (language) {
-        AppLanguage.es => 'Despierta a todo el clan y esta máscara despertará con él.',
-        AppLanguage.en => 'Wake the whole clan and this mask will wake with it.',
+        AppLanguage.es => 'Despierta a todo el clan y este ser despertará con él.',
+        AppLanguage.en => 'Wake the whole clan and this being will wake with it.',
         AppLanguage.ja => '一族すべてを目覚めさせると、この面も目覚める。',
       };
   String get loreBonds => switch (language) {
@@ -665,8 +786,8 @@ class AppStrings {
         AppLanguage.ja => '絆',
       };
   String get loreBondLocked => switch (language) {
-        AppLanguage.es => 'Despierta a todas estas máscaras para conocer su historia.',
-        AppLanguage.en => 'Wake all these masks to learn their story.',
+        AppLanguage.es => 'Despierta a todos estos seres para conocer su historia.',
+        AppLanguage.en => 'Wake all these beings to learn their story.',
         AppLanguage.ja => 'これらの面をすべて目覚めさせると物語が明かされる。',
       };
   String get loreFaceVeiled => switch (language) {
@@ -1860,14 +1981,14 @@ class AppStrings {
       };
 
   String get weeklyPrizesHint => switch (language) {
-        AppLanguage.es => 'Máscaras que solo se consiguen con los desafíos semanales.',
-        AppLanguage.en => 'Masks you can only get from weekly challenges.',
+        AppLanguage.es => 'Seres etéreos que solo despiertan con los desafíos semanales.',
+        AppLanguage.en => 'Ethereal beings that only wake with the weekly challenges.',
         AppLanguage.ja => '週間チャレンジ限定の面。',
       };
 
   String get weeklyAllCollected => switch (language) {
-        AppLanguage.es => 'Ya tienes todas las máscaras semanales. ¡Sigue jugando por diversión!',
-        AppLanguage.en => 'You have every weekly mask. Keep playing for fun!',
+        AppLanguage.es => 'Ya despertaste a todos los seres semanales. ¡Sigue jugando por diversión!',
+        AppLanguage.en => 'You have woken every weekly being. Keep playing for fun!',
         AppLanguage.ja => '週間の面をすべて集めた！',
       };
 

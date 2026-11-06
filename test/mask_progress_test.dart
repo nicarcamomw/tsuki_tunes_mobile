@@ -224,7 +224,7 @@ void main() {
       await openSecret();
       expect(
         find.text(
-          'Consigue ${MaskProvider.secretHintsAfter} máscaras para ver una pista.',
+          'Despierta ${MaskProvider.secretHintsAfter} seres etéreos para ver una pista.',
         ),
         findsOneWidget,
       );

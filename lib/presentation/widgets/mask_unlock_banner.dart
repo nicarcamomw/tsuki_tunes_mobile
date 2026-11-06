@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import 'eco_widgets.dart';
 import 'oni_mask_art.dart';
 import 'oni_mask_colors.dart';
 
@@ -23,6 +24,8 @@ class MaskUnlockLayer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pending = ref.watch(maskProvider.select((m) => m.pendingCelebration));
     final mask = MaskCatalog.byId(pending);
+    // A level reached waits for the masks to be announced first.
+    final levelUp = ref.watch(maskProvider.select((m) => m.pendingLevelUp));
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -37,6 +40,13 @@ class MaskUnlockLayer extends ConsumerWidget {
               mask: mask,
               onTap: onOpenCollection,
             ),
+          )
+        else if (levelUp != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: EcoLevelUpBanner(key: ValueKey('lv${levelUp.$2}'), from: levelUp.$1, to: levelUp.$2),
           ),
       ],
     );

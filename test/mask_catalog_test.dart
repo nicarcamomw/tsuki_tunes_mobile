@@ -34,8 +34,9 @@ void main() {
     expect(divine.every((m) => m.rarity == MaskRarity.ul), isTrue);
     expect(MaskCatalog.all.where((m) => m.rarity == MaskRarity.dios).map((m) => m.id),
         unorderedEquals(['uchuu_shin', 'ochigami']));
-    // The Fallen God asks for every non-divine UL.
-    final ultra = MaskCatalog.all.where((m) => m.rarity == MaskRarity.ul && !m.divine).length;
+    // The Fallen God asks for every non-divine UL (not the Bearer's own).
+    final ultra =
+        MaskCatalog.all.where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'level').length;
     expect(MaskCatalog.byId('ochigami')!.goal, ultra);
   });
 }

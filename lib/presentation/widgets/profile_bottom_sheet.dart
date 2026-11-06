@@ -28,6 +28,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/auth_provider.dart';
 import '../state/locale_provider.dart';
+import 'eco_widgets.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
 import 'shuffle_mode_icon.dart';
@@ -107,6 +108,10 @@ class _ProfileSheet extends ConsumerWidget {
               ),
             ),
             _buildHeader(context, locale, strings),
+            if (ref.watch(authProvider.select((a) => a.isAuthenticated))) ...[
+              const SizedBox(height: 14),
+              const EcoLevelCard(margin: EdgeInsets.zero),
+            ],
             const SizedBox(height: 20),
             _SpotifyCard(hostContext: hostContext, locale: locale),
             const SizedBox(height: 20),

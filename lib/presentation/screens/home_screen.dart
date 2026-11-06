@@ -24,6 +24,7 @@ import '../state/locale_provider.dart';
 import '../widgets/album_card.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/eco_widgets.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
@@ -370,8 +371,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               // Reasons to come back: the daily streak, and this week's
               // challenges and their mask.
-              if (isLoggedIn) const SliverToBoxAdapter(child: StreakCard()),
-              const SliverToBoxAdapter(child: WeeklyChallengesCard(compact: true)),
+              if (isLoggedIn) const SliverToBoxAdapter(child: EcoLevelCard()),
+              if (isLoggedIn)
+                const SliverToBoxAdapter(
+                  child: EcoLocked(feature: EcoFeature.streak, child: StreakCard()),
+                ),
+              const SliverToBoxAdapter(
+                child: EcoLocked(feature: EcoFeature.weekly, child: WeeklyChallengesCard(compact: true)),
+              ),
 
               if (isLoggedIn && listenedCount > 0)
                 SliverToBoxAdapter(
@@ -381,19 +388,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                            child: _WrappedEntryCard(
-                                locale: locale, strings: strings)),
+                            child: EcoLocked(
+                                feature: EcoFeature.wrapped,
+                                child: _WrappedEntryCard(locale: locale, strings: strings))),
                         const SizedBox(width: 10),
                         Expanded(
-                            child: _ListeningClockEntryCard(
-                                locale: locale, strings: strings)),
+                            child: EcoLocked(
+                                feature: EcoFeature.listeningClock,
+                                child: _ListeningClockEntryCard(locale: locale, strings: strings))),
                       ],
                     ),
                   ),
                 ),
 
               if (isLoggedIn && listenedCount > 0)
-                const SliverToBoxAdapter(child: TimeMachineEntryCard()),
+                const SliverToBoxAdapter(
+                  child: EcoLocked(feature: EcoFeature.timeMachine, child: TimeMachineEntryCard()),
+                ),
 
               if (isLoggedIn && ReleaseRadarService.isSupported)
                 SliverToBoxAdapter(
@@ -402,7 +413,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               if (hasArtists)
                 SliverToBoxAdapter(
-                  child: _RabbitHoleEntryCard(
+                  child: EcoLocked(
+                    feature: EcoFeature.rabbitHole,
+                    child: _RabbitHoleEntryCard(
                     locale: locale,
                     strings: strings,
                     seedArtist: _topArtistsDisplay.isNotEmpty &&
@@ -411,6 +424,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         : _featuredArtists.isNotEmpty
                             ? _featuredArtists.first
                             : null,
+                  ),
                   ),
                 ),
 
@@ -688,6 +702,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _openGuessGame() async {
+    if (!ecoAllows(context, EcoFeature.guessSong)) return;
     unawaited(HapticFeedback.lightImpact());
     await const GuessSongRoute().push(context);
     await _refreshDailyDone();
@@ -728,6 +743,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       : strings.homeAmbientCardSubtitle,
                   highlight: ambientCount > 0,
                   onTap: () {
+                    if (!ecoAllows(context, EcoFeature.ambient)) return;
                     HapticFeedback.lightImpact();
                     AmbientMixerSheet.show(context);
                   },
@@ -745,6 +761,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
               highlight: run.$1,
               onTap: () {
+                if (!ecoAllows(context, EcoFeature.running)) return;
                 HapticFeedback.lightImpact();
                 RunModeScreen.open(context);
               },

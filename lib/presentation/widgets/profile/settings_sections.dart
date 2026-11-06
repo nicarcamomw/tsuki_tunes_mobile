@@ -85,6 +85,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         subtitle: strings.runSettingSubtitle,
         value: run.enabled,
         onChanged: (v) {
+          if (v && !ecoAllows(context, EcoFeature.running)) return;
           HapticFeedback.selectionClick();
           run.setEnabled(v);
           setState(() {});
@@ -235,6 +236,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         trailing: const Icon(Icons.chevron_right,
             color: AppColors.textMuted, size: 18),
         onTap: () {
+          if (!ecoAllows(context, EcoFeature.smartShuffle)) return;
           HapticFeedback.selectionClick();
           showSmartShuffleSheet(widget.hostContext);
         },

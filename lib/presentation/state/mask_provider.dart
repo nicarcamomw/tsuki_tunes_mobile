@@ -17,12 +17,14 @@ import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
+import '../../domain/logic/eco_levels.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
 import '../../domain/lore/tsuki_lore.dart';
 
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';
+export '../../domain/logic/eco_levels.dart';
 
 final _log = Log.named('Masks');
 
@@ -157,9 +159,10 @@ class MaskProvider extends ChangeNotifier {
       // The gods: the divine masks, and the ultra ones that are not.
       'divine' => MaskCatalog.all.where((m) => m.divine && _unlocked.containsKey(m.id)).length,
       'ultra' => MaskCatalog.all
-          .where((m) => m.rarity == MaskRarity.ul && !m.divine && _unlocked.containsKey(m.id))
+          .where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'level' && _unlocked.containsKey(m.id))
           .length,
       'night' => _stats.nightPlays,
+      'level' => level,
       _ => c[key] ?? 0,
     };
   }
@@ -186,6 +189,95 @@ class MaskProvider extends ChangeNotifier {
     // Only recent ids are kept: enough to not count one twice in a row.
     if (seen.length > 120) seen.remove(seen.first);
     _bump(key);
+  }
+
+  // ── Eco ──
+
+  static const int ecoPerPlay = 10;
+  static const int ecoPerAlbum = 100;
+  static const int ecoPerDay = 50;
+  static const int ecoPerStreakDay = 5;
+  static const int ecoStreakCap = 30;
+  static const int ecoPerChallenge = 150;
+  static const int ecoPerGuess = 40;
+
+  /// Eco for awakening a being, by rarity.
+  static int ecoForMask(MaskRarity r) => switch (r) {
+        MaskRarity.r => 100,
+        MaskRarity.sr => 250,
+        MaskRarity.ssr => 600,
+        MaskRarity.ul => 1500,
+        MaskRarity.dios => 4000,
+      };
+
+  /// The account's Eco: songs heard, whole albums, beings awakened, and
+  /// what days with music, challenges and the daily game added. All of it
+  /// comes from counters backed up with the account.
+  int get eco {
+    var total = _stats.plays * ecoPerPlay + (_stats.c['albums'] ?? 0) * ecoPerAlbum + (_stats.c['eco'] ?? 0);
+    for (final id in _unlocked.keys) {
+      final m = MaskCatalog.byId(id);
+      if (m != null) total += ecoForMask(m.rarity);
+    }
+    return total;
+  }
+
+  int get level => EcoLevels.levelFor(eco);
+  EcoRank get rank => EcoLevels.rankOf(level);
+  double get levelProgress => EcoLevels.progressIn(eco);
+
+  bool hasFeature(EcoFeature f) => level >= f.level;
+
+  /// Levels reached since they were last shown: (from, to), shown once.
+  (int, int)? get pendingLevelUp => _levelUpFrom == null ? null : (_levelUpFrom!, _stats.lvl);
+  int? _levelUpFrom;
+
+  void levelUpShown() {
+    if (_levelUpFrom == null) return;
+    _levelUpFrom = null;
+    notifyListeners();
+  }
+
+  /// Adds [amount] Eco once for [id] (a day, a week's challenge...).
+  void _ecoOnce(String id, int amount) {
+    final seen = _stats.seen.putIfAbsent('eco', () => <String>{});
+    if (!seen.add(id)) return;
+    if (seen.length > 120) seen.remove(seen.first);
+    _bump('eco', amount);
+  }
+
+  /// Notes a new level. The first time (a new account, or one from before
+  /// levels existed) it only takes note: nothing to celebrate.
+  void _checkLevel() {
+    if (!_loaded) return;
+    final now = level;
+    if (_stats.lvl == 0) {
+      _stats.lvl = now;
+      return;
+    }
+    if (now <= _stats.lvl) return;
+    _levelUpFrom ??= _stats.lvl;
+    _stats.lvl = now;
+    unawaited(_saveLocal());
+    _checkCounterMasks();
+  }
+
+  @override
+  void notifyListeners() {
+    _checkLevel();
+    super.notifyListeners();
+  }
+
+  /// The player's colour, among those the levels opened (null: the app's).
+  EcoColor? get playerColor {
+    final c = EcoLevels.colorById(_stats.color);
+    return c != null && level >= c.level ? c : null;
+  }
+
+  void setPlayerColor(String? id) {
+    _stats.color = id;
+    notifyListeners();
+    unawaited(_saveLocal());
   }
 
   // ── Weekly challenges ──
@@ -286,6 +378,11 @@ class MaskProvider extends ChangeNotifier {
 
   /// Hands out the week's prizes as their challenges get done.
   void _checkWeekly() {
+    if (!hasFeature(EcoFeature.weekly)) return;
+    final challenges = weeklyChallenges;
+    for (var i = 0; i < challenges.length; i++) {
+      if (weeklyDone(challenges[i])) _ecoOnce('wk${_stats.week}:$i', ecoPerChallenge);
+    }
     final done = weeklyDoneCount;
     for (final entry in weeklyNeeds.entries) {
       if (done < entry.value || weeklyRewardWonFor(entry.key)) continue;
@@ -738,6 +835,7 @@ class MaskProvider extends ChangeNotifier {
     if (_stats.streak % shieldEvery == 0 && _stats.shields < maxShields) _stats.shields++;
     _stats.lastDay = day;
     if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
+    _ecoOnce('day:$day', ecoPerDay + ecoPerStreakDay * min(_stats.streak, ecoStreakCap));
   }
 
   // ── Daily streak ──
@@ -921,7 +1019,10 @@ class MaskProvider extends ChangeNotifier {
     _stats.guessStreak = streak;
     if (won && attempts == 1) unlock('mimi');
     if (streak >= 14) unlock('ren');
-    if (won) _countWeekly('guess');
+    if (won) {
+      _countWeekly('guess');
+      _ecoOnce('guess:${_dayKey(_clock())}', ecoPerGuess);
+    }
     _checkWeekly();
     notifyListeners();
     unawaited(_saveLocal());
@@ -1048,6 +1149,10 @@ class _Stats {
   /// hand and the days they covered.
   Set<int> days = {};
   int shields = 0;
+
+  /// The level last seen (0: not yet), and the player colour chosen.
+  int lvl = 0;
+  String? color;
   Set<int> shielded = {};
   static const int keptDays = 400;
 
@@ -1103,6 +1208,8 @@ class _Stats {
         'days': days.toList(),
         'shields': shields,
         'shielded': shielded.toList(),
+        'lvl': lvl,
+        if (color != null) 'color': color,
         'session': sessionSec,
         'idle': idleSec,
         'history': historyApplied,
@@ -1146,6 +1253,8 @@ class _Stats {
       s.days = {for (final d in (m['days'] as List? ?? const [])) d as int};
       s.shields = m['shields'] ?? 0;
       s.shielded = {for (final d in (m['shielded'] as List? ?? const [])) d as int};
+      s.lvl = m['lvl'] ?? 0;
+      s.color = m['color'] as String?;
       s.sessionSec = m['session'] ?? 0;
       s.idleSec = m['idle'] ?? 0;
       s.historyApplied = m['history'] == true;

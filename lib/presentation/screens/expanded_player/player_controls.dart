@@ -37,7 +37,12 @@ class _PlayerControls extends StatelessWidget {
             // Off → shuffle → shuffle with recommendations.
             onTap: () {
               HapticFeedback.selectionClick();
-              final mode = audio.cycleShuffle();
+              var mode = audio.cycleShuffle();
+              // Shuffle with recommendations opens with the levels: until
+              // then, the button goes straight back to off.
+              if (mode == ShuffleMode.smart && !context.readState(maskProvider).hasFeature(EcoFeature.smartShuffle)) {
+                mode = audio.cycleShuffle();
+              }
               showTrackSnack(
                 context,
                 switch (mode) {

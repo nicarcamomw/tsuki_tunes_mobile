@@ -15,6 +15,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import 'eco_widgets.dart';
 import 'swipeable_sheet.dart';
 
 /// Starts a song radio and tells the user how it went.
@@ -42,6 +43,7 @@ Future<void> startArtistRadioWithFeedback(
   Artist artist, {
   double bottomMargin = 12,
 }) async {
+  if (!ecoAllows(context, EcoFeature.artistRadio)) return;
   unawaited(HapticFeedback.mediumImpact());
   final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
@@ -270,6 +272,12 @@ class _RadioControlSheet extends ConsumerWidget {
               ],
               selected: {mode},
               onSelectionChanged: (s) {
+                final locked = switch (s.first) {
+                  RadioMode.familiar => EcoFeature.radioFamiliar,
+                  RadioMode.adventurous => EcoFeature.radioAdventurous,
+                  RadioMode.balanced => null,
+                };
+                if (locked != null && !ecoAllows(context, locked)) return;
                 HapticFeedback.selectionClick();
                 audio.setRadioMode(s.first);
               },

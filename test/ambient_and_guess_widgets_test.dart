@@ -33,7 +33,8 @@ void main() {
     await tester.pumpWidget(wrap(const Scaffold(body: AmbientMixerSheet())));
     await tester.pump();
 
-    for (final name in ['Lluvia', 'Tormenta', 'Olas', 'Fogata', 'Viento', 'Noche']) {
+    // At level 1 every sound is still closed, each with its level.
+    for (final name in ['Lluvia · NV 8', 'Tormenta · NV 11', 'Olas · NV 14', 'Fogata · NV 17', 'Viento · NV 22', 'Noche · NV 26']) {
       expect(find.text(name), findsOneWidget);
     }
     expect(find.text('Apagar con la música'), findsOneWidget);

@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'eco_widgets.dart';
 import 'swipeable_sheet.dart';
 
 class AmbientMixerSheet extends ConsumerStatefulWidget {
@@ -66,6 +67,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
   @override
   Widget build(BuildContext context) {
     final ambient = ref.watch(ambientProvider);
+    final level = ref.watch(maskProvider.select((m) => m.level));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final remaining = ambient.stopRemaining;
@@ -127,8 +129,20 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     label: strings.ambientName(sound),
                     active: ambient.isOn(sound),
                     loading: ambient.isLoading(sound),
+                    // Each sound opens at its Eco level.
+                    lockedAt: EcoLevels.soundOpen(sound, level) ? null : EcoLevels.soundLevels[sound],
                     onTap: () {
                       HapticFeedback.selectionClick();
+                      if (!EcoLevels.soundOpen(sound, level)) {
+                        ScaffoldMessenger.of(context)
+                          ..clearSnackBars()
+                          ..showSnackBar(SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: AppColors.bgCard,
+                            content: Text('${strings.ambientName(sound)} · ${strings.ecoOpensAt(EcoLevels.soundLevels[sound]!)}'),
+                          ));
+                        return;
+                      }
                       ambient.toggle(sound);
                     },
                     locale: locale,
@@ -320,6 +334,9 @@ class _SoundTile extends StatelessWidget {
   final VoidCallback onTap;
   final LocaleProvider locale;
 
+  /// The Eco level this sound opens at, while it's still closed.
+  final int? lockedAt;
+
   const _SoundTile({
     required this.icon,
     required this.label,
@@ -327,6 +344,7 @@ class _SoundTile extends StatelessWidget {
     required this.loading,
     required this.onTap,
     required this.locale,
+    this.lockedAt,
   });
 
   @override
@@ -364,13 +382,14 @@ class _SoundTile extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2, color: color),
                         ),
                       )
-                    : Icon(icon, size: 24, color: active ? color : AppColors.textMuted),
+                    : Icon(lockedAt == null ? icon : Icons.lock_outline_rounded,
+                        size: 24, color: active ? color : AppColors.textMuted.withValues(alpha: lockedAt == null ? 1 : 0.6)),
               ),
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
-                  label,
+                  lockedAt == null ? label : '$label · ${locale.strings.ecoLevelShort(lockedAt!)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
