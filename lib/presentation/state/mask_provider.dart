@@ -18,6 +18,7 @@ import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
+import '../../domain/lore/tsuki_lore.dart';
 
 export '../../domain/entities/oni_mask.dart';
 export '../../domain/entities/weekly_challenge.dart';
@@ -141,6 +142,11 @@ class MaskProvider extends ChangeNotifier {
     if (key.startsWith('style:')) return _stats.styles[key.substring(6)] ?? 0;
     // Ambient time is kept in seconds, goals are in hours.
     if (key.startsWith('amb:')) return (c[key] ?? 0) ~/ 3600;
+    // A clan's mask: how many of its members have awakened.
+    if (key.startsWith('clan:')) {
+      final clan = TsukiLore.faction(key.substring(5));
+      return clan == null ? 0 : TsukiLore.awakened(clan, _unlocked.keys.toSet());
+    }
     return switch (key) {
       'styles12' => MusicStyles.main
           .where((s) => (_stats.styles[s.name] ?? 0) >= perStyleForRainbow)
@@ -607,7 +613,9 @@ class MaskProvider extends ChangeNotifier {
     for (var changed = true; changed;) {
       changed = false;
       for (final m in MaskCatalog.all) {
-        if (!_collectors.contains(m.counter) || _unlocked.containsKey(m.id)) continue;
+        final key = m.counter;
+        if (key == null || _unlocked.containsKey(m.id)) continue;
+        if (!_collectors.contains(key) && !key.startsWith('clan:')) continue;
         if (counterValue(m.counter!) >= m.goal!) {
           _unlocked[m.id] = at;
           newly.add(m.id);

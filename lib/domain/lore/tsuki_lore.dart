@@ -81,6 +81,14 @@ class LoreFaction {
   final String? rival;
   final List<String> members;
 
+  /// The clan's own mask, awakened with the whole clan (none yet: null).
+  String? get reward {
+    for (final m in MaskCatalog.all) {
+      if (m.counter == 'clan:$id') return m.id;
+    }
+    return null;
+  }
+
   const LoreFaction({
     required this.id,
     required this.kanji,

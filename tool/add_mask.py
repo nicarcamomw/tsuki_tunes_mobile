@@ -41,6 +41,10 @@ FILL_HOLES = False
 # bright halo; it greys pure white faces, so it's off by default.
 GLOW = False
 
+# --solid: cut only the white the image edges reach, no AI: for white
+# porcelain or glass masks whose white the AI would punch holes in.
+SOLID = False
+
 # How far from pure white (0-255, by the darkest channel) still counts as
 # background, and where the soft edge ends.
 BG_NEAR = 18
@@ -99,6 +103,12 @@ def cut_out(img: Image.Image) -> Image.Image:
                     pockets.paste(Image.fromarray(np.where(blob, 1, 0).astype(np.uint8)), mask=Image.fromarray((blob * 255).astype(np.uint8)))
         soft = np.clip((dist - BG_NEAR) / (BG_FAR - BG_NEAR), 0, 1)
         alpha = np.where(background, soft, 1.0)
+    if SOLID:
+        # White masks (porcelain, glass): the AI takes their white for
+        # background. Only what the edges reach is cut.
+        a = np.maximum(alpha, 1e-3)[..., None]
+        color = np.clip((rgb - (1 - a) * 255) / a, 0, 255)
+        return Image.fromarray(np.dstack([color, alpha * 255]).astype(np.uint8), 'RGBA')
     ai = ai_alpha(img)
     if ai is not None:
         alpha = np.maximum(alpha, np.where(background & (dist < 14), 0, ai))
@@ -161,8 +171,11 @@ def add(src: str, tier: str, name: str) -> str:
 
 def main():
     """add_mask.py <picture> <tier> <name> [<picture> <tier> <name> ...]"""
-    global FILL_HOLES, GLOW
+    global FILL_HOLES, GLOW, SOLID
     args = sys.argv[1:]
+    if '--solid' in args:
+        SOLID = True
+        args.remove('--solid')
     if '--fill-holes' in args:
         FILL_HOLES = True
         args.remove('--fill-holes')

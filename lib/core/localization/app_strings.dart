@@ -456,6 +456,16 @@ class AppStrings {
         AppLanguage.en => 'Wake the whole clan to learn its secret ($have/$total).',
         AppLanguage.ja => '一族すべてを目覚めさせると秘密が明かされる（$have/$total）。',
       };
+  String get loreReward => switch (language) {
+        AppLanguage.es => 'MÁSCARA DEL CLAN',
+        AppLanguage.en => 'CLAN MASK',
+        AppLanguage.ja => '一族の面',
+      };
+  String get loreRewardHint => switch (language) {
+        AppLanguage.es => 'Despierta a todo el clan y esta máscara despertará con él.',
+        AppLanguage.en => 'Wake the whole clan and this mask will wake with it.',
+        AppLanguage.ja => '一族すべてを目覚めさせると、この面も目覚める。',
+      };
   String get loreBonds => switch (language) {
         AppLanguage.es => 'VÍNCULOS',
         AppLanguage.en => 'BONDS',

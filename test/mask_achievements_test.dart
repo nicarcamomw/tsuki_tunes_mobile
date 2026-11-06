@@ -6,6 +6,7 @@ import 'package:tsuki_tunes_mobile/domain/entities/play_day.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/moon_calculator.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/music_styles.dart';
+import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 
 Track _t(String id, {String artist = 'Artist', int? rank, bool explicit = false, String albumId = ''}) => Track(
@@ -330,30 +331,23 @@ void main() {
       expect(masks.isUnlocked('akagane'), isTrue);
     });
 
-    test('the 50th mask brings the Oni King', () {
-      final ids = [for (final m in MaskCatalog.all) if (m.id != 'ou' && m.id != 'oni') m.id];
-      for (final id in ids.take(48)) {
-        masks.unlock(id);
-      }
-      expect(masks.isUnlocked('ou'), isFalse);
-      masks.unlock(ids[48]);
-      expect(masks.isUnlocked('ou'), isTrue);
-    });
-
-    test('the 75th mask brings the Kitsune King', () {
-      final ids = [
-        for (final m in MaskCatalog.all)
-          if (m.counter != 'masks' && m.id != 'oni') m.id,
-      ];
-      for (final id in ids.take(72)) {
-        masks.unlock(id);
-      }
-      // 72 + the Oni King = 73.
-      expect(masks.isUnlocked('ou'), isTrue);
-      expect(masks.isUnlocked('kitsune_ou'), isFalse);
-      masks.unlock(ids[72]);
-      expect(masks.isUnlocked('kitsune_ou'), isTrue, reason: '74 + itself');
-    });
+    // Unlocking masks can complete clans, whose masks come too: what
+    // matters is that each collector arrives exactly with its count.
+    for (final (king, count) in [('ou', 50), ('kitsune_ou', 75)]) {
+      test('the ${count}th mask brings $king', () {
+        final ids = [
+          for (final m in MaskCatalog.all)
+            if (m.counter != 'masks' && m.id != 'oni') m.id,
+        ];
+        for (final id in ids) {
+          if (masks.isUnlocked(king)) break;
+          masks.unlock(id);
+          expect(masks.isUnlocked(king), masks.unlockedCount >= count,
+              reason: '${masks.unlockedCount} masks');
+        }
+        expect(masks.isUnlocked(king), isTrue);
+      });
+    }
 
     test('the 7 divine masks bring the God of the Universe; the ultra ones the Fallen God', () {
       final divine = [for (final m in MaskCatalog.all) if (m.divine) m.id];
@@ -375,6 +369,17 @@ void main() {
       expect(masks.isUnlocked('ochigami'), isFalse);
       masks.unlock(ultra.last);
       expect(masks.isUnlocked('ochigami'), isTrue);
+    });
+
+    test('a whole clan awakens its clan mask', () {
+      final zorro = TsukiLore.faction('zorro')!;
+      for (final id in zorro.members.take(zorro.members.length - 1)) {
+        masks.unlock(id);
+      }
+      expect(masks.isUnlocked('kyuubi'), isFalse);
+      expect(masks.progress('kyuubi'), (zorro.members.length - 1, zorro.members.length));
+      masks.unlock(zorro.members.last);
+      expect(masks.isUnlocked('kyuubi'), isTrue);
     });
 
     test('El Oni still asks for the original achievements only', () {

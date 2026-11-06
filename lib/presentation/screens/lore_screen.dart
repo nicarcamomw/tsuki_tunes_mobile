@@ -405,6 +405,30 @@ class _FactionSection extends ConsumerWidget {
             ],
           ),
         ),
+        if (faction.reward case final rewardId?)
+          if (MaskCatalog.byId(rewardId) case final reward?) ...[
+            const SizedBox(height: 18),
+            Text(strings.loreReward, style: _label(locale, color)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                OniMaskArt(mask: reward, size: 72, unlocked: owned.contains(reward.id)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(owned.contains(reward.id) ? reward.name(lang) : '???',
+                          style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      const SizedBox(height: 4),
+                      Text(owned.contains(reward.id) ? reward.description(lang) : strings.loreRewardHint,
+                          style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         const SizedBox(height: 18),
         _BondsSection(bonds: TsukiLore.bondsOf(faction.members), owned: owned),
       ],

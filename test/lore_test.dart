@@ -13,8 +13,8 @@ void main() {
     test('every mask outside the 9 Faces belongs to exactly one clan', () {
       for (final m in MaskCatalog.all) {
         final clans = TsukiLore.factions.where((f) => f.members.contains(m.id)).length;
-        final face = m.divine || m.rarity == MaskRarity.dios;
-        expect(clans, face ? 0 : 1, reason: m.id);
+        final outside = m.divine || m.rarity == MaskRarity.dios || (m.counter?.startsWith('clan:') ?? false);
+        expect(clans, outside ? 0 : 1, reason: m.id);
       }
     });
 
@@ -47,6 +47,14 @@ void main() {
         expect(c.body.en.trim(), isNotEmpty);
       }
     });
+  });
+
+  test('a clan mask asks for its whole clan', () {
+    for (final f in TsukiLore.factions) {
+      final reward = MaskCatalog.byId(f.reward);
+      expect(reward, isNotNull, reason: f.id);
+      expect(reward!.goal, f.members.length, reason: f.id);
+    }
   });
 
   group('what opens', () {
@@ -97,7 +105,7 @@ void main() {
     await tester.scrollUntilVisible(find.text('MIEMBROS DEL CLAN'), 300);
     expect(find.text('MIEMBROS DEL CLAN'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('SECRETO DEL CLAN'), 300);
-    expect(find.textContaining('Despierta a todo el clan'), findsOneWidget);
+    expect(find.textContaining('para conocer su secreto'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox());
