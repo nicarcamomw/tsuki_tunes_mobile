@@ -16,8 +16,10 @@ import '../../data/datasources/streak_reminder.dart';
 import '../../data/datasources/time_machine_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
+import '../../domain/entities/album_progress.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/radar_release.dart';
+import '../../domain/logic/completion_recommendations.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -31,6 +33,7 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/tap_scale.dart';
 import '../widgets/weekly_challenges_card.dart';
 import '../widgets/wrapped_picker_sheet.dart';
 import 'guess_song_screen.dart';
@@ -40,6 +43,7 @@ import 'streak_screen.dart';
 import 'time_machine_screen.dart';
 
 part 'home/affinity_sheet.dart';
+part 'home/completion_sections.dart';
 part 'home/entry_cards.dart';
 part 'home/gear_profile_button.dart';
 part 'home/home_widgets.dart';
@@ -60,6 +64,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<Album> _latestReleases = [];
   List<_TopArtistDisplay> _topArtistsDisplay = [];
   List<Artist> _recommendedArtists = [];
+  List<CompletionRecommendation> _completionRecs = [];
+
+  // The completed albums the "because you completed" rows were built from
+  // (null before the first build), and a counter that drops stale loads.
+  String? _completionSeedKey;
+  int _completionLoad = 0;
   bool _isLoading = true;
   bool _hasError = false;
   bool _dailyDone = false;
@@ -126,6 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _isLoading = true;
       _hasError = false;
       _recommendedArtists = [];
+      _completionSeedKey = null;
     });
     try {
       final featured = await _api.getFeaturedArtists();
@@ -153,6 +164,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _isLoading = false;
       });
       unawaited(_loadPersonalizedRecommendations(topDisplay));
+      unawaited(_loadCompletionRecommendations());
     } catch (e) {
       _log.severe('loadHomeData error: $e');
       if (mounted) {
@@ -286,8 +298,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  /// The completed albums that seed the "because you completed" rows.
+  static String _completionSeedKeyOf(LibraryRepositoryImpl l) =>
+      l.completedAlbums(limit: 6).map((a) => a.albumId).join(',');
+
+  /// "Because you completed X": artists similar to the ones behind the
+  /// latest completed albums that the user has not listened to yet.
+  Future<void> _loadCompletionRecommendations() async {
+    final library = ref.read(libraryProvider);
+    final key = _completionSeedKeyOf(library);
+    _completionSeedKey = key;
+    final load = ++_completionLoad;
+    final completed = library.completedAlbums(limit: 6);
+    if (completed.isEmpty) {
+      if (_completionRecs.isNotEmpty) setState(() => _completionRecs = []);
+      return;
+    }
+    final known = {
+      for (final t in library.listenedTracks)
+        for (final a in t.artists) a.toLowerCase(),
+    };
+    final rows = await CompletionRecommendations(
+      findArtist: _findArtistByName,
+      relatedArtists: (id) => _api.getRelatedArtists(id, limit: 20),
+    ).build(
+      completed: completed,
+      knownArtistNames: known,
+      excludeIds: {
+        for (final t in _topArtistsDisplay)
+          if (t.artist != null) t.artist!.id,
+      },
+    );
+    if (!mounted || load != _completionLoad) return;
+    setState(() => _completionRecs = rows);
+  }
+
+  /// The Deezer artist with exactly [name], else the first result.
+  Future<Artist?> _findArtistByName(String name) async {
+    final results = await _api.searchArtists(name, limit: 3);
+    for (final a in results) {
+      if (a.name.toLowerCase() == name.toLowerCase()) return a;
+    }
+    return results.isNotEmpty ? results.first : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Completing (or un-completing) an album changes the seeds: rebuild
+    // the "because you completed" rows once the home has loaded.
+    ref.listen<String>(libraryProvider.select(_completionSeedKeyOf),
+        (_, next) {
+      if (_completionSeedKey != null && next != _completionSeedKey) {
+        unawaited(_loadCompletionRecommendations());
+      }
+    });
     final (statsLoaded, listenedCount, artistsCount, albumsCount, topArtistName, topArtistScore) =
         ref.watch(libraryProvider.select((l) {
       final top = l.getTopArtists(limit: 1);
@@ -429,7 +493,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
 
               ..._buildTopArtistsSlivers(locale),
+              if (isLoggedIn && listenedCount > 0)
+                SliverToBoxAdapter(
+                    child: _AlmostCompleteSection(locale: locale)),
               ..._buildLatestReleasesSlivers(locale),
+              ..._buildCompletionSlivers(locale),
               ..._buildRecommendedSlivers(locale),
 
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -670,10 +738,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
   }
 
+  /// A row of similar artists for each of the latest completed albums.
+  List<Widget> _buildCompletionSlivers(LocaleProvider locale) {
+    return [
+      for (final rec in _completionRecs) ...[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: _SectionTitle(
+              locale: locale,
+              text: locale.strings.becauseYouCompleted(rec.album.title),
+              maxLines: 2,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 160,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: rec.artists.length,
+              itemBuilder: (context, index) =>
+                  ArtistCard(artist: rec.artists[index]),
+            ),
+          ),
+        ),
+      ],
+    ];
+  }
+
   /// Artists related to the top ones, or featured ones until those load.
+  /// Those already suggested by a completed album are left out.
   List<Widget> _buildRecommendedSlivers(LocaleProvider locale) {
-    final artists =
-        _recommendedArtists.isNotEmpty ? _recommendedArtists : _featuredArtists;
+    final shown = {
+      for (final rec in _completionRecs)
+        for (final a in rec.artists) a.id,
+    };
+    final artists = (_recommendedArtists.isNotEmpty
+            ? _recommendedArtists
+            : _featuredArtists)
+        .where((a) => !shown.contains(a.id))
+        .toList();
     if (artists.isEmpty) return const [];
     return [
       SliverToBoxAdapter(

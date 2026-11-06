@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
+import '../../domain/entities/album_progress.dart';
 import '../datasources/storage_service.dart';
 import 'listened_tracks_repository.dart';
 
@@ -45,6 +46,11 @@ class AlbumCompletionIndex {
   bool _dirty = true;
   Map<String, int> _listenedByAlbum = {};
 
+  // Title, cover, artist and latest listen of each album with listened
+  // tracks, for the recommendations; rebuilt lazily like the counts.
+  bool _infoDirty = true;
+  Map<String, _AlbumInfo> _albumInfo = {};
+
   // Test hook, reached through LibraryRepositoryImpl.
   Map<String, int> get trackCounts => _trackCounts;
 
@@ -53,7 +59,10 @@ class AlbumCompletionIndex {
   }
 
   /// The listened tracks changed: per-album counts are rebuilt on next read.
-  void invalidate() => _dirty = true;
+  void invalidate() {
+    _dirty = true;
+    _infoDirty = true;
+  }
 
   /// A new user: albums may be fetched again.
   void clearRequests() => _trackCountRequests.clear();
@@ -192,6 +201,103 @@ class AlbumCompletionIndex {
     return listenedCount >= total;
   }
 
+  void _ensureAlbumInfo() {
+    if (!_infoDirty) return;
+    final info = <String, _AlbumInfo>{};
+    for (final t in _listenedTracks()) {
+      if (t.albumId.isEmpty) continue;
+      final a = info.putIfAbsent(t.albumId, () => _AlbumInfo(t.albumTitle, t.coverUrl));
+      a.listened++;
+      if (a.coverUrl.isEmpty && t.coverUrl.isNotEmpty) a.coverUrl = t.coverUrl;
+      final artist = t.artists.isNotEmpty ? t.artists.first : t.artistName;
+      if (artist.isNotEmpty) a.artists[artist] = (a.artists[artist] ?? 0) + 1;
+      final at = t.listenedAt;
+      if (at != null && (a.lastListenedAt == null || at.isAfter(a.lastListenedAt!))) {
+        a.lastListenedAt = at;
+      }
+    }
+    _albumInfo = info;
+    _infoDirty = false;
+  }
+
+  AlbumProgress _progressOf(String albumId, _AlbumInfo a) => AlbumProgress(
+        albumId: albumId,
+        title: a.title,
+        artistName: a.mainArtist,
+        coverUrl: a.coverUrl,
+        listened: a.listened,
+        total: _trackCounts[albumId] ?? 0,
+        lastListenedAt: a.lastListenedAt,
+      );
+
+  static int _byRecency(AlbumProgress a, AlbumProgress b) {
+    final at = a.lastListenedAt, bt = b.lastListenedAt;
+    if (at == null && bt == null) return 0;
+    if (at == null) return 1;
+    if (bt == null) return -1;
+    return bt.compareTo(at);
+  }
+
+  /// Albums a few songs away from complete: at most [maxMissing] missing and
+  /// at least [minShare] of them listened. Fewest missing first, then the
+  /// most recently listened. Only albums whose song count is known count.
+  List<AlbumProgress> almostComplete(
+      {int maxMissing = 3, double minShare = 0.5, int limit = 10}) {
+    _ensureAlbumInfo();
+    final out = <AlbumProgress>[];
+    _albumInfo.forEach((id, a) {
+      final p = _progressOf(id, a);
+      if (p.total <= 0 || p.isComplete) return;
+      if (p.missing > maxMissing || p.share < minShare) return;
+      out.add(p);
+    });
+    out.sort((a, b) {
+      final byMissing = a.missing.compareTo(b.missing);
+      return byMissing != 0 ? byMissing : _byRecency(a, b);
+    });
+    return out.take(limit).toList();
+  }
+
+  /// Completed albums, the most recently listened first.
+  List<AlbumProgress> completed({int limit = 10}) {
+    _ensureAlbumInfo();
+    final out = <AlbumProgress>[];
+    _albumInfo.forEach((id, a) {
+      final p = _progressOf(id, a);
+      if (p.isComplete) out.add(p);
+    });
+    out.sort(_byRecency);
+    return out.take(limit).toList();
+  }
+
+  /// Requests the song count of the [limit] most recently listened albums
+  /// that have none yet, so [almostComplete] and [completed] can judge them
+  /// without the user opening each one. Same once-per-session rule as
+  /// [ensureTrackCounts].
+  void ensureRecentTrackCounts(
+      Future<Album?> Function(String albumId) fetchAlbum,
+      {int limit = 20}) {
+    if (!_listenedLoaded()) return;
+    _ensureAlbumInfo();
+    final pending = <AlbumProgress>[];
+    _albumInfo.forEach((id, a) {
+      if ((_trackCounts[id] ?? 0) > 0 || _trackCountRequests.contains(id)) return;
+      pending.add(_progressOf(id, a));
+    });
+    if (pending.isEmpty) return;
+    pending.sort(_byRecency);
+    ensureTrackCounts(
+      pending.take(limit).map((p) => Album(
+            id: p.albumId,
+            title: p.title,
+            coverUrl: p.coverUrl,
+            artistId: '',
+            artistName: p.artistName,
+          )),
+      fetchAlbum,
+    );
+  }
+
   /// Drops the counts of albums with no listened tracks left, and stores
   /// the rest when anything was dropped (or [forceSave]).
   void prune({bool forceSave = false}) {
@@ -209,5 +315,30 @@ class AlbumCompletionIndex {
         _log.fine('Pruned ${before - _trackCounts.length} orphaned albumTrackCounts');
       }
     }
+  }
+}
+
+class _AlbumInfo {
+  final String title;
+  String coverUrl;
+  int listened = 0;
+  DateTime? lastListenedAt;
+
+  // First artist of each listened song -> how many songs.
+  final Map<String, int> artists = {};
+
+  _AlbumInfo(this.title, this.coverUrl);
+
+  /// The artist most of its songs are by.
+  String get mainArtist {
+    var best = '';
+    var bestCount = 0;
+    artists.forEach((name, n) {
+      if (n > bestCount) {
+        best = name;
+        bestCount = n;
+      }
+    });
+    return best;
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
+import '../../domain/entities/album_progress.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
@@ -194,6 +195,20 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   void ensureAlbumTrackCounts(Iterable<Album> albums,
           Future<Album?> Function(String albumId) fetchAlbum) =>
       _albums.ensureTrackCounts(albums, fetchAlbum);
+
+  /// Albums a few songs away from complete, fewest missing first.
+  List<AlbumProgress> almostCompleteAlbums({int limit = 10}) =>
+      _albums.almostComplete(limit: limit);
+
+  /// Completed albums, the most recently listened first.
+  List<AlbumProgress> completedAlbums({int limit = 10}) =>
+      _albums.completed(limit: limit);
+
+  /// Fetches the song count of the most recently listened albums that have
+  /// none yet, so the home can tell which are almost complete.
+  void ensureRecentAlbumTrackCounts(
+          Future<Album?> Function(String albumId) fetchAlbum) =>
+      _albums.ensureRecentTrackCounts(fetchAlbum);
 
   // --- Firestore connection ---
 

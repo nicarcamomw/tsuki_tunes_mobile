@@ -1871,5 +1871,36 @@
       "language": {"type": "String"}
     }
   },
-  "lyricsUnknownLanguage": "No se pudo reconocer el idioma de esta letra."
+  "lyricsUnknownLanguage": "No se pudo reconocer el idioma de esta letra.",
+  "almostCompleteTitle": "CASI COMPLETOS",
+  "almostCompleteMissing": "{count, plural, =1{Te falta 1 canción} other{Te faltan {count} canciones}}",
+  "@almostCompleteMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yAlmostComplete": "{album}, de {artist}. {missing}",
+  "@a11yAlmostComplete": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      },
+      "artist": {
+        "type": "String"
+      },
+      "missing": {
+        "type": "String"
+      }
+    }
+  },
+  "becauseYouCompleted": "PORQUE COMPLETASTE {album}",
+  "@becauseYouCompleted": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  }
 }

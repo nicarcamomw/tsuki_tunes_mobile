@@ -827,5 +827,9 @@
   "lyricsPreviewNote": "30秒のプレビュー再生中のため、歌詞は同期されません。Spotifyでは曲に合わせて表示されます。",
   "lyricsTranslateTo": "歌詞の翻訳先",
   "lyricsSameLanguage": "歌詞はすでに{language}です。",
-  "lyricsUnknownLanguage": "この歌詞の言語を認識できませんでした。"
+  "lyricsUnknownLanguage": "この歌詞の言語を認識できませんでした。",
+  "almostCompleteTitle": "あと少しで完走",
+  "almostCompleteMissing": "あと{count}曲",
+  "a11yAlmostComplete": "{album}、{artist}。{missing}",
+  "becauseYouCompleted": "{album}を完走したあなたへ"
 }

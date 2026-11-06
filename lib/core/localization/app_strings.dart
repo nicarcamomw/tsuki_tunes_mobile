@@ -2698,4 +2698,10 @@ class AppStrings {
   String lyricsSameLanguage(String language) => _l.lyricsSameLanguage(language);
 
   String get lyricsUnknownLanguage => _l.lyricsUnknownLanguage;
+
+  String get almostCompleteTitle => _l.almostCompleteTitle;
+  String almostCompleteMissing(int count) => _l.almostCompleteMissing(count);
+  String a11yAlmostComplete(String album, String artist, String missing) =>
+      _l.a11yAlmostComplete(album, artist, missing);
+  String becauseYouCompleted(String album) => _l.becauseYouCompleted(album);
 }

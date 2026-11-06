@@ -827,5 +827,9 @@
   "lyricsPreviewNote": "A 30-second preview is playing: lyrics are not synced. With Spotify they follow the song.",
   "lyricsTranslateTo": "Translate the lyrics into",
   "lyricsSameLanguage": "The lyrics are already in {language}.",
-  "lyricsUnknownLanguage": "The language of these lyrics could not be recognized."
+  "lyricsUnknownLanguage": "The language of these lyrics could not be recognized.",
+  "almostCompleteTitle": "ALMOST COMPLETE",
+  "almostCompleteMissing": "{count, plural, =1{1 song to go} other{{count} songs to go}}",
+  "a11yAlmostComplete": "{album}, by {artist}. {missing}",
+  "becauseYouCompleted": "BECAUSE YOU COMPLETED {album}"
 }
