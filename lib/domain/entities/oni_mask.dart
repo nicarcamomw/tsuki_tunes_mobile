@@ -2,8 +2,9 @@ import '../../core/localization/app_language.dart';
 import '../logic/music_styles.dart';
 
 /// Rarity tiers, gacha style: R (rare), SR (super rare), SSR (super super
-/// rare) and UL (ultra). Whether a mask is hidden is [OniMask.secret].
-enum MaskRarity { r, sr, ssr, ul }
+/// rare), UL (ultra; some of them divine, see [OniMask.divine]) and, above
+/// all, the two supreme gods. Whether a mask is hidden is [OniMask.secret].
+enum MaskRarity { r, sr, ssr, ul, dios }
 
 enum MaskArt {
   tengu,
@@ -57,6 +58,9 @@ class OniMask {
   final String? counter;
   /// Won by completing a week's three challenges, not by an achievement.
   final bool weekly;
+
+  /// A divine mask: UL with a divine trait (its own color, a halo).
+  final bool divine;
   final Map<AppLanguage, String> names;
   final Map<AppLanguage, String> descriptions;
   /// For secret masks: a riddle shown, still locked, once the user has
@@ -76,8 +80,10 @@ class OniMask {
     this.goal,
     this.counter,
     this.weekly = false,
+    this.divine = false,
     this.hints,
-  }) : assert((art == null) != (image == null), 'a mask has an art or its own image');
+  })  : assert((art == null) != (image == null), 'a mask has an art or its own image'),
+        assert(!divine || rarity == MaskRarity.ul, 'divine masks are UL');
 
   String asset() => image ?? switch (art!) {
         MaskArt.tengu => 'assets/images/tengu.png',
@@ -2097,131 +2103,175 @@ class MaskCatalog {
         AppLanguage.ja: 'ジャズ・ソウル・ブルースを300曲聴く。',
       },
     ),
-    // Batch 6: cosmic and ritual faces.
+    // The divine masks: UL with a divine trait.
     const OniMask(
       id: 'hibiboshi',
       kanji: '裂',
-      image: 'assets/images/masks/r/hibiboshi.webp',
-      rarity: MaskRarity.r,
+      image: 'assets/images/masks/ul/hibiboshi.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'night',
-      goal: 50,
+      goal: 300,
       names: {
         AppLanguage.es: 'Grieta Estelar',
         AppLanguage.en: 'Star Crack',
         AppLanguage.ja: '星の罅',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 50 canciones entre la medianoche y las 5 AM.',
-        AppLanguage.en: 'Listen to 50 songs between midnight and 5 AM.',
-        AppLanguage.ja: '深夜0時から5時の間に50曲聴く。',
+        AppLanguage.es: 'Escucha 300 canciones entre la medianoche y las 5 AM: la grieta deja pasar las estrellas.',
+        AppLanguage.en: 'Listen to 300 songs between midnight and 5 AM: the crack lets the stars through.',
+        AppLanguage.ja: '深夜0時から5時の間に300曲聴く。罅から星が漏れる。',
       },
     ),
     const OniMask(
       id: 'uchuu',
       kanji: '宙',
-      image: 'assets/images/masks/sr/uchuu.webp',
-      rarity: MaskRarity.sr,
+      image: 'assets/images/masks/ul/uchuu.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'moons',
-      goal: 4,
+      goal: 12,
       names: {
         AppLanguage.es: 'Oni Cósmico',
         AppLanguage.en: 'Cosmic Oni',
         AppLanguage.ja: '宇宙鬼',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha música en 4 lunas llenas.',
-        AppLanguage.en: 'Listen to music on 4 full moons.',
-        AppLanguage.ja: '4回の満月に音楽を聴く。',
+        AppLanguage.es: 'Escucha música en 12 lunas llenas: un año entero de lunas.',
+        AppLanguage.en: 'Listen to music on 12 full moons: a whole year of moons.',
+        AppLanguage.ja: '12回の満月に音楽を聴く。一年分の月。',
       },
     ),
     const OniMask(
       id: 'tenshi',
       kanji: '涙',
-      image: 'assets/images/masks/ssr/tenshi.webp',
-      rarity: MaskRarity.ssr,
+      image: 'assets/images/masks/ul/tenshi.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'sleep',
-      goal: 25,
+      goal: 60,
       names: {
         AppLanguage.es: 'Ángel de Lágrimas Doradas',
         AppLanguage.en: 'Angel of Golden Tears',
         AppLanguage.ja: '金涙の天使',
       },
       descriptions: {
-        AppLanguage.es: 'Duérmete con el temporizador de sueño 25 noches.',
-        AppLanguage.en: 'Fall asleep with the sleep timer on 25 nights.',
-        AppLanguage.ja: 'スリープタイマーで25晩眠る。',
+        AppLanguage.es: 'Duérmete con el temporizador de sueño 60 noches.',
+        AppLanguage.en: 'Fall asleep with the sleep timer on 60 nights.',
+        AppLanguage.ja: 'スリープタイマーで60晩眠る。',
       },
     ),
     const OniMask(
       id: 'nichigetsu',
       kanji: '陰',
-      image: 'assets/images/masks/r/nichigetsu.webp',
-      rarity: MaskRarity.r,
+      image: 'assets/images/masks/ul/nichigetsu.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'streak',
-      goal: 10,
+      goal: 180,
       names: {
         AppLanguage.es: 'Sol y Luna',
         AppLanguage.en: 'Sun and Moon',
         AppLanguage.ja: '日月',
       },
       descriptions: {
-        AppLanguage.es: 'Racha de 10 días seguidos con música, de día y de noche.',
-        AppLanguage.en: 'A 10-day streak of music, day and night.',
-        AppLanguage.ja: '10日連続で音楽を聴く。昼も夜も。',
+        AppLanguage.es: 'Racha de 180 días seguidos con música: medio año de soles y lunas.',
+        AppLanguage.en: 'A 180-day streak of music: half a year of suns and moons.',
+        AppLanguage.ja: '180日連続で音楽を聴く。半年分の日と月。',
       },
     ),
     const OniMask(
       id: 'seiza',
       kanji: '星',
-      image: 'assets/images/masks/sr/seiza.webp',
-      rarity: MaskRarity.sr,
+      image: 'assets/images/masks/ul/seiza.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'hidden',
-      goal: 100,
+      goal: 300,
       names: {
         AppLanguage.es: 'Constelación',
         AppLanguage.en: 'Constellation',
         AppLanguage.ja: '星座',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 100 joyas ocultas: estrellas que casi nadie ha visto.',
-        AppLanguage.en: 'Listen to 100 hidden gems: stars hardly anyone has seen.',
-        AppLanguage.ja: '隠れた名曲を100曲聴く。誰も見ていない星。',
+        AppLanguage.es: 'Escucha 300 joyas ocultas: estrellas que casi nadie ha visto.',
+        AppLanguage.en: 'Listen to 300 hidden gems: stars hardly anyone has seen.',
+        AppLanguage.ja: '隠れた名曲を300曲聴く。誰も見ていない星。',
       },
     ),
     const OniMask(
       id: 'enbu',
       kanji: '舞',
-      image: 'assets/images/masks/r/enbu.webp',
-      rarity: MaskRarity.r,
+      image: 'assets/images/masks/ul/enbu.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'style:rock',
-      goal: 60,
+      goal: 500,
       names: {
         AppLanguage.es: 'Kabuki Ardiente',
         AppLanguage.en: 'Burning Kabuki',
         AppLanguage.ja: '炎舞',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 60 canciones de rock.',
-        AppLanguage.en: 'Listen to 60 rock songs.',
-        AppLanguage.ja: 'ロックを60曲聴く。',
+        AppLanguage.es: 'Escucha 500 canciones de rock.',
+        AppLanguage.en: 'Listen to 500 rock songs.',
+        AppLanguage.ja: 'ロックを500曲聴く。',
       },
     ),
     const OniMask(
       id: 'chirune',
       kanji: '呪',
-      image: 'assets/images/masks/r/chirune.webp',
-      rarity: MaskRarity.r,
+      image: 'assets/images/masks/ul/chirune.webp',
+      rarity: MaskRarity.ul,
+      divine: true,
       counter: 'explicit',
-      goal: 60,
+      goal: 500,
       names: {
         AppLanguage.es: 'Runa de Sangre',
         AppLanguage.en: 'Blood Rune',
         AppLanguage.ja: '血の呪符',
       },
       descriptions: {
-        AppLanguage.es: 'Escucha 60 canciones con contenido explícito.',
-        AppLanguage.en: 'Listen to 60 explicit songs.',
-        AppLanguage.ja: '過激な表現のある曲を60曲聴く。',
+        AppLanguage.es: 'Escucha 500 canciones con contenido explícito.',
+        AppLanguage.en: 'Listen to 500 explicit songs.',
+        AppLanguage.ja: '過激な表現のある曲を500曲聴く。',
+      },
+    ),
+    // The two supreme gods: the most powerful masks of all.
+    const OniMask(
+      id: 'uchuu_shin',
+      kanji: '神',
+      image: 'assets/images/masks/dios/uchuu_shin.webp',
+      rarity: MaskRarity.dios,
+      counter: 'divine',
+      goal: 7,
+      names: {
+        AppLanguage.es: 'Dios del Universo',
+        AppLanguage.en: 'God of the Universe',
+        AppLanguage.ja: '宇宙神',
+      },
+      descriptions: {
+        AppLanguage.es: 'Reúne las 7 máscaras divinas. Quien las tiene todas sostiene el universo.',
+        AppLanguage.en: 'Collect the 7 divine masks. Whoever holds them all holds the universe.',
+        AppLanguage.ja: '7つの神の面をすべて集める。すべてを持つ者が宇宙を支える。',
+      },
+    ),
+    const OniMask(
+      id: 'ochigami',
+      kanji: '堕',
+      image: 'assets/images/masks/dios/ochigami.webp',
+      rarity: MaskRarity.dios,
+      counter: 'ultra',
+      goal: 8,
+      names: {
+        AppLanguage.es: 'Dios Caído',
+        AppLanguage.en: 'Fallen God',
+        AppLanguage.ja: '堕ちた神',
+      },
+      descriptions: {
+        AppLanguage.es: 'Reúne las 8 máscaras ultra que no son divinas. El que cayó del cielo reina sobre ellas.',
+        AppLanguage.en: 'Collect the 8 ultra masks that are not divine. The one who fell from the sky rules over them.',
+        AppLanguage.ja: '神ではない8つのウルトラの面を集める。天から堕ちた者がそれらを統べる。',
       },
     ),
   ];

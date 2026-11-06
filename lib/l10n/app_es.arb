@@ -1121,8 +1121,8 @@
       }
     }
   },
-  "maskRarity": "{rarity, select, r{R} sr{SR} ssr{SSR} other{UL}}",
-  "maskRarityName": "{rarity, select, r{RARA} sr{SÚPER RARA} ssr{SÚPER SÚPER RARA} other{ULTRA}}",
+  "maskRarity": "{rarity, select, r{R} sr{SR} ssr{SSR} dios{DIOS} other{UL}}",
+  "maskRarityName": "{rarity, select, r{RARA} sr{SÚPER RARA} ssr{SÚPER SÚPER RARA} dios{DIOS SUPREMO} other{ULTRA}}",
   "@maskRarityName": {
     "description": "Full name of a mask rarity tier (R, SR, SSR, UL).",
     "placeholders": {

@@ -144,6 +144,11 @@ class MaskProvider extends ChangeNotifier {
           .length,
       'artistMax' => _stats.artistPlays.values.fold<int>(0, (a, b) => b > a ? b : a),
       'masks' => _unlocked.length,
+      // The gods: the divine masks, and the ultra ones that are not.
+      'divine' => MaskCatalog.all.where((m) => m.divine && _unlocked.containsKey(m.id)).length,
+      'ultra' => MaskCatalog.all
+          .where((m) => m.rarity == MaskRarity.ul && !m.divine && _unlocked.containsKey(m.id))
+          .length,
       'night' => _stats.nightPlays,
       _ => c[key] ?? 0,
     };
@@ -594,13 +599,17 @@ class MaskProvider extends ChangeNotifier {
       _unlocked['oni'] = at;
       newly.add('oni');
     }
-    // The collectors' masks (Rey Oni at 50, Rey Kitsune at 75) come with
-    // the mask that reaches their count, and count themselves too.
-    for (final m in MaskCatalog.all) {
-      if (m.counter != 'masks' || _unlocked.containsKey(m.id)) continue;
-      if (_unlocked.length >= m.goal!) {
-        _unlocked[m.id] = at;
-        newly.add(m.id);
+    // The collectors' masks (Rey Oni at 50, Rey Kitsune at 75, the gods)
+    // come with the mask that completes their set.
+    for (var changed = true; changed;) {
+      changed = false;
+      for (final m in MaskCatalog.all) {
+        if (!_collectors.contains(m.counter) || _unlocked.containsKey(m.id)) continue;
+        if (counterValue(m.counter!) >= m.goal!) {
+          _unlocked[m.id] = at;
+          newly.add(m.id);
+          changed = true;
+        }
       }
     }
     _celebrations.addAll(newly);
@@ -703,6 +712,9 @@ class MaskProvider extends ChangeNotifier {
     _stats.lastDay = day;
     if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
   }
+
+  /// Counters that are collections of masks: checked on every unlock.
+  static const _collectors = {'masks', 'divine', 'ultra'};
 
   /// Away this many days, then back: Porcelana.
   static const int comebackDays = 14;

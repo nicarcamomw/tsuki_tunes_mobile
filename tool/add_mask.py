@@ -8,7 +8,7 @@ parts inside the mask (a kitsune's face) stay. Edges are softened and the
 white fringe is taken out of their color. The mask is then centered at the
 size of the others: 510x637, transparent, about 85% of the width.
 
-    python3 tool/add_mask.py <picture> <tier: r|sr|ssr|ul> <name> [...]
+    python3 tool/add_mask.py <picture> <tier: r|sr|ssr|ul|dios> <name> [...]
 
 Several masks at once: repeat the three arguments (the AI model loads once).
 
@@ -31,10 +31,15 @@ from PIL import Image, ImageDraw
 W, H = 510, 637
 # The mask's box inside the image, like the original four.
 FIT_W, FIT_H = 440, 560
-TIERS = ('r', 'sr', 'ssr', 'ul')
+TIERS = ('r', 'sr', 'ssr', 'ul', 'dios')
 
 # --fill-holes: also remove pure white pockets enclosed by the mask.
 FILL_HOLES = False
+
+# --glow: keep a light glow around the mask as soft, see-through light
+# (the AI cut-out plus how far each pixel is from white). For masks on a
+# bright halo; it greys pure white faces, so it's off by default.
+GLOW = False
 
 # How far from pure white (0-255, by the darkest channel) still counts as
 # background, and where the soft edge ends.
@@ -45,6 +50,15 @@ BG_FAR = 60
 def cut_out(img: Image.Image) -> Image.Image:
     rgb = np.asarray(img.convert('RGB')).astype(np.float32)
     h, w, _ = rgb.shape
+    if GLOW:
+        ai = ai_alpha(img)
+        if ai is None:
+            raise SystemExit('--glow needs rembg installed')
+        dist = 255 - rgb.min(axis=2)
+        alpha = np.maximum(ai, np.clip((dist - 12) / 140, 0, 1) ** 1.3)
+        a = np.maximum(alpha, 1e-3)[..., None]
+        color = np.clip((rgb - (1 - a) * 255) / a, 0, 255)
+        return Image.fromarray(np.dstack([color, alpha * 255]).astype(np.uint8), 'RGBA')
     # A dark background (not white): only the AI can tell the mask from it.
     corners = np.concatenate([rgb[:8, :8], rgb[:8, -8:], rgb[-8:, :8], rgb[-8:, -8:]]).reshape(-1, 3)
     if corners.min(axis=1).mean() < 128:
@@ -147,11 +161,14 @@ def add(src: str, tier: str, name: str) -> str:
 
 def main():
     """add_mask.py <picture> <tier> <name> [<picture> <tier> <name> ...]"""
-    global FILL_HOLES
+    global FILL_HOLES, GLOW
     args = sys.argv[1:]
     if '--fill-holes' in args:
         FILL_HOLES = True
         args.remove('--fill-holes')
+    if '--glow' in args:
+        GLOW = True
+        args.remove('--glow')
     if not args or len(args) % 3:
         raise SystemExit(__doc__)
     for i in range(0, len(args), 3):

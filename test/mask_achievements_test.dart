@@ -355,6 +355,28 @@ void main() {
       expect(masks.isUnlocked('kitsune_ou'), isTrue, reason: '74 + itself');
     });
 
+    test('the 7 divine masks bring the God of the Universe; the ultra ones the Fallen God', () {
+      final divine = [for (final m in MaskCatalog.all) if (m.divine) m.id];
+      for (final id in divine.take(6)) {
+        masks.unlock(id);
+      }
+      expect(masks.progress('uchuu_shin'), (6, 7));
+      expect(masks.isUnlocked('uchuu_shin'), isFalse);
+      masks.unlock(divine.last);
+      expect(masks.isUnlocked('uchuu_shin'), isTrue);
+
+      final ultra = [
+        for (final m in MaskCatalog.all)
+          if (m.rarity == MaskRarity.ul && !m.divine) m.id,
+      ];
+      for (final id in ultra.take(ultra.length - 1)) {
+        masks.unlock(id);
+      }
+      expect(masks.isUnlocked('ochigami'), isFalse);
+      masks.unlock(ultra.last);
+      expect(masks.isUnlocked('ochigami'), isTrue);
+    });
+
     test('El Oni still asks for the original achievements only', () {
       for (final m in MaskCatalog.oniSet) {
         masks.unlock(m.id);

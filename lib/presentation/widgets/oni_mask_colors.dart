@@ -9,5 +9,6 @@ extension OniMaskColors on OniMask {
         MaskRarity.sr => const Color(0xFFB026FF),
         MaskRarity.ssr => const Color(0xFFFFC94A),
         MaskRarity.ul => const Color(0xFFFF2A4A),
+        MaskRarity.dios => const Color(0xFFFFFFFF),
       };
 }
