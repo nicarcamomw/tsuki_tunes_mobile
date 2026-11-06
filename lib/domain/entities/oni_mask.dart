@@ -683,9 +683,9 @@ class MaskCatalog {
       rarity: MaskRarity.sr,
       weekly: true,
       names: {
-        AppLanguage.es: 'Luna de Sangre',
-        AppLanguage.en: 'Blood Moon',
-        AppLanguage.ja: '血の月',
+        AppLanguage.es: 'Lluvia de Sangre',
+        AppLanguage.en: 'Blood Rain',
+        AppLanguage.ja: '血の雨',
       },
       descriptions: _weeklyDescription,
     ),
