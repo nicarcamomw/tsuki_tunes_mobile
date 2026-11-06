@@ -1,4 +1,7 @@
-"""Turns a mask picture on a plain white background into a mask image.
+"""Turns a mask picture on a plain background into a mask image.
+
+White backgrounds are cut by color (plus rembg when installed); dark ones
+by rembg alone.
 
 The background is what is white and reaches the picture's edges: white
 parts inside the mask (a kitsune's face) stay. Edges are softened and the
@@ -30,6 +33,9 @@ W, H = 510, 637
 FIT_W, FIT_H = 440, 560
 TIERS = ('r', 'sr', 'ssr', 'ul')
 
+# --fill-holes: also remove pure white pockets enclosed by the mask.
+FILL_HOLES = False
+
 # How far from pure white (0-255, by the darkest channel) still counts as
 # background, and where the soft edge ends.
 BG_NEAR = 18
@@ -39,6 +45,13 @@ BG_FAR = 60
 def cut_out(img: Image.Image) -> Image.Image:
     rgb = np.asarray(img.convert('RGB')).astype(np.float32)
     h, w, _ = rgb.shape
+    # A dark background (not white): only the AI can tell the mask from it.
+    corners = np.concatenate([rgb[:8, :8], rgb[:8, -8:], rgb[-8:, :8], rgb[-8:, -8:]]).reshape(-1, 3)
+    if corners.min(axis=1).mean() < 128:
+        ai = ai_alpha(img)
+        if ai is None:
+            raise SystemExit('dark background: needs rembg installed')
+        return Image.fromarray(np.dstack([rgb, ai * 255]).astype(np.uint8), 'RGBA')
     # 0 = pure white, 255 = black.
     dist = 255 - rgb.min(axis=2)
 
@@ -55,9 +68,26 @@ def cut_out(img: Image.Image) -> Image.Image:
     # near-white (gone) to the far edge (kept) for smooth edges.
     soft = np.clip((dist - BG_NEAR) / (BG_FAR - BG_NEAR), 0, 1)
     alpha = np.where(background, soft, 1.0)
+    if FILL_HOLES:
+        # Pure white pockets the edges can't reach (white showing between
+        # a face and the cords around it). Off by default: white masks
+        # (porcelain) have pure white areas of their own.
+        pockets = Image.fromarray(np.where((dist < 14) & ~background, 255, 0).astype(np.uint8)).copy()
+        seen = np.zeros((h, w), bool)
+        for y in range(0, h, 4):
+            for x in range(0, w, 4):
+                if pockets.getpixel((x, y)) == 255 and not seen[y, x]:
+                    ImageDraw.floodfill(pockets, (x, y), 64)
+                    blob = np.asarray(pockets) == 64
+                    seen |= blob
+                    if blob.sum() > h * w * 0.0005:
+                        background |= blob
+                    pockets.paste(Image.fromarray(np.where(blob, 1, 0).astype(np.uint8)), mask=Image.fromarray((blob * 255).astype(np.uint8)))
+        soft = np.clip((dist - BG_NEAR) / (BG_FAR - BG_NEAR), 0, 1)
+        alpha = np.where(background, soft, 1.0)
     ai = ai_alpha(img)
     if ai is not None:
-        alpha = np.maximum(alpha, ai)
+        alpha = np.maximum(alpha, np.where(background & (dist < 14), 0, ai))
         # Background the edges can't reach (white between cords, a floor
         # shadow): light, colorless, and background to the AI.
         light = (rgb.min(axis=2) > 150) & (rgb.max(axis=2) - rgb.min(axis=2) < 28)
@@ -117,7 +147,11 @@ def add(src: str, tier: str, name: str) -> str:
 
 def main():
     """add_mask.py <picture> <tier> <name> [<picture> <tier> <name> ...]"""
+    global FILL_HOLES
     args = sys.argv[1:]
+    if '--fill-holes' in args:
+        FILL_HOLES = True
+        args.remove('--fill-holes')
     if not args or len(args) % 3:
         raise SystemExit(__doc__)
     for i in range(0, len(args), 3):
