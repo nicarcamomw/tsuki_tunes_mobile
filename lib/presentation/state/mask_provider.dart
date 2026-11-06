@@ -107,6 +107,9 @@ class MaskProvider extends ChangeNotifier {
   bool isUnlocked(String id) => _unlocked.containsKey(id);
   DateTime? unlockedAt(String id) => _unlocked[id];
   int get unlockedCount => _unlocked.length;
+
+  /// The masks awakened so far.
+  Set<String> get unlockedIds => _unlocked.keys.toSet();
   int get totalCount => MaskCatalog.all.length;
   OniMask? get equipped => MaskCatalog.byId(_equipped);
   String? get pendingCelebration => _celebrations.isEmpty ? null : _celebrations.first;

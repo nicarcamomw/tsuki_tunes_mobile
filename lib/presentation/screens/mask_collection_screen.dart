@@ -10,6 +10,7 @@ import '../widgets/oni_mask_art.dart';
 import '../widgets/oni_mask_colors.dart';
 import '../widgets/swipeable_sheet.dart';
 import '../widgets/weekly_challenges_card.dart';
+import 'lore_screen.dart';
 
 class MaskCollectionScreen extends ConsumerWidget {
   const MaskCollectionScreen({super.key});
@@ -122,6 +123,12 @@ class MaskCollectionScreen extends ConsumerWidget {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _LoreButton(label: strings.loreButton, onTap: () => LoreScreen.open(context)),
+            ),
+          ),
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(16, 0, 16, 18),
@@ -144,6 +151,59 @@ class MaskCollectionScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Opens Tsuki Lore: a moon, gold and night, unlike the rest of the screen.
+class _LoreButton extends ConsumerWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _LoreButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    const gold = Color(0xFFFFE9A8);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(colors: [Color(0xFF241F38), Color(0xFF11111B)]),
+            border: Border.all(color: gold.withValues(alpha: 0.5)),
+            boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.12), blurRadius: 16)],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF4EFE0),
+                  boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.6), blurRadius: 12)],
+                ),
+                child: const Text('月', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF1A1A28))),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label,
+                    style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: gold, letterSpacing: 0.4)),
+              ),
+              const Icon(Icons.auto_stories_rounded, color: gold, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

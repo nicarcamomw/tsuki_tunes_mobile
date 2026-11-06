@@ -369,6 +369,137 @@ class AppStrings {
 
   String maskRarity(MaskRarity r) => _l.maskRarity(r.name);
 
+  // --- Tsuki Lore ---
+  String get loreTitle => 'TSUKI LORE';
+  String get loreSubtitle => switch (language) {
+        AppLanguage.es => 'La historia del centro del universo',
+        AppLanguage.en => 'The story of the centre of the universe',
+        AppLanguage.ja => '宇宙の中心の物語',
+      };
+  String get loreButton => switch (language) {
+        AppLanguage.es => 'TSUKI LORE · La historia de las máscaras',
+        AppLanguage.en => 'TSUKI LORE · The story of the masks',
+        AppLanguage.ja => 'TSUKI LORE・面の物語',
+      };
+  String loreChaptersOpen(int open, int total) => switch (language) {
+        AppLanguage.es => '$open de $total capítulos abiertos',
+        AppLanguage.en => '$open of $total chapters open',
+        AppLanguage.ja => '$total章中$open章',
+      };
+  String loreTomo(String numeral) => switch (language) {
+        AppLanguage.es => 'TOMO $numeral',
+        AppLanguage.en => 'VOLUME $numeral',
+        AppLanguage.ja => '第$numeral巻',
+      };
+  String loreChapter(String numeral) => switch (language) {
+        AppLanguage.es => numeral == '0' ? 'PRÓLOGO' : 'CAPÍTULO $numeral',
+        AppLanguage.en => numeral == '0' ? 'PROLOGUE' : 'CHAPTER $numeral',
+        AppLanguage.ja => numeral == '0' ? '序章' : '第$numeral章',
+      };
+  String get loreComingSoon => switch (language) {
+        AppLanguage.es => 'Próximamente',
+        AppLanguage.en => 'Coming soon',
+        AppLanguage.ja => '近日公開',
+      };
+  String get loreComingSoonHint => switch (language) {
+        AppLanguage.es => 'Este tomo llegará en una próxima actualización.',
+        AppLanguage.en => 'This volume arrives in a future update.',
+        AppLanguage.ja => 'この巻は今後のアップデートで公開されます。',
+      };
+  String loreNeedMasks(int n) => switch (language) {
+        AppLanguage.es => n == 1 ? 'Despierta tu primera máscara' : 'Despierta $n máscaras',
+        AppLanguage.en => n == 1 ? 'Wake your first mask' : 'Wake $n masks',
+        AppLanguage.ja => '面を$n枚目覚めさせる',
+      };
+  String loreNeedFaction(String clan) => switch (language) {
+        AppLanguage.es => 'Despierta una máscara de $clan',
+        AppLanguage.en => 'Wake a mask of $clan',
+        AppLanguage.ja => '$clanの面を1枚目覚めさせる',
+      };
+  String get loreNeedUltra => switch (language) {
+        AppLanguage.es => 'Despierta a uno de los Ocho Ultras',
+        AppLanguage.en => 'Wake one of the Eight Ultras',
+        AppLanguage.ja => '八つのウルトラの1つを目覚めさせる',
+      };
+  String loreNeedDivine(int n) => switch (language) {
+        AppLanguage.es => n == 1 ? 'Despierta una Cara divina' : 'Despierta $n Caras divinas',
+        AppLanguage.en => n == 1 ? 'Wake a divine Face' : 'Wake $n divine Faces',
+        AppLanguage.ja => '神の面を$n枚目覚めさせる',
+      };
+  String get loreNeedGod => switch (language) {
+        AppLanguage.es => 'Despierta a un Dios Supremo',
+        AppLanguage.en => 'Wake a Supreme God',
+        AppLanguage.ja => '至高神を目覚めさせる',
+      };
+  String get loreMembers => switch (language) {
+        AppLanguage.es => 'MIEMBROS DEL CLAN',
+        AppLanguage.en => 'CLAN MEMBERS',
+        AppLanguage.ja => '一族の面',
+      };
+  String get loreLeader => switch (language) {
+        AppLanguage.es => 'Líder',
+        AppLanguage.en => 'Leader',
+        AppLanguage.ja => '長',
+      };
+  String get loreRival => switch (language) {
+        AppLanguage.es => 'Rival',
+        AppLanguage.en => 'Rival',
+        AppLanguage.ja => '宿敵',
+      };
+  String get loreSecret => switch (language) {
+        AppLanguage.es => 'SECRETO DEL CLAN',
+        AppLanguage.en => 'CLAN SECRET',
+        AppLanguage.ja => '一族の秘密',
+      };
+  String loreSecretLocked(int have, int total) => switch (language) {
+        AppLanguage.es => 'Despierta a todo el clan para conocer su secreto ($have/$total).',
+        AppLanguage.en => 'Wake the whole clan to learn its secret ($have/$total).',
+        AppLanguage.ja => '一族すべてを目覚めさせると秘密が明かされる（$have/$total）。',
+      };
+  String get loreBonds => switch (language) {
+        AppLanguage.es => 'VÍNCULOS',
+        AppLanguage.en => 'BONDS',
+        AppLanguage.ja => '絆',
+      };
+  String get loreBondLocked => switch (language) {
+        AppLanguage.es => 'Despierta a todas estas máscaras para conocer su historia.',
+        AppLanguage.en => 'Wake all these masks to learn their story.',
+        AppLanguage.ja => 'これらの面をすべて目覚めさせると物語が明かされる。',
+      };
+  String get loreFaceVeiled => switch (language) {
+        AppLanguage.es => 'Esta Cara aún no se ha mostrado.',
+        AppLanguage.en => 'This Face has not shown itself yet.',
+        AppLanguage.ja => 'この面はまだ姿を見せていない。',
+      };
+  String loreBondKind(String kind) => switch (language) {
+        AppLanguage.es => switch (kind) {
+            'rival' => 'RIVALES',
+            'family' => 'FAMILIA',
+            'mentor' => 'MAESTRO Y DISCÍPULO',
+            'soul' => 'UNA SOLA ALMA',
+            _ => 'PACTO',
+          },
+        AppLanguage.en => switch (kind) {
+            'rival' => 'RIVALS',
+            'family' => 'FAMILY',
+            'mentor' => 'MASTER AND STUDENT',
+            'soul' => 'ONE SOUL',
+            _ => 'PACT',
+          },
+        AppLanguage.ja => switch (kind) {
+            'rival' => '宿敵',
+            'family' => '血縁',
+            'mentor' => '師弟',
+            'soul' => '同魂',
+            _ => '盟約',
+          },
+      };
+  String loreClanOf(String clan) => switch (language) {
+        AppLanguage.es => 'Clan: $clan',
+        AppLanguage.en => 'Clan: $clan',
+        AppLanguage.ja => '一族：$clan',
+      };
+
   /// "SÚPER RARA" for SR.
   String maskRarityName(MaskRarity r) => _l.maskRarityName(r.name);
 
