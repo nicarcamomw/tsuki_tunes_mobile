@@ -45,6 +45,7 @@ void main() {
         await user.collection('listenedDeletions').doc('t9').set({'deletedAt': DateTime(2026)});
         await user.collection('playDays').doc('2026-11-02').set({'date': '2026-11-02'});
         await db.collection('profiles').doc(uid).set({'displayName': 'Name $uid'});
+        await db.collection('ascensions').doc(uid).set({'name': 'Name $uid', 'level': 100});
       }
     });
 
@@ -62,6 +63,7 @@ void main() {
         expect((await user.collection(name).get()).docs, isEmpty, reason: name);
       }
       expect((await db.collection('profiles').doc('me').get()).exists, isFalse);
+      expect((await db.collection('ascensions').doc('me').get()).exists, isFalse);
       // The rules don't let the app delete it: nothing personal stays.
       final left = (await user.get()).data()!;
       expect(left.keys, ['lastSubWrite']);
@@ -74,6 +76,7 @@ void main() {
       expect((await other.collection('listenedTracks').get()).docs, hasLength(450));
       expect((await other.get()).data()!['email'], 'other@example.com');
       expect((await db.collection('profiles').doc('other').get()).exists, isTrue);
+      expect((await db.collection('ascensions').doc('other').get()).exists, isTrue);
     });
   });
 

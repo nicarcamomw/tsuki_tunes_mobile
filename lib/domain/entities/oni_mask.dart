@@ -2280,7 +2280,7 @@ class MaskCatalog {
       image: 'assets/images/masks/ssr/kakeru.webp',
       rarity: MaskRarity.ssr,
       counter: 'clan:cristal',
-      goal: 12,
+      goal: 9,
       names: {
         AppLanguage.es: 'El Vidrio Ausente',
         AppLanguage.en: 'The Missing Pane',
@@ -2352,7 +2352,7 @@ class MaskCatalog {
       image: 'assets/images/masks/ssr/tsuki_shin.webp',
       rarity: MaskRarity.ssr,
       counter: 'clan:elementos',
-      goal: 17,
+      goal: 15,
       names: {
         AppLanguage.es: 'Corazón de la Luna',
         AppLanguage.en: 'Heart of the Moon',
@@ -2401,24 +2401,24 @@ class MaskCatalog {
         AppLanguage.ja: '神ではない8つのウルトラの面を集める。天から堕ちた者がそれらを統べる。',
       },
     ),
-    // The Bearer's own mask: level 100 of Eco, when the Bearer crosses over
-    // and becomes an ethereal being. No clan, no faction: their own.
+    // The Bearer's own mask: at level 100 of Eco the Bearer may choose to
+    // cross over and become an ethereal being. No clan, no faction: theirs.
     const OniMask(
       id: 'portador',
       kanji: '霊',
       image: 'assets/images/masks/ul/portador.webp',
       rarity: MaskRarity.ul,
-      counter: 'level',
-      goal: 100,
+      counter: 'ethereal',
+      goal: 1,
       names: {
         AppLanguage.es: 'Máscara Etérea',
         AppLanguage.en: 'Ethereal Mask',
         AppLanguage.ja: '霊の面',
       },
       descriptions: {
-        AppLanguage.es: 'Llega al nivel 100 de Eco. El Portador cruza, se vuelve un ser etéreo y recibe su propia máscara.',
-        AppLanguage.en: 'Reach Eco level 100. The Bearer crosses over, becomes an ethereal being and receives a mask of their own.',
-        AppLanguage.ja: 'エコーレベル100に到達する。運び手は境を越えて霊なる者となり、自分だけの面を得る。',
+        AppLanguage.es: 'Llega al nivel 100 de Eco y elige cruzar. Te vuelves un ser etéreo, y tu propia máscara se forja en el centro del universo.',
+        AppLanguage.en: 'Reach Eco level 100 and choose to cross. You become an ethereal being, and your own mask is forged at the centre of the universe.',
+        AppLanguage.ja: 'エコーレベル100に到達し、越えることを選ぶ。霊なる者となり、宇宙の中心で自分だけの面が鍛えられる。',
       },
     ),
   ];

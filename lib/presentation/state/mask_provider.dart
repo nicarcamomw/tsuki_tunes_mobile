@@ -159,10 +159,11 @@ class MaskProvider extends ChangeNotifier {
       // The gods: the divine masks, and the ultra ones that are not.
       'divine' => MaskCatalog.all.where((m) => m.divine && _unlocked.containsKey(m.id)).length,
       'ultra' => MaskCatalog.all
-          .where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'level' && _unlocked.containsKey(m.id))
+          .where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal' && _unlocked.containsKey(m.id))
           .length,
       'night' => _stats.nightPlays,
       'level' => level,
+      'ethereal' => _stats.choice == 'ser' ? 1 : 0,
       _ => c[key] ?? 0,
     };
   }
@@ -223,7 +224,72 @@ class MaskProvider extends ChangeNotifier {
   }
 
   int get level => EcoLevels.levelFor(eco);
-  EcoRank get rank => EcoLevels.rankOf(level);
+
+  /// The rank: by level, and at 100 by the Bearer's choice. Until they
+  /// choose, they are still a Seer.
+  EcoRank get rank {
+    final l = level;
+    if (l < EcoLevels.maxLevel) return EcoLevels.rankOf(l);
+    return switch (_stats.choice) {
+      'ser' => EcoRank.etereo,
+      'no' => EcoRank.inconmensurable,
+      _ => EcoRank.vidente,
+    };
+  }
+
+  /// The Bearer's choice at level 100: to become an ethereal being or to
+  /// stay a Bearer. Made once, for good.
+  EtherealChoice? get etherealChoice => switch (_stats.choice) {
+        'ser' => EtherealChoice.ser,
+        'no' => EtherealChoice.noSer,
+        _ => null,
+      };
+
+  /// Level 100 reached and the choice still to make.
+  bool get choicePending => level >= EcoLevels.maxLevel && _stats.choice == null;
+
+  /// Whether the Bearer's Eco reached the legend: the level of a Supreme
+  /// God. No one has.
+  bool get legendReached => _stats.legend;
+
+  /// Makes the level 100 choice, once: [ser] crosses over (the ethereal
+  /// mask awakens), otherwise the Bearer stays one for good. [name] and
+  /// [maskName] go to the moon's keeper, who forges the Bearer's own mask.
+  Future<void> chooseEthereal({required bool ser, String? name, String? maskName}) async {
+    if (!choicePending) return;
+    _stats.choice = ser ? 'ser' : 'no';
+    _stats.progressDirty = true;
+    _checkCounterMasks();
+    notifyListeners();
+    await _saveLocal();
+    await _writeCloud({'choice': _stats.choice});
+    await _reportAscension(name: name, maskName: maskName);
+  }
+
+  /// Tells the moon's keeper (the app's owner) about a Bearer at level 100,
+  /// their choice, or the legend: a document they are notified of.
+  Future<void> _reportAscension({String? name, String? maskName}) async {
+    final uid = _uid;
+    final firebase = FirebaseService();
+    if (uid == null || uid.startsWith('guest_') || !firebase.isInitialized || !firebase.isSignedIn) return;
+    String? cut(String? v, int max) => v == null || v.trim().isEmpty ? null : v.trim().substring(0, min(v.trim().length, max));
+    try {
+      await firebase.db.collection('ascensions').doc(uid).set({
+        if (cut(name, 80) case final n?) 'name': n,
+        if (cut(maskName, 60) case final m?) 'maskName': m,
+        'level': level,
+        'eco': eco,
+        if (_stats.choice != null) 'choice': _stats.choice,
+        if (_stats.legend) 'legend': true,
+        'at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      _log.severe('ascension report error: $e');
+    }
+  }
+
+  /// The name the Bearer goes by, for the keeper's notice.
+  String? Function()? userName;
   double get levelProgress => EcoLevels.progressIn(eco);
 
   bool hasFeature(EcoFeature f) => level >= f.level;
@@ -251,6 +317,12 @@ class MaskProvider extends ChangeNotifier {
   void _checkLevel() {
     if (!_loaded) return;
     final now = level;
+    if (!_stats.legend && eco >= EcoLevels.legendEco) {
+      // It has never happened. If it does, the keeper must know.
+      _stats.legend = true;
+      unawaited(_saveLocal());
+      unawaited(_reportAscension(name: userName?.call()));
+    }
     if (_stats.lvl == 0) {
       _stats.lvl = now;
       return;
@@ -260,6 +332,8 @@ class MaskProvider extends ChangeNotifier {
     _stats.lvl = now;
     unawaited(_saveLocal());
     _checkCounterMasks();
+    // Level 100: the keeper hears of it before the Bearer chooses.
+    if (now >= EcoLevels.maxLevel) unawaited(_reportAscension(name: userName?.call()));
   }
 
   @override
@@ -495,6 +569,12 @@ class MaskProvider extends ChangeNotifier {
         final eq = masks['equipped'];
         if (eq is String && MaskCatalog.byId(eq) != null && eq != _equipped) {
           _equipped = eq;
+          changed = true;
+        }
+        final choice = masks['choice'];
+        if ((choice == 'ser' || choice == 'no') && _stats.choice == null) {
+          _stats.choice = choice as String;
+          _checkCounterMasks();
           changed = true;
         }
       }
@@ -1153,6 +1233,11 @@ class _Stats {
   /// The level last seen (0: not yet), and the player colour chosen.
   int lvl = 0;
   String? color;
+
+  /// The level 100 choice ('ser' or 'no'), and whether the legend was
+  /// reached.
+  String? choice;
+  bool legend = false;
   Set<int> shielded = {};
   static const int keptDays = 400;
 
@@ -1210,6 +1295,8 @@ class _Stats {
         'shielded': shielded.toList(),
         'lvl': lvl,
         if (color != null) 'color': color,
+        if (choice != null) 'choice': choice,
+        if (legend) 'legend': true,
         'session': sessionSec,
         'idle': idleSec,
         'history': historyApplied,
@@ -1255,6 +1342,8 @@ class _Stats {
       s.shielded = {for (final d in (m['shielded'] as List? ?? const [])) d as int};
       s.lvl = m['lvl'] ?? 0;
       s.color = m['color'] as String?;
+      s.choice = m['choice'] as String?;
+      s.legend = m['legend'] == true;
       s.sessionSec = m['session'] ?? 0;
       s.idleSec = m['idle'] ?? 0;
       s.historyApplied = m['history'] == true;
@@ -1269,3 +1358,6 @@ class _Stats {
 /// yesterday had ([atRisk]), days missed but covered by shields
 /// ([shielded]), the run broken ([lost]) or never started ([none]).
 enum StreakState { done, atRisk, shielded, lost, none }
+
+/// The level 100 choice: to become an ethereal being, or not.
+enum EtherealChoice { ser, noSer }

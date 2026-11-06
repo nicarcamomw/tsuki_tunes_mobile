@@ -23,7 +23,6 @@ enum EcoFeature {
   moonMix(19),
   radioAdventurous(20),
   smartShuffle(23),
-  ultraEquip(30),
   hearBeings(75),
   seeBeings(90),
   ethereal(100);
@@ -43,7 +42,11 @@ enum EcoRank {
   portador(50),
   oyente(75),
   vidente(90),
-  etereo(100);
+  etereo(100),
+
+  /// A Bearer at level 100 who chose not to cross: the privileges of a
+  /// Bearer of immeasurable levels. Only by choice, never by level.
+  inconmensurable(100);
 
   const EcoRank(this.from);
   final int from;
@@ -58,20 +61,20 @@ class EcoColor {
   const EcoColor(this.id, this.argb, this.level, this.name);
 }
 
-enum EcoRewardKind { start, feature, sound, tomo, color, rank, fragment }
+enum EcoRewardKind { start, feature, sound, chapter, color, rank, fragment }
 
-/// What a level gives: a feature, an ambient sound, a lore volume, a
-/// player colour, a new rank, or a fragment of the legend.
+/// What a level gives: a feature, an ambient sound, a chapter of the lore,
+/// a player colour, a new rank, or a fragment of the legend.
 class EcoReward {
   final EcoRewardKind kind;
   final EcoFeature? feature;
   final AmbientSound? sound;
-  final int? tomo;
+  final LoreChapter? chapter;
   final EcoColor? color;
   final EcoRank? rank;
   final Txt? fragment;
 
-  const EcoReward._(this.kind, {this.feature, this.sound, this.tomo, this.color, this.rank, this.fragment});
+  const EcoReward._(this.kind, {this.feature, this.sound, this.chapter, this.color, this.rank, this.fragment});
 }
 
 /// The Eco levels: 1 to 100, each harder to reach than the last, and the
@@ -115,12 +118,10 @@ class EcoLevels {
     return ((eco - from) / (legendEco - from)).clamp(0.0, 1.0);
   }
 
-  static EcoRank rankOf(int level) => EcoRank.values.lastWhere((r) => level >= r.from);
-
-  /// Lore volumes and the level that opens each (volume I is open).
-  static const Map<int, int> tomoLevels = {1: 1, 2: 10, 3: 20, 4: 40};
-
-  static bool tomoOpen(int tomo, int level) => level >= (tomoLevels[tomo] ?? maxLevel + 1);
+  /// The rank a level gives. At 100 it is the Seer's until the Bearer
+  /// chooses (MaskProvider.rank).
+  static EcoRank rankOf(int level) =>
+      EcoRank.values.lastWhere((r) => level >= r.from && r != EcoRank.inconmensurable);
 
   /// The ambient sounds and their levels: rain comes with the mixer.
   static const Map<AmbientSound, int> soundLevels = {
@@ -181,15 +182,16 @@ class EcoLevels {
 
     add(1, const EcoReward._(EcoRewardKind.start));
     for (final r in EcoRank.values.skip(1)) {
-      add(r.from, EcoReward._(EcoRewardKind.rank, rank: r));
+      if (r != EcoRank.inconmensurable) add(r.from, EcoReward._(EcoRewardKind.rank, rank: r));
     }
     for (final f in EcoFeature.values) {
       add(f.level, EcoReward._(EcoRewardKind.feature, feature: f));
     }
     soundLevels.forEach((s, l) => add(l, EcoReward._(EcoRewardKind.sound, sound: s)));
-    tomoLevels.forEach((t, l) {
-      if (t > 1) add(l, EcoReward._(EcoRewardKind.tomo, tomo: t));
-    });
+    // Eco is knowledge: each chapter of the lore opens at its level.
+    for (final c in TsukiLore.chapters) {
+      if (c.level > 1) add(c.level, EcoReward._(EcoRewardKind.chapter, chapter: c));
+    }
     for (final c in colors) {
       add(c.level, EcoReward._(EcoRewardKind.color, color: c));
     }
@@ -232,12 +234,8 @@ class EcoLevels {
         'Silence reaches Tsuki too. It falls like grey snow and dims the Echo it touches. The Elementals sweep it away every morning.'),
     Txt('Una canción escuchada mil veces deja un surco en la luna. Hay surcos tan profundos que los seres viajan por ellos como por ríos.',
         'A song heard a thousand times leaves a groove in the moon. Some grooves run so deep that the beings travel them like rivers.'),
-    Txt('El Shogunato guarda un registro de cada Portador cuyo Eco llegó intacto. El libro ocupa una torre entera y nunca se ha cerrado.',
-        'The Shogunate keeps a record of every Bearer whose Echo arrived whole. The book fills an entire tower and has never been closed.'),
     Txt('Dicen que las Tres Coronas no se odian. Se temen. Y en Tsuki, el miedo dura más que el odio.',
         'They say the Three Crowns do not hate each other. They fear each other. And on Tsuki, fear lasts longer than hate.'),
-    Txt('Los seres de la Corte de Cristal no hablan: vibran. Si te acercas lo suficiente, sus palabras se sienten en los dientes.',
-        'The beings of the Crystal Court do not speak: they vibrate. Get close enough and you feel their words in your teeth.'),
     Txt('En Tsuki no hay día ni noche: hay luna llena y luna nueva. Los clanes pelean en una y hacen tratos en la otra.',
         'On Tsuki there is no day or night: there is full moon and new moon. The clans fight in one and strike deals in the other.'),
     Txt('Cuando un Portador deja de escuchar por mucho tiempo, su Eco se enfría. Pero si vuelve, el primer Eco que llega brilla el doble.',
@@ -258,10 +256,6 @@ class EcoLevels {
         'Bearers who pass the halfway point begin to dream of craters they have never seen.'),
     Txt('Se cuenta que una vez un Portador escuchó durante cuarenta días sin parar. Al día cuarenta y uno, la Corte de Cristal le dedicó una torre.',
         'It is told that a Bearer once listened for forty days without stopping. On the forty-first, the Crystal Court raised a tower in their name.'),
-    Txt('Los Elementales plantan árboles donde cae el Eco de los Portadores que escuchan de madrugada. Ese bosque ya no tiene fin.',
-        'The Elementals plant trees where the Echo of Bearers who listen at dawn falls. That forest no longer has an end.'),
-    Txt('En el Shogunato, los aprendices practican callando. Dicen que solo quien conoce el silencio puede mandar con el sonido.',
-        'In the Shogunate, apprentices train in silence. They say only those who know silence can command with sound.'),
     Txt('Mientras más Eco carga un Portador, más se le acercan los seres etéreos. Algunos solo para mirar. Otros, para pedir.',
         'The more Echo a Bearer carries, the closer the ethereal beings come. Some only to look. Others, to ask.'),
     Txt('Con suficiente Eco, un Portador empieza a notar cosas raras: una canción que suena antes de elegirla, una nota que nadie más oye.',
@@ -284,8 +278,6 @@ class EcoLevels {
         'What the beings whisper is almost never for the Bearer. They talk among themselves about them: how much Echo they bring, and how much they still lack.'),
     Txt('Hay un nivel más allá de todo. Los seres lo llaman el nivel de los Dioses Supremos, y lo dicen en voz muy baja.',
         'There is a level beyond everything. The beings call it the level of the Supreme Gods, and they say it very quietly.'),
-    Txt('Ningún Portador ha llegado jamás al nivel de un Dios Supremo. Algunos dicen que es imposible. Otros, que solo no ha pasado todavía.',
-        'No Bearer has ever reached the level of a Supreme God. Some say it is impossible. Others, that it simply has not happened yet.'),
     Txt('Ver a un ser etéreo es más difícil que oírlo. La luz de Tsuki los esconde: hay que tener tanto Eco que la luz deje de cegar.',
         'Seeing an ethereal being is harder than hearing one. Tsuki\'s light hides them: it takes so much Echo that the light stops blinding.'),
     Txt('Las siete Caras temen una sola cosa: un Portador con tanto Eco como un dios. Ese día, dicen, el equilibrio se romperá.',

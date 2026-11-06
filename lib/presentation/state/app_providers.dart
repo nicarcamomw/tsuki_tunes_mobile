@@ -99,7 +99,7 @@ final streakReminderProvider = Provider<StreakReminder>((ref) => StreakReminder.
 
 /// Masks belong to the signed-in account (null while signed out or guest).
 final maskProvider = ChangeNotifierProvider<MaskProvider>((ref) {
-  final masks = MaskProvider();
+  final masks = MaskProvider()..userName = () => ref.read(authProvider).user?.displayName;
   // The streak's evening reminder follows the run (it changes nothing
   // when the run hasn't changed).
   masks.addListener(() => unawaited(StreakReminder.shared.sync(masks.streakForReminder)));

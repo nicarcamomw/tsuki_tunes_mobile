@@ -560,8 +560,6 @@ class _MaskDetail extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    final top = mask.rarity == MaskRarity.ul || mask.rarity == MaskRarity.dios;
-                    if (!isEquipped && top && !ecoAllows(context, EcoFeature.ultraEquip)) return;
                     HapticFeedback.mediumImpact();
                     if (isEquipped) {
                       masks.unequip();
@@ -590,9 +588,11 @@ class _MaskDetail extends ConsumerWidget {
   }
 }
 
-/// What a being whispers to those who can hear it: its clan's motto, or
-/// for the Faces of the Universe, the first words of their legend.
+/// What a being whispers to those who can hear it: its own words for the
+/// Five who crossed, its clan's motto, or for the Faces of the Universe,
+/// the first words of their legend.
 String? _whisperOf(OniMask mask, AppLanguage lang) {
+  if (TsukiLore.crossedWhispers[mask.id] case final w?) return w.of(lang);
   final clan = TsukiLore.factionOf(mask.id);
   if (clan != null) return clan.motto.of(lang).replaceAll(RegExp('[«»“”]'), '');
   for (final f in TsukiLore.faces) {

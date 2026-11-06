@@ -36,7 +36,7 @@ void main() {
         unorderedEquals(['uchuu_shin', 'ochigami']));
     // The Fallen God asks for every non-divine UL (not the Bearer's own).
     final ultra =
-        MaskCatalog.all.where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'level').length;
+        MaskCatalog.all.where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal').length;
     expect(MaskCatalog.byId('ochigami')!.goal, ultra);
   });
 }

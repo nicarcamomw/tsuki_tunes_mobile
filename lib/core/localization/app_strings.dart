@@ -409,6 +409,7 @@ class AppStrings {
         EcoRank.oyente => _es('Oyente de lo Etéreo', 'Hearer of the Ethereal', '霊を聴く者'),
         EcoRank.vidente => _es('Vidente de lo Etéreo', 'Seer of the Ethereal', '霊を視る者'),
         EcoRank.etereo => _es('Ser Etéreo', 'Ethereal Being', '霊なる者'),
+        EcoRank.inconmensurable => _es('Portador Inconmensurable', 'Immeasurable Bearer', '計り知れぬ運び手'),
       };
 
   String ecoFeatureName(EcoFeature f) => switch (f) {
@@ -429,16 +430,10 @@ class AppStrings {
         EcoFeature.moonMix => _es('Mezcla de luna llena', 'Full moon mix', '満月ミックス'),
         EcoFeature.radioAdventurous => _es('Radio en modo Aventurero', 'Radio in Adventurous mode', 'ラジオ:冒険モード'),
         EcoFeature.smartShuffle => _es('Aleatorio con recomendaciones', 'Shuffle with recommendations', 'おすすめ入りシャッフル'),
-        EcoFeature.ultraEquip => _es('Portar seres UL y DS, con su aura en el reproductor',
-            'Wear UL and DS beings, with their aura on the player', 'ULとDSの霊をまとい、プレーヤーにオーラ'),
         EcoFeature.hearBeings => _es('Escuchar a los seres etéreos', 'Hear the ethereal beings', '霊なる者の声を聴く'),
         EcoFeature.seeBeings => _es('Ver a los seres etéreos', 'See the ethereal beings', '霊なる者を視る'),
         EcoFeature.ethereal => _es('Volverte un ser etéreo', 'Become an ethereal being', '霊なる者になる'),
       };
-
-  String ecoTomoName(int tomo) => _es('Tsuki Lore · Tomo ${_roman(tomo)}', 'Tsuki Lore · Volume ${_roman(tomo)}',
-      'Tsuki Lore・第${_roman(tomo)}巻');
-  static String _roman(int n) => const ['', 'I', 'II', 'III', 'IV', 'V'][n.clamp(0, 5)];
 
   String ecoColorName(EcoColor c) => c.name.of(language);
 
@@ -449,7 +444,7 @@ class AppStrings {
         EcoRewardKind.feature => ecoFeatureName(r.feature!),
         EcoRewardKind.sound => _es('Sonido de ambiente: ${ambientName(r.sound!)}',
             'Ambient sound: ${ambientName(r.sound!)}', '環境音:${ambientName(r.sound!)}'),
-        EcoRewardKind.tomo => ecoTomoName(r.tomo!),
+        EcoRewardKind.chapter => 'Tsuki Lore · ${r.chapter!.title.of(language)}',
         EcoRewardKind.color => _es('Color del reproductor: ${ecoColorName(r.color!)}',
             'Player colour: ${ecoColorName(r.color!)}', 'プレーヤーの色:${ecoColorName(r.color!)}'),
         EcoRewardKind.rank => _es('Nuevo rango: ${ecoRankName(r.rank!)}', 'New rank: ${ecoRankName(r.rank!)}',
@@ -489,6 +484,55 @@ class AppStrings {
   String get ecoWhisper => _es('SU SUSURRO', 'ITS WHISPER', 'そのささやき');
   String ecoWhisperLocked(int level) =>
       _es('En el nivel $level podrás escuchar su voz.', 'At level $level you will hear its voice.', 'レベル$levelでその声が聴こえる。');
+  String ecoLegendAmount(int eco) => '${ecoAmount(eco).replaceAll(' Eco', '')} / ??????? Eco';
+  String get ecoChoicePending => _es('Tu elección te espera', 'Your choice awaits', 'あなたの選択が待っている');
+
+  // ── Level 100: the choice ──
+  List<String> get ascensionCall => language == AppLanguage.es
+      ? const [
+          'Has llegado a este punto siendo un Portador de niveles incomprendidos.',
+          'La Luna Madre se regocija con tu Eco.',
+          'Es la señal. Es el momento de tu elección:',
+          'seguir siendo un ser acumulador de Eco,',
+          'o traspasar la muralla de lo lógico y viajar hasta el centro del universo,',
+          'para así volverte...',
+        ]
+      : const [
+          'You have come this far as a Bearer of levels beyond understanding.',
+          'The Mother Moon rejoices in your Echo.',
+          'It is the sign. It is the moment of your choice:',
+          'to remain a being who gathers Echo,',
+          'or to pass through the wall of the logical and travel to the centre of the universe,',
+          'and so become...',
+        ];
+  String get ascensionBeing => _es('Un Ser Etéreo', 'An Ethereal Being', '霊なる者');
+  String get ascensionSer => _es('SER', 'BE', '成る');
+  String get ascensionNoSer => _es('NO SER', 'NOT BE', '成らない');
+  String get ascensionWarningTitle => _es('ADVERTENCIA', 'WARNING', '警告');
+  String get ascensionWarning => _es(
+      'Si decides mantener tu forma de Portador, no podrás transformarte nunca más en un Ser Etéreo. Esta es tu elección. Seguirás gozando de los privilegios de un Portador de niveles inconmensurables.',
+      'If you decide to keep your form as a Bearer, you will never be able to become an Ethereal Being. This is your choice. You will keep enjoying the privileges of a Bearer of immeasurable levels.',
+      '運び手の姿を保つなら、二度と霊なる者にはなれない。これはあなたの選択だ。計り知れぬレベルの運び手としての特権は続く。');
+  String get ascensionKeepForm => _es('Mantener mi forma', 'Keep my form', '姿を保つ');
+  String get ascensionBack => _es('Volver', 'Back', '戻る');
+  String get ascensionLater => _es('Más tarde', 'Later', 'あとで');
+  String get ascensionNameTitle =>
+      _es('¿Cómo se llamará tu máscara etérea?', 'What will your ethereal mask be called?', 'あなたの霊の面の名は?');
+  String get ascensionNameHint => _es(
+      'Este nombre viajará hasta el centro del universo, donde se forjará tu máscara.',
+      'This name will travel to the centre of the universe, where your mask will be forged.',
+      'この名は宇宙の中心へ届き、そこであなたの面が鍛えられる。');
+  String get ascensionCross => _es('CRUZAR', 'CROSS', '越える');
+  String get ascensionCrossed => _es(
+      'Has traspasado la muralla de lo lógico. Ya no escuchas la música: eres parte de ella. Tu máscara etérea se está forjando en el centro del universo, con todo lo que escuchaste. La Luna Madre te la entregará cuando esté lista.',
+      'You have passed through the wall of the logical. You no longer hear music: you are part of it. Your ethereal mask is being forged at the centre of the universe, with everything you ever heard. The Mother Moon will give it to you when it is ready.',
+      'あなたは論理の壁を越えた。もう音楽を聴くのではない。その一部なのだ。あなたの霊の面は、聴いてきたすべてと共に宇宙の中心で鍛えられている。');
+  String get ascensionStayed => _es(
+      'Sigues siendo Portador. Tu Eco seguirá cayendo sobre Tsuki como una estrella, y los seres etéreos sabrán siempre que pudiste cruzar y elegiste quedarte.',
+      'You remain a Bearer. Your Echo will keep falling on Tsuki like a star, and the ethereal beings will always know you could have crossed and chose to stay.',
+      'あなたは運び手のままだ。あなたのエコーは星のようにツキに降り続け、霊なる者たちは、あなたが越えられたのに留まったことを忘れない。');
+  String get ascensionDone => _es('Continuar', 'Continue', '続ける');
+
   String get a11yEcoLevels => _es('Abrir los niveles de Eco', 'Open the Eco levels', 'エコーレベルを開く');
 
   // ── Artist radio ──
@@ -686,9 +730,9 @@ class AppStrings {
 
   String get loreTitle => 'TSUKI LORE';
   String get loreSubtitle => switch (language) {
-        AppLanguage.es => 'La historia del centro del universo',
-        AppLanguage.en => 'The story of the centre of the universe',
-        AppLanguage.ja => '宇宙の中心の物語',
+        AppLanguage.es => 'El Eco es conocimiento: cada nivel revela más de Tsuki',
+        AppLanguage.en => 'Echo is knowledge: every level reveals more of Tsuki',
+        AppLanguage.ja => 'エコーは知識。レベルが上がるほどツキの真実が明かされる',
       };
   String get loreButton => switch (language) {
         AppLanguage.es => 'TSUKI LORE · La historia de los seres etéreos',

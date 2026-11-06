@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/ambient_sound_generator.dart';
+import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/ascension_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
@@ -76,8 +78,8 @@ void main() {
       expect(EcoFeature.hearBeings.level, 75);
       expect(EcoFeature.seeBeings.level, 90);
       expect(EcoFeature.ethereal.level, 100);
-      expect(EcoLevels.tomoOpen(2, 9), isFalse);
-      expect(EcoLevels.tomoOpen(2, 10), isTrue);
+      expect(TsukiLore.tomoOpen(2, 9), isFalse);
+      expect(TsukiLore.tomoOpen(2, 10), isTrue);
       expect(EcoLevels.soundOpen(AmbientSound.rain, 7), isFalse);
       expect(EcoLevels.soundOpen(AmbientSound.rain, EcoFeature.ambient.level), isTrue);
     });
@@ -141,13 +143,46 @@ void main() {
       expect(masks.playerColor?.id, 'jade');
     });
 
-    test('level 100 makes the Bearer an ethereal being: their own mask', () {
-      expect(masks.isUnlocked('portador'), isFalse);
+    test('level 100 asks for the choice; to be makes the Bearer ethereal, with their own mask', () async {
       masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
-      masks.onPlayCounted(_t('a${n++}'));
       expect(masks.level, EcoLevels.maxLevel);
+      expect(masks.choicePending, isTrue);
+      expect(masks.rank, EcoRank.vidente, reason: 'a Seer until the choice');
+      expect(masks.isUnlocked('portador'), isFalse);
+
+      await masks.chooseEthereal(ser: true, maskName: 'Luz');
+      expect(masks.etherealChoice, EtherealChoice.ser);
+      expect(masks.rank, EcoRank.etereo);
       expect(masks.isUnlocked('portador'), isTrue);
       expect(masks.counterValue('ultra'), 0, reason: 'not one of the eight Ultras');
+      expect(masks.choicePending, isFalse);
+
+      // Made once: it can't be changed.
+      await masks.chooseEthereal(ser: false);
+      expect(masks.etherealChoice, EtherealChoice.ser);
+    });
+
+    test('not to be keeps the Bearer for good, an immeasurable one', () async {
+      masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
+      await masks.chooseEthereal(ser: false);
+      expect(masks.etherealChoice, EtherealChoice.noSer);
+      expect(masks.rank, EcoRank.inconmensurable);
+      expect(masks.isUnlocked('portador'), isFalse);
+
+      // The choice survives a restart.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final again = MaskProvider(clock: () => now);
+      await again.ready;
+      expect(again.etherealChoice, EtherealChoice.noSer);
+      expect(again.choicePending, isFalse);
+      again.dispose();
+    });
+
+    test('below level 100 there is no choice to make', () async {
+      masks.applyProgress({'plays': 1000});
+      expect(masks.choicePending, isFalse);
+      await masks.chooseEthereal(ser: true);
+      expect(masks.etherealChoice, isNull);
     });
   });
 
@@ -195,6 +230,58 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('SE ABRE EN EL NIVEL 15'), findsOneWidget);
       expect(find.text('Ver niveles'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      masks.dispose();
+    });
+
+    testWidgets('level 100: to not be warns first, then keeps the Bearer', (tester) async {
+      await tester.runAsync(() => masks.ready);
+      masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
+      await pump(tester, const AscensionScreen());
+      await tester.pumpAndSettle(const Duration(seconds: 10));
+      expect(find.text('La Luna Madre se regocija con tu Eco.'), findsOneWidget);
+      expect(find.text('UN SER ETÉREO'), findsOneWidget);
+
+      await tester.tap(find.text('NO SER'));
+      await tester.pumpAndSettle();
+      expect(find.text('ADVERTENCIA'), findsOneWidget);
+      expect(find.textContaining('no podrás transformarte nunca más'), findsOneWidget);
+      await tester.tap(find.text('Mantener mi forma'));
+      await tester.pumpAndSettle();
+      expect(masks.etherealChoice, EtherealChoice.noSer);
+      expect(find.textContaining('Sigues siendo Portador'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      masks.dispose();
+    });
+
+    testWidgets('level 100: to be names the mask and crosses', (tester) async {
+      await tester.runAsync(() => masks.ready);
+      masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
+      await pump(tester, const AscensionScreen());
+      await tester.pumpAndSettle(const Duration(seconds: 10));
+      await tester.tap(find.text('SER'));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Cómo se llamará tu máscara etérea?'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Luz de Tsuki');
+      await tester.tap(find.text('CRUZAR'));
+      // The ethereal mask shimmers forever: step the clock instead.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      expect(masks.etherealChoice, EtherealChoice.ser);
+      expect(masks.isUnlocked('portador'), isTrue);
+      expect(find.textContaining('Has traspasado la muralla'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      masks.dispose();
+    });
+
+    testWidgets('past level 100 the Eco of a god is unknown: ???????', (tester) async {
+      await tester.runAsync(() => masks.ready);
+      masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
+      await pump(tester, const Scaffold(body: EcoLevelCard()));
+      expect(find.textContaining('/ ??????? Eco'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       masks.dispose();
     });

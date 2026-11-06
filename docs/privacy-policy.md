@@ -17,13 +17,14 @@ Tsuki Tunes ("la app") es un reproductor de música desarrollado por Nicolás C�
 ### Tu biblioteca y actividad en la app
 Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - Canciones escuchadas, playlists, artistas seguidos y el registro diario de reproducciones.
-- Estadísticas de escucha, tu avance hacia las máscaras (por ejemplo, cuántas canciones escuchaste de cada estilo musical o tu racha de días seguidos) y las máscaras que desbloqueaste.
+- Estadísticas de escucha, tu avance hacia los seres etéreos (por ejemplo, cuántas canciones escuchaste de cada estilo musical o tu racha de días seguidos), los seres que despertaste y tu nivel de Eco, que se calcula con esos mismos datos.
+- Si llegas al **nivel 100 de Eco**, se guarda un aviso con tu nombre, tu nivel, tu Eco, tu elección (volverte un ser etéreo o seguir siendo Portador) y el nombre que elijas para tu máscara etérea. Solo lo lee el equipo de Tsuki Tunes, para crear tu máscara; ningún otro usuario puede verlo.
 
 ### Perfil público (opcional)
 - Si activas tu **perfil público**, otras personas pueden ver tu nombre, tu foto, tu máscara, tus estadísticas y tus artistas más escuchados. Viene **desactivado**, y puedes desactivarlo cuando quieras.
 
 ### Ubicación aproximada (opcional)
-- Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad. Con el clima activado, dos máscaras se consiguen escuchando con tormenta o con frío: eso se revisa en el teléfono y no se guarda el clima.
+- Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad. Con el clima activado, dos seres etéreos despiertan escuchando con tormenta o con frío: eso se revisa en el teléfono y no se guarda el clima.
 
 ### Micrófono (opcional)
 - La **búsqueda por voz** usa el micrófono solo mientras la estás usando. El audio lo procesa el servicio de reconocimiento de voz de tu teléfono, que normalmente es de Google, para convertirlo en texto. Tsuki Tunes no guarda ni envía el audio a ningún otro lugar. Solo usa el texto para buscar.
@@ -59,7 +60,7 @@ La app usa estos servicios, cada uno con su propia política de privacidad:
 - [Inicio de sesión con Google](https://policies.google.com/privacy): si eliges entrar con Google.
 - [Spotify](https://www.spotify.com/legal/privacy-policy/): reproducción completa, si conectas tu cuenta.
 - [Deezer](https://www.deezer.com/legal/personal-datas): catálogo y fragmentos de canciones de 30 segundos.
-- [Last.fm](https://www.last.fm/legal/privacy): canciones similares para la radio, y los estilos musicales de cada artista que escuchas (para las máscaras).
+- [Last.fm](https://www.last.fm/legal/privacy): canciones similares para la radio, y los estilos musicales de cada artista que escuchas (para los seres etéreos).
 - [LRCLIB](https://lrclib.net/): letras de canciones.
 - [Open-Meteo](https://open-meteo.com/en/terms): clima, si lo activas.
 - Reconocimiento de voz de tu teléfono (normalmente [Google](https://policies.google.com/privacy)): búsqueda por voz, si la usas.
@@ -81,7 +82,7 @@ A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada con
   - Tu historial.
   - Tu perfil público.
   - Tu cuenta de inicio de sesión.
-  - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, máscaras, estilos de artistas y cachés).
+  - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, seres etéreos, nivel de Eco, estilos de artistas y cachés).
 - También puedes pedir la eliminación sin la app; mira [cómo eliminar tu cuenta](delete-account.md).
 - La base de datos se respalda una vez al día para recuperarla ante fallas, y cada copia se borra sola a los 98 días. Los datos de una cuenta eliminada pueden seguir en esas copias hasta 98 días.
 - Las estadísticas de uso y los reportes de errores no están vinculados a tu cuenta. Firebase los elimina automáticamente: los de Analytics después de un máximo de 14 meses y los de Crashlytics después de 90 días.

@@ -87,6 +87,8 @@ class AccountDeletionService {
       if (page.docs.length < _batchSize) break;
     }
     await _db.collection('profiles').doc(uid).delete();
+    // The level 100 report, if there was one.
+    await _db.collection('ascensions').doc(uid).delete();
 
     final userDoc = await user.get(const GetOptions(source: Source.server));
     if (userDoc.exists) {

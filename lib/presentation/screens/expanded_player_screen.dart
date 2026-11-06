@@ -208,11 +208,10 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   /// An equipped UL or DS mask tints the player with its aura.
   @override
   Widget build(BuildContext context) {
-    // A UL or DS being's aura (from level 30), else the colour the levels
-    // opened and the user chose, else the app's red.
+    // A UL or DS being's aura, else the colour the levels opened and the
+    // user chose, else the app's red.
     final aura = ref.watch(maskProvider.select((m) =>
-        (m.hasFeature(EcoFeature.ultraEquip) ? m.equipped?.playerAura : null) ??
-        (m.playerColor == null ? null : Color(m.playerColor!.argb))));
+        m.equipped?.playerAura ?? (m.playerColor == null ? null : Color(m.playerColor!.argb))));
     return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
   }
 

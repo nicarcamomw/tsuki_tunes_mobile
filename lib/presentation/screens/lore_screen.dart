@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
 import '../../domain/lore/tsuki_lore.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
+import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
 const _gold = Color(0xFFFFE9A8);
@@ -24,7 +24,6 @@ class LoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final owned = ref.watch(maskProvider).unlockedIds;
     final level = ref.watch(maskProvider.select((m) => m.level));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
@@ -45,7 +44,7 @@ class LoreScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
         children: [
-          _Header(locale: locale, strings: strings, open: TsukiLore.openCount(owned, level: level), total: TsukiLore.releasedCount(level)),
+          _Header(locale: locale, strings: strings, open: TsukiLore.openCount(level), total: TsukiLore.chapters.length),
           for (final tomo in TsukiLore.tomos) ...[
             const SizedBox(height: 22),
             Row(
@@ -67,11 +66,11 @@ class LoreScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 10),
-            if (!EcoLevels.tomoOpen(tomo.number, level))
-              _ComingSoon(locale: locale, strings: strings, level: EcoLevels.tomoLevels[tomo.number]!)
+            if (!TsukiLore.tomoOpen(tomo.number, level))
+              _ComingSoon(locale: locale, strings: strings, level: TsukiLore.tomoLevel(tomo.number))
             else
               for (final c in TsukiLore.chaptersOf(tomo.number))
-                _ChapterTile(chapter: c, open: TsukiLore.isOpen(c, owned, level: level)),
+                _ChapterTile(chapter: c, open: TsukiLore.isOpen(c, level)),
           ],
         ],
       ),
@@ -179,17 +178,6 @@ class _ComingSoon extends StatelessWidget {
   }
 }
 
-/// What a locked chapter asks for.
-String _requirement(AppStrings strings, LoreChapter c, AppLanguage lang) => switch (c.lock) {
-      LoreLock.free => '',
-      LoreLock.level => strings.ecoOpensAt(c.need),
-      LoreLock.masks => strings.loreNeedMasks(c.need),
-      LoreLock.faction => strings.loreNeedFaction(TsukiLore.faction(c.factionId)!.name.of(lang)),
-      LoreLock.ultra => strings.loreNeedUltra,
-      LoreLock.divine => strings.loreNeedDivine(c.need),
-      LoreLock.god => strings.loreNeedGod,
-    };
-
 class _ChapterTile extends ConsumerWidget {
   final LoreChapter chapter;
   final bool open;
@@ -252,7 +240,7 @@ class _ChapterTile extends ConsumerWidget {
                             color: open ? AppColors.textBright : AppColors.textSecondary)),
                     if (!open) ...[
                       const SizedBox(height: 3),
-                      Text(_requirement(strings, chapter, lang),
+                      Text(strings.ecoOpensAt(chapter.level),
                           style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
                     ],
                   ],
@@ -320,16 +308,14 @@ class LoreChapterScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 22),
           for (final p in chapter.body.of(lang).split('\n\n')) ...[
-            Text(p, style: body()),
+            LoreText(p, style: body()),
             const SizedBox(height: 14),
           ],
           if (faction != null) _FactionSection(faction: faction, owned: owned),
           if (chapter.id == 'guerras') _BondsSection(bonds: TsukiLore.bonds, owned: owned),
+          if (chapter.id == 'cinco') _MaskRow(ids: TsukiLore.crossed, owned: owned),
           if (chapter.id == 'ultras')
-            _MaskRow(ids: [
-              for (final m in MaskCatalog.all)
-                if (m.rarity == MaskRarity.ul && !m.divine) m.id,
-            ], owned: owned),
+            _MaskRow(ids: TsukiLore.ultras, owned: owned),
           if (chapter.id == 'caras')
             for (final f in TsukiLore.faces) _FaceCard(face: f, owned: owned.contains(f.mask)),
         ],

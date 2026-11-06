@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
 import '../widgets/eco_widgets.dart';
+import 'ascension_screen.dart';
 
 const _bg = Color(0xFF08090E);
 
@@ -17,8 +19,11 @@ const _bg = Color(0xFF08090E);
 class EcoLevelsScreen extends ConsumerWidget {
   const EcoLevelsScreen({super.key});
 
-  static Future<void> open(BuildContext context) => Navigator.of(context, rootNavigator: true)
-      .push(MaterialPageRoute<void>(builder: (_) => const EcoLevelsScreen()));
+  /// Opens the levels, also from above the navigator (the level-up banner).
+  static Future<void> open(BuildContext context) {
+    final nav = Navigator.maybeOf(context, rootNavigator: true) ?? rootNavigatorKey.currentState;
+    return nav?.push(MaterialPageRoute<void>(builder: (_) => const EcoLevelsScreen())) ?? Future.value();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -121,6 +126,15 @@ class _Header extends StatelessWidget {
               style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
           const SizedBox(height: 16),
           EcoProgressBar(masks: masks),
+          if (masks.choicePending) ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFFF4D6), foregroundColor: const Color(0xFF111217)),
+              onPressed: () => AscensionScreen.open(context),
+              icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+              label: Text(strings.ecoChoicePending, style: const TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ],
         ],
       ),
     );
@@ -361,7 +375,7 @@ class _LevelRow extends StatelessWidget {
             _ => Icons.lock_open_rounded,
           },
         EcoRewardKind.sound => Icons.waves_rounded,
-        EcoRewardKind.tomo => Icons.menu_book_rounded,
+        EcoRewardKind.chapter => Icons.menu_book_rounded,
         EcoRewardKind.color => Icons.palette_rounded,
         EcoRewardKind.rank => Icons.military_tech_rounded,
         EcoRewardKind.fragment => Icons.format_quote_rounded,
@@ -377,8 +391,7 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = EcoLevels.legendProgress(masks.eco);
-    final broken = progress >= 1;
+    final broken = masks.legendReached;
     return Container(
       margin: const EdgeInsets.only(top: 18),
       padding: const EdgeInsets.all(18),
@@ -410,15 +423,10 @@ class _Legend extends StatelessWidget {
           Text(strings.ecoLegendText,
               style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.45)),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              backgroundColor: Colors.white.withValues(alpha: 0.06),
-              color: const Color(0xFFFFE9A8),
-            ),
-          ),
+          // How much Eco a Supreme God holds is not for anyone to know.
+          Text(strings.ecoLegendAmount(masks.eco),
+              style: locale.getTextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1)),
           const SizedBox(height: 6),
           Text(broken ? strings.ecoBalanceBroken : strings.ecoLegendNever,
               style: locale.getTextStyle(

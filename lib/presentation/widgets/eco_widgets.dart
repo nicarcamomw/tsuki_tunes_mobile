@@ -24,6 +24,7 @@ Color ecoRankColor(EcoRank r) => switch (r) {
       EcoRank.oyente => const Color(0xFF64FFDA),
       EcoRank.vidente => const Color(0xFFE040FB),
       EcoRank.etereo => Colors.white,
+      EcoRank.inconmensurable => const Color(0xFFFFE9A8),
     };
 
 /// Whether [f] is open; when it isn't, explains at which level it opens.
@@ -142,20 +143,26 @@ class EcoProgressBar extends ConsumerWidget {
                   style: locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.4)),
             ),
             const Spacer(),
-            Text(strings.ecoAmount(eco),
-                style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            if (!atTop)
+              Text(strings.ecoAmount(eco),
+                  style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ],
         ),
         const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
-            value: atTop ? EcoLevels.legendProgress(eco) : masks.levelProgress,
-            minHeight: 5,
-            backgroundColor: Colors.white.withValues(alpha: 0.07),
-            color: color,
+        if (atTop)
+          // Past 100 no one knows how far the legend is.
+          Text(strings.ecoLegendAmount(eco),
+              style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color, letterSpacing: 1))
+        else
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: masks.levelProgress,
+              minHeight: 5,
+              backgroundColor: Colors.white.withValues(alpha: 0.07),
+              color: color,
+            ),
           ),
-        ),
         if (!atTop) ...[
           const SizedBox(height: 5),
           Text(strings.ecoToNext(EcoLevels.ecoFor(level + 1) - eco, level + 1),

@@ -1,0 +1,49 @@
+name: Ascensions
+
+# Tells the app's keeper when a Bearer reaches Eco level 100, makes the
+# choice (to become an ethereal being or not), or reaches the legend beyond
+# 100. The app writes ascensions/{uid} in Firestore; this job reads the new
+# ones every hour, opens an issue assigned to the repository owner (GitHub
+# emails it) and marks the document as told.
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT with the "Cloud
+# Datastore User" role (Google Cloud console > IAM) besides the rules
+# role it already has. Without the secret it does nothing.
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ascensions
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Tell the keeper
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT is not set; nothing to read."
+            exit 0
+          fi
+          pip install --quiet google-cloud-firestore==2.19.0
+          python tool/ascensions_notify.py

@@ -106,6 +106,8 @@ service cloud.firestore {
           && (!isWritten('masks') || !('equipped' in d.masks)
               || d.masks.equipped == null
               || (d.masks.equipped is string && d.masks.equipped.size() <= 40))
+          // The level 100 choice: to become an ethereal being or not.
+          && (!isWritten('masks') || !('choice' in d.masks) || d.masks.choice in ['ser', 'no'])
           // Progress backup: a few counters, the top artists' plays, plays
           // per music style and the counters of the newer masks.
           && (!isWritten('masks') || !('progress' in d.masks)
@@ -206,12 +208,23 @@ service cloud.firestore {
               || request.time > get(userPath(userId)).data.lastSubWrite + duration.value(1, 's'));
     }
 
+    // The level 100 choice is made once: once there, it can't change (the
+    // whole masks map can still go, when the account's data is deleted).
+    function choiceKept() {
+      return resource == null
+          || !('masks' in resource.data)
+          || !('choice' in resource.data.masks)
+          || !('masks' in request.resource.data)
+          || request.resource.data.masks.get('choice', null) == resource.data.masks.choice;
+    }
+
     // Users can only read/write their own document. It can't be deleted from
     // the app: recreating it would reset the rate limit's stamp.
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create, update: if isOwner(userId)
           && validUserDoc(request.resource.data)
+          && choiceKept()
           && stampUntouchedOrNow();
       allow delete: if false;
 
@@ -308,6 +321,30 @@ service cloud.firestore {
           && validProfile(request.resource.data)
           && request.time > resource.data.updatedAt + duration.value(10, 's');
       allow delete: if isOwner(userId);
+    }
+
+    // A Bearer at level 100 (their name, the name for their mask, their
+    // choice) or at the legend. A job with the admin key tells the app's
+    // keeper and marks it told; no client can read these.
+    function validAscension(d) {
+      return only(['name', 'maskName', 'level', 'eco', 'choice', 'legend', 'at'])
+          && wString('name', 80, false)
+          && wString('maskName', 60, false)
+          && d.level == 100
+          && d.eco is int && d.eco >= 0
+          && (!isWritten('choice') || d.choice in ['ser', 'no'])
+          && (!isWritten('legend') || d.legend == true)
+          && d.at == request.time
+          // The choice, once told, stays.
+          && (resource == null || !('choice' in resource.data)
+              || d.get('choice', null) == resource.data.choice);
+    }
+
+    match /ascensions/{userId} {
+      allow create, update: if isOwner(userId) && validAscension(request.resource.data);
+      // Deleting the account deletes it too.
+      allow delete: if isOwner(userId);
+      allow read: if false;
     }
 
     // Deny all other access by default

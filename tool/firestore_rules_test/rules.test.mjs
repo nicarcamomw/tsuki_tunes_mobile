@@ -373,6 +373,37 @@ test('nobody else can delete an account\'s data', async () => {
   await assertFails(deleteDoc(doc(db, 'users/alice/playDays/2026-11-02')));
 });
 
+test('the level 100 choice is made once', async () => {
+  await seed('users/alice', { ...oldStamp(), masks: { unlocked: { hajime: 1 } } });
+  const db = alice();
+  await assertFails(setDoc(doc(db, 'users/alice'), { masks: { choice: 'maybe' } }, { merge: true }));
+  await assertSucceeds(setDoc(doc(db, 'users/alice'), { masks: { choice: 'no' } }, { merge: true }));
+  await assertFails(setDoc(doc(db, 'users/alice'), { masks: { choice: 'ser' } }, { merge: true }));
+  // Deleting the account's data still works.
+  await assertSucceeds(updateDoc(doc(db, 'users/alice'), { masks: deleteField() }));
+});
+
+test('a Bearer at level 100 tells the keeper; no one reads it', async () => {
+  const db = alice();
+  const report = { name: 'Alice', level: 100, eco: 2800000, at: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(db, 'ascensions/alice'), report));
+  await assertSucceeds(setDoc(doc(db, 'ascensions/alice'),
+    { maskName: 'Luz de Alice', choice: 'ser', level: 100, eco: 2800500, at: serverTimestamp() }, { merge: true }));
+  // The choice stays; others can't write here; nobody reads.
+  await assertFails(setDoc(doc(db, 'ascensions/alice'),
+    { choice: 'no', level: 100, eco: 2800600, at: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(bob(), 'ascensions/alice'), report));
+  await assertFails(getDoc(doc(db, 'ascensions/alice')));
+  // Only the report's fields; the keeper's marks are not the client's.
+  await assertFails(setDoc(doc(db, 'ascensions/alice'),
+    { notifiedReach: true, level: 100, eco: 2800600, at: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(alice(), 'ascensions/alice2'), report));
+  await assertFails(setDoc(doc(bob(), 'ascensions/bob'), { ...report, level: 99 }));
+  // Deleting the account takes it; only its owner can.
+  await assertFails(deleteDoc(doc(bob(), 'ascensions/alice')));
+  await assertSucceeds(deleteDoc(doc(db, 'ascensions/alice')));
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   await env.clearFirestore();

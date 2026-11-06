@@ -22,7 +22,7 @@ Escribe a **ni.carcamo.hernandez@gmail.com** desde el correo de la cuenta de Goo
 
 - Tu cuenta de inicio de sesión (nombre, correo y foto de Google).
 - Tus canciones escuchadas, playlists, artistas seguidos y el registro de reproducciones.
-- Tus estadísticas, tus máscaras y tu perfil público.
+- Tus estadísticas, tus seres etéreos, tu nivel de Eco, el aviso del nivel 100 si lo alcanzaste, y tu perfil público.
 - Si la eliminas desde la app, también lo que guardaba en tu teléfono: historial de reproducción y de búsquedas, cumpleaños, ciudad del clima, máscaras, artistas del radar, canciones guardadas en caché y notificaciones programadas. Solo se conservan el idioma de la app y tu elección sobre las estadísticas de uso.
 
 Tu conexión con Spotify también se desconecta. Tu cuenta de Spotify no se ve afectada.
