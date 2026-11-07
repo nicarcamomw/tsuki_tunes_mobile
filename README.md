@@ -12,8 +12,10 @@ Reproductor de música con estética Cyberpunk & folklore japonés. Catálogo y 
 
 ```bash
 flutter pub get
-flutter run --dart-define=LASTFM_API_KEY=tu_api_key
+flutter run
 ```
+
+Last.fm no necesita clave en la app: la pide al backend (Cloud Functions), que la guarda en Secret Manager. Solo para probar sin backend (por ejemplo, dev sin la función desplegada) se puede compilar con `--dart-define=LASTFM_API_KEY=tu_api_key`; nunca en el APK que se publica.
 
 ## Ambientes: dev y prod
 
@@ -70,7 +72,7 @@ cd tool/firestore_rules_test && npm ci && npm test
 - **Caché** en memoria por instancia (horas o un día según el tipo de dato) y `Cache-Control`. Los errores no se guardan.
 - **Límite de pedidos** por usuario (app verificada + IP): 30 de Last.fm y 120 de Deezer de golpe, que se recargan con el tiempo. Como máximo 5 instancias, para acotar el costo ante un abuso.
 - **App Check:** la app manda su token; la función lo exige solo con el parámetro `ENFORCE_APP_CHECK` en `true` (hoy `false` en `functions/.env`). Activarlo junto con el de Firestore, cuando la app esté en Google Play: poner `true` en ese archivo y desplegar.
-- Mientras el proxy no esté desplegado, una app compilada con `LASTFM_API_KEY` sigue llamando a Last.fm directo. Una vez desplegado, quitar esa variable del build (`build-apk.yml`) para que la clave salga del APK.
+- El APK ya no lleva la clave de Last.fm (`build-apk.yml` no la pone desde el 7 de noviembre de 2026, con la función desplegada en prod). Una app compilada a mano con `LASTFM_API_KEY` llama a Last.fm directo solo si el backend no responde.
 
 Tests y build (también corren en el CI):
 

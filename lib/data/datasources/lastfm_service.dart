@@ -11,9 +11,9 @@ import 'backend_proxy.dart';
 final _log = Log.named('LastFM');
 
 /// Last.fm, through Tsuki's backend (BackendProxy), which holds the key:
-/// the app no longer needs one. A build that still has the key compiled in
-/// (LASTFM_API_KEY) calls Last.fm directly when the backend can't be
-/// reached, until the proxy is deployed everywhere.
+/// the published app has none. A local build with the key compiled in
+/// (LASTFM_API_KEY, for testing without the backend) calls Last.fm
+/// directly when the backend can't be reached.
 class LastFmService {
   static const String _apiKey = String.fromEnvironment('LASTFM_API_KEY');
 
