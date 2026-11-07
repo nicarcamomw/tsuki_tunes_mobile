@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -339,7 +340,8 @@ void main() {
     late WeatherProvider weather;
     late MoonProvider moon;
 
-    Future<void> pumpHome(WidgetTester tester, Widget child, {AudioProvider? audio}) async {
+    Future<void> pumpHome(WidgetTester tester, Widget child,
+        {AudioProvider? audio, List<Override> overrides = const []}) async {
       tester.view.physicalSize = const Size(360 * 3, 760 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -351,6 +353,7 @@ void main() {
           moonProvider.overrideWith((ref) => moon, disposeNotifier: false),
           ambientProvider.overrideWith((ref) => AmbientProvider()),
           if (audio != null) audioProvider.overrideWith((ref) => audio, disposeNotifier: false),
+          ...overrides,
         ],
         child: app,
       ));
@@ -430,12 +433,13 @@ void main() {
       final calm = [for (var i = 0; i < 5; i++) _t('c$i', artist: 'X$i')];
       await pumpHome(
         tester,
-        RainOfferCard(
-          tempo: BpmService(fetch: (_) async => const TrackAudioInfo(bpm: 70), gap: Duration.zero),
-          search: (_) async => calm,
-          library: [_t('own', artist: 'Mine')],
-        ),
+        RainOfferCard(library: [_t('own', artist: 'Mine')]),
         audio: audio,
+        overrides: [
+          bpmProvider.overrideWithValue(BpmService(
+              fetch: (_) async => const TrackAudioInfo(bpm: 70), gap: Duration.zero)),
+          trackSearchProvider.overrideWithValue((_) async => calm),
+        ],
       );
       expect(find.text('Está lloviendo donde estás'), findsOneWidget);
       expect(find.text('¿Pongo algo para la lluvia?'), findsOneWidget);

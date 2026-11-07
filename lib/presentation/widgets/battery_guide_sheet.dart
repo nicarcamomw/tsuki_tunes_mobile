@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/battery_guide.dart';
+import '../../domain/entities/battery_family.dart';
 import '../state/app_providers.dart';
 import 'swipeable_sheet.dart';
 
@@ -24,7 +24,7 @@ class BatteryGuideSheet extends ConsumerWidget {
   });
 
   static Future<void> show(BuildContext context) {
-    final guide = BatteryGuide.instance;
+    final guide = context.readState(batteryGuideProvider);
     final family = guide.family;
     if (family == null) return Future.value();
     return SwipeableSheet.show(
@@ -42,7 +42,7 @@ class BatteryGuideSheet extends ConsumerWidget {
     unawaited(HapticFeedback.selectionClick());
     final messenger = ScaffoldMessenger.of(context);
     final failedText = context.readState(stringsProvider).batteryGuideOpenFailed;
-    final opened = await BatteryGuide.instance.openSpotifySettings();
+    final opened = await context.readState(batteryGuideProvider).openSpotifySettings();
     if (!opened) {
       messenger.showSnackBar(SnackBar(content: Text(failedText)));
     }
@@ -166,7 +166,7 @@ class BatteryGuideSheet extends ConsumerWidget {
           const SizedBox(height: 6),
           TextButton(
             onPressed: () {
-              BatteryGuide.instance.dismiss();
+              context.readState(batteryGuideProvider).dismiss();
               Navigator.of(context).pop();
             },
             child: Text(

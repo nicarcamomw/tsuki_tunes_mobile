@@ -5,39 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
+import '../../domain/entities/battery_family.dart';
 import '../../domain/entities/playback_error.dart';
+
+export '../../domain/entities/battery_family.dart';
 
 
 final _log = Log.named('BatteryGuide');
-
-/// Phone makers whose battery manager freezes apps in the background, each
-/// with its own settings to undo it. Sister brands share their system.
-enum BatteryFamily {
-  /// Honor (MagicOS) and Huawei (EMUI).
-  honor,
-
-  /// Xiaomi, Redmi and POCO (MIUI / HyperOS).
-  xiaomi,
-
-  /// OPPO, realme and OnePlus (ColorOS and its forks).
-  oppo,
-
-  /// vivo and iQOO (Funtouch OS / OriginOS).
-  vivo,
-}
-
-/// The maker's family for [manufacturer] / [brand] (Android's
-/// Build.MANUFACTURER and Build.BRAND), or null when it doesn't freeze apps.
-@visibleForTesting
-BatteryFamily? batteryFamilyFor(String manufacturer, String brand) {
-  final names = '${manufacturer.toLowerCase()} ${brand.toLowerCase()}';
-  bool has(String name) => names.contains(name);
-  if (has('honor') || has('huawei')) return BatteryFamily.honor;
-  if (has('xiaomi') || has('redmi') || has('poco')) return BatteryFamily.xiaomi;
-  if (has('oppo') || has('realme') || has('oneplus')) return BatteryFamily.oppo;
-  if (has('vivo') || has('iqoo')) return BatteryFamily.vivo;
-  return null;
-}
 
 /// When Spotify can't play because the phone froze it in the background,
 /// explains how to let it run, on the phones known to do that.

@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/bpm_flow.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
@@ -809,9 +808,9 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                   ),
                 ),
                 ValueListenableBuilder<int>(
-                  valueListenable: BpmService.shared.revision,
+                  valueListenable: ref.read(bpmProvider).revision,
                   builder: (_, __, ___) {
-                    final bpm = BpmService.shared.cached(t.id);
+                    final bpm = ref.read(bpmProvider).cached(t.id);
                     if (bpm == null) return const SizedBox.shrink();
                     return Padding(
                       padding: const EdgeInsets.only(left: 6),

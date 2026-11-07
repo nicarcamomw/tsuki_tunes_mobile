@@ -177,7 +177,9 @@ void main() {
     await history.record(_t('lastCycle'), at: at.subtract(const Duration(days: 40)));
     final library = LibraryRepositoryImpl();
 
-    final mix = MoonSheet.buildMix(MoonCalculator.snapshot(at), history, library);
+    final mix = MoonSheet.buildMix(MoonCalculator.snapshot(at),
+        topBetween: history.topBetween,
+        fallback: [...library.favoriteTracks, ...library.recentTracks]);
     expect(mix.first.id, 'recent');
     expect(mix.any((t) => t.id == 'lastCycle'), isFalse);
   });

@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../data/datasources/device_location.dart';
-import '../../data/datasources/weather_service.dart';
+import '../../domain/entities/location.dart';
+import '../../domain/entities/weather.dart';
 import '../state/app_providers.dart';
 import '../state/weather_provider.dart';
 import 'sky_line.dart';
@@ -84,7 +84,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
     final strings = locale.strings;
     final now = weather.enabled ? weather.current : null;
     final problem = _problemText(weather.locationProblem, strings);
-    final part = WeatherService.dayPart(DateTime.now());
+    final part = dayPartAt(DateTime.now());
 
     TextStyle label(double size, {FontWeight? weight, Color? color, double? spacing}) =>
         locale.getTextStyle(

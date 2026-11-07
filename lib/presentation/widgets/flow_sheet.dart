@@ -3,16 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/bpm_flow.dart';
+import '../../domain/logic/bpm_flow.dart';
 import '../state/app_providers.dart';
 import 'swipeable_sheet.dart';
 
 /// Reads the tempo of the upcoming tracks, shows how many Deezer knows, and
 /// reorders the queue in the chosen flow.
 class FlowSheet extends ConsumerStatefulWidget {
-  final BpmService? service;
-
-  const FlowSheet({super.key, this.service});
+  const FlowSheet({super.key});
 
   static Future<void> show(BuildContext context) => SwipeableSheet.show(
         context,
@@ -28,7 +26,7 @@ class FlowSheet extends ConsumerStatefulWidget {
 class _FlowSheetState extends ConsumerState<FlowSheet> {
   static const _color = AppColors.neonCyan;
 
-  late final BpmService _service = widget.service ?? BpmService.shared;
+  late final _service = ref.read(bpmProvider);
   bool _loading = true;
   int _done = 0;
   int _toLookUp = 0;

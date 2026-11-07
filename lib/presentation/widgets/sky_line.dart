@@ -7,11 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/bpm_flow.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/rain_mix.dart';
-import '../../data/datasources/weather_service.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/entities/weather.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
@@ -97,7 +94,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
     ) = ref.watch(moonProvider.select(
         (m) => (m.snapshot.name, m.snapshot.illumination, m.snapshot.waxing)));
 
-    final part = WeatherService.dayPart((widget.clock ?? DateTime.now)());
+    final part = dayPartAt((widget.clock ?? DateTime.now)());
     final w = enabled ? weather : null;
     final isDay =
         w?.isDay ?? (part == DayPart.morning || part == DayPart.afternoon);
@@ -387,14 +384,11 @@ class _FallPainter extends CustomPainter {
 /// "It's raining where you are: play something for the rain?" Shown once per
 /// rain, only with the weather on.
 class RainOfferCard extends ConsumerStatefulWidget {
-  @visibleForTesting
-  final BpmService? tempo;
-  @visibleForTesting
-  final Future<List<Track>> Function(String query)? search;
+  /// The songs to pick from; the user's favorites and recents by default.
   @visibleForTesting
   final List<Track>? library;
 
-  const RainOfferCard({super.key, this.tempo, this.search, this.library});
+  const RainOfferCard({super.key, this.library});
 
   @override
   ConsumerState<RainOfferCard> createState() => _RainOfferCardState();
@@ -417,12 +411,9 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
 
     final tracks =
         widget.library ?? [...library.favoriteTracks, ...library.recentTracks];
-    final list = await RainMix.build(
+    final list = await ref.read(rainMixProvider)(
       library: tracks,
-      artistNames: RainMix.artistsFrom(
-          tracks, [...library.favoriteArtists.map((a) => a.name)]),
-      bpm: widget.tempo ?? BpmService.shared,
-      search: widget.search ?? DeezerApiService().searchTracks,
+      favoriteArtists: [...library.favoriteArtists.map((a) => a.name)],
     );
     if (!mounted) return;
     if (list.isEmpty) {

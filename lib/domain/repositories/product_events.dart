@@ -6,3 +6,11 @@
 abstract class ProductEvents {
   void log(String name, [Map<String, Object> parameters = const {}]);
 }
+
+/// Counts nothing: for use cases built without analytics (tests, tools).
+class NoProductEvents implements ProductEvents {
+  const NoProductEvents();
+
+  @override
+  void log(String name, [Map<String, Object> parameters = const {}]) {}
+}

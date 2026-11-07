@@ -7,17 +7,23 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../data/datasources/audio_precache_service.dart';
 import '../../data/datasources/battery_guide.dart';
+import '../../data/datasources/beat_clock.dart';
 import '../../data/datasources/bpm_flow.dart';
+import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
+import '../../data/datasources/playback_log.dart';
 import '../../data/datasources/product_analytics.dart';
+import '../../data/datasources/rain_mix.dart';
 import '../../data/datasources/release_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../data/datasources/streak_reminder.dart';
 import '../../data/datasources/style_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
 import '../../data/datasources/time_machine_service.dart';
+import '../../data/datasources/voice_search_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
@@ -89,6 +95,43 @@ final bpmProvider = Provider((ref) => BpmService.shared);
 
 /// The battery guide offered on phones that freeze Spotify.
 final batteryGuideProvider = Provider((ref) => BatteryGuide.instance);
+
+/// Settings and small values kept on the phone.
+final storageProvider = Provider((ref) => getIt<StorageService>());
+
+/// Product analytics, for the setting that turns it off (the use cases
+/// report through productEventsProvider).
+final analyticsProvider = Provider((ref) => ProductAnalytics.instance);
+
+/// The playback log, copied from settings to report a problem.
+final playbackLogProvider = Provider((ref) => PlaybackLog.instance);
+
+/// Previews kept on the phone for offline and instant starts.
+final audioCacheProvider = Provider((ref) => AudioPrecacheService());
+
+/// On-device speech recognition for voice search.
+final voiceSearchProvider = Provider((ref) => VoiceSearchService());
+
+/// Beat grids tapped by the user for each song.
+final beatSyncProvider = Provider((ref) => BeatSyncStore.shared);
+
+/// Song search in the catalog, as a function (tests pass their own).
+final trackSearchProvider =
+    Provider<Future<List<Track>> Function(String query)>(
+        (ref) => DeezerApiService().searchTracks);
+
+/// A queue for a rainy moment from the listener's own calm songs (see
+/// RainMix), with the BPM cache and the catalog search.
+final rainMixProvider = Provider((ref) => ({
+      required List<Track> library,
+      required List<String> favoriteArtists,
+    }) =>
+        RainMix.build(
+          library: library,
+          artistNames: RainMix.artistsFrom(library, favoriteArtists),
+          bpm: ref.read(bpmProvider),
+          search: ref.read(trackSearchProvider),
+        ));
 
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 

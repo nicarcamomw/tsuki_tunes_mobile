@@ -250,7 +250,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         borderRadius: BorderRadius.zero,
         onTap: () {
           HapticFeedback.lightImpact();
-          Clipboard.setData(ClipboardData(text: PlaybackLog.instance.dump()));
+          Clipboard.setData(ClipboardData(text: ref.read(playbackLogProvider).dump()));
           ScaffoldMessenger.of(widget.hostContext).showSnackBar(
             SnackBar(content: Text(strings.playbackLogCopied)),
           );
@@ -266,7 +266,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
         onTap: () {
           HapticFeedback.lightImpact();
-          AudioPrecacheService().clearCache();
+          ref.read(audioCacheProvider).clearCache();
           ScaffoldMessenger.of(widget.hostContext).showSnackBar(
             SnackBar(content: Text(strings.audioCacheCleared)),
           );
@@ -342,10 +342,10 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         icon: Icons.insights_rounded,
         title: strings.analyticsSettingTitle,
         subtitle: strings.analyticsSettingSubtitle,
-        value: ProductAnalytics.instance.enabled,
+        value: ref.read(analyticsProvider).enabled,
         onChanged: (v) async {
           unawaited(HapticFeedback.selectionClick());
-          await ProductAnalytics.instance.setEnabled(v);
+          await ref.read(analyticsProvider).setEnabled(v);
           if (mounted) setState(() {});
         },
       ),
@@ -429,7 +429,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
   }
 
   Future<void> _load() async {
-    final b = await StorageService().getBirthday();
+    final b = await context.readState(storageProvider).getBirthday();
     if (mounted) setState(() { _birthday = b; _loaded = true; });
   }
 
@@ -478,7 +478,8 @@ class _BirthdayRowState extends State<_BirthdayRow> {
     if (picked != null) {
       final mmdd = '${picked.month.toString().padLeft(2, '0')}-'
           '${picked.day.toString().padLeft(2, '0')}';
-      await StorageService().saveBirthday(mmdd);
+      if (!mounted) return;
+      await context.readState(storageProvider).saveBirthday(mmdd);
       if (mounted) {
         setState(() => _birthday = mmdd);
         widget.onChanged();

@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../data/datasources/play_history.dart';
-import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/moon_provider.dart';
@@ -74,15 +72,21 @@ class MoonSheet extends ConsumerWidget {
 
   /// The tracks of the mix: most played this lunar cycle, topped up with
   /// favorites and recents when the cycle was quiet.
-  static List<Track> buildMix(MoonSnapshot s, PlayHistory history, LibraryRepositoryImpl library) {
+  /// [topBetween] gives the most played songs in a time range (the play
+  /// history); [fallback] fills a quiet cycle (favorites, then recents).
+  static List<Track> buildMix(
+    MoonSnapshot s, {
+    required List<Track> Function(DateTime from, DateTime to) topBetween,
+    required List<Track> fallback,
+  }) {
     final from = s.isFullMoonWindow
         ? s.nearestFull.subtract(Duration(
             minutes: (MoonCalculator.synodicMonth * 1440).round()))
         : s.previousFull.time;
-    final mix = history.topBetween(from, s.at);
+    final mix = topBetween(from, s.at);
     if (mix.isEmpty || mix.length >= 10) return mix;
     final seen = mix.map((t) => t.id).toSet();
-    for (final t in [...library.favoriteTracks, ...library.recentTracks]) {
+    for (final t in fallback) {
       if (mix.length >= 10) break;
       if (seen.add(t.id)) mix.add(t);
     }
@@ -92,7 +96,6 @@ class MoonSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final moon = ref.watch(moonProvider);
-    final history = ref.watch(playHistoryProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final s = moon.snapshot;
@@ -190,7 +193,7 @@ class MoonSheet extends ConsumerWidget {
             ),
 
             const SizedBox(height: 22),
-            EcoLocked(feature: EcoFeature.moonMix, child: _FullMoonMixCard(snapshot: s, history: history)),
+            EcoLocked(feature: EcoFeature.moonMix, child: _FullMoonMixCard(snapshot: s)),
 
             const SizedBox(height: 22),
             Text(
@@ -455,9 +458,7 @@ class _PhaseTile extends ConsumerWidget {
 
 class _FullMoonMixCard extends ConsumerStatefulWidget {
   final MoonSnapshot snapshot;
-  final PlayHistory history;
-
-  const _FullMoonMixCard({required this.snapshot, required this.history});
+  const _FullMoonMixCard({required this.snapshot});
 
   @override
   ConsumerState<_FullMoonMixCard> createState() => _FullMoonMixCardState();
@@ -488,13 +489,16 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final s = widget.snapshot;
+    final history = ref.watch(playHistoryProvider);
     final unlocked = s.isFullMoonWindow;
+    final library = ref.read(libraryProvider);
     final mix = unlocked
-        ? MoonSheet.buildMix(s, widget.history, ref.read(libraryProvider))
+        ? MoonSheet.buildMix(s,
+            topBetween: history.topBetween,
+            fallback: [...library.favoriteTracks, ...library.recentTracks])
         : const <Track>[];
-    final cycleCount = unlocked
-        ? 0
-        : widget.history.countBetween(s.previousFull.time, s.at);
+    final cycleCount =
+        unlocked ? 0 : history.countBetween(s.previousFull.time, s.at);
 
     return Container(
       width: double.infinity,

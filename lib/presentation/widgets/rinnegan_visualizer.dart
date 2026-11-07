@@ -10,8 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/beat_clock.dart';
-import '../../data/datasources/bpm_flow.dart';
+import '../../domain/logic/beat_clock.dart';
 import '../state/app_providers.dart';
 
 /// The spinning eye of the player. With the song's tempo (Deezer's BPM, or
@@ -34,8 +33,6 @@ class RinneganVisualizer extends ConsumerStatefulWidget {
   final bool fullSong;
   final Duration Function()? position;
   final double Function()? speed;
-  @visibleForTesting
-  final BpmService? tempoService;
 
   const RinneganVisualizer({
     super.key,
@@ -46,7 +43,6 @@ class RinneganVisualizer extends ConsumerStatefulWidget {
     this.fullSong = false,
     this.position,
     this.speed,
-    this.tempoService,
   });
 
   @override
@@ -105,7 +101,8 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
   bool _hintPending = false;
 
   double get _now => _wall.elapsedMicroseconds / 1e6;
-  BpmService get _tempo => widget.tempoService ?? BpmService.shared;
+  late final _tempo = ref.read(bpmProvider);
+  late final _beatSync = ref.read(beatSyncProvider);
 
   @override
   void initState() {
@@ -145,7 +142,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
 
   String? get _key => widget.trackId == null || widget.trackId!.isEmpty
       ? null
-      : BeatSyncStore.keyFor(widget.trackId!, fullSong: widget.fullSong);
+      : beatSyncKey(widget.trackId!, fullSong: widget.fullSong);
 
   Future<void> _loadGrid() async {
     final gen = ++_lookupGen;
@@ -155,9 +152,9 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     if (key == null) return;
     final id = widget.trackId!;
 
-    await BeatSyncStore.shared.load();
+    await _beatSync.load();
     if (gen != _lookupGen || !mounted) return;
-    final tapped = BeatSyncStore.shared.get(key);
+    final tapped = _beatSync.get(key);
     if (tapped != null) {
       _setGrid(tapped, fromTaps: true);
       return;
@@ -300,7 +297,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     }
     final key = _key!;
     _setGrid(result.grid, fromTaps: true);
-    unawaited(BeatSyncStore.shared.put(key, result.grid));
+    unawaited(_beatSync.put(key, result.grid));
     HapticFeedback.mediumImpact();
     _showChip(result.tappedTempo
         ? strings.beatSyncTempo(result.grid.bpm.round())
@@ -316,7 +313,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     _taps.clear();
     HapticFeedback.mediumImpact();
     final strings = ref.read(stringsProvider);
-    unawaited(BeatSyncStore.shared.remove(key));
+    unawaited(_beatSync.remove(key));
     final bpm = _tempo.cached(widget.trackId!);
     _grid = bpm == null ? null : BeatGrid(bpm);
     _gridFromTaps = false;

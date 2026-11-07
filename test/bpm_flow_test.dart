@@ -226,8 +226,9 @@ void main() {
     await tester.pumpWidget(TestScope(
         overrides: [
           audioProvider.overrideWith((ref) => audio, disposeNotifier: false),
+          bpmProvider.overrideWithValue(service),
         ],
-        child: MaterialApp(home: Scaffold(body: FlowSheet(service: service)))));
+        child: const MaterialApp(home: Scaffold(body: FlowSheet()))));
     // The fake lookup resolves in microtasks; a few frames are enough.
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 10));

@@ -10,24 +10,6 @@ import 'package:path/path.dart' as p;
 // code, so it can be tested (and reasoned about) on its own. data
 // implements the domain's interfaces and never reaches into presentation.
 
-/// Screens and widgets that still call a data source directly (mostly the
-/// Deezer catalog) instead of a use case. Known debt: this list may only
-/// shrink. A new screen or widget must go through the domain.
-const _presentationToDataDebt = {
-  'presentation/widgets/battery_guide_sheet.dart',
-  'presentation/widgets/flow_sheet.dart',
-  'presentation/widgets/language_selector_sheet.dart',
-  'presentation/widgets/lyrics_view.dart',
-  'presentation/widgets/moon_sheet.dart',
-  'presentation/widgets/playlist_selector_sheet.dart',
-  'presentation/widgets/profile_bottom_sheet.dart',
-  'presentation/widgets/queue_panel.dart',
-  'presentation/widgets/rinnegan_visualizer.dart',
-  'presentation/widgets/sky_line.dart',
-  'presentation/widgets/voice_search_sheet.dart',
-  'presentation/widgets/weather_sheet.dart',
-};
-
 /// Packages the domain may use: annotations for the generated JSON and
 /// dependency injection code (plain Dart, no Flutter).
 const _domainPackages = {
@@ -92,16 +74,15 @@ void main() {
     expect(offenders, isEmpty);
   });
 
-  test('no new screen or widget calls a data source directly', () {
-    final usingData = {
+  test('no screen or widget calls a data source directly', () {
+    final usingData = [
       for (final dir in ['presentation/screens', 'presentation/widgets'])
         for (final file in _dartFiles(dir))
-          if (_imports(file).any((uri) => uri.startsWith('data/'))) file,
-    };
-    expect(usingData.difference(_presentationToDataDebt), isEmpty,
-        reason: 'go through a use case in domain/usecases instead');
-    // Paying the debt down: drop the file from the list once it's clean.
-    expect(_presentationToDataDebt.difference(usingData), isEmpty,
-        reason: 'these no longer use data: remove them from the list');
+          for (final uri in _imports(file))
+            if (uri.startsWith('data/')) '$file -> $uri',
+    ];
+    expect(usingData, isEmpty,
+        reason: 'go through a use case in domain/usecases, or a provider in '
+            'presentation/state, instead');
   });
 }

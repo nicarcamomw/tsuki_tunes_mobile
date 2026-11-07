@@ -187,6 +187,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i670.ReorderPlaylist>(
       () => _i670.ReorderPlaylist(gh<_i128.PlaylistRepository>()),
     );
+    gh.factory<_i79.CreatePlaylist>(
+      () => _i79.CreatePlaylist(
+        gh<_i128.PlaylistRepository>(),
+        events: gh<_i73.ProductEvents>(),
+      ),
+    );
     gh.lazySingleton<_i802.PlaybackController>(
       () => repositoryModule.playback(gh<_i1052.AudioProvider>()),
     );
@@ -197,12 +203,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i448.LibraryStore>(),
         gh<_i144.Outbox>(),
         gh<_i814.DeezerApiService>(),
-      ),
-    );
-    gh.factory<_i79.CreatePlaylist>(
-      () => _i79.CreatePlaylist(
-        gh<_i128.PlaylistRepository>(),
-        events: gh<_i73.ProductEvents>(),
       ),
     );
     gh.factory<_i317.AddToQueue>(

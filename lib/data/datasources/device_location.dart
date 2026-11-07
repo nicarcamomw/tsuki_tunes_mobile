@@ -1,27 +1,11 @@
 import 'package:geolocator/geolocator.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/location.dart';
+
+export '../../domain/entities/location.dart';
 
 
 final _log = Log.named('Location');
-
-enum LocationStatus { ok, denied, deniedForever, serviceOff, failed }
-
-class LocationResult {
-  final LocationStatus status;
-  final double? latitude;
-  final double? longitude;
-
-  const LocationResult(this.status, [this.latitude, this.longitude]);
-
-  bool get ok => status == LocationStatus.ok;
-}
-
-abstract class LocationSource {
-  /// Approximate position, asking for permission if [ask] and not yet given.
-  Future<LocationResult> approximate({bool ask = false});
-  Future<void> openAppSettings();
-  Future<void> openLocationSettings();
-}
 
 /// The phone's coarse location (about 2 km), the only kind the app declares.
 class DeviceLocation implements LocationSource {

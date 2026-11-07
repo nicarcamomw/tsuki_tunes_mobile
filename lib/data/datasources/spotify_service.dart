@@ -86,6 +86,10 @@ class SpotifyService {
 
   /// What [lastError] holds when [connect] failed for that reason.
   static const notRegisteredError = 'user_not_registered';
+
+  /// The last connect failed because this Spotify account isn't on the
+  /// app's allow list (development mode).
+  bool get isNotRegistered => _lastError == notRegisteredError;
   String? get accessToken => _accessToken;
   String? get activeDeviceName => _activeDeviceName;
 

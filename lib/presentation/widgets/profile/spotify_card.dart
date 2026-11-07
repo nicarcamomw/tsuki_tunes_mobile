@@ -16,7 +16,6 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
   bool _isConnecting = false;
 
   AudioProvider get _audio => ref.read(audioProvider);
-  SpotifyService get _spotify => _audio.spotify;
 
   void _showSnack(SnackBar snackBar) {
     if (widget.hostContext.mounted) {
@@ -38,7 +37,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
   }
 
   Future<void> _disconnect() async {
-    await _spotify.disconnect();
+    await _audio.spotify.disconnect();
     await _audio.updateSpotifyState();
     if (mounted) setState(() {});
   }
@@ -47,20 +46,20 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
     final strings = widget.locale.strings;
     setState(() => _isConnecting = true);
     try {
-      final success = await _spotify.connect();
+      final success = await _audio.spotify.connect();
       _isConnecting = false;
       if (success) {
-        ProductAnalytics.instance.log('spotify_connected', {'premium': _spotify.isPremium});
+        ref.read(analyticsProvider).log('spotify_connected', {'premium': _audio.spotify.isPremium});
         await _audio.updateSpotifyState();
         if (mounted) setState(() {});
         _showSnack(_plainSnack(strings.spotifySyncSuccess, const Duration(seconds: 2)));
-      } else if (_spotify.lastError == SpotifyService.notRegisteredError) {
+      } else if (_audio.spotify.isNotRegistered) {
         if (mounted) setState(() {});
-        ProductAnalytics.instance.log('spotify_connect_failed', {'reason': 'not_registered'});
+        ref.read(analyticsProvider).log('spotify_connect_failed', {'reason': 'not_registered'});
         await _explainRestrictedAccess();
       } else {
         if (mounted) setState(() {});
-        final rawError = _spotify.lastError;
+        final rawError = _audio.spotify.lastError;
         String msg = strings.spotifyConnectError;
         if (rawError != null) {
           final lower = rawError.toLowerCase();
@@ -68,7 +67,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             msg = strings.spotifyCanceledByUser;
           }
         }
-        ProductAnalytics.instance.log('spotify_connect_failed',
+        ref.read(analyticsProvider).log('spotify_connect_failed',
             {'canceled': msg == strings.spotifyCanceledByUser});
         _showSnack(_plainSnack(msg, const Duration(seconds: 3)));
       }
@@ -155,7 +154,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
   Widget build(BuildContext context) {
     final locale = widget.locale;
     final strings = locale.strings;
-    final spotify = _spotify;
+    final spotify = _audio.spotify;
 
     return Column(
       mainAxisSize: MainAxisSize.min,

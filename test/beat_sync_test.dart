@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/beat_clock.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/bpm_flow.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/deezer_api_service.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/rinnegan_visualizer.dart';
 import 'helpers/test_scope.dart';
 
@@ -186,6 +187,7 @@ void main() {
     final tempo = BpmService(fetch: (_) async => const TrackAudioInfo(bpm: 120), gap: Duration.zero);
 
     Widget eye(bool playing) => TestScope(
+          overrides: [bpmProvider.overrideWithValue(tempo)],
           child: MaterialApp(
             home: Scaffold(
               body: Center(
@@ -195,7 +197,6 @@ void main() {
                   trackId: 'song',
                   position: () => position,
                   speed: () => 1.0,
-                  tempoService: tempo,
                 ),
               ),
             ),

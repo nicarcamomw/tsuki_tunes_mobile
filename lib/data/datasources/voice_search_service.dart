@@ -2,35 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/voice_error.dart';
 import '../../domain/logic/voice_commands.dart';
+
+export '../../domain/entities/voice_error.dart';
 
 export '../../domain/logic/voice_commands.dart' show VoiceAction, VoiceCommand;
 
 
 final _log = Log.named('Voice');
-
-/// Why listening stopped without a usable result.
-enum VoiceError {
-  /// Microphone permission denied.
-  permission,
-
-  /// No speech recognizer on this phone (e.g. no Google app).
-  unavailable,
-
-  /// Heard nothing, or nothing it could recognize.
-  noMatch,
-
-  /// The recognizer needs the network and couldn't reach it.
-  network,
-
-  /// The chosen language isn't supported by the recognizer.
-  language,
-
-  /// A previous session was still closing.
-  busy,
-
-  other,
-}
 
 class VoiceSearchService {
   static final VoiceSearchService _instance = VoiceSearchService._();

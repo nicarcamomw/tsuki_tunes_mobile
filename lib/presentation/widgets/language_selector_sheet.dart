@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
-import '../../data/datasources/storage_service.dart';
 import '../state/app_providers.dart';
 import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
@@ -122,7 +121,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                     if (!isSelected) {
                       await ref.read(localeProvider).setLanguage(
                             lang,
-                            StorageService(),
+                            ref.read(storageProvider),
                           );
                     }
                     if (context.mounted) {

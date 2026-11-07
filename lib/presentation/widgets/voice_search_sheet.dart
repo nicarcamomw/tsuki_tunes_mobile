@@ -7,7 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/voice_search_service.dart';
+import '../../domain/entities/voice_error.dart';
+import '../state/app_providers.dart';
 
 enum _SheetState { initializing, listening, done, failed }
 
@@ -35,7 +36,7 @@ class VoiceSearchSheet extends StatefulWidget {
 
 class _VoiceSearchSheetState extends State<VoiceSearchSheet>
     with SingleTickerProviderStateMixin {
-  final _voice = VoiceSearchService();
+  late final _voice = context.readState(voiceSearchProvider);
   late final AnimationController _pulseController;
 
   _SheetState _state = _SheetState.initializing;
