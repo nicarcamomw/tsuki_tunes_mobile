@@ -19,7 +19,7 @@ dependencies:
   google_fonts: ^6.2.1
   lucide_icons: ^0.257.0
   flutter_animate: ^4.5.2
-  cached_network_image: ^3.4.1
+  cached_network_image: ^4.0.6
 
   # State Management
   # Audio Playback
