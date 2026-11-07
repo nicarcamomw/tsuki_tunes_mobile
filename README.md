@@ -89,7 +89,7 @@ cd functions && npm ci && npm test && npm run build
    ```bash
    firebase deploy --only functions --project tsuki-tunes-web
    ```
-4. Desde ahí, el workflow *Deploy Cloud Functions* despliega solo en cada push a `main` que toque `functions/`, o a mano eligiendo el proyecto. Para eso la cuenta de servicio de `FIREBASE_SERVICE_ACCOUNT` necesita además los roles **Cloud Functions Admin**, **Service Account User**, **Cloud Build Editor**, **Artifact Registry Administrator**, **Secret Manager Viewer** y **Cloud Run Admin**.
+4. Desde ahí, el workflow *Deploy Cloud Functions* despliega solo en cada push a `main` que toque `functions/`, o a mano eligiendo el proyecto, **una vez creada la variable de repositorio `DEPLOY_FUNCTIONS` = `true`** (Settings → Secrets and variables → Actions → Variables; hasta entonces solo prueba). La cuenta de servicio de `FIREBASE_SERVICE_ACCOUNT` necesita además los roles **Cloud Functions Admin**, **Service Account User**, **Cloud Build Editor**, **Artifact Registry Administrator**, **Secret Manager Viewer** y **Cloud Run Admin**.
 5. Comprobar: `curl "https://us-central1-tsuki-tunes-web.cloudfunctions.net/api/deezer/genre"` devuelve la lista de géneros.
 
 Costo: el plan Blaze incluye 2 millones de invocaciones al mes gratis; el uso de la app queda muy por debajo.
