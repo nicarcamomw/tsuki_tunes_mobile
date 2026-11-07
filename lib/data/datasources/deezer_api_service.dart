@@ -9,8 +9,10 @@ import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
+import '../../domain/entities/genre.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/catalog_repository.dart';
+import '../../domain/repositories/genre_catalog.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
@@ -39,7 +41,8 @@ class TrackAudioInfo {
   const TrackAudioInfo({required this.bpm, this.gain});
 }
 
-class DeezerApiService implements MusicApiContract, CatalogRepository {
+class DeezerApiService
+    implements MusicApiContract, CatalogRepository, GenreCatalog {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
   DeezerApiService._internal();
@@ -412,6 +415,78 @@ class DeezerApiService implements MusicApiContract, CatalogRepository {
       _log.severe('getChartArtists error: $e');
     }
     return [];
+  }
+
+  /// Deezer's music genres, without "All". Kept in memory only (the disk
+  /// cache doesn't know the type); empty when they can't be reached.
+  @override
+  Future<List<Genre>> getGenres() async {
+    const cacheKey = 'genres';
+    final cached = _getCached<List<Genre>>(cacheKey);
+    if (cached != null) return cached;
+
+    return _deduped(cacheKey, () async {
+      try {
+        final data = await _fetchJson(ApiEndpoints.genres);
+        if (data is Map<String, dynamic>) {
+          final List list = data['data'] ?? [];
+          final genres = list
+              .whereType<Map<String, dynamic>>()
+              .map(Genre.fromDeezer)
+              .where((g) => g.id.isNotEmpty && g.id != '0' && g.name.isNotEmpty)
+              .toList();
+          if (genres.isNotEmpty) _setCache(cacheKey, genres, isChart: true);
+          return genres;
+        }
+      } catch (e) {
+        _log.severe('getGenres error: $e');
+      }
+      return <Genre>[];
+    });
+  }
+
+  /// The best known artists of a genre. Throws [DeezerApiException] when
+  /// Deezer can't be reached, so the genre page can offer a retry.
+  @override
+  Future<List<Artist>> getGenreArtists(String genreId) async {
+    final cacheKey = 'genre_artists_$genreId';
+    final cached = await _getFromCache<List<Artist>>(cacheKey);
+    if (cached != null) return cached;
+
+    return _deduped(cacheKey, () async {
+      final data = await _fetchJson(ApiEndpoints.genreArtists(genreId),
+          throwOnError: true);
+      if (data is! Map<String, dynamic>) return <Artist>[];
+      final List list = data['data'] ?? [];
+      final artists = list
+          .map((item) => Artist.fromDeezer(item))
+          .where((a) => a.id.isNotEmpty)
+          .toList();
+      _setCache(cacheKey, artists, isChart: true);
+      return artists;
+    });
+  }
+
+  /// The genre's most played songs right now. Throws like
+  /// [getGenreArtists].
+  @override
+  Future<List<Track>> getGenreChartTracks(String genreId) async {
+    final cacheKey = 'genre_tracks_$genreId';
+    final cached = await _getFromCache<List<Track>>(cacheKey);
+    if (cached != null) return cached;
+
+    return _deduped(cacheKey, () async {
+      final data = await _fetchJson(ApiEndpoints.genreChartTracks(genreId),
+          throwOnError: true);
+      if (data is! Map<String, dynamic>) return <Track>[];
+      final List list = data['data'] ?? [];
+      final tracks = list
+          .map((item) => Track.fromDeezer(item))
+          .where((t) => t.id.isNotEmpty)
+          .toList();
+      _setCache(cacheKey, tracks, isChart: true);
+      return tracks;
+    });
   }
 
   @override

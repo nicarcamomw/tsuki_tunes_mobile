@@ -1,14 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/product_analytics.dart';
 import '../../di/injection.dart';
 import '../../domain/repositories/catalog_repository.dart';
+import '../../domain/repositories/genre_catalog.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../../domain/repositories/playback_controller.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/repositories/product_events.dart';
 import '../../domain/usecases/catalog/get_album.dart';
 import '../../domain/usecases/catalog/get_artist.dart';
+import '../../domain/usecases/catalog/get_genre_page.dart';
+import '../../domain/usecases/catalog/get_genres.dart';
 import '../../domain/usecases/catalog/get_track.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../../domain/usecases/library/toggle_album_listened.dart';
@@ -111,3 +115,11 @@ final getAlbumProvider = Provider((ref) => GetAlbum(ref.watch(catalogRepositoryP
 final getArtistProvider = Provider((ref) => GetArtist(ref.watch(catalogRepositoryProvider)));
 
 final getTrackProvider = Provider((ref) => GetTrack(ref.watch(catalogRepositoryProvider)));
+
+/// The genres to explore: Deezer's (the same singleton as the catalog).
+final genreCatalogProvider = Provider<GenreCatalog>((ref) => DeezerApiService());
+
+final getGenresProvider = Provider((ref) => GetGenres(ref.watch(genreCatalogProvider)));
+
+final getGenrePageProvider =
+    Provider((ref) => GetGenrePage(ref.watch(genreCatalogProvider)));

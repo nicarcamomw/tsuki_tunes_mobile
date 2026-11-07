@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -11,7 +12,10 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/voice_search_service.dart';
+import '../../domain/entities/genre.dart';
 import '../../domain/entities/lyrics_search_result.dart';
+import '../../domain/logic/search_suggestions.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/search_provider.dart';
@@ -39,11 +43,81 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // the voice sheet explains any problem (permission, no recognizer).
   static const bool _voiceSupported = !kIsWeb;
 
+  List<Genre> _genres = const [];
+
+  // The user's artists (most listened first) and song and album titles,
+  // for suggestions and "did you mean"; rebuilt when the library changes.
+  List<String> _libraryArtists = const [];
+  List<String> _libraryTitles = const [];
+  Object? _libraryNamesKey;
+
   @override
   void initState() {
     super.initState();
     NavigationEvents.onSearchFocus = focusSearchInput;
     NavigationEvents.onSearchClear = clearAndFocus;
+    _loadGenres();
+  }
+
+  Future<void> _loadGenres() async {
+    final genres = await ref.read(getGenresProvider)();
+    if (mounted && genres.isNotEmpty) setState(() => _genres = genres);
+  }
+
+  /// Rebuilds the user's names when their library changed, and hands them
+  /// to the search for "did you mean".
+  void _refreshLibraryNames(SearchProvider search) {
+    final library = ref.read(libraryProvider);
+    final key = (library.listenedCount, library.followedArtists.length,
+        library.favoriteArtists.length);
+    if (key == _libraryNamesKey) return;
+    _libraryNamesKey = key;
+
+    final plays = <String, int>{};
+    final spelled = <String, String>{};
+    void count(String name, int weight) {
+      final n = name.trim();
+      if (n.isEmpty) return;
+      final k = n.toLowerCase();
+      spelled.putIfAbsent(k, () => n);
+      plays[k] = (plays[k] ?? 0) + weight;
+    }
+
+    final titles = <String>{};
+    for (final t in library.listenedTracks) {
+      for (final a in t.artists) {
+        count(a, 1);
+      }
+      if (t.title.isNotEmpty) titles.add(t.title);
+      if (t.albumTitle.isNotEmpty) titles.add(t.albumTitle);
+    }
+    // Followed and favourite artists count as much as many songs.
+    for (final a in [...library.followedArtists, ...library.favoriteArtists]) {
+      count(a.name, 20);
+    }
+    final ranked = plays.keys.toList()
+      ..sort((a, b) => plays[b]!.compareTo(plays[a]!));
+    _libraryArtists = [for (final k in ranked) spelled[k]!];
+    _libraryTitles = titles.toList();
+    search.setLibraryNames([..._libraryArtists, ..._libraryTitles]);
+  }
+
+  /// Searches [query] at once, as if typed: from a suggestion, "did you
+  /// mean" or the explore section.
+  void _runQuery(String query) {
+    unawaited(HapticFeedback.selectionClick());
+    _debounce?.cancel();
+    _controller.value = TextEditingValue(
+      text: query,
+      selection: TextSelection.collapsed(offset: query.length),
+    );
+    FocusScope.of(context).unfocus();
+    final search = ref.read(searchProvider);
+    if (_selectedTabIndex == 4) {
+      search.searchLyrics(query);
+    } else {
+      search.search(query);
+    }
   }
 
   @override
@@ -148,6 +222,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final search = ref.watch(searchProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
+    ref.watch(libraryProvider.select((l) => (l.listenedCount,
+        l.followedArtists.length, l.favoriteArtists.length)));
+    _refreshLibraryNames(search);
     final hasResults = search.artists.isNotEmpty || search.albums.isNotEmpty || search.tracks.isNotEmpty;
     if (!search.isLoading && search.query.isNotEmpty && !search.hasError && _lastAnnouncedQuery != search.query) {
       _lastAnnouncedQuery = search.query;
@@ -283,6 +360,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
 
+              // Completions of what is being typed.
+              ListenableBuilder(
+                listenable: Listenable.merge([_controller, focusNode]),
+                builder: (context, _) => _buildSuggestions(search, locale),
+              ),
+
               // Tabs: ['Todo', 'Artistas', 'Álbumes', 'Canciones'] (localizadas)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -359,8 +442,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget _buildEmptyState(AppStrings strings, LocaleProvider locale) {
     final search = ref.read(searchProvider);
     final history = search.searchHistory;
+    final topArtists = _libraryArtists.take(10).toList();
 
-    if (history.isEmpty) {
+    if (history.isEmpty && topArtists.isEmpty && _genres.isEmpty) {
       return GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -399,6 +483,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
+          if (history.isNotEmpty) ...[
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -516,7 +601,149 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                 ),
               )),
+          ],
+          if (topArtists.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _sectionLabel(strings.searchYourArtists, locale),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final name in topArtists)
+                  _QueryChip(
+                    label: name,
+                    icon: Icons.person_outline,
+                    semanticLabel: strings.a11ySearchSuggestion(name),
+                    locale: locale,
+                    onTap: () => _runQuery(name),
+                  ),
+              ],
+            ),
+          ],
+          if (_genres.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _sectionLabel(strings.exploreGenres, locale),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 2.6,
+              children: [
+                for (final g in _genres) _GenreTile(genre: g, locale: locale),
+              ],
+            ),
+          ],
+          const SizedBox(height: 120),
         ],
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text, LocaleProvider locale) => Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: locale.getTextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textMuted,
+            letterSpacing: 1.2,
+          ),
+        ),
+      );
+
+  /// Completions of the text being typed: recent searches, the user's own
+  /// artists and songs, then names from the results so far.
+  Widget _buildSuggestions(SearchProvider search, LocaleProvider locale) {
+    final text = _controller.text.trim();
+    if (text.isEmpty || !focusNode.hasFocus || _selectedTabIndex == 4) {
+      return const SizedBox.shrink();
+    }
+    final suggestions = SearchSuggestions.suggest(
+      text,
+      history: search.searchHistory,
+      library: [..._libraryArtists, ..._libraryTitles],
+      // Results are those of the query being typed, or a little behind it.
+      catalog: search.resultNames,
+    );
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+    final strings = locale.strings;
+    return Semantics(
+      container: true,
+      label: strings.searchSuggestions,
+      child: SizedBox(
+        height: 40,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          children: [
+            for (final sug in suggestions)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _QueryChip(
+                  label: sug.text,
+                  icon: switch (sug.source) {
+                    SuggestionSource.history => Icons.history,
+                    SuggestionSource.library => Icons.library_music_outlined,
+                    SuggestionSource.catalog => Icons.search,
+                  },
+                  semanticLabel: strings.a11ySearchSuggestion(sug.text),
+                  locale: locale,
+                  onTap: () => _runQuery(sug.text),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "Did you mean X?", tappable, when the search found a likely typo.
+  Widget _buildDidYouMean(SearchProvider search, LocaleProvider locale) {
+    final suggestion = search.didYouMean;
+    if (suggestion == null) return const SizedBox.shrink();
+    final strings = locale.strings;
+    return Semantics(
+      button: true,
+      label: strings.a11yDidYouMean(suggestion),
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => _runQuery(suggestion),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_fix_high, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    style: locale.getTextStyle(
+                        fontSize: 13, color: AppColors.textSecondary),
+                    children: [
+                      TextSpan(text: '${strings.didYouMeanPrefix} '),
+                      TextSpan(
+                        text: suggestion,
+                        style: locale.getTextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                      const TextSpan(text: '?'),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -828,9 +1055,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
         child: Center(
-          child: Text(
-            strings.noResultsFor(search.query),
-            style: locale.getTextStyle(color: AppColors.textSecondary),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  strings.noResultsFor(search.query),
+                  textAlign: TextAlign.center,
+                  style: locale.getTextStyle(color: AppColors.textSecondary),
+                ),
+                _buildDidYouMean(search, locale),
+              ],
+            ),
           ),
         ),
       );
@@ -858,6 +1095,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(bottom: 120),
       children: [
+        _buildDidYouMean(search, locale),
+
         // Artists Section
         if (showArtists && hasArtists) ...[
           Padding(
@@ -972,6 +1211,132 @@ class _TapScaleState extends State<_TapScale> {
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
         child: widget.child,
+      ),
+    );
+  }
+}
+
+/// A query to search with one tap: a suggestion or one of the user's
+/// artists.
+class _QueryChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final String semanticLabel;
+  final LocaleProvider locale;
+  final VoidCallback onTap;
+
+  const _QueryChip({
+    required this.label,
+    required this.icon,
+    required this.semanticLabel,
+    required this.locale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: _TapScale(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.bgMid,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.textMuted),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: locale.getTextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A genre to explore: its picture under a dark veil, and its name.
+class _GenreTile extends StatelessWidget {
+  final Genre genre;
+  final LocaleProvider locale;
+
+  const _GenreTile({required this.genre, required this.locale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: genre.name,
+      excludeSemantics: true,
+      child: _TapScale(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          GenreRoute(id: genre.id, name: genre.name).push(context);
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(color: AppColors.bgMid),
+              if (genre.pictureUrl.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: genre.pictureUrl,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      AppColors.bgDeep.withValues(alpha: 0.9),
+                      AppColors.bgDeep.withValues(alpha: 0.35),
+                    ],
+                  ),
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    genre.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: locale.getTextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textBright,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

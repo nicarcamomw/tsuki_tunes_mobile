@@ -20,6 +20,12 @@ class ApiEndpoints {
   static const String chartArtists = '$deezerBase/chart/0/artists?limit=15';
   static const String chartAlbums = '$deezerBase/chart/0/albums?limit=15';
 
+  // Genres. Id 0 is "All", which the chart endpoints also take.
+  static const String genres = '$deezerBase/genre';
+  static String genreArtists(String id) => '$deezerBase/genre/$id/artists';
+  static String genreChartTracks(String id, {int limit = 25}) =>
+      '$deezerBase/chart/$id/tracks?limit=$limit';
+
   // Entity endpoints
   static String artist(String id) => '$deezerBase/artist/$id';
   static String artistTopTracks(String id, {int limit = 10}) =>

@@ -2704,4 +2704,14 @@ class AppStrings {
   String a11yAlmostComplete(String album, String artist, String missing) =>
       _l.a11yAlmostComplete(album, artist, missing);
   String becauseYouCompleted(String album) => _l.becauseYouCompleted(album);
+
+  String get searchSuggestions => _l.searchSuggestions;
+  String a11ySearchSuggestion(String query) => _l.a11ySearchSuggestion(query);
+  String get didYouMeanPrefix => _l.didYouMeanPrefix;
+  String a11yDidYouMean(String query) => _l.a11yDidYouMean(query);
+  String get searchYourArtists => _l.searchYourArtists;
+  String get exploreGenres => _l.exploreGenres;
+  String get genreArtists => _l.genreArtists;
+  String get genreTopTracks => _l.genreTopTracks;
+  String get genreEmpty => _l.genreEmpty;
 }

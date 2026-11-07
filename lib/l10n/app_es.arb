@@ -1902,5 +1902,28 @@
         "type": "String"
       }
     }
-  }
+  },
+  "searchSuggestions": "Sugerencias",
+  "a11ySearchSuggestion": "Buscar {query}",
+  "@a11ySearchSuggestion": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "didYouMeanPrefix": "¿Quisiste decir",
+  "a11yDidYouMean": "¿Quisiste decir {query}? Toca para buscarlo",
+  "@a11yDidYouMean": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchYourArtists": "TUS ARTISTAS",
+  "exploreGenres": "EXPLORAR GÉNEROS",
+  "genreArtists": "ARTISTAS DEL GÉNERO",
+  "genreTopTracks": "LO MÁS ESCUCHADO",
+  "genreEmpty": "Este género no tiene artistas ahora mismo."
 }

@@ -184,6 +184,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           parentNavigatorKey: TutorialRoute.$parentNavigatorKey,
           factory: $TutorialRoute._fromState,
         ),
+        GoRouteData.$route(
+          path: 'genre/:id',
+          hasOverriddenOnExit: false,
+          factory: $GenreRoute._fromState,
+        ),
       ],
     ),
   ],
@@ -561,6 +566,34 @@ mixin $TutorialRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/tutorial');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $GenreRoute on GoRouteData {
+  static GenreRoute _fromState(GoRouterState state) => GenreRoute(
+    id: state.pathParameters['id']!,
+    name: state.uri.queryParameters['name'] ?? '',
+  );
+
+  GenreRoute get _self => this as GenreRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/genre/${Uri.encodeComponent(_self.id)}',
+    queryParams: {if (_self.name != '') 'name': _self.name},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

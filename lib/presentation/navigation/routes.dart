@@ -8,6 +8,7 @@ import '../../domain/entities/track.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/artist_discography_screen.dart';
+import '../screens/genre_screen.dart';
 import '../screens/guess_song_screen.dart';
 import '../screens/listening_clock_screen.dart';
 import '../screens/login_screen.dart';
@@ -88,6 +89,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<MaskCollectionRoute>(path: 'masks'),
         TypedGoRoute<WrappedRoute>(path: 'wrapped/:year'),
         TypedGoRoute<TutorialRoute>(path: 'tutorial'),
+        TypedGoRoute<GenreRoute>(path: 'genre/:id'),
       ],
     ),
   ],
@@ -266,6 +268,19 @@ class PlaylistRoute extends GoRouteData with $PlaylistRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, PlaylistDetailScreen(playlistId: id));
+}
+
+/// A genre from the search screen; [name] titles it (a query parameter,
+/// so a link without it still opens).
+class GenreRoute extends GoRouteData with $GenreRoute {
+  const GenreRoute({required this.id, this.name = ''});
+
+  final String id;
+  final String name;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) =>
+      cyberPage(state, GenreScreen(genreId: id, name: name));
 }
 
 class ReleaseRadarRoute extends GoRouteData with $ReleaseRadarRoute {

@@ -5,12 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/lastfm_service.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/track.dart';
-
+import '../../domain/logic/search_suggestions.dart';
 
 final _log = Log.named('Search');
 
@@ -37,6 +38,18 @@ class SearchProvider extends ChangeNotifier {
 
   List<String> _searchHistory = [];
 
+  // Names "did you mean" can offer (not the history, which keeps typos):
+  // the user's artists, songs and albums
+  // (see [setLibraryNames]) and the chart artists, once loaded.
+  List<String> _libraryNames = const [];
+  List<String> _chartNames = const [];
+  bool _chartNamesRequested = false;
+  String? _didYouMean;
+
+  /// Artist names a typo-tolerant search finds for a query (Last.fm when it
+  /// has a key), asked only when Deezer finds nothing.
+  final Future<List<String>> Function(String query) _fuzzyArtistNames;
+
   String get query => _query;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
@@ -49,8 +62,69 @@ class SearchProvider extends ChangeNotifier {
   bool get hasLyricsError => _hasLyricsError;
   List<String> get searchHistory => _searchHistory;
 
-  SearchProvider() {
+  /// A likely correction of the last query, or null.
+  String? get didYouMean => _didYouMean;
+
+  /// Names of the current results, for suggestions while typing.
+  Iterable<String> get resultNames sync* {
+    for (final a in _artists) {
+      yield a.name;
+    }
+    for (final t in _tracks) {
+      yield t.title;
+    }
+    for (final a in _albums) {
+      yield a.title;
+    }
+  }
+
+  SearchProvider({Future<List<String>> Function(String query)? fuzzyArtistNames})
+      : _fuzzyArtistNames = fuzzyArtistNames ?? LastFmService.searchArtistNames {
     _loadHistory();
+  }
+
+  /// The user's artists, songs and albums, most relevant first: "did you
+  /// mean" corrects towards them.
+  void setLibraryNames(List<String> names) => _libraryNames = names;
+
+  Future<void> _loadChartNames() async {
+    if (_chartNamesRequested) return;
+    _chartNamesRequested = true;
+    try {
+      final artists = await _api.getChartArtists();
+      _chartNames = [for (final a in artists) a.name];
+    } catch (e) {
+      _log.warning('chart names for suggestions: $e');
+    }
+  }
+
+  String? _correction(String query, [Iterable<String> extra = const []]) =>
+      SearchSuggestions.didYouMean(
+        query,
+        vocabulary: [..._libraryNames, ..._chartNames, ...extra],
+        resultNames: resultNames,
+      );
+
+  /// Works out "did you mean" for [query] once its results are in. With no
+  /// results and nothing close among the known names, asks the
+  /// typo-tolerant search too.
+  Future<void> _suggestCorrection(String query, int generation) async {
+    await _loadChartNames();
+    if (generation != _searchGeneration) return;
+    var correction = _correction(query);
+    final empty = _artists.isEmpty && _tracks.isEmpty && _albums.isEmpty;
+    if (correction == null && empty) {
+      try {
+        final names = await _fuzzyArtistNames(query);
+        if (generation != _searchGeneration) return;
+        correction = _correction(query, names);
+      } catch (e) {
+        _log.warning('fuzzy artist names: $e');
+      }
+    }
+    if (generation != _searchGeneration || correction == _didYouMean) return;
+    _didYouMean = correction;
+    notifyListeners();
   }
 
   Future<void> _loadHistory() async {
@@ -115,6 +189,7 @@ class SearchProvider extends ChangeNotifier {
 
     _query = cleanQuery;
     _isLoading = true;
+    _didYouMean = null;
     final generation = ++_searchGeneration;
     notifyListeners();
 
@@ -126,6 +201,7 @@ class SearchProvider extends ChangeNotifier {
       _artists = results['artists'] ?? [];
       _albums = results['albums'] ?? [];
       unawaited(_saveToHistory(cleanQuery));
+      unawaited(_suggestCorrection(cleanQuery, generation));
     } catch (e) {
       if (generation != _searchGeneration) return;
       _log.severe('Search error: $e');
@@ -193,6 +269,7 @@ class SearchProvider extends ChangeNotifier {
     _hasError = false;
     _isLyricsLoading = false;
     _hasLyricsError = false;
+    _didYouMean = null;
     _searchGeneration++;
     _lyricsSearchGeneration++;
     notifyListeners();

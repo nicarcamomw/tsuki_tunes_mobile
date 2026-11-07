@@ -82,4 +82,35 @@ class LastFmService {
     }
     return [];
   }
+
+  /// Artist names Last.fm finds for [query], best first. Its search forgives
+  /// typos, so it feeds "did you mean" when Deezer finds nothing.
+  static Future<List<String>> searchArtistNames(String query,
+      {int limit = 5}) async {
+    if (!isConfigured || query.trim().isEmpty) return [];
+    try {
+      final uri = Uri.https('ws.audioscrobbler.com', '/2.0/', {
+        'method': 'artist.search',
+        'artist': query.trim(),
+        'limit': '$limit',
+        'api_key': _apiKey,
+        'format': 'json',
+      });
+      final response = await http.get(uri).timeout(const Duration(seconds: 6));
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(response.body);
+      final results = data is Map ? data['results'] : null;
+      final found = results is Map ? results['artistmatches'] : null;
+      final matches = found is Map ? found['artist'] : null;
+      final list = matches is List ? matches : (matches is Map ? [matches] : const []);
+      return [
+        for (final a in list)
+          if (a is Map && (a['name']?.toString().trim().isNotEmpty ?? false))
+            a['name'].toString().trim(),
+      ];
+    } catch (e) {
+      _log.severe('LastFM artist.search error for $query: $e');
+      return [];
+    }
+  }
 }

@@ -831,5 +831,14 @@
   "almostCompleteTitle": "ALMOST COMPLETE",
   "almostCompleteMissing": "{count, plural, =1{1 song to go} other{{count} songs to go}}",
   "a11yAlmostComplete": "{album}, by {artist}. {missing}",
-  "becauseYouCompleted": "BECAUSE YOU COMPLETED {album}"
+  "becauseYouCompleted": "BECAUSE YOU COMPLETED {album}",
+  "searchSuggestions": "Suggestions",
+  "a11ySearchSuggestion": "Search {query}",
+  "didYouMeanPrefix": "Did you mean",
+  "a11yDidYouMean": "Did you mean {query}? Tap to search it",
+  "searchYourArtists": "YOUR ARTISTS",
+  "exploreGenres": "EXPLORE GENRES",
+  "genreArtists": "ARTISTS IN THIS GENRE",
+  "genreTopTracks": "MOST PLAYED",
+  "genreEmpty": "This genre has no artists right now."
 }

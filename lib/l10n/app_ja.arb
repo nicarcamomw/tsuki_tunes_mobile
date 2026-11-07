@@ -831,5 +831,14 @@
   "almostCompleteTitle": "あと少しで完走",
   "almostCompleteMissing": "あと{count}曲",
   "a11yAlmostComplete": "{album}、{artist}。{missing}",
-  "becauseYouCompleted": "{album}を完走したあなたへ"
+  "becauseYouCompleted": "{album}を完走したあなたへ",
+  "searchSuggestions": "候補",
+  "a11ySearchSuggestion": "{query}を検索",
+  "didYouMeanPrefix": "もしかして",
+  "a11yDidYouMean": "もしかして{query}？タップして検索",
+  "searchYourArtists": "あなたのアーティスト",
+  "exploreGenres": "ジャンルを探す",
+  "genreArtists": "このジャンルのアーティスト",
+  "genreTopTracks": "よく聴かれている曲",
+  "genreEmpty": "このジャンルには今アーティストがいません。"
 }
