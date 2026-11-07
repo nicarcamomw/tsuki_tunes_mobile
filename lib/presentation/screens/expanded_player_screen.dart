@@ -25,6 +25,7 @@ import '../widgets/eco_widgets.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
+import '../widgets/player_art_hero.dart';
 import '../widgets/player_tint.dart';
 import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
@@ -280,8 +281,10 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                   else ...[
                     const Spacer(),
                     ExcludeSemantics(
-                    child: Hero(
-                      tag: 'player_art_${track.id}',
+                    child: PlayerArtHero(
+                      trackId: track.id,
+                      coverUrl: track.coverUrl,
+                      isPlaying: isPlaying,
                       child: RinneganVisualizer(
                         isPlaying: isPlaying,
                         imageUrl: track.coverUrl,
