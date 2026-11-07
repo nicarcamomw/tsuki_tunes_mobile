@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -37,6 +39,47 @@ void main() {
       expect(CoverColors.fromSeed(const Color(0xFF000000)), isNull);
       expect(CoverColors.fromSeed(const Color(0xFFFFFFFF)), isNull);
       expect(CoverColors.fromSeed(const Color(0xFF808080)), isNull);
+    });
+  });
+
+  group('dominantArgb', () {
+    Uint32List image(List<int> colours) {
+      // 64x64, filled with the colours in equal bands.
+      final out = Uint32List(64 * 64);
+      for (var i = 0; i < out.length; i++) {
+        out[i] = colours[i * colours.length ~/ out.length];
+      }
+      return out;
+    }
+
+    test('a mostly red cover gives a red', () async {
+      final argb = await dominantArgb(image([0xFFD32F2F, 0xFFD32F2F, 0xFFD32F2F, 0xFF202020]));
+      final hue = HSLColor.fromColor(Color(argb!)).hue;
+      expect(hue < 15 || hue > 345, isTrue, reason: 'hue $hue');
+    });
+
+    test('a vivid colour wins over a larger dull one', () async {
+      final argb = await dominantArgb(image([0xFF555555, 0xFF555555, 0xFF555555, 0xFF00C8FF]));
+      expect(HSLColor.fromColor(Color(argb!)).hue, closeTo(193, 15));
+    });
+
+    test('black and white gives no colour, not a default blue', () async {
+      expect(await dominantArgb(image([0xFF000000, 0xFFFFFFFF, 0xFF808080])), isNull);
+    });
+
+    test('a transparent image gives no colour', () async {
+      expect(await dominantArgb(Uint32List(64 * 64)), isNull);
+    });
+
+    test('a cover is read in a few milliseconds', () async {
+      final noisy = Uint32List(64 * 64);
+      for (var i = 0; i < noisy.length; i++) {
+        noisy[i] = 0xFF000000 | ((i * 2654435761) & 0xFFFFFF);
+      }
+      final sw = Stopwatch()..start();
+      await dominantArgb(noisy);
+      // Off the UI thread anyway (an isolate); this keeps it cheap there too.
+      expect(sw.elapsedMilliseconds, lessThan(1000));
     });
   });
 

@@ -1,6 +1,12 @@
+import 'dart:async';
+import 'dart:isolate';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_color_utilities/material_color_utilities.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
@@ -50,21 +56,80 @@ class CoverColors {
 /// Reads the colours of the cover at a URL; null when it has none or fails.
 typedef CoverColorsReader = Future<CoverColors?> Function(String coverUrl);
 
+/// Side of the copy of the cover its colour is read from: plenty for a
+/// dominant colour, and 4 096 pixels instead of the cover's up to a million.
+const coverSampleSize = 64;
+
 /// Picks the cover's most representative colour with Material's quantizer
-/// (the same scoring as dynamic colour on Android) and adapts it.
+/// and scoring (as dynamic colour on Android does) and adapts it.
+///
+/// Nothing heavy runs on the UI thread, so a song change never stutters the
+/// screen: the engine decodes the cover straight at [coverSampleSize] (it's
+/// on disk already, the player shows it), and the quantizing, which took
+/// 40 to 170 ms through ColorScheme.fromImageProvider, runs in an isolate.
 Future<CoverColors?> readCoverColors(String coverUrl) async {
   try {
-    final scheme = await ColorScheme.fromImageProvider(
-      provider: CachedNetworkImageProvider(coverUrl),
-      brightness: Brightness.dark,
-      // Fidelity keeps the primary close to the cover's real colour.
-      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-    );
-    return CoverColors.fromSeed(scheme.primary);
+    final pixels = await _samplePixels(ResizeImage(
+      CachedNetworkImageProvider(coverUrl),
+      width: coverSampleSize,
+      height: coverSampleSize,
+    ));
+    if (pixels == null) return null;
+    final seed = await Isolate.run(() => dominantArgb(pixels));
+    return seed == null ? null : CoverColors.fromSeed(Color(seed));
   } catch (e) {
     _log.fine('No colours for $coverUrl: $e');
     return null;
   }
+}
+
+/// The pixels of [provider]'s image, as ARGB.
+Future<Uint32List?> _samplePixels(ImageProvider provider) async {
+  final stream = provider.resolve(ImageConfiguration.empty);
+  final completer = Completer<ui.Image>();
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener((info, _) {
+    stream.removeListener(listener);
+    // Our own handle: the cache may let go of its image once we stop
+    // listening, before its pixels are read.
+    if (!completer.isCompleted) completer.complete(info.image.clone());
+  }, onError: (Object e, StackTrace? st) {
+    stream.removeListener(listener);
+    if (!completer.isCompleted) completer.completeError(e, st);
+  });
+  stream.addListener(listener);
+  final image = await completer.future.timeout(const Duration(seconds: 10));
+  try {
+    final data = await image.toByteData(); // RGBA bytes
+    if (data == null) return null;
+    final rgba = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    final out = Uint32List(rgba.length ~/ 4);
+    for (var i = 0, p = 0; i < out.length; i++, p += 4) {
+      out[i] = rgba[p + 3] << 24 | rgba[p] << 16 | rgba[p + 1] << 8 | rgba[p + 2];
+    }
+    return out;
+  } finally {
+    image.dispose();
+  }
+}
+
+/// The most representative colour of [argbPixels] (Celebi quantizer, then
+/// Material's score, which favours vivid colours that cover a fair share),
+/// or null for an image with no pixels to speak of. Pure Dart: it runs in
+/// an isolate.
+@visibleForTesting
+Future<int?> dominantArgb(Uint32List argbPixels) async {
+  final opaque = [
+    for (final p in argbPixels)
+      if ((p >> 24) >= 0xF0) p
+  ];
+  if (opaque.isEmpty) return null;
+  final result = await QuantizerCelebi().quantize(opaque, 128);
+  if (result.colorToCount.isEmpty) return null;
+  // No colour good enough (a black and white cover): none, not the
+  // scorer's default blue, so the player keeps its own colour.
+  final best = Score.score(result.colorToCount, desired: 1, fallbackColorARGB: 0).first;
+  return best == 0 ? null : best;
 }
 
 /// How covers are read; overridden in tests.

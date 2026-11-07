@@ -57,7 +57,10 @@ class _SkeletonScopeState extends ConsumerState<SkeletonScope> with SingleTicker
         label: widget.label ?? ref.watch(stringsProvider).a11yLoading,
         liveRegion: true,
         child: ExcludeSemantics(
-          child: _SkeletonShimmer(animation: _controller, onImage: widget.onImage, child: widget.child),
+          // The shimmer repaints only the bones, never what's around them.
+          child: RepaintBoundary(
+            child: _SkeletonShimmer(animation: _controller, onImage: widget.onImage, child: widget.child),
+          ),
         ),
       );
 }
@@ -139,26 +142,53 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
     final onImage = scope?.onImage ?? false;
     final base = onImage ? _baseOnImage : _base;
     final highlight = onImage ? _highlightOnImage : _highlight;
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, _) {
-        // -2 → 2 with an ease, as before: the highlight sweeps left to right.
-        final x = Curves.easeInOutSine.transform(animation.value) * 4 - 2;
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            gradient: LinearGradient(
-              begin: Alignment(x - 1, 0),
-              end: Alignment(x + 1, 0),
-              colors: [base, highlight, base],
-            ),
-          ),
-        );
-      },
+    // Painted, not rebuilt: each frame of the shimmer only repaints the
+    // bone (a widget rebuild per bone per frame added up in long lists).
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: CustomPaint(
+        painter: _BonePainter(
+          animation: animation,
+          radius: widget.borderRadius,
+          base: base,
+          highlight: highlight,
+        ),
+      ),
     );
   }
+}
+
+class _BonePainter extends CustomPainter {
+  final Animation<double> animation;
+  final double radius;
+  final Color base;
+  final Color highlight;
+
+  _BonePainter({required this.animation, required this.radius, required this.base, required this.highlight})
+      : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    // -2 → 2 with an ease: the highlight sweeps left to right.
+    final x = Curves.easeInOutSine.transform(animation.value) * 4 - 2;
+    final rect = Offset.zero & size;
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment(x - 1, 0),
+        end: Alignment(x + 1, 0),
+        colors: [base, highlight, base],
+      ).createShader(rect);
+    canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)), paint);
+  }
+
+  @override
+  bool shouldRepaint(_BonePainter old) =>
+      old.animation != animation ||
+      old.radius != radius ||
+      old.base != base ||
+      old.highlight != highlight;
 }
 
 /// A bone [factor] of the available width, so lines in a list vary like text.

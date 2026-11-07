@@ -23,6 +23,16 @@ void main() {
     expect(tester.binding.transientCallbackCount, 1);
   });
 
+  testWidgets('the shimmer repaints the bones without rebuilding them', (tester) async {
+    await tester.pumpWidget(_app(const SkeletonTrackList(count: 3)));
+    final bone = find.descendant(of: find.byType(SkeletonLoader), matching: find.byType(CustomPaint)).first;
+    final before = tester.widget(bone);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    // The same widget: frames only repaint it.
+    expect(identical(tester.widget(bone), before), isTrue);
+  });
+
   testWidgets('a bone on its own still shimmers', (tester) async {
     await tester.pumpWidget(_app(const SkeletonLoader(width: 40, height: 10)));
     expect(tester.binding.transientCallbackCount, 1);
