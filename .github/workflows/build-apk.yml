@@ -84,7 +84,7 @@ jobs:
           check_coverage "lib/domain/usecases/" 60 "Use cases" || failed=1
           exit $failed
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-report
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload golden failures
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: golden-failures
           path: test/**/failures/
@@ -215,12 +215,12 @@ jobs:
           mv "$OUT_AAB/app-prod-release.aab" "tsuki-tunes-$N.aab"
           ls -lh tsuki-tunes-*
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: tsuki-tunes-apk
           path: tsuki-tunes-*.apk
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: tsuki-tunes-aab
           path: tsuki-tunes-*.aab
@@ -253,7 +253,7 @@ jobs:
           cd ..
           rm "$RUNNER_TEMP/sa.json"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: debug-symbols
           path: |
