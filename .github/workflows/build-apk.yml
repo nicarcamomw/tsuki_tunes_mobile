@@ -65,16 +65,16 @@ jobs:
             done < coverage/lcov.info
 
             if [ "$total" -eq 0 ]; then
-              echo "⚠️  $label: no lines found — skipping"
+              echo "::warning::$label: no lines found, skipping"
               return 0
             fi
 
             pct=$((hit * 100 / total))
             if [ "$pct" -lt "$min" ]; then
-              echo "::error::❌ $label coverage is ${pct}% (minimum ${min}%): ${hit}/${total} lines"
+              echo "::error::$label coverage is ${pct}% (minimum ${min}%): ${hit}/${total} lines"
               return 1
             fi
-            echo "✅ $label coverage: ${pct}% (${hit}/${total} lines)"
+            echo "OK $label coverage: ${pct}% (${hit}/${total} lines)"
           }
 
           failed=0
