@@ -16,13 +16,13 @@ import '../navigation/app_router.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
+import '../state/cover_colors.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/lyrics_view.dart';
-import '../widgets/oni_mask_colors.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
 import '../widgets/player_tint.dart';
@@ -205,15 +205,13 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     Navigator.of(context).pop();
   }
 
-  /// An equipped UL or DS mask tints the player with its aura.
+  /// The player is tinted by a mask's aura, the chosen colour or the cover
+  /// ([playerTintColorProvider]), fading between tracks.
   @override
-  Widget build(BuildContext context) {
-    // A UL or DS being's aura, else the colour the levels opened and the
-    // user chose, else the app's red.
-    final aura = ref.watch(maskProvider.select((m) =>
-        m.equipped?.playerAura ?? (m.playerColor == null ? null : Color(m.playerColor!.argb))));
-    return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
-  }
+  Widget build(BuildContext context) => AnimatedPlayerTint(
+        color: ref.watch(playerTintColorProvider),
+        child: Builder(builder: _buildTinted),
+      );
 
   Widget _buildTinted(BuildContext context) {
     final locale = ref.watch(localeProvider);
@@ -266,7 +264,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           offset: Offset(0, _dragDy),
           child: Scaffold(
             backgroundColor: AppColors.bgDeep,
-            body: SafeArea(
+            body: _CoverBackdrop(child: SafeArea(
               child: _centerPage(track, Column(
                 children: [
                   _buildTopBar(track, locale, radioActive: radioActive),
@@ -363,7 +361,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                 const SizedBox(height: 24),
               ],
             )),
-          ),
+          )),
         ),
       ),
     ),
@@ -520,4 +518,30 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     );
   }
 
+}
+
+/// The player's backdrop: a gradient from the cover's deep colour at the top
+/// into the app's background, fading when the track changes.
+class _CoverBackdrop extends ConsumerWidget {
+  final Widget child;
+
+  const _CoverBackdrop({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final top = ref.watch(playerBackgroundColorProvider) ?? AppColors.bgDeep;
+    return AnimatedContainer(
+      duration: AnimatedPlayerTint.duration,
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [top, Color.lerp(top, AppColors.bgDeep, 0.6)!, AppColors.bgDeep],
+          stops: const [0.0, 0.45, 0.85],
+        ),
+      ),
+      child: child,
+    );
+  }
 }

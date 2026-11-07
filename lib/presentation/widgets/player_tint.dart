@@ -2,8 +2,9 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/constants/app_colors.dart';
 
-/// The player's accent colour: the app's red, or the aura of an equipped
-/// UL or DS mask. Set above the mini player and the expanded player.
+/// The player's accent colour: the aura of an equipped UL or DS mask, the
+/// colour the user chose, the cover's colour, or the app's red. Set above
+/// the mini player and the expanded player.
 class PlayerTint extends InheritedWidget {
   final Color color;
 
@@ -17,4 +18,24 @@ class PlayerTint extends InheritedWidget {
 
   @override
   bool updateShouldNotify(PlayerTint old) => old.color != color;
+}
+
+/// A [PlayerTint] that fades to a new [color] instead of jumping, so the
+/// player changes colour smoothly with each cover.
+class AnimatedPlayerTint extends StatelessWidget {
+  final Color color;
+  final Widget child;
+
+  static const duration = Duration(milliseconds: 600);
+
+  const AnimatedPlayerTint({super.key, required this.color, required this.child});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<Color?>(
+        tween: ColorTween(end: color),
+        duration: duration,
+        curve: Curves.easeOut,
+        builder: (_, c, child) => PlayerTint(color: c ?? color, child: child!),
+        child: child,
+      );
 }
