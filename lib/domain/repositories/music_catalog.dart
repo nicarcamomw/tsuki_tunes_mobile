@@ -29,6 +29,9 @@ abstract interface class MusicCatalog implements CatalogRepository {
   @override
   Future<Track?> getTrack(String trackId, {bool forceRefresh = false});
 
+  /// The song with this ISRC (the recording's code), or null.
+  Future<Track?> findTrackByIsrc(String isrc);
+
   /// The worldwide top songs, a long list (games, mixes).
   Future<List<Track>> getLargeChartTracks();
 

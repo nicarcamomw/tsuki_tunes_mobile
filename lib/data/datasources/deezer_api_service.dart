@@ -704,6 +704,22 @@ class DeezerApiService
     });
   }
 
+  @override
+  Future<Track?> findTrackByIsrc(String isrc) async {
+    final code = isrc.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z0-9]{12}$').hasMatch(code)) return null;
+    try {
+      final data = await _fetchJson(ApiEndpoints.track('isrc:$code'));
+      // Not found comes back as {"error": ...}.
+      if (data is Map<String, dynamic> && data['id'] != null && data['error'] == null) {
+        return Track.fromDeezer(data);
+      }
+    } catch (e) {
+      _log.warning('findTrackByIsrc($code) error: $e');
+    }
+    return null;
+  }
+
   static const int _relatedFetchLimit = 25;
 
   /// Artists similar to [artistId]. Always fetched at full size and sliced,

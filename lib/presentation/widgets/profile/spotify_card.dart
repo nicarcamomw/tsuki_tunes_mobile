@@ -221,6 +221,16 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
+                      icon: Icon(Icons.playlist_add_rounded, size: 18, color: AppColors.accent, semanticLabel: strings.importTitle),
+                      tooltip: strings.importTitle,
+                      onPressed: () async {
+                        final host = widget.hostContext;
+                        Navigator.pop(context);
+                        await Future<void>.delayed(const Duration(milliseconds: 120));
+                        if (host.mounted) unawaited(const SpotifyImportRoute().push<void>(host));
+                      },
+                    ),
+                    IconButton(
                       icon: Icon(Icons.launch_rounded, size: 16, color: AppColors.accent, semanticLabel: strings.a11yOpenExternal),
                       tooltip: strings.openSpotifyTooltip,
                       onPressed: () => spotify.openSpotifyApp(),

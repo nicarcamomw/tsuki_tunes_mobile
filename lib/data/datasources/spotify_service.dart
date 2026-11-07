@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/external_library.dart';
 import 'perf_tracker.dart';
 import 'storage_service.dart';
 
@@ -43,7 +44,8 @@ class SpotifyService {
   static const _scopes =
       'streaming user-read-private '
       'user-read-playback-state user-modify-playback-state '
-      'user-read-currently-playing user-library-read user-top-read';
+      'user-read-currently-playing user-library-read user-top-read '
+      'playlist-read-private playlist-read-collaborative';
 
   static const _tokenKey = 'spotify_access_token';
   static const _refreshKey = 'spotify_refresh_token';
@@ -596,6 +598,88 @@ class SpotifyService {
         '');
     t = t.replaceAll(RegExp(r'\s(feat\.?|ft\.?|featuring)\s.*$'), '');
     return _normalize(t);
+  }
+
+  // ── Import ──
+
+  /// Spotify answered that the saved sign-in lacks a permission the app
+  /// now asks for (reading playlists): connecting again grants it.
+  bool importNeedsReconnect = false;
+
+  Future<Map<String, dynamic>?> _getJson(Uri url) async {
+    await _ensureValidToken();
+    if (_accessToken == null) return null;
+    final res = await _get(url, headers: {'Authorization': 'Bearer $_accessToken'});
+    if (res.statusCode == 403 || res.statusCode == 401) {
+      importNeedsReconnect = res.statusCode == 403 || importNeedsReconnect;
+      return null;
+    }
+    if (res.statusCode != 200) return null;
+    final data = json.decode(res.body);
+    return data is Map<String, dynamic> ? data : null;
+  }
+
+  /// The user's playlists (theirs and the ones they follow), and how many
+  /// songs they saved, as the first entry.
+  Future<List<ExternalPlaylist>> getImportablePlaylists() async {
+    importNeedsReconnect = false;
+    final out = <ExternalPlaylist>[];
+    final liked = await _getJson(Uri.parse('https://api.spotify.com/v1/me/tracks?limit=1'));
+    final likedTotal = liked?['total'];
+    if (likedTotal is int && likedTotal > 0) {
+      out.add(ExternalPlaylist(id: 'liked', name: 'Liked', total: likedTotal, liked: true));
+    }
+    Uri? next = Uri.parse('https://api.spotify.com/v1/me/playlists?limit=50');
+    var pages = 0;
+    while (next != null && pages++ < 10) {
+      final page = await _getJson(next);
+      if (page == null) break;
+      for (final p in (page['items'] as List? ?? const [])) {
+        if (p is! Map || p['id'] == null) continue;
+        final images = p['images'];
+        final tracks = p['tracks'];
+        out.add(ExternalPlaylist(
+          id: p['id'] as String,
+          name: (p['name'] as String?)?.trim().isNotEmpty == true ? p['name'] as String : 'Playlist',
+          total: tracks is Map && tracks['total'] is int ? tracks['total'] as int : 0,
+          imageUrl: images is List && images.isNotEmpty && images.first is Map ? images.first['url'] as String? : null,
+        ));
+      }
+      final n = page['next'];
+      next = n is String ? Uri.parse(n) : null;
+    }
+    return out;
+  }
+
+  /// The songs of [playlist], up to [limit].
+  Future<List<ExternalTrack>> getImportTracks(ExternalPlaylist playlist, {int limit = 1000}) async {
+    final out = <ExternalTrack>[];
+    Uri? next = playlist.liked
+        ? Uri.parse('https://api.spotify.com/v1/me/tracks?limit=50')
+        : Uri.parse('https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=100'
+            '&fields=next,items(track(name,duration_ms,external_ids(isrc),artists(name),type))');
+    while (next != null && out.length < limit) {
+      final page = await _getJson(next);
+      if (page == null) break;
+      for (final item in (page['items'] as List? ?? const [])) {
+        final t = item is Map ? item['track'] : null;
+        if (t is! Map || t['name'] == null) continue;
+        if (t['type'] != null && t['type'] != 'track') continue; // podcast episodes
+        final ids = t['external_ids'];
+        out.add(ExternalTrack(
+          title: t['name'] as String,
+          artists: [
+            for (final a in (t['artists'] as List? ?? const []))
+              if (a is Map && a['name'] is String) a['name'] as String,
+          ],
+          isrc: ids is Map ? ids['isrc'] as String? : null,
+          durationMs: t['duration_ms'] is int ? t['duration_ms'] as int : 0,
+        ));
+      }
+      final n = page['next'];
+      next = n is String ? Uri.parse(n) : null;
+    }
+    return out.take(limit).toList();
   }
 
   Future<String?> getActiveDeviceId() async {

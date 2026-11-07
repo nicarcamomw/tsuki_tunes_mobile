@@ -150,6 +150,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $DiscoveryRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'import-spotify',
+          hasOverriddenOnExit: false,
+          factory: $SpotifyImportRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -451,6 +456,27 @@ mixin $DiscoveryRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/discover');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $SpotifyImportRoute on GoRouteData {
+  static SpotifyImportRoute _fromState(GoRouterState state) =>
+      const SpotifyImportRoute();
+
+  @override
+  String get location => GoRouteData.$location('/import-spotify');
 
   @override
   void go(BuildContext context) => context.go(location);

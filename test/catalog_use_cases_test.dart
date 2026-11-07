@@ -54,6 +54,9 @@ class _Catalog implements MusicCatalog {
   }
 
   @override
+  Future<Track?> findTrackByIsrc(String isrc) async => null;
+
+  @override
   Future<List<Artist>> searchArtists(String query, {int limit = 25}) async {
     _check(query);
     return (searches[query] ?? const []).take(limit).toList();

@@ -465,6 +465,33 @@ class AppStrings {
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
 
+  // ── Import from Spotify ──
+  String get importTitle => _es('Importar de Spotify', 'Import from Spotify', 'Spotifyからインポート');
+  String get importHint => _es(
+      'Elige qué traer. Cada canción se busca en el catálogo de Tsuki y las que se encuentran forman una playlist con el mismo nombre.',
+      'Choose what to bring. Each song is looked up in Tsuki\'s catalog, and the ones found make a playlist with the same name.',
+      '持ってくるものを選んで。各曲をツキのカタログで探し、見つかった曲で同じ名前のプレイリストを作る。');
+  String get importLiked => _es('Canciones que te gustan (Spotify)', 'Liked Songs (Spotify)', 'お気に入りの曲（Spotify）');
+  String importSongs(int n) => _es(n == 1 ? '1 canción' : '$n canciones', n == 1 ? '1 song' : '$n songs', '$n曲');
+  String importButton(int n) => _es(
+      n == 1 ? 'Importar 1 playlist' : 'Importar $n playlists',
+      n == 1 ? 'Import 1 playlist' : 'Import $n playlists',
+      '$n個のプレイリストをインポート');
+  String importProgress(int done, int total) => _es('$done de $total canciones', '$done of $total songs', '$total曲中$done曲');
+  String get importKeepOpen => _es(
+      'Deja esta pantalla abierta hasta que termine.',
+      'Keep this screen open until it finishes.',
+      '終わるまでこの画面を開いたままにして。');
+  String importFound(int found, int total) => _es('$found de $total encontradas', '$found of $total found', '$total曲中$found曲見つかった');
+  String get importDone => _es('Listo. Tus playlists ya están en la biblioteca.', 'Done. Your playlists are in the library.', '完了。プレイリストはライブラリにある。');
+  String get importCancel => _es('Detener', 'Stop', '停止');
+  String get importReconnect => _es(
+      'Para leer tus playlists, Spotify necesita un permiso nuevo. Desconecta y vuelve a conectar Spotify en tu perfil.',
+      'To read your playlists, Spotify needs a new permission. Disconnect and connect Spotify again in your profile.',
+      'プレイリストを読むにはSpotifyの新しい許可が必要。プロフィールでSpotifyを接続し直して。');
+  String get importNone => _es('No encontré playlists en tu Spotify.', 'No playlists found in your Spotify.', 'Spotifyにプレイリストが見つからない。');
+  String get importNotConnected => _es('Conecta Spotify en tu perfil para importar.', 'Connect Spotify in your profile to import.', 'インポートするにはプロフィールでSpotifyを接続して。');
+
   // ── Discovery ──
   String get discoveryTitle => _es('Descubrir', 'Discover', 'ディスカバー');
   String get discoverySubtitle => _es(
