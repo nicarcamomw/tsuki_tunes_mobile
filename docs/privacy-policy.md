@@ -43,7 +43,7 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - **No vemos tu contraseña de Spotify.** El inicio de sesión se hace directamente con Spotify (OAuth). Los tokens de acceso se guardan cifrados **solo en tu teléfono**, y se borran cuando desconectas Spotify o cierras sesión.
 
 ### Datos que se guardan solo en tu teléfono
-- Tu fecha de cumpleaños (si la indicas), tus preferencias, el historial de búsqueda, los estilos musicales de los artistas que escuchas y los fragmentos de canciones y carátulas guardados en caché para reproducirlos más rápido.
+- Tu fecha de cumpleaños (si la indicas), tus preferencias, el historial de búsqueda, los estilos musicales de los artistas que escuchas los fragmentos de canciones y carátulas guardados en caché para reproducirlos más rápido, y los álbumes que descargues para escuchar sin internet (sus fragmentos de 30 segundos).
 
 ## 2. Datos que NO recopilamos
 

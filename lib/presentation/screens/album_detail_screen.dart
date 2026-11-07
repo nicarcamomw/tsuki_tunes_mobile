@@ -12,9 +12,11 @@ import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
+import '../state/album_downloads_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
+import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
@@ -56,11 +58,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       _hasError = false;
     });
     final isOnline = ref.read(connectivityProvider).isOnline;
+    // A downloaded album opens without internet, with its songs.
+    final saved = ref.read(albumDownloadsProvider).savedAlbum(widget.album.id);
     if (!isOnline) {
       if (mounted) {
         setState(() {
-          _hasError = true;
-          _fullAlbum = widget.album;
+          _hasError = saved == null;
+          _fullAlbum = saved ?? widget.album;
           _isLoading = false;
         });
       }
@@ -92,8 +96,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       _log.severe('loadAlbumDetails error: $e');
       if (mounted) {
         setState(() {
-          _hasError = true;
-          _fullAlbum = widget.album;
+          _hasError = saved == null;
+          _fullAlbum = saved ?? widget.album;
           _isLoading = false;
         });
       }
@@ -112,6 +116,47 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     } catch (e) {
       _log.severe('enrichTracks error: $e');
     }
+  }
+
+  /// Downloads the album's previews, or offers to remove a download.
+  Future<void> _onDownload(Album albumData) async {
+    final strings = ref.read(localeProvider).strings;
+    final downloads = ref.read(albumDownloadsProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    unawaited(HapticFeedback.selectionClick());
+    if (ref.read(maskProvider).isObserver) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(strings.downloadAlbumObserver),
+        action: SnackBarAction(label: strings.ecoObserverAction, onPressed: () => becomeBearer(context)),
+      ));
+      return;
+    }
+    if (downloads.isDownloaded(albumData.id)) {
+      final remove = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.bgCard,
+          title: Text(strings.downloadAlbumRemove),
+          content: Text(strings.downloadAlbumRemoveBody(albumData.title)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel)),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(strings.downloadAlbumRemove, style: const TextStyle(color: AppColors.accent)),
+            ),
+          ],
+        ),
+      );
+      if (remove == true) await downloads.remove(albumData.id);
+      return;
+    }
+    if (!albumData.tracks.any((t) => t.previewUrl.isNotEmpty)) {
+      messenger.showSnackBar(SnackBar(content: Text(strings.downloadAlbumNone)));
+      return;
+    }
+    final all = await downloads.download(albumData);
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text(all ? strings.downloadAlbumDone : strings.downloadAlbumPartial)));
   }
 
   void _toggleAll(Album albumData) {
@@ -170,6 +215,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             ),
             centerTitle: true,
             actions: [
+              if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
                 IconButton(
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
@@ -557,6 +603,47 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       ),
       ),
       ),
+    );
+  }
+}
+
+/// Download, its progress, or downloaded (tap to remove).
+class _DownloadButton extends ConsumerWidget {
+  final Album album;
+  final VoidCallback onTap;
+  const _DownloadButton({required this.album, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(localeProvider).strings;
+    final downloads = ref.watch(albumDownloadsProvider);
+    final progress = downloads.progressOf(album.id);
+    if (progress != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Semantics(
+          label: strings.downloadAlbumProgress((progress * 100).round()),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              value: progress == 0 ? null : progress,
+              strokeWidth: 2.4,
+              color: AppColors.accent,
+              backgroundColor: AppColors.border,
+            ),
+          ),
+        ),
+      );
+    }
+    final saved = downloads.isDownloaded(album.id);
+    return IconButton(
+      tooltip: saved ? strings.downloadAlbumRemove : strings.downloadAlbum,
+      icon: Icon(saved ? Icons.download_done_rounded : Icons.download_rounded,
+          color: saved ? AppColors.accent : AppColors.textBright,
+          size: 22,
+          semanticLabel: saved ? strings.downloadAlbumSaved : strings.downloadAlbum),
+      onPressed: onTap,
     );
   }
 }

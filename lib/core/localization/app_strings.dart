@@ -463,6 +463,35 @@ class AppStrings {
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
 
+  // ── Downloaded albums ──
+  String get downloadAlbum => _es(
+      'Descargar para escuchar sin internet (vistas previas de 30 s)',
+      'Download to listen offline (30 s previews)',
+      'オフライン用にダウンロード（30秒プレビュー）');
+  String downloadAlbumProgress(int pct) => _es('Descargando, $pct%', 'Downloading, $pct%', 'ダウンロード中 $pct%');
+  String get downloadAlbumDone => _es(
+      'Álbum descargado: sus vistas previas suenan sin internet.',
+      'Album downloaded: its previews play offline.',
+      'ダウンロード完了。プレビューはオフラインで再生できる。');
+  String get downloadAlbumPartial => _es(
+      'Se descargó una parte. Lo demás sonará cuando haya internet.',
+      'Part of it was downloaded. The rest will play when there is internet.',
+      '一部だけダウンロードできた。残りはネット接続時に再生される。');
+  String get downloadAlbumNone => _es(
+      'Este álbum no tiene vistas previas para descargar.',
+      'This album has no previews to download.',
+      'このアルバムにはダウンロードできるプレビューがない。');
+  String get downloadAlbumSaved => _es('Descargado', 'Downloaded', 'ダウンロード済み');
+  String get downloadAlbumRemove => _es('Quitar descarga', 'Remove download', 'ダウンロードを削除');
+  String downloadAlbumRemoveBody(String album) => _es(
+      'Se borran del teléfono las vistas previas de $album.',
+      'The previews of $album are deleted from the phone.',
+      '$albumのプレビューを端末から削除する。');
+  String get downloadAlbumObserver => _es(
+      'Los Observadores no guardan nada. Vuélvete Portador para descargar álbumes.',
+      'Observers keep nothing. Become a Bearer to download albums.',
+      '観測者は何も残せない。運び手になるとアルバムをダウンロードできる。');
+
   // ── Spotify Connect ──
   String get devicesTitle => _es('Escuchar en', 'Listen on', '再生する場所');
   String get devicesHint => _es(

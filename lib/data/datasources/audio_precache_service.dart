@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
+import 'album_downloads.dart';
 
 
 final _log = Log.named('AudioPrecache');
@@ -73,6 +74,9 @@ class AudioPrecacheService {
 
   /// Checks if track is already cached locally with a valid non-empty file.
   String? getCachedFilePath(String trackId) {
+    // A song of a downloaded album: kept apart, never pruned.
+    final saved = AlbumDownloads.instance.pathFor(trackId);
+    if (saved != null) return saved;
     final cached = _cachedPaths[trackId];
     if (cached != null) {
       final file = File(cached);
