@@ -7,10 +7,15 @@ name: Firebase Test Lab
 # service account with the "Firebase Test Lab Admin" role and write access
 # to that bucket. Without it the run is skipped right away, instead of
 # building for 15 minutes and failing at the login.
+#
+# Not on every push: each run uses two real phones and leaves its results in
+# Cloud Storage, which got expensive with many pushes a day. Once a week
+# (Monday) and by hand from the Actions tab; the unit and widget tests still
+# run on every push in CI.
 
 on:
-  push:
-    branches: [main]
+  schedule:
+    - cron: '23 9 * * 1'
   workflow_dispatch:
 
 concurrency:
