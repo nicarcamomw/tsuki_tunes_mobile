@@ -22,6 +22,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 import 'shared_playlist_screen.dart' show createSharedPlaylist;
@@ -563,19 +564,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         index--;
                       }
                       if (index == visible.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                        );
+                        return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8));
                       }
                       return _AlbumGroupTile(
                         group: visible[index],

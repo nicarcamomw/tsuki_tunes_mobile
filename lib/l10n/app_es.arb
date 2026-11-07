@@ -576,6 +576,7 @@
   "a11yNext": "Siguiente pista",
   "a11yShuffleOn": "Aleatorio activado",
   "a11yShuffleOff": "Aleatorio desactivado",
+  "a11yLoading": "Cargando",
   "a11yMarkListened": "Marcar como escuchado",
   "a11yUnmarkListened": "Desmarcar como escuchado",
   "a11yShowStats": "Mostrar estadísticas",

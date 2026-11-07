@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import 'haptics.dart';
+import 'skeleton_loader.dart';
 import 'swipeable_sheet.dart';
 
 /// Spotify Connect: the user's devices with Spotify open, to move the music
@@ -108,10 +109,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
             style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 14),
         if (devices == null)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 30),
-            child: Center(child: CircularProgressIndicator(color: AppColors.success, strokeWidth: 2.4)),
-          )
+          const SkeletonRowList(count: 3, leading: 36, round: true, padding: EdgeInsets.symmetric(vertical: 8))
         else if (devices.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),

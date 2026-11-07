@@ -11,6 +11,7 @@ import '../../domain/entities/social.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// One collaborative playlist, live.
@@ -38,7 +39,7 @@ class SharedPlaylistScreen extends ConsumerWidget {
 
     Widget body;
     if (async.isLoading && p == null) {
-      body = const Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2));
+      body = const SkeletonDetailPage();
     } else if (p == null || me == null || !(p.isMember(me) || p.isInvited(me))) {
       body = Center(
         child: Padding(

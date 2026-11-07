@@ -23,6 +23,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 import 'wrapped/story_image.dart';
 
 
@@ -243,7 +244,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
     return Scaffold(
       backgroundColor: Colors.black,
       body: data == null
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? const SkeletonStory()
           : data.isEmpty
               ? _Empty(locale: locale, strings: strings, monthly: _monthly)
               : _buildStories(strings),

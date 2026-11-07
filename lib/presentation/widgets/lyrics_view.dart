@@ -11,6 +11,7 @@ import '../state/app_providers.dart';
 import '../state/lyrics_controller.dart';
 import 'audio_progress_selector.dart';
 import 'haptics.dart';
+import 'skeleton_loader.dart';
 
 export '../state/lyrics_controller.dart';
 
@@ -460,7 +461,12 @@ class LyricsCard extends ConsumerWidget {
 
         Widget body;
         if (controller.loading) {
-          body = _CardMessage(text: strings.lyricsLoading, loading: true);
+          body = Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SkeletonLyrics(lines: 3, lineHeight: 12, gap: 12, label: strings.lyricsLoading),
+            ),
+          );
         } else if (lyrics == null) {
           body = _CardMessage(
             text: strings.noLyricsFound,
@@ -564,14 +570,12 @@ class LyricsCard extends ConsumerWidget {
 
 class _CardMessage extends ConsumerWidget {
   final String text;
-  final bool loading;
   final IconData? icon;
   final String? actionLabel;
   final VoidCallback? onAction;
 
   const _CardMessage({
     required this.text,
-    this.loading = false,
     this.icon,
     this.actionLabel,
     this.onAction,
@@ -584,16 +588,9 @@ class _CardMessage extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (loading)
-            const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                  strokeWidth: 1.6, color: Colors.white70),
-            )
-          else if (icon != null)
+          if (icon != null)
             Icon(icon, size: 18, color: Colors.white70),
-          if (loading || icon != null) const SizedBox(width: 10),
+          if (icon != null) const SizedBox(width: 10),
           Flexible(
             child: Text(
               text,

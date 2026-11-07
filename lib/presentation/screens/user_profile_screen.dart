@@ -12,6 +12,7 @@ import '../state/app_providers.dart';
 import '../widgets/eco_widgets.dart' show EcoRank;
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/skeleton_loader.dart';
 import 'bonds_screen.dart';
 
 /// Someone's published profile (null: private or missing).
@@ -41,7 +42,7 @@ class UserProfileScreen extends ConsumerWidget {
             data: (p) => p == null
                 ? _Unavailable(text: strings.profileUnavailable, uid: uid)
                 : _ProfileBody(profile: p, own: false),
-            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)),
+            loading: () => const SkeletonProfile(),
             error: (_, __) => _Unavailable(text: strings.profileUnavailable, uid: uid),
           );
     }
