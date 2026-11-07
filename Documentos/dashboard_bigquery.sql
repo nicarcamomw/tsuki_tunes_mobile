@@ -185,19 +185,12 @@ completed AS (
       FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
       AND FORMAT_DATE('%Y%m%d', CURRENT_DATE())
 )
-SELECT
-  'play_start'       AS step,
-  1                  AS step_order,
-  (SELECT COUNT(*) FROM plays)     AS users
+-- track_listened sale solo la primera vez que se escucha una canción
+-- (MarkTrackListened no marca dos veces la misma), así que el segundo paso
+-- es "escuchó una canción nueva", no "escuchó una canción completa".
+SELECT 'Reprodujo' AS step, 1 AS step_order, (SELECT COUNT(*) FROM plays) AS users
 UNION ALL
-SELECT
-  'track_listened',
-  2,
-  (SELECT COUNT(*) FROM listened)
+SELECT 'Escuchó una canción nueva', 2, (SELECT COUNT(*) FROM listened)
 UNION ALL
-SELECT
-  'album_completed',
-  3,
-  (SELECT COUNT(*) FROM completed)
-ORDER BY
-  step_order;
+SELECT 'Completó un álbum', 3, (SELECT COUNT(*) FROM completed)
+ORDER BY step_order;
