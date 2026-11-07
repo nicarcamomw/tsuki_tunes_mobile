@@ -730,6 +730,7 @@ void main() {
     Future<AudioProvider> playing(List<Track> tracks, {int atMs = 60000}) async {
       fakeNative.setConnected(true);
       final provider = createProvider();
+      addTearDown(provider.stop);
       await provider.playTrack(tracks.first, newQueue: tracks);
       await Future.delayed(Duration.zero);
       fakeNative.simulateStateChanged(atMs, 180000, false,
@@ -797,6 +798,73 @@ void main() {
 
       expect(provider.currentTrack?.id, 't3');
       expect(fakeNative.lastTrackUri, 'spotify:track:t3');
+    });
+
+    test('with the screen off, a jump Spotify didn\'t predict is the car\'s "next"',
+        () async {
+      // Spotify's guess of its next song was another one; with the screen
+      // off nobody picked this in the Spotify app.
+      final screen = StreamController<bool>.broadcast();
+      addTearDown(screen.close);
+      fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
+      setLifecycle(AppLifecycleState.paused);
+      fakeNative.setConnected(true);
+      final provider = AudioProvider(
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        flags: flags,
+        screenChanges: screen.stream,
+      );
+      addTearDown(provider.stop);
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      fakeNative.simulateStateChanged(60000, 180000, false,
+          uri: 'spotify:track:t1');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      screen.add(false);
+      await Future.delayed(Duration.zero);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:OTHER');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('"next" pressed again right after a skip is looked at again in seconds',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+
+      // First press: Spotify's autoplay, Tsuki plays t2 instead, and Spotify
+      // says t2 plays.
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay1');
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(800, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 300));
+      expect(provider.currentTrack?.id, 't2');
+
+      // Screen off: Android cuts App Remote, so the second press only shows
+      // up in the Web API's state, too soon after t2 started to tell from a
+      // stale report...
+      fakeNative.setConnected(false);
+      fakeSpotify.setPlaying('spotify:track:autoplay2', progressMs: 300);
+      await provider.syncSpotifyStateForTesting();
+      expect(provider.currentTrack?.id, 't2');
+
+      // ...so it's looked at again once that moment passes, not at the next
+      // poll 15 to 30 seconds later.
+      await Future.delayed(const Duration(seconds: 6));
+      expect(provider.currentTrack?.id, 't3');
+
+      // Spotify says t3 plays, so nothing is left running into later tests.
+      fakeNative.setConnected(true);
+      fakeNative.simulateStateChanged(500, 180000, false,
+          uri: 'spotify:track:t3');
+      await Future.delayed(const Duration(milliseconds: 300));
     });
 
     test('right after a play, the song Spotify was on is not a skip',
@@ -912,6 +980,9 @@ void main() {
     Future<AudioProvider> playingAt(List<Track> tracks, int atMs) async {
       fakeNative.setConnected(true);
       final provider = createProvider();
+      // Stopped after the test: its timers would otherwise keep queueing
+      // songs in the shared fake Spotify during the next ones.
+      addTearDown(provider.stop);
       await provider.playTrack(tracks.first, newQueue: tracks);
       fakeNative.simulateStateChanged(atMs, 180000, false,
           uri: 'spotify:track:${tracks.first.id}');
@@ -949,10 +1020,58 @@ void main() {
           reason: 'no playUri restarting it');
     });
 
-    test('nothing is queued before the last 20 seconds', () async {
-      await playingAt([_track('t1'), _track('t2')], 60000);
+    test('our next song goes to Spotify\'s queue as soon as ours plays',
+        () async {
+      // Mid-song: Spotify's own "next" (the car's button) must be ours,
+      // not its autoplay.
+      await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
       await tick();
-      expect(fakeNative.queued, isEmpty);
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2']);
+    });
+
+    test('the car\'s "next" mid-song plays our next song straight away',
+        () async {
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
+      await tick();
+
+      // The car's button reaches Spotify, which plays what's queued: ours.
+      fakeNative.simulateStateChanged(0, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(provider.isPlaying, isTrue);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2',
+          reason: 'followed, not replayed: no autoplay song in between');
+
+      // And the one after it goes to Spotify's queue in turn.
+      fakeNative.simulateStateChanged(3000, 180000, false,
+          uri: 'spotify:track:t2');
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2', 'spotify:track:t3']);
+    });
+
+    test('a song still waiting in Spotify\'s queue is reused when it\'s our next',
+        () async {
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2']);
+
+      // t1 again from the start (a "previous"): t2 still waits in Spotify.
+      await provider.playTrack(provider.queue[0]);
+      fakeNative.simulateStateChanged(3000, 180000, false,
+          uri: 'spotify:track:t1');
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2'], reason: 'not queued twice');
+
+      fakeNative.simulateStateChanged(0, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
     });
 
     test('nothing is queued with repeat-one', () async {

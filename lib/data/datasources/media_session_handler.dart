@@ -1,5 +1,11 @@
 import 'package:audio_service/audio_service.dart';
 
+import '../../core/logger.dart';
+
+/// What the system asked for (car, speaker, headset, lock screen, Android
+/// Auto), kept in the playback log so a skip that went wrong can be traced.
+final _log = Log.named('MediaSession');
+
 /// What the media browser (Android Auto) can list and play; see
 /// AutoMediaLibrary.
 abstract class MediaLibrarySource {
@@ -50,26 +56,47 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> play() async => onPlay?.call();
+  Future<void> play() async {
+    _log.info('system: play');
+    await onPlay?.call();
+  }
 
   @override
-  Future<void> pause() async => onPause?.call();
+  Future<void> pause() async {
+    _log.info('system: pause');
+    await onPause?.call();
+  }
 
   @override
-  Future<void> stop() async => onStop?.call();
+  Future<void> stop() async {
+    _log.info('system: stop');
+    await onStop?.call();
+  }
 
   @override
-  Future<void> skipToNext() async => onSkipToNext?.call();
+  Future<void> skipToNext() async {
+    _log.info('system: next');
+    await onSkipToNext?.call();
+  }
 
   @override
-  Future<void> skipToPrevious() async => onSkipToPrevious?.call();
+  Future<void> skipToPrevious() async {
+    _log.info('system: previous');
+    await onSkipToPrevious?.call();
+  }
 
   @override
-  Future<void> seek(Duration position) async => onSeek?.call(position);
+  Future<void> seek(Duration position) async {
+    _log.info('system: seek to ${position.inSeconds}s');
+    await onSeek?.call(position);
+  }
 
   /// A song picked in the queue Android Auto shows ([queue]).
   @override
-  Future<void> skipToQueueItem(int index) async => onSkipToQueueItem?.call(index);
+  Future<void> skipToQueueItem(int index) async {
+    _log.info('system: queue item $index');
+    await onSkipToQueueItem?.call(index);
+  }
 
   /// The user swiped the app away from recents: stop like Spotify does.
   @override
@@ -80,6 +107,7 @@ class TsukiAudioHandler extends BaseAudioHandler with SeekHandler {
   /// Headset single-click toggles play/pause; double/triple click skip.
   @override
   Future<void> click([MediaButton button = MediaButton.media]) async {
+    _log.info('system: button ${button.name}');
     switch (button) {
       case MediaButton.media:
         if (playbackState.value.playing) {
