@@ -50,6 +50,8 @@ app.*.map.json
 # Secrets & API keys
 .env
 .env.*
+# The functions' parameters (no secrets: those are in Secret Manager).
+!functions/.env
 config/*.env
 !config/.env.example
 *.keystore

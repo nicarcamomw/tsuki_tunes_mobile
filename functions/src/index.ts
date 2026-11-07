@@ -16,7 +16,8 @@ const lastFmKey = defineSecret('LASTFM_API_KEY');
 /**
  * Refuse callers without a valid App Check token. Off until the app is in
  * Google Play (installs from GitHub can't pass Play Integrity); turn it on
- * together with Firestore's enforcement.
+ * together with Firestore's enforcement. Its value is in functions/.env (a
+ * CI deploy is non-interactive and cannot ask for it).
  */
 const enforceAppCheck = defineBoolean('ENFORCE_APP_CHECK', { default: false });
 
