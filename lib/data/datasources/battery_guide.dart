@@ -21,6 +21,9 @@ enum BatteryFamily {
 
   /// OPPO, realme and OnePlus (ColorOS and its forks).
   oppo,
+
+  /// vivo and iQOO (Funtouch OS / OriginOS).
+  vivo,
 }
 
 /// The maker's family for [manufacturer] / [brand] (Android's
@@ -32,6 +35,7 @@ BatteryFamily? batteryFamilyFor(String manufacturer, String brand) {
   if (has('honor') || has('huawei')) return BatteryFamily.honor;
   if (has('xiaomi') || has('redmi') || has('poco')) return BatteryFamily.xiaomi;
   if (has('oppo') || has('realme') || has('oneplus')) return BatteryFamily.oppo;
+  if (has('vivo') || has('iqoo')) return BatteryFamily.vivo;
   return null;
 }
 

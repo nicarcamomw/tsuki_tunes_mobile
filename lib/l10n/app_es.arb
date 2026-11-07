@@ -1718,7 +1718,7 @@
     }
   },
   "batteryGuideStepOpen": "Abre los ajustes de Spotify con el botón de abajo.",
-  "batteryGuideStepBattery": "{family, select, honor{Entra en «Batería» › «Inicio de aplicaciones» y cambia Spotify a «Gestionar manualmente».} xiaomi{Entra en «Ahorro de batería» y elige «Sin restricciones».} other{Entra en «Uso de la batería» y activa «Permitir actividad en segundo plano».}}",
+  "batteryGuideStepBattery": "{family, select, honor{Entra en «Batería» › «Inicio de aplicaciones» y cambia Spotify a «Gestionar manualmente».} xiaomi{Entra en «Ahorro de batería» y elige «Sin restricciones».} vivo{Entra en «Batería» y activa «Permitir consumo alto en segundo plano».} other{Entra en «Uso de la batería» y activa «Permitir actividad en segundo plano».}}",
   "@batteryGuideStepBattery": {
     "placeholders": {
       "family": {
@@ -1726,7 +1726,7 @@
       }
     }
   },
-  "batteryGuideStepAutostart": "{family, select, honor{Deja activadas las tres opciones: inicio automático, inicio secundario y ejecución en segundo plano.} xiaomi{Activa «Inicio automático».} other{Activa también «Permitir inicio automático».}}",
+  "batteryGuideStepAutostart": "{family, select, honor{Deja activadas las tres opciones: inicio automático, inicio secundario y ejecución en segundo plano.} xiaomi{Activa «Inicio automático».} vivo{Activa «Inicio automático» (en algunos modelos está en i Manager › Gestor de apps).} other{Activa también «Permitir inicio automático».}}",
   "@batteryGuideStepAutostart": {
     "placeholders": {
       "family": {

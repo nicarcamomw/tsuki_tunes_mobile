@@ -226,7 +226,8 @@ class _OwnControls extends ConsumerWidget {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: isPublic && controller.shareLink != null
-                ? () => Share.share(strings.profileShareText(controller.shareLink!))
+                ? () => SharePlus.instance.share(
+                    ShareParams(text: strings.profileShareText(controller.shareLink!)))
                 : null,
             icon: const Icon(Icons.share_rounded),
             label: Text(isPublic ? strings.profileShare : strings.profileMakePublicFirst),

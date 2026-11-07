@@ -19,6 +19,8 @@ void main() {
       expect(batteryFamilyFor('OPPO', 'OPPO'), BatteryFamily.oppo);
       expect(batteryFamilyFor('realme', 'realme'), BatteryFamily.oppo);
       expect(batteryFamilyFor('OnePlus', 'OnePlus'), BatteryFamily.oppo);
+      expect(batteryFamilyFor('vivo', 'vivo'), BatteryFamily.vivo);
+      expect(batteryFamilyFor('vivo', 'iQOO'), BatteryFamily.vivo);
     });
 
     test('other makers get no guide', () {
@@ -88,6 +90,9 @@ void main() {
 
       await pumpGuide(tester, BatteryFamily.oppo);
       expect(find.textContaining('Permitir actividad en segundo plano'), findsOneWidget);
+
+      await pumpGuide(tester, BatteryFamily.vivo);
+      expect(find.textContaining('Permitir consumo alto en segundo plano'), findsOneWidget);
     });
   });
 }

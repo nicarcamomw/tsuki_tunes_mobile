@@ -179,8 +179,10 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       await file.writeAsBytes(bytes.buffer.asUint8List());
       if (!mounted) return;
       final strings = ref.read(stringsProvider);
-      await Share.shareXFiles([XFile(file.path)],
-          text: 'Tsuki Wrapped · ${strings.wrappedPeriod(widget.year, widget.month)}');
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        text: 'Tsuki Wrapped · ${strings.wrappedPeriod(widget.year, widget.month)}',
+      ));
     } catch (e) {
       _log.severe('share error: $e');
     } finally {
