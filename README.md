@@ -56,6 +56,46 @@ Los tests de las reglas (`tool/firestore_rules_test/`, con `@firebase/rules-unit
 cd tool/firestore_rules_test && npm ci && npm test
 ```
 
+## Backend propio (Cloud Functions)
+
+`functions/` (TypeScript, Node 22) tiene una función HTTP, `api`, que hace de **proxy** entre la app y Last.fm / Deezer:
+
+| Ruta | Para qué |
+|---|---|
+| `GET /api/lastfm?method=…` | Last.fm con la clave **del servidor** (Secret Manager): la app ya no la lleva dentro. Solo los métodos que usa la app (`track.getsimilar`, `artist.getinfo`, `artist.search`). |
+| `GET /api/deezer/<ruta>?…` | Deezer con caché y cabeceras CORS. La usa la versión web (Deezer no manda CORS); el teléfono sigue hablando directo con Deezer, que no tiene clave que ocultar y así responde más rápido. |
+
+- URL: `https://us-central1-<proyecto>.cloudfunctions.net/api`, del proyecto de cada flavor (`tsuki-tunes-web` en prod, `tsuki-tunes-dev` en dev). La app la arma sola (`lib/data/datasources/backend_proxy.dart`).
+- **Lista blanca:** cualquier método, ruta o parámetro que la app no use se rechaza (400), para que el proxy no sirva como clave gratis de Last.fm ni como relay abierto.
+- **Caché** en memoria por instancia (horas o un día según el tipo de dato) y `Cache-Control`. Los errores no se guardan.
+- **Límite de pedidos** por usuario (app verificada + IP): 30 de Last.fm y 120 de Deezer de golpe, que se recargan con el tiempo. Como máximo 5 instancias, para acotar el costo ante un abuso.
+- **App Check:** la app manda su token; la función lo exige solo cuando `ENFORCE_APP_CHECK=true` (en `functions/.env`). Activarlo junto con el de Firestore, cuando la app esté en Google Play.
+- Mientras el proxy no esté desplegado, una app compilada con `LASTFM_API_KEY` sigue llamando a Last.fm directo. Una vez desplegado, quitar esa variable del build (`build-apk.yml`) para que la clave salga del APK.
+
+Tests y build (también corren en el CI):
+
+```bash
+cd functions && npm ci && npm test && npm run build
+```
+
+### Desplegar (una vez por proyecto)
+
+1. El proyecto tiene que estar en el plan **Blaze** (prod ya lo está; dev, si se quiere probar ahí).
+2. Guardar la clave de Last.fm en Secret Manager:
+   ```bash
+   firebase functions:secrets:set LASTFM_API_KEY --project tsuki-tunes-web
+   ```
+3. Primer despliegue a mano (ofrece activar las APIs que falten: Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc):
+   ```bash
+   firebase deploy --only functions --project tsuki-tunes-web
+   ```
+4. Desde ahí, el workflow *Deploy Cloud Functions* despliega solo en cada push a `main` que toque `functions/`, o a mano eligiendo el proyecto. Para eso la cuenta de servicio de `FIREBASE_SERVICE_ACCOUNT` necesita además los roles **Cloud Functions Admin**, **Service Account User**, **Cloud Build Editor**, **Artifact Registry Administrator**, **Secret Manager Viewer** y **Cloud Run Admin**.
+5. Comprobar: `curl "https://us-central1-tsuki-tunes-web.cloudfunctions.net/api/deezer/genre"` devuelve la lista de géneros.
+
+Costo: el plan Blaze incluye 2 millones de invocaciones al mes gratis; el uso de la app queda muy por debajo.
+
+En desarrollo, `tool/dev_emulators.sh` también levanta la función (puerto 5001); la clave para el emulador va en `functions/.secret.local` (ignorado por git).
+
 ## Respaldos de Firestore
 
 Firestore guarda un respaldo **diario** de la base `(default)` y lo conserva **98 días** (programación creada el 2026-11-02; el proyecto está en el plan Blaze). Comandos con el CLI de Firebase (v13.7 o más nuevo):

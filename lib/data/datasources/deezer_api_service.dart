@@ -14,6 +14,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/genre_catalog.dart';
 import '../../domain/repositories/music_catalog.dart';
 import '../contracts/music_api_contract.dart';
+import 'backend_proxy.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
 
@@ -179,7 +180,14 @@ class DeezerApiService
       return null;
     }
 
-    // Web: try CORS proxies first, then direct
+    // Web: Deezer sends no CORS headers. Tsuki's backend first (it caches
+    // and answers with CORS), then public CORS proxies, then direct.
+    final own = BackendProxy.instance.deezer(url);
+    if (own != null) {
+      final res = await BackendProxy.instance
+          .getUri(own, timeout: const Duration(seconds: 8));
+      if (res != null && res.statusCode == 200) return await _decode(res.body);
+    }
     for (final proxy in _corsProxies) {
       try {
         final proxyUrl = '$proxy${Uri.encodeComponent(url)}';

@@ -1,0 +1,74 @@
+name: Deploy Cloud Functions
+
+# Builds, tests and deploys functions/ (the Last.fm / Deezer proxy) when it
+# changes on main, or by hand from the Actions tab, where the project can
+# be chosen (dev to try a change first).
+#
+# Needs, once (see README "Backend propio"):
+# - Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc
+#   and Secret Manager APIs enabled in the project (the first manual
+#   `firebase deploy --only functions` offers to enable them).
+# - The secret LASTFM_API_KEY in Secret Manager:
+#   `firebase functions:secrets:set LASTFM_API_KEY --project <project>`.
+# - The repository secret FIREBASE_SERVICE_ACCOUNT with, besides its rules
+#   roles: Cloud Functions Admin, Service Account User, Cloud Build Editor,
+#   Artifact Registry Administrator, Secret Manager Viewer and Cloud Run
+#   Admin. Without the secret the deploy is skipped (tests still run).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - functions/**
+      - firebase.json
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Firebase project
+        type: choice
+        options: [tsuki-tunes-web, tsuki-tunes-dev]
+        default: tsuki-tunes-web
+
+concurrency:
+  group: deploy-functions-${{ inputs.project || 'tsuki-tunes-web' }}
+  cancel-in-progress: false
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install
+        working-directory: functions
+        run: npm ci
+
+      - name: Test
+        working-directory: functions
+        run: npm test
+
+      - name: Build
+        working-directory: functions
+        run: npm run build
+
+      - name: Deploy
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJECT: ${{ inputs.project || 'tsuki-tunes-web' }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::warning::Secret FIREBASE_SERVICE_ACCOUNT is not set; functions tested but not deployed."
+            exit 0
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@15.35.0 deploy \
+            --only functions --project "$PROJECT" --non-interactive
+          rm "$RUNNER_TEMP/sa.json"
