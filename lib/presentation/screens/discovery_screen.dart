@@ -265,7 +265,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         actions: [
           if (deck.liked > 0)
             TextButton.icon(
-              onPressed: _openSaved,
+              onPressed: () { Haptics.tap(); _openSaved(); },
               icon: const Icon(Icons.queue_music_rounded, size: 18, color: AppColors.success),
               label: Text('${deck.liked}',
                   style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w900)),

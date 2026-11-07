@@ -47,6 +47,17 @@ void main() {
     expect(felt, ['selectionClick', 'lightImpact', 'lightImpact', 'mediumImpact', 'mediumImpact', 'mediumImpact']);
   });
 
+  test('a swipe ticks when it crosses its point, both ways, and not in between', () async {
+    DismissUpdateDetails at(bool reached, bool before) => DismissUpdateDetails(
+        direction: DismissDirection.startToEnd, reached: reached, previousReached: before, progress: 0.5);
+    Haptics.swipe(at(false, false));
+    Haptics.swipe(at(true, false)); // crosses
+    Haptics.swipe(at(true, true));
+    Haptics.swipe(at(false, true)); // pulled back
+    await pumpEventQueue();
+    expect(felt, ['lightImpact', 'lightImpact']);
+  });
+
   testWidgets('success and error are two beats', (tester) async {
     Haptics.success();
     await tester.pump(const Duration(milliseconds: 100));

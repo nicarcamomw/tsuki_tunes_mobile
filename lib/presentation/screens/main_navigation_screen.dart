@@ -148,7 +148,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   ? SnackBarAction(
                       label: strings.batteryGuideAction,
                       textColor: AppColors.accent,
-                      onPressed: () => BatteryGuideSheet.show(context),
+                      onPressed: () { Haptics.tap(); BatteryGuideSheet.show(context); },
                     )
                   : null,
               content: Row(

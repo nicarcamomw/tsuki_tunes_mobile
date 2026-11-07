@@ -136,7 +136,10 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
           return RefreshIndicator(
             color: AppColors.neonCyan,
             backgroundColor: AppColors.bgCard,
-            onRefresh: _radar.checkNow,
+            onRefresh: () {
+              Haptics.threshold();
+              return _radar.checkNow();
+            },
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [

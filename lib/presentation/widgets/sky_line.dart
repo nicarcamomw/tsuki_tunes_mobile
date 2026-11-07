@@ -570,7 +570,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
+                  onPressed: () { Haptics.tap();
                     setState(() => _state = _OfferState.asking);
                     ref.read(weatherProvider).dismissRainOffer();
                   },

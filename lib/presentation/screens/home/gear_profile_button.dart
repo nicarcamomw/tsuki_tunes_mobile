@@ -47,7 +47,7 @@ class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
       button: true,
       label: widget.label,
       child: GestureDetector(
-        onTap: _onTap,
+        onTap: () { Haptics.tap(); _onTap(); },
         child: SizedBox(
           width: 34,
           height: 34,

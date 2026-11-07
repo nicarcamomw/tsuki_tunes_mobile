@@ -205,7 +205,10 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
-        onRefresh: () => Future.wait([_loadArtistInfo(), _loadArtistData()]),
+        onRefresh: () {
+          Haptics.threshold();
+          return Future.wait([_loadArtistInfo(), _loadArtistData()]);
+        },
         child: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -442,7 +445,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       button: true,
       label: '${album.title}, ${album.artistName}',
       child: GestureDetector(
-        onTap: () async {
+        onTap: () async { Haptics.tap();
           await AlbumRoute(id: album.id, $extra: album).push(context);
           if (mounted) setState(() {});
         },

@@ -245,8 +245,8 @@ class _ProfileSheet extends ConsumerWidget {
         const SizedBox(height: 12),
         InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => _closeThen(
-              context, () => MaskCollectionScreen.open(hostContext)),
+          onTap: () { Haptics.tap(); _closeThen(
+              context, () => MaskCollectionScreen.open(hostContext)); },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -278,7 +278,7 @@ class _ProfileSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           InkWell(
             borderRadius: BorderRadius.circular(20),
-            onTap: () => _closeThen(context, () => UserProfileRoute(uid: auth.uid!).push(hostContext)),
+            onTap: () { Haptics.tap(); _closeThen(context, () => UserProfileRoute(uid: auth.uid!).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -303,7 +303,7 @@ class _ProfileSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           InkWell(
             borderRadius: BorderRadius.circular(20),
-            onTap: () => _closeThen(context, () => const BondsRoute(tab: 1).push(hostContext)),
+            onTap: () { Haptics.tap(); _closeThen(context, () => const BondsRoute(tab: 1).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(

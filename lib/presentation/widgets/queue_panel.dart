@@ -67,7 +67,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       action: SnackBarAction(
         label: _locale.strings.undo,
         textColor: AppColors.accent,
-        onPressed: () => _audio.restoreQueue(before),
+        onPressed: () { Haptics.tap(); _audio.restoreQueue(before); },
       ),
     );
   }
@@ -245,6 +245,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverReorderableList(
                       itemCount: upcoming.length,
+                      // Picked up: the same feel as any long press.
+                      onReorderStart: (_) => Haptics.longPress(),
                       onReorderItem: (from, to) {
                         if (to != from) _move(from, to);
                       },
@@ -423,7 +425,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       button: true,
       expanded: _showPlayed,
       child: InkWell(
-        onTap: () => setState(() => _showPlayed = !_showPlayed),
+        onTap: () { Haptics.selection(); setState(() => _showPlayed = !_showPlayed); },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 12, 4),
           child: Row(
@@ -596,6 +598,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             DismissDirection.startToEnd: 0.3,
             DismissDirection.endToStart: 0.4,
           },
+          onUpdate: Haptics.swipe,
           background: _swipeBackground(
             icon: Icons.vertical_align_top_rounded,
             label: strings.playNext,

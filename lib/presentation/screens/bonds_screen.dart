@@ -64,7 +64,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                 final inParty = ref.watch(partyProvider.select((p) => p.inParty));
                 return IconButton(
                   tooltip: strings.partyTitle,
-                  onPressed: () => const PartyRoute().push<void>(context),
+                  onPressed: () { Haptics.tap(); const PartyRoute().push<void>(context); },
                   icon: Badge(
                     isLabelVisible: invites > 0,
                     backgroundColor: AppColors.accent,
@@ -191,6 +191,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
       color: AppColors.accent,
       backgroundColor: AppColors.bgCard,
       onRefresh: () async {
+        Haptics.threshold();
         setState(() => _load(refresh: true));
         await _feed;
       },
@@ -249,7 +250,7 @@ class ResonanceTile extends ConsumerWidget {
       excludeSemantics: true,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: showPerson ? () => UserProfileRoute(uid: resonance.person.uid).push<void>(context) : null,
+        onTap: showPerson ? () { Haptics.tap(); UserProfileRoute(uid: resonance.person.uid).push<void>(context); } : null,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -485,7 +486,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
                 ? null
                 : IconButton(
                     icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
-                    onPressed: () {
+                    onPressed: () { Haptics.selection();
                       _field.clear();
                       _search('');
                     },
@@ -593,7 +594,7 @@ class BondButton extends ConsumerWidget {
             minimumSize: size,
             padding: pad,
           ),
-          onPressed: compact ? null : () => _confirmUnbond(context, ref, person),
+          onPressed: compact ? null : () { Haptics.tap(); _confirmUnbond(context, ref, person); },
           icon: const Icon(Icons.link_rounded, size: 18),
           label: Text(compact ? strings.bondsBonded : strings.bondsUnbond),
         );
@@ -642,7 +643,7 @@ class PersonRow extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => UserProfileRoute(uid: person.uid).push<void>(context),
+        onTap: () { Haptics.tap(); UserProfileRoute(uid: person.uid).push<void>(context); },
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
           decoration: BoxDecoration(

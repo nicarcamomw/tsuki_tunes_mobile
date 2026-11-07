@@ -76,7 +76,7 @@ class SpotifyImportScreen extends ConsumerWidget {
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textSecondary, side: const BorderSide(color: AppColors.border)),
-              onPressed: c.cancel,
+              onPressed: () { Haptics.remove(); c.cancel(); },
               child: Text(strings.importCancel),
             ),
             const SizedBox(height: 24),
@@ -92,7 +92,7 @@ class SpotifyImportScreen extends ConsumerWidget {
               title: Text(r.name, style: style(13.5, w: FontWeight.w800)),
               subtitle: Text(strings.importFound(r.found, r.total), style: style(11.5, color: AppColors.textSecondary)),
               trailing: r.playlistId == null ? null : const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-              onTap: r.playlistId == null ? null : () => PlaylistRoute(id: r.playlistId!).push<void>(context),
+              onTap: r.playlistId == null ? null : () { Haptics.tap(); PlaylistRoute(id: r.playlistId!).push<void>(context); },
             ),
         ],
       );

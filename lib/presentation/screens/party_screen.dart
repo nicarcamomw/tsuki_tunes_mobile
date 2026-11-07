@@ -111,7 +111,7 @@ class PartyScreen extends ConsumerWidget {
                 side: const BorderSide(color: AppColors.accent),
                 minimumSize: const Size(double.infinity, 48),
               ),
-              onPressed: () => _invite(context, ref, p),
+              onPressed: () { Haptics.tap(); _invite(context, ref, p); },
               icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
               label: Text(strings.partyInvite),
             ),
@@ -186,7 +186,7 @@ class PartyScreen extends ConsumerWidget {
                             style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.textSecondary,
                                 side: const BorderSide(color: AppColors.border)),
-                            onPressed: () => party.decline(inv.host),
+                            onPressed: () { Haptics.remove(); party.decline(inv.host); },
                             child: Text(strings.sharedDecline),
                           ),
                         ),

@@ -364,7 +364,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
             button: true,
             label: '${strings.ecoLevelUp}: ${strings.ecoLevel(widget.to)}',
             child: GestureDetector(
-              onTap: () {
+              onTap: () { Haptics.tap();
                 _close();
                 EcoLevelsScreen.open(context);
               },

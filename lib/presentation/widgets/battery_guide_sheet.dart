@@ -165,7 +165,7 @@ class BatteryGuideSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           TextButton(
-            onPressed: () {
+            onPressed: () { Haptics.tap();
               context.readState(batteryGuideProvider).dismiss();
               Navigator.of(context).pop();
             },

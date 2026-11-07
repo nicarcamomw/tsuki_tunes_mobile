@@ -130,7 +130,7 @@ class MaskCollectionScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: _LoreButton(label: strings.loreButton, onTap: () => LoreScreen.open(context)),
+              child: _LoreButton(label: strings.loreButton, onTap: () { Haptics.tap(); LoreScreen.open(context); }),
             ),
           ),
           const SliverToBoxAdapter(

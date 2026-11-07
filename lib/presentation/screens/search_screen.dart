@@ -348,7 +348,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             return IconButton(
                               icon: Icon(Icons.clear, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
                               tooltip: strings.a11yClearSearch,
-                              onPressed: () {
+                              onPressed: () { Haptics.selection();
                                 _controller.clear();
                                 search.clear();
                               },
@@ -510,7 +510,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 button: true,
                 label: strings.clearHistory,
                 child: GestureDetector(
-                onTap: () {
+                onTap: () { Haptics.tap();
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
@@ -566,15 +566,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ...history.map((q) => Dismissible(
                 key: ValueKey('history_$q'),
                 direction: DismissDirection.endToStart,
+                onUpdate: Haptics.swipe,
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
                   child: Icon(Icons.delete_outline,
                       color: AppColors.accent, size: 18, semanticLabel: strings.a11yClearHistory),
                 ),
-                onDismissed: (_) => search.removeFromHistory(q),
+                onDismissed: (_) {
+                  Haptics.remove();
+                  search.removeFromHistory(q);
+                },
                 child: InkWell(
-                  onTap: () {
+                  onTap: () { Haptics.tap();
                     _controller.text = q;
                     search.search(q);
                   },

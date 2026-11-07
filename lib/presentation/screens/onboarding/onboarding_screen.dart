@@ -13,6 +13,7 @@ import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_nav_icon.dart';
+import '../../widgets/haptics.dart';
 
 part 'painters.dart';
 part 'slide_identity.dart';
@@ -292,7 +293,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: _completeOnboarding,
+              onTap: () { Haptics.tap(); _completeOnboarding(); },
               borderRadius: BorderRadius.circular(20),
               splashColor: AppColors.accent.withValues(alpha: 0.2),
               highlightColor: AppColors.accent.withValues(alpha: 0.1),
@@ -385,7 +386,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: _nextPage,
+              onTap: () { Haptics.tap(); _nextPage(); },
               borderRadius: BorderRadius.circular(8),
               splashColor: AppColors.accent.withValues(alpha: 0.3),
               highlightColor: AppColors.accent.withValues(alpha: 0.15),

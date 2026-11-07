@@ -291,7 +291,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                           label: strings.retryLoading,
                           child: InkWell(
                           borderRadius: BorderRadius.circular(4),
-                          onTap: _loadMoreAlbums,
+                          onTap: () { Haptics.tap(); _loadMoreAlbums(); },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
@@ -467,7 +467,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       button: true,
       label: '${album.title}, ${album.artistName}',
       child: GestureDetector(
-        onTap: () async {
+        onTap: () async { Haptics.tap();
           await AlbumRoute(id: album.id, $extra: album).push(context);
           if (mounted) setState(() {});
         },

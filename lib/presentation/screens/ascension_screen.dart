@@ -245,7 +245,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
                                 child: _ChoiceButton(
                                   label: strings.ascensionSer,
                                   filled: true,
-                                  onTap: _busy ? null : () => setState(() => _step = _Step.name),
+                                  onTap: _busy ? null : () { Haptics.selection(); setState(() => _step = _Step.name); },
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -253,7 +253,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
                                 child: _ChoiceButton(
                                   label: strings.ascensionNoSer,
                                   filled: false,
-                                  onTap: _busy ? null : _confirmStay,
+                                  onTap: _busy ? null : () { Haptics.confirm(); _confirmStay(); },
                                 ),
                               ),
                             ],

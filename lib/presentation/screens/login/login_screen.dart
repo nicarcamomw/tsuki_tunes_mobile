@@ -308,7 +308,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _handleGuestExplore,
+                      onTap: () { Haptics.tap(); _handleGuestExplore(); },
                       borderRadius: BorderRadius.circular(24),
                       splashColor: AppColors.accent.withValues(alpha: 0.2),
                       child: Container(

@@ -343,6 +343,7 @@ class TrackTile extends ConsumerWidget {
       key: ValueKey('swipe_queue_${track.id}'),
       direction: DismissDirection.startToEnd,
       dismissThresholds: const {DismissDirection.startToEnd: 0.25},
+      onUpdate: Haptics.swipe,
       background: Container(
         color: AppColors.neonCyan.withValues(alpha: 0.14),
         alignment: Alignment.centerLeft,

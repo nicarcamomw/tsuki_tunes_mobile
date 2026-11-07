@@ -174,7 +174,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                       else
                         IconButton(
                           icon: const Icon(Icons.refresh_rounded, color: AppColors.textMuted),
-                          onPressed: () => weather.refresh(force: true),
+                          onPressed: () { Haptics.tap(); weather.refresh(force: true); },
                         ),
                     ],
                   ),
@@ -219,9 +219,12 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
-                      onPressed: weather.locationProblem == LocationStatus.serviceOff
-                          ? weather.openLocationSettings
-                          : weather.openAppSettings,
+                      onPressed: () {
+                        Haptics.tap();
+                        weather.locationProblem == LocationStatus.serviceOff
+                            ? weather.openLocationSettings()
+                            : weather.openAppSettings();
+                      },
                       child: Text(strings.weatherOpenSettings,
                           style: label(12, weight: FontWeight.w700, color: AppColors.neonCyan)),
                     ),
