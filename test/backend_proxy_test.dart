@@ -8,7 +8,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const base = 'https://us-central1-tsuki-test.cloudfunctions.net/api';
 
-  setUp(() => BackendProxy.baseUrlOverride = base);
+  setUp(() {
+    BackendProxy.baseUrlOverride = base;
+    LastFmService.clearCache();
+  });
   tearDown(() => BackendProxy.baseUrlOverride = null);
 
   group('backend urls', () {
@@ -69,6 +72,28 @@ void main() {
           () => LastFmService.getArtistTags('Korn'), () => client);
       expect(tags, isEmpty);
       expect(calls, 1);
+    });
+
+    test('the same question twice asks the backend once; a failure is asked again', () async {
+      var calls = 0;
+      final ok = MockClient((_) async {
+        calls++;
+        return http.Response('{"artist":{"tags":{"tag":[{"name":"nu metal"}]}}}', 200);
+      });
+      for (var i = 0; i < 3; i++) {
+        final tags = await http.runWithClient(() => LastFmService.getArtistTags('Korn'), () => ok);
+        expect(tags, ['nu metal']);
+      }
+      expect(calls, 1);
+
+      var failed = 0;
+      final down = MockClient((_) async {
+        failed++;
+        return http.Response('oops', 500);
+      });
+      await http.runWithClient(() => LastFmService.getArtistTags('Deftones'), () => down);
+      await http.runWithClient(() => LastFmService.getArtistTags('Deftones'), () => down);
+      expect(failed, 2);
     });
 
     test('an unreachable backend and no key in the build: empty, no crash',

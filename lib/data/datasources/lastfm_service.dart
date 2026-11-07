@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/logger.dart';
@@ -23,9 +24,42 @@ class LastFmService {
   /// retrying with the key.
   static const _finalStatuses = {400, 401, 429};
 
+  /// Answers already asked for, for [_cacheTtl]: the radio asks for the
+  /// same song's neighbours again and again, and each question is a call
+  /// to the backend. Questions in flight are shared too. Failures are not
+  /// kept, so the next question tries again.
+  static final _cache = <String, ({DateTime at, Future<Map<String, dynamic>?> answer})>{};
+  static const _cacheTtl = Duration(hours: 6);
+  static const _cacheSize = 300;
+
+  @visibleForTesting
+  static void clearCache() => _cache.clear();
+
   /// Last.fm's JSON for [params] (a method and its parameters), or null.
   static Future<Map<String, dynamic>?> _call(Map<String, String> params,
-      {Duration timeout = const Duration(seconds: 8)}) async {
+      {Duration timeout = const Duration(seconds: 8)}) {
+    final key = (params.keys.toList()..sort()).map((k) => '$k=${params[k]}').join('&').toLowerCase();
+    final now = DateTime.now();
+    final kept = _cache.remove(key);
+    if (kept != null && now.difference(kept.at) < _cacheTtl) {
+      _cache[key] = kept; // most recently used last
+      return kept.answer;
+    }
+    final answer = _fetch(params, timeout).then((data) {
+      if (data == null) _cache.remove(key);
+      return data;
+    }, onError: (Object e) {
+      _cache.remove(key);
+      throw e;
+    });
+    _cache[key] = (at: now, answer: answer);
+    while (_cache.length > _cacheSize) {
+      _cache.remove(_cache.keys.first);
+    }
+    return answer;
+  }
+
+  static Future<Map<String, dynamic>?> _fetch(Map<String, String> params, Duration timeout) async {
     final res =
         await BackendProxy.instance.get('lastfm', params, timeout: timeout);
     if (res != null) {
