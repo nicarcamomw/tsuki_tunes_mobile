@@ -39,14 +39,24 @@ class SearchSuggestions {
 
   /// Lower case, no accents, punctuation turned into single spaces: "Beyoncé
   /// - Halo!" and "beyonce halo" fold the same.
+  ///
+  /// Remembered: the same library names are folded on every keystroke.
   static String fold(String s) {
+    final cached = _folded[s];
+    if (cached != null) return cached;
     final lower = s.toLowerCase();
     final buf = StringBuffer();
     for (final c in lower.split('')) {
       buf.write(_accents[c] ?? c);
     }
-    return buf.toString().replaceAll(_nonWord, ' ').trim();
+    final out = buf.toString().replaceAll(_nonWord, ' ').trim();
+    if (_folded.length >= _maxFolded) _folded.clear();
+    _folded[s] = out;
+    return out;
   }
+
+  static final Map<String, String> _folded = {};
+  static const int _maxFolded = 50000;
 
   static List<String> _words(String folded) =>
       folded.isEmpty ? const [] : folded.split(' ');
@@ -156,10 +166,19 @@ class SearchSuggestions {
     final q = fold(query);
     if (q.length < 4) return null;
     var hasResults = false;
+    final resultWords = <String>{};
     for (final r in resultNames) {
       hasResults = true;
       final f = fold(r);
       if (f.isNotEmpty && (f.startsWith(q) || _matchScore(q, f) >= 2)) return null;
+      resultWords.addAll(_words(f));
+    }
+    // Every word found somewhere in the results, split between an artist
+    // and a song ("adele hello"): the search understood it.
+    final qWords = _words(q);
+    if (hasResults &&
+        qWords.every((w) => resultWords.any((r) => r.startsWith(w)))) {
+      return null;
     }
 
     final names = <String, String>{}; // folded -> as written

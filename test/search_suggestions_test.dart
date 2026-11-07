@@ -128,6 +128,14 @@ void main() {
       );
     });
 
+    test('nothing when the words are split between an artist and a song', () {
+      expect(
+        SearchSuggestions.didYouMean('adele hello',
+            vocabulary: ['Adele', 'Adel Hell'], resultNames: ['Adele', 'Hello']),
+        isNull,
+      );
+    });
+
     test('with results, only whole names are offered, not word fixes', () {
       expect(
         SearchSuggestions.didYouMean('metalica one',

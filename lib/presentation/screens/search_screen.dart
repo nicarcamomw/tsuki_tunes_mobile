@@ -50,6 +50,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<String> _libraryArtists = const [];
   List<String> _libraryTitles = const [];
   Object? _libraryNamesKey;
+  static const int _maxLibraryTitles = 3000;
 
   @override
   void initState() {
@@ -83,8 +84,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       plays[k] = (plays[k] ?? 0) + weight;
     }
 
+    // Latest listened first, so the titles kept are the recent ones.
+    final tracks = [...library.listenedTracks]..sort((a, b) {
+        final at = a.listenedAt, bt = b.listenedAt;
+        if (at == null || bt == null) return at == null ? (bt == null ? 0 : 1) : -1;
+        return bt.compareTo(at);
+      });
     final titles = <String>{};
-    for (final t in library.listenedTracks) {
+    for (final t in tracks) {
       for (final a in t.artists) {
         count(a, 1);
       }
@@ -98,7 +105,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final ranked = plays.keys.toList()
       ..sort((a, b) => plays[b]!.compareTo(plays[a]!));
     _libraryArtists = [for (final k in ranked) spelled[k]!];
-    _libraryTitles = titles.toList();
+    // Every artist, but a bounded number of titles: suggestions run on
+    // each keystroke, and a big library has tens of thousands.
+    _libraryTitles = titles.take(_maxLibraryTitles).toList();
     search.setLibraryNames([..._libraryArtists, ..._libraryTitles]);
   }
 
