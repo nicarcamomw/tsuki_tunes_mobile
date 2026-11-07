@@ -1645,42 +1645,42 @@ packages:
     dependency: "direct main"
     description:
       name: spotify_sdk
-      sha256: dc9916d5e440e57ce4e89fd12c35e80ea4a8fd0806335a3be16647c97fd6288a
+      sha256: "00f50620ac7b6e64554546dbdda7dc08315fe3df18b47cd5f0eaad101d3592ce"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.0"
+    version: "4.3.4"
   spotify_sdk_android:
     dependency: transitive
     description:
       name: spotify_sdk_android
-      sha256: af78d1c7b1da8bf375f6c2a33743260c716cc6791c8284d29f9a173e310e22b4
+      sha256: "87999a6ae0c4b92ffca5cbe42d4b7613051d9c3f8623ac38de1b1bd13b829fa5"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_ios:
     dependency: transitive
     description:
       name: spotify_sdk_ios
-      sha256: "8308510916c5be7be2eba09d7036e1ac2ed422d6f7aeecdbdbb2a808041b3f74"
+      sha256: "2a1776ad7a6673e60cb6b83be7ce70f9bdc0ae764aa1bfe67ef661e002b0afc9"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_platform_interface:
     dependency: transitive
     description:
       name: spotify_sdk_platform_interface
-      sha256: "66b9ffa05df29f48ef59996e5920dacea200346e39e5a7b13f3df90e363c1f77"
+      sha256: a021c6bee8f8da66542430c53db0184db43dc7ff57994f075c500ee9b4a680b5
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_web:
     dependency: transitive
     description:
       name: spotify_sdk_web
-      sha256: "0058afc09f5d65ce76b49e40a91fb202042a6bd61ef1850c08f51ed043170859"
+      sha256: "0a1e22e93f6acf82cc9b2dfdecb1a989491243881f92b91baa0258e5a2fd0e95"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   sqflite:
     dependency: transitive
     description:
@@ -1805,10 +1805,10 @@ packages:
     dependency: transitive
     description:
       name: synchronized
-      sha256: "3a7b5d17422dd0f8d5c6c14feaa5a1c65638b9455f871a96f08437562c046931"
+      sha256: "0ce4712bd3be1fccfab14458059baebb400ba6c6239b65398e3464945fabbae7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.1+2"
+    version: "3.6.1"
   term_glyph:
     dependency: transitive
     description:
@@ -1941,10 +1941,10 @@ packages:
     dependency: transitive
     description:
       name: web
-      sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
+      sha256: e119e82ac4795c7925103b7cf3768191f33941b99e7ccffbd6c645201d9f606b
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.1"
+    version: "1.1.2"
   web_socket:
     dependency: transitive
     description:

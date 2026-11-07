@@ -65,7 +65,7 @@ dependencies:
   google_mlkit_translation: ^0.13.0
 
   # Spotify Native Playback
-  spotify_sdk: ^4.0.0
+  spotify_sdk: ^4.3.4
   audio_session: ^0.1.25
   audio_service: ^0.18.19
   firebase_crashlytics: ^6.0.1
