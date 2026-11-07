@@ -73,6 +73,7 @@ class AccountDeletionService {
     }
 
     await _deleteBonds(uid);
+    await _leaveSharedPlaylists(uid);
 
     // No rate limit on these.
     while (true) {
@@ -99,6 +100,25 @@ class AccountDeletionService {
       });
     }
     _log.info('Firestore data of the account deleted');
+  }
+
+  /// Collaborative playlists: the ones I made go for everyone; I leave the
+  /// others and turn down the invitations.
+  Future<void> _leaveSharedPlaylists(String uid) async {
+    final col = _db.collection('sharedPlaylists');
+    final stamp = {'updatedAt': FieldValue.serverTimestamp(), 'updatedBy': uid};
+    final mine = await col.where('members', arrayContains: uid).get(const GetOptions(source: Source.server));
+    for (final doc in mine.docs) {
+      if (doc.data()['owner'] == uid) {
+        await doc.reference.delete();
+      } else {
+        await doc.reference.update({'members': FieldValue.arrayRemove([uid]), ...stamp});
+      }
+    }
+    final invited = await col.where('invited', arrayContains: uid).get(const GetOptions(source: Source.server));
+    for (final doc in invited.docs) {
+      await doc.reference.update({'invited': FieldValue.arrayRemove([uid]), ...stamp});
+    }
   }
 
   /// Bonds and requests, on both sides: my Bonds lose me, my requests leave

@@ -29,6 +29,10 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - Puedes rechazar solicitudes, cancelar las que enviaste y deshacer un Lazo cuando quieras. Al eliminar tu cuenta se borran tus Lazos y solicitudes, también de las listas de las otras personas.
 - Los Observadores (sin cuenta) no usan Lazos.
 
+### Playlists colaborativas (opcional)
+- Si creas una playlist colaborativa o te unes a una, sus miembros ven tu nombre y las canciones que agregaste. Solo puedes invitar a tus Lazos.
+- Al eliminar tu cuenta, las playlists colaborativas que creaste se borran para todos, y sales de las demás.
+
 ### Ubicación aproximada (opcional)
 - Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad. Con el clima activado, dos seres etéreos despiertan escuchando con tormenta o con frío: eso se revisa en el teléfono y no se guarda el clima.
 

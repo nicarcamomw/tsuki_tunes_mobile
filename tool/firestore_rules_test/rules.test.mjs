@@ -24,6 +24,8 @@ import {
   where,
   orderBy,
   getDocs,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
@@ -511,6 +513,62 @@ test('searching by name finds public profiles only', async () => {
   assert.deepEqual(found.docs.map((d) => d.id), ['alice']);
   // Without the public filter the query could return private ones: refused.
   await assertFails(getDocs(query(collection(db, 'profiles'), where('nameLower', '>=', 'al'))));
+});
+
+// --- Collaborative playlists
+
+const shared = (overrides = {}) => ({
+  name: 'Noche', owner: 'alice', members: ['alice'], invited: [], names: { alice: 'Alice' },
+  tracks: [], updatedAt: serverTimestamp(), updatedBy: 'alice', ...overrides,
+});
+const seedShared = (overrides = {}) =>
+  seed('sharedPlaylists/s1', { ...shared(overrides), updatedAt: Timestamp.now() });
+const stamp = (uid) => ({ updatedAt: serverTimestamp(), updatedBy: uid });
+
+test('a collaborative playlist is born with its owner as the only member', async () => {
+  await assertSucceeds(setDoc(doc(alice(), 'sharedPlaylists/s1'), shared()));
+  await assertFails(setDoc(doc(alice(), 'sharedPlaylists/s2'), shared({ members: ['alice', 'bob'] })));
+  await assertFails(setDoc(doc(alice(), 'sharedPlaylists/s3'), shared({ invited: ['bob'] })));
+  await assertFails(setDoc(doc(bob(), 'sharedPlaylists/s4'), shared()));
+});
+
+test('the owner invites Bonds only, one at a time', async () => {
+  await seedShared();
+  await assertFails(updateDoc(doc(alice(), 'sharedPlaylists/s1'), { invited: arrayUnion('bob'), lastInvited: 'bob', ...stamp('alice') }));
+  await seed('users/alice/friends/bob', { name: 'Bob', at: Timestamp.now() });
+  await assertSucceeds(updateDoc(doc(alice(), 'sharedPlaylists/s1'), { invited: arrayUnion('bob'), lastInvited: 'bob', ...stamp('alice') }));
+  // Nobody is made a member without joining.
+  await assertFails(updateDoc(doc(alice(), 'sharedPlaylists/s1'), { members: arrayUnion('carol'), ...stamp('alice') }));
+});
+
+test('an invited Bond reads it and joins, with their own name only; outsiders see nothing', async () => {
+  await seedShared({ invited: ['bob'] });
+  await assertSucceeds(getDoc(doc(bob(), 'sharedPlaylists/s1')));
+  await assertFails(getDoc(doc(carol(), 'sharedPlaylists/s1')));
+  await assertFails(updateDoc(doc(carol(), 'sharedPlaylists/s1'), { members: arrayUnion('carol'), ...stamp('carol') }));
+  await assertFails(updateDoc(doc(bob(), 'sharedPlaylists/s1'),
+    { invited: arrayRemove('bob'), members: arrayUnion('bob'), 'names.alice': 'Hacked', ...stamp('bob') }));
+  await assertSucceeds(updateDoc(doc(bob(), 'sharedPlaylists/s1'),
+    { invited: arrayRemove('bob'), members: arrayUnion('bob'), 'names.bob': 'Bob', ...stamp('bob') }));
+});
+
+test('members edit the songs but not the name or the people; a member leaves; only the owner deletes', async () => {
+  await seedShared({ members: ['alice', 'bob'], names: { alice: 'Alice', bob: 'Bob' } });
+  await assertSucceeds(updateDoc(doc(bob(), 'sharedPlaylists/s1'), { tracks: [{ id: 't1', addedBy: 'bob' }], ...stamp('bob') }));
+  await assertFails(updateDoc(doc(bob(), 'sharedPlaylists/s1'), { name: 'Mía', ...stamp('bob') }));
+  await assertFails(updateDoc(doc(bob(), 'sharedPlaylists/s1'), { members: ['bob'], ...stamp('bob') }));
+  await assertFails(updateDoc(doc(bob(), 'sharedPlaylists/s1'), { tracks: [], updatedAt: serverTimestamp(), updatedBy: 'alice' }));
+  await assertFails(deleteDoc(doc(bob(), 'sharedPlaylists/s1')));
+  await assertSucceeds(updateDoc(doc(bob(), 'sharedPlaylists/s1'), { members: arrayRemove('bob'), ...stamp('bob') }));
+  await assertSucceeds(deleteDoc(doc(alice(), 'sharedPlaylists/s1')));
+});
+
+test('my collaborative playlists and invitations can be listed, not anyone else\'s', async () => {
+  await seedShared({ invited: ['bob'] });
+  const db = bob();
+  await assertSucceeds(getDocs(query(collection(db, 'sharedPlaylists'), where('invited', 'array-contains', 'bob'))));
+  await assertSucceeds(getDocs(query(collection(db, 'sharedPlaylists'), where('members', 'array-contains', 'bob'))));
+  await assertFails(getDocs(query(collection(db, 'sharedPlaylists'), where('members', 'array-contains', 'alice'))));
 });
 
 let failed = 0;

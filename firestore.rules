@@ -400,6 +400,70 @@ service cloud.firestore {
               || d.get('choice', null) == resource.data.choice);
     }
 
+    // ── Collaborative playlists ──
+
+    function validShared(d) {
+      return d.keys().hasOnly(['name', 'owner', 'members', 'invited', 'lastInvited', 'names', 'tracks',
+                               'updatedAt', 'updatedBy'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+          && d.members is list && d.members.size() <= 20
+          && d.invited is list && d.invited.size() <= 20
+          && d.names is map && d.names.size() <= 40
+          && d.tracks is list && d.tracks.size() <= 500
+          && d.updatedAt == request.time
+          && d.updatedBy == request.auth.uid;
+    }
+
+    function sharedChangeAllowed() {
+      let me = request.auth.uid;
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      let base = changed.hasOnly(['tracks', 'updatedAt', 'updatedBy']);
+      return after.owner == before.owner && (
+        // A member edits the songs.
+        (me in before.members && base)
+        // The owner renames, removes people, edits songs, and invites
+        // Bonds, one at a time; nobody becomes a member without joining.
+        || (me == before.owner
+            && changed.hasOnly(['name', 'invited', 'lastInvited', 'members', 'tracks', 'updatedAt', 'updatedBy'])
+            && me in after.members
+            && before.members.toSet().hasAll(after.members.toSet())
+            && (after.invited.toSet().difference(before.invited.toSet()).size() == 0
+                || (after.invited.toSet().difference(before.invited.toSet()) == [after.lastInvited].toSet()
+                    && exists(socialPath(me, 'friends', after.lastInvited)))))
+        // An invited Bond joins: from invited to members, with their name.
+        || (me in before.invited
+            && changed.hasOnly(['invited', 'members', 'names', 'updatedAt', 'updatedBy'])
+            && after.members.toSet() == before.members.toSet().union([me].toSet())
+            && after.invited.toSet() == before.invited.toSet().difference([me].toSet())
+            && after.names.diff(before.names).affectedKeys().hasOnly([me]))
+        // An invited one declines.
+        || (me in before.invited
+            && changed.hasOnly(['invited', 'updatedAt', 'updatedBy'])
+            && after.invited.toSet() == before.invited.toSet().difference([me].toSet()))
+        // A member (not the owner) leaves.
+        || (me in before.members && me != before.owner
+            && changed.hasOnly(['members', 'updatedAt', 'updatedBy'])
+            && after.members.toSet() == before.members.toSet().difference([me].toSet()))
+      );
+    }
+
+    // Members and invited Bonds read it; the rules above say who changes
+    // what; only the owner deletes it.
+    match /sharedPlaylists/{id} {
+      allow read: if signedIn()
+          && (request.auth.uid in resource.data.members || request.auth.uid in resource.data.invited);
+      allow create: if signedIn()
+          && validShared(request.resource.data)
+          && request.resource.data.owner == request.auth.uid
+          && request.resource.data.members == [request.auth.uid]
+          && request.resource.data.invited.size() == 0
+          && request.resource.data.names.keys().hasOnly([request.auth.uid]);
+      allow update: if signedIn() && validShared(request.resource.data) && sharedChangeAllowed();
+      allow delete: if signedIn() && request.auth.uid == resource.data.owner;
+    }
+
     match /ascensions/{userId} {
       allow create, update: if isOwner(userId) && validAscension(request.resource.data);
       // Deleting the account deletes it too.

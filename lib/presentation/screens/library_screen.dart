@@ -24,6 +24,7 @@ import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
+import 'shared_playlist_screen.dart' show createSharedPlaylist;
 
 class _AlbumGroupData {
   final String albumId;
@@ -605,14 +606,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     AppStrings strings,
   ) {
     final playlists = ref.watch(playlistProvider).playlists;
+    final shared = ref.watch(sharedPlaylistsProvider);
+    final hasShared = shared.mine.isNotEmpty || shared.invitations.isNotEmpty;
 
     return Column(
       children: [
-        // Create playlist button
+        // Create playlist buttons: mine, and one with my Bonds.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: SizedBox(
-            width: double.infinity,
+          child: Row(
+            children: [
+          Expanded(
             child: OutlinedButton.icon(
               onPressed: () => _showCreatePlaylistDialog(context),
               icon: Icon(Icons.add, color: AppColors.accent, size: 18, semanticLabel: strings.a11yCreatePlaylist),
@@ -632,11 +636,33 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               ),
             ),
           ),
+              if (shared.available) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => createSharedPlaylist(context, ref),
+                    icon: const Icon(Icons.group_add_rounded, color: AppColors.accent, size: 18),
+                    label: Text(
+                      strings.sharedNew,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
 
         // Playlist list or empty state
         Expanded(
-          child: playlists.isEmpty
+          child: playlists.isEmpty && !hasShared
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -669,13 +695,50 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ),
                   ),
                 )
-              : ListView.builder(
+              : ListView(
                   padding: const EdgeInsets.only(bottom: 120),
-                  itemCount: playlists.length,
-                  itemBuilder: (context, index) {
-                    final playlist = playlists[index];
-                    return _PlaylistListTile(playlist: playlist);
-                  },
+                  children: [
+                    if (hasShared) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        child: Text(strings.sharedTitle.toUpperCase(),
+                            style: locale.getTextStyle(
+                                fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
+                      ),
+                      for (final p in [...shared.invitations, ...shared.mine])
+                        ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: p.coverUrl.isEmpty
+                                  ? const ColoredBox(
+                                      color: AppColors.bgMid, child: Icon(Icons.groups_rounded, color: AppColors.accent))
+                                  : CachedNetworkImage(
+                                      imageUrl: p.coverUrl,
+                                      memCacheWidth: imageCacheSize(context, 48),
+                                      fit: BoxFit.cover),
+                            ),
+                          ),
+                          title: Text(p.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: locale.getTextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                          subtitle: Text(
+                            shared.me != null && p.isInvited(shared.me!) && !p.isMember(shared.me!)
+                                ? strings.sharedInvitedBy(p.nameOf(p.owner))
+                                : '${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
+                            style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                          trailing: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
+                          onTap: () => SharedPlaylistRoute(id: p.id).push<void>(context),
+                        ),
+                      const Divider(color: AppColors.border, height: 16),
+                    ],
+                    for (final playlist in playlists) _PlaylistListTile(playlist: playlist),
+                  ],
                 ),
         ),
       ],

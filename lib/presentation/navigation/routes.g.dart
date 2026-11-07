@@ -155,6 +155,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $SpotifyImportRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'shared/:id',
+          hasOverriddenOnExit: false,
+          factory: $SharedPlaylistRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -477,6 +482,30 @@ mixin $SpotifyImportRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/import-spotify');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $SharedPlaylistRoute on GoRouteData {
+  static SharedPlaylistRoute _fromState(GoRouterState state) =>
+      SharedPlaylistRoute(id: state.pathParameters['id']!);
+
+  SharedPlaylistRoute get _self => this as SharedPlaylistRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/shared/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);

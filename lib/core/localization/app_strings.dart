@@ -465,6 +465,44 @@ class AppStrings {
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
 
+  // ── Collaborative playlists ──
+  String get sharedTitle => _es('Colaborativas', 'Collaborative', '共同プレイリスト');
+  String get sharedNew => _es('Nueva colaborativa', 'New collaborative', '新しい共同プレイリスト');
+  String get sharedNewHint => _es(
+      'Una playlist que armas con tus Lazos: todos agregan y quitan canciones.',
+      'A playlist you build with your Bonds: everyone adds and removes songs.',
+      '絆の仲間と作るプレイリスト。みんなで曲を追加・削除できる。');
+  String sharedMembers(int n) => _es(n == 1 ? '1 persona' : '$n personas', n == 1 ? '1 person' : '$n people', '$n人');
+  String sharedInvitedBy(String name) => _es('$name te invitó', '$name invited you', '$nameから招待');
+  String get sharedJoin => _es('Unirme', 'Join', '参加');
+  String get sharedDecline => _es('No, gracias', 'No, thanks', '辞退');
+  String get sharedInvite => _es('Invitar', 'Invite', '招待');
+  String get sharedInviteTitle => _es('Invitar a tus Lazos', 'Invite your Bonds', '絆の仲間を招待');
+  String get sharedInviteNone => _es(
+      'Todos tus Lazos ya están aquí, o todavía no tienes Lazos.',
+      'All your Bonds are already here, or you have no Bonds yet.',
+      '絆の仲間は全員参加済みか、まだ絆がない。');
+  String get sharedInvitedTag => _es('Invitado', 'Invited', '招待中');
+  String get sharedOwnerTag => _es('Creador', 'Owner', '作成者');
+  String sharedAddedBy(String name) => _es('agregó $name', 'added by $name', '$nameが追加');
+  String get sharedPlayAll => _es('Reproducir', 'Play', '再生');
+  String get sharedRename => _es('Cambiar nombre', 'Rename', '名前を変更');
+  String get sharedLeave => _es('Salir de la playlist', 'Leave the playlist', 'プレイリストから抜ける');
+  String get sharedDelete => _es('Eliminar para todos', 'Delete for everyone', '全員から削除');
+  String get sharedDeleteBody => _es(
+      'La playlist desaparece para todos sus miembros.',
+      'The playlist disappears for all its members.',
+      'すべてのメンバーからプレイリストが消える。');
+  String get sharedEmpty => _es(
+      'Todavía no hay canciones. Agrega desde cualquier canción con "Agregar a playlist".',
+      'No songs yet. Add from any song with "Add to playlist".',
+      'まだ曲がない。どの曲からでも「プレイリストに追加」で追加できる。');
+  String get sharedGone => _es('Esta playlist ya no existe o no eres parte de ella.', 'This playlist no longer exists or you are not part of it.', 'このプレイリストは存在しないか、参加していない。');
+  String get sharedObserver => _es(
+      'Las playlists colaborativas son entre Portadores. Vuélvete Portador para crearlas.',
+      'Collaborative playlists are between Bearers. Become a Bearer to create them.',
+      '共同プレイリストは運び手同士のもの。運び手になって作ろう。');
+
   // ── Import from Spotify ──
   String get importTitle => _es('Importar de Spotify', 'Import from Spotify', 'Spotifyからインポート');
   String get importHint => _es(

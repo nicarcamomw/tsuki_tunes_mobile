@@ -36,6 +36,8 @@ class _PlaylistSelectorContent extends ConsumerWidget {
     final strings = ref.read(stringsProvider);
     final locale = ref.read(localeProvider);
     final playlists = ref.watch(playlistProvider).playlists;
+    final sharedState = ref.watch(sharedPlaylistsProvider);
+    final shared = sharedState.mine;
 
     return SafeArea(
       child: ConstrainedBox(
@@ -108,6 +110,41 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                 }
               },
             ),
+            // Collaborative playlists: the song goes in for everyone.
+            if (shared.isNotEmpty) ...[
+              const Divider(color: AppColors.border, height: 1),
+              for (final sp in shared)
+                Builder(builder: (ctx) {
+                  final added = sp.tracks.any((s) => s.track.id == track.id);
+                  return ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(color: AppColors.bgMid, borderRadius: BorderRadius.circular(4)),
+                      child: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
+                    ),
+                    title: Text(sp.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: locale.getTextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: added ? AppColors.textMuted : AppColors.textBright)),
+                    subtitle: Text('${strings.sharedTitle} · ${strings.sharedMembers(sp.members.length)}',
+                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    trailing: added ? const Icon(Icons.check, color: AppColors.accent, size: 18) : null,
+                    onTap: added
+                        ? null
+                        : () async {
+                            unawaited(HapticFeedback.lightImpact());
+                            final messenger = ScaffoldMessenger.of(context);
+                            Navigator.pop(context);
+                            final ok = await sharedState.addTrack(sp.id, track);
+                            messenger.showSnackBar(SnackBar(content: Text(ok ? sp.name : strings.bondsFailed)));
+                          },
+                  );
+                }),
+            ],
             if (playlists.isNotEmpty) ...[
               const Divider(color: AppColors.border, height: 1),
               Flexible(

@@ -56,6 +56,8 @@ import 'package:tsuki_tunes_mobile/domain/repositories/product_events.dart'
     as _i73;
 import 'package:tsuki_tunes_mobile/domain/repositories/profile_repository.dart'
     as _i834;
+import 'package:tsuki_tunes_mobile/domain/repositories/shared_playlist_repository.dart'
+    as _i664;
 import 'package:tsuki_tunes_mobile/domain/repositories/social_repository.dart'
     as _i238;
 import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_album.dart'
@@ -130,6 +132,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i238.SocialRepository>(
       () => repositoryModule.social(gh<_i186.FirebaseService>()),
+    );
+    gh.lazySingleton<_i664.SharedPlaylistRepository>(
+      () => repositoryModule.sharedPlaylists(gh<_i186.FirebaseService>()),
     );
     gh.lazySingleton<_i448.LibraryStore>(
       () => dataModule.libraryStore(gh<_i169.AppDatabase>()),

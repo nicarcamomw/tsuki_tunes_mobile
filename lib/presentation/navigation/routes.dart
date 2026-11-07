@@ -21,6 +21,7 @@ import '../screens/playlist_detail_screen.dart';
 import '../screens/rabbit_hole_screen.dart';
 import '../screens/release_radar_screen.dart';
 import '../screens/run_mode_screen.dart';
+import '../screens/shared_playlist_screen.dart';
 import '../screens/spotify_import_screen.dart';
 import '../screens/time_machine_screen.dart';
 import '../screens/user_profile_screen.dart';
@@ -87,6 +88,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<BondsRoute>(path: 'bonds'),
         TypedGoRoute<DiscoveryRoute>(path: 'discover'),
         TypedGoRoute<SpotifyImportRoute>(path: 'import-spotify'),
+        TypedGoRoute<SharedPlaylistRoute>(path: 'shared/:id'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -264,6 +266,16 @@ class UserProfileRoute extends GoRouteData with $UserProfileRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, UserProfileScreen(uid: uid));
+}
+
+/// A collaborative playlist.
+class SharedPlaylistRoute extends GoRouteData with $SharedPlaylistRoute {
+  const SharedPlaylistRoute({required this.id});
+
+  final String id;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(state, SharedPlaylistScreen(id: id));
 }
 
 /// Bring Spotify playlists into Tsuki.

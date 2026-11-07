@@ -31,6 +31,7 @@ import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/product_events.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../domain/repositories/shared_playlist_repository.dart';
 import '../../domain/repositories/social_repository.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../navigation/session_gate.dart';
@@ -45,6 +46,7 @@ import 'profile_controller.dart';
 import 'run_provider.dart';
 import 'search_provider.dart';
 import 'shake_skip_provider.dart';
+import 'shared_playlists_controller.dart';
 import 'social_controller.dart';
 import 'weather_provider.dart';
 
@@ -397,6 +399,20 @@ final socialProvider = ChangeNotifierProvider<SocialController>((ref) {
       );
     },
     myTops: () => profile.current?.tops ?? const [],
+  );
+});
+
+/// Collaborative playlists (with Bonds).
+final sharedPlaylistsProvider = ChangeNotifierProvider<SharedPlaylistsController>((ref) {
+  final auth = ref.read(authProvider);
+  return SharedPlaylistsController(
+    repository: getIt<SharedPlaylistRepository>(),
+    changes: auth,
+    uid: () => auth.isAuthenticated ? auth.uid : null,
+    myName: () {
+      final n = auth.user?.displayName?.trim();
+      return n == null || n.isEmpty ? 'Tsuki' : n;
+    },
   );
 });
 

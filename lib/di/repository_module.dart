@@ -8,12 +8,14 @@ import '../data/local/library_store.dart';
 import '../data/repositories/library_repository_impl.dart';
 import '../data/repositories/playlist_repository_impl.dart';
 import '../data/repositories/profile_repository_impl.dart';
+import '../data/repositories/shared_playlist_repository_impl.dart';
 import '../data/repositories/social_repository_impl.dart';
 import '../data/sync/outbox.dart';
 import '../domain/repositories/library_repository.dart';
 import '../domain/repositories/playback_controller.dart';
 import '../domain/repositories/playlist_repository.dart';
 import '../domain/repositories/profile_repository.dart';
+import '../domain/repositories/shared_playlist_repository.dart';
 import '../domain/repositories/social_repository.dart';
 import '../presentation/state/audio_provider.dart';
 
@@ -68,4 +70,7 @@ abstract class RepositoryModule {
 
   @lazySingleton
   SocialRepository social(FirebaseService firebase) => SocialRepositoryImpl(firebase);
+
+  @lazySingleton
+  SharedPlaylistRepository sharedPlaylists(FirebaseService firebase) => SharedPlaylistRepositoryImpl(firebase);
 }
