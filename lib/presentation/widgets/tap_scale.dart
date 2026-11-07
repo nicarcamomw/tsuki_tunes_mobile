@@ -1,6 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'haptics.dart';
 
 class TapScale extends StatefulWidget {
   final Widget child;
@@ -9,6 +10,10 @@ class TapScale extends StatefulWidget {
   final double scaleDown;
   final String? semanticLabel;
 
+  /// The feel of a tap: [Haptics.tap] for things that open or start,
+  /// [Haptics.selection] for picking or toggling, null for none.
+  final VoidCallback? haptic;
+
   const TapScale({
     super.key,
     required this.child,
@@ -16,6 +21,7 @@ class TapScale extends StatefulWidget {
     this.onLongPress,
     this.scaleDown = 0.90,
     this.semanticLabel,
+    this.haptic = Haptics.tap,
   });
 
   @override
@@ -67,7 +73,7 @@ class _TapScaleState extends State<TapScale>
     }
     if (!mounted) return;
     if (!_reduceMotion) _controller.reverse();
-    unawaited(HapticFeedback.lightImpact());
+    if (widget.onTap != null) widget.haptic?.call();
     widget.onTap?.call();
   }
 
@@ -97,6 +103,7 @@ class _TapScaleState extends State<TapScale>
         onLongPress: widget.onLongPress != null
             ? () {
                 _controller.reverse();
+                Haptics.longPress();
                 widget.onLongPress?.call();
               }
             : null,

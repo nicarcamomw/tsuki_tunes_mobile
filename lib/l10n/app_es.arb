@@ -1845,6 +1845,8 @@
   "appVersionCopied": "Versión copiada",
   "analyticsSettingTitle": "Compartir estadísticas de uso",
   "analyticsSettingSubtitle": "Qué funciones se usan, para mejorar la app. Sin canciones, búsquedas ni nombres.",
+  "hapticsSettingTitle": "Vibración",
+  "hapticsSettingSubtitle": "Respuesta táctil al tocar, elegir y confirmar.",
   "deleteAccountOption": "ELIMINAR CUENTA",
   "deleteAccountConfirmTitle": "Eliminar cuenta",
   "deleteAccountConfirmMessage": "Se borrarán para siempre tu cuenta de Tsuki Tunes y sus datos: historial, playlists, artistas seguidos, seres etéreos y perfil público. Te pediremos iniciar sesión con Google para confirmar. No se puede deshacer.",

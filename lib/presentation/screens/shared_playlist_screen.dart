@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -11,6 +10,7 @@ import '../../domain/entities/shared_playlist.dart';
 import '../../domain/entities/social.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/haptics.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// One collaborative playlist, live.
@@ -211,7 +211,7 @@ class _Body extends ConsumerWidget {
                 child: FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
                   onPressed: () {
-                    HapticFeedback.mediumImpact();
+                    Haptics.confirm();
                     c.join(p.id);
                   },
                   child: Text(strings.sharedJoin, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -324,7 +324,7 @@ class _Body extends ConsumerWidget {
                       tooltip: strings.cancel,
                       icon: const Icon(Icons.remove_circle_outline_rounded, color: AppColors.textMuted, size: 20),
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.remove();
                         c.removeTrack(p.id, s.track.id);
                       },
                     )
@@ -400,7 +400,7 @@ class _Body extends ConsumerWidget {
                                   fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           trailing: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.accent),
                           onTap: () async {
-                            unawaited(HapticFeedback.selectionClick());
+                            Haptics.confirm();
                             Navigator.pop(sheet);
                             await ref.read(sharedPlaylistsProvider).invite(p.id, b.uid);
                           },

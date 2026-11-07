@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,6 +21,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 import 'shared_playlist_screen.dart' show createSharedPlaylist;
@@ -461,7 +461,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                         label: strings.retry,
                                         child: GestureDetector(
                                           onTap: () {
-                                            HapticFeedback.lightImpact();
+                                            Haptics.tap();
                                             _refreshData();
                                           },
                                           child: Container(
@@ -516,7 +516,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                   label: strings.a11yGoToSearch,
                                   child: GestureDetector(
                                     onTap: () {
-                                      HapticFeedback.lightImpact();
+                                      Haptics.selection();
                                       NavigationEvents.switchTab?.call(1);
                                     },
                                     child: Container(
@@ -917,7 +917,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         selected: isSelected,
         child: GestureDetector(
           onTap: () {
-            HapticFeedback.lightImpact();
+            Haptics.selection();
             setState(() => _sortBy = value);
           },
           child: Container(
@@ -1127,7 +1127,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   ref.read(playTrackProvider)(track, queue: queue);
                 },
                 onLongPress: () {
-                  HapticFeedback.mediumImpact();
+                  Haptics.longPress();
                   final track = Track(
                     id: trackData.trackId,
                     title: trackData.title,

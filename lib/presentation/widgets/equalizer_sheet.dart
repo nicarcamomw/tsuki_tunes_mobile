@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// The equalizer's presets, with each one's curve drawn so the difference
@@ -60,7 +60,7 @@ class _EqualizerSheet extends ConsumerWidget {
               enabled: audio.hasEqualizer,
               locale: locale,
               onTap: () {
-                HapticFeedback.selectionClick();
+                Haptics.selection();
                 audio.setEqPreset(p);
               },
             ),

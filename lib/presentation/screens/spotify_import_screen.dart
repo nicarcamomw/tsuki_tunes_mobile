@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -13,6 +12,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/spotify_import_controller.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 
 final spotifyImportProvider = ChangeNotifierProvider.autoDispose<SpotifyImportController>((ref) {
   final spotify = ref.read(audioProvider).spotify;
@@ -113,7 +113,7 @@ class SpotifyImportScreen extends ConsumerWidget {
                   CheckboxListTile(
                     value: c.isSelected(p.id),
                     onChanged: (_) {
-                      HapticFeedback.selectionClick();
+                      Haptics.selection();
                       c.toggle(p.id);
                     },
                     activeColor: AppColors.success,
@@ -155,7 +155,7 @@ class SpotifyImportScreen extends ConsumerWidget {
                   onPressed: c.selectedCount == 0
                       ? null
                       : () {
-                          HapticFeedback.mediumImpact();
+                          Haptics.confirm();
                           unawaited(c.run());
                         },
                   icon: const Icon(Icons.download_rounded),

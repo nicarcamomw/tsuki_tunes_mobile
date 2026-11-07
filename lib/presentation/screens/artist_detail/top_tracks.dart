@@ -55,7 +55,7 @@ class _TopTracksSliver extends StatelessWidget {
                   label: strings.retry,
                   child: GestureDetector(
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      Haptics.tap();
                       onRetry();
                     },
                     child: Container(
@@ -246,7 +246,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
               : strings.a11yShowAllTracks,
           child: GestureDetector(
             onTap: () {
-              HapticFeedback.lightImpact();
+              Haptics.selection();
               onToggle();
             },
             child: AnimatedContainer(

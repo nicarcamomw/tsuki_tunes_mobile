@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'moon_glyph.dart';
 import 'moon_sheet.dart';
 
@@ -39,11 +39,11 @@ class _MoonButtonState extends ConsumerState<MoonButton> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           MoonSheet.show(context);
         },
         onLongPress: () {
-          HapticFeedback.heavyImpact();
+          Haptics.longPress();
           moon.previewEclipse();
         },
         child: SizedBox(

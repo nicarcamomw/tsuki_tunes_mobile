@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// Spotify Connect: the user's devices with Spotify open, to move the music
@@ -48,7 +48,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
     final id = d['id'] as String?;
     final name = (d['name'] as String?) ?? '';
     if (id == null || _moving != null) return;
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.selection();
     setState(() => _moving = id);
     final audio = ref.read(audioProvider);
     final strings = ref.read(localeProvider).strings;

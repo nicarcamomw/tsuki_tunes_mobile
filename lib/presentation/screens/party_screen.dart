@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/haptics.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// Listening together: open a party and invite Bonds, or join one you were
@@ -118,7 +118,7 @@ class PartyScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           TextButton(
             onPressed: () {
-              HapticFeedback.selectionClick();
+              Haptics.remove();
               unawaited(party.leave());
             },
             child: Text(hosting ? strings.partyEnd : strings.partyLeave,
@@ -142,7 +142,7 @@ class PartyScreen extends ConsumerWidget {
             style: FilledButton.styleFrom(
                 backgroundColor: AppColors.accent, minimumSize: const Size(double.infinity, 50)),
             onPressed: () async {
-              unawaited(HapticFeedback.mediumImpact());
+              Haptics.confirm();
               final ok = await party.host();
               if (!ok && context.mounted) {
                 ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(strings.bondsFailed)));
@@ -195,7 +195,7 @@ class PartyScreen extends ConsumerWidget {
                           child: FilledButton(
                             style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
                             onPressed: () {
-                              HapticFeedback.mediumImpact();
+                              Haptics.confirm();
                               unawaited(party.join(inv.host));
                             },
                             child: Text(strings.sharedJoin, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -270,7 +270,7 @@ class PartyScreen extends ConsumerWidget {
                                   fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           trailing: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.accent),
                           onTap: () {
-                            HapticFeedback.selectionClick();
+                            Haptics.confirm();
                             Navigator.pop(sheet);
                             unawaited(ref.read(partyProvider).invite(b.uid));
                           },

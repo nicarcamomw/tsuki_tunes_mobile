@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -10,6 +9,7 @@ import '../../domain/entities/location.dart';
 import '../../domain/entities/weather.dart';
 import '../state/app_providers.dart';
 import '../state/weather_provider.dart';
+import 'haptics.dart';
 import 'sky_line.dart';
 import 'swipeable_sheet.dart';
 
@@ -125,7 +125,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                       tooltip: strings.weatherTurnOff,
                       icon: const Icon(Icons.power_settings_new_rounded, color: AppColors.textMuted),
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         weather.disable();
                       },
                     ),
@@ -205,7 +205,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                 onPressed: weather.loading
                     ? null
                     : () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         weather.useDeviceLocation();
                       },
                 icon: const Icon(Icons.my_location_rounded, size: 18),
@@ -294,7 +294,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                           ? const Icon(Icons.check_rounded, color: AppColors.neonCyan)
                           : null,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         FocusScope.of(context).unfocus();
                         weather.usePlace(p);
                         setState(() => _results = null);

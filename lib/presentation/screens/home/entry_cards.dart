@@ -324,7 +324,7 @@ class _ReleaseRadarEntryCard extends ConsumerWidget {
               excludeSemantics: true,
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  Haptics.tap();
                   const ReleaseRadarRoute().push(context);
                 },
                 child: GlassCard(

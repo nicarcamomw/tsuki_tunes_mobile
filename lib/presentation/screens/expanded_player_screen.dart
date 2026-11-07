@@ -4,7 +4,6 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -22,6 +21,7 @@ import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
@@ -103,7 +103,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
 
   void _openLyrics() {
     if (!ecoAllows(context, EcoFeature.lyrics)) return;
-    HapticFeedback.selectionClick();
+    Haptics.tap();
     Navigator.of(context).push(
       LyricsScreen.route(controller: _lyrics),
     );
@@ -435,7 +435,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
               icon: const Icon(Icons.more_vert,
                   size: 24, color: AppColors.textPrimary),
               onPressed: () {
-                HapticFeedback.selectionClick();
+                Haptics.tap();
                 _showSongOptionsSheet(
                   context, track, locale,
                   radioActive: radioActive,
@@ -479,7 +479,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                 const SizedBox(height: 4),
                 GestureDetector(
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    Haptics.tap();
                     if (track.artistId.isNotEmpty) {
                       Navigator.of(context).pop();
                       _openArtistOf(track);

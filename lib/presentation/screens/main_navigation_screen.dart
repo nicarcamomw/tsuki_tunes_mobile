@@ -15,6 +15,7 @@ import '../widgets/battery_guide_sheet.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
+import '../widgets/haptics.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/playback_error_text.dart';
 import '../widgets/tap_scale.dart';
@@ -501,7 +502,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       return;
     }
 
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
 
     if (_tabNotifier.value != index) {
@@ -529,7 +530,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   void _onNavItemDoubleTap(int index) {
     FocusScope.of(context).unfocus();
-    HapticFeedback.lightImpact();
+    Haptics.tap();
     if (index == 0) {
       NavigationEvents.onHomeScrollToTop?.call();
       NavigationEvents.onHomeRefresh?.call();
@@ -542,7 +543,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   void _onNavItemLongPress(int index) {
     FocusScope.of(context).unfocus();
-    HapticFeedback.heavyImpact();
+    Haptics.longPress();
     if (index == 0) {
       // Long-press en HOME: Abre el modal de perfil y configuración de Spotify
       if (_tabNotifier.value != 0) {

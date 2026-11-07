@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -15,6 +14,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/haptics.dart';
 
 enum _Period { year, sixMonths, month, week, random }
 
@@ -63,7 +63,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   }
 
   void _select(_Period period) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     final now = DateTime.now();
     DateTime? anchor;
     switch (period) {
@@ -96,7 +96,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   Future<void> _play() async {
     final moment = _moment;
     if (moment == null || _starting) return;
-    unawaited(HapticFeedback.mediumImpact());
+    Haptics.confirm();
     setState(() => _starting = true);
     final strings = ref.read(stringsProvider);
 
@@ -256,7 +256,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                 child: SwitchListTile(
                   value: _notify,
                   onChanged: (v) {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     setState(() => _notify = v);
                     _service.setNotificationsEnabled(v);
                   },
@@ -763,7 +763,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          Haptics.tap();
           const TimeMachineRoute().push(context);
         },
         child: GlassCard(

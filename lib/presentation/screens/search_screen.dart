@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -21,6 +20,8 @@ import '../state/search_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/haptics.dart';
+import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/voice_search_sheet.dart';
 import 'main_navigation_screen.dart';
@@ -113,7 +114,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   /// Searches [query] at once, as if typed: from a suggestion, "did you
   /// mean" or the explore section.
   void _runQuery(String query) {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.selection();
     _debounce?.cancel();
     _controller.value = TextEditingValue(
       text: query,
@@ -166,7 +167,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _startVoiceSearch() async {
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     FocusScope.of(context).unfocus();
     final locale = ref.read(localeProvider);
     final audio = ref.read(audioProvider);
@@ -221,7 +222,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ));
       return;
     }
-    unawaited(HapticFeedback.mediumImpact());
+    Haptics.confirm();
     await ref.read(playTracksProvider)(search.tracks);
   }
 
@@ -384,9 +385,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     return Semantics(
                       button: true,
                       label: tabs[index],
-                      child: _TapScale(
+                      child: TapScale(
+                      scaleDown: 0.93,
+                      haptic: Haptics.selection,
                       onTap: () {
-                        HapticFeedback.lightImpact();
                         FocusScope.of(context).unfocus();
                         final prev = _selectedTabIndex;
                         setState(() => _selectedTabIndex = index);
@@ -778,7 +780,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             label: strings.retry,
             child: GestureDetector(
             onTap: () {
-              HapticFeedback.lightImpact();
+              Haptics.tap();
               search.retryLastSearch();
             },
             child: Container(
@@ -834,7 +836,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               label: strings.retry,
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  Haptics.tap();
                   search.retryLyricsSearch();
                 },
                 child: Container(
@@ -927,7 +929,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return InkWell(
       onTap: () async {
-        unawaited(HapticFeedback.lightImpact());
+        Haptics.tap();
         // One search: the song's results land in the Songs tab, which
         // opens only when the catalog has it.
         final query = '${result.trackName} ${result.artistName}';
@@ -1188,37 +1190,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-class _TapScale extends StatefulWidget {
-  final VoidCallback onTap;
-  final Widget child;
-  const _TapScale({required this.onTap, required this.child});
-
-  @override
-  State<_TapScale> createState() => _TapScaleState();
-}
-
-class _TapScaleState extends State<_TapScale> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.93),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-        child: widget.child,
-      ),
-    );
-  }
-}
-
 /// A query to search with one tap: a suggestion or one of the user's
 /// artists.
 class _QueryChip extends StatelessWidget {
@@ -1242,7 +1213,9 @@ class _QueryChip extends StatelessWidget {
       button: true,
       label: semanticLabel,
       excludeSemantics: true,
-      child: _TapScale(
+      child: TapScale(
+        scaleDown: 0.93,
+        haptic: null, // the query it runs gives the tick
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 220),
@@ -1290,7 +1263,8 @@ class _GenreTile extends StatelessWidget {
       button: true,
       label: genre.name,
       excludeSemantics: true,
-      child: _TapScale(
+      child: TapScale(
+        scaleDown: 0.93,
         onTap: () {
           FocusScope.of(context).unfocus();
           GenreRoute(id: genre.id, name: genre.name).push(context);

@@ -29,6 +29,7 @@ class _PlayerControls extends StatelessWidget {
         children: [
           // Shuffle
           TapScale(
+            haptic: Haptics.selection,
             semanticLabel: switch (shuffleMode) {
               ShuffleMode.off => strings.a11yShuffleOff,
               ShuffleMode.on => strings.a11yShuffleOn,
@@ -36,7 +37,6 @@ class _PlayerControls extends StatelessWidget {
             },
             // Off → shuffle → shuffle with recommendations.
             onTap: () {
-              HapticFeedback.selectionClick();
               var mode = audio.cycleShuffle();
               // Shuffle with recommendations opens with the levels: until
               // then, the button goes straight back to off.
@@ -53,10 +53,7 @@ class _PlayerControls extends StatelessWidget {
                 bottom: MediaQuery.paddingOf(context).bottom + 12,
               );
             },
-            onLongPress: () {
-              HapticFeedback.mediumImpact();
-              showSmartShuffleSheet(context);
-            },
+            onLongPress: () => showSmartShuffleSheet(context),
             scaleDown: 0.8,
             child: _ModeIcon(
               icon: ShuffleModeIcon(
@@ -105,6 +102,7 @@ class _PlayerControls extends StatelessWidget {
 
           // Repeat
           TapScale(
+            haptic: Haptics.selection,
             semanticLabel: switch (repeatMode) {
               PlaybackRepeatMode.off => strings.repeatOff,
               PlaybackRepeatMode.all => strings.repeatAll,

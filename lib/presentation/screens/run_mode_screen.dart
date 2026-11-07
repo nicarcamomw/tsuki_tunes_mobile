@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../../domain/logic/pace_matcher.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/run_provider.dart';
+import '../widgets/haptics.dart';
 
 class RunModeScreen extends ConsumerWidget {
   const RunModeScreen({super.key});
@@ -85,7 +85,7 @@ class RunModeScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
-                    HapticFeedback.mediumImpact();
+                    Haptics.confirm();
                     run.active ? run.stop() : run.start();
                   },
                   child: Text(
@@ -448,7 +448,7 @@ class _MusicPanel extends ConsumerWidget {
                 onPressed: target == null
                     ? null
                     : () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         run.isLocked ? run.unlock() : run.lock();
                       },
                 icon: Icon(run.isLocked ? Icons.directions_walk_rounded : Icons.lock_rounded, size: 16),
@@ -565,7 +565,7 @@ class _RoundButton extends StatelessWidget {
       message: tooltip,
       child: InkResponse(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           onTap();
         },
         radius: 20,
@@ -628,7 +628,7 @@ class _SyncRow extends ConsumerWidget {
             activeThumbColor: AppColors.neonCyan,
             onChanged: canSync
                 ? (v) {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     run.setSyncTempo(v);
                   }
                 : null,

@@ -34,7 +34,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
                 : strings.crossfadeSubtitle,
             value: audio.crossfadeSeconds > 0,
             onChanged: (v) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setCrossfadeSeconds(v ? 3 : 0);
               setState(() {});
             },
@@ -49,7 +49,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         subtitle: strings.autoMarkSubtitle,
         value: audio.autoMarkListened,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           audio.setAutoMarkListened(v);
           setState(() {});
         },
@@ -61,7 +61,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         subtitle: strings.normalizeSubtitle,
         value: audio.normalizeVolume,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           audio.setNormalizeVolume(v);
           setState(() {});
         },
@@ -86,7 +86,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
         onTap: () async {
-          unawaited(HapticFeedback.selectionClick());
+          Haptics.tap();
           await showEqualizerSheet(widget.hostContext);
           if (mounted) setState(() {});
         },
@@ -98,7 +98,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         subtitle: strings.shakeSkipSubtitle,
         value: shakeSkip.enabled,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           shakeSkip.setEnabled(v);
           setState(() {});
         },
@@ -111,7 +111,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         value: run.enabled,
         onChanged: (v) {
           if (v && !ecoAllows(context, EcoFeature.running)) return;
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           run.setEnabled(v);
           setState(() {});
         },
@@ -216,7 +216,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         subtitle: strings.precacheWifiSubtitle,
         value: audio.precacheWifiOnly,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           audio.setPrecacheWifiOnly(v);
           setState(() {});
         },
@@ -228,7 +228,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         subtitle: strings.autoplaySimilarSubtitle,
         value: audio.autoplaySimilar,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           audio.setAutoplaySimilar(v);
           setState(() {});
         },
@@ -262,7 +262,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
             color: AppColors.textMuted, size: 18),
         onTap: () {
           if (!ecoAllows(context, EcoFeature.smartShuffle)) return;
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           showSmartShuffleSheet(widget.hostContext);
         },
       ),
@@ -274,7 +274,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         labelColor: AppColors.textSecondary,
         borderRadius: BorderRadius.zero,
         onTap: () {
-          HapticFeedback.lightImpact();
+          Haptics.tap();
           Clipboard.setData(ClipboardData(text: ref.read(playbackLogProvider).dump()));
           ScaffoldMessenger.of(widget.hostContext).showSnackBar(
             SnackBar(content: Text(strings.playbackLogCopied)),
@@ -290,7 +290,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         labelColor: AppColors.textSecondary,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
         onTap: () {
-          HapticFeedback.lightImpact();
+          Haptics.remove();
           ref.read(audioCacheProvider).clearCache();
           ScaffoldMessenger.of(widget.hostContext).showSnackBar(
             SnackBar(content: Text(strings.audioCacheCleared)),
@@ -340,7 +340,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         subtitle: strings.moonAtmosphereSubtitle,
         value: moon.atmosphereEnabled,
         onChanged: (v) {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           moon.setAtmosphereEnabled(v);
           setState(() {});
         },
@@ -352,7 +352,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         subtitle: strings.weatherSettingSubtitle,
         value: weather.enabled,
         onChanged: (v) async {
-          unawaited(HapticFeedback.selectionClick());
+          Haptics.selection();
           if (!v) {
             await weather.disable();
             if (mounted) setState(() {});
@@ -364,12 +364,25 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
       ),
       _SettingSwitch(
         locale: locale,
+        icon: Icons.vibration_rounded,
+        title: strings.hapticsSettingTitle,
+        subtitle: strings.hapticsSettingSubtitle,
+        value: Haptics.enabled,
+        onChanged: (v) async {
+          await Haptics.setEnabled(v);
+          // Turning it on answers with the feel it brings back.
+          Haptics.selection();
+          if (mounted) setState(() {});
+        },
+      ),
+      _SettingSwitch(
+        locale: locale,
         icon: Icons.insights_rounded,
         title: strings.analyticsSettingTitle,
         subtitle: strings.analyticsSettingSubtitle,
         value: ref.read(analyticsProvider).enabled,
         onChanged: (v) async {
-          unawaited(HapticFeedback.selectionClick());
+          Haptics.selection();
           await ref.read(analyticsProvider).setEnabled(v);
           if (mounted) setState(() {});
         },

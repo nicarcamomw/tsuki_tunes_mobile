@@ -47,7 +47,7 @@ class _QueueView extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           showRadioControlSheet(context);
         },
         child: Container(

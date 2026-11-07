@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -12,6 +11,7 @@ import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/usecases/playlists/add_track_to_playlist.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'haptics.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
   return showModalBottomSheet(
@@ -77,7 +77,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                 ),
               ),
               onTap: () async {
-                unawaited(HapticFeedback.lightImpact());
+                Haptics.tap();
                 final name = await showPlaylistNameDialog(context);
                 if (name != null && name.trim().isNotEmpty && context.mounted) {
                   final created =
@@ -136,7 +136,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                     onTap: added
                         ? null
                         : () async {
-                            unawaited(HapticFeedback.lightImpact());
+                            Haptics.confirm();
                             final messenger = ScaffoldMessenger.of(context);
                             Navigator.pop(context);
                             final ok = await sharedState.addTrack(sp.id, track);
@@ -206,7 +206,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                           : null,
                       onTap: alreadyAdded
                           ? () {
-                              HapticFeedback.lightImpact();
+                              Haptics.confirm();
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -227,7 +227,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                               );
                             }
                           : () {
-                              unawaited(HapticFeedback.lightImpact());
+                              Haptics.confirm();
                               final add = ref.read(addTrackToPlaylistProvider);
                               final full = add.check(playlist, track) ==
                                   AddToPlaylistResult.full;

@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../data/datasources/motion_sensor.dart';
 import '../../domain/logic/shake_detector.dart';
+import '../widgets/haptics.dart';
 import 'audio_provider.dart';
 import 'run_provider.dart';
 
@@ -99,7 +99,7 @@ class ShakeSkipProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _onShake() {
     final audio = _audio;
     if (audio == null || audio.currentTrack == null) return;
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     unawaited(audio.next());
   }
 

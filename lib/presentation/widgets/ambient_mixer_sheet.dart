@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,6 +8,7 @@ import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import 'eco_widgets.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 class AmbientMixerSheet extends ConsumerStatefulWidget {
@@ -132,7 +132,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     // Each sound opens at its Eco level.
                     lockedAt: EcoLevels.soundOpen(sound, level) ? null : EcoLevels.soundLevels[sound],
                     onTap: () {
-                      HapticFeedback.selectionClick();
+                      Haptics.selection();
                       if (!EcoLevels.soundOpen(sound, level)) {
                         ScaffoldMessenger.of(context)
                           ..clearSnackBars()
@@ -208,7 +208,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        HapticFeedback.lightImpact();
+                        Haptics.tap();
                         ambient.isPlaying ? ambient.pauseAll() : ambient.resumeAll();
                       },
                       icon: Icon(
@@ -235,7 +235,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        HapticFeedback.lightImpact();
+                        Haptics.remove();
                         ambient.stopAll();
                       },
                       icon: const Icon(Icons.stop_rounded, color: AppColors.textSecondary, size: 18),
@@ -285,7 +285,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     label: Text(strings.ambientAfterTimerOption(m)),
                     selected: ambient.afterTimerMinutes == m,
                     onSelected: (_) {
-                      HapticFeedback.selectionClick();
+                      Haptics.selection();
                       ambient.setAfterTimerMinutes(m);
                     },
                     showCheckmark: false,

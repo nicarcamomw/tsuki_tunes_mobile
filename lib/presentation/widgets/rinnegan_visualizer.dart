@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,6 +11,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/beat_clock.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 
 /// The spinning eye of the player. With the song's tempo (Deezer's BPM, or
 /// tapped in by the listener) it turns once every four bars and pulses on
@@ -307,7 +307,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     if (!widget.isPlaying || _key == null) return;
     final t = _songTimeAt(wall);
     if (t == null) return;
-    HapticFeedback.selectionClick();
+    Haptics.selection();
 
     final deezer = _gridFromTaps ? _tempo.cached(widget.trackId!) : _grid?.bpm;
     final result = _taps.tap(t, wall, bpm: deezer);
@@ -319,7 +319,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     final key = _key!;
     _setGrid(result.grid, fromTaps: true);
     unawaited(_beatSync.put(key, result.grid));
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     _showChip(result.tappedTempo
         ? strings.beatSyncTempo(result.grid.bpm.round())
         : strings.beatSyncLocked(result.grid.bpm.round()));
@@ -332,7 +332,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
     final key = _key;
     if (key == null) return;
     _taps.clear();
-    HapticFeedback.mediumImpact();
+    Haptics.longPress();
     final strings = ref.read(stringsProvider);
     unawaited(_beatSync.remove(key));
     final bpm = _tempo.cached(widget.trackId!);

@@ -18,6 +18,7 @@ import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 
 
 final _log = Log.named('GuessSong');
@@ -329,7 +330,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   }
 
   Future<void> _pickArtist(Artist artist) async {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.selection();
     FocusScope.of(context).unfocus();
     setState(() {
       _artist = artist;
@@ -396,7 +397,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
   void _setMode(GuessMode mode) {
     if (mode == _mode) return;
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     setState(() => _mode = mode);
     _prefs?.setString(_lastModeKey, mode.name);
     _startRound();
@@ -425,7 +426,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       _stopClip();
       return;
     }
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     await _player.seek(Duration.zero);
     setState(() {
       _clipPlaying = true;
@@ -523,11 +524,11 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     _stopClip();
     switch (outcome) {
       case GuessOutcome.correct:
-        HapticFeedback.heavyImpact();
+        Haptics.success();
       case GuessOutcome.rightArtist:
-        HapticFeedback.mediumImpact();
+        Haptics.confirm();
       default:
-        HapticFeedback.lightImpact();
+        Haptics.error();
     }
     setState(() {
       _outcomes = [..._outcomes, outcome];
@@ -588,7 +589,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     Clipboard.setData(ClipboardData(
       text: GuessGame.shareText(header: header, outcomes: _outcomes),
     ));
-    HapticFeedback.selectionClick();
+    Haptics.tap();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(strings.guessCopied),

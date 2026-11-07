@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../screens/mask_collection_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import 'haptics.dart';
 import 'oni_mask_art.dart';
 
 IconData _iconFor(ChallengeKind kind) => switch (kind) {
@@ -67,7 +67,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.tap();
             MaskCollectionScreen.open(context);
           },
           child: Container(

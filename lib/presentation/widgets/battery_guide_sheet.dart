@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../domain/entities/battery_family.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// Step by step, for this phone's maker, how to stop it from freezing
@@ -39,7 +39,7 @@ class BatteryGuideSheet extends ConsumerWidget {
   }
 
   Future<void> _openSettings(BuildContext context) async {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.tap();
     final messenger = ScaffoldMessenger.of(context);
     final failedText = context.readState(stringsProvider).batteryGuideOpenFailed;
     final opened = await context.readState(batteryGuideProvider).openSpotifySettings();

@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../domain/entities/voice_error.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 
 enum _SheetState { initializing, listening, done, failed }
 
@@ -94,7 +94,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
       _error = null;
     });
     _pulseController.repeat();
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
 
     await _voice.listen(
       localeId: _localeId,
@@ -155,7 +155,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
 
   void _fail(VoiceError error) {
     _pulseController.stop();
-    unawaited(HapticFeedback.mediumImpact());
+    Haptics.error();
     setState(() {
       _state = _SheetState.failed;
       _error = error;
@@ -166,7 +166,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
   void _finish(String text) async {
     if (_finished) return;
     _finished = true;
-    unawaited(HapticFeedback.mediumImpact());
+    Haptics.confirm();
     setState(() => _state = _SheetState.done);
     _pulseController.stop();
     await Future.delayed(const Duration(milliseconds: 400));
@@ -421,7 +421,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
   }) {
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        Haptics.tap();
         onTap();
       },
       child: Container(

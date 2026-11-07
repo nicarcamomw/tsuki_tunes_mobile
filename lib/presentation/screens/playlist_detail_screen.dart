@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
@@ -32,7 +32,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   String get playlistId => widget.playlistId;
 
   void _setEditing(bool value) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     setState(() => _editing = value);
   }
 
@@ -40,7 +40,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   /// the same place.
   void _remove(Track track, int index) {
     final strings = ref.read(stringsProvider);
-    HapticFeedback.lightImpact();
+    Haptics.remove();
     final undo = ref.read(removeTrackFromPlaylistProvider)(playlistId, track, index);
     showTrackSnack(
       context,
@@ -404,7 +404,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             SliverReorderableList(
               itemCount: playlist.tracks.length,
               onReorderItem: (oldIndex, newIndex) {
-                HapticFeedback.selectionClick();
+                Haptics.selection();
                 ref.read(reorderPlaylistProvider)(playlistId, oldIndex, newIndex);
               },
               proxyDecorator: (child, _, __) => Material(

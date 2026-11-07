@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
 
 /// Bonds (Lazos): what your Bonds' Echo did (Resonances), your Bonds and
@@ -374,7 +374,7 @@ class _RequestButtons extends ConsumerWidget {
               minimumSize: const Size(0, 40),
             ),
             onPressed: () async {
-              unawaited(HapticFeedback.selectionClick());
+              Haptics.remove();
               final ok = await social.decline(person.uid);
               if (!ok && context.mounted) _toast(context, strings.bondsFailed);
             },
@@ -386,7 +386,7 @@ class _RequestButtons extends ConsumerWidget {
           child: FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size(0, 40)),
             onPressed: () async {
-              unawaited(HapticFeedback.mediumImpact());
+              Haptics.confirm();
               final ok = await social.accept(person.uid);
               if (context.mounted) _toast(context, ok ? strings.bondsNowBonded(person.name) : strings.bondsFailed);
             },
@@ -547,7 +547,7 @@ class BondButton extends ConsumerWidget {
         return FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: size, padding: pad),
           onPressed: () async {
-            unawaited(HapticFeedback.mediumImpact());
+            Haptics.confirm();
             final ok = await social.request(person);
             if (context.mounted) _toast(context, ok ? strings.bondsSentTo(person.name) : strings.bondsFailed);
           },
@@ -566,7 +566,7 @@ class BondButton extends ConsumerWidget {
             padding: pad,
           ),
           onPressed: () async {
-            unawaited(HapticFeedback.selectionClick());
+            Haptics.remove();
             final ok = await social.cancel(person.uid);
             if (!ok && context.mounted) _toast(context, strings.bondsFailed);
           },
@@ -577,7 +577,7 @@ class BondButton extends ConsumerWidget {
         return FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: size, padding: pad),
           onPressed: () async {
-            unawaited(HapticFeedback.mediumImpact());
+            Haptics.confirm();
             final ok = await social.accept(person.uid);
             if (context.mounted) _toast(context, ok ? strings.bondsNowBonded(person.name) : strings.bondsFailed);
           },

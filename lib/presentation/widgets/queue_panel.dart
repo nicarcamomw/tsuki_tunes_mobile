@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -14,6 +13,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import 'eco_widgets.dart';
 import 'flow_sheet.dart';
+import 'haptics.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
 import 'shuffle_mode_icon.dart';
@@ -73,29 +73,29 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   }
 
   void _remove(int queueIndex) {
-    HapticFeedback.lightImpact();
+    Haptics.remove();
     _editWithUndo(_locale.strings.removedFromQueue,
         () => _audio.removeFromQueue(queueIndex));
   }
 
   void _playNext(int queueIndex) {
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     _editWithUndo(_locale.strings.addedPlayNext,
         () => _audio.playNextFromQueue(queueIndex));
   }
 
   void _move(int from, int to) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     _audio.moveUpcoming(from, to);
   }
 
   void _clear() {
-    HapticFeedback.mediumImpact();
+    Haptics.remove();
     _editWithUndo(_locale.strings.queueClearLabel, _audio.clearQueue);
   }
 
   void _play(Track track) {
-    HapticFeedback.selectionClick();
+    Haptics.tap();
     ref.read(playTrackProvider)(track);
     widget.onPlay?.call();
   }
@@ -333,7 +333,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               color: AppColors.neonCyan,
               onTap: () {
                 if (!ecoAllows(context, EcoFeature.bpmFlow)) return;
-                HapticFeedback.selectionClick();
+                Haptics.tap();
                 FlowSheet.show(context);
               },
             ),
@@ -343,7 +343,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               semanticLabel: strings.queueSaveAsPlaylist,
               color: AppColors.textMuted,
               onTap: () {
-                HapticFeedback.selectionClick();
+                Haptics.tap();
                 final queue = audio.queue;
                 saveTracksAsPlaylist(context, [
                   if (audio.currentTrack != null) audio.currentTrack!,

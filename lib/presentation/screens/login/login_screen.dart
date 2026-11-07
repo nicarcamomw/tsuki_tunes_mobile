@@ -19,6 +19,7 @@ import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_orb.dart';
+import '../../widgets/haptics.dart';
 import '../../widgets/spectrum_wave_visualizer.dart';
 
 part 'google_button.dart';

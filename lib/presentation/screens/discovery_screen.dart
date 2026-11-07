@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:just_audio/just_audio.dart';
@@ -17,6 +16,7 @@ import '../state/app_providers.dart';
 import '../state/discovery_controller.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 
 final _log = Log.named('DiscoveryScreen');
 
@@ -87,7 +87,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   }
 
   Future<void> _togglePause() async {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.selection();
     setState(() => _paused = !_paused);
     if (_paused) {
       await _preview.pause();
@@ -98,7 +98,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
   Future<void> _answer(DiscoveryCard card, {required bool liked}) async {
     if (_flying) return;
-    unawaited(liked ? HapticFeedback.mediumImpact() : HapticFeedback.selectionClick());
+    liked ? Haptics.confirm() : Haptics.selection();
     setState(() {
       _flying = true;
       _drag = liked ? 600 : -600;

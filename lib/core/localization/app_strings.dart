@@ -1377,6 +1377,8 @@ class AppStrings {
   String get playbackLogCopy => _l.playbackLogCopy;
   String get playbackLogCopied => _l.playbackLogCopied;
   String get appVersionCopied => _l.appVersionCopied;
+  String get hapticsSettingTitle => _l.hapticsSettingTitle;
+  String get hapticsSettingSubtitle => _l.hapticsSettingSubtitle;
   String get analyticsSettingTitle => _l.analyticsSettingTitle;
   String get analyticsSettingSubtitle => _l.analyticsSettingSubtitle;
 

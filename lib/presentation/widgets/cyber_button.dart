@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import 'haptics.dart';
 
 class CyberButton extends StatefulWidget {
   final String text;
@@ -81,7 +81,7 @@ class _CyberButtonState extends State<CyberButton>
         setState(() => _isPressed = false);
         if (!_reduceMotion) _scaleController.reverse();
         if (!widget.isLoading) {
-          HapticFeedback.lightImpact();
+          Haptics.tap();
           widget.onPressed();
         }
       },

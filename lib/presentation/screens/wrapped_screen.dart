@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,6 +22,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 import 'wrapped/story_image.dart';
 
 
@@ -160,7 +160,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
     final key = _shareKeys[_page];
     final boundary = key?.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) return;
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     setState(() => _sharing = true);
     _progress.stop();
     try {

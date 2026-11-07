@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -11,6 +10,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/lyrics_controller.dart';
 import 'audio_progress_selector.dart';
+import 'haptics.dart';
 
 export '../state/lyrics_controller.dart';
 
@@ -189,7 +189,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
               compact: widget.compact,
               onTap: widget.interactive && synced
                   ? () {
-                      HapticFeedback.selectionClick();
+                      Haptics.selection();
                       ref.read(audioProvider).seek(lyrics.lines[i].time);
                       _resumeFollow();
                     }
@@ -655,7 +655,7 @@ class _RoundIcon extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.tap();
             onTap();
           },
           child: Padding(

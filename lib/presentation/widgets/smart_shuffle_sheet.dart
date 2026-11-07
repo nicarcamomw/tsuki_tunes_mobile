@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
+import 'haptics.dart';
 import 'shuffle_mode_icon.dart';
 import 'swipeable_sheet.dart';
 
@@ -119,7 +119,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             ],
             selected: {mode},
             onSelectionChanged: (s) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setShuffleMode(s.first);
             },
             style: segmentStyle,
@@ -131,7 +131,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             value: audio.avoidSameArtist,
             activeThumbColor: AppColors.accent,
             onChanged: (v) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setAvoidSameArtist(v);
             },
             title: Text(
@@ -169,7 +169,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             ],
             selected: {energy},
             onSelectionChanged: (s) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setShuffleEnergy(s.first);
             },
             style: segmentStyle,
@@ -193,7 +193,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             value: mode == ShuffleMode.smart,
             activeThumbColor: AppColors.accent,
             onChanged: (v) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setShuffleMode(v ? ShuffleMode.smart : ShuffleMode.on);
             },
             secondary: const SparkleIcon(color: AppColors.accent, size: 20),
@@ -215,7 +215,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             ],
             selected: {every},
             onSelectionChanged: (s) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               audio.setRecommendEvery(s.first);
             },
             style: segmentStyle,

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -17,6 +16,7 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
@@ -123,7 +123,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
     final strings = ref.read(localeProvider).strings;
     final downloads = ref.read(albumDownloadsProvider);
     final messenger = ScaffoldMessenger.of(context);
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.tap();
     if (ref.read(maskProvider).isObserver) {
       messenger.showSnackBar(SnackBar(
         content: Text(strings.downloadAlbumObserver),
@@ -160,7 +160,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   }
 
   void _toggleAll(Album albumData) {
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     ref.read(toggleAlbumListenedProvider)(albumData);
   }
 
@@ -367,7 +367,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     label: strings.goToArtist,
                     child: GestureDetector(
                       onTap: () async {
-                        unawaited(HapticFeedback.lightImpact());
+                        Haptics.tap();
                         // The artist page loads the profile from the id.
                         if (albumData.artistId.isNotEmpty) {
                           unawaited(ArtistRoute(id: albumData.artistId).push(context));
@@ -543,7 +543,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         label: strings.retry,
                         child: GestureDetector(
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          Haptics.tap();
                           _loadAlbumDetails();
                         },
                         child: Container(

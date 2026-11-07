@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -26,6 +25,7 @@ import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/haptics.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
@@ -699,7 +699,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _openGuessGame() async {
     if (!ecoAllows(context, EcoFeature.guessSong)) return;
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     await const GuessSongRoute().push(context);
     await _refreshDailyDone();
   }
@@ -740,7 +740,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   highlight: ambientCount > 0,
                   onTap: () {
                     if (!ecoAllows(context, EcoFeature.ambient)) return;
-                    HapticFeedback.lightImpact();
+                    Haptics.tap();
                     AmbientMixerSheet.show(context);
                   },
                 ),
@@ -758,7 +758,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               highlight: run.$1,
               onTap: () {
                 if (!ecoAllows(context, EcoFeature.running)) return;
-                HapticFeedback.lightImpact();
+                Haptics.tap();
                 RunModeScreen.open(context);
               },
             ),
