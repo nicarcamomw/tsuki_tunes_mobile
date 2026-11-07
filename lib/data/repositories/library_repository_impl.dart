@@ -9,6 +9,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/album_progress.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/play_day.dart';
+import '../../domain/entities/top_artist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../datasources/firebase_service.dart';
@@ -21,23 +22,10 @@ import 'album_completion_index.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
 
-export 'listened_tracks_repository.dart' show ListenedTrackData;
+export '../../domain/entities/listened_track.dart' show ListenedTrackData;
+export '../../domain/entities/top_artist.dart' show TopArtistEntry;
 
 final _log = Log.named('LibraryRepositoryImpl');
-
-class TopArtistEntry {
-  final String name;
-  final int score;
-  final int savedCount;
-  final int visits;
-
-  TopArtistEntry({
-    required this.name,
-    required this.score,
-    required this.savedCount,
-    required this.visits,
-  });
-}
 
 /// The user's library as the screens see it. Listened tracks, followed
 /// artists and album completion live in their own classes; this one wires
@@ -192,6 +180,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
 
   /// Fetches the real track count of albums with listened tracks, so they
   /// can be judged complete. Cheap enough to call from build.
+  @override
   void ensureAlbumTrackCounts(Iterable<Album> albums,
           Future<Album?> Function(String albumId) fetchAlbum) =>
       _albums.ensureTrackCounts(albums, fetchAlbum);
@@ -206,6 +195,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
 
   /// Fetches the song count of the most recently listened albums that have
   /// none yet, so the home can tell which are almost complete.
+  @override
   void ensureRecentAlbumTrackCounts(
           Future<Album?> Function(String albumId) fetchAlbum) =>
       _albums.ensureRecentTrackCounts(fetchAlbum);

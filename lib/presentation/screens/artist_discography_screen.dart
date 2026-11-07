@@ -8,12 +8,12 @@ import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
+import '../../domain/repositories/library_repository.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 
 
 final _log = Log.named('ArtistDiscography');
@@ -40,7 +40,7 @@ class ArtistDiscographyScreen extends ConsumerStatefulWidget {
 }
 
 class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScreen> {
-  final DeezerApiService _api = DeezerApiService();
+  late final _catalog = ref.read(musicCatalogProvider);
   late String _filter;
   late final ScrollController _scrollController;
   late List<Album> _allAlbums;
@@ -109,7 +109,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
     try {
       final nonCompileCount =
           _allAlbums.where((a) => a.recordType != 'compile').length;
-      final page = await _api.getArtistAlbumsPage(
+      final page = await _catalog.getArtistAlbumsPage(
         widget.artistId!,
         limit: 100,
         index: nonCompileCount,
@@ -189,7 +189,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
   @override
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
-    library.ensureAlbumTrackCounts(_allAlbums, _api.getAlbum);
+    ref.read(ensureAlbumTrackCountsProvider)(_allAlbums);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final cats = _categories;
@@ -413,7 +413,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
   }
 
   List<Widget> _buildAllSections(Map<String, List<Album>> cats,
-      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
+      LibraryRepository library, LocaleProvider locale, AppStrings strings) {
     final sections = <Widget>[];
     final order = [
       ('album', strings.tabAlbums, Icons.album_rounded, false),
@@ -459,7 +459,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
   }
 
   List<Widget> _buildFilteredGrid(List<Album> albums,
-      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings,
+      LibraryRepository library, LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     return [
       SliverPadding(
@@ -482,7 +482,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
     ];
   }
 
-  Widget _buildItem(BuildContext context, Album album, LibraryRepositoryImpl library,
+  Widget _buildItem(BuildContext context, Album album, LibraryRepository library,
       LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     final isCompleted =

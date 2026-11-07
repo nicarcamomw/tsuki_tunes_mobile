@@ -13,7 +13,7 @@ class _AlmostCompleteSection extends ConsumerWidget {
     final library = ref.watch(libraryProvider);
     // Song counts are only known for albums the user opened: ask for those
     // of the latest listened ones (once per album per session).
-    library.ensureRecentAlbumTrackCounts(DeezerApiService().getAlbum);
+    ref.read(ensureAlbumTrackCountsProvider).recent();
     final albums = library.almostCompleteAlbums();
     if (albums.isEmpty) return const SizedBox.shrink();
     return Column(

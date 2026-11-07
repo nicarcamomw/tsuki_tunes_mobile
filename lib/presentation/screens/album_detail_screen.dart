@@ -10,7 +10,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -33,7 +32,7 @@ class AlbumDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
-  final DeezerApiService _api = DeezerApiService();
+  late final _catalog = ref.read(musicCatalogProvider);
   final ScrollController _scroll = ScrollController();
   Album? _fullAlbum;
   bool _isLoading = true;
@@ -68,7 +67,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       return;
     }
     try {
-      final res = await _api.getAlbum(widget.album.id);
+      final res = await _catalog.getAlbum(widget.album.id);
       if (mounted && res != null) {
         final totalTracks =
             res.tracks.isNotEmpty ? res.tracks.length : res.tracksCount;
@@ -104,7 +103,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   Future<void> _enrichTracks(Album album) async {
     if (album.tracks.isEmpty) return;
     try {
-      final enriched = await _api.enrichTracksWithContributors(album.tracks);
+      final enriched = await _catalog.enrichTracksWithContributors(album.tracks);
       if (mounted) {
         setState(() {
           _fullAlbum = album.copyWith(tracks: enriched);

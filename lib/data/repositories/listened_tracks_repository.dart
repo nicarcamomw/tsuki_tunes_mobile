@@ -6,8 +6,8 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/foundation.dart';
 
 import '../../core/logger.dart';
+import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/track.dart';
-import '../../domain/logic/artist_names.dart';
 import '../datasources/firebase_service.dart';
 import '../datasources/storage_service.dart';
 import '../datasources/sub_write_queue.dart';
@@ -16,143 +16,22 @@ import '../sync/firestore_sync.dart';
 import '../sync/outbox.dart';
 import 'album_completion_index.dart';
 
+export '../../domain/entities/listened_track.dart' show ListenedTrackData;
+
 
 final _log = Log.named('Listened');
 
-class ListenedTrackData {
-  final String trackId;
-  final String title;
-  final String artistName;
-  final String albumTitle;
-  final String albumId;
-  final String coverUrl;
-  final String previewUrl;
-  final int duration;
-  final DateTime? listenedAt;
+/// Firestore's side of [ListenedTrackData]: its server timestamp.
+ListenedTrackData listenedTrackFromFirestore(Map<String, dynamic> data,
+    {String? docId}) {
+  final raw = data['listenedAt'];
+  return ListenedTrackData.fromStored(
+    raw is Timestamp ? {...data, 'listenedAt': raw.toDate()} : data,
+    docId: docId,
+  );
+}
 
-  /// Each artist of the song (a collaboration has several). Songs marked
-  /// before this was kept only have [artistName], all of them joined by
-  /// commas: [hasArtistList] is false and this is a best guess.
-  final List<String> artists;
-  final bool hasArtistList;
-
-  ListenedTrackData({
-    required this.trackId,
-    required this.title,
-    required this.artistName,
-    required this.albumTitle,
-    required this.albumId,
-    required this.coverUrl,
-    this.previewUrl = '',
-    required this.duration,
-    this.listenedAt,
-    List<String>? artists,
-  })  : hasArtistList = artists != null && artists.isNotEmpty,
-        artists = (artists != null && artists.isNotEmpty) ? artists : guessArtists(artistName);
-
-  /// The artists in a joined name, until the real list is known. Anything
-  /// [ArtistNames.split] misses is repaired from the catalog (see
-  /// ListenedTracksRepository).
-  static List<String> guessArtists(String joined) => ArtistNames.split(joined);
-
-  static List<String>? _artistsFrom(Object? raw) =>
-      raw is List ? [for (final a in raw) if (a != null && a.toString().trim().isNotEmpty) a.toString().trim()] : null;
-
-  factory ListenedTrackData.fromTrack(Track track) => ListenedTrackData(
-        trackId: track.id,
-        title: track.title,
-        artistName: track.fullArtistName,
-        albumTitle: track.albumTitle,
-        albumId: track.albumId,
-        coverUrl: track.coverUrl,
-        duration: track.durationSeconds,
-        previewUrl: track.previewUrl,
-        listenedAt: DateTime.now(),
-        artists: track.contributors.length > 1
-            ? [for (final c in track.contributors) if (c.name.isNotEmpty) c.name]
-            : [if (track.artistName.isNotEmpty) track.artistName],
-      );
-
-  ListenedTrackData withArtists(List<String> artists) => ListenedTrackData(
-        trackId: trackId,
-        title: title,
-        artistName: artistName,
-        albumTitle: albumTitle,
-        albumId: albumId,
-        coverUrl: coverUrl,
-        previewUrl: previewUrl,
-        duration: duration,
-        listenedAt: listenedAt,
-        artists: artists,
-      );
-
-  factory ListenedTrackData.fromFirestore(Map<String, dynamic> data,
-      {String? docId}) {
-    DateTime? listened;
-    final rawListened = data['listenedAt'];
-    if (rawListened is Timestamp) {
-      listened = rawListened.toDate();
-    } else if (rawListened is Map) {
-      final sec = rawListened['seconds'] ?? rawListened['_seconds'];
-      if (sec is num) {
-        listened = DateTime.fromMillisecondsSinceEpoch(sec.toInt() * 1000);
-      }
-    } else if (rawListened is String) {
-      listened = DateTime.tryParse(rawListened);
-    }
-
-    final tid = data['trackId']?.toString() ?? docId ?? '';
-    final aid = data['albumId']?.toString() ?? '';
-    final dur =
-        data['duration'] is num ? (data['duration'] as num).toInt() : 0;
-
-    return ListenedTrackData(
-      trackId: tid,
-      title: data['title']?.toString() ?? '',
-      artistName: data['artistName']?.toString() ?? '',
-      albumTitle: data['albumTitle']?.toString() ?? '',
-      albumId: aid,
-      coverUrl: data['coverUrl']?.toString() ?? '',
-      previewUrl: data['previewUrl']?.toString() ?? '',
-      duration: dur,
-      listenedAt: listened,
-      artists: _artistsFrom(data['artists']),
-    );
-  }
-
-  factory ListenedTrackData.fromJson(Map<String, dynamic> json) {
-    DateTime? listened;
-    if (json['listenedAt'] != null) {
-      listened = DateTime.tryParse(json['listenedAt'].toString());
-    }
-    return ListenedTrackData(
-      trackId: json['trackId']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      artistName: json['artistName']?.toString() ?? '',
-      albumTitle: json['albumTitle']?.toString() ?? '',
-      albumId: json['albumId']?.toString() ?? '',
-      coverUrl: json['coverUrl']?.toString() ?? '',
-      previewUrl: json['previewUrl']?.toString() ?? '',
-      duration:
-          json['duration'] is num ? (json['duration'] as num).toInt() : 0,
-      listenedAt: listened,
-      artists: _artistsFrom(json['artists']),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'trackId': trackId,
-        'title': title,
-        'artistName': artistName,
-        'albumTitle': albumTitle,
-        'albumId': albumId,
-        'coverUrl': coverUrl,
-        'previewUrl': previewUrl,
-        'duration': duration,
-        'listenedAt': listenedAt?.toIso8601String(),
-        if (hasArtistList) 'artists': artists,
-      };
-
+extension ListenedTrackFirestore on ListenedTrackData {
   Map<String, dynamic> toFirestore() => {
         'trackId': trackId,
         'title': title,
@@ -398,7 +277,7 @@ class ListenedTracksRepository {
         final snapshot = await tracksCol.orderBy('listenedAt', descending: true).get();
         if (!isCurrent()) return false;
         final server = [
-          for (final doc in snapshot.docs) ListenedTrackData.fromFirestore(doc.data(), docId: doc.id).toJson(),
+          for (final doc in snapshot.docs) listenedTrackFromFirestore(doc.data(), docId: doc.id).toJson(),
         ];
         await _store.replaceListenedWithServer(uid, server);
         if (!isCurrent()) return false;
@@ -442,7 +321,7 @@ class ListenedTracksRepository {
         if (change.doc.metadata.hasPendingWrites) continue;
         final docData = change.doc.data();
         if (docData == null) continue;
-        final data = ListenedTrackData.fromFirestore(docData, docId: change.doc.id);
+        final data = listenedTrackFromFirestore(docData, docId: change.doc.id);
         if (change.type == DocumentChangeType.removed) {
           removed.add(data.trackId);
         } else {

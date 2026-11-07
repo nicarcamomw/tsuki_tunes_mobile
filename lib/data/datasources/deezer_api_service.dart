@@ -11,8 +11,8 @@ import '../../domain/entities/artist.dart';
 import '../../domain/entities/artist_albums_page.dart';
 import '../../domain/entities/genre.dart';
 import '../../domain/entities/track.dart';
-import '../../domain/repositories/catalog_repository.dart';
 import '../../domain/repositories/genre_catalog.dart';
+import '../../domain/repositories/music_catalog.dart';
 import '../contracts/music_api_contract.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
@@ -42,7 +42,7 @@ class TrackAudioInfo {
 }
 
 class DeezerApiService
-    implements MusicApiContract, CatalogRepository, GenreCatalog {
+    implements MusicApiContract, MusicCatalog, GenreCatalog {
   static final DeezerApiService _instance = DeezerApiService._internal();
   factory DeezerApiService() => _instance;
   DeezerApiService._internal();
@@ -599,6 +599,7 @@ class DeezerApiService
     });
   }
 
+  @override
   Future<List<Album>> getArtistCompilations(String artistId,
       {int limit = 50}) async {
     final cacheKey = 'artist_compilations_$artistId';
@@ -700,6 +701,7 @@ class DeezerApiService
   /// one cache entry whatever [limit] they ask for. Failures return an empty
   /// list unless [throwOnError] is set, for callers that need to tell "no
   /// related artists" from "no network".
+  @override
   Future<List<Artist>> getRelatedArtists(String artistId,
       {int limit = 20, bool throwOnError = false}) async {
     final cacheKey = 'artist_related_$artistId';

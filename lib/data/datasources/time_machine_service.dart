@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/play_day.dart';
 import '../../domain/entities/track.dart';
 import '../repositories/library_repository_impl.dart';
@@ -64,7 +65,7 @@ class TimeMachineService {
   static const String _lastNotifiedKey = 'tsuki_tm_last_notified';
   static const String notifyKey = 'tsuki_tm_notify';
   static const int _notificationId = 7201;
-  static const String payload = 'time_machine';
+  static const String payload = NotificationPayloads.timeMachine;
   static const Duration _minGapBetweenNotifications = Duration(days: 6);
   static const int _scheduleDays = 21;
 

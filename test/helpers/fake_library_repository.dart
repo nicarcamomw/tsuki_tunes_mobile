@@ -1,3 +1,4 @@
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/library_repository.dart';
@@ -74,4 +75,16 @@ class FakeLibraryRepository implements LibraryRepository {
 
   @override
   Future<void> recordPlay(Track track) async => plays.add(track);
+
+  /// Albums asked to have their song counts fetched.
+  final countsAsked = <String>[];
+
+  @override
+  void ensureAlbumTrackCounts(Iterable<Album> albums,
+          Future<Album?> Function(String albumId) fetchAlbum) =>
+      countsAsked.addAll(albums.map((a) => a.id));
+
+  @override
+  void ensureRecentAlbumTrackCounts(
+      Future<Album?> Function(String albumId) fetchAlbum) {}
 }

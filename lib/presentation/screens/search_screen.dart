@@ -10,11 +10,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/voice_search_service.dart';
 import '../../domain/entities/genre.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/logic/search_suggestions.dart';
+import '../../domain/logic/voice_commands.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -188,7 +187,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     final command = spokenText == null
         ? null
-        : VoiceSearchService.parseCommand(spokenText);
+        : VoiceCommands.parse(spokenText);
     if (command == null || command.query.isEmpty || !mounted) {
       if (resumeAfter && !audio.isPlaying) await audio.togglePlay();
       return;
@@ -204,7 +203,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     await search.search(command.query);
     // "pon Jefe de La Combo Tortuga": try again without the "de".
-    final joined = VoiceSearchService.withoutArtistJoiner(command.query);
+    final joined = VoiceCommands.withoutArtistJoiner(command.query);
     if (search.tracks.isEmpty && joined != null) {
       _controller.text = joined;
       await search.search(joined);
@@ -929,19 +928,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return InkWell(
       onTap: () async {
         unawaited(HapticFeedback.lightImpact());
-        try {
-          final deezerResults = await DeezerApiService().search(
-            '${result.trackName} ${result.artistName}',
-          );
-          final tracks = deezerResults['tracks'];
-          if (tracks != null && tracks.isNotEmpty) {
-            if (!mounted) return;
-            final provider = ref.read(searchProvider);
-            _controller.text = '${result.trackName} ${result.artistName}';
-            unawaited(provider.search('${result.trackName} ${result.artistName}'));
-            setState(() => _selectedTabIndex = 3);
-          }
-        } catch (_) {}
+        // One search: the song's results land in the Songs tab, which
+        // opens only when the catalog has it.
+        final query = '${result.trackName} ${result.artistName}';
+        final search = ref.read(searchProvider);
+        await search.search(query);
+        if (!mounted || search.tracks.isEmpty) return;
+        _controller.text = query;
+        setState(() => _selectedTabIndex = 3);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

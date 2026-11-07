@@ -11,15 +11,11 @@ import '../../core/logger.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/lastfm_service.dart';
-import '../../data/datasources/release_radar_service.dart';
-import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
-import '../../domain/entities/artist_albums_page.dart';
+import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/track.dart';
-import '../../domain/logic/artist_features.dart';
+import '../../domain/repositories/library_repository.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -47,7 +43,7 @@ class ArtistDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
-  final DeezerApiService _api = DeezerApiService();
+  late final _catalog = ref.read(musicCatalogProvider);
   final ScrollController _scrollController = ScrollController();
   // Entry points like the track menu only know the artist's id and name, so
   // the full profile (photos, fans, release count) is fetched on open.
@@ -110,7 +106,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   Future<void> _loadArtistInfo() async {
     if (!_needsArtistInfo) return;
-    final full = await _api.getArtist(widget.artist.id);
+    final full = await _catalog.getArtist(widget.artist.id);
     if (mounted && full != null) {
       setState(() => _artist = full);
     }
@@ -132,32 +128,16 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       return;
     }
     try {
-      final results = await Future.wait([
-        // Deezer's top mixes the artist's own songs with their features;
-        // a longer list leaves enough of both after splitting them.
-        _api.getArtistTopTracks(_artist.id, limit: 50),
-        _api.getArtistAlbumsPage(_artist.id, limit: 250, index: 0),
-        LastFmService.getArtistTags(_artist.name),
-        _api.getArtistCompilations(_artist.id),
-        _api.getRelatedArtists(_artist.id),
-      ]);
+      final page = await ref.read(getArtistPageProvider)(_artist);
       if (mounted) {
-        final pagedAlbums = results[1] as ArtistAlbumsPage;
-        final compilations = results[3] as List<Album>;
-        final existingIds = pagedAlbums.items.map((a) => a.id).toSet();
-        final uniqueCompilations =
-            compilations.where((c) => !existingIds.contains(c.id)).toList();
-        final allAlbums = [...pagedAlbums.items, ...uniqueCompilations];
-        final split = ArtistFeatures.split(results[0] as List<Track>,
-            artistId: _artist.id, artistName: _artist.name);
         setState(() {
-          _topTracks = split.own.take(10).toList();
-          _features = split.features.take(20).toList();
-          _albums = allAlbums;
-          _totalAlbums = pagedAlbums.total + uniqueCompilations.length;
-          _hasMoreAlbums = pagedAlbums.hasMore;
-          _artistTags = results[2] as List<String>;
-          _relatedArtists = results[4] as List<Artist>;
+          _topTracks = page.topTracks;
+          _features = page.features;
+          _albums = page.albums;
+          _totalAlbums = page.totalAlbums;
+          _hasMoreAlbums = page.hasMoreAlbums;
+          _artistTags = page.tags;
+          _relatedArtists = page.related;
           _isLoading = false;
         });
       }
@@ -197,7 +177,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     final strings = locale.strings;
     final library = ref.watch(libraryProvider);
 
-    library.ensureAlbumTrackCounts(_albums, _api.getAlbum);
+    ref.read(ensureAlbumTrackCountsProvider)(_albums);
 
     // The mask lights up when every own release has all its tracks listened.
     final releaseGroups = _ownReleaseGroups;
@@ -281,7 +261,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           // Stored content section
           if (!_isLoading)
             SliverToBoxAdapter(
-              child: _buildStoredContentSection(library, locale, strings),
+              child: _buildStoredContentSection(
+                  library, library.listenedTracks, locale, strings),
             ),
 
           // Similar Artists
@@ -304,7 +285,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   /// Discography heading, then one section per release type.
   List<Widget> _buildDiscographySlivers(Map<String, List<Album>> cats,
-      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
+      LibraryRepository library, LocaleProvider locale, AppStrings strings) {
     return [
       SliverToBoxAdapter(
         child: Padding(
@@ -347,7 +328,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   }
 
   List<Widget> _buildCategorySection(
-      String title, List<Album> albums, String filterKey, LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings, {IconData? icon, bool isAppearsOn = false}) {
+      String title, List<Album> albums, String filterKey, LibraryRepository library, LocaleProvider locale, AppStrings strings, {IconData? icon, bool isAppearsOn = false}) {
     const maxVisible = 8;
     final visible = albums.take(maxVisible).toList();
     final hasMore = albums.length > maxVisible;
@@ -447,7 +428,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   }
 
   Widget _buildDiscographyItem(
-      BuildContext context, Album album, LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings,
+      BuildContext context, Album album, LibraryRepository library, LocaleProvider locale, AppStrings strings,
       {bool isAppearsOn = false}) {
     final isCompleted =
         library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount);
@@ -536,8 +517,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   /// Following is the moment the user wants alerts, so that's when we ask.
   Future<void> _announceRadar(AppStrings strings) async {
-    final radar = ReleaseRadarService();
-    if (!ReleaseRadarService.isSupported) return;
+    final radar = ref.read(releaseRadarProvider);
+    if (!ref.read(releaseRadarSupportedProvider)) return;
     await radar.askPermissionOnceForFollow();
     if (!mounted || !radar.notifyEnabled.value) return;
     ScaffoldMessenger.of(context)
@@ -709,13 +690,13 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     );
   }
 
-  Widget _buildStoredContentSection(
-      LibraryRepositoryImpl library, LocaleProvider locale, AppStrings strings) {
+  Widget _buildStoredContentSection(LibraryRepository library,
+      List<ListenedTrackData> listened, LocaleProvider locale, AppStrings strings) {
     final artistName = _artist.name;
     final artistNameLower = artistName.toLowerCase().trim();
     final albumIds = _albums.map((a) => a.id).toSet();
 
-    final artistTracks = library.listenedTracks.where((t) {
+    final artistTracks = listened.where((t) {
       if (albumIds.contains(t.albumId)) return true;
       final trackArtists = t.artists.map((a) => a.toLowerCase());
       return trackArtists.any((a) => a == artistNameLower);
@@ -911,7 +892,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     IconData icon,
     String label,
     List<Album> albums,
-    LibraryRepositoryImpl library,
+    LibraryRepository library,
     LocaleProvider locale, {
     String? semanticLabel,
   }) {

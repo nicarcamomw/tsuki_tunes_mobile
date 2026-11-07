@@ -100,7 +100,7 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
   /// The database rejects longer names and bigger playlists
   /// (firestore.rules); checking here gives a clear no instead of a silent
   /// rollback.
-  static const int maxNameLength = 100;
+  static const int maxNameLength = PlaylistRepository.maxNameLength;
 
   static String _cleanName(String name) {
     final trimmed = name.trim();

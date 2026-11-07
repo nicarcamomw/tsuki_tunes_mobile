@@ -19,6 +19,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
+import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/radar_release.dart';
 import 'time_machine_service.dart';
 
@@ -89,7 +90,7 @@ class ReleaseRadarService {
 
   static const String _channelId = 'tsuki_release_radar';
   static const int _notificationId = 7101;
-  static const String _payload = 'release_radar';
+  static const String _payload = NotificationPayloads.releaseRadar;
 
   static bool get isSupported =>
       !kIsWeb && (Platform.isAndroid || Platform.isIOS);

@@ -1,19 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/lastfm_service.dart';
 import '../../data/datasources/product_analytics.dart';
 import '../../di/injection.dart';
 import '../../domain/repositories/catalog_repository.dart';
 import '../../domain/repositories/genre_catalog.dart';
 import '../../domain/repositories/library_repository.dart';
+import '../../domain/repositories/music_catalog.dart';
 import '../../domain/repositories/playback_controller.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/repositories/product_events.dart';
+import '../../domain/usecases/catalog/find_artist_by_name.dart';
 import '../../domain/usecases/catalog/get_album.dart';
 import '../../domain/usecases/catalog/get_artist.dart';
+import '../../domain/usecases/catalog/get_artist_page.dart';
 import '../../domain/usecases/catalog/get_genre_page.dart';
 import '../../domain/usecases/catalog/get_genres.dart';
+import '../../domain/usecases/catalog/get_latest_releases.dart';
+import '../../domain/usecases/catalog/get_similar_artists.dart';
 import '../../domain/usecases/catalog/get_track.dart';
+import '../../domain/usecases/library/ensure_album_track_counts.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../../domain/usecases/library/toggle_album_listened.dart';
 import '../../domain/usecases/library/toggle_follow_artist.dart';
@@ -115,6 +122,27 @@ final getAlbumProvider = Provider((ref) => GetAlbum(ref.watch(catalogRepositoryP
 final getArtistProvider = Provider((ref) => GetArtist(ref.watch(catalogRepositoryProvider)));
 
 final getTrackProvider = Provider((ref) => GetTrack(ref.watch(catalogRepositoryProvider)));
+
+/// The catalog as the screens browse it: Deezer's (the same singleton as
+/// [catalogRepositoryProvider]).
+final musicCatalogProvider = Provider<MusicCatalog>((ref) => DeezerApiService());
+
+final findArtistByNameProvider =
+    Provider((ref) => FindArtistByName(ref.watch(musicCatalogProvider)));
+
+final getLatestReleasesProvider =
+    Provider((ref) => GetLatestReleases(ref.watch(musicCatalogProvider)));
+
+final getSimilarArtistsProvider =
+    Provider((ref) => GetSimilarArtists(ref.watch(musicCatalogProvider)));
+
+/// Style tags come from Last.fm (empty without its key).
+final getArtistPageProvider = Provider((ref) => GetArtistPage(
+    ref.watch(musicCatalogProvider),
+    tags: LastFmService.getArtistTags));
+
+final ensureAlbumTrackCountsProvider = Provider((ref) => EnsureAlbumTrackCounts(
+    ref.watch(libraryRepositoryProvider), ref.watch(catalogRepositoryProvider)));
 
 /// The genres to explore: Deezer's (the same singleton as the catalog).
 final genreCatalogProvider = Provider<GenreCatalog>((ref) => DeezerApiService());

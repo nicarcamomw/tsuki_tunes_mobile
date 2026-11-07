@@ -230,14 +230,14 @@ class _RabbitHoleEntryCard extends StatelessWidget {
   }
 }
 
-class _ReleaseRadarEntryCard extends StatelessWidget {
+class _ReleaseRadarEntryCard extends ConsumerWidget {
   final LocaleProvider locale;
   final dynamic strings;
   const _ReleaseRadarEntryCard({required this.locale, required this.strings});
 
   @override
-  Widget build(BuildContext context) {
-    final radar = ReleaseRadarService();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radar = ref.read(releaseRadarProvider);
     return ValueListenableBuilder<List<RadarRelease>>(
       valueListenable: radar.releases,
       builder: (context, releases, _) {

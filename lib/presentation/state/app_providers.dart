@@ -71,6 +71,15 @@ final playlistProvider = ChangeNotifierProvider<PlaylistRepositoryImpl>(
   (ref) => getIt<PlaylistRepositoryImpl>(),
 );
 
+/// Followed artists' new releases: the list, what is watched, and the
+/// notifications it opens. The type stays inferred so screens don't import
+/// the data layer for it.
+final releaseRadarProvider = Provider((ref) => ReleaseRadarService());
+
+/// Whether this platform runs the release radar (Android and iOS).
+final releaseRadarSupportedProvider =
+    Provider<bool>((ref) => ReleaseRadarService.isSupported);
+
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 
 final localeProvider = ChangeNotifierProvider<LocaleProvider>(

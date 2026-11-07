@@ -1,3 +1,4 @@
+import '../entities/album.dart';
 import '../entities/artist.dart';
 import '../entities/track.dart';
 
@@ -17,6 +18,16 @@ abstract interface class LibraryRepository {
   void registerAlbumTrackCount(String albumId, int count);
   int getAlbumTracksCount(String albumId);
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0});
+
+  /// Asks [fetchAlbum] for the song count of the [albums] with listened
+  /// songs and no known count, once per album per session, so they can be
+  /// judged complete. Cheap enough to call from build.
+  void ensureAlbumTrackCounts(Iterable<Album> albums,
+      Future<Album?> Function(String albumId) fetchAlbum);
+
+  /// The same for the most recently listened albums, wherever they are.
+  void ensureRecentAlbumTrackCounts(
+      Future<Album?> Function(String albumId) fetchAlbum);
 
   bool isFavoriteTrack(String trackId);
   Future<void> toggleFavoriteTrack(Track track);

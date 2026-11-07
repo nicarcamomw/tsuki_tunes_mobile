@@ -10,19 +10,17 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/release_radar_service.dart';
-import '../../data/datasources/streak_reminder.dart';
-import '../../data/datasources/time_machine_service.dart';
-import '../../data/repositories/library_repository_impl.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/album_progress.dart';
 import '../../domain/entities/artist.dart';
+import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/radar_release.dart';
+import '../../domain/entities/top_artist.dart';
 import '../../domain/logic/completion_recommendations.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
@@ -59,7 +57,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController scrollController = ScrollController();
-  final DeezerApiService _api = DeezerApiService();
+  // Read once: dispose can't use ref.
+  late final _radar = ref.read(releaseRadarProvider);
   List<Artist> _featuredArtists = [];
   List<Album> _latestReleases = [];
   List<_TopArtistDisplay> _topArtistsDisplay = [];
@@ -82,18 +81,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
     _refreshDailyDone();
-    ReleaseRadarService().openRequests.addListener(_openRadarIfRequested);
+    _radar.openRequests.addListener(_openRadarIfRequested);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _openRadarIfRequested());
   }
 
   void _openRadarIfRequested() {
     if (!mounted) return;
-    final payload = ReleaseRadarService().consumePendingOpen();
+    final payload = _radar.consumePendingOpen();
     if (payload == null) return;
-    if (payload == TimeMachineService.payload) {
+    if (payload == NotificationPayloads.timeMachine) {
       unawaited(const TimeMachineRoute().push(context));
-    } else if (payload == StreakReminder.payload) {
+    } else if (payload == NotificationPayloads.streak) {
       unawaited(StreakScreen.open(context));
     } else {
       unawaited(const ReleaseRadarRoute().push(context));
@@ -102,7 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
-    ReleaseRadarService().openRequests.removeListener(_openRadarIfRequested);
+    _radar.openRequests.removeListener(_openRadarIfRequested);
     if (NavigationEvents.onHomeScrollToTop == scrollToTop) {
       NavigationEvents.onHomeScrollToTop = null;
     }
@@ -139,7 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _completionSeedKey = null;
     });
     try {
-      final featured = await _api.getFeaturedArtists();
+      final featured = await ref.read(musicCatalogProvider).getFeaturedArtists();
       if (!mounted) return;
 
       final library = ref.read(libraryProvider);
@@ -151,9 +150,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (topEntries.isNotEmpty) {
         topDisplay = await _fetchTopArtistPictures(topEntries);
         if (!mounted) return;
-        releases = await _loadLatestFromTopArtists(topDisplay);
+        releases = await ref.read(getLatestReleasesProvider)([
+          for (final t in topDisplay)
+            if (t.artist != null) t.artist!,
+        ]);
       } else if (featured.isNotEmpty) {
-        releases = await _loadLatestFromFeatured(featured);
+        releases =
+            await ref.read(getLatestReleasesProvider)(featured.take(6).toList());
       }
       if (!mounted) return;
 
@@ -176,137 +179,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<List<_TopArtistDisplay>> _fetchTopArtistPictures(List<TopArtistEntry> entries) async {
-    return await Future.wait(entries.map((entry) async {
-      try {
-        final results = await _api.searchArtists(entry.name, limit: 3);
-        Artist? matched;
-        for (final a in results) {
-          if (a.name.toLowerCase() == entry.name.toLowerCase()) {
-            matched = a;
-            break;
-          }
-        }
-        matched ??= results.isNotEmpty ? results.first : null;
-        return _TopArtistDisplay(entry: entry, artist: matched);
-      } catch (e) {
-        _log.severe('fetchTopArtistPictures error: $e');
-        return _TopArtistDisplay(entry: entry, artist: null);
-      }
-    }));
-  }
-
-  Future<List<Album>> _loadLatestFromTopArtists(List<_TopArtistDisplay> tops) async {
-    final validTops = tops.take(10).where((t) => t.artist != null).toList();
-    final cutoff = DateTime.now().subtract(const Duration(days: 365));
-    final results = await Future.wait(validTops.map((top) async {
-      try {
-        final artistAlbums = await _api.getArtistAlbums(top.artist!.id);
-        if (artistAlbums.isEmpty) return <Album>[];
-        return artistAlbums.map((a) {
-          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
-          final needsId = a.artistId.isEmpty;
-          if (needsName || needsId) {
-            return a.copyWith(
-              artistName: needsName ? top.entry.name : a.artistName,
-              artistId: needsId ? top.artist!.id : a.artistId,
-            );
-          }
-          return a;
-        }).toList();
-      } catch (e) {
-        _log.severe('loadLatestFromTopArtists error for ${top.entry.name}: $e');
-        return <Album>[];
-      }
-    }));
-
-    final allAlbums = <Album>[];
-    final seenIds = <String>{};
-    for (final albumList in results) {
-      for (final album in albumList) {
-        if (!seenIds.contains(album.id) && album.releaseDate.isNotEmpty) {
-          final parsed = DateTime.tryParse(album.releaseDate);
-          if (parsed != null && parsed.isAfter(cutoff)) {
-            seenIds.add(album.id);
-            allAlbums.add(album);
-          }
-        }
-      }
-    }
-
-    allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-    return allAlbums.take(15).toList();
-  }
-
-  Future<List<Album>> _loadLatestFromFeatured(List<Artist> featured) async {
-    final cutoff = DateTime.now().subtract(const Duration(days: 365));
-    final results = await Future.wait(featured.take(6).map((artist) async {
-      try {
-        final artistAlbums = await _api.getArtistAlbums(artist.id);
-        if (artistAlbums.isEmpty) return <Album>[];
-        return artistAlbums.map((a) {
-          final needsName = a.artistName == 'Unknown Artist' || a.artistName.isEmpty;
-          final needsId = a.artistId.isEmpty;
-          if (needsName || needsId) {
-            return a.copyWith(
-              artistName: needsName ? artist.name : a.artistName,
-              artistId: needsId ? artist.id : a.artistId,
-            );
-          }
-          return a;
-        }).toList();
-      } catch (e) {
-        _log.severe('loadLatestFromFeatured error: $e');
-        return <Album>[];
-      }
-    }));
-
-    final allAlbums = <Album>[];
-    final seenIds = <String>{};
-    for (final albumList in results) {
-      for (final album in albumList) {
-        if (!seenIds.contains(album.id) && album.releaseDate.isNotEmpty) {
-          final parsed = DateTime.tryParse(album.releaseDate);
-          if (parsed != null && parsed.isAfter(cutoff)) {
-            seenIds.add(album.id);
-            allAlbums.add(album);
-          }
-        }
-      }
-    }
-
-    allAlbums.sort((a, b) => b.releaseDate.compareTo(a.releaseDate));
-    return allAlbums.take(15).toList();
+  /// Each top artist (the library knows names) with their catalog entry,
+  /// for the picture and to open them; null when not found.
+  Future<List<_TopArtistDisplay>> _fetchTopArtistPictures(List<TopArtistEntry> entries) {
+    final find = ref.read(findArtistByNameProvider);
+    return Future.wait(entries.map((entry) async =>
+        _TopArtistDisplay(entry: entry, artist: await find(entry.name))));
   }
 
   Future<void> _loadPersonalizedRecommendations(List<_TopArtistDisplay> tops) async {
-    final seeds = tops.where((t) => t.artist != null).take(3).toList();
-    if (seeds.isEmpty) return;
-    final topIds = tops.map((t) => t.artist?.id).whereType<String>().toSet();
-    final all = <Artist>[];
-    final seenIds = <String>{...topIds};
-    for (final seed in seeds) {
-      try {
-        final related = await _api.getRelatedArtists(seed.artist!.id, limit: 10);
-        for (final a in related) {
-          if (seenIds.add(a.id)) all.add(a);
-        }
-      } catch (_) {}
-    }
-    if (mounted && all.isNotEmpty) {
-      setState(() => _recommendedArtists = all.take(15).toList());
+    final found = [for (final t in tops) if (t.artist != null) t.artist!];
+    if (found.isEmpty) return;
+    final similar = await ref.read(getSimilarArtistsProvider)(
+      found.take(3).toList(),
+      exclude: {for (final a in found) a.id},
+    );
+    if (mounted && similar.isNotEmpty) {
+      setState(() => _recommendedArtists = similar);
     }
   }
 
   /// The completed albums that seed the "because you completed" rows.
-  static String _completionSeedKeyOf(LibraryRepositoryImpl l) =>
-      l.completedAlbums(limit: 6).map((a) => a.albumId).join(',');
+  static String _completionSeedKeyOf(List<AlbumProgress> completed) =>
+      completed.map((a) => a.albumId).join(',');
 
   /// "Because you completed X": artists similar to the ones behind the
   /// latest completed albums that the user has not listened to yet.
   Future<void> _loadCompletionRecommendations() async {
     final library = ref.read(libraryProvider);
-    final key = _completionSeedKeyOf(library);
+    final key = _completionSeedKeyOf(library.completedAlbums(limit: 6));
     _completionSeedKey = key;
     final load = ++_completionLoad;
     final completed = library.completedAlbums(limit: 6);
@@ -318,9 +219,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       for (final t in library.listenedTracks)
         for (final a in t.artists) a.toLowerCase(),
     };
+    final catalog = ref.read(musicCatalogProvider);
     final rows = await CompletionRecommendations(
-      findArtist: _findArtistByName,
-      relatedArtists: (id) => _api.getRelatedArtists(id, limit: 20),
+      findArtist: ref.read(findArtistByNameProvider).call,
+      relatedArtists: (id) => catalog.getRelatedArtists(id, limit: 20),
     ).build(
       completed: completed,
       knownArtistNames: known,
@@ -333,20 +235,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _completionRecs = rows);
   }
 
-  /// The Deezer artist with exactly [name], else the first result.
-  Future<Artist?> _findArtistByName(String name) async {
-    final results = await _api.searchArtists(name, limit: 3);
-    for (final a in results) {
-      if (a.name.toLowerCase() == name.toLowerCase()) return a;
-    }
-    return results.isNotEmpty ? results.first : null;
-  }
-
   @override
   Widget build(BuildContext context) {
     // Completing (or un-completing) an album changes the seeds: rebuild
     // the "because you completed" rows once the home has loaded.
-    ref.listen<String>(libraryProvider.select(_completionSeedKeyOf),
+    ref.listen<String>(
+        libraryProvider.select(
+            (l) => _completionSeedKeyOf(l.completedAlbums(limit: 6))),
         (_, next) {
       if (_completionSeedKey != null && next != _completionSeedKey) {
         unawaited(_loadCompletionRecommendations());
@@ -470,7 +365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: EcoLocked(feature: EcoFeature.timeMachine, child: TimeMachineEntryCard()),
                 ),
 
-              if (isLoggedIn && ReleaseRadarService.isSupported)
+              if (isLoggedIn && ref.watch(releaseRadarSupportedProvider))
                 SliverToBoxAdapter(
                   child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
                 ),
@@ -683,21 +578,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _openArtist(artist);
       return;
     }
-    final entry = top.entry;
-    try {
-      final results = await _api.searchArtists(entry.name, limit: 3);
-      Artist? matched;
-      for (final a in results) {
-        if (a.name.toLowerCase() == entry.name.toLowerCase()) {
-          matched = a;
-          break;
-        }
-      }
-      matched ??= results.isNotEmpty ? results.first : null;
-      if (mounted && matched != null) _openArtist(matched);
-    } catch (e) {
-      _log.warning('retry artist search for ${entry.name}: $e');
-    }
+    final matched = await ref.read(findArtistByNameProvider)(top.entry.name);
+    if (mounted && matched != null) _openArtist(matched);
   }
 
   List<Widget> _buildLatestReleasesSlivers(LocaleProvider locale) {

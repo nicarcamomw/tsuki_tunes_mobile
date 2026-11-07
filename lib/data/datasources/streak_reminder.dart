@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../domain/entities/notification_payloads.dart';
 import 'release_radar_service.dart';
 
 /// The daily streak's one quiet reminder: at [hour] on the first day
@@ -19,7 +20,7 @@ class StreakReminder {
 
   static const String enabledKey = 'tsuki_streak_reminder';
   static const int notificationId = 7103;
-  static const String payload = 'streak';
+  static const String payload = NotificationPayloads.streak;
   static const int hour = 20;
   static const int minStreak = 2;
 

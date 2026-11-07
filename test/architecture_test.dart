@@ -14,19 +14,12 @@ import 'package:path/path.dart' as p;
 /// Deezer catalog) instead of a use case. Known debt: this list may only
 /// shrink. A new screen or widget must go through the domain.
 const _presentationToDataDebt = {
-  'presentation/screens/album_detail_screen.dart',
-  'presentation/screens/artist_detail_screen.dart',
-  'presentation/screens/artist_discography_screen.dart',
   'presentation/screens/expanded_player_screen.dart',
   'presentation/screens/guess_song_screen.dart',
-  'presentation/screens/home_screen.dart',
-  'presentation/screens/library_screen.dart',
   'presentation/screens/main_navigation_screen.dart',
   'presentation/screens/onboarding/onboarding_screen.dart',
-  'presentation/screens/playlist_detail_screen.dart',
   'presentation/screens/rabbit_hole_screen.dart',
   'presentation/screens/release_radar_screen.dart',
-  'presentation/screens/search_screen.dart',
   'presentation/screens/time_machine_screen.dart',
   'presentation/screens/wrapped_screen.dart',
   'presentation/widgets/battery_guide_sheet.dart',

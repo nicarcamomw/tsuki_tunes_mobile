@@ -3,6 +3,9 @@ import '../entities/track.dart';
 
 /// The user's playlists. Writes need a signed-in (or local guest) account.
 abstract interface class PlaylistRepository {
+  /// Longest playlist name kept; longer ones are cut.
+  static const int maxNameLength = 100;
+
   List<Playlist> get playlists;
 
   /// Null when it couldn't be created (empty name, no account).
