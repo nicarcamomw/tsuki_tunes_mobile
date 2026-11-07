@@ -218,7 +218,7 @@ Las métricas diarias del dashboard están en `Documentos/dashboard_bigquery.sql
 
 1. **Exportar Analytics a BigQuery:** Consola de Firebase → Configuración del proyecto → Integraciones → BigQuery → Vincular. Marcar "Firebase Analytics" y "Crashlytics". Los datos empiezan a llegar al día siguiente.
 2. **Registrar dimensiones personalizadas en GA4:** En la consola de GA4 → Configurar → Definiciones personalizadas, crear `mode`, `reason`, `album_id`, `artist_id` como dimensiones de evento. Sin esto, BigQuery tiene los datos pero GA4 no deja filtrar por ellos en sus reportes nativos.
-3. **Crear el dashboard en Looker Studio:** Conectar cada query de `dashboard_bigquery.sql` como fuente de datos (reemplazar `PROJECT` y `PROPERTY_ID`). El rango de fechas se controla con un filtro de Looker Studio.
+3. **Crear el dashboard en Looker Studio:** Conectar cada query de `dashboard_bigquery.sql` como fuente de datos (ya apuntan a `tsuki-tunes-web` y `analytics_561936962`). Exportación solo **diaria** (la de transmisión cobra) y vencimiento de tablas de 365 días en ambos datasets, para quedar en lo gratis. El rango de fechas se controla con un filtro de Looker Studio.
 
 ## Feature flags (Remote Config)
 

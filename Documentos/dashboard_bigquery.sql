@@ -10,7 +10,8 @@
 -- Crashlytics → BigQuery se activa en la misma sección.  Los datos caen
 -- en `<project>.firebase_crashlytics.*`.
 --
--- Reemplaza PROJECT y PROPERTY_ID con los valores reales del proyecto.
+-- Ya apuntan al proyecto real: tsuki-tunes-web, dataset analytics_561936962
+-- (exportación diaria, región US). Para otro proyecto, cambiar esos dos.
 -- En Looker Studio, cada consulta se agrega como fuente de datos
 -- "Consulta personalizada de BigQuery".
 -- =========================================================================
@@ -26,7 +27,7 @@ SELECT
   event_date,
   COUNT(DISTINCT user_pseudo_id) AS dau
 FROM
-  `PROJECT.analytics_PROPERTY_ID.events_*`
+  `tsuki-tunes-web.analytics_561936962.events_*`
 WHERE
   -- Últimos 90 días; en Looker Studio se reemplaza por el filtro de fecha.
   _TABLE_SUFFIX BETWEEN
@@ -62,7 +63,7 @@ FROM (
        FROM UNNEST(event_params)
       WHERE key = 'mode')                    AS mode
   FROM
-    `PROJECT.analytics_PROPERTY_ID.events_*`
+    `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE
     event_name = 'play_start'
     AND _TABLE_SUFFIX BETWEEN
@@ -87,7 +88,7 @@ WITH dau AS (
     event_date,
     COUNT(DISTINCT user_pseudo_id)           AS active_users
   FROM
-    `PROJECT.analytics_PROPERTY_ID.events_*`
+    `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE
     _TABLE_SUFFIX BETWEEN
       FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY))
@@ -100,7 +101,7 @@ crashes AS (
     FORMAT_DATE('%Y%m%d', event_timestamp)   AS event_date,
     COUNT(DISTINCT installation_uuid)        AS crashed_users
   FROM
-    `PROJECT.firebase_crashlytics.com_tsuki_tsuki_tunes_mobile_ANDROID`
+    `tsuki-tunes-web.firebase_crashlytics.com_tsuki_tsuki_tunes_mobile_ANDROID`
   WHERE
     event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 90 DAY)
     AND is_fatal = TRUE
@@ -140,7 +141,7 @@ FROM (
        FROM UNNEST(event_params)
       WHERE key = 'reason')                  AS reason
   FROM
-    `PROJECT.analytics_PROPERTY_ID.events_*`
+    `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE
     event_name = 'spotify_fallback'
     AND _TABLE_SUFFIX BETWEEN
@@ -162,7 +163,7 @@ ORDER BY
 
 WITH plays AS (
   SELECT DISTINCT user_pseudo_id
-  FROM `PROJECT.analytics_PROPERTY_ID.events_*`
+  FROM `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE event_name = 'play_start'
     AND _TABLE_SUFFIX BETWEEN
       FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
@@ -170,7 +171,7 @@ WITH plays AS (
 ),
 listened AS (
   SELECT DISTINCT user_pseudo_id
-  FROM `PROJECT.analytics_PROPERTY_ID.events_*`
+  FROM `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE event_name = 'track_listened'
     AND _TABLE_SUFFIX BETWEEN
       FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
@@ -178,7 +179,7 @@ listened AS (
 ),
 completed AS (
   SELECT DISTINCT user_pseudo_id
-  FROM `PROJECT.analytics_PROPERTY_ID.events_*`
+  FROM `tsuki-tunes-web.analytics_561936962.events_*`
   WHERE event_name = 'album_completed'
     AND _TABLE_SUFFIX BETWEEN
       FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
