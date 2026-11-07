@@ -165,6 +165,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   Timer? _spotifyRecheckTimer;
   int _spotifyRechecks = 0;
   int _spotifyRecheckGen = -1;
+
+  /// App Remote's link dropped while Spotify plays ours (Android does it
+  /// in the background): tries to get it back, a few times, spaced out.
+  Timer? _appRemoteReconnectTimer;
+  int _appRemoteReconnects = 0;
   bool _spotifyQueueBroken = false;
   bool _spotifyListStale = false;
 
@@ -723,8 +728,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       await BpmService.shared.gainFor(track.id);
       if (_currentTrack?.id == track.id) _service.refreshLoudness(track);
     }
-    for (final next in upcomingTracks.take(3)) {
-      await BpmService.shared.gainFor(next.id);
+    // The next ones in play order (shuffle's picks too), not the list's.
+    for (final i in _q.peekUpcoming(3)) {
+      await BpmService.shared.gainFor(_q.tracks[i].id);
     }
   }
 
@@ -958,12 +964,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       // than 3 s: loading may renew the token over a slow network.
       await _spotifyReady.timeout(const Duration(seconds: 3), onTimeout: () {});
       if (gen != _playGeneration) return;
-      track = await _withFreshPreview(track);
-      if (gen != _playGeneration) return;
 
       if (_useSpotify) {
+        // Spotify plays its own copy: the preview's signed link (stale after
+        // a few hours in playlists, history or a saved queue) is renewed
+        // only if it falls back to the preview, not before every start.
         await _playViaSpotify(track);
       } else {
+        track = await _withFreshPreview(track);
+        if (gen != _playGeneration) return;
         try {
           await _service.playTrack(track);
         } catch (e) {
@@ -1214,6 +1223,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _q.resetNavigation();
     _spotifyListTimer?.cancel();
     _spotifyRecheckTimer?.cancel();
+    _appRemoteReconnectTimer?.cancel();
     _spotifyListStale = false;
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
@@ -1911,6 +1921,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
     _spotifyRecheckTimer?.cancel();
+    _appRemoteReconnectTimer?.cancel();
     _unplugSub?.cancel();
     _screenSub?.cancel();
     _posSub?.cancel();

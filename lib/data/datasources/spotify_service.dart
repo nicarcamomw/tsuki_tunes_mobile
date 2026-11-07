@@ -1102,6 +1102,23 @@ class SpotifyService {
     return null;
   }
 
+  /// Puts [uri] in Spotify's queue (after what's queued already), on the
+  /// device playing. For when App Remote's link is down.
+  Future<bool> addToQueue(String uri) async {
+    await _ensureValidToken();
+    if (_accessToken == null) return false;
+    try {
+      final response = await _post(
+        Uri.parse('https://api.spotify.com/v1/me/player/queue?uri=${Uri.encodeQueryComponent(uri)}'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+      return response.statusCode == 204 || response.statusCode == 200;
+    } catch (e) {
+      _log.warning('Spotify queue (Web API) failed: $e');
+      return false;
+    }
+  }
+
   /// The song Spotify plays next if its "next" is pressed (the first of
   /// its queue, autoplay included), or null when unknown.
   Future<String?> nextInQueue() async {
