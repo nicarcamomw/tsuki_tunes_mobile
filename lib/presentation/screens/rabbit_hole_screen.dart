@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
-import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -95,7 +94,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     with TickerProviderStateMixin {
   static const String _hintPrefKey = 'rabbit_hole_hint_seen';
 
-  final DeezerApiService _api = DeezerApiService();
+  late final _api = ref.read(musicCatalogProvider);
   final Random _rng = Random();
   final Map<String, _GraphNode> _nodes = {};
   final List<_GraphEdge> _edges = [];

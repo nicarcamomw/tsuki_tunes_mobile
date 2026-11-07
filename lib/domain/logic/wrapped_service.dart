@@ -1,7 +1,7 @@
-import '../../domain/entities/album.dart';
-import '../../domain/entities/play_day.dart';
-import '../../domain/entities/wrapped_data.dart';
-import '../repositories/library_repository_impl.dart';
+import '../entities/album.dart';
+import '../entities/listened_track.dart';
+import '../entities/play_day.dart';
+import '../entities/wrapped_data.dart';
 
 class WrappedService {
   static final WrappedService _instance = WrappedService._internal();

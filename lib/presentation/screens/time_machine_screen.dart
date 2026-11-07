@@ -8,10 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../data/datasources/deezer_api_service.dart';
-import '../../data/datasources/release_radar_service.dart';
-import '../../data/datasources/time_machine_service.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/time_machine.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -28,7 +26,7 @@ class TimeMachineScreen extends ConsumerStatefulWidget {
 }
 
 class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
-  final TimeMachineService _service = TimeMachineService();
+  late final _service = ref.read(timeMachineProvider);
   final Random _rng = Random();
 
   _Period _period = _Period.year;
@@ -43,7 +41,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   @override
   void initState() {
     super.initState();
-    _anchor = TimeMachineService.yearsAgo(DateTime.now(), 1);
+    _anchor = TimeMachine.yearsAgo(DateTime.now(), 1);
     _load();
     _service.notificationsEnabled().then((v) {
       if (mounted) setState(() => _notify = v);
@@ -70,15 +68,15 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
     DateTime? anchor;
     switch (period) {
       case _Period.year:
-        anchor = TimeMachineService.yearsAgo(now, 1);
+        anchor = TimeMachine.yearsAgo(now, 1);
       case _Period.sixMonths:
-        anchor = TimeMachineService.monthsAgo(now, 6);
+        anchor = TimeMachine.monthsAgo(now, 6);
       case _Period.month:
-        anchor = TimeMachineService.monthsAgo(now, 1);
+        anchor = TimeMachine.monthsAgo(now, 1);
       case _Period.week:
         anchor = now.subtract(const Duration(days: 7));
       case _Period.random:
-        final dates = TimeMachineService.datesWithHistory(
+        final dates = TimeMachine.datesWithHistory(
           ref.read(libraryProvider).listenedTracks,
           now.subtract(const Duration(days: 7)),
         );
@@ -103,7 +101,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
     final strings = ref.read(stringsProvider);
 
     // History may lack a preview URL (older entries): fetch those fresh.
-    final api = DeezerApiService();
+    final api = ref.read(musicCatalogProvider);
     final resolved = await Future.wait(moment.tracks.map((t) async {
       if (t.track.previewUrl.isNotEmpty) return t.track;
       final fresh = await api.getTrack(t.track.id);
@@ -246,7 +244,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                 ),
               ),
             ),
-          if (ReleaseRadarService.isSupported)
+          if (ref.watch(releaseRadarSupportedProvider))
             Container(
               margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
               decoration: BoxDecoration(
@@ -739,9 +737,9 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
     if (_requested) return;
     _requested = true;
     final library = ref.read(libraryProvider);
-    final service = TimeMachineService();
+    final service = ref.read(timeMachineProvider);
     service
-        .load(library, TimeMachineService.yearsAgo(DateTime.now(), 1))
+        .load(library, TimeMachine.yearsAgo(DateTime.now(), 1))
         .then((m) {
       if (mounted) setState(() => _moment = m);
     });

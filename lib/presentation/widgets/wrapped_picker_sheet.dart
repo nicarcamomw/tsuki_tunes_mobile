@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/wrapped_service.dart';
+import '../../domain/logic/wrapped_service.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/app_providers.dart';
 import 'swipeable_sheet.dart';

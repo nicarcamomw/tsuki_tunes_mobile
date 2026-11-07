@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/release_radar_service.dart';
 import '../../domain/entities/radar_release.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -24,7 +23,7 @@ class ReleaseRadarScreen extends ConsumerStatefulWidget {
 
 class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
     with WidgetsBindingObserver {
-  final ReleaseRadarService _radar = ReleaseRadarService();
+  late final _radar = ref.read(releaseRadarProvider);
   bool? _permission;
 
   @override

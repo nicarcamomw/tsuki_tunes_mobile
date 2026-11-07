@@ -231,9 +231,10 @@ void _showSongOptionsSheet(
   required VoidCallback onOpenAlbum,
 }) {
   final strings = locale.strings;
+  final bpmService = ProviderScope.containerOf(context).read(bpmProvider);
   // Not asked yet (e.g. playing through Spotify): ask now, the row shows
   // up when the answer arrives.
-  unawaited(BpmService.shared.ensure(track.id));
+  unawaited(bpmService.ensure(track.id));
 
   Widget optionTile({
     required IconData icon,
@@ -368,9 +369,9 @@ void _showSongOptionsSheet(
               const SizedBox(height: 8),
               // BPM info
               ValueListenableBuilder<int>(
-                valueListenable: BpmService.shared.revision,
+                valueListenable: bpmService.revision,
                 builder: (_, __, ___) {
-                  final bpm = BpmService.shared.cached(track.id);
+                  final bpm = bpmService.cached(track.id);
                   if (bpm == null) return const SizedBox.shrink();
                   return optionTile(
                     icon: Icons.speed,

@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
-import '../../data/datasources/deezer_api_service.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/artist_names.dart';
@@ -55,7 +54,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   static const _minLibrarySize = 5;
   static const _revealSeconds = 30;
 
-  final _api = DeezerApiService();
+  late final _api = ref.read(musicCatalogProvider);
   final _player = AudioPlayer();
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();

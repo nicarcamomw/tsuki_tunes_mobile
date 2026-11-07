@@ -10,7 +10,6 @@ import '../../core/logger.dart';
 import '../../data/datasources/deezer_api_service.dart';
 import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/weather_service.dart';
-import '../../data/datasources/wrapped_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/play_day.dart';
@@ -20,6 +19,7 @@ import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/eco_levels.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
+import '../../domain/logic/wrapped_service.dart';
 import '../../domain/lore/tsuki_lore.dart';
 
 export '../../domain/entities/oni_mask.dart';

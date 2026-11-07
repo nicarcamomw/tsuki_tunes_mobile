@@ -24,4 +24,18 @@ abstract interface class MusicCatalog implements CatalogRepository {
 
   /// The same songs with every artist of each collaboration.
   Future<List<Track>> enrichTracksWithContributors(List<Track> tracks);
+
+  /// A song by id; [forceRefresh] skips the cache (a fresh preview URL).
+  @override
+  Future<Track?> getTrack(String trackId, {bool forceRefresh = false});
+
+  /// The worldwide top songs, a long list (games, mixes).
+  Future<List<Track>> getLargeChartTracks();
+
+  /// Song search that keeps little-known songs, for looking up one in
+  /// particular. Throws when the catalog can't be reached.
+  Future<List<Track>> searchTracksUnfiltered(String query, {int limit = 25});
+
+  /// Warms the cache of these artists' similar artists, one at a time.
+  Future<void> prefetchRelatedArtists(Iterable<String> artistIds);
 }

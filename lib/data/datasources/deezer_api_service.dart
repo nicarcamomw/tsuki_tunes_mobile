@@ -301,6 +301,7 @@ class DeezerApiService
 
   /// Like [searchTracks] but keeps low-rank tracks, for when the user is
   /// looking for one specific song (e.g. a guess in the guess-the-song game).
+  @override
   Future<List<Track>> searchTracksUnfiltered(String query, {int limit = 25}) =>
       _searchTracks(query, limit: limit, dropUnpopular: false);
 
@@ -378,6 +379,7 @@ class DeezerApiService
 
   /// Top 100 global tracks; the guess-the-song game needs a bigger pool than
   /// the home chart.
+  @override
   Future<List<Track>> getLargeChartTracks() async {
     const cacheKey = 'chart_tracks_large';
     final cached = await _getFromCache<List<Track>>(cacheKey);
@@ -733,6 +735,7 @@ class DeezerApiService
 
   /// Warms the cache for [artistIds] one at a time, so the next tap on any
   /// of them answers instantly without bursting Deezer's rate limit.
+  @override
   Future<void> prefetchRelatedArtists(Iterable<String> artistIds) async {
     for (final id in artistIds) {
       if (_getCached<List<Artist>>('artist_related_$id') != null) continue;

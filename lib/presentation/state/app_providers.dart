@@ -17,6 +17,7 @@ import '../../data/datasources/storage_service.dart';
 import '../../data/datasources/streak_reminder.dart';
 import '../../data/datasources/style_service.dart';
 import '../../data/datasources/tile_channel_service.dart';
+import '../../data/datasources/time_machine_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
@@ -79,6 +80,15 @@ final releaseRadarProvider = Provider((ref) => ReleaseRadarService());
 /// Whether this platform runs the release radar (Android and iOS).
 final releaseRadarSupportedProvider =
     Provider<bool>((ref) => ReleaseRadarService.isSupported);
+
+/// "A year ago today": its moments, schedule and notification setting.
+final timeMachineProvider = Provider((ref) => TimeMachineService());
+
+/// Song tempos (BPM), fetched and cached for the player and the flows.
+final bpmProvider = Provider((ref) => BpmService.shared);
+
+/// The battery guide offered on phones that freeze Spotify.
+final batteryGuideProvider = Provider((ref) => BatteryGuide.instance);
 
 final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
 

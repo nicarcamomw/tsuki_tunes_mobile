@@ -14,14 +14,6 @@ import 'package:path/path.dart' as p;
 /// Deezer catalog) instead of a use case. Known debt: this list may only
 /// shrink. A new screen or widget must go through the domain.
 const _presentationToDataDebt = {
-  'presentation/screens/expanded_player_screen.dart',
-  'presentation/screens/guess_song_screen.dart',
-  'presentation/screens/main_navigation_screen.dart',
-  'presentation/screens/onboarding/onboarding_screen.dart',
-  'presentation/screens/rabbit_hole_screen.dart',
-  'presentation/screens/release_radar_screen.dart',
-  'presentation/screens/time_machine_screen.dart',
-  'presentation/screens/wrapped_screen.dart',
   'presentation/widgets/battery_guide_sheet.dart',
   'presentation/widgets/flow_sheet.dart',
   'presentation/widgets/language_selector_sheet.dart',
@@ -34,7 +26,6 @@ const _presentationToDataDebt = {
   'presentation/widgets/sky_line.dart',
   'presentation/widgets/voice_search_sheet.dart',
   'presentation/widgets/weather_sheet.dart',
-  'presentation/widgets/wrapped_picker_sheet.dart',
 };
 
 /// Packages the domain may use: annotations for the generated JSON and

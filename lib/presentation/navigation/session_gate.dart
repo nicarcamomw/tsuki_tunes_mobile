@@ -107,7 +107,10 @@ class SessionGate extends ChangeNotifier {
     }));
   }
 
-  /// The first-run tutorial ended (it saved the flag itself).
+  /// Remembers on this phone that the tutorial was seen.
+  Future<void> saveOnboardingDone() => _storage.setCompletedOnboarding(true);
+
+  /// The first-run tutorial ended (after [saveOnboardingDone]).
   void onboardingCompleted() {
     _onboardingDone = true;
     _sync();

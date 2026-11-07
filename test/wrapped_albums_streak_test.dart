@@ -2,11 +2,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsuki_tunes_mobile/data/datasources/wrapped_service.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/play_day.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/wrapped_service.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/wrapped/story_image.dart';
 
 PlayDayTrack _song(String id, String album) => PlayDayTrack(

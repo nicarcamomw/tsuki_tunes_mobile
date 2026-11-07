@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../data/datasources/battery_guide.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
@@ -76,7 +75,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     _tabNotifier.addListener(_updateCanPop);
     shellNavigatorObserver.onNavigationChanged = _updateCanPop;
     NavigationEvents.switchTab = _switchToTab;
-    unawaited(BatteryGuide.instance.load());
+    unawaited(ref.read(batteryGuideProvider).load());
   }
 
   void _switchToTab(int index) {
@@ -139,7 +138,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownError = spotifyError;
       // On phones known to freeze Spotify, a failed start comes with a guide
       // to let it run in the background.
-      final offerBatteryGuide = BatteryGuide.instance.offerFor(spotifyError);
+      final offerBatteryGuide = ref.read(batteryGuideProvider).offerFor(spotifyError);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

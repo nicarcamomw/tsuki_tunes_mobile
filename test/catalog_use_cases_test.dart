@@ -110,7 +110,17 @@ class _Catalog implements MusicCatalog {
   Future<Artist?> getArtist(String id) async => null;
 
   @override
-  Future<Track?> getTrack(String trackId) async => null;
+  Future<Track?> getTrack(String trackId, {bool forceRefresh = false}) async => null;
+
+  @override
+  Future<List<Track>> getLargeChartTracks() async => const [];
+
+  @override
+  Future<List<Track>> searchTracksUnfiltered(String query, {int limit = 25}) async =>
+      const [];
+
+  @override
+  Future<void> prefetchRelatedArtists(Iterable<String> artistIds) async {}
 }
 
 void main() {

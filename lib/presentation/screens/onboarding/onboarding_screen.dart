@@ -9,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
-import '../../../data/datasources/storage_service.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
@@ -89,7 +88,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (_isCompleting) return;
     _isCompleting = true;
 
-    await StorageService().setCompletedOnboarding(true);
+    await ref.read(sessionGateProvider).saveOnboardingDone();
     if (!mounted) return;
 
     if (widget.onComplete != null) {
