@@ -15,6 +15,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 
 enum _Period { year, sixMonths, month, week, random }
 
@@ -212,7 +213,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _loading
-                ? const SizedBox(key: ValueKey('loading'), height: 220)
+                ? const _MomentSkeleton(key: ValueKey('loading'))
                 : moment == null
                     ? _Nothing(
                         key: const ValueKey('nothing'),
@@ -830,4 +831,40 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
       ),
     );
   }
+}
+
+/// The moment being looked up: its badges, headline and song card.
+class _MomentSkeleton extends StatelessWidget {
+  const _MomentSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) => const SkeletonScope(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    SkeletonLoader(width: 84, height: 22, borderRadius: 11),
+                    SizedBox(width: 8),
+                    SkeletonLoader(width: 70, height: 22, borderRadius: 11),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: SkeletonLine(factor: 0.7, height: 18),
+              ),
+              SizedBox(height: 14),
+              SkeletonLoader(height: 132, borderRadius: 8),
+              SizedBox(height: 12),
+              SkeletonLoader(height: 46, borderRadius: 23),
+            ],
+          ),
+        ),
+      );
 }

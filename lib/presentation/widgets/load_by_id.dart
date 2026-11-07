@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
+import 'skeleton_loader.dart';
 
 /// A page opened with only an id (a deep link): shows [initial] right away
 /// when the caller already had the object, otherwise loads it, and says so
@@ -51,10 +52,10 @@ class _LoadByIdState<T extends Object> extends ConsumerState<LoadById<T>> {
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-      body: Center(
-        child: _loading
-            ? const CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)
-            : Column(
+      body: _loading
+          ? const SkeletonDetailPage()
+          : Center(
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.link_off_rounded, color: AppColors.textMuted, size: 40),

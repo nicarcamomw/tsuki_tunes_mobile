@@ -359,6 +359,7 @@
   "a11yNext": "Next track",
   "a11yShuffleOn": "Shuffle on",
   "a11yShuffleOff": "Shuffle off",
+  "a11yLoading": "Loading",
   "a11yMarkListened": "Mark track as listened",
   "a11yUnmarkListened": "Unmark track",
   "a11yShowStats": "Show statistics",

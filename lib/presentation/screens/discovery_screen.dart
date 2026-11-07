@@ -17,6 +17,7 @@ import '../state/discovery_controller.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 
 final _log = Log.named('DiscoveryScreen');
 
@@ -151,12 +152,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
     Widget body;
     if (top == null && (deck.loading || !deck.exhausted)) {
-      body = _Message(
-        locale: locale,
-        icon: Icons.travel_explore_rounded,
-        text: strings.discoveryLoading,
-        busy: true,
-      );
+      body = _CardSkeleton(label: strings.discoveryLoading);
     } else if (top == null) {
       body = _Message(
         locale: locale,
@@ -436,14 +432,12 @@ class _Message extends StatelessWidget {
     required this.locale,
     required this.icon,
     required this.text,
-    this.busy = false,
     this.action,
     this.onAction,
   });
   final LocaleProvider locale;
   final IconData icon;
   final String text;
-  final bool busy;
   final String? action;
   final VoidCallback? onAction;
 
@@ -454,11 +448,7 @@ class _Message extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (busy)
-                const SizedBox(
-                    width: 34, height: 34, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2.4))
-              else
-                Icon(icon, size: 44, color: AppColors.textMuted),
+              Icon(icon, size: 44, color: AppColors.textMuted),
               const SizedBox(height: 16),
               Text(text,
                   textAlign: TextAlign.center,
@@ -473,6 +463,49 @@ class _Message extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      );
+}
+
+/// The next card being dealt: its shape, with the title's lines on it.
+class _CardSkeleton extends StatelessWidget {
+  const _CardSkeleton({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => SkeletonScope(
+        label: label,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 0.72,
+              child: Stack(
+                children: [
+                  const Positioned.fill(child: SkeletonLoader(height: double.infinity, borderRadius: 18)),
+                  // Lighter lines where the title and artist will be.
+                  Positioned(
+                    left: 18,
+                    right: 18,
+                    bottom: 22,
+                    child: SkeletonScope(
+                      label: label,
+                      onImage: true,
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonLine(factor: 0.7, height: 22),
+                          SizedBox(height: 8),
+                          SkeletonLine(factor: 0.45, height: 14),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );

@@ -359,6 +359,7 @@
   "a11yNext": "次のトラック",
   "a11yShuffleOn": "シャッフルオン",
   "a11yShuffleOff": "シャッフルオフ",
+  "a11yLoading": "読み込み中",
   "a11yMarkListened": "既聴としてマーク",
   "a11yUnmarkListened": "既聴マークを外す",
   "a11yShowStats": "統計を表示",

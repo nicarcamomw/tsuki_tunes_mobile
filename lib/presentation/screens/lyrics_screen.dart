@@ -14,6 +14,7 @@ import '../state/locale_provider.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
 
 /// Full-screen synced lyrics over the album's color, with the song's
@@ -323,7 +324,12 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     final strings = locale.strings;
     final c = widget.controller;
     if (c.loading) {
-      return _Message(text: strings.lyricsLoading, loading: true);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: SkeletonLyrics(label: strings.lyricsLoading),
+        ),
+      );
     }
     if (c.lyrics == null) {
       return _Message(
@@ -592,11 +598,10 @@ class _Message extends ConsumerWidget {
 
   const _Message({
     required this.text,
-    this.loading = false,
     this.icon,
     this.actionLabel,
     this.onAction,
-  });
+  }) : loading = false;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

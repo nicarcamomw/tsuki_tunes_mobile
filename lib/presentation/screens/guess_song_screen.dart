@@ -19,6 +19,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 
 
 final _log = Log.named('GuessSong');
@@ -823,16 +824,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         ),
         const SizedBox(height: 10),
         if (_artistSearching)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
-              ),
-            ),
-          )
+          const SkeletonRowList(count: 3, leading: 36, round: true, padding: EdgeInsets.symmetric(vertical: 4))
         else if (_artistResults.isNotEmpty)
           ..._artistResults.map(artistRow)
         else if (favorites.isNotEmpty || topNames.isNotEmpty) ...[
@@ -878,15 +870,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
   Widget _body(LocaleProvider locale) {
     final strings = locale.strings;
-    if (_loading) {
-      return const Center(
-        child: SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.accent),
-        ),
-      );
-    }
+    if (_loading) return const _RoundSkeleton();
     if (_error) {
       return Center(
         child: Column(
@@ -1243,13 +1227,9 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.35),
               child: _searching && _suggestions.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
-                      ),
+                  ? const SingleChildScrollView(
+                      physics: NeverScrollableScrollPhysics(),
+                      child: SkeletonRowList(count: 3, leading: 36, padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
                     )
                   : _suggestions.isEmpty
                       ? Padding(
@@ -1752,4 +1732,31 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       ),
     );
   }
+}
+
+/// A round being prepared: the streak chip, the clip's card, the answers.
+class _RoundSkeleton extends StatelessWidget {
+  const _RoundSkeleton();
+
+  @override
+  Widget build(BuildContext context) => SkeletonScope(
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          children: [
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: SkeletonLoader(width: 90, height: 24, borderRadius: 12),
+            ),
+            const SizedBox(height: 10),
+            const SkeletonLoader(height: 140, borderRadius: 16),
+            const SizedBox(height: 16),
+            for (var i = 0; i < 5; i++)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: SkeletonLoader(height: 44, borderRadius: 10),
+              ),
+          ],
+        ),
+      );
 }

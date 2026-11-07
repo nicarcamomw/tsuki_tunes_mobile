@@ -21,6 +21,7 @@ import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
 import '../widgets/voice_search_sheet.dart';
@@ -431,9 +432,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 child: _selectedTabIndex == 4
                     ? _buildLyricsTabContent(search, strings, locale)
                     : search.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(color: AppColors.accent),
-                          )
+                        ? _resultsSkeleton()
                         : search.hasError
                             ? _buildErrorState(search, strings, locale)
                             : search.query.isEmpty
@@ -807,11 +806,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// What the open tab's results will look like: artists, albums or songs.
+  Widget _resultsSkeleton() => SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: switch (_selectedTabIndex) {
+          1 => const SkeletonRowList(count: 7, leading: 48, round: true, padding: EdgeInsets.fromLTRB(16, 8, 16, 0)),
+          2 => const Column(children: [SkeletonAlbumRow(), SkeletonAlbumRow()]),
+          _ => const SkeletonTrackList(count: 8, padding: EdgeInsets.fromLTRB(16, 8, 16, 0)),
+        },
+      );
+
   Widget _buildLyricsTabContent(SearchProvider search, AppStrings strings, LocaleProvider locale) {
     if (search.isLyricsLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.accent),
-      );
+      return const SkeletonRowList(count: 5, padding: EdgeInsets.fromLTRB(16, 8, 16, 0));
     }
 
     if (search.hasLyricsError) {

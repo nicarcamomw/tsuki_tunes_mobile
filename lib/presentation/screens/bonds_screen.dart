@@ -14,6 +14,7 @@ import '../state/locale_provider.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/skeleton_loader.dart';
 
 /// Bonds (Lazos): what your Bonds' Echo did (Resonances), your Bonds and
 /// requests, and finding Bearers by name.
@@ -197,7 +198,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
         future: _feed,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2));
+            return const SkeletonRowList(count: 6, round: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
           }
           final feed = snap.data ?? const [];
           if (feed.isEmpty) {

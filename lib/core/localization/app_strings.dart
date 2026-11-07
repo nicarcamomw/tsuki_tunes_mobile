@@ -1853,6 +1853,7 @@ class AppStrings {
 
   String get a11yShuffleOn => _l.a11yShuffleOn;
 
+  String get a11yLoading => _l.a11yLoading;
   String get a11yShuffleOff => _l.a11yShuffleOff;
 
   String get a11yMarkListened => _l.a11yMarkListened;

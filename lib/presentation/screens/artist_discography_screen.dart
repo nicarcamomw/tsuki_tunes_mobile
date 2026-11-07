@@ -14,6 +14,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 
 
 final _log = Log.named('ArtistDiscography');
@@ -279,36 +280,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                   ..._buildFilteredGrid(_filtered, library, locale, strings,
                       isAppearsOn: _filter == 'appears_on'),
                 if (_isLoadingMore)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              strings.loadingMoreAlbums,
-                              style: locale.getTextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.accent,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SliverToBoxAdapter(child: SkeletonAlbumRow()),
                 if (_loadMoreError)
                   SliverToBoxAdapter(
                     child: Padding(

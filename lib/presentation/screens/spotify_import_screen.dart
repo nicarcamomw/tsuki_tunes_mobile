@@ -13,6 +13,7 @@ import '../state/app_providers.dart';
 import '../state/spotify_import_controller.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/skeleton_loader.dart';
 
 final spotifyImportProvider = ChangeNotifierProvider.autoDispose<SpotifyImportController>((ref) {
   final spotify = ref.read(audioProvider).spotify;
@@ -50,7 +51,7 @@ class SpotifyImportScreen extends ConsumerWidget {
     if (!connected) {
       body = _Center(icon: Icons.link_off_rounded, text: strings.importNotConnected, style: style(13.5));
     } else if (c.loading || c.playlists == null) {
-      body = const Center(child: CircularProgressIndicator(color: AppColors.success, strokeWidth: 2.4));
+      body = const SkeletonRowList(count: 8, leading: 52, trailing: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
     } else if (c.running || c.results.isNotEmpty) {
       body = ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),

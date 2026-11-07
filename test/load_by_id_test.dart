@@ -7,6 +7,7 @@ import 'package:tsuki_tunes_mobile/domain/repositories/catalog_repository.dart';
 import 'package:tsuki_tunes_mobile/domain/usecases/catalog/get_album.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/routes.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/load_by_id.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/skeleton_loader.dart';
 
 import 'helpers/test_scope.dart';
 
@@ -62,7 +63,8 @@ void main() {
         load: (_) => GetAlbum(_Catalog(album: _album))('123'),
         builder: (a) => Text('album ${a.title}'),
       )));
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // The page's shape while it loads, not a spinner.
+      expect(find.byType(SkeletonDetailPage), findsOneWidget);
       await tester.pump();
       expect(find.text('album Toxicity'), findsOneWidget);
     });
