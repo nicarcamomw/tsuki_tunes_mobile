@@ -19,6 +19,11 @@ import {
   increment,
   Timestamp,
   deleteField,
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
 } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
@@ -28,6 +33,7 @@ const env = await initializeTestEnvironment({
 
 const alice = () => env.authenticatedContext('alice').firestore();
 const bob = () => env.authenticatedContext('bob').firestore();
+const carol = () => env.authenticatedContext('carol').firestore();
 
 // Seeds documents with rules off, e.g. a stamp from long ago.
 async function seed(path, data) {
@@ -402,6 +408,109 @@ test('a Bearer at level 100 tells the keeper; no one reads it', async () => {
   // Deleting the account takes it; only its owner can.
   await assertFails(deleteDoc(doc(bob(), 'ascensions/alice')));
   await assertSucceeds(deleteDoc(doc(db, 'ascensions/alice')));
+});
+
+// --- Bonds (Lazos)
+
+const card = (name, overrides = {}) => ({ name, photoUrl: null, maskId: 'hannya', at: serverTimestamp(), ...overrides });
+
+// Alice asks Bob, as the app does: his inbox, her outbox and her stamp.
+function sendRequest(db = alice()) {
+  const b = writeBatch(db);
+  b.set(doc(db, 'users/bob/friendRequests/alice'), card('Alice'));
+  b.set(doc(db, 'users/alice/sentRequests/bob'), card('Bob'));
+  b.set(doc(db, 'users/alice'), { lastSubWrite: serverTimestamp() }, { merge: true });
+  return b.commit();
+}
+
+// Bob accepts: both Bonds, the request and Alice's outbox entry gone.
+function accept(db = bob()) {
+  const b = writeBatch(db);
+  b.set(doc(db, 'users/bob/friends/alice'), card('Alice'));
+  b.set(doc(db, 'users/alice/friends/bob'), card('Bob'));
+  b.delete(doc(db, 'users/bob/friendRequests/alice'));
+  b.delete(doc(db, 'users/alice/sentRequests/bob'));
+  return b.commit();
+}
+
+test('a request goes out stamped, and only as yourself', async () => {
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(sendRequest());
+  // Without the stamp, or in someone else's name.
+  await seed('users/carol', oldStamp());
+  await assertFails(setDoc(doc(carol(), 'users/bob/friendRequests/carol'), card('Carol')));
+  await assertFails(setDoc(doc(carol(), 'users/bob/friendRequests/alice'), card('Alice')));
+  // Not to yourself, nothing else in the card.
+  const db = alice();
+  await assertFails(setDoc(doc(db, 'users/alice/friendRequests/alice'), card('Alice')));
+  await assertFails(setDoc(doc(db, 'users/bob/friendRequests/alice'), card('Alice', { email: 'a@x.com' })));
+});
+
+test('a request can be read by the one who got it, not by others', async () => {
+  await seed('users/bob/friendRequests/alice', { ...card('Alice'), at: Timestamp.now() });
+  await assertSucceeds(getDoc(doc(bob(), 'users/bob/friendRequests/alice')));
+  await assertFails(getDoc(doc(carol(), 'users/bob/friendRequests/alice')));
+});
+
+test('accepting makes the Bond on both sides; without a request, no Bond', async () => {
+  // No request: nobody can make themselves someone's Bond.
+  await assertFails(setDoc(doc(alice(), 'users/alice/friends/bob'), card('Bob')));
+  await assertFails(setDoc(doc(alice(), 'users/bob/friends/alice'), card('Alice')));
+  await seed('users/bob/friendRequests/alice', { ...card('Alice'), at: Timestamp.now() });
+  await seed('users/alice/sentRequests/bob', { ...card('Bob'), at: Timestamp.now() });
+  // The sender can't accept their own request.
+  await assertFails(setDoc(doc(alice(), 'users/alice/friends/bob'), card('Bob')));
+  await assertSucceeds(accept());
+});
+
+test('a request to someone already bonded is refused', async () => {
+  await seed('users/alice', oldStamp());
+  await seed('users/bob/friends/alice', { ...card('Alice'), at: Timestamp.now() });
+  await assertFails(sendRequest());
+});
+
+test('either side can decline, cancel or undo the Bond; outsiders cannot', async () => {
+  await seed('users/bob/friendRequests/alice', { ...card('Alice'), at: Timestamp.now() });
+  await assertFails(deleteDoc(doc(carol(), 'users/bob/friendRequests/alice')));
+  await assertSucceeds(deleteDoc(doc(alice(), 'users/bob/friendRequests/alice')));
+  await seed('users/alice/friends/bob', { ...card('Bob'), at: Timestamp.now() });
+  await seed('users/bob/friends/alice', { ...card('Alice'), at: Timestamp.now() });
+  await assertFails(deleteDoc(doc(carol(), 'users/alice/friends/bob')));
+  await assertSucceeds(deleteDoc(doc(bob(), 'users/alice/friends/bob')));
+  await assertSucceeds(deleteDoc(doc(bob(), 'users/bob/friends/alice')));
+});
+
+test('a private profile is readable by its Bonds only', async () => {
+  await seed('profiles/alice', { ...profile({ public: false }), updatedAt: Timestamp.now() });
+  await assertFails(getDoc(doc(bob(), 'profiles/alice')));
+  await seed('users/alice/friends/bob', { ...card('Bob'), at: Timestamp.now() });
+  await assertSucceeds(getDoc(doc(bob(), 'profiles/alice')));
+  await assertFails(getDoc(doc(carol(), 'profiles/alice')));
+});
+
+test('a profile carries its search key, tops and milestones, within limits', async () => {
+  const db = alice();
+  await assertSucceeds(setDoc(doc(db, 'profiles/alice'), profile({
+    nameLower: 'alice',
+    tops: ['SOAD', 'Deftones'],
+    milestones: [{ k: 'album', a: 'Toxicity', b: 'SOAD', t: 1 }],
+  })));
+  await env.clearFirestore();
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ tops: Array.from({ length: 31 }, (_, i) => `A${i}`) })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'),
+    profile({ milestones: Array.from({ length: 11 }, () => ({ k: 'mask', a: 'oni', t: 1 })) })));
+  await assertFails(setDoc(doc(db, 'profiles/alice'), profile({ nameLower: 'x'.repeat(61) })));
+});
+
+test('searching by name finds public profiles only', async () => {
+  await seed('profiles/alice', { ...profile({ nameLower: 'alice' }), updatedAt: Timestamp.now() });
+  await seed('profiles/alma', { ...profile({ displayName: 'Alma', nameLower: 'alma', public: false }), updatedAt: Timestamp.now() });
+  const db = bob();
+  const found = await assertSucceeds(getDocs(query(collection(db, 'profiles'),
+    where('public', '==', true), where('nameLower', '>=', 'al'), where('nameLower', '<', 'al\uf8ff'), orderBy('nameLower'))));
+  assert.deepEqual(found.docs.map((d) => d.id), ['alice']);
+  // Without the public filter the query could return private ones: refused.
+  await assertFails(getDocs(query(collection(db, 'profiles'), where('nameLower', '>=', 'al'))));
 });
 
 let failed = 0;

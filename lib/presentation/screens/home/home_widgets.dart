@@ -1,5 +1,29 @@
 part of '../home_screen.dart';
 
+/// Bonds (Lazos), with the count of requests waiting for an answer.
+class _BondsButton extends ConsumerWidget {
+  const _BondsButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = ref.watch(stringsProvider);
+    final pending = ref.watch(socialProvider.select((s) => s.pending));
+    return IconButton(
+      tooltip: pending > 0 ? '${strings.bondsTitle}: ${strings.bondsRequests} $pending' : strings.bondsTitle,
+      onPressed: () {
+        HapticFeedback.selectionClick();
+        BondsRoute(tab: pending > 0 ? 1 : 0).push<void>(context);
+      },
+      icon: Badge(
+        isLabelVisible: pending > 0,
+        backgroundColor: AppColors.accent,
+        label: Text('$pending', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+        child: const Icon(Icons.link_rounded, color: AppColors.textBright, size: 22),
+      ),
+    );
+  }
+}
+
 /// Title, telemetry line, moon, source badge and profile gear over the sky.
 class _HomeHeader extends StatelessWidget {
   final LocaleProvider locale;
@@ -74,6 +98,7 @@ class _HomeHeader extends StatelessWidget {
                       const MoonButton(),
                       const SizedBox(width: 4),
                       _SourceBadge(locale: locale),
+                      if (isLoggedIn) const _BondsButton(),
                       const SizedBox(width: 8),
                       Opacity(
                         opacity: isLoggedIn ? 1.0 : 0.0,

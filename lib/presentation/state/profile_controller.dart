@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../core/logger.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/public_profile.dart';
+import '../../domain/entities/social.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/usecases/profile/build_my_profile.dart';
 
@@ -28,6 +29,7 @@ class ProfileController extends ChangeNotifier {
     required Iterable<List<String>> Function() listenedTrackArtists,
     required int Function() albumsCompleted,
     required Iterable<Artist> Function() knownArtists,
+    List<Milestone> Function()? milestones,
     this.debounce = const Duration(seconds: 20),
     this.minInterval = const Duration(minutes: 10),
     DateTime Function()? clock,
@@ -41,6 +43,7 @@ class ProfileController extends ChangeNotifier {
         _listenedTrackArtists = listenedTrackArtists,
         _albumsCompleted = albumsCompleted,
         _knownArtists = knownArtists,
+        _milestones = milestones ?? (() => const []),
         _now = clock ?? DateTime.now {
     _changes.addListener(_onChange);
     _onChange();
@@ -56,6 +59,7 @@ class ProfileController extends ChangeNotifier {
   final Iterable<List<String>> Function() _listenedTrackArtists;
   final int Function() _albumsCompleted;
   final Iterable<Artist> Function() _knownArtists;
+  final List<Milestone> Function() _milestones;
   final DateTime Function() _now;
 
   /// Quiet time after a change before publishing, and the least time
@@ -95,6 +99,7 @@ class ProfileController extends ChangeNotifier {
       listenedTrackArtists: _listenedTrackArtists(),
       albumsCompleted: _albumsCompleted(),
       knownArtists: _knownArtists(),
+      milestones: _milestones(),
     );
   }
 

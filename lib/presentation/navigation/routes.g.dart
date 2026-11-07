@@ -140,6 +140,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $UserProfileRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'bonds',
+          hasOverriddenOnExit: false,
+          factory: $BondsRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -393,6 +398,33 @@ mixin $UserProfileRoute on GoRouteData {
   @override
   String get location =>
       GoRouteData.$location('/user/${Uri.encodeComponent(_self.uid)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $BondsRoute on GoRouteData {
+  static BondsRoute _fromState(GoRouterState state) => BondsRoute(
+    tab: _$convertMapValue('tab', state.uri.queryParameters, int.parse) ?? 0,
+  );
+
+  BondsRoute get _self => this as BondsRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/bonds',
+    queryParams: {if (_self.tab != 0) 'tab': _self.tab.toString()},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

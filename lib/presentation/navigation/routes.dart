@@ -8,6 +8,7 @@ import '../../domain/entities/track.dart';
 import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/artist_discography_screen.dart';
+import '../screens/bonds_screen.dart';
 import '../screens/genre_screen.dart';
 import '../screens/guess_song_screen.dart';
 import '../screens/listening_clock_screen.dart';
@@ -81,6 +82,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<PlaylistRoute>(path: 'playlist/:id'),
         TypedGoRoute<TrackRoute>(path: 'track/:id'),
         TypedGoRoute<UserProfileRoute>(path: 'user/:uid'),
+        TypedGoRoute<BondsRoute>(path: 'bonds'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -258,6 +260,18 @@ class UserProfileRoute extends GoRouteData with $UserProfileRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, UserProfileScreen(uid: uid));
+}
+
+/// Bonds (Lazos): Resonances, Bonds and requests, and search.
+class BondsRoute extends GoRouteData with $BondsRoute {
+  const BondsRoute({this.tab = 0});
+
+  /// 0 Resonances, 1 Bonds, 2 Search.
+  final int tab;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) =>
+      cyberPage(state, BondsScreen(initialTab: tab));
 }
 
 class PlaylistRoute extends GoRouteData with $PlaylistRoute {

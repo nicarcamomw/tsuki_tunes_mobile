@@ -8,11 +8,13 @@ import '../data/local/library_store.dart';
 import '../data/repositories/library_repository_impl.dart';
 import '../data/repositories/playlist_repository_impl.dart';
 import '../data/repositories/profile_repository_impl.dart';
+import '../data/repositories/social_repository_impl.dart';
 import '../data/sync/outbox.dart';
 import '../domain/repositories/library_repository.dart';
 import '../domain/repositories/playback_controller.dart';
 import '../domain/repositories/playlist_repository.dart';
 import '../domain/repositories/profile_repository.dart';
+import '../domain/repositories/social_repository.dart';
 import '../presentation/state/audio_provider.dart';
 
 /// The repositories and the player, each registered once under its own
@@ -63,4 +65,7 @@ abstract class RepositoryModule {
 
   @lazySingleton
   ProfileRepository profiles(FirebaseService firebase) => ProfileRepositoryImpl(firebase);
+
+  @lazySingleton
+  SocialRepository social(FirebaseService firebase) => SocialRepositoryImpl(firebase);
 }

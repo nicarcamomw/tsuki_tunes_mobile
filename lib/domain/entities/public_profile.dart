@@ -1,3 +1,5 @@
+import 'social.dart';
+
 /// What a user shows of themselves: the numbers of their library and the
 /// artists they listen to most. Nothing else of theirs is in it.
 class PublicProfile {
@@ -9,6 +11,8 @@ class PublicProfile {
     this.isPublic = false,
     this.stats = const ProfileStats(),
     this.topArtists = const [],
+    this.tops = const [],
+    this.milestones = const [],
     this.updatedAt,
   });
 
@@ -29,6 +33,13 @@ class PublicProfile {
   final bool isPublic;
   final ProfileStats stats;
   final List<TopArtist> topArtists;
+
+  /// The most listened artists' names, best first (up to
+  /// Sintonia.artistsCompared), for the Sintonía with others.
+  final List<String> tops;
+
+  /// What their Echo did lately, newest first (Resonances).
+  final List<Milestone> milestones;
   final DateTime? updatedAt;
 
   PublicProfile copyWith({
@@ -38,6 +49,8 @@ class PublicProfile {
     bool? isPublic,
     ProfileStats? stats,
     List<TopArtist>? topArtists,
+    List<String>? tops,
+    List<Milestone>? milestones,
   }) =>
       PublicProfile(
         uid: uid,
@@ -47,6 +60,8 @@ class PublicProfile {
         isPublic: isPublic ?? this.isPublic,
         stats: stats ?? this.stats,
         topArtists: topArtists ?? this.topArtists,
+        tops: tops ?? this.tops,
+        milestones: milestones ?? this.milestones,
         updatedAt: updatedAt,
       );
 
@@ -57,7 +72,17 @@ class PublicProfile {
       maskId == other.maskId &&
       isPublic == other.isPublic &&
       stats == other.stats &&
-      _sameArtists(topArtists, other.topArtists);
+      _sameArtists(topArtists, other.topArtists) &&
+      _same(tops, other.tops) &&
+      _same(milestones, other.milestones);
+
+  static bool _same<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   static bool _sameArtists(List<TopArtist> a, List<TopArtist> b) {
     if (a.length != b.length) return false;

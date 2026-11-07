@@ -1,5 +1,7 @@
 import '../../entities/artist.dart';
 import '../../entities/public_profile.dart';
+import '../../entities/social.dart';
+import '../../logic/sintonia.dart';
 
 /// The profile a user publishes, from their library: songs listened,
 /// albums completed, distinct artists and the five artists with the most
@@ -18,6 +20,7 @@ class BuildMyProfile {
     required Iterable<List<String>> listenedTrackArtists,
     required int albumsCompleted,
     Iterable<Artist> knownArtists = const [],
+    List<Milestone> milestones = const [],
   }) {
     final perArtist = <String, int>{};
     final shown = <String, String>{}; // lowercase -> name as first seen
@@ -53,6 +56,8 @@ class BuildMyProfile {
         for (final e in ranked.take(PublicProfile.topArtistsShown))
           TopArtist(name: shown[e.key]!, count: e.value, pictureUrl: pictures[e.key]),
       ],
+      tops: [for (final e in ranked.take(Sintonia.artistsCompared)) shown[e.key]!],
+      milestones: milestones.take(Milestone.kept).toList(),
     );
   }
 }

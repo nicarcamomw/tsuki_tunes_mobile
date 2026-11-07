@@ -26,7 +26,9 @@ void main() {
     ));
 
     final raw = (await server.collection('profiles').doc('u1').get()).data()!;
-    expect(raw.keys.toSet(), {'displayName', 'photoUrl', 'maskId', 'public', 'stats', 'topArtists', 'updatedAt'});
+    expect(raw.keys.toSet(), {
+      'displayName', 'nameLower', 'photoUrl', 'maskId', 'public', 'stats', 'topArtists', 'tops', 'milestones', 'updatedAt',
+    });
 
     final back = await repo.getProfile('u1');
     expect(back!.displayName, 'Nico');

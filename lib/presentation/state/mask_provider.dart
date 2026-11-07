@@ -13,6 +13,7 @@ import '../../data/datasources/weather_service.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/play_day.dart';
+import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/artist_names.dart';
@@ -227,6 +228,13 @@ class MaskProvider extends ChangeNotifier {
   /// the levels and what they open.
   int get level => _observer ? 1 : EcoLevels.levelFor(eco);
 
+  /// What this Bearer did that their Bonds hear about (Resonances): rarer
+  /// beings awakened, new ranks, long streaks.
+  void Function(Milestone milestone)? onMilestone;
+
+  /// The streak lengths that become a Resonance.
+  static const streakMilestones = {7, 30, 100, 365};
+
   /// Without an account (a guest) one is an Observer: no Eco, no levels.
   bool get isObserver => _observer;
   bool _observer = false;
@@ -340,6 +348,9 @@ class MaskProvider extends ChangeNotifier {
       return;
     }
     if (now <= _stats.lvl) return;
+    if (EcoLevels.rankOf(now) != EcoLevels.rankOf(_stats.lvl)) {
+      onMilestone?.call(Milestone(kind: MilestoneKind.rank, a: '$now', at: _clock()));
+    }
     _levelUpFrom ??= _stats.lvl;
     _stats.lvl = now;
     unawaited(_saveLocal());
@@ -815,6 +826,13 @@ class MaskProvider extends ChangeNotifier {
       }
     }
     _celebrations.addAll(newly);
+    // The rarer beings are worth telling the Bonds about.
+    for (final m in newly) {
+      final mask = MaskCatalog.byId(m);
+      if (mask != null && mask.rarity != MaskRarity.r) {
+        onMilestone?.call(Milestone(kind: MilestoneKind.mask, a: m, at: at));
+      }
+    }
     _equipped ??= id;
     notifyListeners();
     unawaited(_saveLocal());
@@ -927,6 +945,9 @@ class MaskProvider extends ChangeNotifier {
     if (_stats.streak % shieldEvery == 0 && _stats.shields < maxShields) _stats.shields++;
     _stats.lastDay = day;
     if (_stats.streak > (_stats.c['streak'] ?? 0)) _stats.c['streak'] = _stats.streak;
+    if (streakMilestones.contains(_stats.streak)) {
+      onMilestone?.call(Milestone(kind: MilestoneKind.streak, a: '${_stats.streak}', at: _clock()));
+    }
     _ecoOnce('day:$day', ecoPerDay + ecoPerStreakDay * min(_stats.streak, ecoStreakCap));
   }
 

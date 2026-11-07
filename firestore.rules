@@ -208,6 +208,26 @@ service cloud.firestore {
               || request.time > get(userPath(userId)).data.lastSubWrite + duration.value(1, 's'));
     }
 
+    // ── Bonds (Lazos) ──
+
+    function socialPath(userId, col, id) {
+      return /databases/$(database)/documents/users/$(userId)/$(col)/$(id);
+    }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // A request or a Bond: the other person's card (name, photo, mask) and
+    // the server's time.
+    function validBondCard(d) {
+      return d.keys().hasOnly(['name', 'photoUrl', 'maskId', 'at'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+          && shortString(d, 'photoUrl', 2000)
+          && shortString(d, 'maskId', 40)
+          && d.at == request.time;
+    }
+
     // The level 100 choice is made once: once there, it can't change (the
     // whole masks map can still go, when the account's data is deleted).
     function choiceKept() {
@@ -264,6 +284,39 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && notRateLimited(userId);
       }
 
+      // Bonds. The one who accepts a request writes both sides, while the
+      // request still exists; either side can undo it.
+      match /friends/{friendId} {
+        allow read: if isOwner(userId);
+        allow create: if friendId != userId
+            && validBondCard(request.resource.data)
+            && ((isOwner(userId) && exists(socialPath(userId, 'friendRequests', friendId)))
+                || (signedIn() && request.auth.uid == friendId
+                    && exists(socialPath(friendId, 'friendRequests', userId))));
+        allow delete: if isOwner(userId) || (signedIn() && request.auth.uid == friendId);
+      }
+
+      // Requests others sent me: the sender writes it (once a second at
+      // most, and not to someone already bonded); either side can remove it.
+      match /friendRequests/{fromId} {
+        allow read: if isOwner(userId);
+        allow create: if signedIn() && request.auth.uid == fromId && fromId != userId
+            && validBondCard(request.resource.data)
+            && !exists(socialPath(userId, 'friends', fromId))
+            && notRateLimited(fromId);
+        allow delete: if isOwner(userId) || (signedIn() && request.auth.uid == fromId);
+      }
+
+      // The requests I sent, to see and cancel them; the receiver clears it
+      // when answering.
+      match /sentRequests/{toId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && toId != userId
+            && validBondCard(request.resource.data)
+            && notRateLimited(userId);
+        allow delete: if isOwner(userId) || (signedIn() && request.auth.uid == toId);
+      }
+
       // Daily play log, one doc per yyyy-MM-dd. No notRateLimited(): plays
       // made offline are flushed back-to-back on reconnect and would all be
       // rejected. One doc per day plus map size caps bound abuse instead.
@@ -292,8 +345,12 @@ service cloud.firestore {
     // The public profile: exactly these fields, each checked, so nothing
     // private can end up readable by others.
     function validProfile(d) {
-      return d.keys().hasOnly(['displayName', 'photoUrl', 'maskId', 'public', 'stats', 'topArtists', 'updatedAt'])
+      return d.keys().hasOnly(['displayName', 'nameLower', 'photoUrl', 'maskId', 'public', 'stats', 'topArtists',
+                               'tops', 'milestones', 'updatedAt'])
           && d.displayName is string && d.displayName.size() <= 60
+          && shortString(d, 'nameLower', 60)
+          && (!('tops' in d) || (d.tops is list && d.tops.size() <= 30))
+          && (!('milestones' in d) || (d.milestones is list && d.milestones.size() <= 10))
           && shortString(d, 'photoUrl', 2000)
           && shortString(d, 'maskId', 40)
           && d.public is bool
@@ -311,11 +368,14 @@ service cloud.firestore {
           && d.updatedAt == request.time;
     }
 
-    // Public profiles: the owner writes theirs (at most every 10 seconds,
-    // to keep within the free quota); others read it only when public.
+    // Profiles: the owner writes theirs (at most every 10 seconds, to keep
+    // within the free quota).
     match /profiles/{userId} {
+      // Public: anyone reads it, and finds it by name. Private: only its
+      // owner and their Bonds.
       allow read: if isOwner(userId)
-          || (resource != null && resource.data.get('public', false) == true);
+          || (resource != null && resource.data.get('public', false) == true)
+          || (signedIn() && exists(socialPath(userId, 'friends', request.auth.uid)));
       allow create: if isOwner(userId) && validProfile(request.resource.data);
       allow update: if isOwner(userId)
           && validProfile(request.resource.data)

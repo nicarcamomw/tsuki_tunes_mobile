@@ -72,6 +72,8 @@ class AccountDeletionService {
       }
     }
 
+    await _deleteBonds(uid);
+
     // No rate limit on these.
     while (true) {
       final page = await user
@@ -97,6 +99,32 @@ class AccountDeletionService {
       });
     }
     _log.info('Firestore data of the account deleted');
+  }
+
+  /// Bonds and requests, on both sides: my Bonds lose me, my requests leave
+  /// their inboxes, the ones I got leave their senders' outboxes.
+  Future<void> _deleteBonds(String uid) async {
+    final user = _db.collection('users').doc(uid);
+    // (my collection, where the other person keeps me)
+    const pairs = [
+      ('friends', 'friends'),
+      ('sentRequests', 'friendRequests'),
+      ('friendRequests', 'sentRequests'),
+    ];
+    for (final (mine, theirs) in pairs) {
+      while (true) {
+        final page = await user.collection(mine).limit(200).get(const GetOptions(source: Source.server));
+        if (page.docs.isEmpty) break;
+        final batch = _db.batch();
+        for (final doc in page.docs) {
+          batch
+            ..delete(doc.reference)
+            ..delete(_db.collection('users').doc(doc.id).collection(theirs).doc(uid));
+        }
+        await batch.commit();
+        if (page.docs.length < 200) break;
+      }
+    }
   }
 
   /// What else on the phone tells what the person listened to: the saved

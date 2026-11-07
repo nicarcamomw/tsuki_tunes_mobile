@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/public_profile.dart';
+import '../../domain/entities/social.dart';
+import '../../domain/logic/search_suggestions.dart';
+import '../../domain/logic/sintonia.dart';
 
 /// Reads `profiles/{uid}`.
 PublicProfile profileFromFirestore(String uid, Map<String, dynamic> d) {
@@ -19,8 +22,24 @@ PublicProfile profileFromFirestore(String uid, Map<String, dynamic> d) {
           if (a is Map && a['name'] is String)
             TopArtist(name: a['name'] as String, count: n(a['count']), pictureUrl: a['pictureUrl']?.toString()),
     ],
+    tops: [
+      if (d['tops'] is List)
+        for (final t in d['tops'] as List)
+          if (t is String) t,
+    ],
+    milestones: [
+      if (d['milestones'] is List)
+        for (final m in d['milestones'] as List)
+          if (Milestone.fromMap(m) case final ms?) ms,
+    ],
     updatedAt: d['updatedAt'] is Timestamp ? (d['updatedAt'] as Timestamp).toDate() : null,
   );
+}
+
+/// The name as search compares it: lower case, no accents.
+String profileSearchKey(String name) {
+  final folded = SearchSuggestions.fold(name);
+  return folded.length > PublicProfile.maxNameLength ? folded.substring(0, PublicProfile.maxNameLength) : folded;
 }
 
 /// The document the rules accept: exactly these fields, the time stamped by
@@ -31,6 +50,7 @@ Map<String, dynamic> profileToFirestore(PublicProfile p) => {
           : p.displayName,
       'photoUrl': p.photoUrl,
       'maskId': p.maskId,
+      'nameLower': profileSearchKey(p.displayName),
       'public': p.isPublic,
       'stats': {'tracks': p.stats.tracks, 'albums': p.stats.albums, 'artists': p.stats.artists},
       'topArtists': [
@@ -41,5 +61,9 @@ Map<String, dynamic> profileToFirestore(PublicProfile p) => {
             if (a.pictureUrl != null) 'pictureUrl': a.pictureUrl,
           },
       ],
+      'tops': [
+        for (final t in p.tops.take(Sintonia.artistsCompared)) t.length > 200 ? t.substring(0, 200) : t,
+      ],
+      'milestones': [for (final m in p.milestones.take(Milestone.kept)) m.toMap()],
       'updatedAt': FieldValue.serverTimestamp(),
     };

@@ -69,6 +69,31 @@ void main() {
       expect(left.keys, ['lastSubWrite']);
     });
 
+    test('Bonds and requests go on both sides, and only mine', () async {
+      Future<void> put(String path) => db.doc(path).set({'name': 'X'});
+      await put('users/me/friends/other');
+      await put('users/other/friends/me');
+      await put('users/me/sentRequests/third');
+      await put('users/third/friendRequests/me');
+      await put('users/me/friendRequests/fourth');
+      await put('users/fourth/sentRequests/me');
+      await put('users/other/friends/third');
+
+      await service.deleteUserData('me');
+
+      for (final path in [
+        'users/me/friends/other',
+        'users/other/friends/me',
+        'users/me/sentRequests/third',
+        'users/third/friendRequests/me',
+        'users/me/friendRequests/fourth',
+        'users/fourth/sentRequests/me',
+      ]) {
+        expect((await db.doc(path).get()).exists, isFalse, reason: path);
+      }
+      expect((await db.doc('users/other/friends/third').get()).exists, isTrue);
+    });
+
     test('other accounts are left alone', () async {
       await service.deleteUserData('me');
 

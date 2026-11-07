@@ -1,19 +1,105 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "profiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": [
-    { "collectionGroup": "playDays", "fieldPath": "plays", "indexes": [] },
-    { "collectionGroup": "playDays", "fieldPath": "tracks", "indexes": [] },
-    { "collectionGroup": "playDays", "fieldPath": "hours", "indexes": [] },
-    { "collectionGroup": "playlists", "fieldPath": "tracks", "indexes": [] },
-    { "collectionGroup": "listenedTracks", "fieldPath": "coverUrl", "indexes": [] },
-    { "collectionGroup": "listenedTracks", "fieldPath": "previewUrl", "indexes": [] },
-    { "collectionGroup": "listenedTracks", "fieldPath": "artists", "indexes": [] },
-    { "collectionGroup": "followedArtists", "fieldPath": "pictureUrl", "indexes": [] },
-    { "collectionGroup": "followedArtists", "fieldPath": "pictureSmall", "indexes": [] },
-    { "collectionGroup": "followedArtists", "fieldPath": "pictureMedium", "indexes": [] },
-    { "collectionGroup": "followedArtists", "fieldPath": "pictureBig", "indexes": [] },
-    { "collectionGroup": "followedArtists", "fieldPath": "pictureXl", "indexes": [] },
-    { "collectionGroup": "users", "fieldPath": "masks", "indexes": [] },
-    { "collectionGroup": "profiles", "fieldPath": "topArtists", "indexes": [] }
+    {
+      "collectionGroup": "playDays",
+      "fieldPath": "plays",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playDays",
+      "fieldPath": "tracks",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playDays",
+      "fieldPath": "hours",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playlists",
+      "fieldPath": "tracks",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "listenedTracks",
+      "fieldPath": "coverUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "listenedTracks",
+      "fieldPath": "previewUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "listenedTracks",
+      "fieldPath": "artists",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "followedArtists",
+      "fieldPath": "pictureUrl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "followedArtists",
+      "fieldPath": "pictureSmall",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "followedArtists",
+      "fieldPath": "pictureMedium",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "followedArtists",
+      "fieldPath": "pictureBig",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "followedArtists",
+      "fieldPath": "pictureXl",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "masks",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "topArtists",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "tops",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "milestones",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "profiles",
+      "fieldPath": "photoUrl",
+      "indexes": []
+    }
   ]
 }

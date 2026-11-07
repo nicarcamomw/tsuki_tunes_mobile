@@ -21,7 +21,13 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - Si llegas al **nivel 100 de Eco**, se guarda un aviso con tu nombre, tu nivel, tu Eco, tu elección (volverte un ser etéreo o seguir siendo Portador) y el nombre que elijas para tu máscara etérea. Solo lo lee el equipo de Tsuki Tunes, para crear tu máscara; ningún otro usuario puede verlo.
 
 ### Perfil público (opcional)
-- Si activas tu **perfil público**, otras personas pueden ver tu nombre, tu foto, tu máscara, tus estadísticas y tus artistas más escuchados. Viene **desactivado**, y puedes desactivarlo cuando quieras.
+- Si activas tu **perfil público**, otras personas pueden ver tu nombre, tu foto, tu máscara, tus estadísticas, tus artistas más escuchados y tus **Resonancias** (tus últimos logros: álbumes que completaste, seres que despertaste, rangos y rachas). También pueden **encontrarte buscando tu nombre**. Viene **desactivado**, y puedes desactivarlo cuando quieras.
+
+### Lazos (opcional)
+- Puedes pedirle un **Lazo** a otra persona. La solicitud le muestra tu nombre, tu foto y tu máscara. Si la acepta, los dos quedan en la lista de Lazos del otro.
+- Tus Lazos pueden ver tu perfil y tus Resonancias **aunque tu perfil sea privado**. Nadie más ve a quién tienes como Lazo.
+- Puedes rechazar solicitudes, cancelar las que enviaste y deshacer un Lazo cuando quieras. Al eliminar tu cuenta se borran tus Lazos y solicitudes, también de las listas de las otras personas.
+- Los Observadores (sin cuenta) no usan Lazos.
 
 ### Ubicación aproximada (opcional)
 - Si activas el **clima**, la app usa tu ubicación aproximada (unos 2 km) para mostrar el clima. Se envía redondeada a [Open-Meteo](https://open-meteo.com/en/terms), que no exige cuenta. Nunca se usa en segundo plano y no la guardamos. En vez de eso puedes elegir una ciudad. Con el clima activado, dos seres etéreos despiertan escuchando con tormenta o con frío: eso se revisa en el teléfono y no se guarda el clima.
@@ -82,7 +88,7 @@ Las consultas a Last.fm pasan por el **servidor de la app** (Firebase Cloud Func
 - Puedes **eliminar tu cuenta y todos sus datos** desde la app: **Perfil → Eliminar cuenta**. Se borran de inmediato:
   - Tu biblioteca.
   - Tu historial.
-  - Tu perfil público.
+  - Tu perfil público, tus Lazos y tus solicitudes de Lazo (también de las listas de las otras personas).
   - Tu cuenta de inicio de sesión.
   - Lo que la app guardaba en tu teléfono (historial, búsquedas, cumpleaños, ciudad del clima, seres etéreos, nivel de Eco, estilos de artistas y cachés).
 - También puedes pedir la eliminación sin la app; mira [cómo eliminar tu cuenta](delete-account.md).

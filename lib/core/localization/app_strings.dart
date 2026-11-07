@@ -5,6 +5,7 @@ import '../../data/datasources/battery_guide.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/weather_service.dart';
 import '../../domain/entities/oni_mask.dart';
+import '../../domain/entities/social.dart';
 import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
 import '../../domain/logic/cadence_detector.dart';
@@ -462,6 +463,82 @@ class AppStrings {
       'Earn Eco by listening to music to level up. Every level opens something new.',
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
+
+  // ── Bonds (Lazos) ──
+  String get bondsTitle => _es('Lazos', 'Bonds', '絆');
+  String get bondsTabResonances => _es('Resonancias', 'Resonances', '共鳴');
+  String get bondsTabBonds => _es('Lazos', 'Bonds', '絆');
+  String get bondsTabSearch => _es('Buscar', 'Search', '探す');
+  String get bondsSearchHint => _es('Busca un Portador por su nombre', 'Search a Bearer by name', '名前で運び手を探す');
+  String get bondsSearchHelp => _es(
+      'Solo aparecen los Portadores con perfil público. Si tu amigo lo tiene privado, pídele el enlace a su perfil.',
+      'Only Bearers with a public profile show up. If your friend\'s is private, ask them for the link to their profile.',
+      '公開プロフィールの運び手だけが表示される。友達が非公開なら、プロフィールのリンクを送ってもらおう。');
+  String bondsSearchNone(String q) => _es('Nadie se llama "$q" todavía.', 'No one called "$q" yet.', '「$q」という人はまだいない。');
+  String get bondsSearchFailed => _es('No se pudo buscar. Revisa tu conexión.', 'Could not search. Check your connection.', '検索できなかった。接続を確認して。');
+  String get bondsRequests => _es('Solicitudes', 'Requests', 'リクエスト');
+  String get bondsSent => _es('Enviadas', 'Sent', '送信済み');
+  String get bondsYours => _es('Tus Lazos', 'Your Bonds', 'あなたの絆');
+  String get bondsNone => _es(
+      'Todavía no tienes Lazos. Busca a alguien o comparte tu perfil para que te encuentren.',
+      'No Bonds yet. Search for someone, or share your profile so they find you.',
+      'まだ絆がない。誰かを探すか、プロフィールを共有して見つけてもらおう。');
+  String get bondsAsk => _es('Crear Lazo', 'Create Bond', '絆を結ぶ');
+  String get bondsAskShort => _es('Pedir Lazo', 'Ask', '申請');
+  String get bondsAsked => _es('Solicitud enviada', 'Request sent', '申請済み');
+  String get bondsCancel => _es('Cancelar solicitud', 'Cancel request', '申請を取り消す');
+  String get bondsAccept => _es('Aceptar', 'Accept', '承認');
+  String get bondsDecline => _es('Rechazar', 'Decline', '拒否');
+  String get bondsBonded => _es('Lazo', 'Bond', '絆');
+  String get bondsUnbond => _es('Deshacer Lazo', 'Undo Bond', '絆を解く');
+  String bondsUnbondBody(String name) => _es(
+      'Dejarás de escuchar las Resonancias de $name, y $name las tuyas.',
+      'You will stop hearing $name\'s Resonances, and $name yours.',
+      '$nameの共鳴が聞こえなくなり、$nameにもあなたの共鳴が届かなくなる。');
+  String bondsWantsYou(String name) => _es('$name quiere crear un Lazo contigo', '$name wants to create a Bond with you', '$nameがあなたと絆を結びたがっている');
+  String bondsNowBonded(String name) => _es('Ahora tienes un Lazo con $name', 'You now have a Bond with $name', '$nameと絆を結んだ');
+  String bondsSentTo(String name) => _es('Solicitud enviada a $name', 'Request sent to $name', '$nameに申請した');
+  String get bondsFailed => _es('No se pudo. Inténtalo de nuevo.', 'It did not work. Try again.', 'うまくいかなかった。もう一度試して。');
+  String get bondsObserver => _es(
+      'Los Observadores no crean Lazos. Vuélvete Portador para encontrar a los tuyos.',
+      'Observers do not create Bonds. Become a Bearer to find yours.',
+      '観測者は絆を結べない。運び手になって仲間を見つけよう。');
+  String get bondsResonancesNone => _es(
+      'Cuando tus Lazos completen álbumes, despierten seres o suban de rango, lo escucharás aquí.',
+      'When your Bonds complete albums, awaken beings or rise in rank, you will hear it here.',
+      '絆の仲間がアルバムを聴き終えたり、霊を目覚めさせたり、位を上げたりすると、ここに届く。');
+  String get bondsResonancesNoBonds => _es(
+      'Las Resonancias son el Eco de tus Lazos. Crea tu primer Lazo para empezar a escucharlas.',
+      'Resonances are your Bonds\' Echo. Create your first Bond to start hearing them.',
+      '共鳴は絆の仲間のエコー。最初の絆を結んで聞き始めよう。');
+  String get bondsYourResonances => _es('Tus Resonancias', 'Your Resonances', 'あなたの共鳴');
+  String bondsMilestone(Milestone m, String maskName) => switch (m.kind) {
+        MilestoneKind.album => _es('completó el álbum ${m.a} de ${m.b ?? ''}', 'completed the album ${m.a} by ${m.b ?? ''}',
+            '${m.b ?? ''}のアルバム「${m.a}」を聴き終えた'),
+        MilestoneKind.mask => _es('despertó a $maskName', 'awakened $maskName', '$maskNameを目覚めさせた'),
+        MilestoneKind.rank => _es('llegó al nivel ${m.a} de Eco', 'reached Eco level ${m.a}', 'エコーレベル${m.a}に到達した'),
+        MilestoneKind.streak => _es('lleva ${m.a} días seguidos escuchando', 'has listened ${m.a} days in a row', '${m.a}日連続で聴いている'),
+      };
+  String get sintoniaTitle => _es('Sintonía', 'Sintonía', '同調');
+  String sintoniaShared(int n) => _es(
+      n == 1 ? '1 artista en común' : '$n artistas en común',
+      n == 1 ? '1 artist in common' : '$n artists in common',
+      '共通のアーティスト $n人');
+  String get sintoniaNone => _es(
+      'Todavía no comparten artistas. Puede que se descubran algo.',
+      'No artists in common yet. You might discover something from each other.',
+      'まだ共通のアーティストはいない。お互いに何か見つかるかも。');
+  String sintoniaLabel(int pct) => switch (pct) {
+        >= 70 => _es('Ecos gemelos', 'Twin Echoes', '双子のエコー'),
+        >= 45 => _es('En la misma frecuencia', 'On the same frequency', '同じ周波数'),
+        >= 20 => _es('Ecos cercanos', 'Close Echoes', '近いエコー'),
+        _ => _es('Ecos lejanos', 'Distant Echoes', '遠いエコー'),
+      };
+  String bondsAgo(Duration d) {
+    if (d.inMinutes < 60) return _es('hace ${d.inMinutes.clamp(1, 59)} min', '${d.inMinutes.clamp(1, 59)} min ago', '${d.inMinutes.clamp(1, 59)}分前');
+    if (d.inHours < 24) return _es('hace ${d.inHours} h', '${d.inHours} h ago', '${d.inHours}時間前');
+    return _es('hace ${d.inDays} d', '${d.inDays} d ago', '${d.inDays}日前');
+  }
 
   // ── Downloaded albums ──
   String get downloadAlbum => _es(

@@ -1827,8 +1827,8 @@
     }
   },
   "profilePublic": "PERFIL PÚBLICO",
-  "profilePublicHint": "Cualquiera con el enlace puede verlo",
-  "profilePrivateHint": "Solo tú lo ves",
+  "profilePublicHint": "Aparece en la búsqueda de Lazos y cualquiera con el enlace puede verlo",
+  "profilePrivateHint": "Solo tú y tus Lazos lo ven",
   "profileShare": "COMPARTIR PERFIL",
   "profileShareText": "Mi perfil en Tsuki Tunes: {link}",
   "@profileShareText": {

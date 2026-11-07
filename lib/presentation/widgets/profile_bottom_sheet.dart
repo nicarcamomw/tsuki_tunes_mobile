@@ -299,6 +299,31 @@ class _ProfileSheet extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _closeThen(context, () => const BondsRoute(tab: 1).push(hostContext)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.link_rounded, size: 15, color: AppColors.accent),
+                  const SizedBox(width: 6),
+                  Text(
+                    strings.bondsTitle,
+                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textBright),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
+                ],
+              ),
+            ),
+          ),
         ],
       ],
     );

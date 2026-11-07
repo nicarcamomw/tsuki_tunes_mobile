@@ -51,7 +51,7 @@ void main() {
     expect(find.text('Tool'), findsOneWidget);
     expect(find.text('2 canciones'), findsOneWidget);
     expect(find.text('PERFIL PÚBLICO'), findsOneWidget);
-    expect(find.text('Solo tú lo ves'), findsOneWidget);
+    expect(find.text('Solo tú y tus Lazos lo ven'), findsOneWidget);
     // Private: nothing to share yet.
     final share = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
     expect(share.onPressed, isNull);

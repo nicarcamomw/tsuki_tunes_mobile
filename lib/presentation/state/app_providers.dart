@@ -27,8 +27,11 @@ import '../../data/datasources/voice_search_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
+import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/product_events.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../domain/repositories/social_repository.dart';
 import '../../domain/usecases/library/mark_track_listened.dart';
 import '../navigation/session_gate.dart';
 import 'ambient_provider.dart';
@@ -42,6 +45,7 @@ import 'profile_controller.dart';
 import 'run_provider.dart';
 import 'search_provider.dart';
 import 'shake_skip_provider.dart';
+import 'social_controller.dart';
 import 'weather_provider.dart';
 
 // The app's state, owned by Riverpod. The library, playlists and player
@@ -260,7 +264,20 @@ final playbackWiringProvider = Provider<void>((ref) {
           durationSeconds: queue[next].durationSeconds);
     }
   };
-  final markListened = MarkTrackListened(library, events: ProductAnalytics.instance);
+  // Resonances: what the Bonds hear about (rarer beings, new ranks, long
+  // streaks, albums heard whole).
+  final milestones = ref.read(milestoneLogProvider);
+  masks.onMilestone = milestones.add;
+  void albumMilestone(String albumId) {
+    for (final t in library.listenedTracks) {
+      if (t.albumId == albumId && t.albumTitle.isNotEmpty) {
+        milestones.album(t.albumTitle, t.artistName);
+        return;
+      }
+    }
+  }
+
+  final markListened = MarkTrackListened(library, events: _MilestoneEvents(albumMilestone));
   player.onListenedThreshold = markListened.call;
 
   // When a track count arrives late (the album screen is opened after all
@@ -268,6 +285,7 @@ final playbackWiringProvider = Provider<void>((ref) {
   // that MarkTrackListened couldn't fire at listen time.
   library.onAlbumCompleted = (albumId) {
     ProductAnalytics.instance.log('album_completed', {'album_id': albumId});
+    albumMilestone(albumId);
   };
 
   // The "new artist" mask needs the artists the user already knew, once
@@ -332,9 +350,11 @@ final profileControllerProvider = ChangeNotifierProvider<ProfileController>((ref
   final auth = ref.read(authProvider);
   final library = ref.read(libraryProvider);
   final masks = ref.read(maskProvider);
+  final milestones = ref.read(milestoneLogProvider);
   return ProfileController(
     repository: getIt<ProfileRepository>(),
-    changes: Listenable.merge([auth, library, masks]),
+    changes: Listenable.merge([auth, library, masks, milestones]),
+    milestones: () => milestones.items,
     // Guests have no profile.
     uid: () => auth.isAuthenticated ? auth.uid : null,
     displayName: () => auth.user?.displayName ?? '',
@@ -346,6 +366,52 @@ final profileControllerProvider = ChangeNotifierProvider<ProfileController>((ref
     knownArtists: () => [...library.followedArtists, ...library.favoriteArtists],
   );
 });
+
+/// What this Bearer's Echo did lately, per account (none for Observers).
+final milestoneLogProvider = ChangeNotifierProvider<MilestoneLog>((ref) {
+  final log = MilestoneLog();
+  final auth = ref.read(authProvider);
+  _follow(ref, auth, () => unawaited(log.setUser(auth.isAuthenticated ? auth.uid : null)));
+  return log;
+});
+
+/// Bonds (Lazos): search, requests, Bonds, Resonances and Sintonía.
+final socialProvider = ChangeNotifierProvider<SocialController>((ref) {
+  final auth = ref.read(authProvider);
+  final profile = ref.read(profileControllerProvider);
+  final masks = ref.read(maskProvider);
+  return SocialController(
+    repository: getIt<SocialRepository>(),
+    profiles: getIt<ProfileRepository>(),
+    changes: auth,
+    uid: () => auth.isAuthenticated ? auth.uid : null,
+    myCard: () {
+      final uid = auth.uid;
+      if (!auth.isAuthenticated || uid == null) return null;
+      final name = auth.user?.displayName?.trim();
+      return SocialPerson(
+        uid: uid,
+        name: name == null || name.isEmpty ? 'Tsuki' : name,
+        photoUrl: auth.user?.photoURL,
+        maskId: masks.equipped?.id,
+      );
+    },
+    myTops: () => profile.current?.tops ?? const [],
+  );
+});
+
+/// Forwards the use cases' events to analytics, and turns a completed album
+/// into a Resonance.
+class _MilestoneEvents implements ProductEvents {
+  const _MilestoneEvents(this._album);
+  final void Function(String albumId) _album;
+
+  @override
+  void log(String name, [Map<String, Object> parameters = const {}]) {
+    ProductAnalytics.instance.log(name, parameters);
+    if (name == 'album_completed' && parameters['album_id'] is String) _album(parameters['album_id'] as String);
+  }
+}
 
 /// Sign-in state for the router: connects the library and playlists to the
 /// account and knows whether the tutorial was seen.
