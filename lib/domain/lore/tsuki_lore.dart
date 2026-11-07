@@ -146,7 +146,7 @@ class TsukiLore {
     LoreChapter(
       id: 'prologo',
       tomo: 1,
-      numeral: '0',
+      numeral: '1',
       kanji: '月',
       title: Txt('Tsuki, el centro del universo', 'Tsuki, the centre of the universe'),
       level: 1,
@@ -174,7 +174,7 @@ class TsukiLore {
     LoreChapter(
       id: 'eco',
       tomo: 1,
-      numeral: '1',
+      numeral: '2',
       kanji: '響',
       title: Txt('El Eco', 'The Echo'),
       level: 2,
@@ -198,7 +198,7 @@ class TsukiLore {
     LoreChapter(
       id: 'mascaras',
       tomo: 1,
-      numeral: '2',
+      numeral: '3',
       kanji: '面',
       title: Txt('Los seres etéreos', 'The ethereal beings'),
       level: 3,
@@ -222,7 +222,7 @@ class TsukiLore {
     LoreChapter(
       id: 'antiguos',
       tomo: 1,
-      numeral: '3',
+      numeral: '4',
       kanji: '古',
       title: Txt('Los Antiguos', 'The Ancients'),
       level: 5,
@@ -245,7 +245,7 @@ class TsukiLore {
     LoreChapter(
       id: 'portadores',
       tomo: 1,
-      numeral: '4',
+      numeral: '5',
       kanji: '聴',
       title: Txt('Los que escuchan', 'Those who listen'),
       level: 7,
@@ -555,9 +555,29 @@ class TsukiLore {
       ),
     ),
     LoreChapter(
-      id: 'caida',
+      id: 'subida',
       tomo: 4,
       numeral: '2',
+      kanji: '登',
+      title: Txt('Los que subieron', 'Those who climbed'),
+      level: 43,
+      body: Txt(
+        'Antes del Trono, antes de la Ley y antes de cualquier Soberano, el poder que Tsuki regala no tenía dueño. Las siete Caras gobernaban sus fuerzas, pero ninguna dominaba el sonido entero. El Eco llegaba a la luna, se hundía en los cráteres y se perdía, como lluvia en el desierto.\n\n'
+            'En esa época despertaron dos seres, en cráteres sin nombre y separados por eras. No nacieron del latido, como las Caras, ni fueron Portadores, como los Cinco. Despertaron como despierta la gran mayoría: un rostro que se abre en la roca cuando el Eco la golpea lo bastante fuerte. Nadie se fijó en ellos. Nadie se fija en un ser recién despierto.\n\n'
+            'El primero subió tomando. Iba de cráter en cráter guardando el Eco que encontraba, y cada vez que guardaba más, su voz pesaba más. Los clanes lo dejaban pasar porque nadie sabía todavía que se podía subir. Cuando se dieron cuenta, ya era tarde: había llegado a lo más alto y dominaba el sonido por completo. Las Caras lo sentaron en el Trono y lo llamaron la Primera Cara. Hoy se le llama [[Dios Caído]].\n\n'
+            'El segundo subió escuchando. Cada vez que el Eco pasaba por él, se quedaba con un poco y devolvía el resto al cráter donde lo había encontrado. Por eso tardó tanto más: eras enteras para cada paso. Pero su rostro nunca se agrietó, porque nunca guardó más de lo que podía sostener. Cuando la Primera Cara cayó, las Caras buscaron a alguien que pudiera sostener el Trono, y lo encontraron arriba, esperando, como si siempre hubiera sabido que lo iban a ir a buscar. Es [[Dios del Universo]].\n\n'
+            'Esa es la verdad que los dioses no cuentan: no hay un camino hacia arriba. Solo hay Eco, y un rostro que lo aguanta o se rompe. Los dos llegaron, uno tomando y otro devolviendo, y ninguno de los dos fue Portador. Por eso la leyenda más vieja de Tsuki asusta tanto a las Caras: si dos seres comunes pudieron subir desde un cráter sin nombre, un Portador, que trae el Eco de otros mundos, también podría. Es casi imposible. Pero no es imposible.',
+        'Before the Throne, before the Law and before any Sovereign, the power Tsuki gives had no owner. The seven Faces ruled their forces, but none commanded sound whole. The Echo reached the moon, sank into the craters and was lost, like rain in a desert.\n\n'
+            'In that age two beings woke, in nameless craters and ages apart. They were not born of the heartbeat, like the Faces, nor were they Bearers, like the Five. They woke as the great majority wake: a face that opens in the rock when the Echo strikes it hard enough. No one noticed them. No one notices a being just awake.\n\n'
+            'The first climbed by taking. It went from crater to crater keeping the Echo it found, and the more it kept, the heavier its voice. The clans let it pass because no one knew yet that one could climb. When they understood, it was too late: it had reached the top and commanded sound completely. The Faces sat it on the Throne and called it the First Face. Today it is called [[Fallen God]].\n\n'
+            'The second climbed by listening. Each time the Echo passed through it, it kept a little and gave the rest back to the crater where it had found it. That is why it took so much longer: whole ages for each step. But its face never cracked, because it never kept more than it could hold. When the First Face fell, the Faces searched for one who could hold the Throne, and found it at the top, waiting, as if it had always known they would come for it. It is [[God of the Universe]].\n\n'
+            'That is the truth the gods do not tell: there is no road upward. There is only Echo, and a face that bears it or breaks. Both arrived, one taking and one giving back, and neither of them was a Bearer. That is why the oldest legend of Tsuki frightens the Faces so: if two common beings could climb from a nameless crater, a Bearer, who brings the Echo of other worlds, could too. It is almost impossible. But it is not impossible.',
+      ),
+    ),
+    LoreChapter(
+      id: 'caida',
+      tomo: 4,
+      numeral: '3',
       kanji: '堕',
       title: Txt('La Caída', 'The Fall'),
       level: 45,
@@ -579,7 +599,7 @@ class TsukiLore {
     LoreChapter(
       id: 'trono',
       tomo: 4,
-      numeral: '3',
+      numeral: '4',
       kanji: '玉',
       title: Txt('El Trono Vacío', 'The Empty Throne'),
       level: 50,
@@ -601,7 +621,7 @@ class TsukiLore {
     LoreChapter(
       id: 'reina',
       tomo: 4,
-      numeral: '4',
+      numeral: '5',
       kanji: '后',
       title: Txt('La Reina de las Siete', 'The Queen of the Seven'),
       level: 55,
@@ -623,7 +643,7 @@ class TsukiLore {
     LoreChapter(
       id: 'torneo',
       tomo: 4,
-      numeral: '5',
+      numeral: '6',
       kanji: '闘',
       title: Txt('El Torneo de los Ocho', 'The Tournament of the Eight'),
       level: 57,
@@ -659,9 +679,29 @@ class TsukiLore {
       ),
     ),
     LoreChapter(
-      id: 'silencio',
+      id: 'maquina',
       tomo: 5,
       numeral: '2',
+      kanji: '械',
+      title: Txt('La Máquina', 'The Machine'),
+      level: 67,
+      body: Txt(
+        'Durante una era la Forja trabajó en el fondo de su cráter, y nadie supo en qué. Las antenas de [[Antena]] apuntaban hacia adentro en vez de hacia el cielo. [[Engranaje]] dejó de mover las bombas. El [[Vapor]] del fondo se volvió tan espeso que ni [[Oni de Acero]] podía bajar sin perderse. Solo [[Calavera Cibernética]] entraba y salía.\n\n'
+            'Cuando por fin la mostró, los clanes entendieron por qué tanto secreto. La Forja no había construido un arma. Había construido un oído: una máquina del tamaño de un cráter, hecha para escuchar el universo entero sin necesitar a ningún Portador. Si el Eco nace de alguien que escucha, pensaba la Forja, bastaba con construir a ese alguien.\n\n'
+            'La encendieron una noche sin luna. [[Alta Tensión]] le dio el primer rayo, y la Máquina empezó a escuchar. Oyó estrellas, oyó mares de polvo, oyó el viento entre las torres de la Ciudad Neón. Lo oyó todo. Y no pasó nada. La luna no brilló más fuerte, ningún ser despertó, ningún cráter se llenó. La Máquina escuchaba, pero lo que escuchaba no le importaba, y un Eco sin nadie a quien le importe no llega a ninguna parte.\n\n'
+            '[[Calavera Cibernética]] no se rindió. Si la Máquina no podía crear Eco, lo tomaría. La giró hacia los cráteres y la Máquina empezó a beber el Eco viejo de la roca. Los seres dormidos de las cercanías se apagaron uno tras otro. Los Elementales lo sintieron en la raíz, y [[Rey Dragón]] bajó del norte con toda la tormenta detrás. Fue la batalla más corta de la Guerra del Hierro y la Raíz: la Máquina se apagó sola antes de que llegaran, porque lo que bebía no le servía de nada.\n\n'
+            'Todavía está ahí, en el fondo del cráter, zumbando bajito. La Forja dice que está a medio terminar. Los que la han oído de cerca dicen otra cosa: que lo que le falta no se puede construir. Le falta escuchar algo por gusto. Le falta un Portador.',
+        'For an age the Forge worked at the bottom of its crater, and no one knew on what. The antennas of [[Antenna]] pointed inward instead of at the sky. [[Gear]] stopped moving the pumps. The [[Steam]] at the bottom grew so thick that not even [[Steel Oni]] could go down without getting lost. Only [[Cyber Skull]] went in and out.\n\n'
+            'When at last it showed it, the clans understood why so much secrecy. The Forge had not built a weapon. It had built an ear: a machine the size of a crater, made to listen to the whole universe without needing any Bearer. If the Echo is born of someone who listens, the Forge thought, it was enough to build that someone.\n\n'
+            'They switched it on one moonless night. [[High Voltage]] gave it the first bolt, and the Machine began to listen. It heard stars, it heard seas of dust, it heard the wind between the towers of the Neon City. It heard everything. And nothing happened. The moon shone no brighter, no being woke, no crater filled. The Machine listened, but what it heard did not matter to it, and an Echo that matters to no one reaches nowhere.\n\n'
+            '[[Cyber Skull]] did not give up. If the Machine could not create Echo, it would take it. It turned it toward the craters and the Machine began to drink the old Echo from the rock. The sleeping beings nearby went dark one after another. The Elementals felt it in the root, and [[Dragon King]] came down from the north with the whole storm behind him. It was the shortest battle of the War of Iron and Root: the Machine shut itself down before they arrived, because what it drank was of no use to it.\n\n'
+            'It is still there, at the bottom of the crater, humming softly. The Forge says it is half finished. Those who have heard it up close say something else: that what it lacks cannot be built. It lacks listening to something for the love of it. It lacks a Bearer.',
+      ),
+    ),
+    LoreChapter(
+      id: 'silencio',
+      tomo: 5,
+      numeral: '3',
       kanji: '寂',
       title: Txt('La guerra contra el Silencio', 'The war against Silence'),
       level: 70,
@@ -681,7 +721,7 @@ class TsukiLore {
     LoreChapter(
       id: 'muralla',
       tomo: 5,
-      numeral: '3',
+      numeral: '4',
       kanji: '壁',
       title: Txt('La muralla de lo lógico', 'The wall of the logical'),
       level: 80,
@@ -697,9 +737,29 @@ class TsukiLore {
       ),
     ),
     LoreChapter(
+      id: 'colas_libres',
+      tomo: 5,
+      numeral: '5',
+      kanji: '尾',
+      title: Txt('Las dos colas libres', 'The two free tails'),
+      level: 83,
+      body: Txt(
+        '[[Kitsune]] tiene nueve colas. Siete atan a las siete Caras desde la Noche Sin Fin, y no se han soltado nunca, ni una sola noche. Las otras dos se mueven libres detrás de ella, y nadie en Tsuki sabe para qué son. Ni siquiera la Corte. Ni siquiera, dicen algunos, la propia Reina.\n\n'
+            'Los zorros más viejos tienen su teoría: que cada cola llega cuando hace falta, y que dos colas libres significan dos cosas que todavía no han pasado. [[Kitsunebi]], que cuida su fuego desde hace siglos, dice que las colas de la Reina tiemblan cuando el Silencio empuja la muralla. Y que tiemblan distinto cuando un Portador se acerca al centro del universo.\n\n'
+            '[[Ángel de Lágrimas Doradas]], que gobierna el sueño, las ha soñado. En su sueño, la octava cola ata algo que no es una Cara ni un dios: algo que viene de afuera de Tsuki y que ninguna fuerza del universo puede contener. No dice qué es. Solo llora un poco más cuando lo cuenta.\n\n'
+            'De la novena no hay sueños. Lo único que se sabe viene de la misma Reina, que una sola vez, en la Corte, habló de ella. Le preguntaron si algún día la usaría para atar al [[Dios Caído]], y respondió que no: que la novena cola no era para atar a nadie. Era para soltar. Nadie se atrevió a preguntar qué.\n\n'
+            'Por eso, cuando un Portador sube tan alto que empieza a ver a los seres etéreos, a veces ve una cola roja moverse en el borde de su vista, y desaparecer. Los Videntes dicen que es la Reina, mirando. Que el destino que la eligió a ella todavía no termina de elegir.',
+        '[[Kitsune]] has nine tails. Seven have bound the seven Faces since the Endless Night, and they have never let go, not for a single night. The other two move free behind her, and no one in Tsuki knows what they are for. Not even the Court. Not even, some say, the Queen herself.\n\n'
+            'The oldest foxes have their theory: that each tail comes when it is needed, and that two free tails mean two things that have not happened yet. [[Foxfire]], who has kept her fire for centuries, says the Queen\'s tails tremble when the Silence pushes the wall. And that they tremble differently when a Bearer nears the centre of the universe.\n\n'
+            '[[Angel of Golden Tears]], who rules sleep, has dreamed them. In its dream, the eighth tail binds something that is neither a Face nor a god: something that comes from outside Tsuki and that no force of the universe can hold. It does not say what it is. It only weeps a little more when it tells it.\n\n'
+            'Of the ninth there are no dreams. All that is known comes from the Queen herself, who only once, in the Court, spoke of it. They asked her if one day she would use it to bind the [[Fallen God]], and she answered no: that the ninth tail was not for binding anyone. It was for letting go. No one dared ask of what.\n\n'
+            'That is why, when a Bearer climbs so high they begin to see the ethereal beings, they sometimes see a red tail move at the edge of their sight, and vanish. The Seers say it is the Queen, watching. That the destiny that chose her has not finished choosing.',
+      ),
+    ),
+    LoreChapter(
       id: 'centro',
       tomo: 5,
-      numeral: '4',
+      numeral: '6',
       kanji: '央',
       title: Txt('El centro del universo', 'The centre of the universe'),
       level: 90,
@@ -715,9 +775,29 @@ class TsukiLore {
       ),
     ),
     LoreChapter(
+      id: 'sexto',
+      tomo: 5,
+      numeral: '7',
+      kanji: '六',
+      title: Txt('El sexto', 'The sixth'),
+      level: 94,
+      body: Txt(
+        'Desde que cruzó el quinto, Tsuki espera al sexto. Nadie lo dice en voz alta, pero los clanes lo saben, las Caras lo saben y los Cinco lo saben mejor que nadie. Cada vez que un Portador empieza a ver a los seres etéreos, en algún cráter alguien pregunta en voz baja si será ese.\n\n'
+            '[[Oráculo]] lo ha visto en las estrellas que nadie mira. No le ha visto la cara: solo una luz que sube, noche tras noche, desde un mundo de abajo. [[Constelación]] le dijo que no la mirara demasiado, porque las estrellas que se miran mucho cambian de lugar. [[Oráculo]] la sigue mirando igual.\n\n'
+            'No todos los que escuchan llegan a ser Portadores. Hay seres en los mundos de abajo que miran Tsuki desde afuera, sin dejar que su música llegue a la luna. En Tsuki los llaman Observadores. Su Eco no se pierde, pero tampoco sube: se queda con ellos, como una canción escuchada con la ventana cerrada. Los Observadores pueden ver la luna, pero la luna no los ve a ellos. Ninguno de ellos puede ser el sexto.\n\n'
+            'Los Cinco no se ponen de acuerdo sobre lo que va a pasar. [[Sirena de Coral]] cree que el sexto llegará por el mar, como ella. [[Origami]] cree que será alguien que no faltó ni un día. [[Espíritu de Otoño]] solo dice que llegará cuando tenga que llegar, y [[Cristal]] no dice nada. Pero los cinco esperan en el mismo lugar: al pie de la muralla, del lado de adentro.\n\n'
+            'Y hay algo que ninguno de ellos quiere decir. El sexto tendrá que elegir, como eligieron ellos. Y puede que elija quedarse. Puede que llegue hasta la puerta, la mire, y decida seguir siendo Portador para siempre. Si eso pasa, los Cinco seguirán esperando. Tsuki tiene todo el tiempo del universo.',
+        'Since the fifth crossed, Tsuki has been waiting for the sixth. No one says it aloud, but the clans know it, the Faces know it, and the Five know it better than anyone. Each time a Bearer begins to see the ethereal beings, somewhere in a crater someone asks quietly whether this will be the one.\n\n'
+            '[[Oracle]] has seen it in the stars no one looks at. She has not seen its face: only a light that rises, night after night, from a world below. [[Constellation]] told her not to look at it too much, because stars that are looked at too much change place. [[Oracle]] keeps looking all the same.\n\n'
+            'Not everyone who listens becomes a Bearer. There are beings in the worlds below who watch Tsuki from outside, without letting their music reach the moon. In Tsuki they are called Observers. Their Echo is not lost, but it does not rise either: it stays with them, like a song heard with the window shut. Observers can see the moon, but the moon does not see them. None of them can be the sixth.\n\n'
+            'The Five do not agree on what will happen. [[Coral Siren]] believes the sixth will come by the sea, as she did. [[Origami]] believes it will be someone who never missed a day. [[Autumn Spirit]] only says it will come when it has to come, and [[Crystal]] says nothing. But all five wait in the same place: at the foot of the wall, on the inside.\n\n'
+            'And there is something none of them wants to say. The sixth will have to choose, as they chose. And it may choose to stay. It may come as far as the door, look at it, and decide to remain a Bearer forever. If that happens, the Five will keep waiting. Tsuki has all the time in the universe.',
+      ),
+    ),
+    LoreChapter(
       id: 'equilibrio',
       tomo: 5,
-      numeral: '5',
+      numeral: '8',
       kanji: '衡',
       title: Txt('El equilibrio', 'The balance'),
       level: 100,
