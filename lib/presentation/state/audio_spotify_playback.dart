@@ -49,12 +49,12 @@ extension _SpotifyPlayback on AudioProvider {
   Future<void> _initSpotify() async {
     _nativePlayer.onStateChanged = (pos, dur, paused) {
       // A song we put in Spotify's queue left it once it plays.
-      _spotifyQueuedPending.remove(_nativePlayer.lastTrackUri);
+      final queuedTrackId = _spotifyQueuedPending.remove(_nativePlayer.lastTrackUri);
       if (!_spotifyActive) return;
       if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
         _onSpotifyLeftTrack(
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos),
-            live: true);
+            live: true, queuedTrackId: queuedTrackId);
         return;
       }
       if (!paused) _spotifyHeardGen = _playGeneration;
@@ -363,7 +363,7 @@ extension _SpotifyPlayback on AudioProvider {
   /// catch our queue up without a new play (which would restart the song).
   /// If our queue changed since the list was sent, take over with a fresh
   /// play instead, at the very start of the song.
-  void _followSpotify(int k, Duration progress) {
+  void _followSpotify(int k, Duration progress, {bool live = false}) {
     final passed = _spotifyAhead.sublist(0, k + 1);
     final expected = [for (final i in _q.peekUpcoming(k + 1)) _q.tracks[i].id];
     final stale = expected.length != passed.length ||
@@ -400,6 +400,9 @@ extension _SpotifyPlayback on AudioProvider {
     _linkedSpotifyUri = null;
     _spotifyTookOver = false;
     _playGeneration++;
+    // App Remote just said this one plays: a jump after it is real (the
+    // car's "next" pressed again), not a stale report.
+    if (live) _spotifyHeardGen = _playGeneration;
     _completionHandled = false;
     _crossfadeTriggered = false;
     _lastPlayStart = now;
@@ -427,23 +430,26 @@ extension _SpotifyPlayback on AudioProvider {
     unawaited(_learnSpotifyNextUp());
   }
 
-  /// Near the end of a song playing through App Remote, puts only the next
-  /// one in the Spotify app's queue: Spotify then joins them with its own
-  /// crossfade instead of slipping into its autoplay, and Tsuki follows
-  /// (_followSpotify) without a new play. Spotify's queue can't be emptied
-  /// from outside, so it's one song, as late as possible (an edit before
-  /// then leaves nothing behind), and never while one we put there hasn't
-  /// played yet. An edit after it is caught by _followSpotify, which takes
-  /// over with the right song.
+  /// As soon as a song plays through App Remote, puts our next one in the
+  /// Spotify app's queue, so Spotify's own "next" is ours: the car's,
+  /// the speaker's or a headset's buttons reach Spotify (the app making the
+  /// sound), and with only our song handed over it jumped to its autoplay,
+  /// which sounded for a moment before Tsuki replaced it. It also joins the
+  /// songs with Spotify's crossfade. Tsuki follows (_followSpotify) without
+  /// a new play.
+  ///
+  /// Spotify's queue can't be emptied from outside, so it's one song, and
+  /// never another while one we put there hasn't played yet: that one is
+  /// first in Spotify's queue, and serves as the next when it still is ours.
+  /// A queue edit meanwhile is caught by _followSpotify, which takes over
+  /// with the right song when Spotify gets there.
   Future<void> _maybeQueueNextInSpotify(Duration pos) async {
     if (!_flags.spotifyQueueNext) return;
     if (_spotifyQueueBroken || !_nativePlayer.isConnected) return;
     if (_spotifyQueuedGen == _playGeneration) return;
-    if (_duration < const Duration(seconds: 40) ||
-        pos < _duration - const Duration(seconds: 20)) {
-      return;
-    }
-    if (_spotifyAhead.isNotEmpty || _spotifyQueuedPending.isNotEmpty) return;
+    // Once ours is playing, a moment in: a play still landing isn't touched.
+    if (!_isPlaying || _isBuffering || pos < const Duration(seconds: 2)) return;
+    if (_spotifyAhead.isNotEmpty) return;
     if (_q.repeatMode == PlaybackRepeatMode.one ||
         _sleepCtrl.stopAfterCurrentTrack) {
       return;
@@ -451,6 +457,16 @@ extension _SpotifyPlayback on AudioProvider {
     final upcoming = _q.peekUpcoming(1);
     if (upcoming.isEmpty) return;
     final next = _q.tracks[upcoming.first];
+
+    if (_spotifyQueuedPending.isNotEmpty) {
+      _spotifyQueuedGen = _playGeneration;
+      final first = _spotifyQueuedPending.entries.first;
+      if (first.value == next.id) {
+        _log.info('"${next.title}" already waits in Spotify\'s queue, it\'s our next');
+        _spotifyAhead = [(trackId: first.value, uri: first.key)];
+      }
+      return;
+    }
 
     // Once per song, whatever happens below.
     final gen = _spotifyQueuedGen = _playGeneration;
@@ -462,7 +478,7 @@ extension _SpotifyPlayback on AudioProvider {
       CrashReporter.instance.issue('spotify_queue_refused');
       return;
     }
-    _spotifyQueuedPending.add(uri);
+    _spotifyQueuedPending[uri] = next.id;
     // The song changed meanwhile: what's queued no longer follows it, and
     // waits in Spotify's queue until it plays (see above).
     if (gen != _playGeneration) return;
@@ -627,26 +643,36 @@ extension _SpotifyPlayback on AudioProvider {
   /// pressed (the car's buttons: do ours), or something someone picked in
   /// the Spotify app (stop claiming it). [live]: reported by App Remote.
   void _onSpotifyLeftTrack(String? uri, Duration otherProgress,
-      {bool live = false}) {
-    final k = uri == null ? -1 : _spotifyAhead.indexWhere((e) => e.uri == uri);
+      {bool live = false, String? queuedTrackId}) {
+    // A song we queued in Spotify is ours even when the list moved on
+    // since (a skip, a new play): follow it, or take over if it's stale.
+    queuedTrackId ??= uri == null ? null : _spotifyQueuedPending.remove(uri);
+    var k = uri == null ? -1 : _spotifyAhead.indexWhere((e) => e.uri == uri);
+    if (k == -1 && uri != null && queuedTrackId != null) {
+      _spotifyAhead = [(trackId: queuedTrackId, uri: uri)];
+      k = 0;
+    }
     final from = live ? 'App Remote' : 'Web API';
     if (_isBuffering || _completionHandled || _crossfadeTriggered) {
       _log.info('Spotify on another song ($from), ignored while '
           '${_isBuffering ? 'starting ours' : _completionHandled ? 'ending ours' : 'crossfading'}');
+      if (_isBuffering) _recheckSpotifyLater(uri, const Duration(seconds: 2));
       return;
     }
     if (k != -1) {
-      _followSpotify(k, otherProgress);
+      _followSpotify(k, otherProgress, live: live);
       return;
     }
     // Right after a play Spotify may still report the song it was on. Not
     // once App Remote said ours plays: a change after that is real (the
     // car's "next" pressed twice in a row).
     final settled = live && _spotifyHeardGen == _playGeneration;
-    if (!settled &&
-        DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) {
+    final sinceStart = DateTime.now().difference(_lastPlayCommandTime);
+    if (!settled && sinceStart < const Duration(seconds: 5)) {
       _log.info('Spotify on another song ($from), not in our list of '
           '${_spotifyAhead.length}; ignored, ours started under 5 s ago');
+      _recheckSpotifyLater(uri,
+          const Duration(seconds: 5) - sinceStart + const Duration(milliseconds: 300));
       return;
     }
 
@@ -702,12 +728,47 @@ extension _SpotifyPlayback on AudioProvider {
     final nextUp = _spotifyNextUp;
     final onScreen =
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
-    if (!onScreen && nextUp != null && nextUp != uri) return false;
+    // A song picked in the Spotify app needs its screen on. With the
+    // screen off (driving, the phone in a pocket) it's a button: the car's,
+    // a speaker's or a headset's. Spotify's guess of its next song (asked
+    // at the start) often isn't the one its autoplay then plays, and taking
+    // that for a pick handed the car to Spotify for good.
+    if (_screenOn && !onScreen && nextUp != null && nextUp != uri) return false;
     _log.info('Spotify skipped ahead (its own "next"), doing ours');
     ProductAnalytics.instance.log('spotify_controls_skip');
     _stopPositionTimer();
     unawaited(next());
     return true;
+  }
+
+  /// Looks again after [delay] at [ignored], a song Spotify reported while
+  /// ours had only just started: a second press of the car's "next" landing
+  /// then used to wait for the next poll (15 to 30 s) with the wrong song on
+  /// screen. Only if Spotify is still on it, and never the song we just
+  /// left (a late report of it is stale, not a "previous": checking the
+  /// play landed is _verifySpotifyPlayback's job). At most three per song.
+  void _recheckSpotifyLater(String? ignored, Duration delay) {
+    if (ignored == null || ignored == _spotifyPrevUri) return;
+    if (_spotifyRecheckGen != _playGeneration) {
+      _spotifyRecheckGen = _playGeneration;
+      _spotifyRechecks = 0;
+    }
+    if (_spotifyRechecks >= 3 || (_spotifyRecheckTimer?.isActive ?? false)) return;
+    _spotifyRechecks++;
+    _spotifyRecheckTimer = Timer(delay, () {
+      if (!_useSpotify || !_spotifyActive || _spotifyFallbackActive) return;
+      if (_nativePlayer.isConnected) {
+        final uri = _nativePlayer.lastTrackUri;
+        if (uri == ignored && !_isOurSpotifyUri(uri)) {
+          _log.info('Spotify is still on the song it jumped to, looking again');
+          // Its position isn't known here; past the first seconds, so it
+          // isn't read as a "previous".
+          _onSpotifyLeftTrack(uri, const Duration(seconds: 3), live: true);
+        }
+      } else {
+        unawaited(_syncSpotifyPlaybackState());
+      }
+    });
   }
 
   /// Asks Spotify what its "next" would play after our song, so a skip to
@@ -1078,7 +1139,13 @@ extension _SpotifyPlayback on AudioProvider {
     for (var i = 0; i < 12; i++) {
       await Future.delayed(const Duration(milliseconds: 250));
       if (gen != _playGeneration || !_spotifyActive) return true;
-      if (_nativePlayer.isPlayingUri(uri) || _nativePlayingOurTrack) {
+      // Also when App Remote already said so and then dropped (it often
+      // does with the screen off): asking the Web API then could find
+      // Spotify on a song the car's "next" moved it to since, and playing
+      // ours again undid that press.
+      if (_nativePlayer.isPlayingUri(uri) ||
+          _nativePlayingOurTrack ||
+          _spotifyHeardGen == gen) {
         _log.info('Playing (App Remote)');
         _onSpotifyConfirmed(0);
         _afterSpotifyStarted();

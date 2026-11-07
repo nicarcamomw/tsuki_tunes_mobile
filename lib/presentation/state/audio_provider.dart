@@ -152,7 +152,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   // _maybeQueueNextInSpotify): the play generation it was done for, the
   // links put there and not played yet, and whether App Remote refused it.
   int _spotifyQueuedGen = -1;
-  final Set<String> _spotifyQueuedPending = {};
+  /// Songs we put in Spotify's queue that it hasn't played yet: uri to
+  /// our track id, oldest first (Spotify plays them in that order).
+  final Map<String, String> _spotifyQueuedPending = {};
+
+  /// Whether the screen is on (unknown counts as on). With it off nobody is
+  /// picking songs in the Spotify app: a jump is the car's or a headset's.
+  bool _screenOn = true;
+
+  /// A Spotify change ignored for a moment (ours was starting) is looked at
+  /// again once that moment passes, instead of at the next poll.
+  Timer? _spotifyRecheckTimer;
+  int _spotifyRechecks = 0;
+  int _spotifyRecheckGen = -1;
   bool _spotifyQueueBroken = false;
   bool _spotifyListStale = false;
 
@@ -496,7 +508,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     );
     WidgetsBinding.instance.addObserver(this);
     _screenSub = (screenChanges ?? ScreenService.changes)
-        .listen((_) => _onScreenChanged());
+        .listen((on) {
+      _screenOn = on;
+      _onScreenChanged();
+    });
     _initAudioSession();
     _initSubscriptions();
     // Once both are known, a Spotify still playing our queue after Tsuki
@@ -740,6 +755,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   @visibleForTesting
   void headphonesUnpluggedForTesting() => _onHeadphonesUnplugged();
+
+  /// One poll of Spotify's state over the Web API, as the timer does.
+  @visibleForTesting
+  Future<void> syncSpotifyStateForTesting() => _syncSpotifyPlaybackState();
 
   bool _warmingUpSpotify = false;
 
@@ -1194,6 +1213,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _retryCount = 0;
     _q.resetNavigation();
     _spotifyListTimer?.cancel();
+    _spotifyRecheckTimer?.cancel();
     _spotifyListStale = false;
     _prefetchedUri = null;
     _prefetchedForTrackId = null;
@@ -1890,6 +1910,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _completionRecheck?.cancel();
     _spotifyListTimer?.cancel();
     _mediaTopTimer?.cancel();
+    _spotifyRecheckTimer?.cancel();
     _unplugSub?.cancel();
     _screenSub?.cancel();
     _posSub?.cancel();
