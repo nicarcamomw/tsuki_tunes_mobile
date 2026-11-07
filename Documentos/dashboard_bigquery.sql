@@ -98,7 +98,7 @@ WITH dau AS (
 ),
 crashes AS (
   SELECT
-    FORMAT_DATE('%Y%m%d', event_timestamp)   AS event_date,
+    FORMAT_TIMESTAMP('%Y%m%d', event_timestamp) AS event_date,
     COUNT(DISTINCT installation_uuid)        AS crashed_users
   FROM
     `tsuki-tunes-web.firebase_crashlytics.com_tsuki_tsuki_tunes_mobile_ANDROID`
