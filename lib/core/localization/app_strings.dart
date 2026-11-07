@@ -465,6 +465,36 @@ class AppStrings {
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
 
+  // ── Listening parties ──
+  String get partyTitle => _es('Escuchar juntos', 'Listen together', '一緒に聴く');
+  String get partyHint => _es(
+      'Abre tu fiesta e invita a tus Lazos: escucharán lo mismo que tú, en el mismo segundo.',
+      'Open your party and invite your Bonds: they will hear what you hear, at the same second.',
+      'パーティーを開いて絆の仲間を招待しよう。同じ曲を同じ瞬間に聴ける。');
+  String get partyOpen => _es('Abrir mi fiesta', 'Open my party', 'パーティーを開く');
+  String get partyEnd => _es('Terminar la fiesta', 'End the party', 'パーティーを終了');
+  String get partyLeave => _es('Salir', 'Leave', '退出');
+  String get partyInvite => _es('Invitar Lazos', 'Invite Bonds', '絆を招待');
+  String get partyInvitations => _es('Te invitaron', 'You were invited', '招待');
+  String partyHostedBy(String name) => _es('Fiesta de $name', '$name\'s party', '$nameのパーティー');
+  String get partyYouHost => _es('Tu fiesta', 'Your party', 'あなたのパーティー');
+  String partyListening(int n) => _es(
+      n == 0 ? 'Nadie más escuchando todavía' : n == 1 ? '1 escuchando contigo' : '$n escuchando contigo',
+      n == 0 ? 'No one else listening yet' : n == 1 ? '1 listening with you' : '$n listening with you',
+      n == 0 ? 'まだ誰も聴いていない' : '$n人が一緒に聴いている');
+  String get partySynced => _es('Sincronizado con el anfitrión', 'In sync with the host', 'ホストと同期中');
+  String get partyNothing => _es('Pon una canción y todos la escucharán.', 'Play a song and everyone will hear it.', '曲を再生すれば、みんなに届く。');
+  String get partyHostPaused => _es('El anfitrión pausó la música', 'The host paused the music', 'ホストが一時停止中');
+  String get partyEnded => _es('La fiesta terminó.', 'The party ended.', 'パーティーは終わった。');
+  String get partyPreviewNote => _es(
+      'Sin Spotify, cada canción suena 30 segundos.',
+      'Without Spotify, each song plays for 30 seconds.',
+      'Spotifyなしでは各曲30秒だけ再生される。');
+  String get partyObserver => _es(
+      'Escuchar juntos es entre Portadores. Vuélvete Portador para abrir una fiesta.',
+      'Listening together is between Bearers. Become a Bearer to open a party.',
+      '一緒に聴くのは運び手同士。運び手になってパーティーを開こう。');
+
   // ── Collaborative playlists ──
   String get sharedTitle => _es('Colaborativas', 'Collaborative', '共同プレイリスト');
   String get sharedNew => _es('Nueva colaborativa', 'New collaborative', '新しい共同プレイリスト');

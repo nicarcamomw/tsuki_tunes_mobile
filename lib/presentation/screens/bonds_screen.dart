@@ -55,6 +55,25 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (social.available)
+            Consumer(
+              builder: (context, ref, _) {
+                final invites = ref.watch(partyProvider.select((p) => p.invitations.length));
+                final inParty = ref.watch(partyProvider.select((p) => p.inParty));
+                return IconButton(
+                  tooltip: strings.partyTitle,
+                  onPressed: () => const PartyRoute().push<void>(context),
+                  icon: Badge(
+                    isLabelVisible: invites > 0,
+                    backgroundColor: AppColors.accent,
+                    label: Text('$invites', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                    child: Icon(Icons.headphones_rounded, color: inParty ? AppColors.success : AppColors.textBright),
+                  ),
+                );
+              },
+            ),
+        ],
         bottom: social.available
             ? TabBar(
                 controller: _tabs,

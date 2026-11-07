@@ -29,6 +29,7 @@ import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/repositories/party_repository.dart';
 import '../../domain/repositories/product_events.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/repositories/shared_playlist_repository.dart';
@@ -42,6 +43,7 @@ import 'connectivity_provider.dart';
 import 'locale_provider.dart';
 import 'mask_provider.dart';
 import 'moon_provider.dart';
+import 'party_controller.dart';
 import 'profile_controller.dart';
 import 'run_provider.dart';
 import 'search_provider.dart';
@@ -415,6 +417,47 @@ final sharedPlaylistsProvider = ChangeNotifierProvider<SharedPlaylistsController
     },
   );
 });
+
+/// Listening together with Bonds.
+final partyProvider = ChangeNotifierProvider<PartyController>((ref) {
+  final auth = ref.read(authProvider);
+  return PartyController(
+    repository: getIt<PartyRepository>(),
+    changes: auth,
+    uid: () => auth.isAuthenticated ? auth.uid : null,
+    myName: () {
+      final n = auth.user?.displayName?.trim();
+      return n == null || n.isEmpty ? 'Tsuki' : n;
+    },
+    player: _AudioPartyPlayer(ref.read(audioProvider)),
+  );
+});
+
+/// The party's view of the app's player.
+class _AudioPartyPlayer implements PartyPlayer {
+  _AudioPartyPlayer(this._audio);
+  final AudioProvider _audio;
+
+  @override
+  Track? get current => _audio.currentTrack;
+  @override
+  bool get playing => _audio.isPlaying;
+  @override
+  Duration get position => _audio.position;
+  @override
+  Future<void> play(Track track) => _audio.playTrack(track, newQueue: [track]);
+  @override
+  Future<void> setPlaying(bool playing) async {
+    if (_audio.isPlaying != playing) await _audio.togglePlay();
+  }
+
+  @override
+  Future<void> seek(Duration position) => _audio.seek(position);
+  @override
+  void addListener(VoidCallback listener) => _audio.addListener(listener);
+  @override
+  void removeListener(VoidCallback listener) => _audio.removeListener(listener);
+}
 
 /// Forwards the use cases' events to analytics, and turns a completed album
 /// into a Resonance.

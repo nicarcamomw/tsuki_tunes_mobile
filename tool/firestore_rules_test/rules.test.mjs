@@ -571,6 +571,42 @@ test('my collaborative playlists and invitations can be listed, not anyone else\
   await assertFails(getDocs(query(collection(db, 'sharedPlaylists'), where('members', 'array-contains', 'alice'))));
 });
 
+// --- Listening parties
+
+const party = (overrides = {}) => ({
+  host: 'alice', name: 'Alice', members: [], invited: [], names: {},
+  track: { id: 't1', title: 'Song' }, positionMs: 0, playing: true,
+  at: serverTimestamp(), updatedAt: serverTimestamp(), ...overrides,
+});
+const seedParty = (overrides = {}) =>
+  seed('parties/alice', { ...party(overrides), at: Timestamp.now(), updatedAt: Timestamp.now() });
+
+test('a host opens their own party only, empty, and moves the music on', async () => {
+  await assertSucceeds(setDoc(doc(alice(), 'parties/alice'), party()));
+  await assertFails(setDoc(doc(bob(), 'parties/alice'), party()));
+  await assertFails(setDoc(doc(bob(), 'parties/bob'), party({ host: 'bob', members: ['alice'] })));
+  await assertSucceeds(updateDoc(doc(alice(), 'parties/alice'),
+    { positionMs: 42000, playing: false, at: serverTimestamp(), updatedAt: serverTimestamp() }));
+  // A made-up clock is refused.
+  await assertFails(updateDoc(doc(alice(), 'parties/alice'),
+    { positionMs: 1, at: Timestamp.fromMillis(0), updatedAt: serverTimestamp() }));
+});
+
+test('only Bonds are invited; they join with their name; members cannot steer the music', async () => {
+  await seedParty();
+  await assertFails(updateDoc(doc(alice(), 'parties/alice'), { invited: arrayUnion('bob'), lastInvited: 'bob', updatedAt: serverTimestamp() }));
+  await seed('users/alice/friends/bob', { name: 'Bob', at: Timestamp.now() });
+  await assertSucceeds(updateDoc(doc(alice(), 'parties/alice'), { invited: arrayUnion('bob'), lastInvited: 'bob', updatedAt: serverTimestamp() }));
+  await assertSucceeds(getDoc(doc(bob(), 'parties/alice')));
+  await assertFails(getDoc(doc(carol(), 'parties/alice')));
+  await assertSucceeds(updateDoc(doc(bob(), 'parties/alice'),
+    { invited: arrayRemove('bob'), members: arrayUnion('bob'), 'names.bob': 'Bob', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(bob(), 'parties/alice'), { positionMs: 0, updatedAt: serverTimestamp() }));
+  await assertFails(deleteDoc(doc(bob(), 'parties/alice')));
+  await assertSucceeds(updateDoc(doc(bob(), 'parties/alice'), { members: arrayRemove('bob'), updatedAt: serverTimestamp() }));
+  await assertSucceeds(deleteDoc(doc(alice(), 'parties/alice')));
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   await env.clearFirestore();

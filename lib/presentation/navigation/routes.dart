@@ -17,6 +17,7 @@ import '../screens/login_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../screens/mask_collection_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../screens/party_screen.dart';
 import '../screens/playlist_detail_screen.dart';
 import '../screens/rabbit_hole_screen.dart';
 import '../screens/release_radar_screen.dart';
@@ -89,6 +90,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<DiscoveryRoute>(path: 'discover'),
         TypedGoRoute<SpotifyImportRoute>(path: 'import-spotify'),
         TypedGoRoute<SharedPlaylistRoute>(path: 'shared/:id'),
+        TypedGoRoute<PartyRoute>(path: 'party'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -266,6 +268,14 @@ class UserProfileRoute extends GoRouteData with $UserProfileRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, UserProfileScreen(uid: uid));
+}
+
+/// Listening together.
+class PartyRoute extends GoRouteData with $PartyRoute {
+  const PartyRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(state, const PartyScreen());
 }
 
 /// A collaborative playlist.

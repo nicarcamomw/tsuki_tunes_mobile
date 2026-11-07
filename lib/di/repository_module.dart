@@ -6,12 +6,14 @@ import '../data/datasources/firebase_service.dart';
 import '../data/datasources/storage_service.dart';
 import '../data/local/library_store.dart';
 import '../data/repositories/library_repository_impl.dart';
+import '../data/repositories/party_repository_impl.dart';
 import '../data/repositories/playlist_repository_impl.dart';
 import '../data/repositories/profile_repository_impl.dart';
 import '../data/repositories/shared_playlist_repository_impl.dart';
 import '../data/repositories/social_repository_impl.dart';
 import '../data/sync/outbox.dart';
 import '../domain/repositories/library_repository.dart';
+import '../domain/repositories/party_repository.dart';
 import '../domain/repositories/playback_controller.dart';
 import '../domain/repositories/playlist_repository.dart';
 import '../domain/repositories/profile_repository.dart';
@@ -73,4 +75,7 @@ abstract class RepositoryModule {
 
   @lazySingleton
   SharedPlaylistRepository sharedPlaylists(FirebaseService firebase) => SharedPlaylistRepositoryImpl(firebase);
+
+  @lazySingleton
+  PartyRepository parties(FirebaseService firebase) => PartyRepositoryImpl(firebase);
 }

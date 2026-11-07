@@ -7,7 +7,8 @@ class _BondsButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.watch(stringsProvider);
-    final pending = ref.watch(socialProvider.select((s) => s.pending));
+    final pending = ref.watch(socialProvider.select((s) => s.pending)) +
+        ref.watch(partyProvider.select((p) => p.invitations.length));
     return IconButton(
       tooltip: pending > 0 ? '${strings.bondsTitle}: ${strings.bondsRequests} $pending' : strings.bondsTitle,
       onPressed: () {

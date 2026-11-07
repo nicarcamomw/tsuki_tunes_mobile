@@ -29,6 +29,9 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 - Puedes rechazar solicitudes, cancelar las que enviaste y deshacer un Lazo cuando quieras. Al eliminar tu cuenta se borran tus Lazos y solicitudes, también de las listas de las otras personas.
 - Los Observadores (sin cuenta) no usan Lazos.
 
+### Escuchar juntos (opcional)
+- Si abres una fiesta o te unes a una, sus participantes ven tu nombre, y quien la abre comparte qué canción suena y en qué segundo, para que todos escuchen lo mismo. Solo se invita a Lazos. La fiesta se borra cuando quien la abrió la termina o elimina su cuenta.
+
 ### Playlists colaborativas (opcional)
 - Si creas una playlist colaborativa o te unes a una, sus miembros ven tu nombre y las canciones que agregaste. Solo puedes invitar a tus Lazos.
 - Al eliminar tu cuenta, las playlists colaborativas que creaste se borran para todos, y sales de las demás.

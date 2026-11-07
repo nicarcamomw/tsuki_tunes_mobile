@@ -464,6 +464,70 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == resource.data.owner;
     }
 
+    // ── Listening parties ──
+
+    function validParty(d) {
+      return d.keys().hasOnly(['host', 'name', 'members', 'invited', 'lastInvited', 'names', 'track',
+                               'positionMs', 'playing', 'at', 'updatedAt'])
+          && d.name is string && d.name.size() <= 60
+          && d.members is list && d.members.size() <= 10
+          && d.invited is list && d.invited.size() <= 20
+          && d.names is map && d.names.size() <= 30
+          && (!('track' in d) || (d.track is map && d.track.size() <= 12))
+          && d.positionMs is int && d.positionMs >= 0
+          && d.playing is bool
+          && d.updatedAt == request.time;
+    }
+
+    function partyChangeAllowed(hostId) {
+      let me = request.auth.uid;
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return after.host == hostId && (
+        // The host: the music (stamped with the server's time), invites
+        // (Bonds, one at a time) and removing people.
+        (me == hostId
+            && changed.hasOnly(['name', 'invited', 'lastInvited', 'members', 'track', 'positionMs', 'playing',
+                                'at', 'updatedAt'])
+            && (!('at' in changed) || after.at == request.time)
+            && before.members.toSet().hasAll(after.members.toSet())
+            && (after.invited.toSet().difference(before.invited.toSet()).size() == 0
+                || (after.invited.toSet().difference(before.invited.toSet()) == [after.lastInvited].toSet()
+                    && exists(socialPath(me, 'friends', after.lastInvited)))))
+        // An invited Bond joins, with their own name.
+        || (me in before.invited
+            && changed.hasOnly(['invited', 'members', 'names', 'updatedAt'])
+            && after.members.toSet() == before.members.toSet().union([me].toSet())
+            && after.invited.toSet() == before.invited.toSet().difference([me].toSet())
+            && after.names.diff(before.names).affectedKeys().hasOnly([me]))
+        // An invited one declines.
+        || (me in before.invited
+            && changed.hasOnly(['invited', 'updatedAt'])
+            && after.invited.toSet() == before.invited.toSet().difference([me].toSet()))
+        // A member leaves.
+        || (me in before.members
+            && changed.hasOnly(['members', 'updatedAt'])
+            && after.members.toSet() == before.members.toSet().difference([me].toSet()))
+      );
+    }
+
+    // One party per host, at their uid. The host, its members and the
+    // invited read it; the host opens and closes it.
+    match /parties/{hostId} {
+      allow read: if signedIn()
+          && (request.auth.uid == hostId || request.auth.uid in resource.data.members
+              || request.auth.uid in resource.data.invited);
+      allow create: if isOwner(hostId)
+          && validParty(request.resource.data)
+          && request.resource.data.host == hostId
+          && request.resource.data.members.size() == 0
+          && request.resource.data.invited.size() == 0
+          && request.resource.data.at == request.time;
+      allow update: if signedIn() && validParty(request.resource.data) && partyChangeAllowed(hostId);
+      allow delete: if isOwner(hostId);
+    }
+
     match /ascensions/{userId} {
       allow create, update: if isOwner(userId) && validAscension(request.resource.data);
       // Deleting the account deletes it too.

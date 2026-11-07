@@ -74,6 +74,7 @@ class AccountDeletionService {
 
     await _deleteBonds(uid);
     await _leaveSharedPlaylists(uid);
+    await _leaveParties(uid);
 
     // No rate limit on these.
     while (true) {
@@ -118,6 +119,20 @@ class AccountDeletionService {
     final invited = await col.where('invited', arrayContains: uid).get(const GetOptions(source: Source.server));
     for (final doc in invited.docs) {
       await doc.reference.update({'invited': FieldValue.arrayRemove([uid]), ...stamp});
+    }
+  }
+
+  /// Listening parties: mine closes; I leave the others' and turn down
+  /// their invitations.
+  Future<void> _leaveParties(String uid) async {
+    final col = _db.collection('parties');
+    await col.doc(uid).delete();
+    final stamp = {'updatedAt': FieldValue.serverTimestamp()};
+    for (final field in ['members', 'invited']) {
+      final found = await col.where(field, arrayContains: uid).get(const GetOptions(source: Source.server));
+      for (final doc in found.docs) {
+        await doc.reference.update({field: FieldValue.arrayRemove([uid]), ...stamp});
+      }
     }
   }
 

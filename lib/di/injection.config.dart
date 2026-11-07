@@ -48,6 +48,8 @@ import 'package:tsuki_tunes_mobile/domain/repositories/catalog_repository.dart'
     as _i1049;
 import 'package:tsuki_tunes_mobile/domain/repositories/library_repository.dart'
     as _i409;
+import 'package:tsuki_tunes_mobile/domain/repositories/party_repository.dart'
+    as _i397;
 import 'package:tsuki_tunes_mobile/domain/repositories/playback_controller.dart'
     as _i802;
 import 'package:tsuki_tunes_mobile/domain/repositories/playlist_repository.dart'
@@ -135,6 +137,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i664.SharedPlaylistRepository>(
       () => repositoryModule.sharedPlaylists(gh<_i186.FirebaseService>()),
+    );
+    gh.lazySingleton<_i397.PartyRepository>(
+      () => repositoryModule.parties(gh<_i186.FirebaseService>()),
     );
     gh.lazySingleton<_i448.LibraryStore>(
       () => dataModule.libraryStore(gh<_i169.AppDatabase>()),
