@@ -24,8 +24,10 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/pop_on_change.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
 
 part 'artist_detail/artist_header.dart';

@@ -305,11 +305,13 @@ class _ArtistInfoSection extends StatelessWidget {
     return Semantics(
       button: true,
       label: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
-      child: GestureDetector(
-      onTap: () {
-        Haptics.selection();
-        onToggleFollow();
-      },
+      child: TapScale(
+      haptic: Haptics.selection,
+      scaleDown: 0.94,
+      onTap: onToggleFollow,
+      child: PopOnChange(
+      value: isFollowed,
+      peak: 1.08,
       child: AnimatedContainer(
         duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
@@ -337,11 +339,20 @@ class _ArtistInfoSection extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isFollowed ? Icons.check : Icons.add,
-              size: 14,
-              color: AppColors.accent,
-              semanticLabel: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
+            // The + turns into a check (and back) instead of jumping.
+            AnimatedSwitcher(
+              duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+              transitionBuilder: (child, anim) => RotationTransition(
+                turns: Tween(begin: 0.25, end: 0.0).animate(anim),
+                child: ScaleTransition(scale: anim, child: child),
+              ),
+              child: Icon(
+                isFollowed ? Icons.check : Icons.add,
+                key: ValueKey(isFollowed),
+                size: 14,
+                color: AppColors.accent,
+                semanticLabel: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
+              ),
             ),
             const SizedBox(width: 6),
             Text(
@@ -357,6 +368,7 @@ class _ArtistInfoSection extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     ),
     );

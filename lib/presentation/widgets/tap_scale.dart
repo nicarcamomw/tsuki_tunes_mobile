@@ -67,12 +67,18 @@ class _TapScaleState extends State<TapScale>
     if (!_reduceMotion) _controller.forward();
   }
 
-  void _onTapUp(TapUpDetails _) async {
-    if (!_reduceMotion && _controller.isAnimating) {
-      await _controller.forward();
+  void _onTapUp(TapUpDetails _) {
+    if (!_reduceMotion) {
+      if (_controller.isAnimating) {
+        // A quick tap: finish the press so it's seen, then spring back,
+        // without holding the action until the animation is done.
+        _controller.forward().whenCompleteOrCancel(() {
+          if (mounted) _controller.reverse();
+        });
+      } else {
+        _controller.reverse();
+      }
     }
-    if (!mounted) return;
-    if (!_reduceMotion) _controller.reverse();
     if (widget.onTap != null) widget.haptic?.call();
     widget.onTap?.call();
   }

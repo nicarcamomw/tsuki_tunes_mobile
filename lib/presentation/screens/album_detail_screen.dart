@@ -17,6 +17,7 @@ import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/haptics.dart';
+import '../widgets/pop_on_change.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
 import '../widgets/track_tile.dart';
@@ -442,7 +443,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    SizedBox(
+                                    PopOnChange(
+                                      value: allListened,
+                                      child: SizedBox(
                                       width: 20,
                                       height: 20,
                                       child: library.syncing
@@ -457,6 +460,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                                   : AppColors.textMuted,
                                               colorBlendMode: BlendMode.srcIn,
                                             ),
+                                    ),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(

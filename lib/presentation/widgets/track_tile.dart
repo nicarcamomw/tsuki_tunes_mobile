@@ -15,6 +15,7 @@ import '../state/use_cases.dart';
 import 'haptics.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
+import 'pop_on_change.dart';
 import 'radio_control_sheet.dart';
 import 'tap_scale.dart';
 
@@ -321,9 +322,12 @@ class TrackTile extends ConsumerWidget {
                       }
                     },
                     scaleDown: 0.8,
-                    child: OniMaskIcon(
-                      isActive: isListened,
-                      size: 24,
+                    child: PopOnChange(
+                      value: isListened,
+                      child: OniMaskIcon(
+                        isActive: isListened,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
