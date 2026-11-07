@@ -4,7 +4,7 @@ title: Política de Privacidad — Tsuki Tunes
 
 # Política de Privacidad — Tsuki Tunes
 
-**Última actualización:** 6 de noviembre de 2026
+**Última actualización:** 7 de noviembre de 2026
 
 Tsuki Tunes ("la app") es un reproductor de música desarrollado por Nicolás Cárcamo ("nosotros", "nos"). Esta política explica qué datos recopilamos, para qué los usamos, con quién se comparten y qué derechos tienes.
 
@@ -12,7 +12,7 @@ Tsuki Tunes ("la app") es un reproductor de música desarrollado por Nicolás C�
 
 ### Datos de cuenta
 - **Nombre, correo electrónico y foto de perfil** de tu cuenta de Google, si inicias sesión con Google. Los usamos para identificar tu cuenta y sincronizar tu biblioteca entre dispositivos.
-- Puedes usar la app **sin cuenta** (modo invitado). En ese caso tu biblioteca se guarda solo en tu teléfono.
+- Puedes usar la app **sin cuenta**, como **Observador**. En ese caso tu biblioteca se guarda solo en tu teléfono y no se acumula Eco ni niveles.
 
 ### Tu biblioteca y actividad en la app
 Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
@@ -56,7 +56,7 @@ Si inicias sesión, se guardan en Firebase Firestore, vinculados a tu cuenta:
 
 La app usa estos servicios, cada uno con su propia política de privacidad:
 
-- [Firebase (Google)](https://firebase.google.com/support/privacy): inicio de sesión, base de datos, Analytics, Crashlytics, Performance, Remote Config y App Check.
+- [Firebase (Google)](https://firebase.google.com/support/privacy): inicio de sesión, base de datos, Analytics, Crashlytics, Performance, Remote Config, App Check y Cloud Functions (el servidor de la app, ver abajo).
 - [Inicio de sesión con Google](https://policies.google.com/privacy): si eliges entrar con Google.
 - [Spotify](https://www.spotify.com/legal/privacy-policy/): reproducción completa, si conectas tu cuenta.
 - [Deezer](https://www.deezer.com/legal/personal-datas): catálogo y fragmentos de canciones de 30 segundos.
@@ -67,6 +67,8 @@ La app usa estos servicios, cada uno con su propia política de privacidad:
 - [Google ML Kit](https://developers.google.com/ml-kit/terms): reconocer el idioma de una letra y traducirla, en el teléfono (solo se descargan los idiomas que elijas).
 
 A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada consulta (por ejemplo, el título y el artista de una canción, o una ubicación redondeada), sin datos de tu cuenta.
+
+Las consultas a Last.fm pasan por el **servidor de la app** (Firebase Cloud Functions), que guarda la clave de Last.fm para que no vaya dentro de la app. El servidor recibe la consulta y la dirección IP de tu conexión: guarda las respuestas unas horas para no repetir consultas, y usa la IP solo para limitar los abusos, en memoria, sin guardarla.
 
 ## 4. Almacenamiento y seguridad
 
@@ -86,6 +88,7 @@ A Deezer, Last.fm, LRCLIB y Open-Meteo solo se envía lo necesario para cada con
 - También puedes pedir la eliminación sin la app; mira [cómo eliminar tu cuenta](delete-account.md).
 - La base de datos se respalda una vez al día para recuperarla ante fallas, y cada copia se borra sola a los 98 días. Los datos de una cuenta eliminada pueden seguir en esas copias hasta 98 días.
 - Las estadísticas de uso y los reportes de errores no están vinculados a tu cuenta. Firebase los elimina automáticamente: los de Analytics después de un máximo de 14 meses y los de Crashlytics después de 90 días.
+- Una copia de esas estadísticas y reportes se guarda en BigQuery, dentro del proyecto de Google Cloud de la app, para ver métricas generales (usuarios activos por día, fallas). Solo la ve el equipo de Tsuki Tunes, y se borra sola después de un año.
 
 ## 6. Tus derechos
 

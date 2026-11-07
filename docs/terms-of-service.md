@@ -4,7 +4,7 @@ title: Términos de Servicio — Tsuki Tunes
 
 # Términos de Servicio — Tsuki Tunes
 
-**Última actualización:** 2 de noviembre de 2026
+**Última actualización:** 7 de noviembre de 2026
 
 Al usar Tsuki Tunes ("la app"), aceptas estos términos. Si no estás de acuerdo, no uses la app.
 
@@ -14,7 +14,7 @@ Tsuki Tunes es un reproductor de música que permite escuchar previews de cancio
 
 ## 2. Cuentas
 
-- Puedes usar la app sin cuenta (modo invitado) o iniciar sesión con Google para sincronizar tu biblioteca entre dispositivos.
+- Puedes usar la app sin cuenta, como Observador (sin niveles de Eco ni nada guardado en la nube), o iniciar sesión con Google para volverte Portador y sincronizar tu biblioteca entre dispositivos.
 - Eres responsable de mantener la seguridad de tu cuenta.
 - No compartas tu sesión con terceros.
 

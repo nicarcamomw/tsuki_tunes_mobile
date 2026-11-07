@@ -2,11 +2,12 @@
 <!-- Every connection: HTTPS only, and only certificates from Android's own
      authorities (not ones a user or an app installed), which stops traffic
      being read through a proxy. The domains below say the same for the
-     ones the app uses most. No certificate pinning: the app talks only to
-     other companies' services (Google, Spotify, Deezer...), which change
-     their certificates on their own schedule; a pin would cut every user
-     off until an update. Pin when there's an API of our own. Guarded by
-     test/network_security_test.dart. -->
+     ones the app uses most. No certificate pinning: the services are other
+     companies' (Google, Spotify, Deezer...), which change their certificates
+     on their own schedule; a pin would cut every user off until an update.
+     That includes Tsuki's own backend (Cloud Functions), served on Google's
+     certificates; its requests prove they come from the app with App Check
+     instead. Guarded by test/network_security_test.dart. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
@@ -21,6 +22,7 @@
         <domain includeSubdomains="true">ws.audioscrobbler.com</domain>
         <domain includeSubdomains="true">firestore.googleapis.com</domain>
         <domain includeSubdomains="true">securetoken.googleapis.com</domain>
+        <domain includeSubdomains="true">cloudfunctions.net</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

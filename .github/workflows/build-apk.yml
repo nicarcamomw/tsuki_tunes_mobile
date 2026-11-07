@@ -224,18 +224,12 @@ jobs:
           name: tsuki-tunes-aab
           path: tsuki-tunes-*.aab
 
-      - name: Upload Dart symbols to Crashlytics
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-        run: |
-          # Dart obfuscation symbols
-          for f in build/symbols/*.symbols; do
-            [ -f "$f" ] && flutter symbolize --input="$f" 2>/dev/null || true
-          done
-
-      - name: Upload native symbols to Crashlytics
+      - name: Upload symbols to Crashlytics
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         env:
           SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # The prod Android app (android/app/google-services.json).
+          CRASHLYTICS_APP_ID: '1:812277566403:android:1b009a83cf8b1557d0cb76'
         run: |
           if [ -z "$SERVICE_ACCOUNT" ]; then
             echo "::warning::FIREBASE_SERVICE_ACCOUNT not set; symbols not uploaded to Crashlytics."
@@ -243,6 +237,15 @@ jobs:
           fi
           printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+
+          # Dart: the release is obfuscated, so without these symbols its
+          # crashes read as unknown frames. One set per build (APK and AAB).
+          for dir in build/symbols build/symbols-aab; do
+            [ -d "$dir" ] || continue
+            npx --yes firebase-tools@15.35.0 crashlytics:symbols:upload \
+              --app="$CRASHLYTICS_APP_ID" "$dir" || \
+              echo "::warning::Dart symbol upload failed for $dir (the service account needs the Firebase Crashlytics Admin role)"
+          done
 
           # The Crashlytics Gradle plugin uploads native (R8/NDK) symbols
           # when this task runs after a release build.
