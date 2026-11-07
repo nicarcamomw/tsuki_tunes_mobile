@@ -10,9 +10,9 @@ import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
+import '../state/cover_colors.dart';
 import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
-import 'oni_mask_colors.dart';
 import 'oni_mask_icon.dart';
 import 'player_tint.dart';
 import 'tap_scale.dart';
@@ -124,15 +124,13 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
         .whenComplete(() => NavigationEvents.isPlayerExpanded.value = false);
   }
 
-  /// An equipped UL or DS mask tints the player with its aura.
+  /// The player is tinted by a mask's aura, the chosen colour or the cover
+  /// ([playerTintColorProvider]), fading between tracks.
   @override
-  Widget build(BuildContext context) {
-    // A UL or DS being's aura, else the colour the levels opened and the
-    // user chose, else the app's red.
-    final aura = ref.watch(maskProvider.select((m) =>
-        m.equipped?.playerAura ?? (m.playerColor == null ? null : Color(m.playerColor!.argb))));
-    return PlayerTint(color: aura ?? AppColors.accent, child: Builder(builder: _buildTinted));
-  }
+  Widget build(BuildContext context) => AnimatedPlayerTint(
+        color: ref.watch(playerTintColorProvider),
+        child: Builder(builder: _buildTinted),
+      );
 
   Widget _buildTinted(BuildContext context) {
     final audio = ref.read(audioProvider);
@@ -148,6 +146,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     if (track == null) return const SizedBox.shrink();
 
     final locale = ref.read(localeProvider);
+    final coverBackground = ref.watch(playerBackgroundColorProvider);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
 
     return Semantics(
@@ -177,8 +176,16 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8.8),
-              child: Container(
-                color: AppColors.bgCard,
+              child: AnimatedContainer(
+                duration: AnimatedPlayerTint.duration,
+                curve: Curves.easeOut,
+                // The cover's colour seeps in from the artwork's side.
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [coverBackground ?? AppColors.bgCard, AppColors.bgCard],
+                    stops: const [0.0, 0.7],
+                  ),
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
