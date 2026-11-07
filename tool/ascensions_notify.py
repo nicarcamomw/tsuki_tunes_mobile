@@ -20,6 +20,7 @@ import json
 import os
 import subprocess
 
+from google.api_core.exceptions import PermissionDenied
 from google.cloud import firestore
 from google.oauth2 import service_account
 
@@ -39,7 +40,16 @@ def main() -> None:
     creds = service_account.Credentials.from_service_account_info(info)
     db = firestore.Client(project=PROJECT, credentials=creds)
 
-    for snap in db.collection('ascensions').stream():
+    try:
+        snaps = list(db.collection('ascensions').stream())
+    except PermissionDenied:
+        # Until the service account has the Cloud Datastore User role, warn
+        # instead of failing (and emailing a failure) every hour.
+        print('::warning::The service account cannot read Firestore yet: '
+              'give it the "Cloud Datastore User" role in Google Cloud IAM.')
+        return
+
+    for snap in snaps:
         d = snap.to_dict() or {}
         name = d.get('name') or '(sin nombre)'
         eco = d.get('eco', 0)
