@@ -23,7 +23,7 @@ dependencies:
 
   # State Management
   # Audio Playback
-  just_audio: ^0.9.46
+  just_audio: ^0.10.6
   audio_video_progress_bar: ^2.0.3
 
   # Logging
