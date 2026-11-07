@@ -9,6 +9,7 @@ import '../screens/album_detail_screen.dart';
 import '../screens/artist_detail_screen.dart';
 import '../screens/artist_discography_screen.dart';
 import '../screens/bonds_screen.dart';
+import '../screens/discovery_screen.dart';
 import '../screens/genre_screen.dart';
 import '../screens/guess_song_screen.dart';
 import '../screens/listening_clock_screen.dart';
@@ -83,6 +84,7 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
         TypedGoRoute<TrackRoute>(path: 'track/:id'),
         TypedGoRoute<UserProfileRoute>(path: 'user/:uid'),
         TypedGoRoute<BondsRoute>(path: 'bonds'),
+        TypedGoRoute<DiscoveryRoute>(path: 'discover'),
         TypedGoRoute<ReleaseRadarRoute>(path: 'radar'),
         TypedGoRoute<TimeMachineRoute>(path: 'time-machine'),
         TypedGoRoute<ListeningClockRoute>(path: 'listening-clock'),
@@ -260,6 +262,14 @@ class UserProfileRoute extends GoRouteData with $UserProfileRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
       cyberPage(state, UserProfileScreen(uid: uid));
+}
+
+/// Discovery: swipe through new songs.
+class DiscoveryRoute extends GoRouteData with $DiscoveryRoute {
+  const DiscoveryRoute();
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(state, const DiscoveryScreen());
 }
 
 /// Bonds (Lazos): Resonances, Bonds and requests, and search.

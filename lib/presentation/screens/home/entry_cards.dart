@@ -139,6 +139,75 @@ class _ListeningClockEntryCard extends StatelessWidget {
   }
 }
 
+/// Discovery: new songs to swipe through.
+class _DiscoveryEntryCard extends StatelessWidget {
+  final LocaleProvider locale;
+  const _DiscoveryEntryCard({required this.locale});
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = locale.strings;
+    return Semantics(
+      button: true,
+      label: '${strings.discoveryTitle}. ${strings.discoverySubtitle}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () => const DiscoveryRoute().push<void>(context),
+        child: GlassCard(
+          color: AppColors.success,
+          highlightAlpha: 0.10,
+          dimAlpha: 0.04,
+          borderAlpha: 0.3,
+          borderRadius: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(Icons.swipe_rounded, color: AppColors.success, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      strings.discoveryTitle.toUpperCase(),
+                      style: locale.getTextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textBright,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      strings.discoverySubtitle,
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.success.withValues(alpha: 0.85),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.success.withValues(alpha: 0.7), size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _RabbitHoleEntryCard extends StatelessWidget {
   final LocaleProvider locale;
   final dynamic strings;

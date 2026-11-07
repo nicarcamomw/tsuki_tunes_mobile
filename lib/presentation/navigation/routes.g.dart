@@ -145,6 +145,11 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           factory: $BondsRoute._fromState,
         ),
         GoRouteData.$route(
+          path: 'discover',
+          hasOverriddenOnExit: false,
+          factory: $DiscoveryRoute._fromState,
+        ),
+        GoRouteData.$route(
           path: 'radar',
           hasOverriddenOnExit: false,
           factory: $ReleaseRadarRoute._fromState,
@@ -425,6 +430,27 @@ mixin $BondsRoute on GoRouteData {
     '/bonds',
     queryParams: {if (_self.tab != 0) 'tab': _self.tab.toString()},
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DiscoveryRoute on GoRouteData {
+  static DiscoveryRoute _fromState(GoRouterState state) =>
+      const DiscoveryRoute();
+
+  @override
+  String get location => GoRouteData.$location('/discover');
 
   @override
   void go(BuildContext context) => context.go(location);

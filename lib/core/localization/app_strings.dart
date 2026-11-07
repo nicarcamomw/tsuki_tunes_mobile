@@ -416,6 +416,7 @@ class AppStrings {
 
   String ecoFeatureName(EcoFeature f) => switch (f) {
         EcoFeature.lyrics => _es('Letras sincronizadas', 'Synced lyrics', '同期歌詞'),
+        EcoFeature.discovery => _es('Modo descubrimiento', 'Discovery mode', 'ディスカバリー'),
         EcoFeature.artistRadio => _es('Radio por artista', 'Artist radio', 'アーティストラジオ'),
         EcoFeature.streak => _es('Racha diaria', 'Daily streak', '連続記録'),
         EcoFeature.wrapped => _es('Wrapped', 'Wrapped', 'Wrapped'),
@@ -463,6 +464,31 @@ class AppStrings {
       'Earn Eco by listening to music to level up. Every level opens something new.',
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
+
+  // ── Discovery ──
+  String get discoveryTitle => _es('Descubrir', 'Discover', 'ディスカバー');
+  String get discoverySubtitle => _es(
+      'Desliza canciones nuevas: derecha para guardar, izquierda para pasar',
+      'Swipe new songs: right to save, left to pass',
+      '新しい曲をスワイプ。右で保存、左でパス');
+  String get discoveryPlaylist => _es('Descubrimientos', 'Discoveries', 'ディスカバリー');
+  String get discoverySave => _es('Guardar', 'Save', '保存');
+  String get discoveryPass => _es('Pasar', 'Pass', 'パス');
+  String get discoveryPlay => _es('Escuchar', 'Listen', '再生');
+  String get discoveryPause => _es('Pausar', 'Pause', '一時停止');
+  String discoveryBecause(String artist) => _es('Porque escuchas a $artist', 'Because you listen to $artist', '$artistを聴いているから');
+  String get discoveryFromCharts => _es('Sonando en el mundo', 'Playing around the world', '世界で人気');
+  String discoverySaved(int n) => _es(
+      n == 1 ? '1 guardada en Descubrimientos' : '$n guardadas en Descubrimientos',
+      n == 1 ? '1 saved to Discoveries' : '$n saved to Discoveries',
+      'ディスカバリーに$n曲保存');
+  String get discoveryLoading => _es('Buscando canciones para ti', 'Finding songs for you', 'あなたのための曲を探しています');
+  String get discoveryEmpty => _es(
+      'No encontré canciones nuevas ahora. Revisa tu conexión o vuelve más tarde.',
+      'No new songs found right now. Check your connection or come back later.',
+      '今は新しい曲が見つからない。接続を確認するか、あとで戻ってきて。');
+  String get discoveryRetry => _es('Buscar de nuevo', 'Search again', 'もう一度探す');
+  String get discoveryOpenPlaylist => _es('Ver guardadas', 'See saved', '保存した曲');
 
   // ── Bonds (Lazos) ──
   String get bondsTitle => _es('Lazos', 'Bonds', '絆');

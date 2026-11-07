@@ -370,6 +370,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
                 ),
 
+              if (isLoggedIn)
+                SliverToBoxAdapter(
+                  child: EcoLocked(
+                    feature: EcoFeature.discovery,
+                    child: _DiscoveryEntryCard(locale: locale),
+                  ),
+                ),
+
               if (hasArtists)
                 SliverToBoxAdapter(
                   child: EcoLocked(

@@ -15,6 +15,7 @@ enum EcoFeature {
   listeningClock(6),
   lyricsTranslate(7),
   ambient(8),
+  discovery(8),
   running(10),
   radioFamiliar(12),
   timeMachine(15),
