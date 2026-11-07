@@ -77,6 +77,9 @@ jobs:
           fi
           printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          # --force: lets the deploy set the cleanup policy of the function's
+          # container images (old ones are deleted instead of piling up and
+          # costing), and remove functions no longer in the source.
           npx --yes firebase-tools@15.35.0 deploy \
-            --only functions --project "$PROJECT" --non-interactive
+            --only functions --project "$PROJECT" --non-interactive --force
           rm "$RUNNER_TEMP/sa.json"
