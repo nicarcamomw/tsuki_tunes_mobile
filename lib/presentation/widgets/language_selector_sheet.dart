@@ -1,13 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
 
@@ -116,8 +114,8 @@ class LanguageSelectorSheet extends ConsumerWidget {
                 child: Semantics(
                   selected: isSelected,
                   child: TapScale(
+                  haptic: Haptics.selection,
                   onTap: () async {
-                    unawaited(HapticFeedback.selectionClick());
                     if (!isSelected) {
                       await ref.read(localeProvider).setLanguage(
                             lang,

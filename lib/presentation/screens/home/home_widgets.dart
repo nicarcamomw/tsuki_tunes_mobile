@@ -12,7 +12,7 @@ class _BondsButton extends ConsumerWidget {
     return IconButton(
       tooltip: pending > 0 ? '${strings.bondsTitle}: ${strings.bondsRequests} $pending' : strings.bondsTitle,
       onPressed: () {
-        HapticFeedback.selectionClick();
+        Haptics.tap();
         BondsRoute(tab: pending > 0 ? 1 : 0).push<void>(context);
       },
       icon: Badge(
@@ -257,7 +257,7 @@ class _HomeMessage extends StatelessWidget {
               const SizedBox(height: 24),
               GestureDetector(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  Haptics.tap();
                   onAction();
                 },
                 child: Container(

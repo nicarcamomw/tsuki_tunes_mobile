@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,6 +8,7 @@ import '../../domain/lore/tsuki_lore.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
+import '../widgets/haptics.dart';
 import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
@@ -197,7 +197,7 @@ class _ChapterTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: open
             ? () {
-                HapticFeedback.selectionClick();
+                Haptics.tap();
                 Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => LoreChapterScreen(chapter: chapter)));
               }
             : null,

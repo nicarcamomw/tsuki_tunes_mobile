@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../domain/logic/bpm_flow.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// Reads the tempo of the upcoming tracks, shows how many Deezer knows, and
@@ -68,7 +68,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
     // The queue may have moved on while the sheet was open: arrange what is
     // upcoming right now.
     final result = BpmFlow.arrange(audio.upcomingTracks, _bpms, mode);
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     audio.setUpcomingOrder(result.order);
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).pop();

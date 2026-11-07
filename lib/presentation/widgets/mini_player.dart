@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../state/audio_provider.dart';
 import '../state/cover_colors.dart';
 import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
+import 'haptics.dart';
 import 'oni_mask_icon.dart';
 import 'player_art_hero.dart';
 import 'player_tint.dart';
@@ -63,7 +63,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
       _swipeDx = (_swipeDx + details.delta.dx).clamp(-160.0, 160.0);
       if (!_hapticFired && _swipeDx.abs() > _swipeThreshold) {
         _hapticFired = true;
-        HapticFeedback.lightImpact();
+        Haptics.threshold();
       } else if (_hapticFired && _swipeDx.abs() < _swipeThreshold * 0.6) {
         _hapticFired = false;
       }
@@ -84,7 +84,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
       final goNext = fastSwipe ? velocity < 0 : _swipeDx < 0;
       _skipDirection = goNext ? 1 : -1;
       _swipeLocked = true;
-      HapticFeedback.mediumImpact();
+      Haptics.confirm();
       if (goNext) {
         audio.next();
       } else {

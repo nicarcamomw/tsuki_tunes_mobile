@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -23,6 +22,7 @@ import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/haptics.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/skeleton_loader.dart';
@@ -373,7 +373,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   label: strings.a11yViewDiscography,
                   child: GestureDetector(
                     onTap: () async {
-                      unawaited(HapticFeedback.lightImpact());
+                      Haptics.tap();
                       final updated =
                           await ArtistDiscographyRoute(
                         id: _artist.id,
@@ -569,7 +569,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   borderRadius: BorderRadius.circular(4),
                   onTap: () {
                     if (!ecoAllows(context, EcoFeature.rabbitHole)) return;
-                    HapticFeedback.lightImpact();
+                    Haptics.tap();
                     // The loaded artist, so the graph's centre has its
                     // picture and fans even when this page was opened from
                     // a bare link.
@@ -621,7 +621,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   label: artist.name,
                   child: GestureDetector(
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    Haptics.tap();
                     ArtistRoute(id: artist.id, $extra: artist).push(context);
                   },
                   child: SizedBox(
@@ -752,7 +752,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   label: _showStoredContent ? strings.a11yCollapseStoredContent : strings.a11yExpandStoredContent,
                   child: GestureDetector(
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      Haptics.selection();
                       setState(() => _showStoredContent = !_showStoredContent);
                     },
                     behavior: HitTestBehavior.opaque,

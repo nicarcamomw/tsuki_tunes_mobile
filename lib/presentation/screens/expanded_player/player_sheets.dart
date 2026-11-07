@@ -386,7 +386,7 @@ void _showSongOptionsSheet(
                 label: strings.addToPlaylist,
                 onTap: () {
                   Navigator.pop(context);
-                  HapticFeedback.selectionClick();
+                  Haptics.tap();
                   showPlaylistSelector(context, track);
                 },
               ),
@@ -396,7 +396,7 @@ void _showSongOptionsSheet(
                 label: strings.a11yQueue,
                 onTap: () {
                   Navigator.pop(context);
-                  HapticFeedback.selectionClick();
+                  Haptics.tap();
                   onShowQueue();
                 },
               ),
@@ -407,7 +407,7 @@ void _showSongOptionsSheet(
                 accentIcon: radioActive,
                 onTap: () {
                   Navigator.pop(context);
-                  HapticFeedback.selectionClick();
+                  Haptics.tap();
                   if (radioActive) {
                     showRadioControlSheet(context);
                   } else {
@@ -426,7 +426,7 @@ void _showSongOptionsSheet(
                   accentIcon: ProviderScope.containerOf(context).read(audioProvider).spotify.listeningOnName != null,
                   onTap: () {
                     Navigator.pop(context);
-                    HapticFeedback.selectionClick();
+                    Haptics.tap();
                     showSpotifyDevicesSheet(context);
                   },
                 ),

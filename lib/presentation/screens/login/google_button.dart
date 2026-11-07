@@ -82,7 +82,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.isLoading || widget.loginSuccess) return;
-    HapticFeedback.lightImpact();
+    Haptics.tap();
     _tapEpicenter = details.localPosition;
     _rippleController.forward(from: 0.0);
   }

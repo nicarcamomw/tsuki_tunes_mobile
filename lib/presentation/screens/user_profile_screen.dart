@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -11,6 +10,7 @@ import '../../domain/entities/social.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../state/app_providers.dart';
 import '../widgets/eco_widgets.dart' show EcoRank;
+import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
 import 'bonds_screen.dart';
 
@@ -326,7 +326,7 @@ class _OwnControls extends ConsumerWidget {
           value: isPublic,
           onChanged: controller.available
               ? (v) {
-                  HapticFeedback.selectionClick();
+                  Haptics.selection();
                   controller.setPublic(v);
                 }
               : null,

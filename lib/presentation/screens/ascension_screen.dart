@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import '../widgets/haptics.dart';
 import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
@@ -62,7 +62,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
   Future<void> _choose(bool ser) async {
     if (_busy) return;
     setState(() => _busy = true);
-    unawaited(HapticFeedback.heavyImpact());
+    Haptics.success();
     await ref.read(maskProvider).chooseEthereal(
           ser: ser,
           name: ref.read(maskProvider).userName?.call(),

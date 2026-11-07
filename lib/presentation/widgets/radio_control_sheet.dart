@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -16,6 +15,7 @@ import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import 'eco_widgets.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// Starts a song radio and tells the user how it went.
@@ -24,7 +24,7 @@ Future<void> startRadioWithFeedback(
   Track track, {
   double bottomMargin = 12,
 }) async {
-  unawaited(HapticFeedback.mediumImpact());
+  Haptics.confirm();
   final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
   final ok = await context.readState(startRadioProvider)(track);
@@ -44,7 +44,7 @@ Future<void> startArtistRadioWithFeedback(
   double bottomMargin = 12,
 }) async {
   if (!ecoAllows(context, EcoFeature.artistRadio)) return;
-  unawaited(HapticFeedback.mediumImpact());
+  Haptics.confirm();
   final locale = context.readState(localeProvider);
   final messenger = ScaffoldMessenger.of(context);
   final ok = await context.readState(startArtistRadioProvider)(artist);
@@ -278,7 +278,7 @@ class _RadioControlSheet extends ConsumerWidget {
                   RadioMode.balanced => null,
                 };
                 if (locked != null && !ecoAllows(context, locked)) return;
-                HapticFeedback.selectionClick();
+                Haptics.selection();
                 audio.setRadioMode(s.first);
               },
               style: SegmentedButton.styleFrom(
@@ -313,7 +313,7 @@ class _RadioControlSheet extends ConsumerWidget {
                       color: AppColors.neonCyan,
                       locale: locale,
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        Haptics.confirm();
                         Navigator.of(context).pop();
                         audio.radioMoreLikeThis();
                         _snack(messenger, locale, strings.radioMoreSnack,
@@ -330,7 +330,7 @@ class _RadioControlSheet extends ConsumerWidget {
                       color: AppColors.sakura,
                       locale: locale,
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        Haptics.confirm();
                         final artist = SongRadio.primaryArtist(current);
                         Navigator.of(context).pop();
                         audio.radioLessLikeThis();
@@ -357,7 +357,7 @@ class _RadioControlSheet extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () {
-                  HapticFeedback.mediumImpact();
+                  Haptics.remove();
                   Navigator.of(context).pop();
                   audio.stopRadio();
                   _snack(messenger, locale, strings.radioStopped,

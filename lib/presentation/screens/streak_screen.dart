@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
+import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/streak_card.dart';
 
@@ -491,7 +491,7 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
               value: on,
               activeTrackColor: streakFlame,
               onChanged: (v) {
-                HapticFeedback.selectionClick();
+                Haptics.selection();
                 unawaited(reminder.setEnabled(v, widget.masks.streakForReminder));
               },
             ),

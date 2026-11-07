@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../state/moon_provider.dart';
 import '../state/use_cases.dart';
 import 'cyber_glitch_text.dart';
 import 'eco_widgets.dart';
+import 'haptics.dart';
 import 'moon_glyph.dart';
 import 'swipeable_sheet.dart';
 
@@ -247,7 +247,7 @@ class MoonSheet extends ConsumerWidget {
             SwitchListTile(
               value: moon.atmosphereEnabled,
               onChanged: (v) {
-                HapticFeedback.selectionClick();
+                Haptics.selection();
                 moon.setAtmosphereEnabled(v);
               },
               dense: true,
@@ -469,7 +469,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
 
   Future<void> _save(List<Track> mix, AppStrings strings) async {
     setState(() => _saving = true);
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.confirm();
     final name = strings.moonMixPlaylistName(
         strings.longDate(widget.snapshot.nearestFull.toLocal()));
     final created = await ref.read(createPlaylistProvider)(name, tracks: mix);
@@ -591,7 +591,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      HapticFeedback.lightImpact();
+                      Haptics.tap();
                       ref.read(playTracksProvider)(mix);
                       Navigator.of(context).pop();
                     },
@@ -708,7 +708,7 @@ class _TappableMoonState extends State<_TappableMoon>
 
     if (_tapCount >= _requiredTaps && !_rabbitVisible) {
       _tapCount = 0;
-      HapticFeedback.mediumImpact();
+      Haptics.tap();
       setState(() => _rabbitVisible = true);
       _fadeCtrl.forward(from: 0);
     }
@@ -723,7 +723,7 @@ class _TappableMoonState extends State<_TappableMoon>
         child: GestureDetector(
           onTap: _onTap,
           onLongPress: () {
-            HapticFeedback.heavyImpact();
+            Haptics.longPress();
             widget.moon.previewEclipse();
           },
           child: Padding(

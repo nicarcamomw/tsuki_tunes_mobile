@@ -190,7 +190,7 @@ class _AppVersionLabel extends StatelessWidget {
         return InkWell(
           borderRadius: BorderRadius.circular(6),
           onTap: () {
-            HapticFeedback.lightImpact();
+            Haptics.tap();
             Clipboard.setData(ClipboardData(text: text));
             ScaffoldMessenger.of(hostContext).showSnackBar(
               SnackBar(content: Text(locale.strings.appVersionCopied)),

@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../../domain/entities/track.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'haptics.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
@@ -134,7 +134,7 @@ class TrackTile extends ConsumerWidget {
   });
 
   void _addToQueue(BuildContext context) {
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     context.readState(addToQueueProvider)(track);
     showTrackSnack(context, context.readState(stringsProvider).addedToQueue);
   }
@@ -167,7 +167,7 @@ class TrackTile extends ConsumerWidget {
           ref.read(playTrackProvider)(track, queue: queue);
         },
         onLongPress: () {
-          HapticFeedback.mediumImpact();
+          Haptics.longPress();
           showTrackActions(context, track, extra: menuActions);
         },
         child: Container(
@@ -309,11 +309,11 @@ class TrackTile extends ConsumerWidget {
                       ? ref.read(stringsProvider).unmarkAsListened
                       : ref.read(stringsProvider).markAsListened,
                   child: TapScale(
+                    haptic: Haptics.selection,
                     semanticLabel: isListened
                         ? ref.read(stringsProvider).unmarkAsListened
                         : ref.read(stringsProvider).markAsListened,
                     onTap: () {
-                      HapticFeedback.lightImpact();
                       if (isListened && onUnmark != null) {
                         onUnmark!();
                       } else {
@@ -443,7 +443,7 @@ void showTrackActions(BuildContext context, Track track,
         ),
       ),
       onTap: () {
-        HapticFeedback.lightImpact();
+        Haptics.tap();
         onTap();
       },
     );

@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../state/weather_provider.dart';
+import 'haptics.dart';
 import 'moon_glyph.dart';
 import 'weather_sheet.dart';
 
@@ -114,7 +114,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           WeatherSheet.show(context);
         },
         child: Padding(
@@ -401,7 +401,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
   bool _addRain = false;
 
   Future<void> _accept() async {
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.confirm();
     setState(() => _state = _OfferState.preparing);
     final library = ref.read(libraryProvider);
     final ambient = ref.read(ambientProvider);
@@ -524,7 +524,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                         children: [
                           TextButton(
                             onPressed: () {
-                              HapticFeedback.selectionClick();
+                              Haptics.selection();
                               unawaited(ref
                                   .read(weatherProvider)
                                   .dismissRainOffer());

@@ -5,7 +5,6 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,6 +15,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 
 // Canvas is far larger than the screen so nodes stay hit-testable anywhere.
 const double _kCanvas = 6000;
@@ -236,7 +236,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         node.state = _NodeState.error;
         if (node.depth == 0) _seedProblem = _SeedProblem.offline;
       });
-      unawaited(HapticFeedback.lightImpact());
+      Haptics.error();
       return;
     }
     // Bail if the screen closed or the graph was re-seeded meanwhile.
@@ -306,7 +306,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
       if (node.depth == 0 && fresh.isEmpty) _seedProblem = _SeedProblem.empty;
     });
 
-    if (fresh.isEmpty && node.depth > 0) unawaited(HapticFeedback.lightImpact());
+    if (fresh.isEmpty && node.depth > 0) Haptics.error();
     if (added < newcomers) _notifyMaxReached();
     _wakePhysics();
     // Warm the next level once the pop-in is over, not during it.
@@ -328,7 +328,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
 
   Future<void> _listen(_GraphNode node) async {
     if (_startingPlayback) return;
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     final messenger = ScaffoldMessenger.of(context);
     final strings = ref.read(stringsProvider);
     setState(() => _startingPlayback = true);
@@ -355,7 +355,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   void _restartFromFocused() {
     final node = _focusedId == null ? null : _nodes[_focusedId!];
     if (node == null || node.depth == 0) return;
-    HapticFeedback.mediumImpact();
+    Haptics.confirm();
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     _seed(node.artist);
     setState(() {});
@@ -503,7 +503,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   }
 
   void _activate(_GraphNode node) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     _dismissHint();
     setState(() {
       _focusedId = node.id;
@@ -519,7 +519,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   }
 
   void _focusOnly(_GraphNode node) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     setState(() => _focusedId = node.id);
     _flyTo(node);
   }
@@ -532,7 +532,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   void _onLongPressStart(LongPressStartDetails details) {
     final node = _nodeAt(details.localPosition);
     if (node == null) return;
-    HapticFeedback.mediumImpact();
+    Haptics.longPress();
     _camera.stop();
     _dismissHint();
     setState(() {
@@ -558,7 +558,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   }
 
   void _openArtist(_GraphNode node) {
-    HapticFeedback.lightImpact();
+    Haptics.tap();
     ArtistRoute(id: node.artist.id, $extra: node.artist).push(context);
   }
 

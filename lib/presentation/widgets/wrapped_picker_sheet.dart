@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../domain/logic/wrapped_service.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 /// Picks which Wrapped to open: the whole year or one of the last months,
@@ -59,7 +59,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
   static String _key(DateTime m) => '${m.year}-${m.month}';
 
   void _open({required int year, int? month}) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     final nav = Navigator.of(context);
     nav.pop();
     WrappedScreen.open(nav.context, year: year, month: month);

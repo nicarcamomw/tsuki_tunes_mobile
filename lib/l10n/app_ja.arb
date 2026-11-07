@@ -806,6 +806,8 @@
   "appVersionCopied": "バージョンをコピーしました",
   "analyticsSettingTitle": "利用統計を共有",
   "analyticsSettingSubtitle": "アプリ改善のため、どの機能が使われているかを送信します。曲名・検索・名前は含みません。",
+  "hapticsSettingTitle": "バイブレーション",
+  "hapticsSettingSubtitle": "タップ・選択・確定時の触覚フィードバック。",
   "deleteAccountOption": "アカウントを削除",
   "deleteAccountConfirmTitle": "アカウントを削除",
   "deleteAccountConfirmMessage": "Tsuki Tunes のアカウントとそのデータ（再生履歴、プレイリスト、フォロー中のアーティスト、マスク、公開プロフィール）が完全に削除されます。確認のため Google で再度ログインしていただきます。元に戻すことはできません。",

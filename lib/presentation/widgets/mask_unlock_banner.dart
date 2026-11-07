@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'eco_widgets.dart';
+import 'haptics.dart';
 import 'oni_mask_art.dart';
 import 'oni_mask_colors.dart';
 
@@ -74,7 +74,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
   @override
   void initState() {
     super.initState();
-    HapticFeedback.heavyImpact();
+    Haptics.success();
     _enter.forward();
     _burst.forward();
     _autoClose = Timer(const Duration(milliseconds: 5200), _close);

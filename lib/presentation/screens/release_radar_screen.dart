@@ -5,7 +5,6 @@ import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ import '../../domain/entities/radar_release.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/haptics.dart';
 
 class ReleaseRadarScreen extends ConsumerStatefulWidget {
   const ReleaseRadarScreen({super.key});
@@ -56,7 +56,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
   }
 
   Future<void> _requestPermission() async {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.tap();
     final granted = await _radar.requestPermission();
     if (!mounted) return;
     setState(() => _permission = granted);
@@ -74,18 +74,18 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
   }
 
   Future<void> _toggleNotify(bool enabled) async {
-    unawaited(HapticFeedback.selectionClick());
+    Haptics.selection();
     await _radar.setNotifyEnabled(enabled);
     if (enabled && _permission == false) await _requestPermission();
   }
 
   Future<void> _checkNow() async {
-    unawaited(HapticFeedback.lightImpact());
+    Haptics.tap();
     await _radar.checkNow();
   }
 
   void _openRelease(RadarRelease release) {
-    HapticFeedback.lightImpact();
+    Haptics.tap();
     final album = release.toAlbum();
     AlbumRoute(id: album.id, $extra: album).push(context);
   }

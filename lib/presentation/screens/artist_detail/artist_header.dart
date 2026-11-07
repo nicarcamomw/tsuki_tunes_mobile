@@ -258,7 +258,7 @@ class _ArtistInfoSection extends StatelessWidget {
             label: showStats ? strings.a11yHideStats : strings.a11yShowStats,
             child: GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                Haptics.selection();
                 onToggleStats();
               },
               behavior: HitTestBehavior.opaque,
@@ -307,7 +307,7 @@ class _ArtistInfoSection extends StatelessWidget {
       label: isFollowed ? strings.a11yUnfollowArtist : strings.a11yFollowArtist,
       child: GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        Haptics.selection();
         onToggleFollow();
       },
       child: AnimatedContainer(

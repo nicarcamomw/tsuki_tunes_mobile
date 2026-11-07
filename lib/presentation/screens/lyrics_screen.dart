@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -440,7 +439,6 @@ class _Chip extends ConsumerWidget {
       onTap: onTap == null
           ? null
           : () {
-              HapticFeedback.selectionClick();
               onTap!();
             },
       scaleDown: 0.92,

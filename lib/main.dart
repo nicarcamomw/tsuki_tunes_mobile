@@ -37,6 +37,7 @@ import 'presentation/screens/ascension_screen.dart';
 import 'presentation/screens/mask_collection_screen.dart';
 import 'presentation/state/app_providers.dart';
 import 'presentation/state/audio_provider.dart';
+import 'presentation/widgets/haptics.dart';
 import 'presentation/widgets/mask_unlock_banner.dart';
 import 'presentation/widgets/moon_atmosphere.dart';
 
@@ -76,6 +77,8 @@ void main() async {
   // there is no screen, so no widgets (and no providers) get built, yet the
   // car still needs the player.
   _audio;
+  // The user's vibration choice; until it's read the app vibrates.
+  unawaited(Haptics.load());
   runApp(const TsukiTunesApp());
   _deferredInit();
 }

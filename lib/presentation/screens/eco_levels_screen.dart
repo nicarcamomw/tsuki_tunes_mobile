@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,6 +8,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/haptics.dart';
 import 'ascension_screen.dart';
 
 const _bg = Color(0xFF08090E);
@@ -223,7 +223,7 @@ class _ColorPicker extends StatelessWidget {
         excludeSemantics: true,
         child: GestureDetector(
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.tap();
             if (lockedAt != null) {
               ScaffoldMessenger.of(context)
                 ..clearSnackBars()

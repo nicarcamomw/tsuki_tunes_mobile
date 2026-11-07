@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -14,6 +13,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/haptics.dart';
 
 
 final _log = Log.named('ArtistDiscography');
@@ -386,7 +386,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       selected: isSelected,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          Haptics.selection();
           _setFilter(value);
         },
         child: Container(

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +9,7 @@ import '../navigation/app_router.dart';
 import '../screens/eco_levels_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
 export '../../domain/logic/eco_levels.dart' show EcoFeature, EcoLevels, EcoRank;
@@ -34,7 +34,7 @@ const ecoObserverColor = Color(0xFF8A8F9E);
 
 /// Sends an Observer to sign in, to become a Bearer.
 void becomeBearer(BuildContext context) {
-  unawaited(HapticFeedback.selectionClick());
+  Haptics.tap();
   context.go(AppPaths.login);
 }
 
@@ -42,7 +42,7 @@ void becomeBearer(BuildContext context) {
 /// Call it where a feature starts: `if (!ecoAllows(context, f)) return;`.
 bool ecoAllows(BuildContext context, EcoFeature f) {
   if (context.readState(maskProvider).hasFeature(f)) return true;
-  unawaited(HapticFeedback.selectionClick());
+  Haptics.tap();
   unawaited(showEcoLockedSheet(context, f));
   return false;
 }
@@ -223,7 +223,7 @@ class EcoBadge extends ConsumerWidget {
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           EcoLevelsScreen.open(context);
         },
         child: Container(
@@ -268,7 +268,7 @@ class EcoLocked extends ConsumerWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           showEcoLockedSheet(context, feature);
         },
         child: Stack(
@@ -322,7 +322,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
   @override
   void initState() {
     super.initState();
-    HapticFeedback.heavyImpact();
+    Haptics.success();
     _autoClose = Timer(const Duration(milliseconds: 6500), _close);
   }
 
@@ -471,7 +471,7 @@ class EcoLevelCard extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.tap();
             EcoLevelsScreen.open(context);
           },
           child: Container(

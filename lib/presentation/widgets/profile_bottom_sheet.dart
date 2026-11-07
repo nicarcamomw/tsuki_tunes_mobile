@@ -25,6 +25,7 @@ import '../state/auth_provider.dart';
 import '../state/locale_provider.dart';
 import 'eco_widgets.dart';
 import 'equalizer_sheet.dart';
+import 'haptics.dart';
 import 'language_selector_sheet.dart';
 import 'oni_mask_art.dart';
 import 'shuffle_mode_icon.dart';

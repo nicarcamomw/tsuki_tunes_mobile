@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,6 +8,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/oni_mask_colors.dart';
 import '../widgets/swipeable_sheet.dart';
@@ -175,7 +175,7 @@ class _LoreButton extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           onTap();
         },
         child: Ink(
@@ -235,7 +235,7 @@ class _MaskTile extends ConsumerWidget {
       label: hidden ? strings.maskSecretName : mask.name(locale.currentLanguage),
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.tap();
           _showDetail(context, mask);
         },
         child: Column(
@@ -560,7 +560,7 @@ class _MaskDetail extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    HapticFeedback.mediumImpact();
+                    Haptics.confirm();
                     if (isEquipped) {
                       masks.unequip();
                     } else {
