@@ -69,7 +69,7 @@ cd tool/firestore_rules_test && npm ci && npm test
 - **Lista blanca:** cualquier método, ruta o parámetro que la app no use se rechaza (400), para que el proxy no sirva como clave gratis de Last.fm ni como relay abierto.
 - **Caché** en memoria por instancia (horas o un día según el tipo de dato) y `Cache-Control`. Los errores no se guardan.
 - **Límite de pedidos** por usuario (app verificada + IP): 30 de Last.fm y 120 de Deezer de golpe, que se recargan con el tiempo. Como máximo 5 instancias, para acotar el costo ante un abuso.
-- **App Check:** la app manda su token; la función lo exige solo cuando `ENFORCE_APP_CHECK=true` (en `functions/.env`). Activarlo junto con el de Firestore, cuando la app esté en Google Play.
+- **App Check:** la app manda su token; la función lo exige solo con el parámetro `ENFORCE_APP_CHECK` en `true` (hoy `default: false` en `functions/src/index.ts`). Activarlo junto con el de Firestore, cuando la app esté en Google Play: cambiar ese valor por defecto y desplegar.
 - Mientras el proxy no esté desplegado, una app compilada con `LASTFM_API_KEY` sigue llamando a Last.fm directo. Una vez desplegado, quitar esa variable del build (`build-apk.yml`) para que la clave salga del APK.
 
 Tests y build (también corren en el CI):
