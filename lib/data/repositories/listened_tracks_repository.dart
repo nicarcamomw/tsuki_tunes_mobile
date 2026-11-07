@@ -122,7 +122,11 @@ class ListenedTracksRepository {
   bool _dirty = true;
   int _uniqueArtistsCount = 0;
 
-  static const Duration _fullSyncInterval = Duration(hours: 4);
+  /// A full download reads every song of the library (thousands of reads);
+  /// the delta listeners and the deletion log keep the copy current in
+  /// between, so once a day is enough. Must stay well under
+  /// [_deletionLogRetention].
+  static const Duration _fullSyncInterval = Duration(hours: 24);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
   /// Firestore batch sizes: 450 sets (+ the stats) and 240 deletes (each

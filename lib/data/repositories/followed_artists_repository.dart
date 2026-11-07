@@ -96,23 +96,30 @@ class FollowedArtistsRepository {
     }
     _outbox.kick(uid);
 
+    // One listener, no separate fetch first: a fetch and then a listener
+    // read every follow twice on each start. The saved copy shows until the
+    // server answers; the cache's guess is skipped, so an empty cache
+    // (a fresh install, offline) never hides the saved follows.
     final followedCol = userDoc.collection('followedArtists');
-    try {
-      final snapshot = await followedCol.get();
-      if (!isCurrent()) return;
-      await _takeServer(uid, snapshot.docs.map((d) => Artist.fromJson(d.data())).toList());
-    } catch (e) {
-      _log.severe('fetch failed: $e');
-    }
-
-    _subscription = followedCol.snapshots().listen((snapshot) async {
-      if (!isCurrent()) return;
-      // Skip this device's own writes not on the server yet.
-      if (snapshot.metadata.hasPendingWrites) return;
-      await _takeServer(uid, snapshot.docs.map((d) => Artist.fromJson(d.data())).toList());
+    final firstAnswer = Completer<void>();
+    _subscription = followedCol.snapshots(includeMetadataChanges: true).listen((snapshot) async {
+      try {
+        if (!isCurrent()) return;
+        if (snapshot.metadata.isFromCache) return;
+        // Skip this device's own writes not on the server yet: the pending
+        // follow already shows.
+        if (snapshot.metadata.hasPendingWrites) return;
+        await _takeServer(uid, snapshot.docs.map((d) => Artist.fromJson(d.data())).toList());
+      } finally {
+        if (!snapshot.metadata.isFromCache && !firstAnswer.isCompleted) firstAnswer.complete();
+      }
     }, onError: (e) {
       _log.severe('listener error: $e');
+      if (!firstAnswer.isCompleted) firstAnswer.complete();
     });
+    // Like the fetch it replaces: connected means the server's follows are
+    // in, unless the server doesn't answer soon (offline: the saved ones stay).
+    await firstAnswer.future.timeout(const Duration(seconds: 8), onTimeout: () {});
   }
 
   /// [server] with the follows and unfollows still pending laid on top.

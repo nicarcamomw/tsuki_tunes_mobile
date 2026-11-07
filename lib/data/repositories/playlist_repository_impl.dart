@@ -168,22 +168,31 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
     // 2. Whatever didn't reach the server last time goes now.
     _outbox.kick(uid);
 
-    // 3. The server's copy.
-    try {
-      final snapshot = await playlistsCol.orderBy('updatedAt', descending: true).get();
+    // 3. The server's copy, then changes made elsewhere, from one listener
+    //    (a fetch and then a listener read every playlist twice on each
+    //    start). Its first answer from the server replaces the saved copy
+    //    whole; answers from the cache alone are skipped, so an empty cache
+    //    never hides the saved playlists. A doc with this device's writes
+    //    still pending waits for the server's version: the pending
+    //    operation already shows.
+    var first = true;
+    final firstAnswer = Completer<void>();
+    _playlistsSubscription = playlistsCol
+        .orderBy('updatedAt', descending: true)
+        .snapshots(includeMetadataChanges: true)
+        .listen((snapshot) async {
       if (_currentUid != uid) return;
-      _server = _unique(snapshot.docs.map((d) => playlistFromFirestore(d.data(), docId: d.id)));
-      await _refresh(uid);
-    } catch (e) {
-      _log.severe('fetch failed: $e');
-    }
-
-    // 4. Changes made elsewhere. A doc with this device's writes still
-    //    pending waits for the server's version: the pending operation
-    //    already shows.
-    _playlistsSubscription =
-        playlistsCol.orderBy('updatedAt', descending: true).snapshots().listen((snapshot) async {
-      if (_currentUid != uid) return;
+      if (snapshot.metadata.isFromCache) return;
+      if (first) {
+        first = false;
+        try {
+          _server = _unique(snapshot.docs.map((d) => playlistFromFirestore(d.data(), docId: d.id)));
+          await _refresh(uid);
+        } finally {
+          if (!firstAnswer.isCompleted) firstAnswer.complete();
+        }
+        return;
+      }
       var changed = false;
       for (final change in snapshot.docChanges) {
         if (change.doc.metadata.hasPendingWrites) continue;
@@ -204,8 +213,14 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
       if (changed) await _refresh(uid);
     }, onError: (e) {
       _log.severe('listener error: $e');
+      if (!firstAnswer.isCompleted) firstAnswer.complete();
     });
+    // Like the fetch it replaces: connected means the server's copy is in,
+    // unless the server doesn't answer soon (offline: the saved copy stays).
+    await firstAnswer.future.timeout(_firstAnswerWait, onTimeout: () {});
   }
+
+  static const _firstAnswerWait = Duration(seconds: 8);
 
   /// Uploads the playlists a guest created on this device into the account
   /// that just signed in (through the outbox, so offline is fine), then
