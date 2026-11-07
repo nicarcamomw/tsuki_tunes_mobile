@@ -9,6 +9,7 @@ import '../../domain/entities/weekly_challenge.dart';
 import '../../domain/logic/ambient_sound_generator.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/eco_levels.dart';
+import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -461,6 +462,56 @@ class AppStrings {
       'Earn Eco by listening to music to level up. Every level opens something new.',
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
+
+  // ── Spotify Connect ──
+  String get devicesTitle => _es('Escuchar en', 'Listen on', '再生する場所');
+  String get devicesHint => _es(
+      'Los dispositivos con Spotify abierto en tu cuenta: tu PC, un parlante, la tele o la consola. Si falta uno, abre Spotify en él.',
+      'The devices with Spotify open on your account: your PC, a speaker, the TV or the console. If one is missing, open Spotify on it.',
+      'あなたのアカウントでSpotifyが開いている機器。PC、スピーカー、テレビ、ゲーム機など。見つからない場合は、その機器でSpotifyを開いてください。');
+  String get devicesEmpty => _es(
+      'No hay dispositivos. Abre Spotify en el que quieras usar y vuelve a buscar.',
+      'No devices. Open Spotify on the one you want and search again.',
+      '機器が見つからない。使いたい機器でSpotifyを開いて、もう一度探して。');
+  String get devicesRefresh => _es('Buscar de nuevo', 'Search again', 'もう一度探す');
+  String get devicesPlayingHere => _es('Sonando aquí', 'Playing here', 'ここで再生中');
+  String get devicesRestricted => _es('Spotify no deja controlarlo', 'Spotify does not allow controlling it', 'Spotifyで操作できない');
+  String devicesMoved(String name) => _es('Sonando en $name', 'Playing on $name', '$nameで再生中');
+  String get devicesFailed => _es(
+      'Spotify no pudo pasar la música a ese dispositivo.',
+      'Spotify could not move the music to that device.',
+      'その機器に音楽を移せなかった。');
+
+  // ── Equalizer ──
+  String get eqTitle => _es('Ecualizador', 'Equalizer', 'イコライザー');
+  String get eqSubtitle => _es(
+      'Da forma al sonido de las vistas previas. Con Spotify, usa el ecualizador de Spotify.',
+      'Shapes the sound of the previews. With Spotify, use Spotify\'s equalizer.',
+      'プレビューの音を整える。Spotifyでは Spotify のイコライザーを使う。');
+  String get eqUnavailable => _es(
+      'Este teléfono no tiene ecualizador para la app.',
+      'This phone has no equalizer for the app.',
+      'この端末ではイコライザーを使えない。');
+  String eqPresetName(EqPreset p) => switch (p) {
+        EqPreset.off => _es('Apagado', 'Off', 'オフ'),
+        EqPreset.bass => _es('Graves', 'Bass', '低音'),
+        EqPreset.rock => _es('Rock', 'Rock', 'ロック'),
+        EqPreset.pop => _es('Pop', 'Pop', 'ポップ'),
+        EqPreset.vocal => _es('Voces', 'Vocals', 'ボーカル'),
+        EqPreset.electronic => _es('Electrónica', 'Electronic', 'エレクトロ'),
+        EqPreset.acoustic => _es('Acústico', 'Acoustic', 'アコースティック'),
+        EqPreset.night => _es('Nocturno', 'Night', 'ナイト'),
+      };
+  String eqPresetHint(EqPreset p) => switch (p) {
+        EqPreset.off => _es('El sonido tal como viene.', 'The sound as it comes.', 'そのままの音。'),
+        EqPreset.bass => _es('Más golpe abajo.', 'More punch down low.', '低音を厚く。'),
+        EqPreset.rock => _es('Graves y agudos arriba.', 'Lows and highs up.', '低音と高音を強く。'),
+        EqPreset.pop => _es('Brillo y presencia.', 'Sparkle and presence.', '明るく前に。'),
+        EqPreset.vocal => _es('La voz al frente.', 'The voice up front.', '声を前に。'),
+        EqPreset.electronic => _es('Bajo profundo y brillo.', 'Deep sub and sparkle.', '深い低音ときらめき。'),
+        EqPreset.acoustic => _es('Cálido y natural.', 'Warm and natural.', '温かく自然に。'),
+        EqPreset.night => _es('Suave, para tarde en la noche.', 'Soft, for late at night.', '夜更けにやさしく。'),
+      };
 
   /// Where the app's data comes from, as those services ask to be credited.
   String get dataCredits => _es(

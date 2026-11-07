@@ -32,6 +32,7 @@ import '../../domain/entities/playback_error.dart';
 import '../../domain/entities/repeat_mode.dart';
 import '../../domain/entities/smart_shuffle.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/song_radio.dart' show SongRadio;
 import '../../domain/repositories/playback_controller.dart';
@@ -42,6 +43,7 @@ import 'connectivity_provider.dart';
 export '../../domain/entities/playback_error.dart';
 export '../../domain/entities/repeat_mode.dart';
 export '../../domain/entities/smart_shuffle.dart';
+export '../../domain/logic/equalizer_presets.dart' show EqPreset;
 export '../../domain/logic/playback_queue.dart' show QueueSnapshot;
 export 'audio_radio_controller.dart';
 
@@ -586,6 +588,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _precacheWifiOnly = await _storage.getPrecacheWifiOnly();
       final prefs = await SharedPreferences.getInstance();
       _normalizeVolume = prefs.getBool(_normalizeKey) ?? true;
+      final eq = EqCurves.fromName(prefs.getString(_eqKey));
+      if (eq != EqPreset.off) unawaited(_service.setEqPreset(eq));
       _autoplaySimilar = prefs.getBool(_autoplayKey) ?? true;
       await _loadShuffleSettings();
       notifyListeners();
@@ -654,6 +658,21 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _spotifyExtendAtNextSong = true;
       unawaited(_reissueSpotifyAhead());
     }
+  }
+
+  // ── Equalizer (Deezer previews only: Spotify plays in its own app) ──
+
+  static const _eqKey = 'tsuki_eq_preset';
+  EqPreset get eqPreset => _service.eqPreset;
+  bool get hasEqualizer => _service.hasEqualizer;
+
+  Future<void> setEqPreset(EqPreset preset) async {
+    await _service.setEqPreset(preset);
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_eqKey, preset.name);
+    } catch (_) {}
   }
 
   // ── Loudness normalization (Deezer previews only) ──

@@ -66,6 +66,31 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           setState(() {});
         },
       ),
+      ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        leading: SizedBox(
+          width: 24,
+          child: Center(
+            child: Icon(Icons.tune_rounded,
+                size: 18, color: audio.eqPreset == EqPreset.off ? AppColors.textMuted : AppColors.accent),
+          ),
+        ),
+        title: Text(
+          strings.eqTitle,
+          style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
+        ),
+        subtitle: Text(
+          strings.eqPresetName(audio.eqPreset),
+          style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
+        onTap: () async {
+          unawaited(HapticFeedback.selectionClick());
+          await showEqualizerSheet(widget.hostContext);
+          if (mounted) setState(() {});
+        },
+      ),
       _SettingSwitch(
         locale: locale,
         icon: Icons.vibration_rounded,

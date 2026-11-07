@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/equalizer_presets.dart';
 import '../contracts/audio_player_contract.dart';
 import 'audio_precache_service.dart';
 
@@ -74,15 +76,59 @@ class AudioPlayerService implements AudioPlayerContract {
   StreamSubscription? _playingSub;
   StreamSubscription? _eventSub;
 
-  AudioPlayerService() : this.withPlayers(AudioPlayer(), AudioPlayer());
+  AudioPlayerService() : this._withEqualizers(_equalizer(), _equalizer());
+
+  AudioPlayerService._withEqualizers(AndroidEqualizer? a, AndroidEqualizer? b)
+      : this.withPlayers(_playerWith(a), _playerWith(b), equalizers: [?a, ?b]);
+
+  /// Android's equalizer, one per deck (an effect belongs to one player).
+  // The real platform (dart:io), not defaultTargetPlatform, which tests
+  // also report as Android while their players have no effects.
+  static AndroidEqualizer? _equalizer() => !kIsWeb && Platform.isAndroid ? AndroidEqualizer() : null;
+
+  static AudioPlayer _playerWith(AndroidEqualizer? eq) =>
+      eq == null ? AudioPlayer() : AudioPlayer(audioPipeline: AudioPipeline(androidAudioEffects: [eq]));
 
   @visibleForTesting
-  AudioPlayerService.withPlayers(this._playerA, this._playerB) {
+  AudioPlayerService.withPlayers(this._playerA, this._playerB, {List<AndroidEqualizer> equalizers = const []})
+      : _equalizers = equalizers {
     _activePlayer = _playerA;
     _standbyPlayer = _playerB;
     _hookActivePlayer(_activePlayer);
     _seqSubA = _playerA.sequenceStateStream.listen((s) => _onSequence(_playerA, s));
     _seqSubB = _playerB.sequenceStateStream.listen((s) => _onSequence(_playerB, s));
+  }
+
+  // ── Equalizer (Android; what Tsuki plays itself, not Spotify) ──
+
+  final List<AndroidEqualizer> _equalizers;
+  EqPreset _eqPreset = EqPreset.off;
+  EqPreset get eqPreset => _eqPreset;
+
+  /// Whether this phone has the equalizer.
+  bool get hasEqualizer => _equalizers.isNotEmpty;
+
+  /// Shapes both decks with [preset]. The bands are the phone's own, known
+  /// once a deck has played; until then the gains wait and apply then.
+  Future<void> setEqPreset(EqPreset preset) async {
+    _eqPreset = preset;
+    for (final eq in _equalizers) {
+      try {
+        await eq.setEnabled(preset != EqPreset.off);
+        if (preset == EqPreset.off) continue;
+        unawaited(eq.parameters.then((params) async {
+          if (_eqPreset != preset) return; // changed meanwhile
+          for (final band in params.bands) {
+            // just_audio counts Android's millibels in thousands (its
+            // "decibels" are tens of dB): a curve's dB go in divided by 10.
+            final db = EqCurves.gainAt(preset, band.centerFrequency);
+            await band.setGain((db / 10).clamp(params.minDecibels, params.maxDecibels));
+          }
+        }).catchError((Object e) => _log.warning('equalizer bands: $e')));
+      } catch (e) {
+        _log.warning('equalizer: $e');
+      }
+    }
   }
 
   /// The song queued with [setGaplessNext], while it hasn't started.

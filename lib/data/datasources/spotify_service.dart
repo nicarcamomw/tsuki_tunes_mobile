@@ -65,6 +65,12 @@ class SpotifyService {
 
   // The phone Spotify last played on: plays and resumes go straight to it,
   // without listing the devices first.
+  /// The device the user chose to listen on (Spotify Connect: a PC, a
+  /// speaker, a console), while it is around; null plays on this phone.
+  String? _preferredDeviceId;
+  String? _preferredDeviceName;
+  String? get listeningOnName => _preferredDeviceName;
+
   String? _phoneDeviceId;
 
   // URI cache: deezer_id / query -> spotify_uri (persisted in SharedPreferences)
@@ -210,6 +216,9 @@ class SpotifyService {
 
   @visibleForTesting
   Map<String, String> get uriCache => _uriCache;
+
+  @visibleForTesting
+  set accessTokenForTesting(String token) => _accessToken = token;
 
   @visibleForTesting
   void populateUriCacheForTesting(Map<String, String> cache) {
@@ -673,11 +682,61 @@ class SpotifyService {
     }
   }
 
+  /// Moves Spotify's playback to [deviceId] (Spotify Connect) and keeps it
+  /// playing there; Tsuki's next songs follow it. A smartphone means this
+  /// phone again. False when Spotify refused.
+  Future<bool> listenOn(String deviceId, {required String name, required bool isPhone}) async {
+    await _ensureValidToken();
+    if (_accessToken == null) return false;
+    try {
+      final response = await _put(
+        Uri.parse('https://api.spotify.com/v1/me/player'),
+        headers: {
+          'Authorization': 'Bearer $_accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'device_ids': [deviceId],
+          'play': true,
+        }),
+      );
+      final ok = response.statusCode == 204 || response.statusCode == 200;
+      _log.fine('Spotify listen on $name: ${response.statusCode}');
+      if (ok) {
+        _preferredDeviceId = isPhone ? null : deviceId;
+        _preferredDeviceName = isPhone ? null : name;
+        _phoneDeviceId = deviceId;
+        _activeDeviceName = name;
+      }
+      return ok;
+    } catch (e) {
+      _log.severe('Spotify listen on error: $e');
+      return false;
+    }
+  }
+
   Future<String?> ensureActiveDevice() async {
     final devices = await getDevices();
     if (devices.isEmpty) {
       _log.fine('Spotify: no devices available at all');
       return null;
+    }
+
+    // A device the user chose stays the target while it's around; once it
+    // is gone (turned off), playback comes back to the phone.
+    final preferred = _preferredDeviceId;
+    if (preferred != null) {
+      final found = devices.where((d) => d['id'] == preferred).toList();
+      if (found.isNotEmpty) {
+        if (found.first['is_active'] != true) {
+          await transferPlayback(preferred);
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+        return _phoneDeviceId = preferred;
+      }
+      _log.fine('Spotify: the chosen device is gone, back to the phone');
+      _preferredDeviceId = null;
+      _preferredDeviceName = null;
     }
 
     for (final d in devices) {
@@ -1002,6 +1061,8 @@ class SpotifyService {
     _profile = null;
     _isPremium = false;
     _phoneDeviceId = null;
+    _preferredDeviceId = null;
+    _preferredDeviceName = null;
 
     await _secureStorage.delete(key: _tokenKey);
     await _secureStorage.delete(key: _refreshKey);

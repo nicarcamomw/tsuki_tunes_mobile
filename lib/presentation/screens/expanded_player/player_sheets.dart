@@ -417,6 +417,19 @@ void _showSongOptionsSheet(
                   }
                 },
               ),
+              // Spotify Connect: move the music to another device.
+              if (ProviderScope.containerOf(context).read(audioProvider).useSpotify)
+                optionTile(
+                  icon: Icons.devices_rounded,
+                  label: strings.devicesTitle,
+                  trailing: ProviderScope.containerOf(context).read(audioProvider).spotify.listeningOnName,
+                  accentIcon: ProviderScope.containerOf(context).read(audioProvider).spotify.listeningOnName != null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.selectionClick();
+                    showSpotifyDevicesSheet(context);
+                  },
+                ),
               // Lyrics full view
               optionTile(
                 icon: Icons.lyrics_outlined,
