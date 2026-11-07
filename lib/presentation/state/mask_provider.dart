@@ -223,7 +223,19 @@ class MaskProvider extends ChangeNotifier {
     return total;
   }
 
-  int get level => EcoLevels.levelFor(eco);
+  /// Level 1 for an Observer (no account): Eco is a Bearer's, and so are
+  /// the levels and what they open.
+  int get level => _observer ? 1 : EcoLevels.levelFor(eco);
+
+  /// Without an account (a guest) one is an Observer: no Eco, no levels.
+  bool get isObserver => _observer;
+  bool _observer = false;
+  set observer(bool value) {
+    if (value == _observer) return;
+    _observer = value;
+    _levelUpFrom = null;
+    notifyListeners();
+  }
 
   /// The rank: by level, and at 100 by the Bearer's choice. Until they
   /// choose, they are still a Seer.
@@ -315,7 +327,7 @@ class MaskProvider extends ChangeNotifier {
   /// Notes a new level. The first time (a new account, or one from before
   /// levels existed) it only takes note: nothing to celebrate.
   void _checkLevel() {
-    if (!_loaded) return;
+    if (!_loaded || _observer) return;
     final now = level;
     if (!_stats.legend && eco >= EcoLevels.legendEco) {
       // It has never happened. If it does, the keeper must know.

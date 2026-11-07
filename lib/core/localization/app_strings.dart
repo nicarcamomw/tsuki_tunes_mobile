@@ -461,6 +461,28 @@ class AppStrings {
       'Earn Eco by listening to music to level up. Every level opens something new.',
       '音楽を聴いてエコーを集め、レベルを上げよう。レベルごとに新しいものが開きます。');
   String get ecoSeeLevels => _es('Ver niveles', 'See levels', 'レベルを見る');
+
+  /// Where the app's data comes from, as those services ask to be credited.
+  String get dataCredits => _es(
+      'Música y artistas: Deezer. Canciones y artistas parecidos: Last.fm. Letras: LRCLIB. Clima: Open-Meteo.',
+      'Music and artists: Deezer. Similar songs and artists: Last.fm. Lyrics: LRCLIB. Weather: Open-Meteo.',
+      '音楽とアーティスト: Deezer。似た曲とアーティスト: Last.fm。歌詞: LRCLIB。天気: Open-Meteo。');
+
+  /// Without an account one is an Observer: no Eco, no levels.
+  String get ecoObserver => _es('Observador', 'Observer', '観測者');
+  String get ecoObserverShort => _es(
+      'Sin Eco ni niveles: solo un Portador los acumula.',
+      'No Eco, no levels: only a Bearer gathers them.',
+      'エコーもレベルもない。貯められるのは運び手だけ。');
+  String get ecoObserverBody => _es(
+      'Los Observadores miran Tsuki desde afuera. Su música no llega a la luna: no acumulan Eco, no suben de nivel y no abren nada. Inicia sesión para volverte Portador, y cada canción que escuches empezará a sonar allá arriba.',
+      'Observers watch Tsuki from outside. Their music never reaches the moon: they gather no Eco, gain no levels and open nothing. Sign in to become a Bearer, and every song you hear will start to sound up there.',
+      '観測者は外からツキを見るだけ。その音楽は月に届かず、エコーも貯まらず、レベルも上がらず、何も開かない。ログインして運び手になれば、聴く曲のすべてがあの空で響き始める。');
+  String get ecoObserverAction => _es('Volverme Portador', 'Become a Bearer', '運び手になる');
+  String ecoObserverLocked(int level) => _es(
+      'Se abre para los Portadores en el nivel $level.',
+      'Opens for Bearers at level $level.',
+      '運び手のレベル$levelで開く。');
   String get ecoHowTitle => _es('CÓMO SE GANA ECO', 'HOW TO EARN ECO', 'エコーの集め方');
   List<(String, String)> get ecoHowItems => [
         (_es('Cada canción escuchada', 'Each song heard', '1曲ごと'), '+10'),

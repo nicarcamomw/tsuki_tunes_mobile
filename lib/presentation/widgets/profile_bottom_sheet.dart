@@ -175,6 +175,16 @@ class _ProfileSheet extends ConsumerWidget {
             ],
             const SizedBox(height: 16),
             _AppVersionLabel(locale: locale, hostContext: hostContext),
+            // The data's sources, credited as they ask (Last.fm's API terms,
+            // Open-Meteo's CC BY licence).
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 0),
+              child: Text(
+                locale.strings.dataCredits,
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(fontSize: 9.5, color: AppColors.textMuted, height: 1.4),
+              ),
+            ),
           ],
         ),
       ),

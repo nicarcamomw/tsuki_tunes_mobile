@@ -166,7 +166,12 @@ final maskProvider = ChangeNotifierProvider<MaskProvider>((ref) {
   // when the run hasn't changed).
   masks.addListener(() => unawaited(StreakReminder.shared.sync(masks.streakForReminder)));
   final auth = ref.read(authProvider);
-  _follow(ref, auth, () => masks.setUser(auth.isAuthenticated ? auth.uid : null));
+  void follow() {
+    masks.observer = auth.isGuest;
+    masks.setUser(auth.isAuthenticated ? auth.uid : null);
+  }
+
+  _follow(ref, auth, follow);
   return masks;
 });
 

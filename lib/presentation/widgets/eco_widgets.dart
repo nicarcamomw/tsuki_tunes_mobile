@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../navigation/app_router.dart';
 import '../screens/eco_levels_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -26,6 +28,15 @@ Color ecoRankColor(EcoRank r) => switch (r) {
       EcoRank.etereo => Colors.white,
       EcoRank.inconmensurable => const Color(0xFFFFE9A8),
     };
+
+/// An Observer's colour: no rank, the grey of someone watching from afar.
+const ecoObserverColor = Color(0xFF8A8F9E);
+
+/// Sends an Observer to sign in, to become a Bearer.
+void becomeBearer(BuildContext context) {
+  unawaited(HapticFeedback.selectionClick());
+  context.go(AppPaths.login);
+}
 
 /// Whether [f] is open; when it isn't, explains at which level it opens.
 /// Call it where a feature starts: `if (!ecoAllows(context, f)) return;`.
@@ -53,6 +64,7 @@ class _LockedSheet extends ConsumerWidget {
     final masks = ref.watch(maskProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
+    final observer = masks.isObserver;
     final rank = EcoLevels.rankOf(feature.level);
     final color = ecoRankColor(rank);
     return ListView(
@@ -87,7 +99,7 @@ class _LockedSheet extends ConsumerWidget {
                   Text(strings.ecoFeatureName(feature),
                       style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                   const SizedBox(height: 2),
-                  Text(strings.ecoOpensAt(feature.level).toUpperCase(),
+                  Text((observer ? strings.ecoObserverLocked(feature.level) : strings.ecoOpensAt(feature.level)).toUpperCase(),
                       style: locale.getTextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.2)),
                 ],
               ),
@@ -95,19 +107,26 @@ class _LockedSheet extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(strings.ecoLockedBody,
+        Text(observer ? strings.ecoObserverBody : strings.ecoLockedBody,
             style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4)),
         const SizedBox(height: 16),
-        EcoProgressBar(masks: masks),
-        const SizedBox(height: 18),
+        if (!observer) ...[
+          EcoProgressBar(masks: masks),
+          const SizedBox(height: 18),
+        ],
         FilledButton.icon(
           style: FilledButton.styleFrom(backgroundColor: color, foregroundColor: const Color(0xFF111217)),
           onPressed: () {
             Navigator.of(context).pop();
-            unawaited(EcoLevelsScreen.open(context));
+            if (observer) {
+              becomeBearer(context);
+            } else {
+              unawaited(EcoLevelsScreen.open(context));
+            }
           },
-          icon: const Icon(Icons.trending_up_rounded, size: 18),
-          label: Text(strings.ecoSeeLevels, style: const TextStyle(fontWeight: FontWeight.w800)),
+          icon: Icon(observer ? Icons.login_rounded : Icons.trending_up_rounded, size: 18),
+          label: Text(observer ? strings.ecoObserverAction : strings.ecoSeeLevels,
+              style: const TextStyle(fontWeight: FontWeight.w800)),
         ),
       ],
     );
@@ -123,6 +142,19 @@ class EcoProgressBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
+    if (masks.isObserver) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(strings.ecoObserver.toUpperCase(),
+              style: locale.getTextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w900, color: ecoObserverColor, letterSpacing: 1.6)),
+          const SizedBox(height: 4),
+          Text(strings.ecoObserverShort,
+              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3)),
+        ],
+      );
+    }
     final level = masks.level;
     final rank = masks.rank;
     final color = ecoRankColor(rank);
@@ -182,11 +214,12 @@ class EcoBadge extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final masks = ref.watch(maskProvider);
     final strings = ref.watch(localeProvider).strings;
+    final observer = masks.isObserver;
     final level = masks.level;
-    final color = ecoRankColor(masks.rank);
+    final color = observer ? ecoObserverColor : ecoRankColor(masks.rank);
     return Semantics(
       button: true,
-      label: '${strings.ecoLevel(level)}. ${strings.a11yEcoLevels}',
+      label: '${observer ? strings.ecoObserver : strings.ecoLevel(level)}. ${strings.a11yEcoLevels}',
       excludeSemantics: true,
       child: GestureDetector(
         onTap: () {
@@ -203,8 +236,11 @@ class EcoBadge extends ConsumerWidget {
             border: Border.all(color: color, width: 1.6),
             boxShadow: [BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: size * 0.3)],
           ),
-          child: Text('$level',
-              style: TextStyle(fontSize: size * (level >= 100 ? 0.32 : 0.4), fontWeight: FontWeight.w900, color: color)),
+          child: observer
+              // An Observer only watches: an eye, not a number.
+              ? Icon(Icons.visibility_outlined, size: size * 0.46, color: color)
+              : Text('$level',
+                  style: TextStyle(fontSize: size * (level >= 100 ? 0.32 : 0.4), fontWeight: FontWeight.w900, color: color)),
         ),
       ),
     );
@@ -426,7 +462,7 @@ class EcoLevelCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final masks = ref.watch(maskProvider);
     final strings = ref.watch(localeProvider).strings;
-    final color = ecoRankColor(masks.rank);
+    final color = masks.isObserver ? ecoObserverColor : ecoRankColor(masks.rank);
     return Padding(
       padding: margin,
       child: Semantics(

@@ -58,7 +58,10 @@ class EcoLevelsScreen extends ConsumerWidget {
         ),
         title: Text(strings.ecoTitle,
             style: locale.getTextStyle(
-                fontSize: 14, fontWeight: FontWeight.w900, color: ecoRankColor(masks.rank), letterSpacing: 3)),
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: masks.isObserver ? ecoObserverColor : ecoRankColor(masks.rank),
+                letterSpacing: 3)),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
@@ -67,7 +70,10 @@ class EcoLevelsScreen extends ConsumerWidget {
           if (i < items.length) return items[i];
           final l = i - items.length + 1;
           if (l > EcoLevels.maxLevel) return _Legend(masks: masks, locale: locale, strings: strings);
-          return _LevelRow(level: l, reached: level >= l, current: level == l, locale: locale, strings: strings);
+          // An Observer has reached none: the levels are what a Bearer opens.
+          final observer = masks.isObserver;
+          return _LevelRow(
+              level: l, reached: !observer && level >= l, current: !observer && level == l, locale: locale, strings: strings);
         },
       ),
     );
@@ -92,8 +98,9 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final observer = masks.isObserver;
     final rank = masks.rank;
-    final color = ecoRankColor(rank);
+    final color = observer ? ecoObserverColor : ecoRankColor(rank);
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
@@ -117,15 +124,33 @@ class _Header extends StatelessWidget {
               border: Border.all(color: color, width: 2.5),
               boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 30)],
             ),
-            child: Text('${masks.level}',
-                style: TextStyle(fontSize: masks.level >= 100 ? 32 : 38, fontWeight: FontWeight.w900, color: color)),
+            child: observer
+                ? Icon(Icons.visibility_outlined, size: 42, color: color)
+                : Text('${masks.level}',
+                    style: TextStyle(fontSize: masks.level >= 100 ? 32 : 38, fontWeight: FontWeight.w900, color: color)),
           ),
           const SizedBox(height: 12),
-          Text(strings.ecoRankName(rank).toUpperCase(),
+          Text((observer ? strings.ecoObserver : strings.ecoRankName(rank)).toUpperCase(),
               textAlign: TextAlign.center,
               style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
           const SizedBox(height: 16),
-          EcoProgressBar(masks: masks),
+          if (observer) ...[
+            Text(strings.ecoObserverBody,
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.45)),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                  backgroundColor: ecoRankColor(EcoRank.portador), foregroundColor: const Color(0xFF111217)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                becomeBearer(context);
+              },
+              icon: const Icon(Icons.login_rounded, size: 18),
+              label: Text(strings.ecoObserverAction, style: const TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ] else
+            EcoProgressBar(masks: masks),
           if (masks.choicePending) ...[
             const SizedBox(height: 16),
             FilledButton.icon(

@@ -129,6 +129,21 @@ void main() {
       old.dispose();
     });
 
+    test('an Observer (a guest) has no levels: nothing opens, nothing is announced', () {
+      masks.observer = true;
+      masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
+      masks.onPlayCounted(_t('a${n++}'));
+      expect(masks.isObserver, isTrue);
+      expect(masks.level, 1);
+      expect(masks.hasFeature(EcoFeature.lyrics), isFalse);
+      expect(masks.choicePending, isFalse);
+      expect(masks.pendingLevelUp, isNull);
+      // Signing in makes them a Bearer: the levels count again.
+      masks.observer = false;
+      expect(masks.level, EcoLevels.maxLevel);
+      expect(masks.hasFeature(EcoFeature.lyrics), isTrue);
+    });
+
     test('features follow the level', () {
       expect(masks.hasFeature(EcoFeature.artistRadio), isFalse);
       masks.applyProgress({'plays': 100});
