@@ -387,7 +387,7 @@ extension _SpotifyPlayback on AudioProvider {
     }
     final track = _q.current;
     if (track == null) return;
-    _log.fine('Spotify moved on to "${track.title}", following');
+    _log.info('Spotify moved on ${k + 1} along our list to "${track.title}", following');
     _radioCtrl.registerLeaving(track, finished, _position, _duration,
         completed: true);
 
@@ -628,8 +628,13 @@ extension _SpotifyPlayback on AudioProvider {
   /// the Spotify app (stop claiming it). [live]: reported by App Remote.
   void _onSpotifyLeftTrack(String? uri, Duration otherProgress,
       {bool live = false}) {
-    if (_isBuffering || _completionHandled || _crossfadeTriggered) return;
     final k = uri == null ? -1 : _spotifyAhead.indexWhere((e) => e.uri == uri);
+    final from = live ? 'App Remote' : 'Web API';
+    if (_isBuffering || _completionHandled || _crossfadeTriggered) {
+      _log.info('Spotify on another song ($from), ignored while '
+          '${_isBuffering ? 'starting ours' : _completionHandled ? 'ending ours' : 'crossfading'}');
+      return;
+    }
     if (k != -1) {
       _followSpotify(k, otherProgress);
       return;
@@ -640,6 +645,8 @@ extension _SpotifyPlayback on AudioProvider {
     final settled = live && _spotifyHeardGen == _playGeneration;
     if (!settled &&
         DateTime.now().difference(_lastPlayCommandTime).inSeconds < 5) {
+      _log.info('Spotify on another song ($from), not in our list of '
+          '${_spotifyAhead.length}; ignored, ours started under 5 s ago');
       return;
     }
 
@@ -662,7 +669,8 @@ extension _SpotifyPlayback on AudioProvider {
     }
 
     if (_spotifyTookOver) return;
-    _log.info('Spotify switched to another track, no longer ours');
+    _log.info('Spotify switched to another track ($from, not in our list of '
+        '${_spotifyAhead.length}, next up was ${_spotifyNextUp == null ? 'unknown' : _spotifyNextUp == uri ? 'this' : 'another'}), no longer ours');
     _spotifyTookOver = true;
     _isPlaying = false;
     _stopPositionTimer();

@@ -7,7 +7,8 @@ import 'package:logging/logging.dart';
 ///
 /// Every subsystem gets its own [Logger] through [Log.named]; messages carry
 /// a severity level instead of a free-form `debugPrint`. In release builds
-/// logging is off entirely (the root level is [Level.OFF]). In debug builds
+/// logging is off (the root level is [Level.OFF]) except playback's info
+/// and above ([playbackLoggers]), kept in memory only. In debug builds
 /// every level prints, with the tag, level and message on one line so it
 /// reads like the old `debugPrint('[Tag] …')` output.
 ///
@@ -25,12 +26,37 @@ import 'package:logging/logging.dart';
 class Log {
   Log._();
 
+  /// The loggers whose info and above is kept in release builds too: what
+  /// playback did and why, for the in-memory log the user can copy from
+  /// settings (PlaybackLog). It never reaches the system log: main's
+  /// debugPrint only prints outside release builds.
+  static const playbackLoggers = {
+    'AudioProvider',
+    'AudioPlayerService',
+    'SpotifyService',
+    'AudioRadio',
+    'MediaSession',
+    'Auto',
+    'Headphones',
+  };
+
   /// Call once, before any logger is used (in main, right after Firebase).
-  static void init() {
+  /// [release] is for tests; it defaults to how the app was built.
+  static void init({bool release = !kDebugMode}) {
     hierarchicalLoggingEnabled = true;
-    Logger.root.level = kDebugMode ? Level.ALL : Level.OFF;
-    Logger.root.onRecord.listen(_print);
+    Logger.root.level = release ? Level.OFF : Level.ALL;
+    for (final name in playbackLoggers) {
+      Logger(name).level = release ? Level.INFO : null;
+    }
+    _release = release;
+    if (!_listening) {
+      _listening = true;
+      Logger.root.onRecord.listen(_print);
+    }
   }
+
+  static bool _release = !kDebugMode;
+  static bool _listening = false;
 
   /// Returns a named child logger. Calling it twice with the same name
   /// returns the same instance (package:logging does this internally).
@@ -46,13 +72,15 @@ class Log {
       _ => record.level.name[0],
     };
     final line = '$lvl [${record.loggerName}] ${record.message}';
-    developer.log(
-      record.message,
-      name: record.loggerName,
-      level: record.level.value,
-      error: record.error,
-      stackTrace: record.stackTrace,
-    );
+    if (!_release) {
+      developer.log(
+        record.message,
+        name: record.loggerName,
+        level: record.level.value,
+        error: record.error,
+        stackTrace: record.stackTrace,
+      );
+    }
     // Also keep the debugPrint path so `flutter logs` / device logs show it.
     debugPrint(line);
   }
