@@ -45,6 +45,27 @@ class RinneganVisualizer extends ConsumerStatefulWidget {
     this.speed,
   });
 
+  /// The share of the disc taken by the round cover.
+  static const double coverFraction = 0.58;
+
+  /// The disc's current angle, for a visualizer somewhere under [context]
+  /// (0 when there is none): the cover's flight back to the mini player
+  /// starts from it.
+  static double rotationIn(BuildContext context) {
+    double? angle;
+    void visit(Element e) {
+      if (angle != null) return;
+      if (e is StatefulElement && e.state is _RinneganVisualizerState) {
+        angle = (e.state as _RinneganVisualizerState)._frame.rotation;
+      } else {
+        e.visitChildren(visit);
+      }
+    }
+
+    if (context is Element && context.mounted) context.visitChildren(visit);
+    return angle ?? 0;
+  }
+
   @override
   ConsumerState<RinneganVisualizer> createState() => _RinneganVisualizerState();
 }
@@ -374,11 +395,11 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
             ExcludeSemantics(
               child: ClipOval(
                 child: SizedBox(
-                  width: size * 0.58,
-                  height: size * 0.58,
+                  width: size * RinneganVisualizer.coverFraction,
+                  height: size * RinneganVisualizer.coverFraction,
                   child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
                       ? CachedNetworkImage(
-                          memCacheWidth: imageCacheSize(context, size * 0.58),
+                          memCacheWidth: imageCacheSize(context, size * RinneganVisualizer.coverFraction),
                           imageUrl: widget.imageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (_, __) => const _CoverPlaceholder(),

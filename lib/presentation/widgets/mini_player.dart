@@ -14,6 +14,7 @@ import '../state/cover_colors.dart';
 import '../state/use_cases.dart';
 import 'audio_progress_selector.dart';
 import 'oni_mask_icon.dart';
+import 'player_art_hero.dart';
 import 'player_tint.dart';
 import 'tap_scale.dart';
 
@@ -431,8 +432,10 @@ class _BreathingCoverState extends State<_BreathingCover>
           child: child,
         );
       },
-      child: Hero(
-        tag: 'player_art_${widget.trackId}',
+      child: PlayerArtHero(
+        trackId: widget.trackId,
+        coverUrl: widget.coverUrl,
+        isPlaying: widget.isPlaying,
         child: ExcludeSemantics(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(3.5),
