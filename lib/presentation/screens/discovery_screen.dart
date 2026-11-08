@@ -457,7 +457,7 @@ class _Message extends StatelessWidget {
                 const SizedBox(height: 16),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.accent, side: const BorderSide(color: AppColors.accent)),
+                      foregroundColor: AppColors.accentText, side: const BorderSide(color: AppColors.accent)),
                   onPressed: onAction,
                   child: Text(action!),
                 ),

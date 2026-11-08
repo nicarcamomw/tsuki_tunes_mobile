@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_strings.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/motion.dart';
 
 class ListeningClockScreen extends ConsumerStatefulWidget {
   const ListeningClockScreen({super.key});
@@ -25,6 +27,10 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
   int _year = DateTime.now().year;
   int _todayDoy = 0;
   int? _selectedHour;
+
+  /// "Hour X: N plays", as the badge under the radar says it.
+  String _hourSummary(AppStrings strings, int hour) =>
+      strings.clockPeakHour(strings.wrappedHourLabel(hour), _hourCounts[hour] ?? 0);
 
   @override
   void initState() {
@@ -194,11 +200,20 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             locale,
             strings.clockRadar,
             AppColors.accent,
-          ).animate().fadeIn(duration: 500.ms),
+          ).animateCalm(context).fadeIn(duration: 500.ms),
           const SizedBox(height: 16),
 
-          // Sharingan Radar (interactive)
+          // Sharingan Radar (interactive). For screen readers it's an
+          // adjustable control: swipe up or down to move through the hours.
           Center(
+            child: Semantics(
+              label: strings.clockRadar,
+              value: _hourSummary(strings, _selectedHour ?? _peakHour),
+              increasedValue: _hourSummary(strings, ((_selectedHour ?? _peakHour) + 1) % 24),
+              decreasedValue: _hourSummary(strings, ((_selectedHour ?? _peakHour) + 23) % 24),
+              onIncrease: () => setState(() => _selectedHour = ((_selectedHour ?? _peakHour) + 1) % 24),
+              onDecrease: () => setState(() => _selectedHour = ((_selectedHour ?? _peakHour) + 23) % 24),
+              child: ExcludeSemantics(
             child: GestureDetector(
               onTapDown: (details) {
                 final box = context.findRenderObject() as RenderBox?;
@@ -229,8 +244,10 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                 ),
               ),
             ),
+              ),
+            ),
           )
-              .animate()
+              .animateCalm(context)
               .fadeIn(duration: 800.ms, delay: 200.ms)
               .scaleXY(begin: 0.85, end: 1, curve: Curves.easeOutBack),
           const SizedBox(height: 16),
@@ -273,7 +290,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                 ),
               ),
             ),
-          ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
+          ).animateCalm(context).fadeIn(duration: 600.ms, delay: 500.ms),
           const SizedBox(height: 36),
 
           // Section: Daily Activity
@@ -281,7 +298,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             locale,
             strings.clockDailyActivity,
             AppColors.neonCyan,
-          ).animate().fadeIn(duration: 500.ms, delay: 600.ms),
+          ).animateCalm(context).fadeIn(duration: 500.ms, delay: 600.ms),
           const SizedBox(height: 16),
 
           // Daily bars
@@ -291,7 +308,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             peakCount: _peakDayCount,
             todayDoy: _todayDoy,
             locale: locale,
-          ).animate().fadeIn(duration: 800.ms, delay: 800.ms),
+          ).animateCalm(context).fadeIn(duration: 800.ms, delay: 800.ms),
           const SizedBox(height: 8),
 
           // Total count
@@ -305,7 +322,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                 letterSpacing: 2,
               ),
             ),
-          ).animate().fadeIn(duration: 600.ms, delay: 1000.ms),
+          ).animateCalm(context).fadeIn(duration: 600.ms, delay: 1000.ms),
 
           const SizedBox(height: 120),
         ],

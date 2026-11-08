@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import 'motion.dart';
 
 /// CyberOrb: Ultra-Premium 3D Glassmorphic Holographic Plasma Sphere
 /// Powered by continuous microsecond Ticker for 100% uninterrupted, infinite,
@@ -38,7 +39,18 @@ class _CyberOrbState extends State<CyberOrb>
         _timeNotifier.value = elapsed.inMicroseconds / 1000000.0;
       }
     });
-    _ticker.start();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Still when the user asked for less motion; picks up a change of it.
+    final still = reduceMotion(context);
+    if (still && _ticker.isActive) {
+      _ticker.stop();
+    } else if (!still && !_ticker.isActive) {
+      _ticker.start();
+    }
   }
 
   @override

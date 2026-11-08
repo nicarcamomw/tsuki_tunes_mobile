@@ -51,7 +51,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
         ElevatedButton(
           onPressed: () => Navigator.of(dialogCtx).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
+            backgroundColor: AppColors.accentFill,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),

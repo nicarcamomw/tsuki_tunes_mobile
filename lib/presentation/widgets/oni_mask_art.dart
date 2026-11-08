@@ -49,8 +49,12 @@ class OniMaskArt extends StatelessWidget {
     return img;
   }
 
+  // The art is decoration (its kanji, lock and "?" included): what the
+  // mask is, its tile or its page says to screen readers.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ExcludeSemantics(child: _art(context));
+
+  Widget _art(BuildContext context) {
     final artSize = frame ? size * 0.78 : size;
     Widget art;
     if (unlocked) {

@@ -61,9 +61,27 @@ class CyberTheme {
         labelSmall: GoogleFonts.plusJakartaSans(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: AppColors.accent,
+          color: AppColors.accentText,
           letterSpacing: 1.5,
         ),
+      ),
+      // Buttons readable at AA: white text on a deeper crimson, and the
+      // accent's readable red for text buttons (the default primary red on
+      // these backgrounds is under 4.5:1).
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accentFill,
+          foregroundColor: AppColors.textBright,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppColors.accentText),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(foregroundColor: AppColors.accentText),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(foregroundColor: AppColors.accentText),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.bgDeep,

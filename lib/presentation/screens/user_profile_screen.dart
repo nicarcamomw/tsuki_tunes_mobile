@@ -350,7 +350,7 @@ class _OwnControls extends ConsumerWidget {
             icon: const Icon(Icons.share_rounded),
             label: Text(isPublic ? strings.profileShare : strings.profileMakePublicFirst),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.accent,
+              foregroundColor: AppColors.accentText,
               side: const BorderSide(color: AppColors.accent),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),

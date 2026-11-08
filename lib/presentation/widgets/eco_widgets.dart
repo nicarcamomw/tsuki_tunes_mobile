@@ -10,6 +10,7 @@ import '../screens/eco_levels_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'haptics.dart';
+import 'motion.dart';
 import 'swipeable_sheet.dart';
 
 export '../../domain/logic/eco_levels.dart' show EcoFeature, EcoLevels, EcoRank;
@@ -315,9 +316,22 @@ class EcoLevelUpBanner extends ConsumerStatefulWidget {
 
 class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with SingleTickerProviderStateMixin {
   late final AnimationController _enter =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 600))..forward();
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
   Timer? _autoClose;
   bool _closing = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // In at once with less motion asked for; sliding in otherwise.
+    if (_enter.isDismissed) {
+      if (reduceMotion(context)) {
+        _enter.value = 1;
+      } else {
+        _enter.forward();
+      }
+    }
+  }
 
   @override
   void initState() {

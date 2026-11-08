@@ -292,7 +292,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 10),
                           ],
                           // --- Play / Pause ---
                           TapScale(
@@ -321,7 +320,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                     color: PlayerTint.of(context),
                                   ),
                           ),
-                          const SizedBox(width: 8),
                           // --- Close / Stop ---
                           TapScale(
                             semanticLabel: locale.strings.a11yStop,

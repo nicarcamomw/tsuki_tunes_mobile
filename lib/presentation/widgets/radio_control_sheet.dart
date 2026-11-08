@@ -365,7 +365,7 @@ class _RadioControlSheet extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.stop_circle_outlined, size: 18),
                 label: Text(strings.radioStop),
-                style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+                style: TextButton.styleFrom(foregroundColor: AppColors.accentText),
               ),
             ),
           ],

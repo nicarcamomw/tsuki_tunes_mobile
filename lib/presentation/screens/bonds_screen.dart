@@ -136,7 +136,7 @@ class _ObserverPanel extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
             onPressed: () => becomeBearer(context),
             icon: const Icon(Icons.login_rounded, size: 18),
             label: Text(strings.ecoObserverAction, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -386,7 +386,7 @@ class _RequestButtons extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: const Size(0, 40)),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: const Size(0, 40)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await social.accept(person.uid);
@@ -485,6 +485,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
                 : _field.text.isEmpty
                 ? null
                 : IconButton(
+  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                     icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
                     onPressed: () { Haptics.selection();
                       _field.clear();
@@ -547,7 +548,7 @@ class BondButton extends ConsumerWidget {
     switch (state) {
       case BondState.none:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.request(person);
@@ -577,7 +578,7 @@ class BondButton extends ConsumerWidget {
         );
       case BondState.received:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accent, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.accept(person.uid);
@@ -589,7 +590,7 @@ class BondButton extends ConsumerWidget {
       case BondState.bonded:
         return OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.accent,
+            foregroundColor: AppColors.accentText,
             side: const BorderSide(color: AppColors.accent),
             minimumSize: size,
             padding: pad,
@@ -613,7 +614,7 @@ class BondButton extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(strings.bondsUnbond, style: const TextStyle(color: AppColors.accent)),
+            child: Text(strings.bondsUnbond, style: const TextStyle(color: AppColors.accentText)),
           ),
         ],
       ),
@@ -685,11 +686,12 @@ class PersonRow extends ConsumerWidget {
                   ),
                   if (trailing != null) ...[
                     const SizedBox(width: 8),
-                    // Never wider than the name needs to stay readable: big
-                    // text sizes shrink the button instead of overflowing.
+                    // Never wider than the name needs to stay readable: with
+                    // big text sizes the button's words wrap. Scaling it down
+                    // instead shrank it under a fingertip (to 23 dp).
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 140),
-                      child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: trailing),
+                      child: trailing,
                     ),
                   ],
                 ],
@@ -786,7 +788,7 @@ class _Empty extends StatelessWidget {
             const SizedBox(height: 16),
             OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accent,
+                foregroundColor: AppColors.accentText,
                 side: const BorderSide(color: AppColors.accent),
               ),
               onPressed: onAction,

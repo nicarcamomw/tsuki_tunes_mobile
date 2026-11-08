@@ -175,7 +175,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
           OutlinedButton(
             onPressed: () { Haptics.tap(); _load(); },
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.accent,
+              foregroundColor: AppColors.accentText,
               side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),
             ),
             child: Text(strings.retry),

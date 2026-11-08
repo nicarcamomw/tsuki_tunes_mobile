@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/app_providers.dart';
+import 'motion.dart';
 
 const _kWitchingHour = 3;
 const _kWitchingMinute = 33;
@@ -79,6 +80,8 @@ class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay>
   }
 
   void _startEffect() {
+    // A glitch with flashing kanji: exactly what less motion asks to spare.
+    if (reduceMotion(context)) return;
     _kanji = _kKanji[_rng.nextInt(_kKanji.length)];
     _kanjiX = 0.15 + _rng.nextDouble() * 0.7;
     _kanjiY = 0.2 + _rng.nextDouble() * 0.5;

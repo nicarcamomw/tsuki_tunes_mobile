@@ -620,6 +620,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         backgroundColor: AppColors.bgDeep,
         elevation: 0,
         leading: IconButton(
+  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textBright),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -654,8 +655,9 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
   }
 
   Widget _modeChips(LocaleProvider locale) {
+    // Room for each chip's 48 dp touch target (it was squeezed to 36).
     return SizedBox(
-      height: 48,
+      height: 60,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -674,7 +676,8 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               fontWeight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary,
             ),
-            selectedColor: AppColors.accent,
+            // White text on it: the deeper crimson reads at AA.
+            selectedColor: AppColors.accentFill,
             backgroundColor: AppColors.bgCard,
             side: BorderSide(color: selected ? AppColors.accent : AppColors.border),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

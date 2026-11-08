@@ -185,7 +185,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 strings.queueGesturesHint,
                 style: locale.getTextStyle(
                   fontSize: 9,
-                  color: AppColors.textMuted.withValues(alpha: 0.6),
+                  color: AppColors.textMuted,
                 ).copyWith(fontStyle: FontStyle.italic),
               ),
             ),

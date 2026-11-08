@@ -225,15 +225,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
+                  // Flavour, not information: screen readers skip it.
+                  ExcludeSemantics(child: Text(
                     strings.libraryTelemetry,
                     style: GoogleFonts.notoSansJp(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accent.withValues(alpha: 0.8),
+                      color: AppColors.accentText,
                       letterSpacing: 1.2,
                     ),
-                  ),
+                  )),
                   const SizedBox(height: 4),
                   Text(
                     strings.libraryStats(totalTracks, totalAlbums),
@@ -1058,8 +1059,8 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        // 48 dp to touch, whatever the text's size.
+                        minimumSize: const Size(48, 48),
                       ),
                       child: Text(
                         strings.viewAlbum,

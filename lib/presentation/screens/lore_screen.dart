@@ -35,6 +35,7 @@ class LoreScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF07080D),
         elevation: 0,
         leading: IconButton(
+  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textBright),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -278,6 +279,7 @@ class LoreChapterScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF07080D),
         elevation: 0,
         leading: IconButton(
+  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textBright),
           onPressed: () => Navigator.of(context).pop(),
         ),

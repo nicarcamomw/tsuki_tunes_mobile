@@ -57,7 +57,7 @@ class GuestLibraryGate extends ConsumerWidget {
                   context.go(AppPaths.login);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
+                  backgroundColor: AppColors.accentFill,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

@@ -135,7 +135,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             child: TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.accent,
+                foregroundColor: AppColors.accentText,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: Text(

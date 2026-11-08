@@ -259,7 +259,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () => FocusScope.of(context).unfocus(),
+      // Only closes the keyboard: nothing for screen readers.
+        excludeFromSemantics: true,
+        onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: AppColors.bgDeep,
         body: Center(
@@ -301,15 +303,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    // Flavour, not information: screen readers skip it.
+                    ExcludeSemantics(child: Text(
                       strings.searchTelemetry,
                       style: GoogleFonts.notoSansJp(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent.withValues(alpha: 0.8),
+                        color: AppColors.accentText,
                         letterSpacing: 1.2,
                       ),
-                    ),
+                    )),
                     const SizedBox(height: 4),
                     Text(
                       strings.searchSubtitle,
@@ -456,6 +459,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (history.isEmpty && topArtists.isEmpty && _genres.isEmpty) {
       return GestureDetector(
         behavior: HitTestBehavior.translucent,
+        // Only closes the keyboard: nothing for screen readers.
+        excludeFromSemantics: true,
         onTap: () => FocusScope.of(context).unfocus(),
         child: Center(
           child: Column(
@@ -488,7 +493,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () => FocusScope.of(context).unfocus(),
+      // Only closes the keyboard: nothing for screen readers.
+        excludeFromSemantics: true,
+        onTap: () => FocusScope.of(context).unfocus(),
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
@@ -549,13 +556,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                   );
                 },
-                child: Text(
-                  strings.clearHistory,
-                  style: locale.getTextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
-                    letterSpacing: 0.8,
+                behavior: HitTestBehavior.opaque,
+                // 48 dp to touch around the small word.
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  child: Center(
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: Text(
+                      strings.clearHistory,
+                      style: locale.getTextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1069,6 +1085,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (!hasArtists && !hasAlbums && !hasTracks) {
       return GestureDetector(
         behavior: HitTestBehavior.translucent,
+        // Only closes the keyboard: nothing for screen readers.
+        excludeFromSemantics: true,
         onTap: () => FocusScope.of(context).unfocus(),
         child: Center(
           child: Padding(

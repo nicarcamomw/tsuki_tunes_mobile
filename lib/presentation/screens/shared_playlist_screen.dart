@@ -67,7 +67,7 @@ class SharedPlaylistScreen extends ConsumerWidget {
               itemBuilder: (_) => [
                 if (owner) PopupMenuItem(value: 'rename', child: Text(strings.sharedRename)),
                 if (owner)
-                  PopupMenuItem(value: 'delete', child: Text(strings.sharedDelete, style: const TextStyle(color: AppColors.accent)))
+                  PopupMenuItem(value: 'delete', child: Text(strings.sharedDelete, style: const TextStyle(color: AppColors.accentText)))
                 else
                   PopupMenuItem(value: 'leave', child: Text(strings.sharedLeave)),
               ],
@@ -98,7 +98,7 @@ class SharedPlaylistScreen extends ConsumerWidget {
               TextButton(onPressed: () => Navigator.pop(d, false), child: Text(strings.cancel)),
               TextButton(
                 onPressed: () => Navigator.pop(d, true),
-                child: Text(strings.sharedDelete, style: const TextStyle(color: AppColors.accent)),
+                child: Text(strings.sharedDelete, style: const TextStyle(color: AppColors.accentText)),
               ),
             ],
           ),
@@ -210,7 +210,7 @@ class _Body extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
                   onPressed: () {
                     Haptics.confirm();
                     c.join(p.id);
@@ -225,7 +225,7 @@ class _Body extends ConsumerWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
                   onPressed: p.tracks.isEmpty
                       ? null
                       : () { Haptics.tap();
@@ -241,7 +241,7 @@ class _Body extends ConsumerWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.accent, side: const BorderSide(color: AppColors.accent)),
+                        foregroundColor: AppColors.accentText, side: const BorderSide(color: AppColors.accent)),
                     onPressed: () { Haptics.tap(); _showInvite(context, ref, p); },
                     icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                     label: Text(strings.sharedInvite),
@@ -352,7 +352,7 @@ class _Body extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(d, false), child: Text(strings.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(d, true),
-            child: Text(strings.bondsDecline, style: const TextStyle(color: AppColors.accent)),
+            child: Text(strings.bondsDecline, style: const TextStyle(color: AppColors.accentText)),
           ),
         ],
       ),

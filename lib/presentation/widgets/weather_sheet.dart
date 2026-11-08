@@ -173,6 +173,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                         )
                       else
                         IconButton(
+  tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
                           icon: const Icon(Icons.refresh_rounded, color: AppColors.textMuted),
                           onPressed: () { Haptics.tap(); weather.refresh(force: true); },
                         ),

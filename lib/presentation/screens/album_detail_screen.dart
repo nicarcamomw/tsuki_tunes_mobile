@@ -143,7 +143,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel)),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(strings.downloadAlbumRemove, style: const TextStyle(color: AppColors.accent)),
+              child: Text(strings.downloadAlbumRemove, style: const TextStyle(color: AppColors.accentText)),
             ),
           ],
         ),
