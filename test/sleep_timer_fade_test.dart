@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/system_volume.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_sleep_timer.dart';
@@ -38,6 +39,7 @@ void main() {
       }
       return {};
     });
+    SharedPreferences.setMockInitialValues({});
     service = AudioPlayerService();
     volume = _Volume();
     spotify = false;
@@ -161,5 +163,54 @@ void main() {
     await at(t, const Duration(seconds: 30));
     expect(t.isFading, isFalse);
     t.dispose();
+  });
+
+  test('Android closed Tsuki mid-fade: the volume comes back with the next play', () async {
+    // At night, with the phone locked, Android often closes Tsuki before it
+    // puts the volume back: it stayed down for good (silence next morning).
+    spotify = true;
+    final before = timer()..set(const Duration(minutes: 30));
+    await at(before, const Duration(seconds: 30));
+    expect(volume.current, 5);
+    before.dispose(); // killed: nothing put back
+
+    final after = timer();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(volume.current, 5, reason: 'not by surprise on start');
+
+    await after.restoreVolume(); // the next play (car, headphones, app)
+    expect(volume.current, 10);
+    after.dispose();
+  });
+
+  test('a volume moved by hand before the restart is left alone', () async {
+    spotify = true;
+    final before = timer()..set(const Duration(minutes: 30));
+    await at(before, const Duration(seconds: 30));
+    before.dispose();
+
+    volume.current = 7; // turned up by hand meanwhile
+    final after = timer();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await after.restoreVolume();
+    expect(volume.current, 7);
+    after.dispose();
+  });
+
+  test('a volume already put back leaves nothing for the next start', () async {
+    spotify = true;
+    final before = timer()..set(const Duration(minutes: 30));
+    await at(before, const Duration(seconds: 30));
+    await at(before, const Duration(milliseconds: -1));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(volume.current, 10);
+    before.dispose();
+
+    final sets = volume.sets.length;
+    final after = timer();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    await after.restoreVolume();
+    expect(volume.sets.length, sets, reason: 'nothing more to put back');
+    after.dispose();
   });
 }

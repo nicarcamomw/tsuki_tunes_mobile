@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../data/datasources/audio_player_service.dart';
@@ -51,6 +52,13 @@ class SleepTimerController {
   // Volume still to put back, once playback has really stopped.
   int? _pendingRestore;
 
+  /// The media volume the fade started from and the last one it set, kept
+  /// on disk while it's down: Android often closes Tsuki at night, between
+  /// the fade and putting the volume back, and the phone's media volume
+  /// stayed at zero for good (no sound the next morning, as if Tsuki were
+  /// broken). On the next start it goes back with the first play.
+  static const _restoreKey = 'sleep_timer_volume_restore';
+
   VoidCallback? onFinished;
 
   SleepTimerController({
@@ -65,7 +73,45 @@ class SleepTimerController {
         _onStop = onStop,
         _fullSongPlaying = fullSongPlaying ?? (() => false),
         _isPlaying = isPlaying ?? (() => false),
-        _systemVolume = systemVolume ?? SystemVolume();
+        _systemVolume = systemVolume ?? SystemVolume() {
+    unawaited(_recoverRestore());
+  }
+
+  /// A volume left down by a fade the app didn't live to undo: put back with
+  /// the next play ([restoreVolume]), unless the user moved it since.
+  Future<void> _recoverRestore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_restoreKey)?.split(',');
+      if (saved == null || saved.length != 2) return;
+      final start = int.tryParse(saved[0]), last = int.tryParse(saved[1]);
+      final now = await _systemVolume.read();
+      if (start == null || last == null || now == null) return;
+      if (_pendingRestore != null || _systemStart != null) return;
+      if (now.current == last) {
+        _log.info('media volume left down by a sleep timer: back with the next play');
+        _pendingRestore = start;
+      } else {
+        await _clearRestore(); // moved by hand since: it's theirs
+      }
+    } catch (e) {
+      _log.warning('sleep timer volume check failed: $e');
+    }
+  }
+
+  Future<void> _saveRestore(int start, int last) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_restoreKey, '$start,$last');
+    } catch (_) {}
+  }
+
+  Future<void> _clearRestore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_restoreKey);
+    } catch (_) {}
+  }
 
   Duration? get remaining {
     if (_deadline != null) {
@@ -200,12 +246,14 @@ class SleepTimerController {
     } else if (now.current != _systemLast) {
       _log.info('volume changed by hand during the fade: leaving it');
       _userTookVolume = true;
+      unawaited(_clearRestore());
       return;
     }
     // Android's steps already follow loudness, so they go down evenly.
     final target = (_systemStart! * t).ceil();
     if (target != _systemLast) {
       _systemLast = target;
+      await _saveRestore(_systemStart!, target);
       await _systemVolume.set(target);
     }
   }
@@ -222,7 +270,10 @@ class SleepTimerController {
     _userTookVolume = false;
     if (restore) {
       _service.masterVolume = 1.0;
-      if (start != null && !took) unawaited(_systemVolume.set(start));
+      if (start != null && !took) {
+        unawaited(_systemVolume.set(start));
+        unawaited(_clearRestore());
+      }
     } else if (start != null && !took) {
       _pendingRestore = start;
     }
@@ -244,6 +295,7 @@ class SleepTimerController {
       }
       _pendingRestore = null;
       await _systemVolume.set(volume);
+      await _clearRestore();
     }));
   }
 
@@ -254,6 +306,7 @@ class SleepTimerController {
     if (volume == null) return;
     _pendingRestore = null;
     await _systemVolume.set(math.max(volume, 0));
+    await _clearRestore();
   }
 
   void dispose() {
