@@ -698,7 +698,6 @@
   "a11yRabbitHole": "Rabbit hole: interactive graph of related artists",
   "radarWatching": "{count, plural, =1{1 artist watched} other{{count} artists watched}}",
   "radarNewCount": "{count, plural, =1{1 NEW RELEASE} other{{count} NEW RELEASES}}",
-  "radarPermissionSettingsHint": "Turn them on in Settings › Apps › Tsuki Tunes › Notifications.",
   "permAllow": "Allow",
   "permNotNow": "Not now",
   "permOpenSettings": "Open settings",

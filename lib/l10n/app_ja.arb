@@ -698,7 +698,6 @@
   "a11yRabbitHole": "ラビットホール：関連アーティストのインタラクティブグラフ",
   "radarWatching": "{count} 組のアーティストを監視中",
   "radarNewCount": "新着 {count} 件",
-  "radarPermissionSettingsHint": "設定 › アプリ › Tsuki Tunes › 通知 でオンにしてください。",
   "permAllow": "許可する",
   "permNotNow": "今はしない",
   "permOpenSettings": "設定を開く",
