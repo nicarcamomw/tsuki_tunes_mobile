@@ -8,6 +8,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 
@@ -172,7 +173,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: _load,
+            onPressed: () { Haptics.tap(); _load(); },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.accent,
               side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 
 class GuestLibraryGate extends ConsumerWidget {
   const GuestLibraryGate({super.key});
@@ -52,7 +53,7 @@ class GuestLibraryGate extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () { Haptics.tap();
                   context.go(AppPaths.login);
                 },
                 style: ElevatedButton.styleFrom(

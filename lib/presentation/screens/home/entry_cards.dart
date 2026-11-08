@@ -12,7 +12,7 @@ class _WrappedEntryCard extends StatelessWidget {
       label: strings.a11yWrapped,
       child: GestureDetector(
         // Pick this month, an earlier one or the whole year.
-        onTap: () => showWrappedPicker(context),
+        onTap: () { Haptics.tap(); showWrappedPicker(context); },
         child: GlassCard(
           color: AppColors.accent,
           highlightAlpha: 0.12,
@@ -83,7 +83,7 @@ class _ListeningClockEntryCard extends StatelessWidget {
       button: true,
       label: strings.a11yClock,
       child: GestureDetector(
-        onTap: () {
+        onTap: () { Haptics.tap();
           const ListeningClockRoute().push(context);
         },
         child: GlassCard(
@@ -152,7 +152,7 @@ class _DiscoveryEntryCard extends StatelessWidget {
       label: '${strings.discoveryTitle}. ${strings.discoverySubtitle}',
       excludeSemantics: true,
       child: GestureDetector(
-        onTap: () => const DiscoveryRoute().push<void>(context),
+        onTap: () { Haptics.tap(); const DiscoveryRoute().push<void>(context); },
         child: GlassCard(
           color: AppColors.success,
           highlightAlpha: 0.10,
@@ -226,7 +226,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
       button: true,
       label: strings.a11yRabbitHole,
       child: GestureDetector(
-        onTap: () {
+        onTap: () { Haptics.tap();
           RabbitHoleRoute(id: seedArtist!.id, $extra: seedArtist).push(context);
         },
         child: GlassCard(

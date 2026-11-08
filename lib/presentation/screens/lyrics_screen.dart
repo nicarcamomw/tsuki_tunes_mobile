@@ -13,6 +13,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
@@ -290,7 +291,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                             _Chip(
                               icon: Icons.ios_share,
                               label: strings.lyricsShare,
-                              onTap: () => _share(track),
+                              onTap: () { Haptics.tap(); _share(track); },
                             ),
                             const SizedBox(width: 8),
                             _Chip(
@@ -301,7 +302,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                                   : strings.lyricsTranslate,
                               active: translated,
                               loading: translating,
-                              onTap: translating ? null : _chooseTranslation,
+                              onTap: translating ? null : () { Haptics.tap(); _chooseTranslation(); },
                             ),
                           ],
                         ),

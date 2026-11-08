@@ -203,7 +203,7 @@ class _Body extends ConsumerWidget {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.textSecondary, side: const BorderSide(color: AppColors.border)),
-                  onPressed: () => c.decline(p.id),
+                  onPressed: () { Haptics.remove(); c.decline(p.id); },
                   child: Text(strings.sharedDecline),
                 ),
               ),
@@ -228,7 +228,7 @@ class _Body extends ConsumerWidget {
                   style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
                   onPressed: p.tracks.isEmpty
                       ? null
-                      : () {
+                      : () { Haptics.tap();
                           final songs = [for (final s in p.tracks) s.track];
                           ref.read(audioProvider).playTrack(songs.first, newQueue: songs);
                         },
@@ -242,7 +242,7 @@ class _Body extends ConsumerWidget {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.accent, side: const BorderSide(color: AppColors.accent)),
-                    onPressed: () => _showInvite(context, ref, p),
+                    onPressed: () { Haptics.tap(); _showInvite(context, ref, p); },
                     icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                     label: Text(strings.sharedInvite),
                   ),
@@ -261,7 +261,7 @@ class _Body extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: GestureDetector(
-                    onLongPress: owner && uid != me ? () => _confirmRemove(context, ref, p, uid) : null,
+                    onLongPress: owner && uid != me ? () { Haptics.longPress(); _confirmRemove(context, ref, p, uid); } : null,
                     child: Opacity(
                       opacity: p.isMember(uid) ? 1 : 0.5,
                       child: SizedBox(
@@ -331,7 +331,7 @@ class _Body extends ConsumerWidget {
                     )
                   : null,
               onTap: p.isMember(me)
-                  ? () {
+                  ? () { Haptics.tap();
                       final songs = [for (final x in p.tracks) x.track];
                       ref.read(audioProvider).playTrack(songs[i], newQueue: songs);
                     }

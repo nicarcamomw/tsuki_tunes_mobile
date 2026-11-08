@@ -636,7 +636,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           IconButton(
             tooltip: strings.guessStatsTitle,
             icon: const Icon(Icons.bar_chart_rounded, color: AppColors.textBright),
-            onPressed: () => _showStats(locale),
+            onPressed: () { Haptics.tap(); _showStats(locale); },
           ),
         ],
       ),
@@ -731,7 +731,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             ),
           ),
           TextButton(
-            onPressed: _changeArtist,
+            onPressed: () { Haptics.tap(); _changeArtist(); },
             child: Text(
               locale.strings.guessArtistChange,
               style: locale.getTextStyle(
@@ -882,7 +882,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                 style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: _startRound,
+              onPressed: () { Haptics.tap(); _startRound(); },
               style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
               child: Text(strings.retry,
                   style: locale.getTextStyle(

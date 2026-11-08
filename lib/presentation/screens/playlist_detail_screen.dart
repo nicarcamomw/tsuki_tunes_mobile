@@ -48,7 +48,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       action: SnackBarAction(
         label: strings.undo,
         textColor: AppColors.accent,
-        onPressed: undo,
+        onPressed: () { Haptics.tap(); undo(); },
       ),
     );
   }
@@ -290,7 +290,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
+                        onPressed: () { Haptics.tap();
                           ref.read(playTracksProvider)(playlist.tracks);
                         },
                         icon: const Icon(Icons.play_arrow,
@@ -315,7 +315,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
+                        onPressed: () { Haptics.tap();
                           ref.read(playTracksProvider)(playlist.tracks, shuffled: true);
                         },
                         icon: const Icon(Icons.shuffle,
@@ -403,6 +403,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           if (playlist.tracks.isNotEmpty && _editing)
             SliverReorderableList(
               itemCount: playlist.tracks.length,
+              onReorderStart: (_) => Haptics.longPress(),
               onReorderItem: (oldIndex, newIndex) {
                 Haptics.selection();
                 ref.read(reorderPlaylistProvider)(playlistId, oldIndex, newIndex);

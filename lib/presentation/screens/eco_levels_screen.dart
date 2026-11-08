@@ -155,7 +155,7 @@ class _Header extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFFF4D6), foregroundColor: const Color(0xFF111217)),
-              onPressed: () => AscensionScreen.open(context),
+              onPressed: () { Haptics.tap(); AscensionScreen.open(context); },
               icon: const Icon(Icons.auto_awesome_rounded, size: 18),
               label: Text(strings.ecoChoicePending, style: const TextStyle(fontWeight: FontWeight.w800)),
             ),

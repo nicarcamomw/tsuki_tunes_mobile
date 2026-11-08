@@ -19,31 +19,39 @@ class PopOnChange extends StatefulWidget {
 }
 
 class _PopOnChangeState extends State<PopOnChange> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(vsync: this, duration: PopOnChange.duration);
+  // Made on the first change only: a list shows this in every row, and most
+  // rows never pop.
+  AnimationController? _controller;
+  Animation<double>? _scale;
 
-  late Animation<double> _scale = _build();
+  static const _still = AlwaysStoppedAnimation<double>(1.0);
 
-  Animation<double> _build() => TweenSequence<double>([
+  Animation<double> _build(AnimationController controller) => TweenSequence<double>([
         // Up quickly, then settle with a little spring.
         TweenSequenceItem(tween: Tween(begin: 1.0, end: widget.peak).chain(CurveTween(curve: Curves.easeOut)), weight: 30),
         TweenSequenceItem(tween: Tween(begin: widget.peak, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)), weight: 70),
-      ]).animate(_controller);
+      ]).animate(controller);
 
   @override
   void didUpdateWidget(PopOnChange old) {
     super.didUpdateWidget(old);
-    if (old.peak != widget.peak) _scale = _build();
-    if (old.value != widget.value && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
-      _controller.forward(from: 0);
+    if (old.value == widget.value || (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
+      if (old.peak != widget.peak && _controller != null) _scale = _build(_controller!);
+      return;
     }
+    final controller = _controller ??= AnimationController(vsync: this, duration: PopOnChange.duration);
+    if (_scale == null || old.peak != widget.peak) _scale = _build(controller);
+    controller.forward(from: 0);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
+  // Always a ScaleTransition, so the child is never rebuilt from scratch
+  // when the first pop arrives.
   @override
-  Widget build(BuildContext context) => ScaleTransition(scale: _scale, child: widget.child);
+  Widget build(BuildContext context) => ScaleTransition(scale: _scale ?? _still, child: widget.child);
 }

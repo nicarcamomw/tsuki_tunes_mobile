@@ -215,7 +215,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
             bottom: 12,
             left: 0,
             right: 0,
-            child: Center(child: _FollowPill(onTap: _resumeFollow)),
+            child: Center(child: _FollowPill(onTap: () { Haptics.selection(); _resumeFollow(); })),
           ),
       ],
     );
@@ -489,7 +489,7 @@ class LyricsCard extends ConsumerWidget {
           button: hasText,
           label: strings.a11yLyrics,
           child: GestureDetector(
-            onTap: hasText ? onOpen : null,
+            onTap: hasText ? () { Haptics.tap(); onOpen(); } : null,
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -550,7 +550,7 @@ class LyricsCard extends ConsumerWidget {
                               _RoundIcon(
                                 icon: Icons.open_in_full,
                                 tooltip: strings.a11yLyrics,
-                                onTap: onOpen,
+                                onTap: () { Haptics.tap(); onOpen(); },
                               ),
                           ],
                         ),

@@ -192,7 +192,10 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
           child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
-        onRefresh: _loadAlbumDetails,
+        onRefresh: () {
+          Haptics.threshold();
+          return _loadAlbumDetails();
+        },
         child: CustomScrollView(
         controller: _scroll,
         slivers: [
@@ -222,7 +225,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
                   icon: Icon(Icons.open_in_new,
                       color: AppColors.accent, size: 20, semanticLabel: strings.a11yOpenExternal),
-                  onPressed: () async {
+                  onPressed: () async { Haptics.tap();
                     try {
                       if (audio.useSpotify) {
                         final searchQuery = Uri.encodeComponent(
@@ -487,7 +490,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       // Play album
                       if (tracks.isNotEmpty)
                         OutlinedButton.icon(
-                          onPressed: () {
+                          onPressed: () { Haptics.tap();
                             ref.read(playTracksProvider)(tracks);
                           },
                           icon: Icon(Icons.play_arrow,

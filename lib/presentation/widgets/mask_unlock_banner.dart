@@ -130,7 +130,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                   button: true,
                   label: '${strings.maskUnlockedTitle}: ${mask.name(locale.currentLanguage)}',
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () { Haptics.tap();
                       _close();
                       widget.onTap?.call();
                     },

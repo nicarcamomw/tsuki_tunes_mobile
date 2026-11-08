@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_player_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/audio_precache_service.dart';
@@ -186,6 +188,15 @@ class FakeSpotifyService extends SpotifyService {
 
   /// What Spotify's own "next" would play; null: unknown.
   String? nextUp;
+
+  /// Songs put in Spotify's queue over the Web API.
+  final webQueued = <String>[];
+
+  @override
+  Future<bool> addToQueue(String uri) async {
+    webQueued.add(uri);
+    return true;
+  }
 
   @override
   Future<String?> nextInQueue() async => nextUp;
@@ -390,6 +401,29 @@ void main() {
         nativePlayer: fakeNative,
         flags: flags,
       );
+
+  test('a song plays on Spotify without first renewing its expired preview link',
+      () async {
+    // A song from a playlist or the history keeps a signed Deezer preview
+    // link that expires after hours; Spotify plays its own copy, so asking
+    // Deezer for a new link first only delayed the start.
+    fakeNative.setConnected(true);
+    final expired = _track('t1').copyWith(
+        previewUrl: 'https://cdnt-preview.dzcdn.net/x.mp3?hdnea=exp=1000~acl=x~hmac=y');
+    final deezerCalls = <Uri>[];
+    final client = MockClient((r) async {
+      if (r.url.host.contains('deezer')) deezerCalls.add(r.url);
+      return http.Response('{}', 200);
+    });
+
+    await http.runWithClient(() async {
+      final provider = createProvider();
+      await provider.playTrack(expired, newQueue: [expired]);
+      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
+    }, () => client);
+
+    expect(deezerCalls, isEmpty);
+  });
 
   group('App Remote fast-path', () {
     test('playViaSpotify uses App Remote when already connected', () async {
@@ -1020,18 +1054,71 @@ void main() {
           reason: 'no playUri restarting it');
     });
 
-    test('our next song goes to Spotify\'s queue as soon as ours plays',
+    test('away from Tsuki, our next song goes to Spotify\'s queue at once',
         () async {
       // Mid-song: Spotify's own "next" (the car's button) must be ours,
       // not its autoplay.
+      setLifecycle(AppLifecycleState.paused);
       await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
       await tick();
       await tick();
       expect(fakeNative.queued, ['spotify:track:t2']);
     });
 
+    test('with Tsuki in front, nothing is queued before the last 20 seconds',
+        () async {
+      // A song may be tapped any moment: the queued one would stay behind
+      // in Spotify and play out of place later.
+      setLifecycle(AppLifecycleState.resumed);
+      await playingAt([_track('t1'), _track('t2')], 60000);
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+    });
+
+    test('with App Remote\'s link down, our next song goes in over the Web API',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
+      // Android cut the link in the background; Spotify keeps playing.
+      fakeNative.setConnected(false);
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+      expect(fakeSpotify.webQueued, ['spotify:track:t2']);
+    });
+
+    test('a song already Spotify\'s next is not queued twice', () async {
+      setLifecycle(AppLifecycleState.paused);
+      fakeSpotify.nextUp = 'spotify:track:t2';
+      final provider =
+          await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
+      await tick();
+      expect(fakeNative.queued, isEmpty);
+
+      // And Spotify moving to it is followed, without a new play.
+      fakeNative.simulateStateChanged(0, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('App Remote\'s link dropped while Spotify plays ours comes back',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playingAt([_track('t1'), _track('t2')], 30000);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 31000);
+      fakeNative.setConnected(false);
+      fakeNative.onDisconnected?.call();
+      await Future.delayed(Duration.zero);
+      expect(provider.isPlaying, isTrue);
+
+      await Future.delayed(const Duration(milliseconds: 3300));
+      expect(fakeNative.isConnected, isTrue);
+    });
+
     test('the car\'s "next" mid-song plays our next song straight away',
         () async {
+      setLifecycle(AppLifecycleState.paused);
       final provider =
           await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
       await tick();
@@ -1055,6 +1142,7 @@ void main() {
 
     test('a song still waiting in Spotify\'s queue is reused when it\'s our next',
         () async {
+      setLifecycle(AppLifecycleState.paused);
       final provider =
           await playingAt([_track('t1'), _track('t2'), _track('t3')], 30000);
       await tick();

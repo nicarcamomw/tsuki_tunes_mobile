@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show DismissUpdateDetails;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The app's haptic vocabulary. Every vibration goes through here, one kind
@@ -13,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// | [selection]  | moving between options or flipping a state              | tick          |
 /// | [tap]        | pressing something that opens or starts                 | light         |
 /// | [threshold]  | a drag crossing the point where letting go will act     | light         |
+/// |              | (Dismissible rows: [swipe])                             |               |
 /// | [longPress]  | a long press revealing a menu or a hidden action        | medium        |
 /// | [confirm]    | an action that changes the user's music or circle       | medium        |
 /// | [remove]     | taking something away (remove, clear, stop, leave)      | medium        |
@@ -61,6 +63,13 @@ abstract final class Haptics {
   /// A drag crossing the point where letting go will act (swipe to skip,
   /// swipe to queue). Pair it with [confirm] when the drag is released.
   static void threshold() => _play(HapticFeedback.lightImpact);
+
+  /// For a Dismissible's onUpdate: [threshold] the moment a swipe crosses
+  /// the point where letting go acts, and again if it's pulled back, like
+  /// the mini player's swipe.
+  static void swipe(DismissUpdateDetails details) {
+    if (details.reached != details.previousReached) threshold();
+  }
 
   /// A long press that reveals a menu or a hidden action.
   static void longPress() => _play(HapticFeedback.mediumImpact);

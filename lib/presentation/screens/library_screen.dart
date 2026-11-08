@@ -343,7 +343,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                             icon: Icon(Icons.clear,
                                 color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
                             tooltip: strings.a11yClearFilter,
-                            onPressed: () {
+                            onPressed: () { Haptics.selection();
                               setState(() => _filterController.clear());
                             },
                           )
@@ -377,7 +377,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () { Haptics.tap();
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
                         ref.read(playTracksProvider)(allTracks);
@@ -402,7 +402,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () { Haptics.tap();
                       final allTracks = _buildAllTracks(listenedTracks);
                       if (allTracks.isNotEmpty) {
                         ref.read(playTracksProvider)(allTracks, shuffled: true);
@@ -433,7 +433,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           child: RefreshIndicator(
             color: AppColors.accent,
             backgroundColor: AppColors.bgCard,
-            onRefresh: _refreshData,
+            onRefresh: () {
+              Haptics.threshold();
+              return _refreshData();
+            },
             child: totalTracks == 0
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -607,7 +610,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             children: [
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => _showCreatePlaylistDialog(context),
+              onPressed: () { Haptics.tap(); _showCreatePlaylistDialog(context); },
               icon: Icon(Icons.add, color: AppColors.accent, size: 18, semanticLabel: strings.a11yCreatePlaylist),
               label: Text(
                 strings.createPlaylist,
@@ -629,7 +632,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => createSharedPlaylist(context, ref),
+                    onPressed: () { Haptics.tap(); createSharedPlaylist(context, ref); },
                     icon: const Icon(Icons.group_add_rounded, color: AppColors.accent, size: 18),
                     label: Text(
                       strings.sharedNew,
@@ -722,7 +725,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                             style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
                           ),
                           trailing: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
-                          onTap: () => SharedPlaylistRoute(id: p.id).push<void>(context),
+                          onTap: () { Haptics.tap(); SharedPlaylistRoute(id: p.id).push<void>(context); },
                         ),
                       const Divider(color: AppColors.border, height: 16),
                     ],
@@ -1049,7 +1052,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   // View album link
                   if (group.albumId.isNotEmpty)
                     TextButton(
-                      onPressed: () {
+                      onPressed: () { Haptics.tap();
                         final album = _buildAlbumFromGroup(group);
                         AlbumRoute(id: album.id, $extra: album).push(context);
                       },
@@ -1096,7 +1099,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
               final isCurrentTrack = currentTrackId == trackData.trackId;
               return InkWell(
                 borderRadius: BorderRadius.circular(4),
-                onTap: () {
+                onTap: () { Haptics.tap();
                   final queue = group.tracks
                       .map((td) => Track(
                             id: td.trackId,
@@ -1179,8 +1182,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         tooltip: strings.a11yRemoveFromPlaylist,
                         icon: Icon(Icons.remove_circle_outline,
                             color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
-                        onPressed: () =>
-                            ref.read(unmarkTrackListenedProvider)(trackData.trackId),
+                        onPressed: () { Haptics.selection(); ref.read(unmarkTrackListenedProvider)(trackData.trackId); },
                       ),
                     ],
                   ),
@@ -1227,7 +1229,7 @@ class _PlaylistListTile extends ConsumerWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(4),
-        onTap: () {
+        onTap: () { Haptics.tap();
           PlaylistRoute(id: playlist.id).push(context);
         },
         child: Padding(

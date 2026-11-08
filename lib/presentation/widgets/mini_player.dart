@@ -154,7 +154,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
       label: '${track.title}, ${track.fullArtistName}',
       child: RepaintBoundary(
         child: GestureDetector(
-          onTap: () => _openExpandedPlayer(context),
+          onTap: () { Haptics.tap(); _openExpandedPlayer(context); },
           onVerticalDragEnd: (details) {
             if ((details.primaryVelocity ?? 0) < -300) {
               _openExpandedPlayer(context);

@@ -430,13 +430,13 @@ class _MusicPanel extends ConsumerWidget {
                 _RoundButton(
                   icon: Icons.remove_rounded,
                   tooltip: '−2',
-                  onTap: () => run.nudgeLock(-2),
+                  onTap: () { Haptics.selection(); run.nudgeLock(-2); },
                 ),
                 const SizedBox(width: 6),
                 _RoundButton(
                   icon: Icons.add_rounded,
                   tooltip: '+2',
-                  onTap: () => run.nudgeLock(2),
+                  onTap: () { Haptics.selection(); run.nudgeLock(2); },
                 ),
               ],
             ],

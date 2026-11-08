@@ -273,7 +273,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.bgCard,
-        onRefresh: _loadHomeData,
+        onRefresh: () {
+          Haptics.threshold();
+          return _loadHomeData();
+        },
         child: CustomScrollView(
           controller: scrollController,
           slivers: [
@@ -492,7 +495,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 // glyph is an icon so it sits dead centre in the ring.
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => _showAffinityInfo(context, locale),
+                  onTap: () { Haptics.tap(); _showAffinityInfo(context, locale); },
                   child: Semantics(
                     button: true,
                     label: strings.affinityInfoTitle,
@@ -536,7 +539,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 pictureUrl: top.artist?.pictureUrl ?? '',
                 semanticsLabel: '${strings.tabArtists} $rank, ${top.entry.name}',
                 placeholderIcon: true,
-                onTap: () => _openTopArtist(top),
+                onTap: () { Haptics.tap(); _openTopArtist(top); },
               );
             },
             childCount: _topArtistsDisplay.length,
@@ -565,7 +568,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               pictureUrl: artist.pictureUrl,
               semanticsLabel: '${strings.featured} $rank, ${artist.name}',
               placeholderIcon: false,
-              onTap: () => _openArtist(artist),
+              onTap: () { Haptics.tap(); _openArtist(artist); },
             );
           },
           childCount: _featuredArtists.take(5).length,

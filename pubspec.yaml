@@ -20,6 +20,9 @@ dependencies:
   lucide_icons: ^0.257.0
   flutter_animate: ^4.5.2
   cached_network_image: ^3.4.1
+  # Dominant colour of a cover (the player's tint), off the UI thread. Its
+  # version comes with Flutter.
+  material_color_utilities: any
 
   # State Management
   # Audio Playback

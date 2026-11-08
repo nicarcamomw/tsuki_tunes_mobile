@@ -151,6 +151,9 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
                   divisions: 11,
                   onChanged: (val) {
                     final sec = val.round();
+                    if (sec == audio.crossfadeSeconds) return;
+                    // A tick per second, like a picker's detents.
+                    Haptics.selection();
                     audio.setCrossfadeSeconds(sec);
                     setState(() {});
                   },
@@ -407,7 +410,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
             ),
           ),
         ),
-        onTap: () => widget.closeThen(() async {
+        onTap: () => widget.closeThen(() async { Haptics.tap();
           LanguageSelectorSheet.show(host);
         }),
       ),
@@ -416,7 +419,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         icon: Icons.auto_stories_rounded,
         iconColor: AppColors.neonCyan,
         label: strings.tutorialOption,
-        onTap: () => widget.closeThen(() async {
+        onTap: () => widget.closeThen(() async { Haptics.tap();
           unawaited(const TutorialRoute().push(host));
         }),
       ),
@@ -426,7 +429,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         iconColor: AppColors.textSecondary,
         label: strings.privacyPolicyOption,
         labelColor: AppColors.textSecondary,
-        onTap: () => _openLegalPage(privacyPolicyUrl),
+        onTap: () { Haptics.tap(); _openLegalPage(privacyPolicyUrl); },
       ),
       _SettingLink(
         locale: locale,
@@ -435,7 +438,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         label: strings.termsOption,
         labelColor: AppColors.textSecondary,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
-        onTap: () => _openLegalPage(termsOfServiceUrl),
+        onTap: () { Haptics.tap(); _openLegalPage(termsOfServiceUrl); },
       ),
     ]);
   }
@@ -528,7 +531,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: _pickDate,
+      onTap: () { Haptics.tap(); _pickDate(); },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(

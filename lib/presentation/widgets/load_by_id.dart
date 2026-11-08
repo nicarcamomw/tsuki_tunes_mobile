@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'skeleton_loader.dart';
 
 /// A page opened with only an id (a deep link): shows [initial] right away
@@ -70,7 +71,7 @@ class _LoadByIdState<T extends Object> extends ConsumerState<LoadById<T>> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: _fetch,
+                    onPressed: () { Haptics.tap(); _fetch(); },
                     child: Text(
                       ref.watch(stringsProvider).retry,
                       style: const TextStyle(color: AppColors.accent),

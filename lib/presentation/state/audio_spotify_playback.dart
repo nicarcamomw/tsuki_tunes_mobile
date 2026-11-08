@@ -98,6 +98,7 @@ extension _SpotifyPlayback on AudioProvider {
       if (!_spotifyActive || !_isPlaying) return;
       _log.warning('App Remote link lost, checking Spotify through the Web API');
       unawaited(_syncSpotifyPlaybackState());
+      _reconnectAppRemoteSoon();
     };
 
     await _spotify.loadSavedState();
@@ -158,7 +159,9 @@ extension _SpotifyPlayback on AudioProvider {
       _spotifyPollTick++;
 
       final hasRealTimeState = _nativePlayer.isConnected;
-      final pollInterval = hasRealTimeState ? 30 : 15;
+      // Without App Remote nothing tells Tsuki when Spotify changes song
+      // (the car's "next"): look every few seconds until it's back.
+      final pollInterval = hasRealTimeState ? 30 : 5;
       final pausePollInterval = hasRealTimeState ? 15 : 5;
 
       if (_isPlaying) {
@@ -430,8 +433,9 @@ extension _SpotifyPlayback on AudioProvider {
     unawaited(_learnSpotifyNextUp());
   }
 
-  /// As soon as a song plays through App Remote, puts our next one in the
-  /// Spotify app's queue, so Spotify's own "next" is ours: the car's,
+  /// While a song plays through App Remote with Tsuki away (screen off,
+  /// another app), puts our next one in the Spotify app's queue at once, so
+  /// Spotify's own "next" is ours: the car's,
   /// the speaker's or a headset's buttons reach Spotify (the app making the
   /// sound), and with only our song handed over it jumped to its autoplay,
   /// which sounded for a moment before Tsuki replaced it. It also joins the
@@ -445,10 +449,22 @@ extension _SpotifyPlayback on AudioProvider {
   /// with the right song when Spotify gets there.
   Future<void> _maybeQueueNextInSpotify(Duration pos) async {
     if (!_flags.spotifyQueueNext) return;
-    if (_spotifyQueueBroken || !_nativePlayer.isConnected) return;
+    if (_spotifyQueueBroken) return;
     if (_spotifyQueuedGen == _playGeneration) return;
     // Once ours is playing, a moment in: a play still landing isn't touched.
     if (!_isPlaying || _isBuffering || pos < const Duration(seconds: 2)) return;
+    // With Tsuki in front a song may be tapped any moment, which would leave
+    // the queued one behind in Spotify (its queue can't be emptied) to play
+    // out of place after the next song: wait for the last seconds then.
+    // Away from Tsuki (screen off, another app) songs change only through
+    // the buttons, so ours goes at once.
+    final inFront = _screenOn &&
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    if (inFront &&
+        (_duration < const Duration(seconds: 40) ||
+            pos < _duration - const Duration(seconds: 20))) {
+      return;
+    }
     if (_spotifyAhead.isNotEmpty) return;
     if (_q.repeatMode == PlaybackRepeatMode.one ||
         _sleepCtrl.stopAfterCurrentTrack) {
@@ -472,8 +488,22 @@ extension _SpotifyPlayback on AudioProvider {
     final gen = _spotifyQueuedGen = _playGeneration;
     final uri = await _resolveSpotifyUri(next);
     if (uri == null || gen != _playGeneration || !_isPlaying) return;
-    if (!await _nativePlayer.queue(uri)) {
-      _log.warning('Spotify queue refused, Tsuki moves on by itself');
+    // Already Spotify's next (queued before App Remote's link dropped, which
+    // forgets it here): adding it again would play it twice.
+    if (await _spotify.nextInQueue() == uri) {
+      if (gen != _playGeneration) return;
+      _log.info('"${next.title}" is already Spotify\'s next');
+      _spotifyQueuedPending[uri] = next.id;
+      _spotifyAhead = [(trackId: next.id, uri: uri)];
+      return;
+    }
+    if (gen != _playGeneration || !_isPlaying) return;
+    // App Remote when it's linked; the Web API when Android dropped it.
+    final native = _nativePlayer.isConnected;
+    final queued =
+        native ? await _nativePlayer.queue(uri) : await _spotify.addToQueue(uri);
+    if (!queued) {
+      _log.warning('Spotify queue refused (${native ? 'App Remote' : 'Web API'}), Tsuki moves on by itself');
       _spotifyQueueBroken = true;
       CrashReporter.instance.issue('spotify_queue_refused');
       return;
@@ -771,6 +801,37 @@ extension _SpotifyPlayback on AudioProvider {
     });
   }
 
+  /// Gets App Remote's link back after Android dropped it while Spotify
+  /// plays ours: live song changes (the car's "next") and the next song in
+  /// Spotify's queue depend on it. After 3, 10, 30 and 60 seconds, while
+  /// it's still needed.
+  void _reconnectAppRemoteSoon() {
+    if (_appRemoteReconnectTimer?.isActive ?? false) return;
+    const waits = [3, 10, 30, 60];
+    if (_appRemoteReconnects >= waits.length) return;
+    _appRemoteReconnectTimer =
+        Timer(Duration(seconds: waits[_appRemoteReconnects]), () async {
+      if (!_useSpotify ||
+          !_spotifyActive ||
+          _spotifyFallbackActive ||
+          !_isPlaying ||
+          _nativePlayer.isConnected) {
+        _appRemoteReconnects = 0;
+        return;
+      }
+      final token = _spotify.accessToken;
+      if (token == null) return;
+      _appRemoteReconnects++;
+      final ok = await _nativePlayer.connect(accessToken: token);
+      _log.info('App Remote reconnect ${ok ? 'worked' : 'failed'} (attempt $_appRemoteReconnects)');
+      if (ok) {
+        _appRemoteReconnects = 0;
+      } else {
+        _reconnectAppRemoteSoon();
+      }
+    });
+  }
+
   /// Asks Spotify what its "next" would play after our song, so a skip to
   /// it is told apart from a song picked in the Spotify app.
   Future<void> _learnSpotifyNextUp() async {
@@ -884,7 +945,9 @@ extension _SpotifyPlayback on AudioProvider {
       ProductAnalytics.instance.log('spotify_fallback', {'reason': 'track_not_found'});
       _spotifyActive = false;
       _spotifyFallbackActive = true;
-      await _service.playTrack(track);
+      final fresh = await _withFreshPreview(track);
+      if (gen != _playGeneration) return;
+      await _service.playTrack(fresh);
       if (gen != _playGeneration) return;
       _isBuffering = false;
       notifyListeners();
@@ -1012,7 +1075,9 @@ extension _SpotifyPlayback on AudioProvider {
     _lastSpotifyError = SpotifyFallbackReason.openApp;
     _spotifyActive = false;
     _spotifyFallbackActive = true;
-    await _playPreviewInsteadOfSpotify(track);
+    final fresh = await _withFreshPreview(track);
+    if (gen != _playGeneration) return;
+    await _playPreviewInsteadOfSpotify(fresh);
     if (gen != _playGeneration) return;
     _isBuffering = false;
     notifyListeners();
