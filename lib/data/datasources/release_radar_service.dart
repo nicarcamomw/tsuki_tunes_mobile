@@ -273,11 +273,18 @@ class ReleaseRadarService {
   }
 
   /// Asks once, at the moment the user shows intent (following an artist).
-  Future<void> askPermissionOnceForFollow() async {
+  /// [explain] says why first (PermissionPrimer); Android's dialog only
+  /// follows a yes there, and a "not now" isn't asked again from here (the
+  /// Radar keeps its switch).
+  Future<void> askPermissionOnceForFollow({Future<bool> Function()? explain}) async {
     if (!isSupported) return;
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_askedKey) ?? false) return;
     if (await hasPermission()) {
+      await prefs.setBool(_askedKey, true);
+      return;
+    }
+    if (explain != null && !await explain()) {
       await prefs.setBool(_askedKey, true);
       return;
     }

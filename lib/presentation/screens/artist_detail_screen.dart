@@ -24,6 +24,7 @@ import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_icon.dart';
+import '../widgets/permission_primer.dart';
 import '../widgets/pop_on_change.dart';
 import '../widgets/radio_control_sheet.dart';
 import '../widgets/skeleton_loader.dart';
@@ -524,7 +525,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   Future<void> _announceRadar(AppStrings strings) async {
     final radar = ref.read(releaseRadarProvider);
     if (!ref.read(releaseRadarSupportedProvider)) return;
-    await radar.askPermissionOnceForFollow();
+    await radar.askPermissionOnceForFollow(
+      explain: () => mounted ? PermissionPrimer.notifications(context) : Future.value(false),
+    );
     if (!mounted || !radar.notifyEnabled.value) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

@@ -17,6 +17,7 @@ import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/haptics.dart';
 import '../widgets/mini_player.dart';
+import '../widgets/permission_primer.dart';
 import '../widgets/playback_error_text.dart';
 import '../widgets/tap_scale.dart';
 import 'home_screen.dart';
@@ -50,6 +51,30 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 }
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+  // Running in the background is offered once 20 s of music have played,
+  // with Tsuki on screen: by then the user cares about the music going on,
+  // and a song isn't interrupted as it starts. Once a session at most.
+  static const _backgroundOfferAfter = Duration(seconds: 20);
+  Timer? _backgroundOfferTimer;
+  bool _backgroundOffered = false;
+
+  void _onPlayingChanged(bool playing) {
+    if (_backgroundOffered) return;
+    if (!playing) {
+      _backgroundOfferTimer?.cancel();
+      _backgroundOfferTimer = null;
+      return;
+    }
+    _backgroundOfferTimer ??= Timer(_backgroundOfferAfter, () async {
+      _backgroundOfferTimer = null;
+      if (!mounted || _backgroundOffered || !ref.read(audioProvider).isPlaying) return;
+      // Away (the car, a pocket): tried again the next time music plays.
+      if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+      _backgroundOffered = true;
+      await PermissionPrimer.offerBackgroundIfNeeded(context);
+    });
+  }
+
   final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
   SpotifyFallbackReason? _lastShownError;
   PlaybackError? _lastShownPlaybackError;
@@ -112,6 +137,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (shellNavigatorObserver.onNavigationChanged == _updateCanPop) {
       shellNavigatorObserver.onNavigationChanged = null;
     }
+    _backgroundOfferTimer?.cancel();
     _tabNotifier.removeListener(_updateCanPop);
     _tabNotifier.dispose();
     _canPopNotifier.dispose();
@@ -120,6 +146,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<bool>(audioProvider.select((a) => a.isPlaying), (_, playing) => _onPlayingChanged(playing));
     final (hasTrack, spotifyError, playbackError) =
         ref.watch(audioProvider.select(
             (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError)));

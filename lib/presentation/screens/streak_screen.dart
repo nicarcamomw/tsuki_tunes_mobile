@@ -10,6 +10,7 @@ import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/permission_primer.dart';
 import '../widgets/streak_card.dart';
 
 const _bg = Color(0xFF0A0B10);
@@ -491,9 +492,14 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
             Switch(
               value: on,
               activeTrackColor: streakFlame,
-              onChanged: (v) {
+              onChanged: (v) async {
                 Haptics.selection();
-                unawaited(reminder.setEnabled(v, widget.masks.streakForReminder));
+                await reminder.setEnabled(v, widget.masks.streakForReminder);
+                // Turned on but Android won't notify: a way to settings, or
+                // the reminder would silently never come.
+                if (v && mounted && !await ref.read(releaseRadarProvider).hasPermission() && mounted) {
+                  showNotificationsBlocked(this.context);
+                }
               },
             ),
           ],
