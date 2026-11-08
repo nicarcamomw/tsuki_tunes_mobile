@@ -31,6 +31,7 @@ class RunModeScreen extends ConsumerWidget {
         backgroundColor: AppColors.bgDeep,
         elevation: 0,
         leading: IconButton(
+  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textBright),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -79,7 +80,7 @@ class RunModeScreen extends ConsumerWidget {
                 height: 52,
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: run.active ? AppColors.bgCard : AppColors.accent,
+                    backgroundColor: run.active ? AppColors.bgCard : AppColors.accentFill,
                     foregroundColor: AppColors.textBright,
                     side: run.active ? const BorderSide(color: AppColors.accent) : null,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -459,7 +460,6 @@ class _MusicPanel extends ConsumerWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.neonCyan,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ),

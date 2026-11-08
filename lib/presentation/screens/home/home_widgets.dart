@@ -79,17 +79,18 @@ class _HomeHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
+                      // Flavour, not information: screen readers skip it.
+                      ExcludeSemantics(child: Text(
                         strings.homeTelemetry,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.notoSansJp(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.accent.withValues(alpha: 0.8),
+                          color: AppColors.accentText,
                           letterSpacing: 1.2,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                   ),

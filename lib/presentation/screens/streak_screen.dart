@@ -34,6 +34,7 @@ class StreakScreen extends ConsumerWidget {
         backgroundColor: _bg,
         elevation: 0,
         leading: IconButton(
+  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textBright),
           onPressed: () => Navigator.of(context).pop(),
         ),

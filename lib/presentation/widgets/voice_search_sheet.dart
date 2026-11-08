@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../domain/entities/voice_error.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
+import 'motion.dart';
 
 enum _SheetState { initializing, listening, done, failed }
 
@@ -93,7 +94,9 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
       _state = _SheetState.listening;
       _error = null;
     });
-    _pulseController.repeat();
+    // The ring pulses while listening; still with less motion asked for
+    // (the "listening" text says it all the same).
+    if (!reduceMotion(context)) _pulseController.repeat();
     Haptics.tap();
 
     await _voice.listen(
@@ -237,15 +240,16 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           ),
           const SizedBox(height: 16),
           // Telemetry header
-          Text(
+          // Flavour, not information: screen readers skip it.
+          ExcludeSemantics(child: Text(
             '◈ VOICE.SCAN // ACTIVE',
             style: GoogleFonts.notoSansJp(
               fontSize: 9,
               fontWeight: FontWeight.w700,
-              color: AppColors.accent.withValues(alpha: 0.8),
+              color: AppColors.accentText,
               letterSpacing: 1.2,
             ),
-          ),
+          )),
           const SizedBox(height: 28),
           // Mic with pulse rings; tapping it after a failure listens again
           // (also picks up a permission just granted in Settings).

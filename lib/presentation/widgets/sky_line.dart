@@ -512,7 +512,6 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                           color: _addRain
                               ? AppColors.neonCyan
                               : AppColors.borderGlow),
-                      visualDensity: VisualDensity.compact,
                     ),
                     // Wraps instead of overflowing with large text sizes.
                     SizedBox(
@@ -539,7 +538,6 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.neonCyan,
                               foregroundColor: AppColors.bgDeep,
-                              visualDensity: VisualDensity.compact,
                             ),
                             onPressed: _accept,
                             child: Text(

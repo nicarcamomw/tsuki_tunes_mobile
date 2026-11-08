@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'motion.dart';
 
 class SakuraOverlay extends StatefulWidget {
   const SakuraOverlay({super.key});
@@ -46,6 +47,8 @@ class _SakuraOverlayState extends State<SakuraOverlay>
     if (month == null || day == null) return;
 
     final now = DateTime.now();
+    // Falling petals are pure decoration: none with less motion asked for.
+    if (reduceMotion(context)) return;
     if (now.month == month && now.day == day) {
       setState(() {
         _active = true;

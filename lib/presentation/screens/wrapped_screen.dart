@@ -23,6 +23,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/haptics.dart';
+import '../widgets/motion.dart';
 import '../widgets/skeleton_loader.dart';
 import 'wrapped/story_image.dart';
 
@@ -253,7 +254,16 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
 
   Widget _buildStories(AppStrings strings) {
     final size = MediaQuery.sizeOf(context);
-    return GestureDetector(
+    // Screen readers move through the story with actions instead of taps on
+    // the screen's sides: a tap goes on, "previous" goes back.
+    return Semantics(
+      label: strings.a11yNext,
+      onTap: () => _goTo(_page + 1),
+      customSemanticsActions: {
+        CustomSemanticsAction(label: strings.a11yPrevious): () => _goTo(_page - 1),
+      },
+      child: GestureDetector(
+      excludeFromSemantics: true,
       onTapUp: (d) {
         final x = d.globalPosition.dx;
         if (x < size.width / 3) {
@@ -293,6 +303,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -615,7 +626,7 @@ class _IntroSlide extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('T S U K I', style: c.text(15, weight: FontWeight.w800, color: AppColors.accent, spacing: 6))
-              .animate()
+              .animateCalm(context)
               .fadeIn(duration: 500.ms),
           const SizedBox(height: 14),
           // One line whatever the screen: it scales down instead of wrapping.
@@ -629,7 +640,7 @@ class _IntroSlide extends StatelessWidget {
               ),
             ),
           )
-              .animate()
+              .animateCalm(context)
               .fadeIn(duration: 700.ms, delay: 150.ms)
               .scaleXY(begin: 0.85, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
           const SizedBox(height: 22),
@@ -642,7 +653,7 @@ class _IntroSlide extends StatelessWidget {
             ),
             child: Text(c.period,
                 style: c.text(c.monthly ? 22 : 34, weight: FontWeight.w900, color: AppColors.accent, spacing: 5)),
-          ).animate().fadeIn(duration: 600.ms, delay: 450.ms).slideY(begin: 0.3, end: 0),
+          ).animateCalm(context).fadeIn(duration: 600.ms, delay: 450.ms).slideY(begin: 0.3, end: 0),
           const SizedBox(height: 26),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -652,18 +663,18 @@ class _IntroSlide extends StatelessWidget {
             ),
             child: Text(c.monthly ? strings.wrappedMonthlyLabel : strings.wrappedYearlyLabel,
                 style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
-          ).animate().fadeIn(delay: 600.ms),
+          ).animateCalm(context).fadeIn(delay: 600.ms),
           const SizedBox(height: 18),
           Text(strings.wrappedIntro(monthly: c.monthly),
                   textAlign: TextAlign.center, style: c.text(19, weight: FontWeight.w700))
-              .animate()
+              .animateCalm(context)
               .fadeIn(duration: 600.ms, delay: 750.ms),
           if (note != null) ...[
             const SizedBox(height: 12),
             Text(note!,
                 textAlign: TextAlign.center,
                 style: c.text(12, weight: FontWeight.w500, color: AppColors.textMuted, height: 1.45))
-                .animate()
+                .animateCalm(context)
                 .fadeIn(delay: 950.ms),
           ],
           const SizedBox(height: 36),
@@ -735,7 +746,7 @@ class _MinutesSlide extends StatelessWidget {
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: 1400.ms).slideX(begin: -0.2, end: 0),
+            ).animateCalm(context).fadeIn(delay: 1400.ms).slideX(begin: -0.2, end: 0),
           ],
           const Spacer(),
           Row(
@@ -744,7 +755,7 @@ class _MinutesSlide extends StatelessWidget {
               _Stat(c, d.uniqueTracksCount, strings.wrappedSongsLabel),
               _Stat(c, d.uniqueArtistsCount, strings.wrappedArtistsLabel),
             ],
-          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.3, end: 0),
+          ).animateCalm(context).fadeIn(delay: 700.ms).slideY(begin: 0.3, end: 0),
           if (d.periodDays > 0) ...[
             const SizedBox(height: 18),
             Text(strings.wrappedActiveDays(d.activeDays, d.periodDays),
@@ -764,7 +775,7 @@ class _MinutesSlide extends StatelessWidget {
                       style: c.text(12, weight: FontWeight.w700, color: AppColors.textSecondary)),
                 ),
               ],
-            ).animate().fadeIn(delay: 1600.ms),
+            ).animateCalm(context).fadeIn(delay: 1600.ms),
           ],
         ],
       ),
@@ -831,7 +842,7 @@ class _DaysBar extends StatelessWidget {
                   gradient: LinearGradient(colors: [AppColors.accent, AppColors.sakura]),
                 ),
               ),
-            ).animate().scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft, duration: 1200.ms, delay: 900.ms),
+            ).animateCalm(context).scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft, duration: 1200.ms, delay: 900.ms),
           ],
         ),
       ),
@@ -865,7 +876,7 @@ class _TopSongSlide extends StatelessWidget {
               final size = math.min(box.maxWidth * 0.62, 240.0);
               return _Cover(top.coverUrl, size: size, radius: 6, glow: true);
             }),
-          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
+          ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
           const SizedBox(height: 20),
           Center(
             child: Text(top.title,
@@ -873,7 +884,7 @@ class _TopSongSlide extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: c.text(26, weight: FontWeight.w900, height: 1.15)),
-          ).animate().fadeIn(delay: 300.ms),
+          ).animateCalm(context).fadeIn(delay: 300.ms),
           const SizedBox(height: 4),
           Center(
             child: Text(top.artistName,
@@ -895,7 +906,7 @@ class _TopSongSlide extends StatelessWidget {
                 child: Text(strings.wrappedPlays(top.playCount),
                     style: c.text(12, weight: FontWeight.w800, color: Colors.white)),
               ),
-            ).animate().fadeIn(delay: 500.ms),
+            ).animateCalm(context).fadeIn(delay: 500.ms),
           ],
           const Spacer(),
           if (rest.isNotEmpty) ...[
@@ -932,7 +943,7 @@ class _TopSongSlide extends StatelessWidget {
                       Text('${rest[i].playCount}', style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
                   ],
                 ),
-              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
+              ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
           ],
         ],
       ),
@@ -972,7 +983,7 @@ class _TopArtistSlide extends StatelessWidget {
               ),
               child: ClipOval(child: _Cover(top.coverUrl ?? '', size: 170, radius: 0)),
             ),
-          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack, duration: 800.ms),
+          ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack, duration: 800.ms),
           const SizedBox(height: 22),
           Center(
             child: FittedBox(
@@ -983,7 +994,7 @@ class _TopArtistSlide extends StatelessWidget {
                     shadows: [Shadow(color: AppColors.neonPurple.withValues(alpha: 0.6), blurRadius: 24)],
                   )),
             ),
-          ).animate().fadeIn(delay: 300.ms),
+          ).animateCalm(context).fadeIn(delay: 300.ms),
           const SizedBox(height: 6),
           Center(
             child: Text(
@@ -1029,7 +1040,7 @@ class _TopArtistSlide extends StatelessWidget {
                                 child: Container(color: AppColors.neonPurple.withValues(alpha: 0.8)),
                               ),
                             ),
-                          ).animate().scaleX(
+                          ).animateCalm(context).scaleX(
                               begin: 0,
                               end: 1,
                               alignment: Alignment.centerLeft,
@@ -1043,7 +1054,7 @@ class _TopArtistSlide extends StatelessWidget {
                         style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
                   ],
                 ),
-              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)),
+              ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 700 + i * 120)),
           ],
         ],
       ),
@@ -1084,7 +1095,7 @@ class _TopAlbumSlide extends StatelessWidget {
               final size = math.min(box.maxWidth * 0.5, 190.0);
               return _Cover(top.coverUrl, size: size, radius: 4, glow: true);
             }),
-          ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
+          ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
           const SizedBox(height: 18),
           Center(
             child: Text(top.title,
@@ -1092,7 +1103,7 @@ class _TopAlbumSlide extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: c.text(24, weight: FontWeight.w900, height: 1.15)),
-          ).animate().fadeIn(delay: 300.ms),
+          ).animateCalm(context).fadeIn(delay: 300.ms),
           const SizedBox(height: 4),
           Center(
             child: Text(top.artistName,
@@ -1106,7 +1117,7 @@ class _TopAlbumSlide extends StatelessWidget {
             child: Text(detail(top),
                 textAlign: TextAlign.center,
                 style: c.text(12, weight: FontWeight.w700, color: _tint)),
-          ).animate().fadeIn(delay: 500.ms),
+          ).animateCalm(context).fadeIn(delay: 500.ms),
           const Spacer(),
           if (rest.isNotEmpty) ...[
             Text(strings.wrappedRunnersUp,
@@ -1140,7 +1151,7 @@ class _TopAlbumSlide extends StatelessWidget {
                     ),
                   ],
                 ),
-              ).animate().fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
+              ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
           ],
           if (done.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -1188,7 +1199,7 @@ class _TopAlbumSlide extends StatelessWidget {
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2, end: 0),
+            ).animateCalm(context).fadeIn(delay: 900.ms).slideY(begin: 0.2, end: 0),
           ],
         ],
       ),
@@ -1224,7 +1235,7 @@ class _HourSlide extends StatelessWidget {
                 style: c.text(84, weight: FontWeight.w900, height: 1).copyWith(
                   shadows: [Shadow(color: AppColors.warning.withValues(alpha: 0.5), blurRadius: 30)],
                 )),
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+          ).animateCalm(context).fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
           const SizedBox(height: 26),
           SizedBox(
             height: 130,
@@ -1250,7 +1261,7 @@ class _HourSlide extends StatelessWidget {
                       ),
                     ),
                   ),
-                ).animate().scaleY(
+                ).animateCalm(context).scaleY(
                     begin: 0,
                     end: 1,
                     alignment: Alignment.bottomCenter,
@@ -1310,7 +1321,7 @@ class _HourSlide extends StatelessWidget {
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: Duration(milliseconds: 900 + p * 120)),
+            ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 900 + p * 120)),
         ],
       ),
     );
@@ -1368,19 +1379,19 @@ class _AuraSlide extends StatelessWidget {
                   ],
                 )),
           )
-              .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
+              .animateCalm(context, onPlay: (ctrl) => ctrl.repeat(reverse: true))
               .scaleXY(begin: 0.97, end: 1.03, duration: 2.seconds, curve: Curves.easeInOut),
           const SizedBox(height: 30),
           Text(name.toUpperCase(),
                   textAlign: TextAlign.center, style: c.text(28, weight: FontWeight.w900, spacing: 2))
-              .animate()
+              .animateCalm(context)
               .fadeIn(delay: 400.ms)
               .slideY(begin: 0.2, end: 0),
           const SizedBox(height: 12),
           Text(description,
                   textAlign: TextAlign.center,
                   style: c.text(15, weight: FontWeight.w500, color: AppColors.textSecondary, height: 1.5))
-              .animate()
+              .animateCalm(context)
               .fadeIn(delay: 700.ms),
         ],
       ),
@@ -1445,7 +1456,7 @@ class _FactsSlide extends StatelessWidget {
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: Duration(milliseconds: 300 + i * 180)).slideX(begin: 0.12, end: 0),
+            ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 300 + i * 180)).slideX(begin: 0.12, end: 0),
           const Spacer(flex: 2),
         ],
       ),
@@ -1645,7 +1656,7 @@ class _SummarySlide extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(duration: 600.ms).scaleXY(begin: 0.94, end: 1, curve: Curves.easeOutCubic),
+                  ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.94, end: 1, curve: Curves.easeOutCubic),
                     ),
                   ),
                 ),
@@ -1658,7 +1669,7 @@ class _SummarySlide extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onShare,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
+                      backgroundColor: AppColors.accentFill,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),

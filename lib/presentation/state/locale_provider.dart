@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/datasources/storage_service.dart';
@@ -66,6 +67,8 @@ class LocaleProvider extends ChangeNotifier {
     double? decorationThickness,
     List<Shadow>? shadows,
   }) {
+    // Brand colours as text get their readable (AA) versions.
+    if (color != null) color = AppColors.forText(color);
     if (_currentLanguage == AppLanguage.ja) {
       return GoogleFonts.notoSansJp(
         fontSize: fontSize,

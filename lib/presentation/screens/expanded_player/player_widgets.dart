@@ -150,13 +150,30 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     );
-    if (widget.isPlaying) _glow.repeat(reverse: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncGlow();
+  }
+
+  // The glow breathes while playing, unless less motion was asked for.
+  void _syncGlow() {
+    if (widget.isPlaying && !reduceMotion(context)) {
+      if (!_glow.isAnimating) _glow.repeat(reverse: true);
+    } else if (_glow.isAnimating) {
+      _glow.stop();
+      _glow.value = widget.isPlaying ? 1 : 0;
+    }
   }
 
   @override
   void didUpdateWidget(covariant _PulsingGlowPlay old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_glow.isAnimating) {
+    if (reduceMotion(context)) {
+      _glow.value = widget.isPlaying ? 1 : 0;
+    } else if (widget.isPlaying && !_glow.isAnimating) {
       _glow.repeat(reverse: true);
     } else if (!widget.isPlaying && _glow.isAnimating) {
       _glow.animateTo(0.0, duration: const Duration(milliseconds: 300));

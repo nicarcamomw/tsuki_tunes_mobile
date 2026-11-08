@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../../core/constants/app_colors.dart';
+import 'motion.dart';
 
 /// Self-contained spectrum wave visualizer with its own Ticker.
 /// For use in screens that don't already have a time driver.
@@ -30,7 +31,18 @@ class _SpectrumWaveVisualizerState extends State<SpectrumWaveVisualizer>
     _ticker = createTicker((elapsed) {
       _time.value = elapsed.inMicroseconds / 1000000.0;
     });
-    _ticker.start();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Still when the user asked for less motion; picks up a change of it.
+    final still = reduceMotion(context);
+    if (still && _ticker.isActive) {
+      _ticker.stop();
+    } else if (!still && !_ticker.isActive) {
+      _ticker.start();
+    }
   }
 
   @override

@@ -74,7 +74,7 @@ class _LoadByIdState<T extends Object> extends ConsumerState<LoadById<T>> {
                     onPressed: () { Haptics.tap(); _fetch(); },
                     child: Text(
                       ref.watch(stringsProvider).retry,
-                      style: const TextStyle(color: AppColors.accent),
+                      style: const TextStyle(color: AppColors.accentText),
                     ),
                   ),
                 ],

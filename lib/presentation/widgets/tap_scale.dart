@@ -14,6 +14,13 @@ class TapScale extends StatefulWidget {
   /// [Haptics.selection] for picking or toggling, null for none.
   final VoidCallback? haptic;
 
+  /// The smallest area that answers a touch (Material's 48 dp): a small
+  /// icon keeps its look, centred in it. Bigger children are untouched.
+  final double minTouchSize;
+
+  /// Material's minimum touch target.
+  static const double minTouchTarget = 48;
+
   const TapScale({
     super.key,
     required this.child,
@@ -22,6 +29,7 @@ class TapScale extends StatefulWidget {
     this.scaleDown = 0.90,
     this.semanticLabel,
     this.haptic = Haptics.tap,
+    this.minTouchSize = minTouchTarget,
   });
 
   @override
@@ -113,13 +121,20 @@ class _TapScaleState extends State<TapScale>
                 widget.onLongPress?.call();
               }
             : null,
-        child: AnimatedBuilder(
-          animation: _scale,
-          builder: (context, child) => Transform.scale(
-            scale: _scale.value,
-            child: child,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: widget.minTouchSize, minHeight: widget.minTouchSize),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: AnimatedBuilder(
+              animation: _scale,
+              builder: (context, child) => Transform.scale(
+                scale: _scale.value,
+                child: child,
+              ),
+              child: widget.child,
+            ),
           ),
-          child: widget.child,
         ),
       ),
     );

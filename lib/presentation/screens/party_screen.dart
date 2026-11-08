@@ -41,7 +41,7 @@ class PartyScreen extends ConsumerWidget {
             Text(strings.partyObserver, textAlign: TextAlign.center, style: style(13.5)),
             const SizedBox(height: 18),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
               onPressed: () => becomeBearer(context),
               child: Text(strings.ecoObserverAction),
             ),
@@ -107,7 +107,7 @@ class PartyScreen extends ConsumerWidget {
           if (hosting)
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accent,
+                foregroundColor: AppColors.accentText,
                 side: const BorderSide(color: AppColors.accent),
                 minimumSize: const Size(double.infinity, 48),
               ),
@@ -140,7 +140,7 @@ class PartyScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           FilledButton.icon(
             style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent, minimumSize: const Size(double.infinity, 50)),
+                backgroundColor: AppColors.accentFill, minimumSize: const Size(double.infinity, 50)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await party.host();
@@ -193,7 +193,7 @@ class PartyScreen extends ConsumerWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
                             onPressed: () {
                               Haptics.confirm();
                               unawaited(party.join(inv.host));

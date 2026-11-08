@@ -84,7 +84,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
     if (widget.isLoading || widget.loginSuccess) return;
     Haptics.tap();
     _tapEpicenter = details.localPosition;
-    _rippleController.forward(from: 0.0);
+    if (!reduceMotion(context)) _rippleController.forward(from: 0.0);
   }
 
   Future<void> _handleTap() async {

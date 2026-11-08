@@ -23,6 +23,7 @@ import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/motion.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
 import '../widgets/player_art_hero.dart';
