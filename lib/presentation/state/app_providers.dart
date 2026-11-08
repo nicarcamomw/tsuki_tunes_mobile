@@ -252,8 +252,9 @@ final playbackWiringProvider = Provider<void>((ref) {
       ambient.isPlaying && (ambient.isOn(AmbientSound.rain) || ambient.isOn(AmbientSound.storm));
   final lyrics = getIt<LyricsService>();
   player.onTrackStarted = (track) {
-    // Locking the phone must not kill Tsuki mid-song (asked once).
-    unawaited(BatteryGuide.instance.askToRunInBackgroundOnce());
+    // Running in the background is offered once some music has been heard,
+    // with its reason (MainNavigationScreen, PermissionPrimer), not here
+    // while the song is starting.
     library.addRecentTrack(track);
     masks.onTrackStarted(track);
     // Tempo for the player (menu, eye, queue) even when loudness isn't

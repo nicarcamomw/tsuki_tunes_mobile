@@ -2693,6 +2693,14 @@ class AppStrings {
   String get radarPermissionAction => _l.radarPermissionAction;
 
   String get radarPermissionSettingsHint => _l.radarPermissionSettingsHint;
+  String get permAllow => _l.permAllow;
+  String get permNotNow => _l.permNotNow;
+  String get permOpenSettings => _l.permOpenSettings;
+  String get permNotifTitle => _l.permNotifTitle;
+  String get permNotifBody => _l.permNotifBody;
+  String get permNotifBlocked => _l.permNotifBlocked;
+  String get permBackgroundTitle => _l.permBackgroundTitle;
+  String get permBackgroundBody => _l.permBackgroundBody;
 
   String get radarCheckNow => _l.radarCheckNow;
 

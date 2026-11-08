@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
@@ -68,20 +69,52 @@ class BatteryGuide {
 
   static const _askedBackgroundKey = 'asked_run_in_background';
 
-  /// Once, the first time music plays: asks Android (its own dialog) to let
-  /// Tsuki run in the background. Without it, many phones kill Tsuki when
-  /// the screen locks, and the music stops or Spotify's player takes over
-  /// the lock screen.
-  Future<void> askToRunInBackgroundOnce() async {
-    if (!Platform.isAndroid) return;
+  /// Whether to offer letting Tsuki run in the background: Android limits
+  /// its battery (so locking the phone can stop the music mid-song) and the
+  /// user wasn't asked yet. Asked once, answered either way.
+  Future<bool> shouldOfferBackground() async {
+    if (!Platform.isAndroid) return false;
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (prefs.getBool(_askedBackgroundKey) ?? false) return;
-      if (await _channel.invokeMethod<bool>('runsInBackground') ?? true) return;
-      await prefs.setBool(_askedBackgroundKey, true);
+      if (prefs.getBool(_askedBackgroundKey) ?? false) return false;
+      return !(await _channel.invokeMethod<bool>('runsInBackground') ?? true);
+    } catch (e) {
+      _log.severe('background check failed: $e');
+      return false;
+    }
+  }
+
+  /// Android's own dialog to let Tsuki run in the background (after the
+  /// user read why, PermissionPrimer). Not offered again.
+  Future<void> askToRunInBackground() async {
+    await _markBackgroundAsked();
+    try {
       await _channel.invokeMethod<bool>('askToRunInBackground');
     } catch (e) {
       _log.severe('background request failed: $e');
+    }
+  }
+
+  /// "Not now": not offered again on its own (the battery guide stays).
+  Future<void> declineBackground() => _markBackgroundAsked();
+
+  Future<void> _markBackgroundAsked() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_askedBackgroundKey, true);
+    } catch (_) {}
+  }
+
+  /// Opens Tsuki's own page in Android's settings (notifications, battery,
+  /// permissions), for when Android won't ask again.
+  Future<bool> openTsukiSettings() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final info = await PackageInfo.fromPlatform();
+      return await _channel.invokeMethod<bool>('openAppSettings', {'package': info.packageName}) ?? false;
+    } catch (e) {
+      _log.severe('opening Tsuki settings failed: $e');
+      return false;
     }
   }
 

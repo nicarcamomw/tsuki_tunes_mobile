@@ -13,6 +13,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/haptics.dart';
+import '../widgets/permission_primer.dart';
 
 class ReleaseRadarScreen extends ConsumerStatefulWidget {
   const ReleaseRadarScreen({super.key});
@@ -60,17 +61,8 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
     final granted = await _radar.requestPermission();
     if (!mounted) return;
     setState(() => _permission = granted);
-    if (!granted) {
-      final strings = ref.read(stringsProvider);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        content: Text(
-          strings.radarPermissionSettingsHint,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-        ),
-      ));
-    }
+    // Android won't show its dialog again: a way to Tsuki's settings.
+    if (!granted) showNotificationsBlocked(context);
   }
 
   Future<void> _toggleNotify(bool enabled) async {

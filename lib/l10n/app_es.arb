@@ -1493,6 +1493,14 @@
     }
   },
   "radarPermissionSettingsHint": "Actívalas en Ajustes › Aplicaciones › Tsuki Tunes › Notificaciones.",
+  "permAllow": "Permitir",
+  "permNotNow": "Ahora no",
+  "permOpenSettings": "Abrir ajustes",
+  "permNotifTitle": "¿Te avisamos cuando salga algo nuevo?",
+  "permNotifBody": "Cuando un artista que sigues saque música, te llega un aviso. Solo eso: nada de publicidad. Puedes apagarlo cuando quieras en el Radar.",
+  "permNotifBlocked": "Las notificaciones de Tsuki están apagadas en Android.",
+  "permBackgroundTitle": "Que la música no se corte",
+  "permBackgroundBody": "Para ahorrar batería, Android puede cerrar Tsuki cuando bloqueas el teléfono, y la música se detiene a mitad de canción. Deja que Tsuki siga en segundo plano y seguirá sonando con la pantalla apagada.",
   "radarNotChecked": "Aún sin revisar",
   "radarLastChecked": "Última revisión: {span}",
   "@radarLastChecked": {
