@@ -2692,7 +2692,6 @@ class AppStrings {
 
   String get radarPermissionAction => _l.radarPermissionAction;
 
-  String get radarPermissionSettingsHint => _l.radarPermissionSettingsHint;
   String get permAllow => _l.permAllow;
   String get permNotNow => _l.permNotNow;
   String get permOpenSettings => _l.permOpenSettings;
