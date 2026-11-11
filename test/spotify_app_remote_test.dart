@@ -16,6 +16,7 @@ import 'package:tsuki_tunes_mobile/data/datasources/media_session_handler.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/perf_tracker.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_web_player.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/song_radio.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
@@ -47,6 +48,12 @@ class FakeSpotifyService extends SpotifyService {
   int lastSeekMs = 0;
   int profileRefreshCount = 0;
   bool stateRequestFails = false;
+
+  /// What Spotify says it's playing, when a test needs the song's name
+  /// (picking up a running Spotify); left out of the state otherwise.
+  String? playingName;
+  List<String> playingArtists = const [];
+  String? playingLinkedFrom;
 
   void setPremium(bool v) => _premium = v;
 
@@ -173,6 +180,10 @@ class FakeSpotifyService extends SpotifyService {
       'item': {
         'uri': _playbackUri,
         'duration_ms': _durationMs,
+        if (playingName != null) 'name': playingName,
+        if (playingName != null)
+          'artists': [for (final a in playingArtists) {'name': a}],
+        if (playingLinkedFrom != null) 'linked_from': {'uri': playingLinkedFrom},
       },
       'device': {
         'name': 'Fake Device',
@@ -1359,6 +1370,64 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(provider.currentTrack?.id, 'q1');
+    });
+  });
+
+  // B10: picking up a Spotify that kept playing our queue matched songs by
+  // name, tags aside, so "Intro" and "Intro (Live)" by the same artist
+  // looked the same. The cached Spotify URI tells them apart.
+  group('picking up a Spotify that kept playing after Tsuki closed', () {
+    Track song(String id, String title) =>
+        _track(id).copyWith(title: title, artistName: 'Band');
+
+    Future<AudioProvider> reopen(List<Track> queue) async {
+      await StorageService().savePlaybackState(queue, 0, 0);
+      final provider = createProvider();
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      return provider;
+    }
+
+    test('the song is found by its Spotify URI, not mistaken for one with a similar name',
+        () async {
+      final queue = [song('intro', 'Intro'), song('live', 'Intro (Live)'), song('x', 'Other')];
+      // The fake cache knows each song as spotify:track:<id>.
+      fakeSpotify.setPlaying('spotify:track:live', progressMs: 30000);
+      fakeSpotify.playingName = 'Intro (Live)';
+      fakeSpotify.playingArtists = ['Band'];
+
+      final provider = await reopen(queue);
+
+      expect(provider.currentTrack?.id, 'live');
+      expect(provider.isPlaying, isTrue);
+      provider.dispose();
+    });
+
+    test('a copy Spotify relinked for another market is still recognised', () async {
+      final queue = [song('intro', 'Intro'), song('live', 'Intro (Live)')];
+      fakeSpotify.setPlaying('spotify:track:market_copy', progressMs: 1000);
+      fakeSpotify.playingLinkedFrom = 'spotify:track:live';
+      fakeSpotify.playingName = 'Intro (Live)';
+      fakeSpotify.playingArtists = ['Band'];
+
+      final provider = await reopen(queue);
+
+      expect(provider.currentTrack?.id, 'live');
+      provider.dispose();
+    });
+
+    test('with no URI cached it still finds the song by name, as before', () async {
+      final queue = [song('a', 'First'), song('b', 'Second (Remastered 2011)')];
+      fakeSpotify.lookedUp = {}; // nothing cached
+      fakeSpotify.setPlaying('spotify:track:unknown', progressMs: 1000);
+      fakeSpotify.playingName = 'Second';
+      fakeSpotify.playingArtists = ['Band'];
+
+      final provider = await reopen(queue);
+
+      expect(provider.currentTrack?.id, 'b');
+      provider.dispose();
     });
   });
 
