@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/utils/deezer_preview.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/album_completion_index.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
@@ -162,6 +164,42 @@ void main() {
       // Nothing new: no rebuild at all.
       library.registerAlbumTrackCounts({'alb0': 10});
       expect(rebuilds, 1);
+    });
+
+    // The artist page asks each album's completion several times per build.
+    // Listened songs are counted per album once after they change; every
+    // question after that is a map lookup, not a pass over all songs.
+    test('100 albums asked 3 times each: one pass over 3000 songs, not 300', () {
+      final songs = [
+        for (var i = 0; i < 3000; i++) _listened('$i', 'alb${i % 100}'),
+      ];
+      var passes = 0;
+      final index = AlbumCompletionIndex(
+        storage: StorageService(),
+        listenedTracks: () {
+          passes++;
+          return songs;
+        },
+        listenedLoaded: () => true,
+        onChanged: () {},
+      );
+
+      for (var round = 0; round < 3; round++) {
+        for (var a = 0; a < 100; a++) {
+          index.isCompleted('alb$a', albumTracksCount: 30);
+        }
+      }
+      expect(passes, 1);
+      expect(index.isCompleted('alb7', albumTracksCount: 30), isTrue);
+      expect(index.listenedCountForAlbum('alb7'), 30);
+
+      // A song marked or unmarked: counted again once, on the next question.
+      songs.removeLast();
+      index.invalidate();
+      expect(passes, 1);
+      expect(index.isCompleted('alb99', albumTracksCount: 30), isFalse);
+      index.isCompleted('alb0', albumTracksCount: 30);
+      expect(passes, 2);
     });
 
     // B9: the discography asked for counts only when it loaded; listened
