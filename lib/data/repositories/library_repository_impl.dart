@@ -239,6 +239,15 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   }
 
   @visibleForTesting
+  set failFullDownloadsForTesting(int n) => _listened.failFullDownloadsForTesting = n;
+
+  @visibleForTesting
+  bool get owesFullSyncForTesting => _listened.owesFullSyncForTesting;
+
+  @visibleForTesting
+  Future<void> retryOwedFullSyncForTesting() => _listened.retryOwedFullSyncForTesting();
+
+  @visibleForTesting
   set followSendHandlerForTesting(Future<void> Function(OutboxEntry entry)? handler) =>
       _followed.sendHandlerForTesting = handler;
 

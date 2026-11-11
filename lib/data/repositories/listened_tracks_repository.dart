@@ -129,6 +129,22 @@ class ListenedTracksRepository {
   static const Duration _fullSyncInterval = Duration(hours: 24);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
+  /// A full download that failed (bad network) is owed: tried again after
+  /// these delays and whenever the connection comes back, instead of only
+  /// at the next start. It matters most after more than
+  /// [_deletionLogRetention] away, when the deletion log no longer has the
+  /// unmarks made elsewhere and only a full download brings them.
+  static const List<Duration> _fullSyncRetryDelays = [
+    Duration(minutes: 1),
+    Duration(minutes: 5),
+    Duration(minutes: 20),
+  ];
+  ({String uid, DocumentReference<Map<String, dynamic>> userDoc, bool Function() isCurrent})?
+      _owedFullSync;
+  Timer? _fullSyncRetry;
+  int _fullSyncAttempts = 0;
+  bool _fullSyncRunning = false;
+
   /// Firestore batch sizes: 450 sets (+ the stats) and 240 deletes (each
   /// also writes the deletion log), under the 500-write limit.
   static const _markBatch = 450;
@@ -243,6 +259,7 @@ class ListenedTracksRepository {
   ) async {
     unawaited(_tracksSubscription?.cancel());
     unawaited(_deletionsSubscription?.cancel());
+    _clearOwedFullSync();
     _uid = uid;
     final tracksCol = userDoc.collection('listenedTracks');
 
@@ -276,24 +293,13 @@ class ListenedTracksRepository {
     DateTime deletionsSince = (lastFullSync ?? now).subtract(const Duration(minutes: 5));
 
     if (needsFullSync) {
-      try {
-        final fetchStartedAt = DateTime.now();
-        final snapshot = await tracksCol.orderBy('listenedAt', descending: true).get();
-        if (!isCurrent()) return false;
-        final server = [
-          for (final doc in snapshot.docs) listenedTrackFromFirestore(doc.data(), docId: doc.id).toJson(),
-        ];
-        await _store.replaceListenedWithServer(uid, server);
-        if (!isCurrent()) return false;
-        await _reload(uid);
-        _loaded = true;
-        _changed();
-        unawaited(_storage.saveLastListenedFullSync(uid, fetchStartedAt));
+      final fetchStartedAt = await _fullDownload(uid, userDoc, isCurrent);
+      if (!isCurrent()) return false;
+      if (fetchStartedAt != null) {
         deletionsSince = fetchStartedAt.subtract(const Duration(minutes: 5));
-        _reconcileServerStats(userDoc, snapshot.docs.length);
-        _pruneDeletionLog(userDoc);
-      } catch (e) {
-        _log.severe('full download failed: $e');
+      } else {
+        _owedFullSync = (uid: uid, userDoc: userDoc, isCurrent: isCurrent);
+        _scheduleFullSyncRetry();
       }
     }
 
@@ -423,6 +429,7 @@ class ListenedTracksRepository {
   }
 
   void disconnect() {
+    _clearOwedFullSync();
     _tracksSubscription?.cancel();
     _deletionsSubscription?.cancel();
     _tracksSubscription = null;
@@ -438,6 +445,93 @@ class ListenedTracksRepository {
     invalidate();
   }
 
+  /// Downloads the whole library and makes it the phone's copy (keeping
+  /// what this phone hasn't sent yet). Returns when it started, or null
+  /// when it failed or the user changed meanwhile.
+  Future<DateTime?> _fullDownload(
+    String uid,
+    DocumentReference<Map<String, dynamic>> userDoc,
+    bool Function() isCurrent,
+  ) async {
+    try {
+      if (failFullDownloadsForTesting > 0) {
+        failFullDownloadsForTesting--;
+        throw StateError('full download failed (test)');
+      }
+      final fetchStartedAt = DateTime.now();
+      final snapshot = await userDoc
+          .collection('listenedTracks')
+          .orderBy('listenedAt', descending: true)
+          .get();
+      if (!isCurrent()) return null;
+      final server = [
+        for (final doc in snapshot.docs) listenedTrackFromFirestore(doc.data(), docId: doc.id).toJson(),
+      ];
+      await _store.replaceListenedWithServer(uid, server);
+      if (!isCurrent()) return null;
+      await _reload(uid);
+      _loaded = true;
+      _changed();
+      unawaited(_storage.saveLastListenedFullSync(uid, fetchStartedAt));
+      _reconcileServerStats(userDoc, snapshot.docs.length);
+      _pruneDeletionLog(userDoc);
+      return fetchStartedAt;
+    } catch (e) {
+      _log.severe('full download failed: $e');
+      return null;
+    }
+  }
+
+  /// The next try of an owed full download, after the next delay; none
+  /// left: the next start or reconnection tries again.
+  void _scheduleFullSyncRetry() {
+    _fullSyncRetry?.cancel();
+    if (_owedFullSync == null || _fullSyncAttempts >= _fullSyncRetryDelays.length) return;
+    final delay = _fullSyncRetryDelays[_fullSyncAttempts++];
+    _fullSyncRetry = Timer(delay, () => unawaited(_retryOwedFullSync()));
+  }
+
+  Future<void> _retryOwedFullSync() async {
+    final owed = _owedFullSync;
+    if (owed == null || _fullSyncRunning) return;
+    if (_uid != owed.uid || !owed.isCurrent()) {
+      _clearOwedFullSync();
+      return;
+    }
+    _fullSyncRetry?.cancel();
+    _fullSyncRunning = true;
+    try {
+      final done = await _fullDownload(owed.uid, owed.userDoc, owed.isCurrent);
+      // Only if it's still the same owed download (no new connect since).
+      if (!identical(_owedFullSync, owed)) return;
+      if (done != null) {
+        _log.info('owed full download done');
+        _clearOwedFullSync();
+      } else if (owed.isCurrent()) {
+        _scheduleFullSyncRetry();
+      } else {
+        _clearOwedFullSync();
+      }
+    } finally {
+      _fullSyncRunning = false;
+    }
+  }
+
+  void _clearOwedFullSync() {
+    _fullSyncRetry?.cancel();
+    _fullSyncRetry = null;
+    _owedFullSync = null;
+    _fullSyncAttempts = 0;
+  }
+
+  /// Tests (through LibraryRepositoryImpl): the next this many full
+  /// downloads fail, like with a bad network.
+  int failFullDownloadsForTesting = 0;
+
+  bool get owesFullSyncForTesting => _owedFullSync != null;
+
+  Future<void> retryOwedFullSyncForTesting() => _retryOwedFullSync();
+
   /// Whether listening already started for the account's tracks.
   bool get isListening => _tracksSubscription != null;
 
@@ -446,7 +540,10 @@ class ListenedTracksRepository {
 
   /// Sends what's pending now, without waiting for the next retry (the
   /// connection came back).
-  Future<void> retryPending(String uid) => _outbox.retryNow(uid);
+  Future<void> retryPending(String uid) async {
+    if (_owedFullSync?.uid == uid) unawaited(_retryOwedFullSync());
+    await _outbox.retryNow(uid);
+  }
 
   /// Applies an unmark made on another device. A track re-marked after the
   /// deletion (newer listenedAt) is kept. Returns whether anything changed.
@@ -662,6 +759,7 @@ class ListenedTracksRepository {
   }
 
   void dispose() {
+    _clearOwedFullSync();
     _tracksSubscription?.cancel();
     _deletionsSubscription?.cancel();
   }

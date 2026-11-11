@@ -152,6 +152,80 @@ void main() {
           phone.applyRemoteDeletion('t9', DateTime(2026, 1, 1)), isFalse);
       expect(phone.isTrackListened('t9'), isTrue);
     });
+
+    test('back after more than a week, a failed full download is owed and '
+        'tried again: the unmarks made meanwhile arrive', () async {
+      await _seed(db, 'old', DateTime(2026, 1, 1));
+      await _seed(db, 'keep', DateTime(2026, 1, 1));
+      final local = AppDatabase(NativeDatabase.memory());
+      final phone = newDevice(local: local);
+      await phone.connectToFirestore(uid);
+      await _settle();
+      expect(phone.isTrackListened('old'), isTrue);
+      phone.disconnectFirestore();
+
+      // Away for 8 days: 'old' was unmarked elsewhere, and its entry in the
+      // deletion log is already gone (kept 7 days).
+      await StorageService().saveLastListenedFullSync(
+          uid, DateTime.now().subtract(const Duration(days: 8)));
+      await db.collection('users').doc(uid).collection('listenedTracks').doc('old').delete();
+
+      // Back with a bad network: the full download fails, the song stays...
+      final again = newDevice(local: local);
+      again.failFullDownloadsForTesting = 1;
+      await again.connectToFirestore(uid);
+      await _settle();
+      expect(again.owesFullSyncForTesting, isTrue);
+      expect(again.isTrackListened('old'), isTrue);
+
+      // ...until the owed download is tried again (a timer, or the
+      // connection coming back), instead of waiting for the next start.
+      await again.retryOwedFullSyncForTesting();
+      await _settle();
+      expect(again.owesFullSyncForTesting, isFalse);
+      expect(again.isTrackListened('old'), isFalse);
+      expect(again.isTrackListened('keep'), isTrue);
+      again.disconnectFirestore();
+    });
+
+    test('songs marked here and not sent yet survive the owed download', () async {
+      await _seed(db, 'server', DateTime(2026, 1, 1));
+      final device = newDevice();
+      device.failFullDownloadsForTesting = 1;
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.owesFullSyncForTesting, isTrue);
+
+      // A mark whose write can't reach the server (no network): it stays
+      // pending on the phone.
+      device.markAlbumChunkHandlerForTesting =
+          (_, __) async => throw FirebaseException(plugin: 'firestore', code: 'unavailable');
+      await device.markTrack(_track('mine'));
+      await _settle();
+
+      await device.retryOwedFullSyncForTesting();
+      await _settle();
+      expect(device.isTrackListened('server'), isTrue);
+      expect(device.isTrackListened('mine'), isTrue);
+      device.disconnectFirestore();
+    });
+
+    test('a normal connect owes nothing; disconnecting forgets what was owed', () async {
+      await _seed(db, 't1', DateTime(2026, 1, 1));
+      final ok = newDevice();
+      await ok.connectToFirestore(uid);
+      await _settle();
+      expect(ok.owesFullSyncForTesting, isFalse);
+      ok.disconnectFirestore();
+
+      final flaky = newDevice();
+      flaky.failFullDownloadsForTesting = 5;
+      await flaky.connectToFirestore(uid);
+      await _settle();
+      expect(flaky.owesFullSyncForTesting, isTrue);
+      flaky.disconnectFirestore();
+      expect(flaky.owesFullSyncForTesting, isFalse);
+    });
   });
 
   group('playlists', () {
