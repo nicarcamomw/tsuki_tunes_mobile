@@ -60,12 +60,12 @@ dependencies:
 
   # Release radar: daily background check + local notifications
   workmanager: ^0.10.10
-  flutter_local_notifications: ^19.4.2
+  flutter_local_notifications: ^23.0.1
   # New releases pushed by the server (functions/src/radar.ts); the local
   # check above stays as the fallback.
   firebase_messaging: ^17.0.1
   # Quiet reminders at a set time (the daily streak).
-  timezone: ^0.10.1
+  timezone: ^0.11.2
 
   # Offline Translation (Google ML Kit)
   google_mlkit_translation: ^0.13.0
