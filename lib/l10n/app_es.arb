@@ -1935,5 +1935,6 @@
   "exploreGenres": "EXPLORAR GÉNEROS",
   "genreArtists": "ARTISTAS DEL GÉNERO",
   "genreTopTracks": "LO MÁS ESCUCHADO",
-  "genreEmpty": "Este género no tiene artistas ahora mismo."
+  "genreEmpty": "Este género no tiene artistas ahora mismo.",
+  "logoutGuestConfirmMessage": "Como Observador, tus playlists se guardan solo en este teléfono y se borrarán al salir. Para conservarlas, inicia sesión con Google: se pasan a tu cuenta solas."
 }

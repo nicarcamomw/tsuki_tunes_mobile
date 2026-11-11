@@ -3024,4 +3024,6 @@ class AppStrings {
   String get genreArtists => _l.genreArtists;
   String get genreTopTracks => _l.genreTopTracks;
   String get genreEmpty => _l.genreEmpty;
+
+  String get logoutGuestConfirmMessage => _l.logoutGuestConfirmMessage;
 }

@@ -850,5 +850,6 @@
   "exploreGenres": "ジャンルを探す",
   "genreArtists": "このジャンルのアーティスト",
   "genreTopTracks": "よく聴かれている曲",
-  "genreEmpty": "このジャンルには今アーティストがいません。"
+  "genreEmpty": "このジャンルには今アーティストがいません。",
+  "logoutGuestConfirmMessage": "観測者のプレイリストはこの端末にだけ保存されており、終了すると削除されます。残すにはGoogleでログインしてください。自動でアカウントに移されます。"
 }

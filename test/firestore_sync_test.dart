@@ -280,6 +280,33 @@ void main() {
       expect(phone.playlists.length, 1);
     });
 
+    // B7: signing in with Google after using the app as a guest moves the
+    // guest's playlists (kept on the phone only) into the account.
+    test('a guest\'s playlists move into the account on sign-in, once', () async {
+      const guest = 'guest_abc';
+      final repo = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
+      await repo.initLocalOnly(guest);
+      await repo.createPlaylist('Noche', tracks: [_track('a'), _track('b')]);
+      expect(repo.playlists.single.name, 'Noche');
+
+      await repo.connectToFirestore(uid);
+      await repo.importGuestPlaylists(guest);
+      await repo.pendingCreations;
+      await _settle();
+
+      final docs = await db.collection('users').doc(uid).collection('playlists').get();
+      expect(docs.docs.map((d) => d.data()['name']), ['Noche']);
+      expect(repo.playlists.single.tracks.map((t) => t.id), ['a', 'b']);
+
+      // Nothing left behind to import twice.
+      await repo.importGuestPlaylists(guest);
+      await repo.pendingCreations;
+      await _settle();
+      final again = await db.collection('users').doc(uid).collection('playlists').get();
+      expect(again.docs, hasLength(1));
+      repo.disconnectFirestore();
+    });
+
     test('duplicates saved earlier in the cache are dropped', () async {
       final storage = StorageService();
       final p = {

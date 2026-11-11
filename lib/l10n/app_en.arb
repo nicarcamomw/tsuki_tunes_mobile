@@ -850,5 +850,6 @@
   "exploreGenres": "EXPLORE GENRES",
   "genreArtists": "ARTISTS IN THIS GENRE",
   "genreTopTracks": "MOST PLAYED",
-  "genreEmpty": "This genre has no artists right now."
+  "genreEmpty": "This genre has no artists right now.",
+  "logoutGuestConfirmMessage": "As an Observer, your playlists are kept only on this phone and will be deleted when you leave. To keep them, sign in with Google: they move to your account by themselves."
 }

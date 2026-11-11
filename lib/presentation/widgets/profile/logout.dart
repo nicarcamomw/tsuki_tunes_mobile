@@ -30,7 +30,8 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
         ],
       ),
       content: Text(
-        strings.logoutConfirmMessage,
+        // A guest's playlists live only on this phone and go with them.
+        auth.isGuest ? strings.logoutGuestConfirmMessage : strings.logoutConfirmMessage,
         style: locale.getTextStyle(
           fontSize: 13,
           color: AppColors.textSecondary,
