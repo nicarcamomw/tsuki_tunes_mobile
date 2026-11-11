@@ -210,6 +210,29 @@ void main() {
       device.disconnectFirestore();
     });
 
+    // B5: the counter used to be a client-side increment, so a song marked
+    // on two devices before they synced counted twice.
+    test('the same song marked on two devices counts once', () async {
+      final phone = newDevice();
+      final tablet = newDevice();
+      await phone.connectToFirestore(uid);
+      await tablet.connectToFirestore(uid);
+      await _settle();
+
+      await phone.markTrack(_track('same'));
+      await tablet.markTrack(_track('same'));
+      await phone.pendingWritesSentForTesting();
+      await tablet.pendingWritesSentForTesting();
+      await _settle();
+
+      final user = await db.collection('users').doc(uid).get();
+      expect(user.data()!['stats']['totalTracks'], 1);
+      expect(phone.listenedCount, 1);
+      expect(tablet.listenedCount, 1);
+      phone.disconnectFirestore();
+      tablet.disconnectFirestore();
+    });
+
     test('a normal connect owes nothing; disconnecting forgets what was owed', () async {
       await _seed(db, 't1', DateTime(2026, 1, 1));
       final ok = newDevice();
