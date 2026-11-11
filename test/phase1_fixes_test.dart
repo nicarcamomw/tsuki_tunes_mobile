@@ -146,6 +146,24 @@ void main() {
       expect(library.isAlbumCompleted('alb1'), isTrue);
     });
 
+    // B11: registering album sizes one by one rebuilt the screens once per
+    // album; registerAlbumTrackCounts tells them once.
+    test('registering 50 album sizes at once rebuilds the screens once', () async {
+      final library = LibraryRepositoryImpl();
+      await Future.delayed(const Duration(milliseconds: 50));
+      var rebuilds = 0;
+      library.addListener(() => rebuilds++);
+
+      library.registerAlbumTrackCounts({for (var i = 0; i < 50; i++) 'alb$i': 10});
+
+      expect(rebuilds, 1);
+      expect(library.getAlbumTracksCount('alb49'), 10);
+
+      // Nothing new: no rebuild at all.
+      library.registerAlbumTrackCounts({'alb0': 10});
+      expect(rebuilds, 1);
+    });
+
     // B9: the discography asked for counts only when it loaded; listened
     // songs arriving afterwards never got their albums marked complete.
     // Screens call ensureAlbumTrackCounts from build, so it runs again

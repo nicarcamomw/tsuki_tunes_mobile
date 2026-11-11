@@ -14,21 +14,27 @@ extension _PlaybackState on AudioProvider {
     _persistPlaybackState();
   }
 
+  /// Saves shortly (changes in a row are written once).
   void _persistPlaybackState() {
     _persistTimer?.cancel();
-    _persistTimer = Timer(const Duration(milliseconds: 500), () async {
-      if (_q.current == null) {
-        await _storage.savePlaybackState(null);
-        return;
-      }
-      await _storage.savePlaybackState(
-        _q.tracks,
-        _q.currentIndex,
-        _position.inMilliseconds,
-        _isPlaying,
-        _radioSnapshot(),
-      );
-    });
+    _persistTimer = Timer(const Duration(milliseconds: 500), _savePlaybackStateNow);
+  }
+
+  /// Saves right away: going to the background, where the system may kill
+  /// the app before a delayed save runs.
+  Future<void> _savePlaybackStateNow() async {
+    _persistTimer?.cancel();
+    if (_q.current == null) {
+      await _storage.savePlaybackState(null);
+      return;
+    }
+    await _storage.savePlaybackState(
+      _q.tracks,
+      _q.currentIndex,
+      _position.inMilliseconds,
+      _isPlaying,
+      _radioSnapshot(),
+    );
   }
 
   Map<String, dynamic>? _radioSnapshot() =>

@@ -144,5 +144,38 @@ void main() {
       expect(step.kind, QueueStepKind.play);
       expect(step.index, 1);
     });
+
+    // B12: offline, "previous" wrapped to the end of the queue even with
+    // repeat off; it now behaves as online and starts the song over.
+    test('on the first track with repeat off it starts the song over, not the last one', () {
+      q.select(tracks[0]);
+      final step = q.previous(position: Duration.zero, online: false, canPlay: (_) => true);
+      expect(step.kind, QueueStepKind.seekToStart);
+      expect(q.currentIndex, 0);
+    });
+
+    test('with no earlier song saved it never jumps forward', () {
+      q.select(tracks[1]);
+      // Only later songs are on the phone.
+      final step = q.previous(
+          position: Duration.zero, online: false, canPlay: (t) => t.id != 't0');
+      expect(step.kind, QueueStepKind.seekToStart);
+      expect(q.currentIndex, 1);
+    });
+
+    test('with repeat all it still wraps to the last saved song', () {
+      q.select(tracks[0]);
+      q.setRepeatMode(PlaybackRepeatMode.all);
+      final step = q.previous(position: Duration.zero, online: false, canPlay: (_) => true);
+      expect(step.kind, QueueStepKind.play);
+      expect(step.index, tracks.length - 1);
+    });
+
+    test('nothing playable offline, not even this one: unavailable', () {
+      q.select(tracks[0]);
+      final step = q.previous(
+          position: Duration.zero, online: false, canPlay: (t) => t.id == 't3');
+      expect(step.kind, QueueStepKind.unavailable);
+    });
   });
 }

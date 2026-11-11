@@ -536,7 +536,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      _persistPlaybackState();
+      unawaited(_savePlaybackStateNow());
     }
     if (state == AppLifecycleState.resumed) {
       _sleepCtrl.check();
