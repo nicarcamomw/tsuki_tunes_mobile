@@ -283,6 +283,25 @@ void main() {
       expect(sent, hasLength(2));
     });
 
+    // B1: a different song by the same artist used to be accepted (and
+    // cached for good) when the exact title wasn't found.
+    test('another song by the same artist is never taken, nor cached', () async {
+      final s = await signedIn();
+      api = (_) async => json200({
+            'tracks': {
+              'items': [
+                item('Greatest Hit', 'Band', 'spotify:track:other1'),
+                item('Another One', 'Band', 'spotify:track:other2'),
+              ],
+            },
+          });
+
+      expect(await withApi(() => s.searchTrack('Song (Remastered 2011)', 'Band', trackId: 'd9')),
+          isNull);
+      expect(sent, hasLength(2), reason: 'both queries tried, neither accepted');
+      expect(await s.cachedTrackUri('Song (Remastered 2011)', 'Band', trackId: 'd9'), isNull);
+    });
+
     test('no reliable match gives nothing', () async {
       final s = await signedIn();
       api = (_) async => json200({
