@@ -607,6 +607,29 @@ test('only Bonds are invited; they join with their name; members cannot steer th
   await assertSucceeds(deleteDoc(doc(alice(), 'parties/alice')));
 });
 
+test('push devices: the owner registers, updates and removes their phone', async () => {
+  const device = (extra = {}) => ({ fid: 'cKx1-fid', platform: 'android', lang: 'es', notify: true, updatedAt: serverTimestamp(), ...extra });
+  const db = alice();
+  const ref = doc(db, 'users/alice/devices/abcdef0123456789');
+  await assertSucceeds(setDoc(ref, device()));
+  await assertSucceeds(setDoc(ref, device({ fid: 'new-fid', notify: false })));
+  await assertSucceeds(getDoc(ref));
+  // Not someone else's, and nothing outside the shape.
+  await assertFails(getDoc(doc(bob(), 'users/alice/devices/abcdef0123456789')));
+  await assertFails(setDoc(doc(bob(), 'users/alice/devices/bobsphone0001'), device()));
+  await assertFails(setDoc(ref, device({ extra: 1 })));
+  await assertFails(setDoc(ref, device({ platform: 'web' })));
+  await assertFails(setDoc(ref, device({ fid: '' })));
+  await assertFails(setDoc(ref, device({ updatedAt: Timestamp.fromMillis(0) })));
+  await assertFails(setDoc(doc(db, 'users/alice/devices/x'), device()));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test('the radar state is the server\'s alone', async () => {
+  await assertFails(getDoc(doc(alice(), 'radarArtists/27')));
+  await assertFails(setDoc(doc(alice(), 'radarArtists/27'), { ids: [], checkedAt: serverTimestamp() }));
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   await env.clearFirestore();

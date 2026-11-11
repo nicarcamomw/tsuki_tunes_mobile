@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/account_deletion_service.dart';
 import '../../data/datasources/firebase_service.dart';
+import '../../data/datasources/push_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
 
@@ -178,6 +179,8 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(_guestModeKey);
     // The guest's playlists can't be reached once its uid is gone.
     if (leftGuestUid != null) await getIt<StorageService>().clearCachedPlaylists(leftGuestUid);
+    // While still signed in: this phone stops getting the account's pushes.
+    if (_user != null) await PushRadarService().unregister();
     await _firebase.signOut();
     notifyListeners();
   }
@@ -218,6 +221,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _log.warning('Preparing the account deletion failed (non-fatal): $e');
     }
+    await PushRadarService().unregister();
     try {
       await AccountDeletionService(firestore).deleteUserData(uid);
       await _firebase.deleteCurrentUser();

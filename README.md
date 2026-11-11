@@ -72,6 +72,7 @@ cd tool/firestore_rules_test && npm ci && npm test
 - **Caché** en memoria por instancia (horas o un día según el tipo de dato) y `Cache-Control`. Los errores no se guardan.
 - **Límite de pedidos** por usuario (app verificada + IP): 30 de Last.fm y 120 de Deezer de golpe, que se recargan con el tiempo. Como máximo 5 instancias, para acotar el costo ante un abuso.
 - **App Check:** la app manda su token; la función lo exige solo con el parámetro `ENFORCE_APP_CHECK` en `true` (hoy `false` en `functions/.env`). Activarlo junto con el de Firestore, cuando la app esté en Google Play: poner `true` en ese archivo y desplegar.
+- **Radar de lanzamientos (`releaseRadar`):** todos los días a las 11:17 (hora de Chile) revisa en Deezer los artistas que sigue cada cuenta y le manda un push a cada teléfono registrado cuando sale algo nuevo (`functions/src/radar.ts`). La app registra el teléfono (su Firebase Installation ID) en `users/{uid}/devices/{id}` al iniciar sesión y lo borra al cerrarla. En Android el push trae solo datos y la app arma la notificación (en su idioma, con la portada y sin repetir lo que su propio chequeo ya avisó). En iOS llega lista, y requiere subir la clave APNs en Firebase. El chequeo local de la app sigue corriendo como respaldo, para invitados o si el servidor falla un día. Lo que el servidor ya revisó de cada artista queda en `radarArtists/`, que la app no puede leer.
 - El APK ya no lleva la clave de Last.fm (`build-apk.yml` no la pone desde el 7 de noviembre de 2026, con la función desplegada en prod). Una app compilada a mano con `LASTFM_API_KEY` llama a Last.fm directo solo si el backend no responde.
 
 Tests y build (también corren en el CI):
@@ -87,11 +88,11 @@ cd functions && npm ci && npm test && npm run build
    ```bash
    firebase functions:secrets:set LASTFM_API_KEY --project tsuki-tunes-web
    ```
-3. Primer despliegue a mano (ofrece activar las APIs que falten: Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc):
+3. Primer despliegue a mano (ofrece activar las APIs que falten: Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc, Cloud Scheduler):
    ```bash
    firebase deploy --only functions --project tsuki-tunes-web
    ```
-4. Desde ahí, el workflow *Deploy Cloud Functions* despliega solo en cada push a `main` que toque `functions/`, o a mano eligiendo el proyecto, **una vez creada la variable de repositorio `DEPLOY_FUNCTIONS` = `true`** (Settings → Secrets and variables → Actions → Variables; hasta entonces solo prueba). La cuenta de servicio de `FIREBASE_SERVICE_ACCOUNT` necesita además los roles **Cloud Functions Admin**, **Service Account User**, **Cloud Build Editor**, **Artifact Registry Administrator**, **Secret Manager Viewer** y **Cloud Run Admin**.
+4. Desde ahí, el workflow *Deploy Cloud Functions* despliega solo en cada push a `main` que toque `functions/`, o a mano eligiendo el proyecto, **una vez creada la variable de repositorio `DEPLOY_FUNCTIONS` = `true`** (Settings → Secrets and variables → Actions → Variables; hasta entonces solo prueba). La cuenta de servicio de `FIREBASE_SERVICE_ACCOUNT` necesita además los roles **Cloud Functions Admin**, **Service Account User**, **Cloud Build Editor**, **Artifact Registry Administrator**, **Secret Manager Viewer**, **Cloud Run Admin** y **Cloud Scheduler Admin** (el trabajo diario del radar).
 5. Comprobar: `curl "https://us-central1-tsuki-tunes-web.cloudfunctions.net/api/deezer/genre"` devuelve la lista de géneros.
 
 Costo: el plan Blaze incluye 2 millones de invocaciones al mes gratis; el uso de la app queda muy por debajo.

@@ -29,6 +29,7 @@ import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/perf_tracker.dart';
 import 'data/datasources/playback_log.dart';
 import 'data/datasources/product_analytics.dart';
+import 'data/datasources/push_radar_service.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
@@ -74,6 +75,8 @@ void main() async {
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.
   await _initFirebaseCore();
+  // Before runApp: where release pushes go while the app is in the background.
+  PushRadarService.registerBackgroundHandler();
   // Built here, not in the widget tree: when Android Auto starts the app
   // there is no screen, so no widgets (and no providers) get built, yet the
   // car still needs the player.
@@ -141,6 +144,7 @@ void _deferredInit() {
     // Rooted phone or emulator: only reported (Crashlytics, analytics).
     unawaited(DeviceIntegrity.report());
     unawaited(ReleaseRadarService().initForeground());
+    unawaited(PushRadarService().init());
     unawaited(HomeWidgetService().initialize());
     unawaited(HomeWidgetService().registerInteractivityCallback());
   }
