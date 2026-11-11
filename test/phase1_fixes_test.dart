@@ -145,5 +145,38 @@ void main() {
       expect(library.getAlbumTracksCount('alb1'), 2);
       expect(library.isAlbumCompleted('alb1'), isTrue);
     });
+
+    // B9: the discography asked for counts only when it loaded; listened
+    // songs arriving afterwards never got their albums marked complete.
+    // Screens call ensureAlbumTrackCounts from build, so it runs again
+    // when the library changes.
+    test('listened songs that arrive after the page loaded still complete their albums', () async {
+      final library = LibraryRepositoryImpl();
+      await Future.delayed(const Duration(milliseconds: 50));
+      library.setListenedTracksLoadedForTesting(false);
+
+      final requested = <String>[];
+      Future<Album?> fetch(String id) async {
+        requested.add(id);
+        return _album(id, tracksCount: 2);
+      }
+      final albums = [_album('alb9')];
+
+      // The page builds before the library is in: nothing to ask yet.
+      library.ensureAlbumTrackCounts(albums, fetch);
+      await Future.delayed(const Duration(milliseconds: 10));
+      expect(requested, isEmpty);
+
+      // The listened songs arrive; the page builds again.
+      await library.setListenedTracksForTesting([
+        _listened('1', 'alb9'),
+        _listened('2', 'alb9'),
+      ]);
+      library.ensureAlbumTrackCounts(albums, fetch);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(requested, ['alb9']);
+      expect(library.isAlbumCompleted('alb9'), isTrue);
+    });
   });
 }
