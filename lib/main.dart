@@ -17,6 +17,7 @@ import 'core/constants/app_colors.dart';
 import 'core/constants/app_environment.dart';
 import 'core/logger.dart';
 import 'core/theme/cyber_theme.dart';
+import 'data/datasources/audio_precache_service.dart';
 import 'data/datasources/auto_media_library.dart';
 import 'data/datasources/crash_reporter.dart';
 import 'data/datasources/deezer_disk_cache.dart';
@@ -115,7 +116,12 @@ void _deferredInit() {
     if (started) return;
     started = true;
     final mediaFuture = _initMediaSession();
-    await Future.wait([_initCrashReporting(), DeezerDiskCache().init(), mediaFuture]);
+    await Future.wait([
+      _initCrashReporting(),
+      DeezerDiskCache().init(),
+      AudioPrecacheService().init(),
+      mediaFuture,
+    ]);
     final handler = await mediaFuture;
     if (handler != null) {
       // Album art for Android Auto's lists, served by ArtworkProvider.
