@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -82,7 +83,13 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    AudioPrecacheService().clearCache();
+    // Its own previews folder: other test files use the shared one in parallel.
+    final dir = Directory.systemTemp.createTempSync('tsuki_preview_refresh_test');
+    AudioPrecacheService.cacheDirForTesting = dir;
+    addTearDown(() {
+      AudioPrecacheService.cacheDirForTesting = null;
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'), (_) async => null);
@@ -97,7 +104,6 @@ void main() {
     });
   });
 
-  tearDown(() => AudioPrecacheService().clearCache());
 
   AudioProvider audioWith(_Player player) =>
       AudioProvider(service: player, storage: StorageService(), connectivityProvider: _Online());

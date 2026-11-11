@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:http/http.dart' as http;
 
 import '../../core/logger.dart';
@@ -26,9 +26,17 @@ class AudioPrecacheService {
 
   bool _diskIndexed = false;
 
+  /// Tests run in parallel: each can keep its previews in its own folder.
+  static Directory? _dirOverride;
+  @visibleForTesting
+  static set cacheDirForTesting(Directory? dir) {
+    _dirOverride = dir;
+    _instance.forgetInMemoryForTesting();
+  }
+
   Directory? _getCacheDir() {
     try {
-      final dir = Directory('${Directory.systemTemp.path}/tsuki_preview_cache');
+      final dir = _dirOverride ?? Directory('${Directory.systemTemp.path}/tsuki_preview_cache');
       if (!dir.existsSync()) {
         dir.createSync(recursive: true);
       }
@@ -167,6 +175,15 @@ class AudioPrecacheService {
         } catch (_) {}
       }
     }
+  }
+
+  /// Forgets what's in memory, leaving the files: like the app starting
+  /// again with the previous sessions' previews on disk.
+  @visibleForTesting
+  void forgetInMemoryForTesting() {
+    _cachedPaths.clear();
+    _cacheLruOrder.clear();
+    _diskIndexed = false;
   }
 
   void clearCache() {
