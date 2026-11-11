@@ -101,8 +101,17 @@ class AudioPrecacheService {
     return null;
   }
 
+  /// Answers that say the preview link itself is no good (expired or
+  /// revoked signature), not the network: a fresh link may work.
+  static const _staleLinkStatuses = {401, 403, 410};
+
   /// Silently pre-downloads the ~450KB preview of an upcoming track in the background.
-  Future<void> precacheTrack(Track track) async {
+  ///
+  /// When Deezer refuses the link (its signature expired or was revoked
+  /// early), [onStale] is asked once for the same track with a fresh link,
+  /// and the download is tried again with it.
+  Future<void> precacheTrack(Track track,
+      {Future<Track?> Function(Track track)? onStale}) async {
     if (kIsWeb) return;
     if (track.previewUrl.isEmpty) return;
     if (getCachedFilePath(track.id) != null) return;
@@ -117,9 +126,21 @@ class AudioPrecacheService {
       final targetFile = File('${dir.path}/preview_${track.id}.mp3');
       _log.fine('Pre-caching upcoming track audio: "${track.title}"...');
 
-      final response = await http
+      var response = await http
           .get(Uri.parse(track.previewUrl))
           .timeout(const Duration(seconds: 12));
+
+      if (_staleLinkStatuses.contains(response.statusCode) && onStale != null) {
+        final fresh = await onStale(track);
+        if (fresh != null &&
+            fresh.previewUrl.isNotEmpty &&
+            fresh.previewUrl != track.previewUrl) {
+          _log.info('Preview link of "${track.title}" was refused: retrying with a fresh one');
+          response = await http
+              .get(Uri.parse(fresh.previewUrl))
+              .timeout(const Duration(seconds: 12));
+        }
+      }
 
       if (response.statusCode == 200 && response.bodyBytes.length > 10000) {
         await targetFile.writeAsBytes(response.bodyBytes, flush: true);

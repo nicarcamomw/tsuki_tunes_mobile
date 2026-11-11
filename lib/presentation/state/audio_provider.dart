@@ -1028,7 +1028,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       return;
     }
     try {
-      await AudioPrecacheService().precacheTrack(await _withFreshPreview(track));
+      await AudioPrecacheService().precacheTrack(
+        await _withFreshPreview(track),
+        // Revoked before its expiry: renew it once more.
+        onStale: (t) => _withFreshPreview(t, force: true),
+      );
     } catch (e) {
       _log.warning('Precache non-fatal error: $e');
     }
