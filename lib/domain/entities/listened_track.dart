@@ -106,25 +106,11 @@ class ListenedTrackData {
     );
   }
 
-  factory ListenedTrackData.fromJson(Map<String, dynamic> json) {
-    DateTime? listened;
-    if (json['listenedAt'] != null) {
-      listened = DateTime.tryParse(json['listenedAt'].toString());
-    }
-    return ListenedTrackData(
-      trackId: json['trackId']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      artistName: json['artistName']?.toString() ?? '',
-      albumTitle: json['albumTitle']?.toString() ?? '',
-      albumId: json['albumId']?.toString() ?? '',
-      coverUrl: json['coverUrl']?.toString() ?? '',
-      previewUrl: json['previewUrl']?.toString() ?? '',
-      duration:
-          json['duration'] is num ? (json['duration'] as num).toInt() : 0,
-      listenedAt: listened,
-      artists: _artistsFrom(json['artists']),
-    );
-  }
+  /// Reads a song as this phone saves it ([toJson]). The same reading as
+  /// [fromStored], so the two can't drift apart: it takes the date as text,
+  /// as a [DateTime] or as a Firestore timestamp alike.
+  factory ListenedTrackData.fromJson(Map<String, dynamic> json) =>
+      ListenedTrackData.fromStored(json);
 
   Map<String, dynamic> toJson() => {
         'trackId': trackId,
