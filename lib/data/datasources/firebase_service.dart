@@ -25,6 +25,9 @@ class FirebaseService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _db;
   GoogleSignIn? _googleSignIn;
+  // google_sign_in 7: initialize() exactly once, before anything else; every
+  // Google call awaits it.
+  Future<void>? _googleReady;
 
   bool get isInitialized => _initialized;
   bool get appCheckActive => _appCheckActive;
@@ -83,13 +86,13 @@ class FirebaseService {
       _db!.useFirestoreEmulator(firebaseEmulatorHost, 8080,
           automaticHostMapping: false);
     }
-    _googleSignIn = GoogleSignIn(
+    _googleSignIn = GoogleSignIn.instance;
+    _googleReady ??= _googleSignIn!.initialize(
       // In dev, null: Android takes the dev project's web client from its
       // google-services.json (default_web_client_id).
       serverClientId: isDevEnvironment
           ? null
           : '812277566403-sre5ujppbo4vk71qrvjcdgffcuhd0ro9.apps.googleusercontent.com',
-      scopes: ['email'],
     );
     _initialized = true;
   }
@@ -116,22 +119,35 @@ class FirebaseService {
     }
   }
 
+  /// The account chosen in Google's picker, or null when the person
+  /// cancelled or closed it (google_sign_in 7 throws for that).
+  Future<GoogleSignInAccount?> _pickGoogleAccount() async {
+    await _googleReady;
+    try {
+      return await _googleSignIn!.authenticate(scopeHint: const ['email']);
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      rethrow;
+    }
+  }
+
+  /// Firebase only needs Google's ID token (the email comes in it).
+  static OAuthCredential _credentialFor(GoogleSignInAccount account) =>
+      GoogleAuthProvider.credential(idToken: account.authentication.idToken);
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      await _googleReady;
       await _googleSignIn?.signOut();
     } catch (_) {}
 
-    final googleUser = await _googleSignIn!.signIn();
+    final googleUser = await _pickGoogleAccount();
     if (googleUser == null) {
       // User cancelled or closed the picker
       return null;
     }
 
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+    final credential = _credentialFor(googleUser);
 
     final userCredential = await _auth!.signInWithCredential(credential);
     try {
@@ -173,17 +189,15 @@ class FirebaseService {
   Future<bool> reauthenticateWithGoogle() async {
     final user = _auth?.currentUser;
     if (user == null) return false;
+    await _googleReady;
     GoogleSignInAccount? account;
     try {
-      account = await _googleSignIn!.signInSilently();
+      // May show a quick account sheet on Android (google_sign_in 7).
+      account = await _googleSignIn!.attemptLightweightAuthentication();
     } catch (_) {}
-    account ??= await _googleSignIn!.signIn();
+    account ??= await _pickGoogleAccount();
     if (account == null) return false;
-    final googleAuth = await account.authentication;
-    await user.reauthenticateWithCredential(GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    ));
+    await user.reauthenticateWithCredential(_credentialFor(account));
     return true;
   }
 
