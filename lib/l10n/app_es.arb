@@ -1878,7 +1878,9 @@
   "lyricsSameLanguage": "La letra ya está en {language}.",
   "@lyricsSameLanguage": {
     "placeholders": {
-      "language": {"type": "String"}
+      "language": {
+        "type": "String"
+      }
     }
   },
   "lyricsUnknownLanguage": "No se pudo reconocer el idioma de esta letra.",
@@ -1936,5 +1938,164 @@
   "genreArtists": "ARTISTAS DEL GÉNERO",
   "genreTopTracks": "LO MÁS ESCUCHADO",
   "genreEmpty": "Este género no tiene artistas ahora mismo.",
-  "logoutGuestConfirmMessage": "Como Observador, tus playlists se guardan solo en este teléfono y se borrarán al salir. Para conservarlas, inicia sesión con Google: se pasan a tu cuenta solas."
+  "logoutGuestConfirmMessage": "Como Observador, tus playlists se guardan solo en este teléfono y se borrarán al salir. Para conservarlas, inicia sesión con Google: se pasan a tu cuenta solas.",
+  "wrappedHourLabel": "{hour, select, h0{12:00 AM} h1{1:00 AM} h2{2:00 AM} h3{3:00 AM} h4{4:00 AM} h5{5:00 AM} h6{6:00 AM} h7{7:00 AM} h8{8:00 AM} h9{9:00 AM} h10{10:00 AM} h11{11:00 AM} h12{12:00 PM} h13{1:00 PM} h14{2:00 PM} h15{3:00 PM} h16{4:00 PM} h17{5:00 PM} h18{6:00 PM} h19{7:00 PM} h20{8:00 PM} h21{9:00 PM} h22{10:00 PM} other{11:00 PM}}",
+  "@wrappedHourLabel": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      }
+    }
+  },
+  "weeklyTitle": "DESAFÍOS DE LA SEMANA",
+  "weeklyDaysLeft": "{days, plural, =1{Queda 1 día} other{Quedan {days} días}}",
+  "@weeklyDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyHoursLeft": "Quedan {hours} h",
+  "@weeklyHoursLeft": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyDoneCount": "{done} de 3 completados",
+  "@weeklyDoneCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyMaskTag": "SEMANAL",
+  "monthName": "{month, select, jan{enero} feb{febrero} mar{marzo} apr{abril} may{mayo} jun{junio} jul{julio} aug{agosto} sep{septiembre} oct{octubre} nov{noviembre} other{diciembre}}",
+  "@monthName": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedPeriodMonth": "{month} {year}",
+  "@wrappedPeriodMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedIntro": "{scope, select, month{¿Listo para revivir tu mes?} other{¿Listo para revivir tu año?}}",
+  "@wrappedIntro": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedMinutesLabel": "MINUTOS ESCUCHADOS",
+  "wrappedHoursOfMusic": "{hours, plural, =1{Eso es 1 hora de música} other{Eso son {hours} horas de música}}",
+  "@wrappedHoursOfMusic": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedActiveDays": "Hubo música {active} de {total} días",
+  "@wrappedActiveDays": {
+    "placeholders": {
+      "active": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedVsPrevious": "{pct}% {direction, select, up{más} other{menos}} que en {previous}",
+  "@wrappedVsPrevious": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "previous": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedPlaysLabel": "REPRODUCCIONES",
+  "wrappedSongsLabel": "CANCIONES",
+  "wrappedArtistsLabel": "ARTISTAS",
+  "wrappedTopSongLabel": "TU CANCIÓN #1",
+  "wrappedTopArtistLabel": "TU ARTISTA #1",
+  "wrappedRunnersUp": "LE SIGUEN",
+  "wrappedDayPart": "{part, select, lateNight{Madrugada} morning{Mañana} afternoon{Tarde} other{Noche}}",
+  "@wrappedDayPart": {
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedAuraTitle": "TU AURA MUSICAL",
+  "wrappedAuraName": "{aura, select, night{Criatura nocturna} dawn{Madrugador} loyal{Alma fiel} explorer{Explorador} marathon{Maratonista} other{Equilibrio}}",
+  "@wrappedAuraName": {
+    "placeholders": {
+      "aura": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedAuraDescription": "{aura, select, night{La luna es tu mejor oyente: tu música suena cuando el resto duerme.} dawn{Empiezas el día con banda sonora antes que nadie.} loyal{Cuando un artista te atrapa, no lo sueltas.} explorer{Siempre buscando algo nuevo: muchísimos artistas distintos.} marathon{Días enteros con música sin parar.} other{Un poco de todo, a cualquier hora: tu música fluye contigo.}}",
+  "@wrappedAuraDescription": {
+    "placeholders": {
+      "aura": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedSummaryTitle": "TU RESUMEN",
+  "wrappedTopSongsShort": "CANCIONES",
+  "wrappedTopArtistsShort": "ARTISTAS",
+  "wrappedOutroFor": "{scope, select, month{NOS VEMOS EL PRÓXIMO MES} other{NOS VEMOS EL PRÓXIMO AÑO}}",
+  "@wrappedOutroFor": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedShareCta": "COMPARTIR RESUMEN",
+  "wrappedNoDataFor": "{scope, select, month{No hay datos suficientes para este mes} other{No hay datos suficientes para este año}}",
+  "@wrappedNoDataFor": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "wrappedPickerSubtitle": "Tu resumen de cada mes y del año",
+  "wrappedThisMonth": "este mes",
+  "wrappedWholeYear": "Año {year} completo",
+  "@wrappedWholeYear": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "wrappedMonthlyLabel": "MENSUAL",
+  "wrappedYearlyLabel": "ANUAL",
+  "wrappedHomeSubtitle": "MES Y AÑO"
 }
