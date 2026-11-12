@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/public_profile.dart';
 import '../../domain/entities/social.dart';
@@ -719,7 +720,8 @@ class PersonAvatar extends StatelessWidget {
         ? OniMaskArt.image(mask, size * 0.82)
         : person.photoUrl != null
         ? ClipOval(
-            child: Image.network(person.photoUrl!, width: size, height: size, fit: BoxFit.cover),
+            child: Image.network(person.photoUrl!,
+                width: size, height: size, fit: BoxFit.cover, cacheWidth: imageCacheSize(context, size)),
           )
         : Text(
             person.name.isEmpty ? '?' : person.name.characters.first.toUpperCase(),

@@ -104,13 +104,20 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
 
             return Offstage(
               offstage: isOffstage,
-              child: ExcludeFocus(
-                excluding: !isTarget,
-                child: IgnorePointer(
-                  ignoring: !isTarget,
-                  child: FadeTransition(
-                    opacity: AlwaysStoppedAnimation(opacity.clamp(0.0, 1.0)),
-                    child: widget.children[i],
+              // Offstage alone doesn't stop animations: a hidden tab's
+              // orb, visualizers and glitches would keep ticking (and
+              // asking for frames). Muted here, like the Navigator does
+              // for covered screens; they pick up again when shown.
+              child: TickerMode(
+                enabled: !isOffstage,
+                child: ExcludeFocus(
+                  excluding: !isTarget,
+                  child: IgnorePointer(
+                    ignoring: !isTarget,
+                    child: FadeTransition(
+                      opacity: AlwaysStoppedAnimation(opacity.clamp(0.0, 1.0)),
+                      child: widget.children[i],
+                    ),
                   ),
                 ),
               ),

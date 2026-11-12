@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/image_cache_size.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/public_profile.dart';
@@ -142,7 +143,9 @@ class _ProfileBody extends ConsumerWidget {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.bgCard,
-                    backgroundImage: a.pictureUrl == null ? null : NetworkImage(a.pictureUrl!),
+                    backgroundImage: a.pictureUrl == null
+                        ? null
+                        : ResizeImage(NetworkImage(a.pictureUrl!), width: imageCacheSize(context, 40)),
                     child: a.pictureUrl == null ? const Icon(Icons.person, color: AppColors.textMuted) : null,
                   ),
                   const SizedBox(width: 12),
@@ -261,7 +264,9 @@ class _Avatar extends StatelessWidget {
     final Widget inner = mask != null
         ? OniMaskArt.image(mask!, size * 0.8)
         : photoUrl != null
-            ? ClipOval(child: Image.network(photoUrl!, width: size, height: size, fit: BoxFit.cover))
+            ? ClipOval(
+                child: Image.network(photoUrl!,
+                    width: size, height: size, fit: BoxFit.cover, cacheWidth: imageCacheSize(context, size)))
             : Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
                 style: const TextStyle(color: AppColors.textBright, fontSize: 40, fontWeight: FontWeight.w800));
     return Container(

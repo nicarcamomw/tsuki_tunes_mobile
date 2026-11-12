@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/genre.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/logic/search_suggestions.dart';
@@ -1305,10 +1306,13 @@ class _GenreTile extends StatelessWidget {
             children: [
               Container(color: AppColors.bgMid),
               if (genre.pictureUrl.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: genre.pictureUrl,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                LayoutBuilder(
+                  builder: (context, box) => CachedNetworkImage(
+                    imageUrl: genre.pictureUrl,
+                    fit: BoxFit.cover,
+                    memCacheWidth: imageCacheSize(context, box.maxWidth),
+                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               DecoratedBox(
                 decoration: BoxDecoration(
