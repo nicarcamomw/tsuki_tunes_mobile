@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/playback_error.dart';
 
 /// SpotifyService against a fake Spotify Web API: what it sends and how it
 /// reads the answers.
@@ -158,6 +160,46 @@ void main() {
     });
   });
 
+  // A6: why a connect failed is a SpotifyConnectError, not text the screen
+  // has to search for "cancel" in.
+  group('why connecting failed', () {
+    void signInPage(Future<Object?> Function(Uri url) answer) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('flutter_web_auth_2'),
+          (call) => answer(Uri.parse((call.arguments as Map)['url'] as String)));
+    }
+
+    test('closing the sign-in page is "cancelled"', () async {
+      signInPage((_) async => throw PlatformException(code: 'CANCELED', message: 'User canceled login'));
+      final s = SpotifyService();
+      expect(await withApi(s.connect), isFalse);
+      expect(s.lastErrorKind, SpotifyConnectError.canceled);
+    });
+
+    test('Spotify answering with an error is "server"; the text stays for the logs', () async {
+      signInPage((url) async => 'tsuki://spotify-callback?error=access_denied&state=${url.queryParameters['state']}');
+      final s = SpotifyService();
+      expect(await withApi(s.connect), isFalse);
+      expect(s.lastErrorKind, SpotifyConnectError.server);
+      expect(s.lastError, 'access_denied');
+    });
+
+    test('an answer for another sign-in is refused (CSRF check)', () async {
+      signInPage((_) async => 'tsuki://spotify-callback?code=abc&state=forged');
+      final s = SpotifyService();
+      expect(await withApi(s.connect), isFalse);
+      expect(s.lastErrorKind, SpotifyConnectError.stateMismatch);
+    });
+
+    test('no connection while exchanging the code is "network"', () async {
+      signInPage((url) async => 'tsuki://spotify-callback?code=abc&state=${url.queryParameters['state']}');
+      api = (_) async => throw const SocketException('offline');
+      final s = SpotifyService();
+      expect(await withApi(s.connect), isFalse);
+      expect(s.lastErrorKind, SpotifyConnectError.network);
+    });
+  });
+
   group('accounts Spotify doesn\'t let use the app (development mode)', () {
     /// Spotify's sign-in page, answering with a code.
     void signInPageAnswers() {
@@ -189,7 +231,8 @@ void main() {
       final s = SpotifyService();
 
       expect(await withApi(s.connect), isFalse);
-      expect(s.lastError, SpotifyService.notRegisteredError);
+      expect(s.lastErrorKind, SpotifyConnectError.notRegistered);
+      expect(s.isNotRegistered, isTrue);
       expect(s.accessRestricted, isTrue);
       // Not left half connected.
       expect(s.isConnected, isFalse);

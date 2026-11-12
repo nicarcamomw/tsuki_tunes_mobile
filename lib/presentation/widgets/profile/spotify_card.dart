@@ -59,14 +59,9 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         await _explainRestrictedAccess();
       } else {
         if (mounted) setState(() {});
-        final rawError = _audio.spotify.lastError;
-        String msg = strings.spotifyConnectError;
-        if (rawError != null) {
-          final lower = rawError.toLowerCase();
-          if (lower.contains('cancel') || lower.contains('cancelada') || lower.contains('canceled_by_user')) {
-            msg = strings.spotifyCanceledByUser;
-          }
-        }
+        final msg = _audio.spotify.lastErrorKind == SpotifyConnectError.canceled
+            ? strings.spotifyCanceledByUser
+            : strings.spotifyConnectError;
         ref.read(analyticsProvider).log('spotify_connect_failed',
             {'canceled': msg == strings.spotifyCanceledByUser});
         _showSnack(_plainSnack(msg, const Duration(seconds: 3)));

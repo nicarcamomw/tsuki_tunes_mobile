@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
 import '../../domain/entities/external_library.dart';
+import '../../domain/entities/playback_error.dart';
 import 'perf_tracker.dart';
 import 'storage_service.dart';
 
@@ -62,6 +63,7 @@ class SpotifyService {
   Map<String, dynamic>? _profile;
   bool _isPremium = false;
   String? _lastError;
+  SpotifyConnectError? _lastErrorKind;
   String? _activeDeviceName;
   Completer<void>? _refreshLock;
 
@@ -84,7 +86,18 @@ class SpotifyService {
   bool get isConnected => _accessToken != null;
   bool get isPremium => _isPremium;
   Map<String, dynamic>? get profile => _profile;
+  /// What Spotify or the system said when [connect] last failed, for the logs.
   String? get lastError => _lastError;
+
+  /// Why [connect] last failed; null after a success.
+  SpotifyConnectError? get lastErrorKind => _lastErrorKind;
+
+  /// Records why [connect] failed: [kind], and [detail] for the logs. Any
+  /// failure whose text says it was cancelled counts as cancelled.
+  void _fail(SpotifyConnectError kind, String? detail) {
+    _lastError = detail;
+    _lastErrorKind = (detail ?? '').toLowerCase().contains('cancel') ? SpotifyConnectError.canceled : kind;
+  }
 
   /// The account signed in, but Spotify refuses this app to it: while the
   /// app is in Spotify's development mode only the few accounts added in
@@ -92,12 +105,9 @@ class SpotifyService {
   bool get accessRestricted => _accessRestricted;
   bool _accessRestricted = false;
 
-  /// What [lastError] holds when [connect] failed for that reason.
-  static const notRegisteredError = 'user_not_registered';
-
   /// The last connect failed because this Spotify account isn't on the
   /// app's allow list (development mode).
-  bool get isNotRegistered => _lastError == notRegisteredError;
+  bool get isNotRegistered => _lastErrorKind == SpotifyConnectError.notRegistered;
   String? get accessToken => _accessToken;
   String? get activeDeviceName => _activeDeviceName;
 
@@ -248,6 +258,7 @@ class SpotifyService {
 
   Future<bool> connect() async {
     _lastError = null;
+    _lastErrorKind = null;
     _accessRestricted = false;
     try {
       final codeVerifier = _generateCodeVerifier();
@@ -272,21 +283,22 @@ class SpotifyService {
 
       final uri = Uri.parse(result);
       if (uri.queryParameters.containsKey('error')) {
-        _lastError = uri.queryParameters['error_description'] ?? uri.queryParameters['error'];
+        _fail(SpotifyConnectError.server,
+            uri.queryParameters['error_description'] ?? uri.queryParameters['error']);
         _log.severe('Spotify auth redirect error: $_lastError');
         return false;
       }
 
       final returnedState = uri.queryParameters['state'];
       if (returnedState != state) {
-        _lastError = 'oauth_state_mismatch';
+        _fail(SpotifyConnectError.stateMismatch, 'oauth_state_mismatch');
         _log.fine('Spotify auth: OAuth state mismatch (CSRF protection)');
         return false;
       }
 
       final code = uri.queryParameters['code'];
       if (code == null) {
-        _lastError = 'auth_code_not_found';
+        _fail(SpotifyConnectError.noAuthCode, 'auth_code_not_found');
         return false;
       }
 
@@ -295,9 +307,9 @@ class SpotifyService {
       _log.severe('Spotify connect error: $e');
       final errStr = e.toString();
       if (errStr.contains('CANCELED') || errStr.contains('user_canceled')) {
-        _lastError = 'canceled_by_user';
+        _fail(SpotifyConnectError.canceled, 'canceled_by_user');
       } else {
-        _lastError = 'connect_error: $e';
+        _fail(SpotifyConnectError.other, 'connect_error: $e');
       }
       return false;
     }
@@ -322,9 +334,10 @@ class SpotifyService {
         _log.severe('Spotify exchange failed (${response.statusCode})');
         try {
           final data = json.decode(response.body);
-          _lastError = data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}';
+          _fail(SpotifyConnectError.server,
+              '${data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}'}');
         } catch (_) {
-          _lastError = 'server_error_${response.statusCode}';
+          _fail(SpotifyConnectError.server, 'server_error_${response.statusCode}');
         }
         return false;
       }
@@ -342,13 +355,13 @@ class SpotifyService {
         _log.warning('Spotify: this account is not allowed to use the app');
         await disconnect();
         _accessRestricted = true;
-        _lastError = notRegisteredError;
+        _fail(SpotifyConnectError.notRegistered, 'user_not_registered');
         return false;
       }
       return _accessToken != null;
     } catch (e) {
       _log.severe('Spotify exchange error: $e');
-      _lastError = 'network_error: $e';
+      _fail(SpotifyConnectError.network, 'network_error: $e');
       return false;
     }
   }

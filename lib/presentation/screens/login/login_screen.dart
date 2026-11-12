@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
@@ -145,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         if (!auth.wasCancelled) {
           final locale = ref.read(localeProvider);
           final strings = locale.strings;
-          final msg = auth.authError == 'login_throttled'
+          final msg = auth.authError == AuthError.throttled
               ? strings.loginThrottled
               : strings.loginGoogleError;
           ScaffoldMessenger.of(context).showSnackBar(

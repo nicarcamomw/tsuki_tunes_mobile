@@ -12,6 +12,7 @@ import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/push_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
+import '../../domain/entities/auth_error.dart';
 
 
 final _log = Log.named('Auth');
@@ -40,7 +41,7 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   bool _isGuest = false;
   bool _loading = true;
-  String? _authError;
+  AuthError? _authError;
   bool _wasCancelled = false;
   String? _guestUid;
   StreamSubscription<User?>? _authSub;
@@ -53,7 +54,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isGuest => _isGuest;
   bool get isLoggedIn => _user != null || _isGuest;
   String? get uid => _user?.uid ?? (_isGuest ? _guestUid : null);
-  String? get authError => _authError;
+  AuthError? get authError => _authError;
   bool get wasCancelled => _wasCancelled;
   bool get isAuthenticated => _user != null && !_isGuest;
 
@@ -141,7 +142,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> loginWithGoogle() async {
     if (isLoginThrottled) {
-      _authError = 'login_throttled';
+      _authError = AuthError.throttled;
       notifyListeners();
       return false;
     }
@@ -165,7 +166,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _loginAttempts++;
       _log.severe('Google sign-in error: $e');
-      _authError = 'login_failed';
+      _authError = AuthError.failed;
       notifyListeners();
       return false;
     }
