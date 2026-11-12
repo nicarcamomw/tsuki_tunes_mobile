@@ -30,10 +30,16 @@ class _FakePlayer implements AudioPlayer {
   @override
   Stream<PlaybackEvent> get playbackEventStream => const Stream.empty();
   @override
-  Stream<SequenceState?> get sequenceStateStream => const Stream.empty();
+  Stream<SequenceState> get sequenceStateStream => const Stream.empty();
+  @override
+  Stream<PlayerException> get errorStream => const Stream.empty();
   @override
   Future<Duration?> setAudioSource(AudioSource source,
           {bool preload = true, int? initialIndex, Duration? initialPosition}) async =>
+      const Duration(seconds: 30);
+  @override
+  Future<Duration?> setAudioSources(List<AudioSource> audioSources,
+          {bool preload = true, int? initialIndex, Duration? initialPosition, ShuffleOrder? shuffleOrder}) async =>
       const Duration(seconds: 30);
   @override
   Future<Duration?> setUrl(String url,

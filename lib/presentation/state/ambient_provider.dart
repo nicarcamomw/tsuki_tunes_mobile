@@ -165,8 +165,12 @@ class AmbientProvider extends ChangeNotifier {
     _volumes.remove(sound);
     final player = _players.remove(sound);
     if (player != null) {
-      await player.stop();
-      await player.dispose();
+      try {
+        await player.stop();
+        await player.dispose();
+      } catch (_) {
+        // A player closed mid-load can throw (just_audio 0.10); it's gone anyway.
+      }
     }
     if (_volumes.isEmpty) _clearStopTimer();
     _changed();

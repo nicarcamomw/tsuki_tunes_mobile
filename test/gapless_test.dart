@@ -57,16 +57,17 @@ class _GaplessService extends AudioPlayerService {
   }
 }
 
-/// Just enough of a player for the playlist bookkeeping, no platform.
+/// Just enough of a player for the playlist bookkeeping, no platform. Like
+/// just_audio 0.10, the playlist lives in the player.
 class _FakePlayer implements AudioPlayer {
-  final _seq = StreamController<SequenceState?>.broadcast();
-  AudioSource? source;
+  final _seq = StreamController<SequenceState>.broadcast();
+  final List<IndexedAudioSource> playlist = [];
   IndexedAudioSource? _current;
   final volumes = <double>[];
   final speeds = <double>[];
 
   @override
-  Stream<SequenceState?> get sequenceStateStream => _seq.stream;
+  Stream<SequenceState> get sequenceStateStream => _seq.stream;
   @override
   Stream<Duration> get positionStream => const Stream.empty();
   @override
@@ -80,12 +81,28 @@ class _FakePlayer implements AudioPlayer {
   @override
   Stream<PlaybackEvent> get playbackEventStream => const Stream.empty();
   @override
-  Future<Duration?> setAudioSource(AudioSource source,
-      {bool preload = true, int? initialIndex, Duration? initialPosition}) async {
-    this.source = source;
-    _current = source.sequence.first;
+  Stream<PlayerException> get errorStream => const Stream.empty();
+  @override
+  List<IndexedAudioSource> get audioSources => List.unmodifiable(playlist);
+
+  @override
+  Future<Duration?> setAudioSources(List<AudioSource> audioSources,
+      {bool preload = true,
+      int? initialIndex,
+      Duration? initialPosition,
+      ShuffleOrder? shuffleOrder}) async {
+    playlist
+      ..clear()
+      ..addAll(audioSources.expand((s) => s.sequence));
+    _current = playlist.first;
     return const Duration(seconds: 30);
   }
+
+  @override
+  Future<void> addAudioSource(AudioSource audioSource) async => playlist.addAll(audioSource.sequence);
+
+  @override
+  Future<void> removeAudioSourceRange(int start, int end) async => playlist.removeRange(start, end);
 
   @override
   Future<Duration?> setUrl(String url,
@@ -95,7 +112,7 @@ class _FakePlayer implements AudioPlayer {
   /// Where the playing song is in the playlist, which shifts when songs
   /// before it are removed (like the real player).
   @override
-  int? get currentIndex => source?.sequence.indexOf(_current!);
+  int? get currentIndex => _current == null ? null : playlist.indexOf(_current!);
   @override
   Future<void> play() async {}
   @override
@@ -111,12 +128,16 @@ class _FakePlayer implements AudioPlayer {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
-  ConcatenatingAudioSource get playlist => source! as ConcatenatingAudioSource;
-
   /// The player went on to the song at [i] of its playlist.
   Future<void> moveTo(int i) async {
-    _current = playlist.sequence[i];
-    _seq.add(SequenceState(playlist.sequence, i, const [0, 1], false, LoopMode.off));
+    _current = playlist[i];
+    _seq.add(SequenceState(
+      sequence: List.of(playlist),
+      currentIndex: i,
+      shuffleIndices: const [0, 1],
+      shuffleModeEnabled: false,
+      loopMode: LoopMode.off,
+    ));
     await Future<void>.delayed(Duration.zero);
   }
 }

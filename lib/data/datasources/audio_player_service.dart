@@ -61,7 +61,10 @@ class AudioPlayerService implements AudioPlayerContract {
   // the player starts the next song the instant the current one ends, with
   // no stop, load and start in between. The song after is added near the
   // end (setGaplessNext); moving into it is announced on gaplessAdvances.
-  ConcatenatingAudioSource? _playlist;
+  // [_playlist] marks the playlist a playTrack set up (just_audio keeps the
+  // playlist in the player now); a newer playTrack replaces it, so a call
+  // still working on the old one can tell.
+  Object? _playlist;
   AudioPlayer? _playlistOwner;
   Track? _gaplessNext;
   Object? _gaplessTag;
@@ -75,6 +78,7 @@ class AudioPlayerService implements AudioPlayerContract {
   StreamSubscription? _stateSub;
   StreamSubscription? _playingSub;
   StreamSubscription? _eventSub;
+  StreamSubscription? _errorSub;
 
   AudioPlayerService() : this._withEqualizers(_equalizer(), _equalizer());
 
@@ -157,20 +161,22 @@ class AudioPlayerService implements AudioPlayerContract {
   @override
   Future<bool> setGaplessNext(Track? next) async {
     final playlist = _playlist;
-    if (playlist == null || !identical(_playlistOwner, _activePlayer) || _isCrossfading) {
+    final player = _activePlayer;
+    if (playlist == null || !identical(_playlistOwner, player) || _isCrossfading) {
       _forgetGaplessNext();
       return false;
     }
     try {
-      final current = _activePlayer.currentIndex ?? 0;
-      if (playlist.length > current + 1) {
-        await playlist.removeRange(current + 1, playlist.length);
+      final current = player.currentIndex ?? 0;
+      final length = player.audioSources.length;
+      if (length > current + 1) {
+        await player.removeAudioSourceRange(current + 1, length);
       }
       if (!identical(_playlist, playlist)) return false;
       _forgetGaplessNext();
       if (next == null || next.previewUrl.isEmpty) return false;
       final tag = Object();
-      await playlist.add(_sourceFor(next, tag));
+      await player.addAudioSource(_sourceFor(next, tag));
       // A new song may have started meanwhile, in a playlist of its own.
       if (!identical(_playlist, playlist)) return false;
       _gaplessNext = next;
@@ -183,8 +189,8 @@ class AudioPlayerService implements AudioPlayerContract {
     }
   }
 
-  void _onSequence(AudioPlayer player, SequenceState? state) {
-    final tag = state?.currentSource?.tag;
+  void _onSequence(AudioPlayer player, SequenceState state) {
+    final tag = state.currentSource?.tag;
     final next = _gaplessNext;
     if (tag == null || next == null || !identical(tag, _gaplessTag)) return;
     if (!identical(player, _activePlayer)) return;
@@ -197,10 +203,9 @@ class AudioPlayerService implements AudioPlayerContract {
     _speed = speedFor?.call(next) ?? 1.0;
     unawaited(player.setSpeed(_speed));
     // Only the song playing stays in the playlist.
-    final playlist = _playlist;
-    final index = state!.currentIndex;
-    if (playlist != null && index > 0) {
-      unawaited(playlist.removeRange(0, index).catchError((Object e) {
+    final index = state.currentIndex;
+    if (_playlist != null && identical(_playlistOwner, player) && index != null && index > 0) {
+      unawaited(player.removeAudioSourceRange(0, index).catchError((Object e) {
         _log.fine('could not trim the playlist: $e');
       }));
     }
@@ -215,6 +220,7 @@ class AudioPlayerService implements AudioPlayerContract {
     _stateSub?.cancel();
     _playingSub?.cancel();
     _eventSub?.cancel();
+    _errorSub?.cancel();
 
     _posSub = player.positionStream.listen((p) {
       if (!_positionCtrl.isClosed) _positionCtrl.add(p);
@@ -233,6 +239,12 @@ class AudioPlayerService implements AudioPlayerContract {
     });
     _eventSub = player.playbackEventStream.listen((e) {
       if (!_eventCtrl.isClosed) _eventCtrl.add(e);
+    });
+    // just_audio 0.10 reports playback errors on errorStream, no longer as
+    // errors of playbackEventStream; passed on there, so listeners keep
+    // hearing them where they always did (AudioProvider handles them).
+    _errorSub = player.errorStream.listen((e) {
+      if (!_eventCtrl.isClosed) _eventCtrl.addError(e);
     });
   }
 
@@ -282,9 +294,9 @@ class AudioPlayerService implements AudioPlayerContract {
         _speed = speedFor?.call(track) ?? 1.0;
         unawaited(_activePlayer.setSpeed(_speed));
         // A playlist of one, which the next song can join (gapless).
-        final playlist = ConcatenatingAudioSource(children: [_sourceFor(track, Object())]);
-        await _activePlayer.setAudioSource(
-          playlist,
+        final playlist = Object();
+        await _activePlayer.setAudioSources(
+          [_sourceFor(track, Object())],
           initialPosition: initialPosition != null && initialPosition > Duration.zero
               ? initialPosition
               : null,
@@ -486,6 +498,7 @@ class AudioPlayerService implements AudioPlayerContract {
     unawaited(_stateSub?.cancel());
     unawaited(_playingSub?.cancel());
     unawaited(_eventSub?.cancel());
+    unawaited(_errorSub?.cancel());
     unawaited(_seqSubA?.cancel());
     unawaited(_seqSubB?.cancel());
     await _advanceCtrl.close();
@@ -497,7 +510,13 @@ class AudioPlayerService implements AudioPlayerContract {
     await _playingCtrl.close();
     await _eventCtrl.close();
 
-    await _playerA.dispose();
-    await _playerB.dispose();
+    // A deck closed mid-load can throw (just_audio 0.10); close both anyway.
+    for (final p in [_playerA, _playerB]) {
+      try {
+        await p.dispose();
+      } catch (e) {
+        _log.fine('player dispose: $e');
+      }
+    }
   }
 }

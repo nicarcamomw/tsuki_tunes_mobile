@@ -148,7 +148,9 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     _countdown?.cancel();
     _posSub?.cancel();
     _stateSub?.cancel();
-    _player.dispose();
+    // just_audio 0.10 can throw from dispose() when the player is still
+    // loading (closed mid-load); it's being thrown away, so that's fine.
+    unawaited(_player.dispose().catchError((Object _) {}));
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _artistSearchCtrl.dispose();

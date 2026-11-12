@@ -71,7 +71,9 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
 
   @override
   void dispose() {
-    unawaited(_preview.dispose());
+    // just_audio 0.10 can throw from dispose() when the player is still
+    // loading (closed mid-load); it's being thrown away, so that's fine.
+    unawaited(_preview.dispose().catchError((Object _) {}));
     super.dispose();
   }
 
