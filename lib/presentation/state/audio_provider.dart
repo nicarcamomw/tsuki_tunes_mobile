@@ -34,6 +34,7 @@ import '../../domain/entities/smart_shuffle.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/playback_queue.dart';
+import '../../domain/logic/playback_restore.dart';
 import '../../domain/logic/song_radio.dart' show SongRadio;
 import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
