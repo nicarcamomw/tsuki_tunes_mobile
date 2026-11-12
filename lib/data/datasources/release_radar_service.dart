@@ -202,7 +202,7 @@ class ReleaseRadarService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           _releasesKey, json.encode(updated.map((r) => r.toJson()).toList()));
-      await _notifications.cancel(_notificationId);
+      await _notifications.cancel(id: _notificationId);
     } catch (e) {
       _log.severe('markAllRead failed: $e');
     }
@@ -554,7 +554,7 @@ class ReleaseRadarService {
       ),
     );
     await _notifications.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: foreground ? _onNotificationTap : null,
     );
     if (foreground) {
@@ -587,10 +587,10 @@ class ReleaseRadarService {
     try {
       await _initNotifications(foreground: false);
       await _notifications.show(
-        id,
-        title,
-        body,
-        NotificationDetails(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,
             channelName,
@@ -625,13 +625,13 @@ class ReleaseRadarService {
     try {
       await _initNotifications(foreground: true);
       await _notifications.zonedSchedule(
-        id,
-        title,
-        body,
+        id: id,
+        title: title,
+        body: body,
         // An instant: the reminder is set again every day, so the zone's
         // rules (summer time) never come into it.
-        tz.TZDateTime.from(at, tz.UTC),
-        NotificationDetails(
+        scheduledDate: tz.TZDateTime.from(at, tz.UTC),
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,
             channelName,
@@ -657,7 +657,7 @@ class ReleaseRadarService {
     if (!isSupported) return;
     try {
       await _initNotifications(foreground: true);
-      await _notifications.cancel(id);
+      await _notifications.cancel(id: id);
     } catch (e) {
       _log.fine('cancel failed: $e');
     }
@@ -700,10 +700,10 @@ class ReleaseRadarService {
           : null;
 
       await _notifications.show(
-        _notificationId,
-        title,
-        body,
-        NotificationDetails(
+        id: _notificationId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
             strings.radarChannelName,
