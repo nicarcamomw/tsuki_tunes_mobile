@@ -143,7 +143,8 @@ class DeezerApiService
         if (res.statusCode == 200) {
           final decoded = await _decode(res.body);
           if (decoded is Map<String, dynamic> && decoded['error'] != null) {
-            final errCode = decoded['error']['code'];
+            final error = decoded['error'];
+            final errCode = error is Map ? error['code'] : null;
             if (errCode == 4 || errCode == 800) {
               _log.warning('Quota limit code $errCode for $url. Waiting 1s before retry...');
               await Future.delayed(const Duration(milliseconds: 1000));

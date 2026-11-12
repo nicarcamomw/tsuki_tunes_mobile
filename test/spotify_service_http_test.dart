@@ -130,7 +130,7 @@ void main() {
 
       expect(s.displayName, 'Nico');
       expect(s.isPremium, isFalse);
-      expect(jsonDecode(secure['spotify_profile']!)['product'], 'free');
+      expect((jsonDecode(secure['spotify_profile']!) as Map)['product'], 'free');
     });
 
     test('disconnecting forgets everything', () async {

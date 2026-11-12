@@ -37,7 +37,7 @@ void main() {
       const MethodChannel('com.ryanheise.just_audio.methods'),
       (MethodCall methodCall) async {
         if (methodCall.method == 'init') {
-          final id = methodCall.arguments['id'];
+          final id = (methodCall.arguments as Map)['id'];
           messenger.setMockMethodCallHandler(
             MethodChannel('com.ryanheise.just_audio.methods.$id'),
             (MethodCall call) async => {},
@@ -200,7 +200,7 @@ void main() {
       var saved = await storage.getPlaybackState();
       expect(saved, isNotNull);
       var savedQueue = (saved!['queue'] as List);
-      expect(savedQueue[2]['id'], equals('t1'));
+      expect((savedQueue[2] as Map)['id'], equals('t1'));
 
       // Remove from queue
       provider.removeFromQueue(1);
@@ -219,7 +219,7 @@ void main() {
       expect(saved, isNotNull);
       savedQueue = (saved!['queue'] as List);
       expect(savedQueue.length, equals(1));
-      expect(savedQueue[0]['id'], equals('t1'));
+      expect((savedQueue[0] as Map)['id'], equals('t1'));
     });
   });
 }

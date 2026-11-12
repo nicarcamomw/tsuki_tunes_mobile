@@ -99,7 +99,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
     );
   }
 
-  Widget _buildEmptyState(LocaleProvider locale, dynamic strings) {
+  Widget _buildEmptyState(LocaleProvider locale, AppStrings strings) {
     return Column(
       children: [
         _buildHeader(locale, strings),
@@ -151,7 +151,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
     );
   }
 
-  Widget _buildHeader(LocaleProvider locale, dynamic strings) {
+  Widget _buildHeader(LocaleProvider locale, AppStrings strings) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
       child: Row(
@@ -187,7 +187,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
     );
   }
 
-  Widget _buildContent(LocaleProvider locale, dynamic strings) {
+  Widget _buildContent(LocaleProvider locale, AppStrings strings) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

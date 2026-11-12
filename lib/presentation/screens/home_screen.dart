@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';

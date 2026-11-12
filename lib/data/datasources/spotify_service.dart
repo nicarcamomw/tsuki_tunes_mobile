@@ -119,7 +119,8 @@ class SpotifyService {
   String? get profileImage {
     final images = _profile?['images'];
     if (images is List && images.isNotEmpty) {
-      return images.first['url'];
+      final first = images.first;
+      if (first is Map) return first['url'] as String?;
     }
     return null;
   }
@@ -333,7 +334,7 @@ class SpotifyService {
       if (response.statusCode != 200) {
         _log.severe('Spotify exchange failed (${response.statusCode})');
         try {
-          final data = json.decode(response.body);
+          final data = json.decode(response.body) as Map<String, dynamic>;
           _fail(SpotifyConnectError.server,
               '${data['error_description'] ?? data['error'] ?? 'auth_failed_${response.statusCode}'}');
         } catch (_) {
@@ -342,7 +343,7 @@ class SpotifyService {
         return false;
       }
 
-      final data = json.decode(response.body);
+      final data = json.decode(response.body) as Map<String, dynamic>;
       _accessToken = data['access_token'];
       _refreshToken = data['refresh_token'];
       _tokenExpiry =
@@ -382,7 +383,7 @@ class SpotifyService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(response.body) as Map<String, dynamic>;
         _accessToken = data['access_token'];
         if (data['refresh_token'] != null) {
           _refreshToken = data['refresh_token'];
@@ -393,7 +394,7 @@ class SpotifyService {
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         // Permanent invalid grant - token was revoked
         try {
-          final data = json.decode(response.body);
+          final data = json.decode(response.body) as Map<String, dynamic>;
           if (data['error'] == 'invalid_grant') {
             _log.fine('Spotify refresh token invalid_grant: disconnecting');
             await disconnect();
@@ -535,7 +536,7 @@ class SpotifyService {
         for (final item in items) {
           final trackName = normalizeTitle(item['name'] as String? ?? '');
           if (trackName != wantedTitle) continue;
-          final artists = (item['artists'] as List?) ?? [];
+          final artists = (item['artists'] as List?)?.whereType<Map>() ?? const <Map>[];
           final artistMatches = artists.any((a) {
             final spotifyArtist = _normalize(a['name'] as String? ?? '');
             return wantedArtists.any((w) =>
@@ -558,7 +559,7 @@ class SpotifyService {
     return null;
   }
 
-  Future<List<dynamic>?> _searchItems(String query, {required int limit}) async {
+  Future<List<Map<String, dynamic>>?> _searchItems(String query, {required int limit}) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       final response = await _get(
         Uri.parse('https://api.spotify.com/v1/search'
@@ -573,8 +574,10 @@ class SpotifyService {
         continue;
       }
       if (response.statusCode != 200) return null;
-      final data = json.decode(response.body);
-      return data['tracks']?['items'] as List?;
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final tracks = data['tracks'];
+      final items = tracks is Map ? tracks['items'] : null;
+      return items is List ? items.whereType<Map<String, dynamic>>().toList() : null;
     }
     return null;
   }
@@ -655,7 +658,7 @@ class SpotifyService {
           id: p['id'] as String,
           name: (p['name'] as String?)?.trim().isNotEmpty == true ? p['name'] as String : 'Playlist',
           total: tracks is Map && tracks['total'] is int ? tracks['total'] as int : 0,
-          imageUrl: images is List && images.isNotEmpty && images.first is Map ? images.first['url'] as String? : null,
+          imageUrl: images is List && images.isNotEmpty ? switch (images.first) { final Map m => m['url'] as String?, _ => null } : null,
         ));
       }
       final n = page['next'];
@@ -706,14 +709,14 @@ class SpotifyService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final devices = data['devices'] as List?;
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final devices = (data['devices'] as List?)?.whereType<Map<String, dynamic>>().toList();
         if (devices != null && devices.isNotEmpty) {
           for (final d in devices) {
             _log.fine('Spotify device: ${d['name']} (${d['type']}) active=${d['is_active']}');
           }
           // Prefer smartphone, then active device, then first
-          final smartphone = devices.cast<Map<String, dynamic>>().where(
+          final smartphone = devices.where(
             (d) => d['type'] == 'Smartphone',
           ).toList();
           final chosen = smartphone.isNotEmpty
@@ -747,8 +750,8 @@ class SpotifyService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final devices = (data['devices'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final devices = (data['devices'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? [];
         return devices;
       }
     } catch (e) {

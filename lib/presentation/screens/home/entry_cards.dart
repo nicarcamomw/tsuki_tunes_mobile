@@ -2,7 +2,7 @@ part of '../home_screen.dart';
 
 class _WrappedEntryCard extends StatelessWidget {
   final LocaleProvider locale;
-  final dynamic strings;
+  final AppStrings strings;
   const _WrappedEntryCard({required this.locale, required this.strings});
 
   @override
@@ -73,7 +73,7 @@ class _WrappedEntryCard extends StatelessWidget {
 
 class _ListeningClockEntryCard extends StatelessWidget {
   final LocaleProvider locale;
-  final dynamic strings;
+  final AppStrings strings;
   const _ListeningClockEntryCard(
       {required this.locale, required this.strings});
 
@@ -210,7 +210,7 @@ class _DiscoveryEntryCard extends StatelessWidget {
 
 class _RabbitHoleEntryCard extends StatelessWidget {
   final LocaleProvider locale;
-  final dynamic strings;
+  final AppStrings strings;
   final Artist? seedArtist;
   const _RabbitHoleEntryCard({
     required this.locale,
@@ -301,7 +301,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
 
 class _ReleaseRadarEntryCard extends ConsumerWidget {
   final LocaleProvider locale;
-  final dynamic strings;
+  final AppStrings strings;
   const _ReleaseRadarEntryCard({required this.locale, required this.strings});
 
   @override

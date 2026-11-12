@@ -78,7 +78,7 @@ void main() {
       expect(device.listenedTrackIds, {'t1', 't2'});
       expect(await StorageService().getLastListenedFullSync(uid), isNotNull);
       final user = await db.collection('users').doc(uid).get();
-      expect(user.data()!['stats']['totalTracks'], 2);
+      expect((user.data()!['stats'] as Map)['totalTracks'], 2);
     });
 
     test('reconnect within a day uses cache + delta, not a full fetch',
@@ -226,7 +226,7 @@ void main() {
       await _settle();
 
       final user = await db.collection('users').doc(uid).get();
-      expect(user.data()!['stats']['totalTracks'], 1);
+      expect((user.data()!['stats'] as Map)['totalTracks'], 1);
       expect(phone.listenedCount, 1);
       expect(tablet.listenedCount, 1);
       phone.disconnectFirestore();
