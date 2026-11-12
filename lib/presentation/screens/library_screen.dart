@@ -18,6 +18,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
+import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
@@ -26,23 +27,6 @@ import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 import 'shared_playlist_screen.dart' show createSharedPlaylist;
-
-class _AlbumGroupData {
-  final String albumId;
-  final String albumTitle;
-  final String artistName;
-  final String coverUrl;
-  final List<ListenedTrackData> tracks;
-  DateTime? latestListened;
-
-  _AlbumGroupData({
-    required this.albumId,
-    required this.albumTitle,
-    required this.artistName,
-    required this.coverUrl,
-    required this.tracks,
-  });
-}
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -60,11 +44,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
   bool _hasError = false;
-
-  // Cached album grouping — rebuilt only when the source list identity changes.
-  List<ListenedTrackData>? _cachedSource;
-  List<_AlbumGroupData> _cachedGroups = const [];
-  int _cachedTotalTracks = 0;
 
   @override
   void initState() {
@@ -122,64 +101,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final library = ref.watch(libraryProvider);
     final listenedTracks = library.listenedTracks;
 
-    // Rebuild the album grouping only when the source list changes.
-    if (!identical(listenedTracks, _cachedSource)) {
-      _cachedSource = listenedTracks;
-      _cachedTotalTracks = listenedTracks.length;
-      final Map<String, _AlbumGroupData> albumMap = {};
-      for (final t in listenedTracks) {
-        final key = t.albumId.isNotEmpty ? t.albumId : t.albumTitle.isNotEmpty ? t.albumTitle : 'unknown';
-        if (!albumMap.containsKey(key)) {
-          albumMap[key] = _AlbumGroupData(
-            albumId: t.albumId,
-            albumTitle: t.albumTitle,
-            artistName: t.artistName,
-            coverUrl: t.coverUrl,
-            tracks: [],
-          );
-        }
-        albumMap[key]!.tracks.add(t);
-        if (t.listenedAt != null) {
-          final current = albumMap[key]!.latestListened;
-          if (current == null || t.listenedAt!.isAfter(current)) {
-            albumMap[key]!.latestListened = t.listenedAt;
-          }
-        }
-      }
-      _cachedGroups = albumMap.values.toList();
-    }
-
-    final totalTracks = _cachedTotalTracks;
-    var albumGroups = List<_AlbumGroupData>.of(_cachedGroups);
-    final totalAlbums = albumGroups.length;
-
-    // Filter
-    final filterText = _filterController.text.toLowerCase();
-    if (filterText.isNotEmpty) {
-      albumGroups = albumGroups.where((g) {
-        return g.albumTitle.toLowerCase().contains(filterText) ||
-            g.artistName.toLowerCase().contains(filterText);
-      }).toList();
-    }
-
-    // Sort
-    switch (_sortBy) {
-      case 'alpha':
-        albumGroups.sort(
-            (a, b) => a.albumTitle.toLowerCase().compareTo(b.albumTitle.toLowerCase()));
-        break;
-      case 'artist':
-        albumGroups.sort(
-            (a, b) => a.artistName.toLowerCase().compareTo(b.artistName.toLowerCase()));
-        break;
-      case 'recent':
-      default:
-        albumGroups.sort((a, b) {
-          final aTime = a.latestListened ?? DateTime(2000);
-          final bTime = b.latestListened ?? DateTime(2000);
-          return bTime.compareTo(aTime);
-        });
-    }
+    // Grouped, filtered and sorted only when the songs, the filter or the
+    // order change (LibraryAlbumList); loading the next page reuses it.
+    final albumList = ref.read(libraryAlbumsProvider);
+    final totalTracks = listenedTracks.length;
+    final totalAlbums = albumList.groups(listenedTracks).length;
+    final albumGroups = albumList.view(
+      listenedTracks,
+      filter: _filterController.text,
+      sortBy: _sortBy,
+    );
 
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
@@ -303,8 +234,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     LocaleProvider locale,
     AppStrings strings,
     List<ListenedTrackData> listenedTracks,
-    List<_AlbumGroupData> albumGroups,
-    List<_AlbumGroupData> visible,
+    List<LibraryAlbumGroup> albumGroups,
+    List<LibraryAlbumGroup> visible,
     int totalTracks,
   ) {
     final filterText = _filterController.text.toLowerCase();
@@ -939,7 +870,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 }
 
 class _AlbumGroupTile extends ConsumerStatefulWidget {
-  final _AlbumGroupData group;
+  final LibraryAlbumGroup group;
   final bool isExpanded;
   final VoidCallback onToggle;
 
@@ -955,7 +886,7 @@ class _AlbumGroupTile extends ConsumerStatefulWidget {
 
 class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     with SingleTickerProviderStateMixin {
-  _AlbumGroupData get group => widget.group;
+  LibraryAlbumGroup get group => widget.group;
   bool get isExpanded => widget.isExpanded;
   VoidCallback get onToggle => widget.onToggle;
 
@@ -1199,7 +1130,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     );
   }
 
-  static Album _buildAlbumFromGroup(_AlbumGroupData group) {
+  static Album _buildAlbumFromGroup(LibraryAlbumGroup group) {
     return Album(
       id: group.albumId,
       title: group.albumTitle,
