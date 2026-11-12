@@ -19,7 +19,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.tsuki.tsuki_tunes_mobile"
-    compileSdk = flutter.compileSdkVersion
+    // 37, above Flutter's default (36): flutter_local_notifications 23 needs it.
+    compileSdk = 37
     ndkVersion = "30.0.15729638"
 
     compileOptions {

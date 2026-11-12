@@ -171,6 +171,10 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           NDK_VERSION=$(grep -oP 'ndkVersion\s*=\s*"\K[^"]+' android/app/build.gradle.kts)
           "$SDKMANAGER" "ndk;$NDK_VERSION"
+          # The compileSdk the app sets (above Flutter's default), in case
+          # the runner image doesn't have it yet.
+          COMPILE_SDK=$(grep -oP '^\s*compileSdk\s*=\s*\K[0-9]+' android/app/build.gradle.kts || true)
+          if [ -n "$COMPILE_SDK" ]; then "$SDKMANAGER" "platforms;android-$COMPILE_SDK"; fi
 
       - name: Install dependencies
         run: flutter pub get
