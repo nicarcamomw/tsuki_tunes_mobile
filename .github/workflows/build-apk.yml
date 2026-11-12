@@ -172,9 +172,14 @@ jobs:
           NDK_VERSION=$(grep -oP 'ndkVersion\s*=\s*"\K[^"]+' android/app/build.gradle.kts)
           "$SDKMANAGER" "ndk;$NDK_VERSION"
           # The compileSdk the app sets (above Flutter's default), in case
-          # the runner image doesn't have it yet.
+          # the runner image doesn't have it yet. Newer platforms are named
+          # android-N.0; if neither name exists, Gradle downloads it itself.
           COMPILE_SDK=$(grep -oP '^\s*compileSdk\s*=\s*\K[0-9]+' android/app/build.gradle.kts || true)
-          if [ -n "$COMPILE_SDK" ]; then "$SDKMANAGER" "platforms;android-$COMPILE_SDK"; fi
+          if [ -n "$COMPILE_SDK" ]; then
+            "$SDKMANAGER" "platforms;android-$COMPILE_SDK" 2>/dev/null \
+              || "$SDKMANAGER" "platforms;android-$COMPILE_SDK.0" 2>/dev/null \
+              || echo "::notice::platform $COMPILE_SDK not in sdkmanager; Gradle will fetch it"
+          fi
 
       - name: Install dependencies
         run: flutter pub get
