@@ -35,7 +35,7 @@ class AuthProvider extends ChangeNotifier {
   static const _guestModeKey = 'guest_mode_active';
   static const _maxLoginAttempts = 5;
   static const _loginCooldownBase = Duration(seconds: 5);
-  final FirebaseService _firebase = FirebaseService();
+  final FirebaseService _firebase;
 
   User? _user;
   bool _isGuest = false;
@@ -106,7 +106,9 @@ class AuthProvider extends ChangeNotifier {
     return 'guest_${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
   }
 
-  AuthProvider() {
+  /// [firebase] comes from get_it (app_providers); a test can hand in a
+  /// fake. Left out, it's the app's own instance.
+  AuthProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService() {
     _init();
   }
 

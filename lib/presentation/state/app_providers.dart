@@ -12,6 +12,7 @@ import '../../data/datasources/battery_guide.dart';
 import '../../data/datasources/beat_clock.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
 import '../../data/datasources/playback_log.dart';
@@ -68,7 +69,8 @@ final connectivityProvider = ChangeNotifierProvider<ConnectivityProvider>(
   (ref) => ConnectivityProvider(),
 );
 
-final authProvider = ChangeNotifierProvider<AuthProvider>((ref) => AuthProvider());
+final authProvider = ChangeNotifierProvider<AuthProvider>(
+    (ref) => AuthProvider(firebase: getIt<FirebaseService>()));
 
 final libraryProvider = ChangeNotifierProvider<LibraryRepositoryImpl>(
   disposeNotifier: false,
@@ -141,7 +143,8 @@ final rainMixProvider = Provider((ref) => ({
           search: ref.read(trackSearchProvider),
         ));
 
-final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
+final searchProvider = ChangeNotifierProvider<SearchProvider>(
+    (ref) => SearchProvider(api: getIt<DeezerApiService>(), lyrics: getIt<LyricsService>()));
 
 final localeProvider = ChangeNotifierProvider<LocaleProvider>(
   (ref) => LocaleProvider(storage: getIt<StorageService>()),
