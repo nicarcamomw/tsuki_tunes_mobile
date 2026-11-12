@@ -72,25 +72,34 @@ void main() {
     });
   });
 
+  // Each run uses songs of its own: the precache remembers what it already
+  // downloaded (it's one per app), and an earlier test must not count.
+  var run = 0;
+
   /// Plays the first of four songs and returns the previews downloaded
-  /// ahead of time.
+  /// ahead of time, without the run prefix ('preview_s2.mp3').
   Future<List<String>> downloadsWhilePlaying({required bool wifiOnly, required bool metered}) async {
+    final tag = 'r${++run}';
     SharedPreferences.setMockInitialValues({'tsuki_precache_wifi_only': wifiOnly});
     final downloads = <String>[];
     final cdn = MockClient((req) async {
       // Only the previews; the radio and related artists ask Deezer too.
       if (req.url.host != 'cdn.example.com') return http.Response('{"data":[]}', 200);
-      downloads.add(req.url.pathSegments.last);
+      downloads.add(req.url.pathSegments.last.replaceFirst('preview_$tag', 'preview_'));
       return http.Response.bytes(List.filled(15000, 1), 200);
     });
     await http.runWithClient(() async {
       final audio = AudioProvider(
           service: _Player(), storage: StorageService(), connectivityProvider: _Network(metered: metered));
       await audio.setPrecacheWifiOnly(wifiOnly);
-      final queue = [for (var i = 1; i <= 4; i++) _song('s$i')];
+      final queue = [for (var i = 1; i <= 4; i++) _song('${tag}s$i')];
       await audio.playTrack(queue.first, newQueue: queue);
-      // The next song is downloaded at once; give it time to land.
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      // The next song is downloaded at once; wait for it (up to 2 s, so a
+      // busy machine running tests in parallel doesn't fail it).
+      final until = DateTime.now().add(const Duration(seconds: 2));
+      while (downloads.isEmpty && DateTime.now().isBefore(until)) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     }, () => cdn);
     return downloads;
   }
