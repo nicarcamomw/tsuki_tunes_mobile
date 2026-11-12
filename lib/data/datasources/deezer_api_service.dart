@@ -58,11 +58,6 @@ class DeezerApiService
   static const int _minArtistFans = 5000;
   static const int _minTrackRank = 10000;
 
-  static const List<String> _corsProxies = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?url=',
-  ];
-
   void _pruneCache() {
     _cache.removeWhere((_, entry) => entry.isExpired);
     if (_cache.length > 200) {
@@ -180,25 +175,14 @@ class DeezerApiService
       return null;
     }
 
-    // Web: Deezer sends no CORS headers. Tsuki's backend first (it caches
-    // and answers with CORS), then public CORS proxies, then direct.
+    // Web: Deezer sends no CORS headers, so it goes through Tsuki's own
+    // backend (functions/, it caches and answers with CORS). No public CORS
+    // proxies: they were unreliable and saw every request.
     final own = BackendProxy.instance.deezer(url);
     if (own != null) {
       final res = await BackendProxy.instance
           .getUri(own, timeout: const Duration(seconds: 8));
       if (res != null && res.statusCode == 200) return await _decode(res.body);
-    }
-    for (final proxy in _corsProxies) {
-      try {
-        final proxyUrl = '$proxy${Uri.encodeComponent(url)}';
-        final res = await http
-            .get(Uri.parse(proxyUrl))
-            .timeout(const Duration(seconds: 8));
-        if (res.statusCode == 200) return await _decode(res.body);
-      } catch (e) {
-        if (e is DeezerApiException) rethrow;
-        _log.severe('CORS proxy error: $e');
-      }
     }
 
     try {
