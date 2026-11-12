@@ -1,11 +1,11 @@
 name: Firebase Test Lab
 
-# Runs integration_test/app_smoke_test.dart on real phones in Firebase Test
-# Lab (project tsuki-tunes-web, results in gs://tsuki-tunes-web-test-lab).
+# Runs integration_test/app_smoke_test.dart on a virtual phone in Firebase
+# Test Lab (project tsuki-tunes-web). Results go to Test Lab's own bucket,
+# which is free (a bucket of ours was billed as Cloud Storage).
 #
 # Needs the repository secret FIREBASE_SERVICE_ACCOUNT: the JSON key of a
-# service account with the "Firebase Test Lab Admin" role and write access
-# to that bucket. Without it the run is skipped right away, instead of
+# service account with the "Firebase Test Lab Admin" role. Without it the run is skipped right away, instead of
 # building for 15 minutes and failing at the login.
 #
 # By hand only (Actions tab), and on one virtual phone. Running on every
@@ -128,6 +128,5 @@ jobs:
             --device model=MediumPhone.arm,version=34,locale=en,orientation=portrait \
             --timeout 5m \
             --num-flaky-test-attempts 0 \
-            --results-bucket=gs://tsuki-tunes-web-test-lab \
             --project=tsuki-tunes-web \
             --no-record-video
