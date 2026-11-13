@@ -103,28 +103,84 @@ class _IsolatedProgressBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return AudioProgressSelector<(Duration, Duration, Duration)>(
       selector: (a) => (a.position, a.duration, a.bufferedPosition),
-      builder: (context, p) => _bar(context, p.$1, p.$2, p.$3),
+      builder: (context, p) => _ScrubBar(locale: locale, position: p.$1, duration: p.$2, buffered: p.$3),
     );
   }
+}
 
-  Widget _bar(BuildContext context, Duration position, Duration duration, Duration buffered) {
+/// R-07: the progress bar grows under the finger and a bubble over the
+/// thumb shows the time it will jump to.
+class _ScrubBar extends StatefulWidget {
+  const _ScrubBar({required this.locale, required this.position, required this.duration, required this.buffered});
+
+  final LocaleProvider locale;
+  final Duration position;
+  final Duration duration;
+  final Duration buffered;
+
+  @override
+  State<_ScrubBar> createState() => _ScrubBarState();
+}
+
+class _ScrubBarState extends State<_ScrubBar> {
+  ThumbDragDetails? _drag;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = widget.locale;
+    final drag = _drag;
+    final dragging = drag != null;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: ProgressBar(
-        progress: position,
-        total: duration,
-        buffered: buffered,
-        onSeek: context.readState(audioProvider).seek,
-        progressBarColor: PlayerTint.of(context),
-        baseBarColor: AppColors.border,
-        bufferedBarColor: AppColors.borderGlow,
-        thumbColor: PlayerTint.of(context),
-        thumbGlowColor: PlayerTint.glowOf(context),
-        thumbRadius: 7.0,
-        timeLabelTextStyle: locale.getTextStyle(
-          fontSize: AppFontSize.caption,
-          color: AppColors.textSecondary,
-        ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ProgressBar(
+            progress: widget.position,
+            total: widget.duration,
+            buffered: widget.buffered,
+            onSeek: context.readState(audioProvider).seek,
+            onDragStart: (d) => setState(() => _drag = d),
+            onDragUpdate: (d) => setState(() => _drag = d),
+            onDragEnd: () => setState(() => _drag = null),
+            progressBarColor: PlayerTint.of(context),
+            baseBarColor: AppColors.border,
+            bufferedBarColor: AppColors.borderGlow,
+            thumbColor: PlayerTint.of(context),
+            thumbGlowColor: PlayerTint.glowOf(context),
+            barHeight: dragging ? 9 : 5,
+            thumbRadius: dragging ? 10 : 7,
+            timeLabelTextStyle: locale.getTextStyle(
+              fontSize: AppFontSize.caption,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          if (drag != null)
+            Positioned(
+              left: drag.localPosition.dx - 28,
+              top: -34,
+              child: IgnorePointer(
+                child: Container(
+                  width: 56,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgCard,
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
+                    border: Border.all(color: PlayerTint.of(context).withValues(alpha: 0.6)),
+                  ),
+                  child: Text(
+                    Formatters.formatDuration(drag.timeStamp),
+                    style: locale.getTextStyle(
+                      fontSize: AppFontSize.caption,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textBright,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
