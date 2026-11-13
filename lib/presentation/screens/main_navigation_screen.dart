@@ -315,7 +315,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     duration: const Duration(milliseconds: 280),
                     curve: Curves.easeInOutCubic,
                     offset: shouldHide ? const Offset(0, 1.2) : Offset.zero,
-                    child: DockSizeReporter(
+                    // R-04: slid away (keyboard up, player open) the dock's
+                    // animations stop: the breathing cover, the marquee, the
+                    // nav icons.
+                    child: TickerMode(
+                      enabled: !shouldHide,
+                      child: DockSizeReporter(
                       child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -340,6 +345,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         ),
                         _buildCyberBottomNav(),
                       ],
+                    ),
                     ),
                     ),
                   );
