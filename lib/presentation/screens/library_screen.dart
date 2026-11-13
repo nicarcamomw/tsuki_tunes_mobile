@@ -517,6 +517,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   image: 'assets/images/hannya.png',
                   artLabel: strings.a11yEmptyPlaylist,
                   lore: strings.emptyLoreHannya,
+                  actionLabel: strings.createPlaylist,
+                  onAction: () => _showCreatePlaylistDialog(context),
                   title: strings.noPlaylistsTitle,
                   message: strings.noPlaylistsSubtitle,
                 )
