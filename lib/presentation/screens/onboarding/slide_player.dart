@@ -109,10 +109,6 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                 blurRadius: 18,
                 offset: const Offset(0, 4),
               ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.7),
-                blurRadius: 16,
-              ),
             ],
           ),
           child: Column(

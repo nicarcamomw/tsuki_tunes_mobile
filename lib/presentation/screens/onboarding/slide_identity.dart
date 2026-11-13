@@ -474,10 +474,6 @@ class _MusicVaultGraphic extends StatelessWidget {
             blurRadius: 14,
             spreadRadius: 1,
           ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.7),
-            blurRadius: 12,
-          ),
         ],
       ),
       child: Stack(
