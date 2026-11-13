@@ -34,12 +34,16 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // A Material, not a coloured box: the rows' tap ripples paint on it
+    // (a decoration hid them).
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.bgMid,
+      child: Material(
+      color: AppColors.bgMid,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
+        side: const BorderSide(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -50,11 +54,15 @@ class _SettingsCard extends StatelessWidget {
           ],
         ],
       ),
+    ),
     );
   }
 }
 
-class _SettingSwitch extends StatelessWidget {
+/// A settings switch. It keeps its own value (S-03): flipping it redraws
+/// the switch, not the whole section around it; a new [value] from the
+/// section still wins.
+class _SettingSwitch extends StatefulWidget {
   final LocaleProvider locale;
   final IconData icon;
   final String title;
@@ -72,17 +80,37 @@ class _SettingSwitch extends StatelessWidget {
   });
 
   @override
+  State<_SettingSwitch> createState() => _SettingSwitchState();
+}
+
+class _SettingSwitchState extends State<_SettingSwitch> {
+  late bool _value = widget.value;
+
+  // When the section does redraw, the setting's real value wins (a
+  // permission refused turns the weather switch back off).
+  @override
+  void didUpdateWidget(_SettingSwitch old) {
+    super.didUpdateWidget(old);
+    _value = widget.value;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = widget.locale;
+    final value = _value;
     return SwitchListTile(
       value: value,
-      onChanged: onChanged,
+      onChanged: (v) {
+        widget.onChanged(v);
+        setState(() => _value = v);
+      },
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       activeThumbColor: AppColors.accent,
-      secondary: Icon(icon,
+      secondary: Icon(widget.icon,
           size: 18, color: value ? AppColors.accent : AppColors.textMuted),
       title: Text(
-        title,
+        widget.title,
         style: locale.getTextStyle(
           fontSize: AppFontSize.body,
           fontWeight: FontWeight.w700,
@@ -90,7 +118,7 @@ class _SettingSwitch extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        subtitle,
+        widget.subtitle,
         style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
       ),
     );

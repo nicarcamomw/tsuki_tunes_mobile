@@ -51,7 +51,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setAutoMarkListened(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -63,7 +62,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setNormalizeVolume(v);
-          setState(() {});
         },
       ),
       ListTile(
@@ -100,7 +98,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           shakeSkip.setEnabled(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -113,7 +110,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           if (v && !ecoAllows(context, EcoFeature.running)) return;
           Haptics.selection();
           run.setEnabled(v);
-          setState(() {});
         },
       ),
     ]);
@@ -221,7 +217,6 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setPrecacheWifiOnly(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -233,7 +228,6 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setAutoplaySimilar(v);
-          setState(() {});
         },
       ),
       _ImageQualityRow(locale: locale, hostContext: widget.hostContext),
@@ -357,7 +351,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         onChanged: (v) {
           Haptics.selection();
           moon.setAtmosphereEnabled(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -387,7 +380,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           await Haptics.setEnabled(v);
           // Turning it on answers with the feel it brings back.
           Haptics.selection();
-          if (mounted) setState(() {});
         },
       ),
       _SettingSwitch(
@@ -399,7 +391,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         onChanged: (v) async {
           Haptics.selection();
           await ref.read(analyticsProvider).setEnabled(v);
-          if (mounted) setState(() {});
         },
       ),
       _SettingLink(
