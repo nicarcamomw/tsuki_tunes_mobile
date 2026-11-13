@@ -285,7 +285,12 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                   else ...[
                     const Spacer(),
                     ExcludeSemantics(
-                    child: PlayerArtHero(
+                    // R-06: swipe the cover to change song (the buttons stay
+                    // for TalkBack).
+                    child: _SwipeToSkip(
+                      onNext: audio.next,
+                      onPrevious: audio.previous,
+                      child: PlayerArtHero(
                       trackId: track.id,
                       coverUrl: track.coverUrl,
                       isPlaying: isPlaying,
@@ -298,6 +303,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         position: () => audio.position,
                         speed: () => audio.playbackSpeed,
                       ),
+                    ),
                     ),
                     ),
                     const SizedBox(height: 24),
@@ -549,3 +555,77 @@ class _CoverBackdrop extends ConsumerWidget {
     );
   }
 }
+
+/// Drags its child sideways; past a third of its width (or flung) it
+/// changes song, then springs back.
+class _SwipeToSkip extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
+
+  const _SwipeToSkip({required this.child, required this.onNext, required this.onPrevious});
+
+  @override
+  State<_SwipeToSkip> createState() => _SwipeToSkipState();
+}
+
+class _SwipeToSkipState extends State<_SwipeToSkip> with SingleTickerProviderStateMixin {
+  late final AnimationController _back = AnimationController(vsync: this, duration: AppMotion.normal)
+    ..addListener(() => setState(() => _dx = _from * (1 - AppMotion.enter.transform(_back.value))));
+  double _dx = 0;
+  double _from = 0;
+  bool _armed = false;
+
+  @override
+  void dispose() {
+    _back.dispose();
+    super.dispose();
+  }
+
+  void _update(DragUpdateDetails d, double width) {
+    _back.stop();
+    setState(() => _dx = (_dx + d.delta.dx).clamp(-width * 0.6, width * 0.6));
+    final past = _dx.abs() > width / 3;
+    if (past != _armed) {
+      _armed = past;
+      if (past) Haptics.selection();
+    }
+  }
+
+  void _end(DragEndDetails d, double width) {
+    final v = d.primaryVelocity ?? 0;
+    final fling = v.abs() > 900;
+    if (_dx.abs() > width / 3 || fling) {
+      final next = fling ? v < 0 : _dx < 0;
+      Haptics.confirm();
+      next ? widget.onNext() : widget.onPrevious();
+    }
+    _armed = false;
+    _from = _dx;
+    _back.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final width = box.maxWidth.isFinite ? box.maxWidth : MediaQuery.sizeOf(context).width;
+      final still = reduceMotion(context);
+      final t = width == 0 ? 0.0 : (_dx / width).clamp(-1.0, 1.0);
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragUpdate: (d) => _update(d, width),
+        onHorizontalDragEnd: (d) => _end(d, width),
+        child: still
+            ? widget.child
+            : Transform.translate(
+                offset: Offset(_dx, 0),
+                child: Transform.rotate(
+                  angle: t * 0.12,
+                  child: Opacity(opacity: (1 - t.abs() * 0.6).clamp(0.3, 1.0), child: widget.child),
+                ),
+              ),
+      );
+    });
+  }
+}
+
