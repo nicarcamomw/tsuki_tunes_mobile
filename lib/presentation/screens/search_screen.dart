@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/genre.dart';
 import '../../domain/entities/lyrics_search_result.dart';
@@ -220,7 +221,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         backgroundColor: AppColors.bgCard,
         content: Text(
           '${strings.noResults}: "${command.query}"',
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
         ),
       ));
       return;
@@ -287,7 +288,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           Text(
                             strings.searchTitle.toUpperCase(),
                             style: locale.getTextStyle(
-                              fontSize: 26,
+                              fontSize: AppFontSize.display,
                               fontWeight: FontWeight.w900,
                               color: AppColors.textBright,
                               letterSpacing: 2,
@@ -296,7 +297,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           Text(
                             ' // 02',
                             style: locale.getTextStyle(
-                              fontSize: 26,
+                              fontSize: AppFontSize.display,
                               fontWeight: FontWeight.w900,
                               color: AppColors.accent,
                             ),
@@ -309,7 +310,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ExcludeSemantics(child: Text(
                       strings.searchTelemetry,
                       style: GoogleFonts.notoSansJp(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentText,
                         letterSpacing: 1.2,
@@ -319,7 +320,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     Text(
                       strings.searchSubtitle,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -340,11 +341,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     controller: _controller,
                     focusNode: focusNode,
                     maxLength: 100,
-                    style: locale.getTextStyle(color: AppColors.textBright, fontSize: 14),
+                    style: locale.getTextStyle(color: AppColors.textBright, fontSize: AppFontSize.title),
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: strings.searchHint,
-                      hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: 14),
+                      hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: AppFontSize.title),
                       prefixIcon: const ExcludeSemantics(child: Icon(Icons.search, color: AppColors.textSecondary, size: 20)),
                       suffixIcon: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _controller,
@@ -418,7 +419,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         child: Text(
                           tabs[index],
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.label,
                             fontWeight: FontWeight.w700,
                             color: isSelected ? AppColors.textBright : AppColors.textSecondary,
                           ),
@@ -476,7 +477,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Text(
                 strings.emptyStateTitle,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                   letterSpacing: 1.5,
@@ -485,7 +486,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               const SizedBox(height: 4),
               Text(
                 strings.emptyStateSubtitle,
-                style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted),
               ),
             ],
           ),
@@ -509,7 +510,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Text(
                 strings.recentSearches,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textMuted,
                   letterSpacing: 1.2,
@@ -527,7 +528,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       title: Text(
                         strings.clearHistory,
                         style: locale.getTextStyle(
-                          fontSize: 16,
+                          fontSize: AppFontSize.heading,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textBright,
                         ),
@@ -568,7 +569,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Text(
                       strings.clearHistory,
                       style: locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                         letterSpacing: 0.8,
@@ -612,7 +613,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           child: Text(
                             q,
                             style: locale.getTextStyle(
-                              fontSize: 13,
+                              fontSize: AppFontSize.bodyLg,
                               color: AppColors.textPrimary,
                             ),
                             maxLines: 1,
@@ -679,7 +680,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Text(
           text,
           style: locale.getTextStyle(
-            fontSize: 10,
+            fontSize: AppFontSize.caption,
             fontWeight: FontWeight.w800,
             color: AppColors.textMuted,
             letterSpacing: 1.2,
@@ -754,13 +755,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 child: Text.rich(
                   TextSpan(
                     style: locale.getTextStyle(
-                        fontSize: 13, color: AppColors.textSecondary),
+                        fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
                     children: [
                       TextSpan(text: '${strings.didYouMeanPrefix} '),
                       TextSpan(
                         text: suggestion,
                         style: locale.getTextStyle(
-                          fontSize: 13,
+                          fontSize: AppFontSize.bodyLg,
                           fontWeight: FontWeight.w800,
                           color: AppColors.accent,
                         ),
@@ -813,7 +814,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Text(
               strings.lyricsSearchEmpty,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 1.5,
@@ -822,7 +823,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(height: 4),
             Text(
               strings.lyricsSearchEmptySubtitle,
-              style: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -850,7 +851,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: Text(
               strings.lyricsSearchResults(search.lyricsResults.length).toUpperCase(),
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.2,
@@ -901,7 +902,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   Text(
                     result.trackName,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -912,7 +913,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   Text(
                     '${result.artistName}  ·  ${result.albumName}',
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.label,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -929,7 +930,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Text(
               result.durationFormatted,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textMuted,
               ),
             ),
@@ -948,7 +949,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       return Text(
         snippet,
         style: locale
-            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)
             .copyWith(fontStyle: FontStyle.italic),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -964,7 +965,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       overflow: TextOverflow.ellipsis,
       text: TextSpan(
         style: locale
-            .getTextStyle(fontSize: 11, color: AppColors.textMuted)
+            .getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)
             .copyWith(fontStyle: FontStyle.italic),
         children: [
           TextSpan(text: before),
@@ -972,7 +973,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             text: match,
             style: locale
                 .getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.label,
                   color: AppColors.accent,
                   fontWeight: FontWeight.w700,
                 )
@@ -1031,7 +1032,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           padding: const EdgeInsets.all(24),
           child: Text(
             strings.noResults,
-            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
           ),
         ),
       );
@@ -1052,7 +1053,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: Text(
                 strings.tabArtists.toUpperCase(),
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accent,
                   letterSpacing: 1.2,
@@ -1081,7 +1082,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: Text(
                 strings.tabAlbums.toUpperCase(),
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accent,
                   letterSpacing: 1.2,
@@ -1110,7 +1111,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: Text(
                 strings.tabTracks.toUpperCase(),
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accent,
                   letterSpacing: 1.2,
@@ -1177,7 +1178,7 @@ class _QueryChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -1248,7 +1249,7 @@ class _GenreTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                     ),

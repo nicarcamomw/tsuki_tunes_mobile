@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 
@@ -42,7 +43,7 @@ class ErrorState extends ConsumerWidget {
             const SizedBox(height: 10),
             Text(
               message,
-              style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
@@ -73,7 +74,7 @@ class ErrorState extends ConsumerWidget {
                         child: Text(
                           strings.retry,
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.label,
                             fontWeight: FontWeight.w800,
                             color: AppColors.accent,
                             letterSpacing: 1.5,

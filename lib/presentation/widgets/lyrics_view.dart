@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
@@ -139,7 +140,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
     while (_keys.length < texts.length) {
       _keys.add(GlobalKey());
     }
-    final fontSize = widget.compact ? 19.0 : 25.0;
+    final fontSize = widget.compact ? AppFontSize.headline : AppFontSize.display;
     final base = locale.getTextStyle(
       fontSize: fontSize,
       fontWeight: FontWeight.w800,
@@ -166,7 +167,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
                 locale.strings.lyricsPreviewNote,
                 style: locale
                     .getTextStyle(
-                      fontSize: widget.compact ? 10 : 12,
+                      fontSize: widget.compact ? AppFontSize.caption : AppFontSize.body,
                       color: AppColors.textMuted,
                     )
                     .copyWith(fontStyle: FontStyle.italic),
@@ -293,7 +294,7 @@ class _LyricLine extends StatelessWidget {
                   child: Text(
                     translation!,
                     style: base.copyWith(
-                      fontSize: (base.fontSize ?? 20) * 0.62,
+                      fontSize: (base.fontSize ?? AppFontSize.headline) * 0.62,
                       fontWeight: FontWeight.w500,
                       fontStyle: FontStyle.italic,
                       color: color.withValues(alpha: color.a * 0.75),
@@ -338,7 +339,7 @@ class _FollowPill extends ConsumerWidget {
             Text(
               locale.strings.lyricsFollowing,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: 0.8,
@@ -523,7 +524,7 @@ class LyricsCard extends ConsumerWidget {
                                   Text(
                                     strings.lyricsCardTitle,
                                     style: locale.getTextStyle(
-                                      fontSize: 15,
+                                      fontSize: AppFontSize.heading,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -536,7 +537,7 @@ class LyricsCard extends ConsumerWidget {
                                         ? '歌詞 // LIVE.SYNC'
                                         : '歌詞 // LYRICS',
                                     style: locale.getTextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: AppFontSize.micro,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.accent
                                           .withValues(alpha: 0.9),
@@ -595,7 +596,7 @@ class _CardMessage extends ConsumerWidget {
             child: Text(
               text,
               style: locale.getTextStyle(
-                fontSize: 10.5,
+                fontSize: AppFontSize.label,
                 fontWeight: FontWeight.w700,
                 color: Colors.white70,
                 letterSpacing: 1,
@@ -617,7 +618,7 @@ class _CardMessage extends ConsumerWidget {
                 child: Text(
                   actionLabel!,
                   style: locale.getTextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),

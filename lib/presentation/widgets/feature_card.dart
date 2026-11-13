@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../state/locale_provider.dart';
 import 'glass_card.dart';
 
@@ -51,7 +52,7 @@ class FeatureCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.label,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 0.8,
@@ -62,7 +63,7 @@ class FeatureCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 10, color: color),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, color: color),
                     ),
                   ],
                 ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -208,7 +209,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           title: Text(
             widget.artistName,
             style: locale.getTextStyle(
-              fontSize: 14,
+              fontSize: AppFontSize.title,
               fontWeight: FontWeight.w700,
               color: AppColors.textBright,
             ),
@@ -267,7 +268,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                         child: Text(
                           strings.noResults,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -311,7 +312,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                                 Text(
                                   strings.retryLoading,
                                   style: locale.getTextStyle(
-                                    fontSize: 11,
+                                    fontSize: AppFontSize.label,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textBright,
                                   ),
@@ -332,7 +333,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                         child: Text(
                           '${strings.allAlbumsLoaded} (${_filtered.length})',
                           style: locale.getTextStyle(
-                            fontSize: 10,
+                            fontSize: AppFontSize.caption,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textMuted,
                             letterSpacing: 1.0,
@@ -374,7 +375,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           child: Text(
             label,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w700,
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
             ),
@@ -406,7 +407,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
@@ -416,7 +417,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               Text(
                 '${items.length}',
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.label,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -491,7 +492,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           Text(
             album.title,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w600,
               color: isCompleted ? AppColors.accent : AppColors.textPrimary,
             ),
@@ -501,7 +502,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           Text(
             subtitle,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.caption,
               color: AppColors.textMuted,
             ),
             maxLines: 1,

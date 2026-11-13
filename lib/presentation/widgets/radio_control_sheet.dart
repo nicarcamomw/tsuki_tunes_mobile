@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
@@ -109,7 +110,7 @@ void _snack(
             child: Text(
               text,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textBright,
               ),
@@ -195,7 +196,7 @@ class _RadioControlSheet extends ConsumerWidget {
                           Text(
                             strings.radioLabel,
                             style: locale.getTextStyle(
-                              fontSize: 10,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,
                               letterSpacing: 2,
@@ -209,7 +210,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                          fontSize: 15,
+                          fontSize: AppFontSize.heading,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textBright,
                         ),
@@ -219,7 +220,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSize.body,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -236,7 +237,7 @@ class _RadioControlSheet extends ConsumerWidget {
                   ? strings.radioSourcesBoth
                   : strings.radioSourcesDeezerOnly,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textMuted,
               ),
             ),
@@ -244,7 +245,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               strings.radioModeTitle,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textMuted,
                 letterSpacing: 1.6,
@@ -288,7 +289,7 @@ class _RadioControlSheet extends ConsumerWidget {
                     AppColors.accent.withValues(alpha: 0.25),
                 side: const BorderSide(color: AppColors.border),
                 textStyle: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.label,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -297,7 +298,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               modeDesc,
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.label,
                 color: AppColors.textSecondary,
                 height: 1.35,
               ),
@@ -347,7 +348,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               strings.radioLearnHint,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textMuted,
                 height: 1.4,
               ),
@@ -409,7 +410,7 @@ class _StatusLine extends StatelessWidget {
             child: Text(
               radioStatusLabel(locale.strings, status),
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.label,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -445,7 +446,7 @@ class _SteerButton extends StatelessWidget {
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700),
       ),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,

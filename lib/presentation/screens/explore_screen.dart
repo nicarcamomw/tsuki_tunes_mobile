@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/artist.dart';
 import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
@@ -307,7 +308,7 @@ class _Header extends StatelessWidget {
                   Text(
                     strings.navExplore,
                     style: locale.getTextStyle(
-                      fontSize: 26,
+                      fontSize: AppFontSize.display,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 2,
@@ -316,7 +317,7 @@ class _Header extends StatelessWidget {
                   Text(
                     ' // ${MainTab.explore.number}',
                     style: locale.getTextStyle(
-                      fontSize: 26,
+                      fontSize: AppFontSize.display,
                       fontWeight: FontWeight.w900,
                       color: AppColors.accent,
                     ),
@@ -333,7 +334,7 @@ class _Header extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.notoSansJp(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accentText,
                 letterSpacing: 1.2,

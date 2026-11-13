@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../navigation/app_router.dart';
 import '../screens/eco_levels_screen.dart';
 import '../state/app_providers.dart';
@@ -98,10 +99,10 @@ class _LockedSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(strings.ecoFeatureName(feature),
-                      style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                   const SizedBox(height: 2),
                   Text((observer ? strings.ecoObserverLocked(feature.level) : strings.ecoOpensAt(feature.level)).toUpperCase(),
-                      style: locale.getTextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.2)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.2)),
                 ],
               ),
             ),
@@ -109,7 +110,7 @@ class _LockedSheet extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(observer ? strings.ecoObserverBody : strings.ecoLockedBody,
-            style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.4)),
         const SizedBox(height: 16),
         if (!observer) ...[
           EcoProgressBar(masks: masks),
@@ -149,10 +150,10 @@ class EcoProgressBar extends ConsumerWidget {
         children: [
           Text(strings.ecoObserver.toUpperCase(),
               style: locale.getTextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w900, color: ecoObserverColor, letterSpacing: 1.6)),
+                  fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: ecoObserverColor, letterSpacing: 1.6)),
           const SizedBox(height: 4),
           Text(strings.ecoObserverShort,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3)),
+              style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textSecondary, height: 1.3)),
         ],
       );
     }
@@ -167,25 +168,25 @@ class EcoProgressBar extends ConsumerWidget {
         Row(
           children: [
             Text(strings.ecoLevel(level),
-                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
             const SizedBox(width: 8),
             Flexible(
               child: Text(strings.ecoRankName(rank).toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.4)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.4)),
             ),
             const Spacer(),
             if (!atTop)
               Text(strings.ecoAmount(eco),
-                  style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ],
         ),
         const SizedBox(height: 6),
         if (atTop)
           // Past 100 no one knows how far the legend is.
           Text(strings.ecoLegendAmount(eco),
-              style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color, letterSpacing: 1))
+              style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w800, color: color, letterSpacing: 1))
         else
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
@@ -199,7 +200,7 @@ class EcoProgressBar extends ConsumerWidget {
         if (!atTop) ...[
           const SizedBox(height: 5),
           Text(strings.ecoToNext(EcoLevels.ecoFor(level + 1) - eco, level + 1),
-              style: locale.getTextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+              style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
         ],
       ],
     );
@@ -291,7 +292,7 @@ class EcoLocked extends ConsumerWidget {
                     Icon(Icons.lock_rounded, size: 10, color: color),
                     const SizedBox(width: 3),
                     Text(strings.ecoLevelShort(feature.level),
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.6)),
+                        style: TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.6)),
                   ],
                 ),
               ),
@@ -412,7 +413,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
                           boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 16)],
                         ),
                         child: Text('${widget.to}',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+                            style: TextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -422,13 +423,13 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
                           children: [
                             Text(strings.ecoLevelUp,
                                 style: locale.getTextStyle(
-                                    fontSize: 9.5, fontWeight: FontWeight.w900, color: color, letterSpacing: 1.6)),
+                                    fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: color, letterSpacing: 1.6)),
                             const SizedBox(height: 2),
                             Text('${strings.ecoLevel(widget.to)} · ${strings.ecoRankName(rank)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: locale.getTextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                                    fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                             for (final r in opened.take(3))
                               Padding(
                                 padding: const EdgeInsets.only(top: 3),
@@ -440,7 +441,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
                                       child: Text(strings.ecoRewardLabel(r),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                          style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textSecondary)),
                                     ),
                                   ],
                                 ),
@@ -449,7 +450,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
                               Padding(
                                 padding: const EdgeInsets.only(top: 3),
                                 child: Text(strings.ecoMore(opened.length - 3),
-                                    style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted)),
+                                    style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
                               ),
                           ],
                         ),

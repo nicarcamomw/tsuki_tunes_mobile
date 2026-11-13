@@ -25,7 +25,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide3Badge,
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
               letterSpacing: 1.6,
@@ -39,7 +39,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide3Title,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 23,
+            fontSize: AppFontSize.headline,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 2.0,
@@ -58,7 +58,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide3Desc,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 12.5,
+            fontSize: AppFontSize.bodyLg,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -162,7 +162,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         Text(
                           'HARDER, BETTER, FASTER',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10.5,
+                            fontSize: AppFontSize.label,
                             fontWeight: FontWeight.w900,
                             color: AppColors.textBright,
                             letterSpacing: 0.5,
@@ -173,7 +173,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         Text(
                           'Daft Punk • Alive 2007',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 9.0,
+                            fontSize: AppFontSize.micro,
                             color: AppColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -233,7 +233,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                       Text(
                         '01:42',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 7.5,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),
@@ -241,7 +241,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                       Text(
                         '03:44',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 7.5,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),

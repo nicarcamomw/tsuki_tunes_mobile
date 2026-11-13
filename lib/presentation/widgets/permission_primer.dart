@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 
@@ -116,14 +117,14 @@ class PermissionPrimer extends ConsumerWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textBright),
+              style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w800, color: AppColors.textBright),
             ),
           ),
           const SizedBox(height: 10),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary, height: 1.45),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -135,7 +136,7 @@ class PermissionPrimer extends ConsumerWidget {
                 Navigator.of(context).pop(true);
               },
               child: Text(strings.permAllow,
-                  style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w800, color: AppColors.textBright)),
             ),
           ),
           const SizedBox(height: 8),
@@ -145,7 +146,7 @@ class PermissionPrimer extends ConsumerWidget {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(strings.permNotNow,
-                  style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
             ),
           ),
         ],
@@ -164,7 +165,7 @@ void showNotificationsBlocked(BuildContext context) {
     ..showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.bgCard,
-      content: Text(strings.permNotifBlocked, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+      content: Text(strings.permNotifBlocked, style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body)),
       action: SnackBarAction(
         label: strings.permOpenSettings,
         textColor: AppColors.accentText,

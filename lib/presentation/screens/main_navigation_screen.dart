@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../navigation/app_router.dart';
 import '../navigation/main_tab.dart';
 import '../state/app_providers.dart';
@@ -191,7 +192,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           ? strings.batteryGuideSnack
                           : spotifyError.message(strings),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -241,7 +242,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: Text(
                       playbackError.message(strings, isOnline: isOnline),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -287,7 +288,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: Text(
                       strings.syncError,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -384,7 +385,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               Text(
                                 strings.offline,
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.label,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -659,7 +660,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 label,
                 maxLines: 1,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.caption,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   color: isSelected ? AppColors.accent : AppColors.textSecondary,
                   letterSpacing: 1,
@@ -673,7 +674,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 locale.strings.navHudSubtitle(tab.name),
                 maxLines: 1,
                 style: GoogleFonts.notoSansJp(
-                  fontSize: 8.5,
+                  fontSize: AppFontSize.micro,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                   color: isSelected
                       ? AppColors.accent.withValues(alpha: 0.9)

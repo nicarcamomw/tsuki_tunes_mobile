@@ -15,7 +15,7 @@ class _SectionHeader extends StatelessWidget {
         child: Text(
           title,
           style: locale.getTextStyle(
-            fontSize: 10,
+            fontSize: AppFontSize.caption,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
             color: AppColors.textMuted,
@@ -84,14 +84,14 @@ class _SettingSwitch extends StatelessWidget {
       title: Text(
         title,
         style: locale.getTextStyle(
-          fontSize: 12,
+          fontSize: AppFontSize.body,
           fontWeight: FontWeight.w700,
           color: AppColors.textBright,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
       ),
     );
   }
@@ -136,7 +136,7 @@ class _SettingLink extends StatelessWidget {
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w600,
                   color: labelColor,
                 ),
@@ -201,7 +201,7 @@ class _AppVersionLabel extends StatelessWidget {
             child: Text(
               text,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
             ),
           ),
         );

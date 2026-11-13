@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/cadence_detector.dart';
 import '../../domain/logic/pace_matcher.dart';
@@ -38,7 +39,7 @@ class RunModeScreen extends ConsumerWidget {
         title: Text(
           strings.runTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 1.5,
@@ -92,7 +93,7 @@ class RunModeScreen extends ConsumerWidget {
                   child: Text(
                     run.active ? strings.runStop : strings.runStart,
                     style: locale.getTextStyle(
-                      fontSize: 15,
+                      fontSize: AppFontSize.heading,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 2,
@@ -153,7 +154,7 @@ class _CadenceGauge extends ConsumerWidget {
                   Text(
                     label,
                     style: locale.getTextStyle(
-                      fontSize: spm == null ? 40 : 64,
+                      fontSize: spm == null ? AppFontSize.hero : AppFontSize.giant,
                       fontWeight: FontWeight.w900,
                       color: spm == null ? AppColors.borderGlow : AppColors.textBright,
                       height: 1,
@@ -164,7 +165,7 @@ class _CadenceGauge extends ConsumerWidget {
                   Text(
                     strings.runSpmUnit,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textMuted,
                       letterSpacing: 2,
@@ -181,7 +182,7 @@ class _CadenceGauge extends ConsumerWidget {
                     child: Text(
                       strings.runState(spm == null ? MotionState.still : reading.state),
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w800,
                         color: color,
                         letterSpacing: 1.5,
@@ -385,7 +386,7 @@ class _StatusLine extends ConsumerWidget {
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: locale.getTextStyle(fontSize: 12, color: color, height: 1.4),
+      style: locale.getTextStyle(fontSize: AppFontSize.body, color: color, height: 1.4),
     );
   }
 }
@@ -421,7 +422,7 @@ class _MusicPanel extends ConsumerWidget {
                 child: Text(
                   target == null ? '—' : strings.runMusicAt(target.round()),
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                   ),
@@ -455,7 +456,7 @@ class _MusicPanel extends ConsumerWidget {
                 icon: Icon(run.isLocked ? Icons.directions_walk_rounded : Icons.lock_rounded, size: 16),
                 label: Text(
                   run.isLocked ? strings.runUnlock : strings.runLock,
-                  style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700),
                 ),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.neonCyan,
@@ -491,7 +492,7 @@ class _MusicPanel extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSize.body,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textBright,
                         ),
@@ -500,7 +501,7 @@ class _MusicPanel extends ConsumerWidget {
                         track.fullArtistName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -547,7 +548,7 @@ class _TempoChip extends ConsumerWidget {
       ),
       child: Text(
         b == null ? locale.strings.runUnknownTempo : locale.strings.runSongTempo(b.round(), rate),
-        style: locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color),
+        style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color),
       ),
     );
   }
@@ -610,7 +611,7 @@ class _SyncRow extends ConsumerWidget {
                 Text(
                   strings.runSyncTitle,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                   ),
@@ -618,7 +619,7 @@ class _SyncRow extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   canSync ? strings.runSyncSubtitle : strings.runSyncSpotify,
-                  style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted, height: 1.35),
+                  style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted, height: 1.35),
                 ),
               ],
             ),
@@ -688,7 +689,7 @@ class _SessionStatsState extends ConsumerState<_SessionStats> {
                 value,
                 maxLines: 1,
                 style: locale.getTextStyle(
-                  fontSize: 16,
+                  fontSize: AppFontSize.heading,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textBright,
                 ),
@@ -699,7 +700,7 @@ class _SessionStatsState extends ConsumerState<_SessionStats> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 9,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
                   letterSpacing: 1,
@@ -802,7 +803,7 @@ class _Hint extends ConsumerWidget {
         Expanded(
           child: Text(
             text,
-            style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted, height: 1.4),
+            style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted, height: 1.4),
           ),
         ),
       ],

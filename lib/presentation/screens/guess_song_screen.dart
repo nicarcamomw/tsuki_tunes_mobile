@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/artist_names.dart';
@@ -649,7 +650,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         title: Text(
           strings.guessTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 1.5,
@@ -694,7 +695,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             onSelected: (_) => _setMode(mode),
             showCheckmark: false,
             labelStyle: locale.getTextStyle(
-              fontSize: 11,
+              fontSize: AppFontSize.label,
               fontWeight: FontWeight.w700,
               color: selected ? Colors.white : AppColors.textSecondary,
             ),
@@ -749,7 +750,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textBright,
               ),
@@ -760,7 +761,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             child: Text(
               locale.strings.guessArtistChange,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1,
@@ -798,7 +799,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -815,7 +816,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       children: [
         Text(
           strings.guessPickArtist,
-          style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary),
+          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 12),
         if (_artistTooFew) _banner(locale, Icons.info_outline_rounded, strings.guessArtistTooFew),
@@ -823,11 +824,11 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           controller: _artistSearchCtrl,
           onChanged: _onArtistSearch,
           textInputAction: TextInputAction.search,
-          style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
           cursorColor: AppColors.accent,
           decoration: InputDecoration(
             hintText: strings.guessArtistSearchHint,
-            hintStyle: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+            hintStyle: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted),
             isDense: true,
             filled: true,
             fillColor: AppColors.bgCard,
@@ -857,7 +858,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           Text(
             strings.guessYourArtists,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w800,
               color: AppColors.textMuted,
               letterSpacing: 1.5,
@@ -877,7 +878,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                       label: Text(name),
                       onPressed: () => _pickArtistByName(name),
                       labelStyle: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.label,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                       ),
@@ -931,7 +932,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                   Text(
                     strings.guessSessionStreak(_sessionStreak, _bestStreak),
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.label,
                       fontWeight: FontWeight.w700,
                       color: AppColors.sakura,
                     ),
@@ -945,7 +946,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               strings.guessHowTo,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted),
             ),
           ),
         if (_finished) ...[
@@ -978,7 +979,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
-                style: locale.getTextStyle(fontSize: 11, color: AppColors.textPrimary)),
+                style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textPrimary)),
           ),
         ],
       ),
@@ -1027,7 +1028,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             child: Text(
               '${i + 1}',
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.label,
                 fontWeight: FontWeight.w800,
                 color: done ? color : AppColors.textMuted,
               ),
@@ -1051,7 +1052,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: done ? AppColors.textBright : AppColors.textMuted,
               ),
@@ -1071,7 +1072,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             child: Text(
               '${GuessGame.clipSeconds[i]}s',
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: isCurrent ? Colors.white : AppColors.textMuted,
               ),
@@ -1099,7 +1100,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final unlocked = _unlockedSeconds / total;
     final head = (_clipPos.inMilliseconds / (total * 1000)).clamp(0.0, 1.0);
     final timeStyle = locale.getTextStyle(
-      fontSize: 9,
+      fontSize: AppFontSize.micro,
       fontWeight: FontWeight.w700,
       color: AppColors.textMuted,
       letterSpacing: 0.5,
@@ -1247,7 +1248,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                               const Icon(Icons.search_off_rounded, size: 14, color: AppColors.textMuted),
                               const SizedBox(width: 6),
                               Text(strings.guessNoResults,
-                                  style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                  style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
                             ],
                           ),
                         )
@@ -1305,7 +1306,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: locale.getTextStyle(
-                                              fontSize: 12,
+                                              fontSize: AppFontSize.body,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.textBright,
                                             ),
@@ -1315,7 +1316,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: locale.getTextStyle(
-                                                fontSize: 10, color: AppColors.textSecondary),
+                                                fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                                           ),
                                           if (t.albumTitle.isNotEmpty)
                                             Text(
@@ -1323,7 +1324,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: locale.getTextStyle(
-                                                  fontSize: 9, color: AppColors.textMuted),
+                                                  fontSize: AppFontSize.micro, color: AppColors.textMuted),
                                             ),
                                         ],
                                       ),
@@ -1352,11 +1353,11 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                   focusNode: _searchFocus,
                   onChanged: _onSearchChanged,
                   textInputAction: TextInputAction.search,
-                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
                   cursorColor: AppColors.accent,
                   decoration: InputDecoration(
                     hintText: strings.guessSearchHint,
-                    hintStyle: locale.getTextStyle(fontSize: 12, color: AppColors.textMuted),
+                    hintStyle: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted),
                     isDense: true,
                     filled: true,
                     fillColor: AppColors.bgCard,
@@ -1391,7 +1392,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                 label: Text(
                   isLast ? strings.guessGiveUp : strings.guessSkip(nextExtra),
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.label,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textSecondary,
                     letterSpacing: 1,
@@ -1465,7 +1466,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               Expanded(
                 child: Text(
                   _won ? strings.guessWonIn(_outcomes.length) : strings.guessLost,
-                  style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color),
+                  style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: color),
                 ),
               ),
               Container(
@@ -1478,7 +1479,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                 child: Text(
                   '${_won ? _outcomes.length : 'X'}/${GuessGame.maxAttempts}',
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w900,
                     color: color,
                     letterSpacing: 1,
@@ -1520,7 +1521,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -1530,7 +1531,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                       t.fullArtistName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary),
                     ),
                     if (t.albumTitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -1538,7 +1539,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                         t.albumTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted),
                       ),
                     ],
                   ],
@@ -1577,7 +1578,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                   Text(
                     strings.guessNextDailyIn('$hh:$mm:$ss'),
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.label,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
                     ),
@@ -1599,7 +1600,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       label: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 10,
+          fontSize: AppFontSize.caption,
           fontWeight: FontWeight.w800,
           color: filled ? Colors.white : AppColors.accent,
           letterSpacing: 0.8,
@@ -1624,10 +1625,10 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             children: [
               Text(value,
                   style: locale.getTextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                      fontSize: AppFontSize.headline, fontWeight: FontWeight.w800, color: AppColors.textBright)),
               Text(label,
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
             ],
           ),
         );
@@ -1665,7 +1666,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                     child: Text(
                       '${strings.guessStatsTitle} · ${strings.guessModeDaily}',
                       style: locale.getTextStyle(
-                        fontSize: 13,
+                        fontSize: AppFontSize.bodyLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
                         letterSpacing: 1.5,
@@ -1688,7 +1689,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               Text(
                 strings.guessStatsDistribution,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textMuted,
                   letterSpacing: 1.2,
@@ -1704,7 +1705,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                         width: 18,
                         child: Text(
                           i < GuessGame.maxAttempts ? '${i + 1}' : 'X',
-                          style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textSecondary),
                         ),
                       ),
                       Expanded(
@@ -1724,7 +1725,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                 '${s.distribution[i]}',
                                 textAlign: TextAlign.right,
                                 style: locale.getTextStyle(
-                                  fontSize: 10,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),

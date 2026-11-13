@@ -118,7 +118,7 @@ class _AlmostCompleteCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -128,7 +128,7 @@ class _AlmostCompleteCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.label,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),

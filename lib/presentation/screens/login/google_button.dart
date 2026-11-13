@@ -201,7 +201,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                             Text(
                               widget.strings.loginGranted,
                               style: widget.locale.getTextStyle(
-                                fontSize: 12.0,
+                                fontSize: AppFontSize.body,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 2.2,
@@ -226,7 +226,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                 Text(
                                   widget.strings.loginLoading,
                                   style: widget.locale.getTextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: AppFontSize.bodyLg,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     letterSpacing: 1.8,
@@ -262,7 +262,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                 Text(
                                   widget.strings.loginGoogle,
                                   style: widget.locale.getTextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: AppFontSize.bodyLg,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     letterSpacing: 1.8,

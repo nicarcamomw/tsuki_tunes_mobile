@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/wrapped_data.dart';
 import '../../domain/logic/wrapped_service.dart';
@@ -476,7 +477,7 @@ class _Backdrop extends StatelessWidget {
               child: Text(
                 kanji!,
                 style: GoogleFonts.notoSansJp(
-                  fontSize: 320,
+                  fontSize: AppFontSize.giant * 5, // marca de agua a todo lo ancho
                   fontWeight: FontWeight.w900,
                   color: tint.withValues(alpha: 0.07),
                   height: 1,
@@ -680,7 +681,7 @@ class _IntroSlide extends StatelessWidget {
           const SizedBox(height: 36),
           Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
               style: GoogleFonts.notoSansJp(
-                  fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
+                  fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
         ],
       ),
     );
@@ -1646,7 +1647,7 @@ class _SummarySlide extends StatelessWidget {
                                 const SizedBox(height: 14),
                                 Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
                                     style: GoogleFonts.notoSansJp(
-                                        fontSize: 8.5,
+                                        fontSize: AppFontSize.micro,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.accent.withValues(alpha: 0.6),
                                         letterSpacing: 2)),
@@ -1770,21 +1771,21 @@ class _Empty extends StatelessWidget {
             children: [
               Text(monthly ? '月' : '年',
                   style: GoogleFonts.notoSansJp(
-                      fontSize: 72, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
+                      fontSize: AppFontSize.giant, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
               const SizedBox(height: 18),
               Text(strings.wrappedNoDataFor(monthly: monthly),
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w800, color: AppColors.textBright)),
               const SizedBox(height: 10),
               Text(strings.wrappedNoDataSubtitle,
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary)),
               const SizedBox(height: 28),
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
                 child: Text(strings.a11yBack,
-                    style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.accent)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, color: AppColors.accent)),
               ),
             ],
           ),

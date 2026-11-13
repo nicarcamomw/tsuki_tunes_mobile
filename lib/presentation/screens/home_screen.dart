@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/album_progress.dart';
@@ -538,7 +539,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Text(
                   strings.emptyReleases,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -687,7 +688,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       label: Text(
                         strings.navExplore,
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.label,
                           fontWeight: FontWeight.w800,
                           color: AppColors.accentText,
                           letterSpacing: 1,

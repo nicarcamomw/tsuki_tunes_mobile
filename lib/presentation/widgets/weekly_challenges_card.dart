@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../screens/mask_collection_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -55,9 +56,9 @@ class WeeklyChallengesCard extends ConsumerWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(strings.weeklyTitle,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: t(11, w: FontWeight.w800, c: AppColors.accent, spacing: 1.4)),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: t(AppFontSize.label, w: FontWeight.w800, c: AppColors.accent, spacing: 1.4)),
         ),
-        Text(strings.weeklyTimeLeft(masks.weekTimeLeft), style: t(10, w: FontWeight.w600, c: AppColors.textMuted)),
+        Text(strings.weeklyTimeLeft(masks.weekTimeLeft), style: t(AppFontSize.caption, w: FontWeight.w600, c: AppColors.textMuted)),
       ],
     );
 
@@ -108,7 +109,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                       const SizedBox(height: 5),
                       Text(
                         won ? reward.name(lang) : strings.weeklyDoneCount(done),
-                        style: t(10.5, w: FontWeight.w600, c: AppColors.textSecondary),
+                        style: t(AppFontSize.label, w: FontWeight.w600, c: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -153,7 +154,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                           ],
                           Text(
                             prizeWon ? strings.maskRarity(prize.rarity) : '$needs/3 · ${strings.maskRarity(prize.rarity)}',
-                            style: t(9.5, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
+                            style: t(AppFontSize.caption, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
                           ),
                         ],
                       ),
@@ -166,7 +167,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                   rPrize == null && srPrize == null
                       ? strings.weeklyAllCollected
                       : '${strings.weeklyPrizes(rPrize?.name(lang), srPrize?.name(lang))}\n${strings.weeklyPrizesHint}',
-                  style: t(11.5, w: FontWeight.w600, c: AppColors.textSecondary),
+                  style: t(AppFontSize.body, w: FontWeight.w600, c: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -211,7 +212,7 @@ class _ChallengeRow extends ConsumerWidget {
                 Text(
                   strings.weeklyChallengeText(challenge),
                   style: locale.getTextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w700,
                     color: done ? AppColors.textSecondary : AppColors.textBright,
                     decoration: done ? TextDecoration.lineThrough : null,
@@ -234,7 +235,7 @@ class _ChallengeRow extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text('$progress/${challenge.target}',
-                        style: locale.getTextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w800, color: color)),
                   ],
                 ),
               ],

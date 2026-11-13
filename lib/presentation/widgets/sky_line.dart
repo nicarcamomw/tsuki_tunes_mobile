@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weather.dart';
 import '../state/ambient_provider.dart';
@@ -136,7 +137,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: locale.getTextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.3,
@@ -169,7 +170,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                       Text(
                         strings.weatherTitle,
                         style: locale.getTextStyle(
-                          fontSize: 9,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textMuted,
                           letterSpacing: 1,
@@ -469,7 +470,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   child: Text(
                     strings.rainOfferTitle(place),
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                     ),
@@ -487,7 +488,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   _OfferState.empty => strings.rainOfferEmpty,
                 },
                 style: locale.getTextStyle(
-                    fontSize: 12, color: AppColors.textMuted, height: 1.35),
+                    fontSize: AppFontSize.body, color: AppColors.textMuted, height: 1.35),
               ),
             ),
             const SizedBox(height: 8),
@@ -504,7 +505,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                           size: 14, color: AppColors.neonCyan),
                       label: Text(strings.rainOfferAddRain),
                       labelStyle: locale.getTextStyle(
-                          fontSize: 11, color: AppColors.textPrimary),
+                          fontSize: AppFontSize.label, color: AppColors.textPrimary),
                       showCheckmark: false,
                       selectedColor: AppColors.neonCyan.withValues(alpha: 0.2),
                       backgroundColor: AppColors.bgDeep,
@@ -531,7 +532,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                             child: Text(
                               strings.rainOfferNo,
                               style: locale.getTextStyle(
-                                  fontSize: 12, color: AppColors.textMuted),
+                                  fontSize: AppFontSize.body, color: AppColors.textMuted),
                             ),
                           ),
                           FilledButton(
@@ -543,7 +544,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                             child: Text(
                               strings.rainOfferYes,
                               style: locale.getTextStyle(
-                                fontSize: 12,
+                                fontSize: AppFontSize.body,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.bgDeep,
                               ),
@@ -575,7 +576,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   child: Text(
                     MaterialLocalizations.of(context).closeButtonLabel,
                     style: locale.getTextStyle(
-                        fontSize: 12, color: AppColors.textMuted),
+                        fontSize: AppFontSize.body, color: AppColors.textMuted),
                   ),
                 ),
               ),

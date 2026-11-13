@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_font_size.dart';
 import '../../navigation/main_tab.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
@@ -268,7 +269,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   Text(
                     strings.onboardingHeaderPrefix,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 1.8,
@@ -277,7 +278,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   CyberGlitchText(
                     text: strings.onboardingHeaderGlitch,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w900,
                       color: AppColors.accent,
                       letterSpacing: 1.8,
@@ -317,7 +318,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     Text(
                       strings.onboardingSkip,
                       style: locale.getTextStyle(
-                        fontSize: 9.5,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
                         letterSpacing: 1.2,
@@ -424,7 +425,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     Text(
                       isLastPage ? strings.onboardingStart : strings.onboardingNext,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.label,
                         fontWeight: FontWeight.w900,
                         color: isLastPage ? Colors.white : AppColors.textBright,
                         letterSpacing: 1.5,
@@ -474,13 +475,13 @@ Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widg
         Text(
           text,
           style: locale?.getTextStyle(
-                fontSize: 8.5,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,
               ) ??
               GoogleFonts.plusJakartaSans(
-                fontSize: 8.5,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,

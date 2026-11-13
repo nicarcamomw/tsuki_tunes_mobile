@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/battery_family.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
@@ -84,7 +85,7 @@ class BatteryGuideSheet extends ConsumerWidget {
                 child: Text(
                   strings.batteryGuideTitle,
                   style: locale.getTextStyle(
-                    fontSize: 16,
+                    fontSize: AppFontSize.heading,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                   ),
@@ -96,7 +97,7 @@ class BatteryGuideSheet extends ConsumerWidget {
           Text(
             strings.batteryGuideIntro(makerName),
             style: locale.getTextStyle(
-              fontSize: 13,
+              fontSize: AppFontSize.bodyLg,
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -120,7 +121,7 @@ class BatteryGuideSheet extends ConsumerWidget {
                     child: Text(
                       '${i + 1}',
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.label,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
                       ),
@@ -131,7 +132,7 @@ class BatteryGuideSheet extends ConsumerWidget {
                     child: Text(
                       steps[i],
                       style: locale.getTextStyle(
-                        fontSize: 13,
+                        fontSize: AppFontSize.bodyLg,
                         color: AppColors.textBright,
                         height: 1.45,
                       ),
@@ -149,7 +150,7 @@ class BatteryGuideSheet extends ConsumerWidget {
               label: Text(
                 strings.batteryGuideOpenSettings,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                   color: Colors.white,
@@ -172,7 +173,7 @@ class BatteryGuideSheet extends ConsumerWidget {
             child: Text(
               strings.batteryGuideDontShow,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
               ),

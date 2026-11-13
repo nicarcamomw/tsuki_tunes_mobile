@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
@@ -321,7 +322,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         Text(
                           playbackError.message(strings),
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.label,
                             color: AppColors.error,
                             fontWeight: FontWeight.w600,
                           ),
@@ -399,7 +400,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     Text(
                       strings.playingFrom,
                       style: locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
                         letterSpacing: 2.0,
@@ -413,7 +414,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                               ? track.artistName
                               : 'DEEZER PREVIEW'),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.label,
                         fontWeight: FontWeight.w700,
                         color: PlayerTint.of(context),
                       ),
@@ -466,7 +467,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                   child: _TitleMarquee(
                     text: track.title,
                     style: locale.getTextStyle(
-                      fontSize: 18,
+                      fontSize: AppFontSize.heading,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                       letterSpacing: 0.5,
@@ -488,7 +489,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     child: Text(
                       track.fullArtistName,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 1,

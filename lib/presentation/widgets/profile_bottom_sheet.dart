@@ -15,6 +15,7 @@ import '../../core/constants/firebase_emulators.dart';
 import '../../core/constants/legal_links.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../navigation/app_router.dart';
 import '../navigation/routes.dart';
@@ -141,7 +142,7 @@ class _ProfileSheet extends ConsumerWidget {
                 label: Text(
                   strings.logoutOption,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
                   ),
@@ -169,7 +170,7 @@ class _ProfileSheet extends ConsumerWidget {
                 label: Text(
                   strings.deleteAccountOption,
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                   ),
@@ -185,7 +186,7 @@ class _ProfileSheet extends ConsumerWidget {
               child: Text(
                 locale.strings.dataCredits,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 9.5, color: AppColors.textMuted, height: 1.4),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted, height: 1.4),
               ),
             ),
           ],
@@ -231,7 +232,7 @@ class _ProfileSheet extends ConsumerWidget {
         Text(
           auth.user?.displayName ?? '',
           style: locale.getTextStyle(
-            fontSize: 16,
+            fontSize: AppFontSize.heading,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -239,7 +240,7 @@ class _ProfileSheet extends ConsumerWidget {
         Text(
           auth.user?.email ?? '',
           style: locale.getTextStyle(
-            fontSize: 11,
+            fontSize: AppFontSize.label,
             color: AppColors.textSecondary,
           ),
         ),
@@ -263,7 +264,7 @@ class _ProfileSheet extends ConsumerWidget {
                 Text(
                   '${strings.masksProfileRow} · ${strings.masksCount(masks.unlockedCount, masks.totalCount)}',
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.label,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
                   ),
@@ -293,7 +294,7 @@ class _ProfileSheet extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     strings.profileViewMine,
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textBright),
+                    style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700, color: AppColors.textBright),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
@@ -318,7 +319,7 @@ class _ProfileSheet extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     strings.bondsTitle,
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textBright),
+                    style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700, color: AppColors.textBright),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
