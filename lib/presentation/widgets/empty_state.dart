@@ -85,8 +85,7 @@ class EmptyState extends ConsumerWidget {
                     semanticLabel: artLabel)
                 : null);
 
-    return Center(
-      child: Padding(
+    final content = Padding(
         padding: padding ?? EdgeInsets.symmetric(horizontal: 28, vertical: compact ? 20 : 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -137,8 +136,18 @@ class EmptyState extends ConsumerWidget {
             ],
           ],
         ),
-      ),
-    );
+      );
+    // Centred when it fits; on a small phone or with large text, where it
+    // overflowed its space, it scrolls instead.
+    return LayoutBuilder(builder: (context, box) {
+      if (!box.hasBoundedHeight) return Center(child: content);
+      return SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight),
+          child: Center(child: content),
+        ),
+      );
+    });
   }
 }
 
