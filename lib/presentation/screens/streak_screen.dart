@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/design_tokens.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -22,7 +23,7 @@ class StreakScreen extends ConsumerWidget {
   const StreakScreen({super.key});
 
   static Future<void> open(BuildContext context) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const StreakScreen()));
+      Navigator.of(context).push(cyberRoute<void>(const StreakScreen()));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

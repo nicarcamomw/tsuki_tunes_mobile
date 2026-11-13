@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -24,7 +25,7 @@ class EcoLevelsScreen extends ConsumerWidget {
   /// Opens the levels, also from above the navigator (the level-up banner).
   static Future<void> open(BuildContext context) {
     final nav = Navigator.maybeOf(context, rootNavigator: true) ?? rootNavigatorKey.currentState;
-    return nav?.push(MaterialPageRoute<void>(builder: (_) => const EcoLevelsScreen())) ?? Future.value();
+    return nav?.push(cyberRoute<void>(const EcoLevelsScreen())) ?? Future.value();
   }
 
   @override

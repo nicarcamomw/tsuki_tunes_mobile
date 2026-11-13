@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../domain/lore/tsuki_lore.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -21,7 +22,7 @@ class LoreScreen extends ConsumerWidget {
   const LoreScreen({super.key});
 
   static Future<void> open(BuildContext context) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const LoreScreen()));
+      Navigator.of(context).push(cyberRoute<void>(const LoreScreen()));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -200,7 +201,7 @@ class _ChapterTile extends ConsumerWidget {
         onTap: open
             ? () {
                 Haptics.tap();
-                Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => LoreChapterScreen(chapter: chapter)));
+                Navigator.of(context).push(cyberRoute<void>(LoreChapterScreen(chapter: chapter)));
               }
             : null,
         child: Container(

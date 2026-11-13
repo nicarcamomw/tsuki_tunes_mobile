@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import '../widgets/haptics.dart';
@@ -23,7 +24,7 @@ class AscensionScreen extends ConsumerStatefulWidget {
 
   static Future<void> open(BuildContext context) {
     final nav = Navigator.maybeOf(context, rootNavigator: true) ?? rootNavigatorKey.currentState;
-    return nav?.push(MaterialPageRoute<void>(fullscreenDialog: true, builder: (_) => const AscensionScreen())) ??
+    return nav?.push(cyberRoute<void>(const AscensionScreen(), fullscreenDialog: true)) ??
         Future.value();
   }
 

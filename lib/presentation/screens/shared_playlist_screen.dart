@@ -9,6 +9,7 @@ import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/shared_playlist.dart';
 import '../../domain/entities/social.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/haptics.dart';
@@ -141,7 +142,7 @@ Future<void> createSharedPlaylist(BuildContext context, WidgetRef ref) async {
   if (name == null || name.trim().isEmpty) return;
   final id = await c.create(name.trim());
   if (id != null && context.mounted) {
-    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => SharedPlaylistScreen(id: id))));
+    unawaited(Navigator.of(context).push(cyberRoute<void>(SharedPlaylistScreen(id: id))));
   }
 }
 

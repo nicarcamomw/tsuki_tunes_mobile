@@ -46,4 +46,8 @@ void main() {
       isEmpty,
     );
   });
+
+  test('E-04: screens open with the app transition, not MaterialPageRoute', () {
+    expect(_offenders(RegExp(r'MaterialPageRoute')), isEmpty);
+  });
 }
