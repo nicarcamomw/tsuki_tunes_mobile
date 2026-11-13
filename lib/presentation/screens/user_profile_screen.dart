@@ -65,7 +65,9 @@ class _Unavailable extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // A private profile reached by its link can still be asked for a Bond.
-    final social = ref.watch(socialProvider);
+    // P-04: what the profile reads, not every social notification.
+    ref.watch(socialProvider.select((s) => (s.available, s.me, s.bonds, s.received, s.sent)));
+    final social = ref.read(socialProvider);
     final known = [...social.received, ...social.sent, ...social.bonds].where((p) => p.uid == uid).firstOrNull;
     final person = known ?? SocialPerson(uid: uid, name: ref.watch(stringsProvider).ecoRankName(EcoRank.portador));
     return Center(

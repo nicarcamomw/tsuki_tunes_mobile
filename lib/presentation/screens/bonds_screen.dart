@@ -44,7 +44,9 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final social = ref.watch(socialProvider);
+    // P-04: only what the tabs show (signed in, the requests badge).
+    ref.watch(socialProvider.select((s) => (s.available, s.pending)));
+    final social = ref.read(socialProvider);
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       appBar: AppBar(
@@ -316,7 +318,9 @@ class _BondsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final social = ref.watch(socialProvider);
+    // P-04: the three lists (replaced, never edited in place, on each change).
+    ref.watch(socialProvider.select((s) => (s.bonds, s.received, s.sent)));
+    final social = ref.read(socialProvider);
     if (social.bonds.isEmpty && social.received.isEmpty && social.sent.isEmpty) {
       return _Empty(
         icon: Icons.people_outline_rounded,
@@ -368,7 +372,8 @@ class _RequestButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.watch(stringsProvider);
-    final social = ref.watch(socialProvider);
+    ref.watch(socialProvider.select((s) => s.isBusy(person.uid)));
+    final social = ref.read(socialProvider);
     if (social.isBusy(person.uid)) return const SizedBox(height: 40, child: Center(child: _Spinner()));
     return Row(
       children: [
@@ -538,7 +543,9 @@ class BondButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.watch(stringsProvider);
-    final social = ref.watch(socialProvider);
+    // P-04: this person's button only redraws when its own state changes.
+    ref.watch(socialProvider.select((s) => (s.available, s.me, s.isBusy(person.uid), s.stateWith(person.uid))));
+    final social = ref.read(socialProvider);
     if (!social.available || social.me == person.uid) return const SizedBox.shrink();
     if (social.isBusy(person.uid)) {
       return SizedBox(

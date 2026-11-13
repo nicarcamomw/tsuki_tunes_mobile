@@ -23,7 +23,9 @@ class MaskCollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = ref.watch(maskProvider);
+    // P-04: rebuilt when what it shows changes, not on every mask notification.
+    ref.watch(maskProvider.select((m) => (m.equipped, m.unlockedCount)));
+    final masks = ref.read(maskProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final equipped = masks.equipped;

@@ -63,7 +63,9 @@ class _LockedSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = ref.watch(maskProvider);
+    // P-04: what it and its EcoProgressBar draw: observer, level, Eco.
+    ref.watch(maskProvider.select((m) => (m.isObserver, m.level, m.eco)));
+    final masks = ref.read(maskProvider);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final observer = masks.isObserver;
@@ -208,7 +210,9 @@ class EcoBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = ref.watch(maskProvider);
+    // P-04: the rank follows the level.
+    ref.watch(maskProvider.select((m) => (m.isObserver, m.level)));
+    final masks = ref.read(maskProvider);
     final strings = ref.watch(localeProvider).strings;
     final observer = masks.isObserver;
     final level = masks.level;
@@ -469,7 +473,9 @@ class EcoLevelCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = ref.watch(maskProvider);
+    // P-04: what it and its EcoProgressBar draw: observer, level, Eco.
+    ref.watch(maskProvider.select((m) => (m.isObserver, m.level, m.eco)));
+    final masks = ref.read(maskProvider);
     final strings = ref.watch(localeProvider).strings;
     final color = masks.isObserver ? ecoObserverColor : ecoRankColor(masks.rank);
     return Padding(

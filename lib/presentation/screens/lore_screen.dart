@@ -264,7 +264,9 @@ class LoreChapterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final owned = ref.watch(maskProvider).unlockedIds;
+    // P-04: a new mask is a new count; the ids are read then.
+    ref.watch(maskProvider.select((m) => m.unlockedCount));
+    final owned = ref.read(maskProvider).unlockedIds;
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;
