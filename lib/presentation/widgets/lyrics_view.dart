@@ -12,6 +12,7 @@ import '../state/app_providers.dart';
 import '../state/lyrics_controller.dart';
 import 'audio_progress_selector.dart';
 import 'haptics.dart';
+import 'motion.dart';
 import 'skeleton_loader.dart';
 
 export '../state/lyrics_controller.dart';
@@ -662,6 +663,67 @@ class _RoundIcon extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// R-05: the line being sung, one row under the player's title; a tap
+/// opens the lyrics. Nothing without synced lyrics, during an
+/// instrumental break, or under a preview (its position isn't the song's).
+class CurrentLyricLine extends ConsumerWidget {
+  final LyricsController controller;
+  final VoidCallback onTap;
+
+  const CurrentLyricLine({super.key, required this.controller, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final fullSong = ref.watch(audioProvider.select((a) => a.playsFullSong));
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final lyrics = controller.lyrics;
+        if (!fullSong || lyrics == null || !lyrics.isSynced || !controller.hasText) {
+          return const SizedBox.shrink();
+        }
+        return AudioProgressSelector<int>(
+          selector: (a) => lyrics.inBreakAt(a.position) ? -1 : lyrics.activeIndexAt(a.position),
+          builder: (context, active) {
+            final text = active >= 0 && active < lyrics.lines.length ? lyrics.lines[active].text.trim() : '';
+            return Semantics(
+              button: true,
+              label: text.isEmpty ? locale.strings.lyrics : '${locale.strings.lyrics}: $text',
+              excludeSemantics: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Haptics.tap();
+                  onTap();
+                },
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 24),
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion(context) ? Duration.zero : AppMotion.fast,
+                    child: Text(
+                      text.isEmpty ? '· · ·' : text,
+                      key: ValueKey(active),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: AppFontSize.bodyLg,
+                        fontWeight: FontWeight.w600,
+                        // D-12: it's what's playing.
+                        color: AppColors.accentText.withValues(alpha: 0.9),
+                      ).copyWith(fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

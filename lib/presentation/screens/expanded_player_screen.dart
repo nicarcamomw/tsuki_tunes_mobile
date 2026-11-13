@@ -498,6 +498,8 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     ),
                   ),
                 ),
+                // R-05: the line being sung peeks under the title.
+                CurrentLyricLine(controller: _lyrics, onTap: _openLyrics),
               ],
             ),
           ),
