@@ -1,0 +1,7 @@
+name: monochrome_icon
+description: Builds the Android 13+ themed icon layer from the launcher foreground.
+publish_to: none
+environment:
+  sdk: ^3.5.0
+dependencies:
+  image: ^4.2.0
