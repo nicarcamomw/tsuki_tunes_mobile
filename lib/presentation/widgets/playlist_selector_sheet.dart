@@ -14,16 +14,11 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import 'app_snack.dart';
 import 'haptics.dart';
+import 'swipeable_sheet.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
-  return showModalBottomSheet(
+  return showAppSheet(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: AppColors.bgCard,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-    ),
     builder: (ctx) => _PlaylistSelectorContent(track: track),
   );
 }

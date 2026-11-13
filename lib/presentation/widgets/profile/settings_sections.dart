@@ -628,13 +628,7 @@ class _ImageQualitySheet extends ConsumerWidget {
       controller: controller,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -34,6 +34,7 @@ import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/weekly_challenges_card.dart';
 import '../widgets/wrapped_picker_sheet.dart';

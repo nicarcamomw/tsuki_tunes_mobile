@@ -13,6 +13,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/swipeable_sheet.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// One collaborative playlist, live.
@@ -365,11 +366,8 @@ class _Body extends ConsumerWidget {
     final strings = ref.read(stringsProvider);
     final locale = ref.read(localeProvider);
     final bonds = ref.read(socialProvider).bonds.where((b) => !p.isMember(b.uid) && !p.isInvited(b.uid)).toList();
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      backgroundColor: AppColors.bgCard,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(

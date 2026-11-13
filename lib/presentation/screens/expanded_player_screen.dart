@@ -37,6 +37,7 @@ import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/shuffle_mode_icon.dart';
 import '../widgets/smart_shuffle_sheet.dart';
 import '../widgets/spotify_devices_sheet.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
 import 'lyrics_screen.dart';

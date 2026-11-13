@@ -78,13 +78,7 @@ class _SourceSheet extends ConsumerWidget {
       controller: controller,
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 18),
         Row(
           children: [

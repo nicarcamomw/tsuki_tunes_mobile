@@ -96,17 +96,7 @@ class _ProfileSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             _buildHeader(context, locale, strings),
             if (ref.watch(authProvider.select((a) => a.isAuthenticated))) ...[
               const SizedBox(height: 14),

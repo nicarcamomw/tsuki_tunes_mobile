@@ -83,13 +83,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
       controller: widget.controller,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 16),
         Row(
           children: [

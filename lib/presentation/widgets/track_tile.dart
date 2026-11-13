@@ -22,6 +22,7 @@ import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'pop_on_change.dart';
 import 'radio_control_sheet.dart';
+import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
 
 class _PlayingIndicator extends StatefulWidget {
@@ -442,18 +443,12 @@ void showTrackActions(BuildContext context, Track track,
 
   // Root navigator so the sheet sits above the bottom bar and mini player
   // instead of being partially hidden behind them.
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: AppColors.bgCard,
+    drawHandle: true,
     constraints: BoxConstraints(
       maxWidth: 600,
       maxHeight: MediaQuery.of(context).size.height * 0.85,
-    ),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (ctx) => SafeArea(
       child: SingleChildScrollView(

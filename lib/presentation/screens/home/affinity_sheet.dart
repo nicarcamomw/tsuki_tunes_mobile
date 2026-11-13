@@ -2,15 +2,10 @@ part of '../home_screen.dart';
 
 void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
   final strings = locale.strings;
-  showModalBottomSheet(
+  showAppSheet(
+    // On the root navigator (showAppSheet): above the mini player and the
+    // nav bar, so neither covers the end.
     context: context,
-    // Above the mini player and the nav bar, so neither covers the end.
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: AppColors.bgCard,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-    ),
     builder: (context) => SafeArea(
       top: false,
       child: Padding(
@@ -19,16 +14,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 32,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           Text(
             strings.affinityInfoTitle,

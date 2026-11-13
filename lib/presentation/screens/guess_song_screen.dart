@@ -23,6 +23,7 @@ import '../widgets/app_snack.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/swipeable_sheet.dart';
 
 
 final _log = Log.named('GuessSong');
@@ -1629,13 +1630,8 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
           ),
         );
 
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-      ),
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -1643,17 +1639,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderGlow,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                ),
-              ),
+              const SheetHandle(),
               Row(
                 children: [
                   const Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.accent),

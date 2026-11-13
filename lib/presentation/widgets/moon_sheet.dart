@@ -112,17 +112,7 @@ class MoonSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Text(
               strings.moonTonightTitle,
               style: locale.getTextStyle(

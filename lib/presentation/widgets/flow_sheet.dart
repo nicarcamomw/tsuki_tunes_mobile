@@ -96,17 +96,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Row(
               children: [
                 const Icon(Icons.show_chart_rounded, color: _color, size: 20),

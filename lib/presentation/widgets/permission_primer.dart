@@ -6,6 +6,7 @@ import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import 'app_snack.dart';
 import 'haptics.dart';
+import 'swipeable_sheet.dart';
 
 /// Why Tsuki wants a permission, just before Android asks for it: what it
 /// gives, in a sentence or two, then "Allow" (which opens the system's own
@@ -37,12 +38,8 @@ class PermissionPrimer extends ConsumerWidget {
     // As tall as its content, so both buttons always show (a fixed share
     // of the screen hid them on small phones and with large text); it
     // scrolls if the text needs more than the screen. Swipe down closes.
-    final allowed = await showModalBottomSheet<bool>(
+    final allowed = await showAppSheet<bool>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (_) => SafeArea(
         child: SingleChildScrollView(
           child: PermissionPrimer(icon: icon, color: color, title: title, body: body),
@@ -94,11 +91,7 @@ class PermissionPrimer extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 24),
           ExcludeSemantics(
             child: Container(

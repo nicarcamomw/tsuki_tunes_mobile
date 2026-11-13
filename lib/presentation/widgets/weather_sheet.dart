@@ -105,16 +105,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderGlow,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                ),
-              ),
+              const SheetHandle(),
               const SizedBox(height: 14),
               Row(
                 children: [

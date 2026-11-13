@@ -121,16 +121,7 @@ class _RadioControlSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             const SizedBox(height: 16),
             Row(
               children: [

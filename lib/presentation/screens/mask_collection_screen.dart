@@ -372,15 +372,7 @@ class _MaskDetail extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 18),
-              decoration: BoxDecoration(
-                color: AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-            ),
+            const SheetHandle(),
             if (seen)
               Opacity(opacity: 0.5, child: OniMaskArt(mask: mask, size: 168, unlocked: true))
             else

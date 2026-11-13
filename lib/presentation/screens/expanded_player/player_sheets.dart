@@ -129,12 +129,8 @@ class _SleepTimerButton extends ConsumerWidget {
           Duration(minutes: minutes),
         ),
     ];
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      backgroundColor: AppColors.bgMid,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-      ),
       builder: (_) {
         return SafeArea(
           child: Padding(
@@ -142,14 +138,7 @@ class _SleepTimerButton extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textMuted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                ),
+                const SheetHandle(),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -291,15 +280,10 @@ void _showSongOptionsSheet(
     );
   }
 
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    backgroundColor: AppColors.bgMid,
-    isScrollControlled: true,
     constraints: BoxConstraints(
       maxHeight: MediaQuery.of(context).size.height * 0.85,
-    ),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (_) {
       return SafeArea(
@@ -308,14 +292,7 @@ void _showSongOptionsSheet(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-              ),
+              const SheetHandle(),
               const SizedBox(height: 16),
               // Track header
               Row(

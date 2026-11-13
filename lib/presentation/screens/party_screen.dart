@@ -15,6 +15,7 @@ import '../state/locale_provider.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/haptics.dart';
+import '../widgets/swipeable_sheet.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// Listening together: open a party and invite Bonds, or join one you were
@@ -235,11 +236,8 @@ class PartyScreen extends ConsumerWidget {
         .bonds
         .where((b) => !p.members.contains(b.uid) && !p.invited.contains(b.uid))
         .toList();
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(

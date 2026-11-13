@@ -18,6 +18,7 @@ import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
 
 /// Full-screen synced lyrics over the album's color, with the song's
@@ -150,11 +151,9 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     final current = controller.translatedTo;
     final suggested = current ?? await LyricsController.lastTarget() ?? locale.currentLanguage.code;
     if (!mounted) return;
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showAppSheet<String>(
       context: context,
-      backgroundColor: AppColors.bgCard,
-      showDragHandle: true,
-      isScrollControlled: true,
+      drawHandle: true,
       builder: (sheetCtx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetCtx).height * 0.7),

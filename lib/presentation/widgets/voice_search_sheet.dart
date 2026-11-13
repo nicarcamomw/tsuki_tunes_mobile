@@ -11,6 +11,7 @@ import '../../domain/entities/voice_error.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 import 'motion.dart';
+import 'swipeable_sheet.dart';
 
 enum _SheetState { initializing, listening, done, failed }
 
@@ -23,10 +24,8 @@ class VoiceSearchSheet extends StatefulWidget {
     BuildContext context, {
     required String langCode,
   }) {
-    return showModalBottomSheet<String>(
+    return showAppSheet<String>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => VoiceSearchSheet(langCode: langCode),
     );
@@ -231,14 +230,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         children: [
           const SizedBox(height: 12),
           // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.textMuted.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           // Telemetry header
           // Flavour, not information: screen readers skip it.

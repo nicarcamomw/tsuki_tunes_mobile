@@ -83,13 +83,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
         controller: widget.controller,
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           Row(
             children: [

@@ -67,17 +67,7 @@ class BatteryGuideSheet extends ConsumerWidget {
         controller: controller,
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 18),
-              decoration: BoxDecoration(
-                color: AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-            ),
-          ),
+          const SheetHandle(),
           Row(
             children: [
               const Icon(Icons.battery_alert_rounded, color: AppColors.accent, size: 22),
