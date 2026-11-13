@@ -290,26 +290,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   children: [
                     Semantics(
                       header: true,
-                      child: Row(
-                        children: [
-                          Text(
-                            strings.searchTitle.toUpperCase(),
-                            style: locale.getTextStyle(
-                              fontSize: AppFontSize.display,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textBright,
-                              letterSpacing: 2,
+                      child: FittedBox(
+                        // Shrinks rather than overflow on a narrow phone or with big text.
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              strings.searchTitle.toUpperCase(),
+                              style: locale.getTextStyle(
+                                fontSize: AppFontSize.display,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textBright,
+                                letterSpacing: 2,
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' // 02',
-                            style: locale.getTextStyle(
-                              fontSize: AppFontSize.display,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.accent,
+                            Text(
+                              ' // 02',
+                              style: locale.getTextStyle(
+                                fontSize: AppFontSize.display,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.accent,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 2),

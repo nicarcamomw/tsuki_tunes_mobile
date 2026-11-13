@@ -103,8 +103,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final library = ref.watch(libraryProvider);
-    final listenedTracks = library.listenedTracks;
+    // L-01: rebuilt when the songs change (the library hands out a new
+    // list then) or the followed artists do, not on every notification
+    // (sync state, play counts…).
+    final listenedTracks = ref.watch(libraryProvider.select((l) => l.listenedTracks));
+    ref.watch(libraryProvider.select((l) => (l.followedArtists, l.followedArtists.length)));
 
     // Grouped, filtered and sorted only when the songs, the filter or the
     // order change (LibraryAlbumList); loading the next page reuses it.
@@ -138,26 +141,32 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 children: [
                   Semantics(
                     header: true,
-                    child: Row(
-                      children: [
-                        Text(
-                          strings.libraryTitle.toUpperCase(),
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.display,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textBright,
-                            letterSpacing: 2,
+                    child: FittedBox(
+                      // Shrinks rather than overflow on a narrow phone or with big text.
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            strings.libraryTitle.toUpperCase(),
+                            style: locale.getTextStyle(
+                              fontSize: AppFontSize.display,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textBright,
+                              letterSpacing: 2,
+                            ),
                           ),
-                        ),
-                        Text(
-                          ' // 03',
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.display,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.accent,
+                          Text(
+                            ' // 03',
+                            style: locale.getTextStyle(
+                              fontSize: AppFontSize.display,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -244,7 +253,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     int totalTracks,
   ) {
     final filterText = _filterController.text.toLowerCase();
-    final allFollowed = ref.watch(libraryProvider).followedArtists;
+    final allFollowed = ref.read(libraryProvider).followedArtists;
     final followedArtists = filterText.isEmpty
         ? allFollowed
         : allFollowed
@@ -765,8 +774,12 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
   @override
   Widget build(BuildContext context) {
-    final currentTrackId =
-        ref.watch(audioProvider.select((a) => a.currentTrack?.id));
+    // L-01: only the album that holds the playing song (before or after
+    // a change) redraws when the song changes, not every row on screen.
+    final currentTrackId = ref.watch(audioProvider.select((a) {
+      final id = a.currentTrack?.id;
+      return id != null && group.tracks.any((t) => t.trackId == id) ? id : null;
+    }));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
