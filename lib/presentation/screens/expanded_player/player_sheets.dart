@@ -37,7 +37,7 @@ class _AmbientButton extends ConsumerWidget {
               Text(
                 '$count',
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.neonCyan,
                 ),
@@ -98,7 +98,7 @@ class _SleepTimerButton extends ConsumerWidget {
               Text(
                 label.isNotEmpty ? label : strings.sleepTimerEndOfTrackShort,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                   letterSpacing: 0.5,

@@ -289,7 +289,7 @@ class _MaskTile extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: (unlocked ? mask.rarityColor : AppColors.textMuted).withValues(alpha: 0.9),
                   letterSpacing: 0.8,
@@ -328,7 +328,7 @@ class _ProgressBar extends ConsumerWidget {
         const SizedBox(width: 4),
         Text(
           '$current/$goal',
-          style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
         ),
       ],
     );

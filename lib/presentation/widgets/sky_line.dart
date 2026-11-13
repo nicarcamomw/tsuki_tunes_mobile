@@ -170,7 +170,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                       Text(
                         strings.weatherTitle,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.micro,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textMuted,
                           letterSpacing: 1,

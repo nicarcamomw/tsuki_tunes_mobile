@@ -569,7 +569,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Text(
                       strings.clearHistory,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                         letterSpacing: 0.8,

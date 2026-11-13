@@ -229,7 +229,7 @@ class _MonthRow extends StatelessWidget {
                             color: AppColors.accent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(currentLabel, style: style(AppFontSize.micro, w: FontWeight.w800, c: Colors.white)),
+                          child: Text(currentLabel, style: style(AppFontSize.caption, w: FontWeight.w800, c: Colors.white)),
                         ),
                       ],
                     ],

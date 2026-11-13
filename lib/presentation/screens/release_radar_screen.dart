@@ -265,7 +265,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                   child: Text(
                     '$count',
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w800,
                       color: color,
                     ),
@@ -760,7 +760,7 @@ class _ReleaseTile extends StatelessWidget {
                           Text(
                             when,
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.micro,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w700,
                               color: days != null && days <= 1
                                   ? AppColors.accent
@@ -826,7 +826,7 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: AppFontSize.micro,
+          fontSize: AppFontSize.caption,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1,

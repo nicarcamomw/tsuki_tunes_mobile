@@ -183,7 +183,7 @@ class _Stats extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
+                        fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
               ],
             ),
           ),

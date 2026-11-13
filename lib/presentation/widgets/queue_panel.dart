@@ -185,7 +185,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               child: Text(
                 strings.queueGesturesHint,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ).copyWith(fontStyle: FontStyle.italic),
               ),
@@ -404,7 +404,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     Text(
                       label,
                       style: _locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w800,
                         color: color,
                         letterSpacing: 0.8,
@@ -477,7 +477,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             Text(
               tag,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neonCyan,
                 letterSpacing: 0.8,
@@ -802,7 +802,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
                               color: AppColors.neonCyan.withValues(alpha: 0.75),
-                              fontSize: AppFontSize.micro,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.3,
                             ),

@@ -70,7 +70,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                   icon: Badge(
                     isLabelVisible: invites > 0,
                     backgroundColor: AppColors.accent,
-                    label: Text('$invites', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
+                    label: Text('$invites', style: const TextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900)),
                     child: Icon(Icons.headphones_rounded, color: inParty ? AppColors.success : AppColors.textBright),
                   ),
                 );
@@ -93,7 +93,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                       offset: const Offset(12, -6),
                       label: Text(
                         '${social.pending}',
-                        style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: const TextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: Colors.white),
                       ),
                       child: Text(strings.bondsTabBonds),
                     ),

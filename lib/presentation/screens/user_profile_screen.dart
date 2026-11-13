@@ -308,7 +308,7 @@ class _Stat extends ConsumerWidget {
             Text(label,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ],
         ),
       ),

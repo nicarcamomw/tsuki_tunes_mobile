@@ -188,7 +188,7 @@ class _WeekDot extends StatelessWidget {
           : Text(
               label,
               style: TextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: played
                     ? const Color(0xFF2A1206)

@@ -25,7 +25,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide2Badge,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w800,
               color: AppColors.neonCyan,
               letterSpacing: 1.6,

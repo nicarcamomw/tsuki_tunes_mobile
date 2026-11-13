@@ -129,7 +129,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '0s',
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textMuted,
               ),
             ),
@@ -163,7 +163,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '12s',
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textMuted,
               ),
             ),
@@ -405,7 +405,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           child: Text(
             locale.currentLanguage.tag,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
             ),

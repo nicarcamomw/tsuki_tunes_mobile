@@ -475,13 +475,13 @@ Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widg
         Text(
           text,
           style: locale?.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,
               ) ??
               GoogleFonts.plusJakartaSans(
-                fontSize: AppFontSize.micro,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,

@@ -18,7 +18,7 @@ class _BondsButton extends ConsumerWidget {
       icon: Badge(
         isLabelVisible: pending > 0,
         backgroundColor: AppColors.accent,
-        label: Text('$pending', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
+        label: Text('$pending', style: const TextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900)),
         child: const Icon(Icons.link_rounded, color: AppColors.textBright, size: 22),
       ),
     );
@@ -377,7 +377,7 @@ class _StatCard extends StatelessWidget {
           Text(
             meta,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: AppFontSize.caption,
               color: AppColors.textMuted,
               letterSpacing: 0.8,
             ),
