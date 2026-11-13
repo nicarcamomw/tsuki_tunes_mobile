@@ -2167,5 +2167,9 @@
   "navLongPressSearch": "empezar una búsqueda nueva",
   "@navLongPressSearch": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."},
   "navLongPressLibrary": "volver arriba",
-  "@navLongPressLibrary": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."}
+  "@navLongPressLibrary": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."},
+  "searchTopResult": "MEJOR RESULTADO",
+  "@searchTopResult": {"description": "B-04: the highlighted first result of a search."},
+  "searchTopArtistKind": "Artista",
+  "@searchTopArtistKind": {"description": "B-04: the highlighted first result of a search."}
 }

@@ -919,5 +919,7 @@
   "navGesturesHint": "ヒント：タブをダブルタップで先頭へ。ホームを長押しでプロフィールを開きます。",
   "navLongPressHome": "プロフィールと設定を開く",
   "navLongPressSearch": "新しく検索する",
-  "navLongPressLibrary": "先頭に戻る"
+  "navLongPressLibrary": "先頭に戻る",
+  "searchTopResult": "トップ結果",
+  "searchTopArtistKind": "アーティスト"
 }

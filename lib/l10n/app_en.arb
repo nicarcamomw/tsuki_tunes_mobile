@@ -919,5 +919,7 @@
   "navGesturesHint": "Tip: double-tap a tab to go back to the top, and long-press Home to open your profile.",
   "navLongPressHome": "open profile and settings",
   "navLongPressSearch": "start a new search",
-  "navLongPressLibrary": "go back to the top"
+  "navLongPressLibrary": "go back to the top",
+  "searchTopResult": "TOP RESULT",
+  "searchTopArtistKind": "Artist"
 }

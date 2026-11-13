@@ -61,6 +61,9 @@ extension _SearchResultsView on _SearchScreenState {
       children: [
         _buildDidYouMean(search, locale),
 
+        // B-04: the best match, highlighted first on "All".
+        if (showAll) _topResult(search, strings, locale),
+
         // Artists Section
         if (showArtists && hasArtists) ...[
           Padding(
@@ -145,6 +148,107 @@ extension _SearchResultsView on _SearchScreenState {
               ),
         ],
       ],
+    );
+  }
+
+  /// The artist when their name is what was typed (or starts with it),
+  /// else the first song; nothing when there are neither.
+  Widget _topResult(SearchProvider search, AppStrings strings, LocaleProvider locale) {
+    String norm(String v) => v.toLowerCase().trim();
+    final q = norm(search.query);
+    final artist = search.artists.isEmpty ? null : search.artists.first;
+    final artistWins = artist != null && q.isNotEmpty && norm(artist.name).startsWith(q);
+    if (!artistWins && search.tracks.isEmpty) return const SizedBox.shrink();
+
+    final Widget body;
+    if (artistWins) {
+      body = Semantics(
+        button: true,
+        label: '${strings.searchTopResult}: ${artist.name}, ${strings.searchTopArtistKind}',
+        excludeSemantics: true,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: () {
+            Haptics.tap();
+            FocusScope.of(context).unfocus();
+            ArtistRoute(id: artist.id, $extra: artist).push<void>(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                ClipOval(
+                  child: SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: artist.pictureUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: artist.pictureUrl,
+                            fit: BoxFit.cover,
+                            memCacheWidth: imageCacheSize(context, 72),
+                            errorWidget: (_, __, ___) => const ColoredBox(color: AppColors.bgMid),
+                          )
+                        : const ColoredBox(
+                            color: AppColors.bgMid,
+                            child: Icon(Icons.person_rounded, color: AppColors.textMuted, size: 32),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(artist.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: locale.getTextStyle(
+                              fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      const SizedBox(height: 2),
+                      Text(strings.searchTopArtistKind,
+                          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      body = TrackTile(track: search.tracks.first, queue: search.tracks);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              strings.searchTopResult,
+              style: locale.getTextStyle(
+                fontSize: AppFontSize.body,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Material(
+            color: AppColors.bgCard,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              side: const BorderSide(color: AppColors.borderGlow),
+            ),
+            child: body,
+          ),
+        ],
+      ),
     );
   }
 }

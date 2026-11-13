@@ -153,6 +153,8 @@ class AppStrings {
   String get emptyLoreHannya => _l.emptyLoreHannya;
   String get emptyLoreTengu => _l.emptyLoreTengu;
   String get navGesturesHint => _l.navGesturesHint;
+  String get searchTopResult => _l.searchTopResult;
+  String get searchTopArtistKind => _l.searchTopArtistKind;
   String navLongPressHint(int index) => switch (index) {
         0 => _l.navLongPressHome,
         1 => _l.navLongPressSearch,

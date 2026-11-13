@@ -113,6 +113,22 @@ class _QueueAudio extends _StillAudio {
   List<Track> get upcomingTracks => _upNext;
 }
 
+class _Results extends SearchProvider {
+  _Results() : super(fuzzyArtistNames: (_) async => const []);
+  @override
+  String get query => 'daft';
+  @override
+  bool get isLoading => false;
+  @override
+  bool get hasError => false;
+  @override
+  List<Artist> get artists => const [Artist(id: '27', name: 'Daft Punk', pictureUrl: '')];
+  @override
+  List<Track> get tracks => const [_song, ..._upNext];
+  @override
+  List<Album> get albums => const [];
+}
+
 /// Deezer as a screen sees it: two genres, nothing else. The fonts never
 /// answer.
 final _deezer = MockClient((req) async {
@@ -362,6 +378,19 @@ void main() {
         ...base,
         audioProvider.overrideWith((ref) => AudioProvider()),
         searchProvider.overrideWith((ref) => SearchProvider(fuzzyArtistNames: (_) async => const [])),
+      ],
+      const SearchScreen(),
+    );
+  });
+
+  testWidgets('search_results', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'search_results',
+      overrides: [
+        ...base,
+        audioProvider.overrideWith((ref) => AudioProvider()),
+        searchProvider.overrideWith((ref) => _Results()),
       ],
       const SearchScreen(),
     );
