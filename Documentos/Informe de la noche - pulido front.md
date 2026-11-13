@@ -1,6 +1,6 @@
 # Informe de la noche — pulido de front
 
-Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es un commit propio, con `flutter analyze` limpio y la suite completa en verde (de 1192 tests al empezar a más de 1210 al final). Las capturas de antes y después están en `Documentos/capturas/`.
+Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es un commit propio, con `flutter analyze` limpio y la suite completa en verde (de 1192 tests al empezar a más de 1210 al final). Las capturas de antes y después están en `Documentos/capturas/`; para verlas de un vistazo, empieza por `00_antes_despues_general.png`.
 
 ## Lo primero: dos avisos
 
@@ -60,6 +60,10 @@ Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es u
 | R-06 | Deslizar la portada del reproductor cambia de canción. |
 | P-12 | Cubierto por E-04 (transición), D-11 (colores) y P-04 (`select`). |
 | F-01 | Los widgets de inicio usan la paleta de la app (como recursos de color), con el gris AA y sin texto de 9 sp. No lo pude compilar aquí (no hay SDK de Android): son cambios solo de recursos. |
+| R-07 | La barra de progreso del reproductor crece bajo el dedo y muestra una burbuja con el tiempo de destino. |
+| A-02 | Onboarding: fuera las sombras dobles que no se veían pero costaban un desenfoque (el texto diminuto ya lo había subido D-02). |
+| P-03 | Wrapped: el fondo desenfocado de cada historia va en su propia capa y sin `Opacity`, y sobra una sombra doble. |
+| T-03 | Ya existía: la portada viaja de la tarjeta de álbum a la cabecera y del mini player al reproductor. |
 | E-07 | Ya estaba hecho en el código (deslizar a los lados cambia de canción y hacia arriba abre el reproductor). |
 | T-04 | Cubierto por D-02. |
 
