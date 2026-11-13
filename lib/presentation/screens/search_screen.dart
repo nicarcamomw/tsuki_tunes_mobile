@@ -21,6 +21,7 @@ import '../state/search_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
@@ -778,54 +779,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildErrorState(SearchProvider search, AppStrings strings, LocaleProvider locale) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-          const SizedBox(height: 12),
-          Text(
-            strings.searchError,
-            style: locale.getTextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Semantics(
-            button: true,
-            label: strings.retry,
-            child: GestureDetector(
-            onTap: () {
-              Haptics.tap();
-              search.retryLastSearch();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                strings.retry,
-                style: locale.getTextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ),
-          ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildErrorState(SearchProvider search, AppStrings strings, LocaleProvider locale) =>
+      ErrorState(message: strings.searchError, onRetry: search.retryLastSearch, padding: EdgeInsets.zero);
 
   /// What the open tab's results will look like: artists, albums or songs.
   Widget _resultsSkeleton() => SingleChildScrollView(
@@ -843,52 +798,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     if (search.hasLyricsError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-            const SizedBox(height: 12),
-            Text(
-              strings.lyricsSearchError,
-              style: locale.getTextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Semantics(
-              button: true,
-              label: strings.retry,
-              child: GestureDetector(
-                onTap: () {
-                  Haptics.tap();
-                  search.retryLyricsSearch();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                  ),
-                  child: Text(
-                    strings.retry,
-                    style: locale.getTextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+      return ErrorState(
+          message: strings.lyricsSearchError, onRetry: search.retryLyricsSearch, padding: EdgeInsets.zero);
     }
 
     final q = _controller.text.trim();

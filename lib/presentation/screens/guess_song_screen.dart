@@ -18,6 +18,7 @@ import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -896,25 +897,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final strings = locale.strings;
     if (_loading) return const _RoundSkeleton();
     if (_error) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.wifi_off_rounded, color: AppColors.textMuted, size: 32),
-            const SizedBox(height: 12),
-            Text(strings.guessLoadError,
-                style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () { Haptics.tap(); _startRound(); },
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
-              child: Text(strings.retry,
-                  style: locale.getTextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent)),
-            ),
-          ],
-        ),
-      );
+      return ErrorState(message: strings.guessLoadError, onRetry: _startRound, iconSize: 32);
     }
 
     if (_mode == GuessMode.artist && (_artist == null || _artistTooFew)) {

@@ -22,6 +22,7 @@ import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
@@ -378,46 +379,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: _hasError
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        strings.loadError,
-                                        style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 14),
-                                      Semantics(
-                                        button: true,
-                                        label: strings.retry,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Haptics.tap();
-                                            _refreshData();
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.accent.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                                            ),
-                                            child: Text(
-                                              strings.retry,
-                                              style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: 1.5),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
+                            ? ErrorState(message: strings.loadError, onRetry: _refreshData)
                             : Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 28),

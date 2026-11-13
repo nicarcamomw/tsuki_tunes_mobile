@@ -9,7 +9,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
-import '../widgets/haptics.dart';
+import '../widgets/error_state.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 
@@ -156,35 +156,6 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         ),
       );
 
-  Widget _buildError(LocaleProvider locale) {
-    final strings = locale.strings;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.wifi_off_rounded,
-              size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-          const SizedBox(height: 12),
-          Text(
-            strings.searchError,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () { Haptics.tap(); _load(); },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.accentText,
-              side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),
-            ),
-            child: Text(strings.retry),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildError(LocaleProvider locale) =>
+      ErrorState(message: locale.strings.searchError, onRetry: _load, padding: EdgeInsets.zero);
 }

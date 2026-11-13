@@ -29,63 +29,7 @@ class _TopTracksSliver extends StatelessWidget {
     if (isLoading) return const ArtistDetailSkeletonLoader();
     if (hasError && tracks.isEmpty) {
       return SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.wifi_off_rounded,
-                  size: 48,
-                  color: AppColors.textMuted,
-                  semanticLabel: strings.a11yOffline,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  strings.loadError,
-                  style: locale.getTextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 14),
-                Semantics(
-                  button: true,
-                  label: strings.retry,
-                  child: GestureDetector(
-                    onTap: () {
-                      Haptics.tap();
-                      onRetry();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Text(
-                        strings.retry,
-                        style: locale.getTextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.accent,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: ErrorState(message: strings.loadError, onRetry: onRetry),
       );
     }
     if (tracks.isEmpty) {

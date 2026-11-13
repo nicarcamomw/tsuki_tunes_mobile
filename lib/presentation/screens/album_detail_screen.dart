@@ -18,6 +18,7 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/pop_on_change.dart';
 import '../widgets/skeleton_loader.dart';
@@ -542,53 +543,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             const AlbumDetailSkeletonLoader()
           else if (_hasError && tracks.isEmpty)
             SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-                      const SizedBox(height: 10),
-                      Text(
-                        strings.loadError,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-                      Semantics(
-                        button: true,
-                        label: strings.retry,
-                        child: GestureDetector(
-                        onTap: () {
-                          Haptics.tap();
-                          _loadAlbumDetails();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            strings.retry,
-                            style: locale.getTextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: ErrorState(message: strings.loadError, onRetry: _loadAlbumDetails),
             )
           else if (tracks.isEmpty)
             SliverToBoxAdapter(
