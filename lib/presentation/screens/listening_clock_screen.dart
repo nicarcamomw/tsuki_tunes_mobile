@@ -124,7 +124,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back,
+            icon: const Icon(Icons.arrow_back_rounded,
                 color: AppColors.textBright, size: 22),
             tooltip: strings.a11yBack,
           ),

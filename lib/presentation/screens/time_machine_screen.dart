@@ -147,7 +147,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
           color: AppColors.textBright,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),

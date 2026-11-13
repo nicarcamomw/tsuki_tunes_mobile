@@ -63,4 +63,8 @@ void main() {
     final loose = RegExp(r'EdgeInsets\.symmetric\(horizontal: 20[,)]|EdgeInsets\.fromLTRB\(20, [\w.+ ]+, 20, ');
     expect(_offenders(loose).where((hit) => hit.contains('/screens/')).toList(), isEmpty);
   });
+
+  test('D-09: one back arrow', () {
+    expect(_offenders(RegExp(r'Icons\.(arrow_back_ios|arrow_back\b(?!_)|chevron_left|keyboard_arrow_left)')), isEmpty);
+  });
 }

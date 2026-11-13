@@ -227,7 +227,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                   width: 1,
                 ),
               ),
-              child: Icon(Icons.chevron_left,
+              child: Icon(Icons.arrow_back_rounded,
                   color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
             ),
             onPressed: () => Navigator.of(context).pop(_allAlbums),

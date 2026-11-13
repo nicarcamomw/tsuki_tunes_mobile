@@ -64,7 +64,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
+            icon: Icon(Icons.arrow_back_rounded, color: AppColors.textBright, semanticLabel: strings.a11yBack),
             tooltip: strings.a11yBack,
             onPressed: () => Navigator.pop(context),
           ),
