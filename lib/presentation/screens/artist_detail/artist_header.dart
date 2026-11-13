@@ -124,11 +124,13 @@ class _ArtistHeroAppBar extends StatelessWidget {
           children: [
             if (artist.pictureUrl.isNotEmpty)
               ExcludeSemantics(
-                child: CachedNetworkImage(
+                child: Consumer(
+                  builder: (context, ref, _) => CachedNetworkImage(
                   memCacheWidth: imageCacheSize(context, (420).toDouble()),
-                  imageUrl: artist.getBestImage(size: 'xl'),
+                  imageUrl: ref.watch(imageQualityProvider).large(artist.getBestImage(size: 'xl')),
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
+                ),
                 ),
               ),
             Container(

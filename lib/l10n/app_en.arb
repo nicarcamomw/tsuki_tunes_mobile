@@ -904,5 +904,12 @@
   "previewReasonOpenApp": "Spotify didn't answer on this phone. Open the Spotify app and press play again.",
   "previewReasonDisabled": "Spotify is paused in Tsuki for a moment, so previews play.",
   "previewReasonOther": "Spotify couldn't play this song, so its preview plays.",
-  "unmarkedSongs": "{count, plural, =1{Song unmarked} other{{count} songs unmarked}}"
+  "unmarkedSongs": "{count, plural, =1{Song unmarked} other{{count} songs unmarked}}",
+  "imageQualityTitle": "Image quality",
+  "imageQualityNormal": "Normal",
+  "imageQualityNormalDesc": "As always",
+  "imageQualityHigh": "High",
+  "imageQualityHighDesc": "Large covers and photos at 1000 px",
+  "imageQualityDataSaver": "Data saver",
+  "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data"
 }

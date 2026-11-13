@@ -22,6 +22,7 @@ import '../screens/mask_collection_screen.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/auth_provider.dart';
+import '../state/image_quality_setting.dart';
 import '../state/locale_provider.dart';
 import 'eco_widgets.dart';
 import 'equalizer_sheet.dart';

@@ -322,8 +322,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     .isNotEmpty
                                 ? CachedNetworkImage(
                                   memCacheWidth: imageCacheSize(context, (260).toDouble()),
-                                    imageUrl:
-                                        albumData.coverXl ?? albumData.coverUrl,
+                                    imageUrl: ref.watch(imageQualityProvider)
+                                        .large(albumData.coverXl ?? albumData.coverUrl),
                                     fit: BoxFit.cover,
                                     placeholder: (_, __) =>
                                         Container(color: AppColors.bgMid),

@@ -15,6 +15,7 @@ import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
 import '../../domain/logic/playback_source.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../utils/image_quality.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -1689,6 +1690,19 @@ class AppStrings {
   String get stoppedPlayback => _l.stoppedPlayback;
 
   String get undo => _l.undo;
+
+  // --- Image quality (Settings > Storage) ---
+  String get imageQualityTitle => _l.imageQualityTitle;
+  String imageQualityName(ImageQuality q) => switch (q) {
+        ImageQuality.normal => _l.imageQualityNormal,
+        ImageQuality.high => _l.imageQualityHigh,
+        ImageQuality.dataSaver => _l.imageQualityDataSaver,
+      };
+  String imageQualityDescription(ImageQuality q) => switch (q) {
+        ImageQuality.normal => _l.imageQualityNormalDesc,
+        ImageQuality.high => _l.imageQualityHighDesc,
+        ImageQuality.dataSaver => _l.imageQualityDataSaverDesc,
+      };
   String unmarkedSongs(int count) => _l.unmarkedSongs(count);
 
   // Gesture hints

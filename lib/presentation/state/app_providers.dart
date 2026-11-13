@@ -42,6 +42,7 @@ import 'ambient_provider.dart';
 import 'audio_provider.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
+import 'image_quality_setting.dart';
 import 'locale_provider.dart';
 import 'mask_provider.dart';
 import 'moon_provider.dart';
@@ -146,6 +147,11 @@ final rainMixProvider = Provider((ref) => ({
 
 final searchProvider = ChangeNotifierProvider<SearchProvider>(
     (ref) => SearchProvider(api: getIt<DeezerApiService>(), lyrics: getIt<LyricsService>()));
+
+/// How big the large images are fetched (Settings > Storage).
+final imageQualityProvider = ChangeNotifierProvider<ImageQualitySetting>(
+  (ref) => ImageQualitySetting(getIt<StorageService>()),
+);
 
 final localeProvider = ChangeNotifierProvider<LocaleProvider>(
   (ref) => LocaleProvider(storage: getIt<StorageService>()),

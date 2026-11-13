@@ -277,14 +277,14 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   }
 }
 
-class _SongCard extends StatelessWidget {
+class _SongCard extends ConsumerWidget {
   const _SongCard({required this.card, required this.locale});
 
   final DiscoveryCard card;
   final LocaleProvider locale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = locale.strings;
     final t = card.track;
     return Semantics(
@@ -304,7 +304,7 @@ class _SongCard extends StatelessWidget {
             children: [
               if (t.coverUrl.isNotEmpty)
                 CachedNetworkImage(
-                  imageUrl: t.coverUrl.replaceAll('250x250', '500x500'),
+                  imageUrl: ref.watch(imageQualityProvider).large(t.coverUrl.replaceAll('250x250', '500x500')),
                   memCacheWidth: imageCacheSize(context, 360),
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const ColoredBox(color: AppColors.bgCard),

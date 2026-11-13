@@ -2145,5 +2145,12 @@
         "type": "int"
       }
     }
-  }
+  },
+  "imageQualityTitle": "Calidad de imagen",
+  "imageQualityNormal": "Normal",
+  "imageQualityNormalDesc": "Como siempre",
+  "imageQualityHigh": "Alta",
+  "imageQualityHighDesc": "Portadas y fotos grandes a 1000 px",
+  "imageQualityDataSaver": "Ahorro de datos",
+  "imageQualityDataSaverDesc": "Portadas y fotos grandes a 250 px: gasta menos datos"
 }

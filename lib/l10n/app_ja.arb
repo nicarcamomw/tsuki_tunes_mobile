@@ -904,5 +904,12 @@
   "previewReasonOpenApp": "このスマホでSpotifyが応答しませんでした。Spotifyアプリを開いて、もう一度再生してください。",
   "previewReasonDisabled": "TsukiでのSpotify再生は一時停止中のため、プレビューを再生しています。",
   "previewReasonOther": "Spotifyでこの曲を再生できなかったため、プレビューを再生しています。",
-  "unmarkedSongs": "{count}曲を未聴に戻しました"
+  "unmarkedSongs": "{count}曲を未聴に戻しました",
+  "imageQualityTitle": "画質",
+  "imageQualityNormal": "標準",
+  "imageQualityNormalDesc": "いつも通り",
+  "imageQualityHigh": "高画質",
+  "imageQualityHighDesc": "大きなジャケットと写真を1000pxで",
+  "imageQualityDataSaver": "データ節約",
+  "imageQualityDataSaverDesc": "大きなジャケットと写真を250pxで：通信量を抑えます"
 }

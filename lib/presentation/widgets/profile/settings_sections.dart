@@ -236,6 +236,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
           setState(() {});
         },
       ),
+      _ImageQualityRow(locale: locale, hostContext: widget.hostContext),
       ListTile(
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
@@ -575,5 +576,92 @@ Future<void> _openLegalPage(String url) async {
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   } catch (e) {
     _log.warning('Could not open $url: $e');
+  }
+}
+
+
+/// Settings > Storage: how big the large images are fetched.
+class _ImageQualityRow extends ConsumerWidget {
+  final LocaleProvider locale;
+  final BuildContext hostContext;
+  const _ImageQualityRow({required this.locale, required this.hostContext});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = locale.strings;
+    final quality = ref.watch(imageQualityProvider.select((s) => s.quality));
+    return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      leading: const SizedBox(
+        width: 24,
+        child: Center(child: Icon(Icons.image_outlined, color: AppColors.accent, size: 18)),
+      ),
+      title: Text(
+        strings.imageQualityTitle,
+        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
+      ),
+      subtitle: Text(
+        '${strings.imageQualityName(quality)} · ${strings.imageQualityDescription(quality)}',
+        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
+      onTap: () {
+        Haptics.tap();
+        unawaited(SwipeableSheet.show(
+          hostContext,
+          initialChildSize: 0.42,
+          maxChildSize: 0.55,
+          builder: (_, controller) => _ImageQualitySheet(locale: locale, controller: controller),
+        ));
+      },
+    );
+  }
+}
+
+class _ImageQualitySheet extends ConsumerWidget {
+  final LocaleProvider locale;
+  final ScrollController controller;
+  const _ImageQualitySheet({required this.locale, required this.controller});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = locale.strings;
+    final setting = ref.watch(imageQualityProvider);
+    return ListView(
+      controller: controller,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      children: [
+        Center(
+          child: Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(strings.imageQualityTitle,
+              style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+        ),
+        const SizedBox(height: 8),
+        for (final q in [ImageQuality.dataSaver, ImageQuality.normal, ImageQuality.high])
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            selected: setting.quality == q,
+            title: Text(strings.imageQualityName(q),
+                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+            subtitle: Text(strings.imageQualityDescription(q),
+                style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+            trailing: setting.quality == q ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20) : null,
+            onTap: () {
+              Haptics.selection();
+              unawaited(setting.set(q));
+              Navigator.of(context).pop();
+            },
+          ),
+      ],
+    );
   }
 }
