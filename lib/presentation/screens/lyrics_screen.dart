@@ -16,6 +16,7 @@ import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/moon_loader.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
@@ -621,12 +622,8 @@ class _Message extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (loading)
-            const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white70),
-            )
+            // P-08: the moon's phases while the words are found.
+            const MoonLoader(size: 26, color: Colors.white70)
           else if (icon != null)
             Icon(icon, size: 38, color: Colors.white70),
           const SizedBox(height: 14),

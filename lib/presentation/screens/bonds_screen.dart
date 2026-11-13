@@ -17,6 +17,7 @@ import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/moon_loader.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -792,7 +793,8 @@ class _Spinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2));
+      // P-08: the app's loading moon.
+      const MoonLoader(size: 18);
 }
 
 void _toast(BuildContext context, String text) =>
