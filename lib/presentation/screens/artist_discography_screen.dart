@@ -241,7 +241,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 16),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -399,7 +399,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       if (items == null || items.isEmpty) continue;
       sections.add(SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 10),
           child: Row(
             children: [
               Icon(icon, size: 16, color: AppColors.accent, semanticLabel: label),
@@ -436,7 +436,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       {bool isAppearsOn = false}) {
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,

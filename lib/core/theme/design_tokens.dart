@@ -84,3 +84,10 @@ abstract final class AppMotion {
   /// Something moving from one place to another.
   static const Curve move = Curves.easeInOutCubic;
 }
+
+/// Spacing (D-05).
+abstract final class AppSpacing {
+  /// The page's side margin: one value for every screen, so titles, cards
+  /// and lists line up from one screen to the next.
+  static const double page = 16;
+}

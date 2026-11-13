@@ -330,7 +330,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
           // Album Hero
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 12),
               child: Column(
                 children: [
                   // Type badge

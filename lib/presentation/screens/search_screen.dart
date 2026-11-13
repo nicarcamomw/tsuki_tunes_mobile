@@ -284,7 +284,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -343,7 +343,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
               // Search input
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 10),
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.bgMid,
@@ -398,7 +398,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               // Tabs: ['Todo', 'Artistas', 'Álbumes', 'Canciones'] (localizadas)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
                 child: Row(
                   children: List.generate(tabs.length, (index) {
                     final isSelected = _selectedTabIndex == index;

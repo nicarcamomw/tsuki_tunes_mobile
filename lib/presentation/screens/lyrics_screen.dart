@@ -161,7 +161,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
             shrinkWrap: true,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 8),
                 child: Text(
                   strings.lyricsTranslateTo,
                   style: locale.getTextStyle(
@@ -283,7 +283,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                       final translatedTo = widget.controller.translatedTo;
                       final translated = translatedTo != null;
                       return Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 8),
                         child: Row(
                           children: [
                             _Chip(

@@ -134,7 +134,7 @@ class _SleepTimerButton extends ConsumerWidget {
       builder: (_) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -288,7 +288,7 @@ void _showSongOptionsSheet(
     builder: (_) {
       return SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

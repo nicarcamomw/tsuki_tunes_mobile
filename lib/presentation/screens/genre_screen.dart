@@ -123,7 +123,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                             height: 155,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                               itemCount: _artists.length,
                               itemBuilder: (context, i) =>
                                   ArtistCard(artist: _artists[i]),
@@ -142,7 +142,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget _header(LocaleProvider locale, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
         child: Semantics(
           header: true,
           child: Text(

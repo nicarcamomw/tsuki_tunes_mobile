@@ -224,7 +224,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
               duration: AppMotion.fast,
               child: Container(
                 key: ValueKey(_selectedHour ?? -1),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 10),
                 decoration: BoxDecoration(
                   color: (_selectedHour != null
                           ? AppColors.textBright
@@ -299,7 +299,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
   Widget _buildSectionLabel(
       LocaleProvider locale, String text, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
         children: [
           Container(width: 4, height: 16, color: color),
@@ -626,7 +626,7 @@ class _DailyActivityBars extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         reverse: true,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: List.generate(currentMonth, (m) {

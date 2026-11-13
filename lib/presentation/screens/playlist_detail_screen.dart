@@ -260,7 +260,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           if (_editing)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 6),
                 child: Text(
                   strings.playlistEditHint,
                   textAlign: TextAlign.center,
@@ -277,7 +277,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
                 child: Row(
                   children: [
                     Expanded(

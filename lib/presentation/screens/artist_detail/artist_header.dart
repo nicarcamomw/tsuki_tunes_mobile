@@ -138,7 +138,7 @@ class _ArtistInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = locale.strings;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -270,7 +270,7 @@ class _ArtistInfoSection extends StatelessWidget {
       child: AnimatedContainer(
         duration: reduceMotion ? Duration.zero : AppMotion.normal,
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 9),
         decoration: BoxDecoration(
           color: isFollowed
               ? AppColors.accent.withValues(alpha: 0.15)

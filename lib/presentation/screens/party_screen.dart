@@ -56,7 +56,7 @@ class PartyScreen extends ConsumerWidget {
       final hosting = party.hosting;
       final Track? track = hosting ? playing : p.track;
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 140),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 140),
         children: [
           Text((hosting ? strings.partyYouHost : strings.partyHostedBy(p.hostName)).toUpperCase(),
               style: style(AppFontSize.caption, color: AppColors.accent, w: FontWeight.w900).copyWith(letterSpacing: 2)),
@@ -131,7 +131,7 @@ class PartyScreen extends ConsumerWidget {
       );
     } else {
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 140),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 140),
         children: [
           if (party.ended) ...[
             Text(strings.partyEnded, style: style(AppFontSize.bodyLg, color: AppColors.textMuted)),
@@ -241,7 +241,7 @@ class PartyScreen extends ConsumerWidget {
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -54,7 +54,7 @@ class MaskCollectionScreen extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -130,21 +130,21 @@ class MaskCollectionScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: EcoLevelCard(margin: EdgeInsets.fromLTRB(16, 0, 16, 16))),
+          const SliverToBoxAdapter(child: EcoLevelCard(margin: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 16))),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 16),
               child: _LoreButton(label: strings.loreButton, onTap: () { Haptics.tap(); LoreScreen.open(context); }),
             ),
           ),
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 18),
+              padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 18),
               child: WeeklyChallengesCard(),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 32),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,

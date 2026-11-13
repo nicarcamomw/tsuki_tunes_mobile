@@ -68,7 +68,7 @@ class EcoLevelsScreen extends ConsumerWidget {
                 letterSpacing: 3)),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         itemCount: items.length + EcoLevels.maxLevel + 1,
         itemBuilder: (context, i) {
           if (i < items.length) return items[i];

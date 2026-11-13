@@ -171,7 +171,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               children: [
                 for (final p in _Period.values)
                   Padding(
@@ -241,7 +241,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
             ),
           if (ref.watch(releaseRadarSupportedProvider))
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              margin: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -303,7 +303,7 @@ class _DateHeader extends StatelessWidget {
     final strings = locale.strings;
     final reduce = MediaQuery.of(context).disableAnimations;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
       child: Row(
         children: [
           ExcludeSemantics(
@@ -418,7 +418,7 @@ class _MomentView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
           child: Wrap(
             spacing: 8,
             children: [
@@ -440,7 +440,7 @@ class _MomentView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 12),
           child: Text(
             headline,
             style: locale.getTextStyle(
@@ -451,7 +451,7 @@ class _MomentView extends StatelessWidget {
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -510,7 +510,7 @@ class _MomentView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 4),
           child: SizedBox(
             height: 46,
             child: FilledButton.icon(
@@ -541,7 +541,7 @@ class _MomentView extends StatelessWidget {
         ),
         for (final t in moment.tracks.skip(1))
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 3),
             child: Semantics(
               label: '${t.track.title}, ${t.track.artistName}. ${_caption(s, t)}',
               excludeSemantics: true,
@@ -767,8 +767,8 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
           dimAlpha: 0.04,
           borderAlpha: 0.35,
           borderRadius: AppRadius.chip,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 14),
           child: Row(
             children: [
               Container(
@@ -834,7 +834,7 @@ class _MomentSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const SkeletonScope(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

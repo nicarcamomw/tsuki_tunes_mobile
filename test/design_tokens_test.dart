@@ -58,4 +58,9 @@ void main() {
         r'Duration\(milliseconds: *([1-9]\d?|[1-5]\d\d|6[0-4]\d|650)\)');
     expect(_offenders(short), isEmpty);
   });
+
+  test('D-05: screens use one side margin', () {
+    final loose = RegExp(r'EdgeInsets\.symmetric\(horizontal: 20[,)]|EdgeInsets\.fromLTRB\(20, [\w.+ ]+, 20, ');
+    expect(_offenders(loose).where((hit) => hit.contains('/screens/')).toList(), isEmpty);
+  });
 }

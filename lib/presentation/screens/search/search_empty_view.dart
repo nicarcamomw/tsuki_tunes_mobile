@@ -28,7 +28,7 @@ extension _SearchEmptyView on _SearchScreenState {
         excludeFromSemantics: true,
         onTap: () => FocusScope.of(context).unfocus(),
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         children: [
           if (history.isNotEmpty) ...[
           const SizedBox(height: 12),

@@ -52,7 +52,7 @@ class RunModeScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
                 children: [
                   Center(child: _CadenceGauge(run: run)),
                   const SizedBox(height: 10),
@@ -75,7 +75,7 @@ class RunModeScreen extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 12),
               child: SizedBox(
                 width: double.infinity,
                 height: 52,

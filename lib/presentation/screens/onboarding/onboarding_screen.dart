@@ -237,7 +237,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final pulse = (sin(t * 2.5) * 0.5 + 0.5);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

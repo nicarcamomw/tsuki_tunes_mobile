@@ -275,7 +275,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
           child: Text.rich(
             TextSpan(
               children: [
@@ -322,7 +322,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -395,7 +395,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -514,7 +514,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -677,7 +677,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

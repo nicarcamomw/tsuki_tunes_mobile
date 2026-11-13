@@ -1344,7 +1344,7 @@ class _BottomPanel extends StatelessWidget {
     final node = focused;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 28, 16, 12 + bottom),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 28, AppSpacing.page, 12 + bottom),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,

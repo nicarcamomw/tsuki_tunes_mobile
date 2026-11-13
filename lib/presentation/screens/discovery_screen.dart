@@ -169,7 +169,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 12),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -479,7 +479,7 @@ class _CardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => SkeletonScope(
         label: label,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 12),
           child: Center(
             child: AspectRatio(
               aspectRatio: 0.72,

@@ -161,7 +161,7 @@ class _Body extends ConsumerWidget {
     final owner = p.owner == me;
     final invitedMe = p.isInvited(me) && !p.isMember(me);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
       children: [
         Row(
           children: [
@@ -372,7 +372,7 @@ class _Body extends ConsumerWidget {
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

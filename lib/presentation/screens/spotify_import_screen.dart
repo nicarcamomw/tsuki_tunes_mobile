@@ -52,10 +52,10 @@ class SpotifyImportScreen extends ConsumerWidget {
     if (!connected) {
       body = _Center(icon: Icons.link_off_rounded, text: strings.importNotConnected, style: style(AppFontSize.title));
     } else if (c.loading || c.playlists == null) {
-      body = const SkeletonRowList(count: 8, leading: 52, trailing: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
+      body = const SkeletonRowList(count: 8, leading: 52, trailing: true, padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 0));
     } else if (c.running || c.results.isNotEmpty) {
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 120),
         children: [
           if (c.running) ...[
             Text(c.current ?? '', style: style(AppFontSize.titleLg, w: FontWeight.w900)),
@@ -107,7 +107,7 @@ class SpotifyImportScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 16),
               children: [
                 Text(strings.importHint, style: style(AppFontSize.body, color: AppColors.textSecondary)),
                 const SizedBox(height: 12),
@@ -148,7 +148,7 @@ class SpotifyImportScreen extends ConsumerWidget {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 50,

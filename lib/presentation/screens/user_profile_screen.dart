@@ -107,7 +107,7 @@ class _ProfileBody extends ConsumerWidget {
         locale.getTextStyle(fontSize: size, fontWeight: weight, color: color);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
       children: [
         Center(child: _Avatar(photoUrl: profile.photoUrl, mask: mask, name: profile.displayName)),
         const SizedBox(height: 12),

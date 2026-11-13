@@ -64,7 +64,7 @@ extension _SearchResultsView on _SearchScreenState {
         // Artists Section
         if (showArtists && hasArtists) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 8),
             child: Semantics(
               header: true,
               child: Text(
@@ -83,7 +83,7 @@ extension _SearchResultsView on _SearchScreenState {
             child: ListView.builder(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: search.artists.length,
               itemBuilder: (context, i) => ArtistCard(artist: search.artists[i]),
             ),
@@ -93,7 +93,7 @@ extension _SearchResultsView on _SearchScreenState {
         // Albums Section
         if (showAlbums && hasAlbums) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
             child: Semantics(
               header: true,
               child: Text(
@@ -112,7 +112,7 @@ extension _SearchResultsView on _SearchScreenState {
             child: ListView.builder(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: search.albums.length,
               itemBuilder: (context, i) => AlbumCard(album: search.albums[i]),
             ),
@@ -122,7 +122,7 @@ extension _SearchResultsView on _SearchScreenState {
         // Tracks Section
         if (showTracks && hasTracks) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
             child: Semantics(
               header: true,
               child: Text(

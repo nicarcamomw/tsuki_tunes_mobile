@@ -45,7 +45,7 @@ class StreakScreen extends ConsumerWidget {
             style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: streakFlame, letterSpacing: 3)),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         children: [
           _Hero(masks: masks, locale: locale, strings: strings),
           const SizedBox(height: 12),

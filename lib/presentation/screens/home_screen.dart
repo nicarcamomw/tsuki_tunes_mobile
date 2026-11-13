@@ -467,7 +467,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     final strings = locale.strings;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: loaded ? null : const NeverScrollableScrollPhysics(),
@@ -518,7 +518,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
             child: Row(
               children: [
                 // The title takes all the room left by the (?)
@@ -591,7 +591,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
           child: _SectionTitle(locale: locale, text: strings.topArtistsTitle),
         ),
       ),
@@ -638,7 +638,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 28, AppSpacing.page, 12),
           child: _SectionTitle(locale: locale, text: strings.latestReleasesTitle),
         ),
       ),
@@ -649,7 +649,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                   children: [
                     for (var i = 0; i < 3; i++)
                       const Padding(
@@ -661,7 +661,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             : _latestReleases.isEmpty
             ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                 child: Text(
                   strings.emptyReleases,
                   style: locale.getTextStyle(
@@ -675,7 +675,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                   itemCount: _latestReleases.length,
                   itemBuilder: (context, index) {
                     return AlbumCard(
@@ -693,7 +693,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       for (final rec in _completionRecs) ...[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
             child: _SectionTitle(
               locale: locale,
               text: locale.strings.becauseYouCompleted(rec.album.title),
@@ -706,7 +706,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             height: 160,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: rec.artists.length,
               itemBuilder: (context, index) =>
                   ArtistCard(artist: rec.artists[index]),
@@ -733,7 +733,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
           child: _SectionTitle(locale: locale, text: locale.strings.recommendedTitle),
         ),
       ),
@@ -742,7 +742,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             itemCount: artists.length,
             itemBuilder: (context, index) => ArtistCard(artist: artists[index]),
           ),
@@ -770,7 +770,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final run = ref.watch(runProvider.select(
         (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled)));
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 0),
       child: Column(
         children: [
           Row(

@@ -135,7 +135,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           children: [
             // Page Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -195,7 +195,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
             // Tab Bar
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.bgMid,
                 borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -265,7 +265,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       children: [
         // Filter + Sort
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
           child: Column(
             children: [
               Container(
@@ -318,7 +318,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         // Play controls
         if (totalTracks > 0)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
             child: Row(
               children: [
                 Expanded(
@@ -422,7 +422,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         index--;
                       }
                       if (index == visible.length) {
-                        return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8));
+                        return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8));
                       }
                       return _AlbumGroupTile(
                         group: visible[index],
@@ -460,7 +460,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       children: [
         // Create playlist buttons: mine, and one with my Bonds.
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
           child: Row(
             children: [
           Expanded(
@@ -522,7 +522,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   children: [
                     if (hasShared) ...[
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 4),
                         child: Text(strings.sharedTitle.toUpperCase(),
                             style: locale.getTextStyle(
                                 fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
@@ -668,7 +668,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             child: Row(
               children: [
                 Icon(Icons.person_add_alt_1_rounded,
@@ -700,7 +700,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             height: 130,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: artists.length,
               itemBuilder: (context, index) => ArtistCard(
                 key: ValueKey(artists[index].id),

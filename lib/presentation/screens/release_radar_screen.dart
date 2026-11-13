@@ -238,7 +238,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
       {int? count}) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
         child: Semantics(
           header: true,
           child: Row(
@@ -312,7 +312,7 @@ class _RadarHeader extends StatelessWidget {
             last == null ? null : DateTime.now().difference(last));
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -568,7 +568,7 @@ class _NotifyRow extends StatelessWidget {
     final blocked = enabled && permission == false;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 0),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -689,7 +689,7 @@ class _ReleaseTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: unread

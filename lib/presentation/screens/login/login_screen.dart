@@ -253,7 +253,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               child: Column(
                 children: [
                   const SizedBox(height: 6),

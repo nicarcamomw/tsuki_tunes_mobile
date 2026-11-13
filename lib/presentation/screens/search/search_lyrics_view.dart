@@ -4,7 +4,7 @@ part of '../search_screen.dart';
 extension _SearchLyricsView on _SearchScreenState {
   Widget _buildLyricsTabContent(SearchProvider search, AppStrings strings, LocaleProvider locale) {
     if (search.isLyricsLoading) {
-      return const SkeletonRowList(count: 5, padding: EdgeInsets.fromLTRB(16, 8, 16, 0));
+      return const SkeletonRowList(count: 5, padding: EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0));
     }
 
     if (search.hasLyricsError) {
@@ -56,7 +56,7 @@ extension _SearchLyricsView on _SearchScreenState {
       itemBuilder: (context, index) {
         if (index == 0) {
           return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 8),
             child: Text(
               strings.lyricsSearchResults(search.lyricsResults.length).toUpperCase(),
               style: locale.getTextStyle(
@@ -89,7 +89,7 @@ extension _SearchLyricsView on _SearchScreenState {
         _selectTab(3);
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

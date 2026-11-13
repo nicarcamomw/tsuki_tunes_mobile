@@ -102,7 +102,7 @@ class _FeaturesSliver extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 6),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 6),
             child: Row(
               children: [
                 const Icon(

@@ -20,7 +20,7 @@ class _AlmostCompleteSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
           child: _SectionTitle(
               locale: locale, text: locale.strings.almostCompleteTitle),
         ),
@@ -28,7 +28,7 @@ class _AlmostCompleteSection extends ConsumerWidget {
           height: 205,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             itemCount: albums.length,
             itemBuilder: (context, index) =>
                 _AlmostCompleteCard(locale: locale, progress: albums[index]),

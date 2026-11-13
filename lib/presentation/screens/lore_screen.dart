@@ -45,7 +45,7 @@ class LoreScreen extends ConsumerWidget {
             style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: _gold, letterSpacing: 3)),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         children: [
           _Header(locale: locale, strings: strings, open: TsukiLore.openCount(level), total: TsukiLore.chapters.length),
           for (final tomo in TsukiLore.tomos) ...[

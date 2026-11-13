@@ -205,7 +205,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
         future: _feed,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const SkeletonRowList(count: 6, round: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
+            return const SkeletonRowList(count: 6, round: true, padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 0));
           }
           final feed = snap.data ?? const [];
           if (feed.isEmpty) {
@@ -217,7 +217,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
             itemCount: feed.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) => ResonanceTile(resonance: feed[i]),
@@ -331,7 +331,7 @@ class _BondsTab extends ConsumerWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
       children: [
         if (social.received.isNotEmpty) ...[
           _SectionLabel(text: strings.bondsRequests, count: social.received.length, locale: locale),
@@ -476,7 +476,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
     final strings = locale.strings;
     final results = _results;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 120),
       children: [
         TextField(
           controller: _field,

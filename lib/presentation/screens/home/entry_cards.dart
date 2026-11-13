@@ -159,8 +159,8 @@ class _DiscoveryEntryCard extends StatelessWidget {
           dimAlpha: 0.04,
           borderAlpha: 0.3,
           borderRadius: AppRadius.chip,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 14),
           child: Row(
             children: [
               Container(
@@ -235,8 +235,8 @@ class _RabbitHoleEntryCard extends StatelessWidget {
           dimAlpha: 0.04,
           borderAlpha: 0.3,
           borderRadius: AppRadius.chip,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 14),
           child: Row(
             children: [
               Container(
@@ -334,9 +334,9 @@ class _ReleaseRadarEntryCard extends ConsumerWidget {
                   borderAlpha: hasNews ? 0.55 : 0.3,
                   borderRadius: AppRadius.chip,
                   margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 6),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 14),
                   child: Row(
                     children: [
                       Stack(

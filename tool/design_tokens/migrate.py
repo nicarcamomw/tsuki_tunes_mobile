@@ -154,6 +154,14 @@ def migrate(kind):
                         tok = 'micro' if ms <= 130 else 'fast' if ms <= 230 else 'normal' if ms <= 360 else 'slow'
                         return f'{m.group(1)}AppMotion.{tok}'
                     new = re.sub(r'(\b(?:duration|reverseDuration|transitionDuration|reverseTransitionDuration): *)(const +)?Duration\(milliseconds: *(\d+)\)', rep_d, new)
+                elif kind == 'margins':
+                    if not (os.sep + 'screens' + os.sep in path or path.endswith('profile_bottom_sheet.dart')):
+                        continue
+                    new = re.sub(r'EdgeInsets\.symmetric\(horizontal: (16|20)([,)])',
+                                 lambda m: f'EdgeInsets.symmetric(horizontal: AppSpacing.page{m.group(2)}', new)
+                    new = re.sub(r'EdgeInsets\.fromLTRB\((16|20), ([\w.+ ]+), (16|20), ',
+                                 lambda m: f'EdgeInsets.fromLTRB(AppSpacing.page, {m.group(2)}, AppSpacing.page, '
+                                 if m.group(1) == m.group(3) else m.group(0), new)
                 if new != text:
                     open(path, 'w').write(new)
                     changed.add(library_of(path, new))

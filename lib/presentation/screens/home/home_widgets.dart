@@ -42,7 +42,7 @@ class _HomeHeader extends StatelessWidget {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -118,7 +118,7 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+            padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 6),
             child: SkyLine(),
           ),
         ],
@@ -531,7 +531,7 @@ class _ArtistRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.chip),
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.bgMid,

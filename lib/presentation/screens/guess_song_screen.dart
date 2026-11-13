@@ -680,7 +680,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       height: 60,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 8),
         itemCount: GuessMode.values.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
@@ -809,7 +809,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         );
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 24),
       children: [
         Text(
           strings.guessPickArtist,
@@ -903,7 +903,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
       children: [
         if (_mode == GuessMode.artist && _artist != null) _artistHeader(locale),
         if (_mode == GuessMode.library && _libraryFallback)
@@ -1220,7 +1220,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         : GuessGame.clipSeconds[_outcomes.length + 1] - GuessGame.clipSeconds[_outcomes.length];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 12),
       decoration: const BoxDecoration(
         color: AppColors.bgMid,
         border: Border(top: BorderSide(color: AppColors.border)),
@@ -1634,7 +1634,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       context: context,
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1735,7 +1735,7 @@ class _RoundSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => SkeletonScope(
         child: ListView(
           physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
           children: [
             const Align(
               alignment: Alignment.centerLeft,

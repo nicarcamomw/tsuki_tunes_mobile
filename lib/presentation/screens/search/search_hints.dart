@@ -23,7 +23,7 @@ extension _SearchHints on _SearchScreenState {
         height: 40,
         child: ListView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 6),
           children: [
             for (final sug in suggestions)
               Padding(
@@ -58,7 +58,7 @@ extension _SearchHints on _SearchScreenState {
       child: InkWell(
         onTap: () => _runQuery(suggestion),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 6),
           child: Row(
             children: [
               const Icon(Icons.auto_fix_high, size: 16, color: AppColors.info),
@@ -99,9 +99,9 @@ extension _SearchHints on _SearchScreenState {
   Widget _resultsSkeleton() => SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
         child: switch (_selectedTabIndex) {
-          1 => const SkeletonRowList(count: 7, leading: 48, round: true, padding: EdgeInsets.fromLTRB(16, 8, 16, 0)),
+          1 => const SkeletonRowList(count: 7, leading: 48, round: true, padding: EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0)),
           2 => const Column(children: [SkeletonAlbumRow(), SkeletonAlbumRow()]),
-          _ => const SkeletonTrackList(count: 8, padding: EdgeInsets.fromLTRB(16, 8, 16, 0)),
+          _ => const SkeletonTrackList(count: 8, padding: EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0)),
         },
       );
 
