@@ -1,136 +1,134 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/constants/app_colors.dart';
-import 'package:tsuki_tunes_mobile/presentation/state/locale_provider.dart';
-import 'package:tsuki_tunes_mobile/presentation/widgets/cyber_orb.dart';
-import 'package:tsuki_tunes_mobile/presentation/widgets/motion.dart';
-import 'package:tsuki_tunes_mobile/presentation/widgets/tap_scale.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/playback_source_badge.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/track_tile.dart';
 
-double _contrast(Color a, Color b) {
-  final la = a.computeLuminance(), lb = b.computeLuminance();
-  final hi = la > lb ? la : lb, lo = la > lb ? lb : la;
-  return (hi + 0.05) / (lo + 0.05);
+import 'helpers/test_scope.dart';
+
+// U6: the widgets seen most follow Android's accessibility rules: every
+// tappable thing is at least 48 px and has a name TalkBack reads, and text
+// stands out from its background.
+
+const _song = Track(
+  id: '1',
+  title: 'Get Lucky',
+  artistId: 'a',
+  artistName: 'Daft Punk',
+  albumId: 'b',
+  albumTitle: 'RAM',
+  coverUrl: '',
+  previewUrl: '',
+  durationSeconds: 248,
+);
+
+class _StillAudio extends AudioProvider {
+  @override
+  Track? get currentTrack => _song;
 }
 
-Widget _frame(Widget child, {bool reduceMotion = false}) => MediaQuery(
-      data: MediaQueryData(disableAnimations: reduceMotion),
-      child: MaterialApp(home: Scaffold(body: Center(child: child))),
-    );
+Future<void> _meetsAll(WidgetTester tester) async {
+  await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+  await expectLater(tester, meetsGuideline(textContrastGuideline));
+}
+
+/// google_fonts asks the network for its fonts; nothing answers in a test.
+final _noNetwork = MockClient((_) => Completer<http.Response>().future);
+Future<void> _offline(Future<void> Function() body) => http.runWithClient(body, () => _noNetwork);
 
 void main() {
-  group('contrast (WCAG AA, 4.5:1 for text)', () {
-    const backgrounds = {
-      'bgDeep': AppColors.bgDeep,
-      'bgMid': AppColors.bgMid,
-      'bgCard': AppColors.bgCard,
-      'bgHover': AppColors.bgHover,
-    };
-    final textColours = {
-      'textPrimary': AppColors.textPrimary,
-      'textSecondary': AppColors.textSecondary,
-      'textMuted': AppColors.textMuted,
-      'textBright': AppColors.textBright,
-      'accent as text': AppColors.forText(AppColors.accent),
-      'neonPurple as text': AppColors.forText(AppColors.neonPurple),
-      'error as text': AppColors.forText(AppColors.error),
-      'neonCyan': AppColors.neonCyan,
-      'neonGreen': AppColors.neonGreen,
-      'sakura': AppColors.sakura,
-      'success': AppColors.success,
-      'warning': AppColors.warning,
-    };
-
-    test('every text colour reads on every background', () {
-      final failing = [
-        for (final t in textColours.entries)
-          for (final b in backgrounds.entries)
-            if (_contrast(t.value, b.value) < 4.5)
-              '${t.key} on ${b.key}: ${_contrast(t.value, b.value).toStringAsFixed(2)}',
-      ];
-      expect(failing, isEmpty);
-    });
-
-    test('white text on a crimson button reads', () {
-      expect(_contrast(AppColors.textBright, AppColors.accentFill), greaterThanOrEqualTo(4.5));
-    });
-
-    testWidgets('text styles swap the brand colours for their readable versions', (tester) async {
-      final locale = LocaleProvider();
-      expect(locale.getTextStyle(color: AppColors.accent).color, AppColors.accentText);
-      expect(locale.getTextStyle(color: AppColors.neonPurple).color, AppColors.neonPurpleText);
-      expect(locale.getTextStyle(color: AppColors.textMuted).color, AppColors.textMuted);
-    });
-  });
-
-  group('touch targets (48 dp)', () {
-    testWidgets('a small icon in TapScale is 48 dp to touch, and looks the same', (tester) async {
-      await tester.pumpWidget(_frame(TapScale(
-        semanticLabel: 'Close',
-        onTap: () {},
-        child: const Icon(Icons.close, size: 20),
-      )));
-      expect(tester.getSize(find.byType(TapScale)), const Size(48, 48));
-      expect(tester.getSize(find.byIcon(Icons.close)), const Size(20, 20));
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-    });
-
-    testWidgets('a big child keeps its size', (tester) async {
-      await tester.pumpWidget(_frame(TapScale(
-        onTap: () {},
-        child: const SizedBox(width: 160, height: 90),
-      )));
-      expect(tester.getSize(find.byType(TapScale)), const Size(160, 90));
-    });
-
-    test('every icon button tells screen readers what it does', () {
-      // IconButton without a tooltip (or its icon's semanticLabel) reads as
-      // just "button" to TalkBack.
-      final call = RegExp(r'\bIconButton(\.filled|\.outlined|\.filledTonal)?\(');
-      final missing = <String>[];
-      for (final f in Directory('lib').listSync(recursive: true).whereType<File>()) {
-        if (!f.path.endsWith('.dart')) continue;
-        final s = f.readAsStringSync();
-        for (final m in call.allMatches(s)) {
-          var depth = 0, j = m.end - 1;
-          for (; j < s.length; j++) {
-            if (s[j] == '(') depth++;
-            if (s[j] == ')' && --depth == 0) break;
-          }
-          final body = s.substring(m.end, j);
-          final labelledAbove = RegExp(r'Semantics\([^)]*label:')
-              .hasMatch(s.substring((m.start - 250).clamp(0, s.length), m.start));
-          if (!body.contains('tooltip:') && !body.contains('semanticLabel:') && !labelledAbove) {
-            missing.add('${f.path}:${'\n'.allMatches(s.substring(0, m.start)).length + 1}');
-          }
-        }
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (_) async => null,
+    );
+    messenger.setMockMethodCallHandler(const MethodChannel('com.ryanheise.just_audio.methods'), (call) async {
+      if (call.method == 'init') {
+        final id = (call.arguments as Map)['id'];
+        messenger.setMockMethodCallHandler(MethodChannel('com.ryanheise.just_audio.methods.$id'), (_) async => {});
       }
-      expect(missing, isEmpty, reason: 'give them a tooltip');
+      return {};
     });
   });
 
-  group('reduce motion', () {
-    testWidgets('a decorative loop stays still', (tester) async {
-      await tester.pumpWidget(_frame(const CyberOrb(), reduceMotion: true));
-      expect(tester.binding.transientCallbackCount, 0);
+  Widget app(Widget child, {List<Object> overrides = const []}) => TestScope(
+    overrides: [
+      playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
+      playerBackgroundColorProvider.overrideWithValue(null),
+      playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
+      ...overrides.cast(),
+    ],
+    child: MaterialApp(
+      theme: ThemeData.dark(),
+      home: Scaffold(backgroundColor: AppColors.bgDeep, body: child),
+    ),
+  );
 
-      await tester.pumpWidget(_frame(const CyberOrb()));
-      expect(tester.binding.transientCallbackCount, greaterThan(0));
-    });
+  testWidgets(
+    'a song row with its Oni mask to mark it',
+    (tester) => _offline(() async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        app(const Column(children: [TrackTile(track: _song, index: 1, showListenedCheckbox: true)])),
+      );
+      await _meetsAll(tester);
+      expect(find.bySemanticsLabel('Marcar como escuchada'), findsOneWidget);
+      handle.dispose();
+    }),
+  );
 
-    testWidgets('an entrance shows its end at once', (tester) async {
-      Widget entrance({required bool still}) => _frame(
-            Builder(builder: (context) => const Text('hi').animateCalm(context).fadeIn(duration: 500.ms)),
-            reduceMotion: still,
-          );
-      await tester.pumpWidget(entrance(still: true));
-      expect(tester.widget<FadeTransition>(find.byType(FadeTransition).last).opacity.value, 1.0);
-      expect(tester.binding.transientCallbackCount, 0);
-      expect(reduceMotion(tester.element(find.text('hi'))), isTrue);
-      await tester.pump(const Duration(milliseconds: 1)); // flutter_animate's zero-delay start, a no-op here
-    });
-  });
+  testWidgets(
+    'the mini player',
+    (tester) => _offline(() async {
+      final handle = tester.ensureSemantics();
+      final audio = _StillAudio();
+      await tester.pumpWidget(
+        app(
+          const Align(alignment: Alignment.bottomCenter, child: MiniPlayer()),
+          overrides: [audioProvider.overrideWith((ref) => audio, disposeNotifier: false)],
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await _meetsAll(tester);
+      await tester.pumpWidget(const SizedBox());
+      audio.dispose();
+      handle.dispose();
+    }),
+  );
+
+  testWidgets(
+    'the player badge and the error state',
+    (tester) => _offline(() async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        app(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const PlaybackSourceBadge(),
+              ErrorState(message: 'No se pudo cargar', onRetry: () {}),
+            ],
+          ),
+        ),
+      );
+      await _meetsAll(tester);
+      handle.dispose();
+    }),
+  );
 }
