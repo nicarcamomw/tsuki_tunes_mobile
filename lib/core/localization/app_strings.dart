@@ -149,6 +149,9 @@ class AppStrings {
 
   String get settingsGeneralSection => _l.settingsGeneralSection;
   String get settingsAdvancedSection => _l.settingsAdvancedSection;
+  String get emptyLoreOni => _l.emptyLoreOni;
+  String get emptyLoreHannya => _l.emptyLoreHannya;
+  String get emptyLoreTengu => _l.emptyLoreTengu;
 
   String get normalizeTitle => _l.normalizeTitle;
 

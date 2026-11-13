@@ -396,8 +396,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         child: _hasError
                             ? ErrorState(message: strings.loadError, onRetry: _refreshData)
                             : EmptyState(
-                            image: 'assets/images/tengu.png',
+                            image: 'assets/images/oni.png',
                             artLabel: strings.a11yEmptyLibrary,
+                            lore: strings.emptyLoreOni,
                             title: strings.emptyLibraryTitle,
                             message: strings.emptyLibrarySubtitle,
                             actionLabel: strings.homeEmptyAction,
@@ -513,8 +514,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         Expanded(
           child: playlists.isEmpty && !hasShared
               ? EmptyState(
-                  image: 'assets/images/tengu.png',
+                  image: 'assets/images/hannya.png',
                   artLabel: strings.a11yEmptyPlaylist,
+                  lore: strings.emptyLoreHannya,
                   title: strings.noPlaylistsTitle,
                   message: strings.noPlaylistsSubtitle,
                 )

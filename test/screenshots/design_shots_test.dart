@@ -224,6 +224,11 @@ Future<void> _pumpShot(
         await tester.pump(const Duration(milliseconds: 100));
       }
     }
+    // Assets (masks, mask art) decode on real time, not the test's.
+    for (var i = 0; i < 3; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 150)));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
   }, () => _deezer);
   await _shoot(tester, name);
   if (errors.isNotEmpty) {

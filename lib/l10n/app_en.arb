@@ -912,5 +912,8 @@
   "imageQualityHigh": "High",
   "imageQualityHighDesc": "Large covers and photos at 1000 px",
   "imageQualityDataSaver": "Data saver",
-  "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data"
+  "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data",
+  "emptyLoreOni": "The Oni keeps every song you mark. Its chest is still empty.",
+  "emptyLoreHannya": "Hannya weaves playlists from moon threads. None woven yet.",
+  "emptyLoreTengu": "The Tengu listens from the top of the forest. Ask it for any song."
 }

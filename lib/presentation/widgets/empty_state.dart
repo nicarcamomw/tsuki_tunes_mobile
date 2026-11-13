@@ -25,6 +25,7 @@ class EmptyState extends ConsumerWidget {
     this.onAction,
     this.compact = false,
     this.padding,
+    this.lore,
   }) : assert(title != null || message != null, 'say what is missing');
 
   /// What's missing, short (in capitals like a HUD line, except [compact]).
@@ -61,14 +62,19 @@ class EmptyState extends ConsumerWidget {
 
   final EdgeInsetsGeometry? padding;
 
+  /// P-06: a line of lore told by the mask in [image]; with it the mask is
+  /// drawn large, as the state's character.
+  final String? lore;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-    final artSize = compact ? 40.0 : 54.0;
+    final character = lore != null && image != null;
+    final artSize = character ? 96.0 : compact ? 40.0 : 54.0;
     final Widget? artWidget = art ??
         (image != null
             ? Opacity(
-                opacity: 0.3,
+                opacity: character ? 0.55 : 0.3,
                 child: Image.asset(image!,
                     width: artSize, height: artSize, semanticLabel: artLabel, excludeFromSemantics: artLabel == null),
               )
@@ -108,6 +114,18 @@ class EmptyState extends ConsumerWidget {
                   height: 1.45,
                 ),
               ),
+            if (lore != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                lore!,
+                textAlign: TextAlign.center,
+                style: locale.getTextStyle(
+                  fontSize: AppFontSize.caption,
+                  color: AppColors.textMuted,
+                  height: 1.45,
+                ).copyWith(fontStyle: FontStyle.italic),
+              ),
+            ],
             if (actionLabel != null && onAction != null) ...[
               SizedBox(height: compact ? 8 : 16),
               StateAction(

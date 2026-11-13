@@ -2153,5 +2153,11 @@
   "imageQualityHigh": "Alta",
   "imageQualityHighDesc": "Portadas y fotos grandes a 1000 px",
   "imageQualityDataSaver": "Ahorro de datos",
-  "imageQualityDataSaverDesc": "Portadas y fotos grandes a 250 px: gasta menos datos"
+  "imageQualityDataSaverDesc": "Portadas y fotos grandes a 250 px: gasta menos datos",
+  "emptyLoreOni": "El Oni guarda cada canción que marcas. Su cofre aún está vacío.",
+  "@emptyLoreOni": {"description": "P-06: the lore line under an empty state, told by its mask."},
+  "emptyLoreHannya": "Hannya teje listas con hilos de luna. Todavía no ha tejido ninguna.",
+  "@emptyLoreHannya": {"description": "P-06: the lore line under an empty state, told by its mask."},
+  "emptyLoreTengu": "El Tengu escucha desde lo alto del bosque. Pregúntale por cualquier canción.",
+  "@emptyLoreTengu": {"description": "P-06: the lore line under an empty state, told by its mask."}
 }

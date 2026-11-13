@@ -16,6 +16,7 @@ extension _SearchEmptyView on _SearchScreenState {
         child: EmptyState(
           image: 'assets/images/tengu.png',
           artLabel: strings.a11ySearchEmpty,
+          lore: strings.emptyLoreTengu,
           title: strings.emptyStateTitle,
           message: strings.emptyStateSubtitle,
         ),
