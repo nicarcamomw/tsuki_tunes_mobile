@@ -194,6 +194,9 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.tsuki.tsuki_tunes_mobile.playback',
         androidNotificationChannelName: 'Tsuki Tunes',
+        // F-02: the mask's silhouette in the status bar (the colour launcher
+        // icon, the default, is drawn as a white blob there).
+        androidNotificationIcon: 'mipmap/ic_launcher_monochrome',
         // Keeping the service in the foreground while paused avoids
         // ForegroundServiceStartNotAllowedException when resuming from the
         // background on Android 12+.
