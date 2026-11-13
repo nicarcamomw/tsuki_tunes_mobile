@@ -20,6 +20,9 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    # A tool with its own pubspec (package:image), run by hand: CI doesn't
+    # fetch its packages, so the app's analysis leaves it out.
+    - tool/monochrome_icon/**
 
 linter:
   # The lint rules applied to this project can be customized in the
