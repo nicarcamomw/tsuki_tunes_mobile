@@ -90,9 +90,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final library = ref.read(libraryProvider);
     try {
       await library.refreshData();
-      setState(() => _hasError = false);
+      if (mounted) setState(() => _hasError = false);
     } catch (_) {
-      setState(() => _hasError = true);
+      if (mounted) setState(() => _hasError = true);
     }
   }
 

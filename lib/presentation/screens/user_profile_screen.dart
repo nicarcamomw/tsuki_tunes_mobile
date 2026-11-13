@@ -261,14 +261,21 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const size = 96.0;
+    final Widget initial = Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+        style: const TextStyle(color: AppColors.textBright, fontSize: 40, fontWeight: FontWeight.w800));
     final Widget inner = mask != null
         ? OniMaskArt.image(mask!, size * 0.8)
         : photoUrl != null
             ? ClipOval(
                 child: Image.network(photoUrl!,
-                    width: size, height: size, fit: BoxFit.cover, cacheWidth: imageCacheSize(context, size)))
-            : Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                style: const TextStyle(color: AppColors.textBright, fontSize: 40, fontWeight: FontWeight.w800));
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    cacheWidth: imageCacheSize(context, size),
+                    // An expired or offline photo falls back to the initial,
+                    // not Flutter's broken-image box.
+                    errorBuilder: (_, _, _) => Center(child: initial)))
+            : initial;
     return Container(
       width: size,
       height: size,

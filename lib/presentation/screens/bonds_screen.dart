@@ -716,17 +716,23 @@ class PersonAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mask = MaskCatalog.byId(person.maskId);
+    final Widget initial = Text(
+      person.name.isEmpty ? '?' : person.name.characters.first.toUpperCase(),
+      style: TextStyle(color: AppColors.textBright, fontSize: size * 0.42, fontWeight: FontWeight.w800),
+    );
     final Widget inner = mask != null
         ? OniMaskArt.image(mask, size * 0.82)
         : person.photoUrl != null
         ? ClipOval(
             child: Image.network(person.photoUrl!,
-                width: size, height: size, fit: BoxFit.cover, cacheWidth: imageCacheSize(context, size)),
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                cacheWidth: imageCacheSize(context, size),
+                // An expired or offline photo falls back to the initial.
+                errorBuilder: (_, _, _) => Center(child: initial)),
           )
-        : Text(
-            person.name.isEmpty ? '?' : person.name.characters.first.toUpperCase(),
-            style: TextStyle(color: AppColors.textBright, fontSize: size * 0.42, fontWeight: FontWeight.w800),
-          );
+        : initial;
     return ExcludeSemantics(
       child: Container(
         width: size,

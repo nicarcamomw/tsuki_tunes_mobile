@@ -747,7 +747,7 @@ class _HistoryPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final moving = values.where((v) => v > 0);
-    if (moving.isEmpty) return;
+    if (moving.isEmpty || values.length < 2) return;
     final lo = min(60.0, moving.reduce(min) - 5);
     final hi = max(140.0, moving.reduce(max) + 5);
     final dx = size.width / (values.length - 1);

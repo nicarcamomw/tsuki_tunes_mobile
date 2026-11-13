@@ -447,6 +447,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     }
     Haptics.tap();
     await _player.seek(Duration.zero);
+    if (!mounted) return;
     setState(() {
       _clipPlaying = true;
       _clipPos = Duration.zero;
