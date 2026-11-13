@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
@@ -40,16 +41,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             const SizedBox(height: 16),
 
             // Header
@@ -59,7 +51,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.accentDim,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
                   ),
                   child: const Icon(
@@ -76,7 +68,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                       Text(
                         strings.languageSelectorTitle,
                         style: locale.getTextStyle(
-                          fontSize: 13,
+                          fontSize: AppFontSize.bodyLg,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textBright,
                           letterSpacing: 1.2,
@@ -86,7 +78,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                       Text(
                         strings.languageSelectorSubtitle,
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textSecondary,
                           letterSpacing: 0.8,
@@ -128,12 +120,12 @@ class LanguageSelectorSheet extends ConsumerWidget {
                   },
                   scaleDown: 0.98,
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppMotion.fast,
                     curve: Curves.easeInOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.accentDim : AppColors.bgMid,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.accent
@@ -161,7 +153,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                             color: isSelected
                                 ? AppColors.accent
                                 : AppColors.bgDeep,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.accent
@@ -172,7 +164,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                           child: Text(
                             lang.tag,
                             style: locale.getTextStyle(
-                              fontSize: 13,
+                              fontSize: AppFontSize.bodyLg,
                               fontWeight: FontWeight.w900,
                               color: isSelected
                                   ? Colors.white
@@ -191,7 +183,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                               Text(
                                 lang.label,
                                 style: locale.getTextStyle(
-                                  fontSize: 14,
+                                  fontSize: AppFontSize.title,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? AppColors.textBright
@@ -203,14 +195,14 @@ class LanguageSelectorSheet extends ConsumerWidget {
                                 strings.languageCardSubtitle(lang),
                                 style: lang == AppLanguage.ja
                                     ? GoogleFonts.notoSansJp(
-                                        fontSize: 10.5,
+                                        fontSize: AppFontSize.caption,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected
                                             ? AppColors.accent
                                             : AppColors.textSecondary,
                                       )
                                     : locale.getTextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: AppFontSize.caption,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected
                                             ? AppColors.accent
@@ -229,7 +221,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               border: Border.all(
                                 color: AppColors.accent.withValues(alpha: 0.6),
                                 width: 1.0,
@@ -257,7 +249,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                                 Text(
                                   strings.activeStatus,
                                   style: locale.getTextStyle(
-                                    fontSize: 9,
+                                    fontSize: AppFontSize.micro,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.accent,
                                     letterSpacing: 0.6,
@@ -294,13 +286,13 @@ class LanguageSelectorSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.bgMid.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
               ),
               child: Text(
                 strings.languageInfoNotice,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.micro,
                   color: AppColors.textMuted,
                   height: 1.3,
                 ),

@@ -401,6 +401,19 @@ class StorageService implements StorageContract {
     await prefs.setBool(_precacheWifiOnlyKey, enabled);
   }
 
+  static const String _imageQualityKey = 'tsuki_image_quality';
+
+  /// The size large images are fetched at (an [ImageQuality] name).
+  Future<String?> getImageQuality() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_imageQualityKey);
+  }
+
+  Future<void> saveImageQuality(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_imageQualityKey, name);
+  }
+
   // --- Cached Playlists (per-user) ---
 
   static String _cachedPlaylistsKey(String uid) => 'tsuki_cached_playlists_$uid';

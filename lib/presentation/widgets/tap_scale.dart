@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme/design_tokens.dart';
 import 'haptics.dart';
 
 class TapScale extends StatefulWidget {
@@ -47,8 +48,8 @@ class _TapScaleState extends State<TapScale>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 250),
+      duration: AppMotion.micro,
+      reverseDuration: AppMotion.normal,
     );
     _scale = Tween<double>(begin: 1.0, end: widget.scaleDown).animate(
       CurvedAnimation(

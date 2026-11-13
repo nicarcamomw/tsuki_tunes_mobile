@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/radar_release.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/permission_primer.dart';
 
@@ -94,7 +96,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
           color: AppColors.textBright,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
@@ -103,7 +105,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
         title: Text(
           strings.radarTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -213,7 +215,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                         strings.radarIosNote,
                         textAlign: TextAlign.center,
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           color: AppColors.textMuted,
                           height: 1.4,
                         ),
@@ -236,7 +238,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
       {int? count}) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
         child: Semantics(
           header: true,
           child: Row(
@@ -246,7 +248,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
               Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.6,
@@ -259,12 +261,12 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Text(
                     '$count',
                     style: locale.getTextStyle(
-                      fontSize: 9,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w800,
                       color: color,
                     ),
@@ -310,7 +312,7 @@ class _RadarHeader extends StatelessWidget {
             last == null ? null : DateTime.now().difference(last));
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -318,7 +320,7 @@ class _RadarHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -334,7 +336,7 @@ class _RadarHeader extends StatelessWidget {
                       ? strings.radarNewCount(unread)
                       : strings.radarWatching(watched).toUpperCase(),
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: unread > 0 ? AppColors.accent : AppColors.textBright,
                     letterSpacing: 1,
@@ -345,7 +347,7 @@ class _RadarHeader extends StatelessWidget {
                   Text(
                     strings.radarWatching(watched),
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -354,7 +356,7 @@ class _RadarHeader extends StatelessWidget {
                 Text(
                   status,
                   style: locale.getTextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSize.micro,
                     fontWeight: checking ? FontWeight.w700 : FontWeight.w500,
                     color: checking ? AppColors.neonCyan : AppColors.textMuted,
                     letterSpacing: checking ? 1.5 : 0.2,
@@ -378,7 +380,7 @@ class _RadarHeader extends StatelessWidget {
                     label: Text(
                       strings.radarCheckNow,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -390,7 +392,7 @@ class _RadarHeader extends StatelessWidget {
                           color: AppColors.neonCyan.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(AppRadius.chip)),
                     ),
                   ),
                 ),
@@ -566,10 +568,10 @@ class _NotifyRow extends StatelessWidget {
     final blocked = enabled && permission == false;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 0),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
           color: blocked
               ? AppColors.warning.withValues(alpha: 0.5)
@@ -594,7 +596,7 @@ class _NotifyRow extends StatelessWidget {
               title: Text(
                 strings.radarNotifyToggle,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                 ),
@@ -602,7 +604,7 @@ class _NotifyRow extends StatelessWidget {
               subtitle: Text(
                 strings.radarNotifyToggleSubtitle,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.micro,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -620,7 +622,7 @@ class _NotifyRow extends StatelessWidget {
                     child: Text(
                       strings.radarPermissionDenied,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -632,7 +634,7 @@ class _NotifyRow extends StatelessWidget {
                     child: Text(
                       strings.radarPermissionAction,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                       ),
@@ -684,16 +686,16 @@ class _ReleaseTile extends StatelessWidget {
       label: '${release.title}, ${release.artistName}, $type, $when',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: unread
                 ? AppColors.accent.withValues(alpha: 0.07)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: unread
                   ? AppColors.accent.withValues(alpha: 0.4)
@@ -703,7 +705,7 @@ class _ReleaseTile extends StatelessWidget {
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: release.coverUrl.isEmpty
                     ? _coverPlaceholder()
                     : CachedNetworkImage(
@@ -727,7 +729,7 @@ class _ReleaseTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 13,
+                        fontSize: AppFontSize.bodyLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -738,7 +740,7 @@ class _ReleaseTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -759,7 +761,7 @@ class _ReleaseTile extends StatelessWidget {
                           Text(
                             when,
                             style: locale.getTextStyle(
-                              fontSize: 9,
+                              fontSize: AppFontSize.micro,
                               fontWeight: FontWeight.w700,
                               color: days != null && days <= 1
                                   ? AppColors.accent
@@ -819,13 +821,13 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 8.5,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1,
@@ -845,7 +847,7 @@ class _SkeletonTile extends StatelessWidget {
           height: h,
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
         );
     return Padding(
@@ -885,35 +887,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: AppColors.neonCyan.withValues(alpha: 0.6)),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textBright,
-              letterSpacing: 1.6,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 11.5,
-              color: AppColors.textSecondary,
-              height: 1.45,
-            ),
-          ),
-        ],
-      ),
-    );
+    return EmptyState(icon: icon, tone: AppColors.neonCyan, title: title, message: body);
   }
 }

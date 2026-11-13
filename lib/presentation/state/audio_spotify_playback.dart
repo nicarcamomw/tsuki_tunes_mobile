@@ -615,6 +615,22 @@ extension _SpotifyPlayback on AudioProvider {
     await _reissueSpotifyAhead(force: true);
   }
 
+  /// The position in [queue] (searching from [from], wrapping around) of
+  /// the song whose cached Spotify URI is one of [uris]; null when none
+  /// is, or Spotify isn't connected. Reads the URI cache only.
+  Future<int?> _queueIndexBySpotifyUri(
+      List<Track> queue, Set<String> uris, int from) async {
+    if (queue.isEmpty) return null;
+    for (var k = 0; k < queue.length; k++) {
+      final i = (from + k) % queue.length;
+      final t = queue[i];
+      final cached =
+          await _spotify.cachedTrackUri(t.title, t.artistName, trackId: t.id);
+      if (cached != null && uris.contains(cached)) return i;
+    }
+    return null;
+  }
+
   /// Tsuki was closed or killed while Spotify kept playing our queue: pick
   /// up the song it's on (when it's one of ours) instead of showing the old
   /// one paused.
@@ -631,8 +647,21 @@ extension _SpotifyPlayback on AudioProvider {
       for (final a in (item['artists'] as List? ?? const []))
         if (a is Map) (a['name'] as String? ?? '').toLowerCase(),
     ];
-    final idx = AudioProvider.queueIndexMatching(_q.tracks, name, artists,
-        from: _q.currentIndex < 0 ? 0 : _q.currentIndex);
+    final from = _q.currentIndex < 0 ? 0 : _q.currentIndex;
+    // By URI first: the songs of our queue Spotify already played have
+    // theirs cached (no request), and a URI tells "Intro" from
+    // "Intro (Live)", which the names below can't. Spotify may have
+    // relinked the song to another market's copy (linked_from).
+    final linked = (item['linked_from'] as Map?)?['uri'] as String?;
+    final queued = List<Track>.of(_q.tracks); // a copy: _q.tracks changes in place
+    var idx = await _queueIndexBySpotifyUri(queued, {uri, if (linked != null) linked}, from);
+    if (_isPlaying || _spotifyActive) return;
+    // The queue changed while looking: only trust a match that's still there.
+    if (idx != null &&
+        (idx >= _q.tracks.length || _q.tracks[idx].id != queued[idx].id)) {
+      idx = null;
+    }
+    idx ??= AudioProvider.queueIndexMatching(_q.tracks, name, artists, from: from);
     if (idx == null) return;
 
     final track = _q.tracks[idx];

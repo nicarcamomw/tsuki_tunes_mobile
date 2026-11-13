@@ -8,8 +8,17 @@ import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
 
 void main() {
   test('every mask\'s image is in the app', () {
+    // A folder in pubspec.yaml's assets bundles its own files only, not its
+    // subfolders': the image's own folder has to be listed.
+    final declared = RegExp(r'^\s+- (assets/\S+/)\s*$', multiLine: true)
+        .allMatches(File('pubspec.yaml').readAsStringSync())
+        .map((m) => m.group(1)!)
+        .toSet();
     for (final m in MaskCatalog.all) {
-      expect(File(m.asset()).existsSync(), isTrue, reason: '${m.id}: ${m.asset()}');
+      final path = m.asset();
+      expect(File(path).existsSync(), isTrue, reason: '${m.id}: $path');
+      expect(declared, contains(path.substring(0, path.lastIndexOf('/') + 1)),
+          reason: '${m.id}: its folder is not in pubspec.yaml, so $path is not bundled');
     }
   });
 

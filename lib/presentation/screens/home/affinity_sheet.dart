@@ -2,15 +2,10 @@ part of '../home_screen.dart';
 
 void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
   final strings = locale.strings;
-  showModalBottomSheet(
+  showAppSheet(
+    // On the root navigator (showAppSheet): above the mini player and the
+    // nav bar, so neither covers the end.
     context: context,
-    // Above the mini player and the nav bar, so neither covers the end.
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: AppColors.bgCard,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
     builder: (context) => SafeArea(
       top: false,
       child: Padding(
@@ -19,21 +14,12 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 32,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textMuted.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           Text(
             strings.affinityInfoTitle,
             style: locale.getTextStyle(
-              fontSize: 16,
+              fontSize: AppFontSize.titleLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
             ),
@@ -42,7 +28,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Text(
             '親和性 // AFFINITY.SCORE',
             style: locale.getTextStyle(
-              fontSize: 8.5,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.accent.withValues(alpha: 0.85),
               letterSpacing: 1.4,
@@ -52,7 +38,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Text(
             strings.affinityInfoIntro,
             style: locale.getTextStyle(
-              fontSize: 13,
+              fontSize: AppFontSize.bodyLg,
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -81,7 +67,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.bgDeep,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
             ),
             child: Row(
@@ -91,7 +77,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                 Text(
                   '${strings.affinityFormulaLabel}  ',
                   style: locale.getTextStyle(
-                    fontSize: 9,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 1.4,
@@ -101,7 +87,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                   child: Text(
                     strings.affinityFormula,
                     style: locale.getTextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -121,7 +107,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                 child: Text(
                   strings.affinityInfoOutro,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textSecondary,
                     height: 1.45,
                   ),
@@ -141,7 +127,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
               child: Text(
                 strings.affinityInfoClose,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),
@@ -179,7 +165,7 @@ class _AffinityFactor extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -202,7 +188,7 @@ class _AffinityFactor extends StatelessWidget {
                 Text(
                   title,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                   ),
@@ -211,7 +197,7 @@ class _AffinityFactor extends StatelessWidget {
                 Text(
                   body,
                   style: locale.getTextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textSecondary,
                     height: 1.35,
                   ),
@@ -224,12 +210,12 @@ class _AffinityFactor extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
             child: Text(
               points,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: color,
                 letterSpacing: 0.8,

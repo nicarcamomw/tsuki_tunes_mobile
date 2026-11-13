@@ -6,11 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/admin.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/account_deletion_service.dart';
 import '../../data/datasources/firebase_service.dart';
+import '../../data/datasources/push_radar_service.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../di/injection.dart';
+import '../../domain/entities/auth_error.dart';
 
 
 final _log = Log.named('Auth');
@@ -34,12 +37,12 @@ class AuthProvider extends ChangeNotifier {
   static const _guestModeKey = 'guest_mode_active';
   static const _maxLoginAttempts = 5;
   static const _loginCooldownBase = Duration(seconds: 5);
-  final FirebaseService _firebase = FirebaseService();
+  final FirebaseService _firebase;
 
   User? _user;
   bool _isGuest = false;
   bool _loading = true;
-  String? _authError;
+  AuthError? _authError;
   bool _wasCancelled = false;
   String? _guestUid;
   StreamSubscription<User?>? _authSub;
@@ -52,9 +55,12 @@ class AuthProvider extends ChangeNotifier {
   bool get isGuest => _isGuest;
   bool get isLoggedIn => _user != null || _isGuest;
   String? get uid => _user?.uid ?? (_isGuest ? _guestUid : null);
-  String? get authError => _authError;
+  AuthError? get authError => _authError;
   bool get wasCancelled => _wasCancelled;
   bool get isAuthenticated => _user != null && !_isGuest;
+
+  /// An admin account (see [adminEmails]): everything unlockable shows unlocked.
+  bool get isAdmin => isAuthenticated && isAdminEmail(_user!.email);
 
   bool get isLoginThrottled {
     if (_loginAttempts < _maxLoginAttempts) return false;
@@ -105,7 +111,9 @@ class AuthProvider extends ChangeNotifier {
     return 'guest_${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
   }
 
-  AuthProvider() {
+  /// [firebase] comes from get_it (app_providers); a test can hand in a
+  /// fake. Left out, it's the app's own instance.
+  AuthProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService() {
     _init();
   }
 
@@ -138,7 +146,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> loginWithGoogle() async {
     if (isLoginThrottled) {
-      _authError = 'login_throttled';
+      _authError = AuthError.throttled;
       notifyListeners();
       return false;
     }
@@ -162,7 +170,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _loginAttempts++;
       _log.severe('Google sign-in error: $e');
-      _authError = 'login_failed';
+      _authError = AuthError.failed;
       notifyListeners();
       return false;
     }
@@ -178,6 +186,8 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(_guestModeKey);
     // The guest's playlists can't be reached once its uid is gone.
     if (leftGuestUid != null) await getIt<StorageService>().clearCachedPlaylists(leftGuestUid);
+    // While still signed in: this phone stops getting the account's pushes.
+    if (_user != null) await PushRadarService().unregister();
     await _firebase.signOut();
     notifyListeners();
   }
@@ -218,6 +228,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _log.warning('Preparing the account deletion failed (non-fatal): $e');
     }
+    await PushRadarService().unregister();
     try {
       await AccountDeletionService(firestore).deleteUserData(uid);
       await _firebase.deleteCurrentUser();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../screens/streak_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -39,7 +40,7 @@ class StreakCard extends ConsumerWidget {
         button: true,
         label: strings.a11yStreak,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
             StreakScreen.open(context);
@@ -48,7 +49,7 @@ class StreakCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: (alive ? streakFlame : AppColors.border).withValues(alpha: alive ? 0.45 : 1)),
             ),
             child: Row(
@@ -63,7 +64,7 @@ class StreakCard extends ConsumerWidget {
                         alive ? '${strings.streakTitle} · ${strings.streakDays(streak).toUpperCase()}' : strings.streakTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: t(11, w: FontWeight.w800, c: alive ? streakFlame : AppColors.textMuted, spacing: 1.4),
+                        style: t(AppFontSize.caption, w: FontWeight.w800, c: alive ? streakFlame : AppColors.textMuted, spacing: 1.4),
                       ),
                       const SizedBox(height: 7),
                       Row(
@@ -92,7 +93,7 @@ class StreakCard extends ConsumerWidget {
                               strings.streakStateShort(state.name),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: t(10.5,
+                              style: t(AppFontSize.caption,
                                   w: FontWeight.w600,
                                   c: state == StreakState.atRisk ? AppColors.warning : AppColors.textSecondary),
                             ),
@@ -187,7 +188,7 @@ class _WeekDot extends StatelessWidget {
           : Text(
               label,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: played
                     ? const Color(0xFF2A1206)

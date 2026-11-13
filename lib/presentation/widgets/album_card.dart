@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
@@ -42,7 +43,7 @@ class AlbumCard extends ConsumerWidget {
                 width: width,
                 height: width,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                   boxShadow: const [
                     BoxShadow(
@@ -53,7 +54,7 @@ class AlbumCard extends ConsumerWidget {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: ExcludeSemantics(
                     child: album.coverUrl.isNotEmpty
                         ? CachedNetworkImage(
@@ -78,7 +79,7 @@ class AlbumCard extends ConsumerWidget {
             Text(
               album.title,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -88,7 +89,7 @@ class AlbumCard extends ConsumerWidget {
             Text(
               album.artistName,
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textSecondary,
               ),
               maxLines: 1,

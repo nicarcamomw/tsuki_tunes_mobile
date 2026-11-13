@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/utils/deezer_preview.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
+import 'package:tsuki_tunes_mobile/data/repositories/album_completion_index.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
@@ -144,6 +146,93 @@ void main() {
       expect(requested, ['alb1']);
       expect(library.getAlbumTracksCount('alb1'), 2);
       expect(library.isAlbumCompleted('alb1'), isTrue);
+    });
+
+    // B11: registering album sizes one by one rebuilt the screens once per
+    // album; registerAlbumTrackCounts tells them once.
+    test('registering 50 album sizes at once rebuilds the screens once', () async {
+      final library = LibraryRepositoryImpl();
+      await Future.delayed(const Duration(milliseconds: 50));
+      var rebuilds = 0;
+      library.addListener(() => rebuilds++);
+
+      library.registerAlbumTrackCounts({for (var i = 0; i < 50; i++) 'alb$i': 10});
+
+      expect(rebuilds, 1);
+      expect(library.getAlbumTracksCount('alb49'), 10);
+
+      // Nothing new: no rebuild at all.
+      library.registerAlbumTrackCounts({'alb0': 10});
+      expect(rebuilds, 1);
+    });
+
+    // The artist page asks each album's completion several times per build.
+    // Listened songs are counted per album once after they change; every
+    // question after that is a map lookup, not a pass over all songs.
+    test('100 albums asked 3 times each: one pass over 3000 songs, not 300', () {
+      final songs = [
+        for (var i = 0; i < 3000; i++) _listened('$i', 'alb${i % 100}'),
+      ];
+      var passes = 0;
+      final index = AlbumCompletionIndex(
+        storage: StorageService(),
+        listenedTracks: () {
+          passes++;
+          return songs;
+        },
+        listenedLoaded: () => true,
+        onChanged: () {},
+      );
+
+      for (var round = 0; round < 3; round++) {
+        for (var a = 0; a < 100; a++) {
+          index.isCompleted('alb$a', albumTracksCount: 30);
+        }
+      }
+      expect(passes, 1);
+      expect(index.isCompleted('alb7', albumTracksCount: 30), isTrue);
+      expect(index.listenedCountForAlbum('alb7'), 30);
+
+      // A song marked or unmarked: counted again once, on the next question.
+      songs.removeLast();
+      index.invalidate();
+      expect(passes, 1);
+      expect(index.isCompleted('alb99', albumTracksCount: 30), isFalse);
+      index.isCompleted('alb0', albumTracksCount: 30);
+      expect(passes, 2);
+    });
+
+    // B9: the discography asked for counts only when it loaded; listened
+    // songs arriving afterwards never got their albums marked complete.
+    // Screens call ensureAlbumTrackCounts from build, so it runs again
+    // when the library changes.
+    test('listened songs that arrive after the page loaded still complete their albums', () async {
+      final library = LibraryRepositoryImpl();
+      await Future.delayed(const Duration(milliseconds: 50));
+      library.setListenedTracksLoadedForTesting(false);
+
+      final requested = <String>[];
+      Future<Album?> fetch(String id) async {
+        requested.add(id);
+        return _album(id, tracksCount: 2);
+      }
+      final albums = [_album('alb9')];
+
+      // The page builds before the library is in: nothing to ask yet.
+      library.ensureAlbumTrackCounts(albums, fetch);
+      await Future.delayed(const Duration(milliseconds: 10));
+      expect(requested, isEmpty);
+
+      // The listened songs arrive; the page builds again.
+      await library.setListenedTracksForTesting([
+        _listened('1', 'alb9'),
+        _listened('2', 'alb9'),
+      ]);
+      library.ensureAlbumTrackCounts(albums, fetch);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(requested, ['alb9']);
+      expect(library.isAlbumCompleted('alb9'), isTrue);
     });
   });
 }

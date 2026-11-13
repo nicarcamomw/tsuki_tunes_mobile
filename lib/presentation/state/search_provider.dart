@@ -16,8 +16,8 @@ import '../../domain/logic/search_suggestions.dart';
 final _log = Log.named('Search');
 
 class SearchProvider extends ChangeNotifier {
-  final DeezerApiService _api = DeezerApiService();
-  final LyricsService _lyricsService = LyricsService();
+  final DeezerApiService _api;
+  final LyricsService _lyricsService;
   static const _historyKey = 'search_history';
   static const _maxHistory = 10;
 
@@ -78,8 +78,15 @@ class SearchProvider extends ChangeNotifier {
     }
   }
 
-  SearchProvider({Future<List<String>> Function(String query)? fuzzyArtistNames})
-      : _fuzzyArtistNames = fuzzyArtistNames ?? LastFmService.searchArtistNames {
+  /// [api] and [lyrics] come from get_it (app_providers); a test can hand
+  /// in fakes. Left out, they're the app's own instances.
+  SearchProvider({
+    DeezerApiService? api,
+    LyricsService? lyrics,
+    Future<List<String>> Function(String query)? fuzzyArtistNames,
+  })  : _api = api ?? DeezerApiService(),
+        _lyricsService = lyrics ?? LyricsService(),
+        _fuzzyArtistNames = fuzzyArtistNames ?? LastFmService.searchArtistNames {
     _loadHistory();
   }
 

@@ -16,7 +16,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: AppColors.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: AppColors.accent.withValues(alpha: 0.35),
               width: 0.8,
@@ -25,7 +25,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide3Badge,
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
               letterSpacing: 1.6,
@@ -39,7 +39,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide3Title,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 23,
+            fontSize: AppFontSize.headline,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 2.0,
@@ -58,7 +58,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide3Desc,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 12.5,
+            fontSize: AppFontSize.bodyLg,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -98,7 +98,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.bgCard.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             border: Border.all(
               color: AppColors.accent.withValues(alpha: 0.45),
               width: 1.2,
@@ -108,10 +108,6 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                 color: AppColors.accent.withValues(alpha: 0.2 + 0.15 * pulse),
                 blurRadius: 18,
                 offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.7),
-                blurRadius: 16,
               ),
             ],
           ),
@@ -128,7 +124,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                     width: 4,
                     height: h,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
@@ -162,7 +158,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         Text(
                           'HARDER, BETTER, FASTER',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10.5,
+                            fontSize: AppFontSize.caption,
                             fontWeight: FontWeight.w900,
                             color: AppColors.textBright,
                             letterSpacing: 0.5,
@@ -173,7 +169,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         Text(
                           'Daft Punk • Alive 2007',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 9.0,
+                            fontSize: AppFontSize.micro,
                             color: AppColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -202,7 +198,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                         ),
                       ),
                       FractionallySizedBox(
@@ -213,7 +209,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                             gradient: const LinearGradient(
                               colors: [AppColors.neonCyan, AppColors.accent],
                             ),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             boxShadow: [
                               BoxShadow(
                                 color:
@@ -233,7 +229,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                       Text(
                         '01:42',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 7.5,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),
@@ -241,7 +237,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                       Text(
                         '03:44',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 7.5,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),

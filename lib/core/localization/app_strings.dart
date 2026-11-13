@@ -13,7 +13,9 @@ import '../../domain/logic/eco_levels.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
+import '../../domain/logic/playback_source.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../utils/image_quality.dart';
 import 'app_language.dart';
 
 class AppStrings {
@@ -43,13 +45,19 @@ class AppStrings {
   // --- Bottom Navigation ---
   String get navHome => language.navHome;
   String get navSearch => language.navSearch;
+  String get navExplore => language.navExplore;
   String get navLibrary => language.navLibrary;
 
-  String navHudSubtitle(int index) => _l.navHudSubtitle(switch (index) {
-        0 => 'home',
-        1 => 'search',
-        _ => 'library',
-      });
+  /// [tab] is the tab's name: home, search, explore or library.
+  String navHudSubtitle(String tab) => _l.navHudSubtitle(tab);
+
+  // --- Explore ---
+  String get exploreTelemetry => _l.exploreTelemetry;
+  String get exploreDiscover => _l.exploreDiscover;
+  String get explorePlay => _l.explorePlay;
+  String get explorePath => _l.explorePath;
+  String get exploreLoreSubtitle => _l.exploreLoreSubtitle;
+  String get homeToday => _l.homeToday;
 
   // --- Telemetría Militar Cyberpunk ---
   String get homeTelemetry => _l.homeTelemetry;
@@ -146,6 +154,19 @@ class AppStrings {
   String get settingsStorageSection => _l.settingsStorageSection;
 
   String get settingsGeneralSection => _l.settingsGeneralSection;
+  String get settingsAdvancedSection => _l.settingsAdvancedSection;
+  String get emptyLoreOni => _l.emptyLoreOni;
+  String get emptyLoreHannya => _l.emptyLoreHannya;
+  String get emptyLoreTengu => _l.emptyLoreTengu;
+  String get navGesturesHint => _l.navGesturesHint;
+  String get searchTopResult => _l.searchTopResult;
+  String get searchTopArtistKind => _l.searchTopArtistKind;
+  /// [tab] is a MainTab name. Explore and Library both go back to the top.
+  String navLongPressHint(String tab) => switch (tab) {
+        'home' => _l.navLongPressHome,
+        'search' => _l.navLongPressSearch,
+        _ => _l.navLongPressLibrary,
+      };
 
   String get normalizeTitle => _l.normalizeTitle;
 
@@ -1403,6 +1424,26 @@ class AppStrings {
 
   String get spotifyConnect => _l.spotifyConnect;
 
+  // --- What the player is playing: the whole song or a 30 s preview ---
+  String get sourceFullSong => _l.sourceFullSong;
+  String get sourcePreview => _l.sourcePreview;
+  String get sourcePreviewShort => _l.sourcePreviewShort;
+  String get sourceFullTitle => _l.sourceFullTitle;
+  String get sourceFullBody => _l.sourceFullBody;
+  String get sourcePreviewTitle => _l.sourcePreviewTitle;
+
+  /// Why a preview plays instead of the whole song.
+  String previewReason(PreviewReason reason) => switch (reason) {
+        PreviewReason.noSpotify => _l.previewReasonNoSpotify,
+        PreviewReason.notPremium => _l.previewReasonNotPremium,
+        PreviewReason.notAllowed => _l.previewReasonNotAllowed,
+        PreviewReason.offline => _l.previewReasonOffline,
+        PreviewReason.trackUnavailable => _l.previewReasonTrackUnavailable,
+        PreviewReason.openApp => _l.previewReasonOpenApp,
+        PreviewReason.disabled => _l.previewReasonDisabled,
+        PreviewReason.other => _l.previewReasonOther,
+      };
+
   String get spotifyDisconnect => _l.spotifyDisconnect;
 
   String get spotifyConnected => _l.spotifyConnected;
@@ -1669,6 +1710,20 @@ class AppStrings {
 
   String get undo => _l.undo;
 
+  // --- Image quality (Settings > Storage) ---
+  String get imageQualityTitle => _l.imageQualityTitle;
+  String imageQualityName(ImageQuality q) => switch (q) {
+        ImageQuality.normal => _l.imageQualityNormal,
+        ImageQuality.high => _l.imageQualityHigh,
+        ImageQuality.dataSaver => _l.imageQualityDataSaver,
+      };
+  String imageQualityDescription(ImageQuality q) => switch (q) {
+        ImageQuality.normal => _l.imageQualityNormalDesc,
+        ImageQuality.high => _l.imageQualityHighDesc,
+        ImageQuality.dataSaver => _l.imageQualityDataSaverDesc,
+      };
+  String unmarkedSongs(int count) => _l.unmarkedSongs(count);
+
   // Gesture hints
   String get swipeToRemoveHint => _l.swipeToRemoveHint;
 
@@ -1790,6 +1845,12 @@ class AppStrings {
   String get profileShare => _l.profileShare;
   String profileShareText(String link) => _l.profileShareText(link);
   String get profileUnavailable => _l.profileUnavailable;
+
+  // --- Sharing an album or an artist (an app link: appLink) ---
+  String get shareAction => _l.shareAction;
+  String albumShareText(String title, String artist, String link) =>
+      _l.albumShareText(title, artist, link);
+  String artistShareText(String name, String link) => _l.artistShareText(name, link);
   String get profileMakePublicFirst => _l.profileMakePublicFirst;
 
 
@@ -2141,15 +2202,8 @@ class AppStrings {
 
   String get wrappedFavoriteHour => _l.wrappedFavoriteHour;
 
-  String wrappedHourLabel(int hour) {
-    final amPm = hour >= 12 ? 'PM' : 'AM';
-    final h12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    return switch (language) {
-      AppLanguage.es => '$h12:00 $amPm',
-      AppLanguage.en => '$h12:00 $amPm',
-      AppLanguage.ja => '$hour:00',
-    };
-  }
+  /// [hour] is 0..23; each language picks its own clock (12 h or 24 h).
+  String wrappedHourLabel(int hour) => _l.wrappedHourLabel('h${hour.clamp(0, 23)}');
 
   String get wrappedFunFacts => _l.wrappedFunFacts;
 
@@ -2299,25 +2353,11 @@ class AppStrings {
           },
       };
 
-  String get weeklyTitle => switch (language) {
-        AppLanguage.es => 'DESAFÍOS DE LA SEMANA',
-        AppLanguage.en => "THIS WEEK'S CHALLENGES",
-        AppLanguage.ja => '今週のチャレンジ',
-      };
+  String get weeklyTitle => _l.weeklyTitle;
 
-  String weeklyTimeLeft(Duration left) {
-    final days = left.inDays;
-    final hours = left.inHours;
-    return switch (language) {
-      AppLanguage.es => days >= 1
-          ? 'Quedan $days ${days == 1 ? 'día' : 'días'}'
-          : 'Quedan $hours h',
-      AppLanguage.en => days >= 1
-          ? '$days ${days == 1 ? 'day' : 'days'} left'
-          : '$hours h left',
-      AppLanguage.ja => days >= 1 ? '残り$days日' : '残り$hours時間',
-    };
-  }
+  String weeklyTimeLeft(Duration left) => left.inDays >= 1
+      ? _l.weeklyDaysLeft(left.inDays)
+      : _l.weeklyHoursLeft(left.inHours);
 
   /// The week's two prizes: an R for two challenges, an SR for all three.
   String weeklyPrizes(String? rMask, String? srMask) => switch (language) {
@@ -2347,149 +2387,57 @@ class AppStrings {
         AppLanguage.ja => '週間の面をすべて集めた！',
       };
 
-  String weeklyDoneCount(int done) => switch (language) {
-        AppLanguage.es => '$done de 3 completados',
-        AppLanguage.en => '$done of 3 done',
-        AppLanguage.ja => '3つ中$doneつ達成',
-      };
+  String weeklyDoneCount(int done) => _l.weeklyDoneCount(done);
 
-  String get weeklyMaskTag => switch (language) {
-        AppLanguage.es => 'SEMANAL',
-        AppLanguage.en => 'WEEKLY',
-        AppLanguage.ja => '週間',
-      };
+  String get weeklyMaskTag => _l.weeklyMaskTag;
 
   // --- Wrapped: monthly recaps and the redesign ---
-  String monthName(int month) {
-    const es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
-        'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const en = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-        'August', 'September', 'October', 'November', 'December'];
-    return switch (language) {
-      AppLanguage.es => es[month - 1],
-      AppLanguage.en => en[month - 1],
-      AppLanguage.ja => '$month月',
-    };
-  }
+  /// [month] is 1 (January) .. 12 (December).
+  String monthName(int month) => _l.monthName(_monthKeys[month.clamp(1, 12) - 1]);
 
   /// "OCTUBRE 2026" / "2026" for the period of a recap.
-  String wrappedPeriod(int year, int? month) {
-    if (month == null) return '$year';
-    return switch (language) {
-      AppLanguage.ja => '$year年$month月',
-      _ => '${monthName(month).toUpperCase()} $year',
-    };
-  }
+  String wrappedPeriod(int year, int? month) => month == null
+      ? '$year'
+      : _l.wrappedPeriodMonth(monthName(month).toUpperCase(), year);
 
-  String wrappedIntro({required bool monthly}) => switch (language) {
-        AppLanguage.es => monthly ? '¿Listo para revivir tu mes?' : '¿Listo para revivir tu año?',
-        AppLanguage.en => monthly ? 'Ready to relive your month?' : 'Ready to relive your year?',
-        AppLanguage.ja => monthly ? '今月を振り返ろう' : '今年を振り返ろう',
-      };
+  static String _scope(bool monthly) => monthly ? 'month' : 'year';
+
+  String wrappedIntro({required bool monthly}) => _l.wrappedIntro(_scope(monthly));
 
   String wrappedReportTag({required bool monthly}) =>
       monthly ? '月報 // MONTHLY.REPORT' : '年間報告 // ANNUAL.REPORT.SYS';
 
-  String get wrappedMinutesLabel => switch (language) {
-        AppLanguage.es => 'MINUTOS ESCUCHADOS',
-        AppLanguage.en => 'MINUTES LISTENED',
-        AppLanguage.ja => '再生時間（分）',
-      };
+  String get wrappedMinutesLabel => _l.wrappedMinutesLabel;
 
-  String wrappedHoursOfMusic(int hours) => switch (language) {
-        AppLanguage.es => hours == 1 ? 'Eso es 1 hora de música' : 'Eso son $hours horas de música',
-        AppLanguage.en => hours == 1 ? "That's 1 hour of music" : "That's $hours hours of music",
-        AppLanguage.ja => '$hours時間分の音楽',
-      };
+  String wrappedHoursOfMusic(int hours) => _l.wrappedHoursOfMusic(hours);
 
-  String wrappedActiveDays(int active, int total) => switch (language) {
-        AppLanguage.es => 'Hubo música $active de $total días',
-        AppLanguage.en => 'Music on $active of $total days',
-        AppLanguage.ja => '$total日中$active日音楽を聴いた',
-      };
+  String wrappedActiveDays(int active, int total) => _l.wrappedActiveDays(active, total);
 
   /// "23% more than in September" / "12% less than in 2025".
-  String wrappedVsPrevious(int pct, String previous) {
-    final up = pct >= 0;
-    final n = pct.abs();
-    return switch (language) {
-      AppLanguage.es => '$n% ${up ? 'más' : 'menos'} que en $previous',
-      AppLanguage.en => '$n% ${up ? 'more' : 'less'} than in $previous',
-      AppLanguage.ja => '$previousより$n%${up ? '多い' : '少ない'}',
-    };
-  }
+  String wrappedVsPrevious(int pct, String previous) =>
+      _l.wrappedVsPrevious(pct.abs(), pct >= 0 ? 'up' : 'down', previous);
 
-  String get wrappedPlaysLabel => switch (language) {
-        AppLanguage.es => 'REPRODUCCIONES',
-        AppLanguage.en => 'PLAYS',
-        AppLanguage.ja => '再生回数',
-      };
-  String get wrappedSongsLabel => switch (language) {
-        AppLanguage.es => 'CANCIONES',
-        AppLanguage.en => 'SONGS',
-        AppLanguage.ja => '曲',
-      };
-  String get wrappedArtistsLabel => switch (language) {
-        AppLanguage.es => 'ARTISTAS',
-        AppLanguage.en => 'ARTISTS',
-        AppLanguage.ja => 'アーティスト',
-      };
+  String get wrappedPlaysLabel => _l.wrappedPlaysLabel;
+  String get wrappedSongsLabel => _l.wrappedSongsLabel;
+  String get wrappedArtistsLabel => _l.wrappedArtistsLabel;
 
-  String get wrappedTopSongLabel => switch (language) {
-        AppLanguage.es => 'TU CANCIÓN #1',
-        AppLanguage.en => 'YOUR #1 SONG',
-        AppLanguage.ja => 'あなたの1位の曲',
-      };
-  String get wrappedTopArtistLabel => switch (language) {
-        AppLanguage.es => 'TU ARTISTA #1',
-        AppLanguage.en => 'YOUR #1 ARTIST',
-        AppLanguage.ja => 'あなたの1位のアーティスト',
-      };
-  String get wrappedRunnersUp => switch (language) {
-        AppLanguage.es => 'LE SIGUEN',
-        AppLanguage.en => 'RUNNERS-UP',
-        AppLanguage.ja => '続いて',
-      };
+  String get wrappedTopSongLabel => _l.wrappedTopSongLabel;
+  String get wrappedTopArtistLabel => _l.wrappedTopArtistLabel;
+  String get wrappedRunnersUp => _l.wrappedRunnersUp;
 
-  String wrappedDayPart(int part) => switch (language) {
-        AppLanguage.es => const ['Madrugada', 'Mañana', 'Tarde', 'Noche'][part],
-        AppLanguage.en => const ['Late night', 'Morning', 'Afternoon', 'Evening'][part],
-        AppLanguage.ja => const ['深夜', '朝', '午後', '夜'][part],
-      };
+  /// [part]: 0 late night, 1 morning, 2 afternoon, 3 evening.
+  String wrappedDayPart(int part) => _l.wrappedDayPart(switch (part) {
+        0 => 'lateNight',
+        1 => 'morning',
+        2 => 'afternoon',
+        _ => 'evening',
+      });
 
-  String get wrappedAuraTitle => switch (language) {
-        AppLanguage.es => 'TU AURA MUSICAL',
-        AppLanguage.en => 'YOUR MUSIC AURA',
-        AppLanguage.ja => 'あなたの音楽オーラ',
-      };
+  String get wrappedAuraTitle => _l.wrappedAuraTitle;
 
   /// Name and description of each listening profile (see WrappedAura).
-  (String, String) wrappedAura(String key) => switch (language) {
-        AppLanguage.es => switch (key) {
-            'night' => ('Criatura nocturna', 'La luna es tu mejor oyente: tu música suena cuando el resto duerme.'),
-            'dawn' => ('Madrugador', 'Empiezas el día con banda sonora antes que nadie.'),
-            'loyal' => ('Alma fiel', 'Cuando un artista te atrapa, no lo sueltas.'),
-            'explorer' => ('Explorador', 'Siempre buscando algo nuevo: muchísimos artistas distintos.'),
-            'marathon' => ('Maratonista', 'Días enteros con música sin parar.'),
-            _ => ('Equilibrio', 'Un poco de todo, a cualquier hora: tu música fluye contigo.'),
-          },
-        AppLanguage.en => switch (key) {
-            'night' => ('Night creature', 'The moon is your best listener: your music plays while others sleep.'),
-            'dawn' => ('Early riser', 'You start the day with a soundtrack before anyone else.'),
-            'loyal' => ('Loyal soul', 'Once an artist hooks you, you never let go.'),
-            'explorer' => ('Explorer', 'Always after something new: so many different artists.'),
-            'marathon' => ('Marathoner', 'Whole days of music, non-stop.'),
-            _ => ('Balance', 'A bit of everything, any time: your music flows with you.'),
-          },
-        AppLanguage.ja => switch (key) {
-            'night' => ('夜の住人', '月が一番のリスナー。みんなが眠る頃にあなたの音楽が流れる。'),
-            'dawn' => ('早起き', '誰よりも早く、音楽とともに一日を始める。'),
-            'loyal' => ('一途な魂', '一度ハマったアーティストは離さない。'),
-            'explorer' => ('探検家', 'いつも新しい音を探している。たくさんのアーティスト。'),
-            'marathon' => ('マラソンランナー', '一日中ずっと音楽。'),
-            _ => ('調和', '何でも、いつでも。音楽があなたと一緒に流れる。'),
-          },
-      };
+  (String, String) wrappedAura(String key) =>
+      (_l.wrappedAuraName(key), _l.wrappedAuraDescription(key));
 
   String get wrappedTopAlbumsLabel => switch (language) {
         AppLanguage.es => 'TUS ÁLBUMES',
@@ -2538,66 +2486,18 @@ class AppStrings {
     };
   }
 
-  String get wrappedSummaryTitle => switch (language) {
-        AppLanguage.es => 'TU RESUMEN',
-        AppLanguage.en => 'YOUR RECAP',
-        AppLanguage.ja => 'まとめ',
-      };
-  String get wrappedTopSongsShort => switch (language) {
-        AppLanguage.es => 'CANCIONES',
-        AppLanguage.en => 'TOP SONGS',
-        AppLanguage.ja => 'トップ曲',
-      };
-  String get wrappedTopArtistsShort => switch (language) {
-        AppLanguage.es => 'ARTISTAS',
-        AppLanguage.en => 'TOP ARTISTS',
-        AppLanguage.ja => 'トップアーティスト',
-      };
-  String wrappedOutroFor({required bool monthly}) => switch (language) {
-        AppLanguage.es => monthly ? 'NOS VEMOS EL PRÓXIMO MES' : 'NOS VEMOS EL PRÓXIMO AÑO',
-        AppLanguage.en => monthly ? 'SEE YOU NEXT MONTH' : 'SEE YOU NEXT YEAR',
-        AppLanguage.ja => monthly ? 'また来月' : 'また来年',
-      };
-  String get wrappedShareCta => switch (language) {
-        AppLanguage.es => 'COMPARTIR RESUMEN',
-        AppLanguage.en => 'SHARE RECAP',
-        AppLanguage.ja => 'まとめをシェア',
-      };
-  String wrappedNoDataFor({required bool monthly}) => switch (language) {
-        AppLanguage.es => monthly ? 'No hay datos suficientes para este mes' : 'No hay datos suficientes para este año',
-        AppLanguage.en => monthly ? 'Not enough data for this month' : 'Not enough data for this year',
-        AppLanguage.ja => monthly ? '今月はデータが足りません' : '今年はデータが足りません',
-      };
-  String get wrappedPickerSubtitle => switch (language) {
-        AppLanguage.es => 'Tu resumen de cada mes y del año',
-        AppLanguage.en => 'Your recap for every month and the year',
-        AppLanguage.ja => '毎月と一年のまとめ',
-      };
-  String get wrappedThisMonth => switch (language) {
-        AppLanguage.es => 'este mes',
-        AppLanguage.en => 'this month',
-        AppLanguage.ja => '今月',
-      };
-  String wrappedWholeYear(int year) => switch (language) {
-        AppLanguage.es => 'Año $year completo',
-        AppLanguage.en => 'All of $year',
-        AppLanguage.ja => '$year年の一年',
-      };
-  String get wrappedMonthlyLabel => switch (language) {
-        AppLanguage.es => 'MENSUAL',
-        AppLanguage.en => 'MONTHLY',
-        AppLanguage.ja => '月間',
-      };
-  String get wrappedYearlyLabel => switch (language) {
-        AppLanguage.es => 'ANUAL',
-        AppLanguage.en => 'YEARLY',
-        AppLanguage.ja => '年間',
-      };
-  String get wrappedHomeSubtitle => switch (language) {
-        AppLanguage.es => 'MES Y AÑO',
-        AppLanguage.en => 'MONTH & YEAR',
-        AppLanguage.ja => '月と年',
-      };
+  String get wrappedSummaryTitle => _l.wrappedSummaryTitle;
+  String get wrappedTopSongsShort => _l.wrappedTopSongsShort;
+  String get wrappedTopArtistsShort => _l.wrappedTopArtistsShort;
+  String wrappedOutroFor({required bool monthly}) => _l.wrappedOutroFor(_scope(monthly));
+  String get wrappedShareCta => _l.wrappedShareCta;
+  String wrappedNoDataFor({required bool monthly}) => _l.wrappedNoDataFor(_scope(monthly));
+  String get wrappedPickerSubtitle => _l.wrappedPickerSubtitle;
+  String get wrappedThisMonth => _l.wrappedThisMonth;
+  String wrappedWholeYear(int year) => _l.wrappedWholeYear(year);
+  String get wrappedMonthlyLabel => _l.wrappedMonthlyLabel;
+  String get wrappedYearlyLabel => _l.wrappedYearlyLabel;
+  String get wrappedHomeSubtitle => _l.wrappedHomeSubtitle;
 
   String get a11yShareSlide => _l.a11yShareSlide;
 
@@ -3024,4 +2924,6 @@ class AppStrings {
   String get genreArtists => _l.genreArtists;
   String get genreTopTracks => _l.genreTopTracks;
   String get genreEmpty => _l.genreEmpty;
+
+  String get logoutGuestConfirmMessage => _l.logoutGuestConfirmMessage;
 }

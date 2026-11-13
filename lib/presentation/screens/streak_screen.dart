@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -13,7 +15,7 @@ import '../widgets/oni_mask_art.dart';
 import '../widgets/permission_primer.dart';
 import '../widgets/streak_card.dart';
 
-const _bg = Color(0xFF0A0B10);
+const _bg = AppColors.shrineBg;
 
 /// The daily streak: days in a row, the best run, moon shields, the last
 /// five weeks, the goals (and the masks they wake) and the reminder.
@@ -21,7 +23,7 @@ class StreakScreen extends ConsumerWidget {
   const StreakScreen({super.key});
 
   static Future<void> open(BuildContext context) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const StreakScreen()));
+      Navigator.of(context).push(cyberRoute<void>(const StreakScreen()));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,10 +42,10 @@ class StreakScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(strings.streakTitle,
-            style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: streakFlame, letterSpacing: 3)),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: streakFlame, letterSpacing: 3)),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         children: [
           _Hero(masks: masks, locale: locale, strings: strings),
           const SizedBox(height: 12),
@@ -73,7 +75,7 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
+      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
 }
 
 class _Hero extends StatelessWidget {
@@ -90,13 +92,13 @@ class _Hero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: RadialGradient(
           center: const Alignment(0, -0.7),
           radius: 1.1,
           colors: alive
-              ? const [Color(0xFF3A1A0C), Color(0xFF181010), Color(0xFF0D0D12)]
-              : const [Color(0xFF1E2029), Color(0xFF13141B), Color(0xFF0D0D12)],
+              ? const [AppColors.emberGlow, AppColors.emberInk, AppColors.shrineCardDeep]
+              : const [AppColors.shrineBorder, AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: (alive ? streakFlame : AppColors.border).withValues(alpha: alive ? 0.4 : 1)),
       ),
@@ -106,16 +108,16 @@ class _Hero extends StatelessWidget {
           const SizedBox(height: 12),
           Text(strings.streakUnit(streak),
               style: locale.getTextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w900, color: alive ? streakFlame : AppColors.textMuted, letterSpacing: 4)),
+                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: alive ? streakFlame : AppColors.textMuted, letterSpacing: 4)),
           Text(strings.streakInARow,
-              style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+              style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: Row(
               children: [
@@ -138,7 +140,7 @@ class _Hero extends StatelessWidget {
                 Expanded(
                   child: Text(strings.streakStateText(state.name),
                       style: locale.getTextStyle(
-                          fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.3)),
+                          fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.3)),
                 ),
               ],
             ),
@@ -170,7 +172,7 @@ class _Stats extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.border),
             ),
             child: Column(
@@ -182,13 +184,13 @@ class _Stats extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(
-                        fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
+                        fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
               ],
             ),
           ),
         );
 
-    final big = locale.getTextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textBright);
+    final big = locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright);
 
     return Row(
       children: [
@@ -229,7 +231,7 @@ class _Calendar extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -240,7 +242,7 @@ class _Calendar extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: Text(d,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+                        style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
                   ),
                 ),
             ],
@@ -279,7 +281,7 @@ class _DayCell extends StatelessWidget {
       height: 34,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         color: played
             ? streakFlame.withValues(alpha: 0.85)
             : shielded
@@ -294,10 +296,10 @@ class _DayCell extends StatelessWidget {
           : Text(
               '${date.day}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: played
-                    ? const Color(0xFF2A1206)
+                    ? AppColors.ember
                     : future
                         ? AppColors.textMuted.withValues(alpha: 0.35)
                         : AppColors.textMuted,
@@ -337,7 +339,7 @@ class _Goals extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
               decoration: BoxDecoration(
                 color: AppColors.bgCard,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: reached ? streakFlame.withValues(alpha: 0.45) : AppColors.border),
               ),
               child: Row(
@@ -354,7 +356,7 @@ class _Goals extends StatelessWidget {
                         style: TextStyle(
                             fontSize: g >= 100 ? 13 : 15,
                             fontWeight: FontWeight.w900,
-                            color: reached ? const Color(0xFF2A1206) : AppColors.textMuted)),
+                            color: reached ? AppColors.ember : AppColors.textMuted)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -366,11 +368,11 @@ class _Goals extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright),
+                              fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright),
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           child: LinearProgressIndicator(
                             value: reached ? 1 : current / g,
                             minHeight: 4,
@@ -382,7 +384,7 @@ class _Goals extends StatelessWidget {
                         Text(
                           reached ? strings.streakGoalReached : strings.streakGoalLeft(g - current),
                           style: locale.getTextStyle(
-                              fontSize: 10.5,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w600,
                               color: reached ? streakFlame : AppColors.textSecondary),
                         ),
@@ -413,7 +415,7 @@ class _ShieldInfo extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: streakShield.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: streakShield.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -427,11 +429,11 @@ class _ShieldInfo extends StatelessWidget {
               children: [
                 Text(strings.streakShieldTitle,
                     style: locale.getTextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w900, color: streakShield, letterSpacing: 1.6)),
+                        fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: streakShield, letterSpacing: 1.6)),
                 const SizedBox(height: 4),
                 Text(strings.streakShieldText(MaskProvider.shieldEvery, MaskProvider.maxShields),
                     style: locale.getTextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.35)),
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.35)),
               ],
             ),
           ),
@@ -469,7 +471,7 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
         padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: AppColors.border),
         ),
         child: Row(
@@ -481,11 +483,11 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(strings.streakReminderTitle,
-                      style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                   const SizedBox(height: 2),
                   Text(strings.streakReminderSubtitle(reminder.remindHour),
                       style: locale.getTextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.3)),
+                          fontSize: AppFontSize.caption, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.3)),
                 ],
               ),
             ),

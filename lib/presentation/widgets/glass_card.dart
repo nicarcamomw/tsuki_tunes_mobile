@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// A tinted card with soft blots of color inside, like ink spreading in
 /// water. The blots bloom one after another when the card appears and then
@@ -29,7 +30,7 @@ class GlassCard extends StatefulWidget {
     this.highlightAlpha = 0.15,
     this.dimAlpha = 0.05,
     this.borderAlpha = 0.4,
-    this.borderRadius = 10,
+    this.borderRadius = AppRadius.card,
     this.padding = const EdgeInsets.all(12),
     this.margin,
     required this.child,

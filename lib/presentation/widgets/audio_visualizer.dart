@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 class AudioVisualizer extends StatefulWidget {
   final bool isPlaying;
@@ -33,7 +34,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
     _targetHeights = List.generate(widget.barCount, (_) => 0.2);
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: AppMotion.fast,
     );
 
     if (widget.isPlaying) {
@@ -95,12 +96,12 @@ class _AudioVisualizerState extends State<AudioVisualizer>
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 1.5),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
+                    duration: AppMotion.micro,
                     width: 3,
                     height: widget.maxHeight * heightFactor,
                     decoration: BoxDecoration(
                       color: widget.isPlaying ? widget.activeColor : AppColors.borderGlow,
-                      borderRadius: BorderRadius.circular(1.5),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       boxShadow: widget.isPlaying
                           ? [
                               BoxShadow(

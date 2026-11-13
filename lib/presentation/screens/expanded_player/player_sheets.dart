@@ -21,7 +21,7 @@ class _AmbientButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: active ? AppColors.neonCyan.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: active ? Border.all(color: AppColors.neonCyan.withValues(alpha: 0.4)) : null,
         ),
         child: Row(
@@ -37,7 +37,7 @@ class _AmbientButton extends ConsumerWidget {
               Text(
                 '$count',
                 style: locale.getTextStyle(
-                  fontSize: 9,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w700,
                   color: AppColors.neonCyan,
                 ),
@@ -81,7 +81,7 @@ class _SleepTimerButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isActive ? AppColors.accent.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: isActive ? Border.all(color: AppColors.accent.withValues(alpha: 0.4)) : null,
         ),
         child: Row(
@@ -98,7 +98,7 @@ class _SleepTimerButton extends ConsumerWidget {
               Text(
                 label.isNotEmpty ? label : strings.sleepTimerEndOfTrackShort,
                 style: locale.getTextStyle(
-                  fontSize: 9,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                   letterSpacing: 0.5,
@@ -129,27 +129,16 @@ class _SleepTimerButton extends ConsumerWidget {
           Duration(minutes: minutes),
         ),
     ];
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      backgroundColor: AppColors.bgMid,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (_) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textMuted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+                const SheetHandle(),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -158,7 +147,7 @@ class _SleepTimerButton extends ConsumerWidget {
                     Text(
                       strings.sleepTimer,
                       style: locale.getTextStyle(
-                        fontSize: 13,
+                        fontSize: AppFontSize.bodyLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
                         letterSpacing: 1.5,
@@ -188,14 +177,14 @@ class _SleepTimerButton extends ConsumerWidget {
       label: label,
       child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         margin: const EdgeInsets.only(bottom: 2),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Row(
           children: [
@@ -203,7 +192,7 @@ class _SleepTimerButton extends ConsumerWidget {
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? AppColors.accent : AppColors.textPrimary,
                   letterSpacing: 1,
@@ -245,7 +234,7 @@ void _showSongOptionsSheet(
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(
@@ -257,7 +246,7 @@ void _showSongOptionsSheet(
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -270,13 +259,13 @@ void _showSongOptionsSheet(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   trailing,
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
                   ),
@@ -291,37 +280,25 @@ void _showSongOptionsSheet(
     );
   }
 
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    backgroundColor: AppColors.bgMid,
-    isScrollControlled: true,
     constraints: BoxConstraints(
       maxHeight: MediaQuery.of(context).size.height * 0.85,
-    ),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (_) {
       return SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const SheetHandle(),
               const SizedBox(height: 16),
               // Track header
               Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     child: SizedBox(
                       width: 44,
                       height: 44,
@@ -344,7 +321,7 @@ void _showSongOptionsSheet(
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textBright,
                           ),
@@ -355,7 +332,7 @@ void _showSongOptionsSheet(
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 12,
+                            fontSize: AppFontSize.body,
                             color: AppColors.textSecondary,
                           ),
                         ),

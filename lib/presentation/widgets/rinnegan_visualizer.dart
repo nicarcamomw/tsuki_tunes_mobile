@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/beat_clock.dart';
 import '../state/app_providers.dart';
@@ -459,7 +460,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
                 bottom: size * 0.1,
                 child: IgnorePointer(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
+                    duration: AppMotion.fast,
                     child: _chip == null
                         ? const SizedBox.shrink()
                         : _SyncChip(key: ValueKey(_chip), text: _chip!),
@@ -496,13 +497,13 @@ class _SyncChip extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgDeep.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.7)),
       ),
       child: Text(
         text,
         style: locale.getTextStyle(
-          fontSize: 10,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.2,

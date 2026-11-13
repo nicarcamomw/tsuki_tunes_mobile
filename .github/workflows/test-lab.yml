@@ -1,26 +1,26 @@
 name: Firebase Test Lab
 
-# Runs integration_test/app_smoke_test.dart on real phones in Firebase Test
-# Lab (project tsuki-tunes-web, results in gs://tsuki-tunes-web-test-lab).
+# Runs integration_test/app_smoke_test.dart on a virtual phone in Firebase
+# Test Lab (project tsuki-tunes-web). Results go to Test Lab's own bucket,
+# which is free (a bucket of ours was billed as Cloud Storage).
 #
 # Needs the repository secret FIREBASE_SERVICE_ACCOUNT: the JSON key of a
-# service account with the "Firebase Test Lab Admin" role and write access
-# to that bucket. Without it the run is skipped right away, instead of
+# service account with the "Firebase Test Lab Admin" role. Without it the run is skipped right away, instead of
 # building for 15 minutes and failing at the login.
 #
-# Not on every push: each run uses two real phones and leaves its results in
-# Cloud Storage, which got expensive with many pushes a day. Once a week
-# (Monday) and by hand from the Actions tab; the unit and widget tests still
-# run on every push in CI.
+# By hand only (Actions tab), and on one virtual phone. Running on every
+# push to main with two real phones cost hundreds of dollars in November
+# 2026; a GitHub run cancelled midway doesn't stop the test in Test Lab,
+# so those were billed too. The unit and widget tests still run on every
+# push in CI, for free.
 
 on:
-  schedule:
-    - cron: '23 9 * * 1'
   workflow_dispatch:
 
 concurrency:
   group: test-lab-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel: Test Lab keeps running (and billing) a cancelled job.
+  cancel-in-progress: false
 
 jobs:
   check-credentials:
@@ -64,6 +64,9 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned: a new stable can break the build overnight (3.50
+          # deprecated package:flutter/material.dart). Bump on purpose.
+          flutter-version: 3.47.9
           cache: true
 
       - name: Install Android NDK
@@ -122,9 +125,8 @@ jobs:
             --type instrumentation \
             --app build/app/outputs/flutter-apk/app-dev-debug.apk \
             --test build/app/outputs/apk/androidTest/dev/debug/app-dev-debug-androidTest.apk \
-            --device model=oriole,version=33,locale=en,orientation=portrait \
-            --device model=redfin,version=30,locale=en,orientation=portrait \
+            --device model=MediumPhone.arm,version=34,locale=en,orientation=portrait \
             --timeout 5m \
-            --results-bucket=gs://tsuki-tunes-web-test-lab \
+            --num-flaky-test-attempts 0 \
             --project=tsuki-tunes-web \
             --no-record-video

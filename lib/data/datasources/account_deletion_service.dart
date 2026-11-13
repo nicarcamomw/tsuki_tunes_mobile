@@ -12,8 +12,8 @@ final _log = Log.named('AccountDeletion');
 /// Deletes what an account keeps in Firestore, within what firestore.rules
 /// allow from the app:
 ///
-/// * Subcollections under the rate limit (listened songs, playlists,
-///   followed artists, unmark log) go in batches that stamp the user
+/// * Subcollections (listened songs, playlists, followed artists, unmark
+///   log, push devices) go in batches that stamp the user
 ///   document's `lastSubWrite`, at most one batch per second.
 /// * The daily play log and the public profile are deleted outright.
 /// * The user document itself can't be deleted (recreating it would reset
@@ -36,6 +36,8 @@ class AccountDeletionService {
     'playlists',
     'followedArtists',
     'listenedDeletions',
+    // Not rate limited, but deleting it the same way is harmless.
+    'devices',
   ];
   static const _batchSize = 400;
 

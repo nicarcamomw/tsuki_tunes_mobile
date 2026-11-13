@@ -1,5 +1,6 @@
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/listened_track.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/repositories/library_repository.dart';
 
@@ -37,6 +38,21 @@ class FakeLibraryRepository implements LibraryRepository {
 
   @override
   Future<void> unmarkAlbumTracks(List<String> trackIds) async => listened.removeAll(trackIds);
+
+  @override
+  List<ListenedTrackData> listenedRecords(Iterable<String> trackIds) => [
+        for (final id in trackIds)
+          if (listened.contains(id))
+            ListenedTrackData(trackId: id, title: '', artistName: '', albumTitle: '', albumId: '', coverUrl: '',
+                previewUrl: '', duration: 0, listenedAt: listenedAt[id]),
+      ];
+
+  /// When each song was marked, for undo tests.
+  final listenedAt = <String, DateTime>{};
+
+  @override
+  Future<void> restoreListened(List<ListenedTrackData> records) async =>
+      listened.addAll(records.map((r) => r.trackId));
 
   @override
   void registerAlbumTrackCount(String albumId, int count) => albumCounts[albumId] = count;

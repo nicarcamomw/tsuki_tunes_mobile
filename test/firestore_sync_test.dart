@@ -78,7 +78,7 @@ void main() {
       expect(device.listenedTrackIds, {'t1', 't2'});
       expect(await StorageService().getLastListenedFullSync(uid), isNotNull);
       final user = await db.collection('users').doc(uid).get();
-      expect(user.data()!['stats']['totalTracks'], 2);
+      expect((user.data()!['stats'] as Map)['totalTracks'], 2);
     });
 
     test('reconnect within a day uses cache + delta, not a full fetch',
@@ -152,6 +152,154 @@ void main() {
           phone.applyRemoteDeletion('t9', DateTime(2026, 1, 1)), isFalse);
       expect(phone.isTrackListened('t9'), isTrue);
     });
+
+    test('back after more than a week, a failed full download is owed and '
+        'tried again: the unmarks made meanwhile arrive', () async {
+      await _seed(db, 'old', DateTime(2026, 1, 1));
+      await _seed(db, 'keep', DateTime(2026, 1, 1));
+      final local = AppDatabase(NativeDatabase.memory());
+      final phone = newDevice(local: local);
+      await phone.connectToFirestore(uid);
+      await _settle();
+      expect(phone.isTrackListened('old'), isTrue);
+      phone.disconnectFirestore();
+
+      // Away for 8 days: 'old' was unmarked elsewhere, and its entry in the
+      // deletion log is already gone (kept 7 days).
+      await StorageService().saveLastListenedFullSync(
+          uid, DateTime.now().subtract(const Duration(days: 8)));
+      await db.collection('users').doc(uid).collection('listenedTracks').doc('old').delete();
+
+      // Back with a bad network: the full download fails, the song stays...
+      final again = newDevice(local: local);
+      again.failFullDownloadsForTesting = 1;
+      await again.connectToFirestore(uid);
+      await _settle();
+      expect(again.owesFullSyncForTesting, isTrue);
+      expect(again.isTrackListened('old'), isTrue);
+
+      // ...until the owed download is tried again (a timer, or the
+      // connection coming back), instead of waiting for the next start.
+      await again.retryOwedFullSyncForTesting();
+      await _settle();
+      expect(again.owesFullSyncForTesting, isFalse);
+      expect(again.isTrackListened('old'), isFalse);
+      expect(again.isTrackListened('keep'), isTrue);
+      again.disconnectFirestore();
+    });
+
+    test('songs marked here and not sent yet survive the owed download', () async {
+      await _seed(db, 'server', DateTime(2026, 1, 1));
+      final device = newDevice();
+      device.failFullDownloadsForTesting = 1;
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.owesFullSyncForTesting, isTrue);
+
+      // A mark whose write can't reach the server (no network): it stays
+      // pending on the phone.
+      device.markAlbumChunkHandlerForTesting =
+          (_, __) async => throw FirebaseException(plugin: 'firestore', code: 'unavailable');
+      await device.markTrack(_track('mine'));
+      await _settle();
+
+      await device.retryOwedFullSyncForTesting();
+      await _settle();
+      expect(device.isTrackListened('server'), isTrue);
+      expect(device.isTrackListened('mine'), isTrue);
+      device.disconnectFirestore();
+    });
+
+    // B5: the counter used to be a client-side increment, so a song marked
+    // on two devices before they synced counted twice.
+    test('the same song marked on two devices counts once', () async {
+      final phone = newDevice();
+      final tablet = newDevice();
+      await phone.connectToFirestore(uid);
+      await tablet.connectToFirestore(uid);
+      await _settle();
+
+      await phone.markTrack(_track('same'));
+      await tablet.markTrack(_track('same'));
+      await phone.pendingWritesSentForTesting();
+      await tablet.pendingWritesSentForTesting();
+      await _settle();
+
+      final user = await db.collection('users').doc(uid).get();
+      expect((user.data()!['stats'] as Map)['totalTracks'], 1);
+      expect(phone.listenedCount, 1);
+      expect(tablet.listenedCount, 1);
+      phone.disconnectFirestore();
+      tablet.disconnectFirestore();
+    });
+
+    test('a normal connect owes nothing; disconnecting forgets what was owed', () async {
+      await _seed(db, 't1', DateTime(2026, 1, 1));
+      final ok = newDevice();
+      await ok.connectToFirestore(uid);
+      await _settle();
+      expect(ok.owesFullSyncForTesting, isFalse);
+      ok.disconnectFirestore();
+
+      final flaky = newDevice();
+      flaky.failFullDownloadsForTesting = 5;
+      await flaky.connectToFirestore(uid);
+      await _settle();
+      expect(flaky.owesFullSyncForTesting, isTrue);
+      flaky.disconnectFirestore();
+      expect(flaky.owesFullSyncForTesting, isFalse);
+    });
+
+    // T2: the whole rollback, from the tap to the library. A change the
+    // server refuses for good (permission-denied) is undone on the phone
+    // and said, not left showing as if it had been saved.
+    test('a mark the server refuses is undone and reported', () async {
+      final device = newDevice();
+      await device.connectToFirestore(uid);
+      await _settle();
+      device.markAlbumChunkHandlerForTesting =
+          (_, __) async => throw const PermanentSyncError('permission-denied');
+
+      await device.markTrack(_track('refused'));
+      expect(device.isTrackListened('refused'), isTrue); // shown at once
+
+      await device.pendingWritesSentForTesting();
+      await _settle();
+      expect(device.isTrackListened('refused'), isFalse);
+      expect(device.listenedCount, 0);
+      expect(device.lastSyncError, 'mark_failed');
+      final server = await db.collection('users').doc(uid).collection('listenedTracks').get();
+      expect(server.docs, isEmpty);
+
+      // Restarted, the phone doesn't bring it back either.
+      device.disconnectFirestore();
+      device.markAlbumChunkHandlerForTesting = null;
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.isTrackListened('refused'), isFalse);
+      device.disconnectFirestore();
+    });
+
+    test('an unmark the server refuses brings the song back', () async {
+      await _seed(db, 'kept', DateTime(2026, 1, 1));
+      final device = newDevice();
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.isTrackListened('kept'), isTrue);
+      device.unmarkAlbumChunkHandlerForTesting =
+          (_, __) async => throw const PermanentSyncError('permission-denied');
+
+      await device.unmarkTrack('kept');
+      expect(device.isTrackListened('kept'), isFalse); // shown at once
+
+      await device.pendingWritesSentForTesting();
+      await _settle();
+      expect(device.isTrackListened('kept'), isTrue);
+      expect(device.lastSyncError, 'unmark_failed');
+      final doc = await db.collection('users').doc(uid).collection('listenedTracks').doc('kept').get();
+      expect(doc.exists, isTrue);
+      device.disconnectFirestore();
+    });
   });
 
   group('playlists', () {
@@ -181,6 +329,33 @@ void main() {
       await phone.pendingCreations;
       await _settle();
       expect(phone.playlists.length, 1);
+    });
+
+    // B7: signing in with Google after using the app as a guest moves the
+    // guest's playlists (kept on the phone only) into the account.
+    test('a guest\'s playlists move into the account on sign-in, once', () async {
+      const guest = 'guest_abc';
+      final repo = PlaylistRepositoryImpl(firebase: FakeFirebaseService(db));
+      await repo.initLocalOnly(guest);
+      await repo.createPlaylist('Noche', tracks: [_track('a'), _track('b')]);
+      expect(repo.playlists.single.name, 'Noche');
+
+      await repo.connectToFirestore(uid);
+      await repo.importGuestPlaylists(guest);
+      await repo.pendingCreations;
+      await _settle();
+
+      final docs = await db.collection('users').doc(uid).collection('playlists').get();
+      expect(docs.docs.map((d) => d.data()['name']), ['Noche']);
+      expect(repo.playlists.single.tracks.map((t) => t.id), ['a', 'b']);
+
+      // Nothing left behind to import twice.
+      await repo.importGuestPlaylists(guest);
+      await repo.pendingCreations;
+      await _settle();
+      final again = await db.collection('users').doc(uid).collection('playlists').get();
+      expect(again.docs, hasLength(1));
+      repo.disconnectFirestore();
     });
 
     test('duplicates saved earlier in the cache are dropped', () async {

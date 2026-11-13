@@ -24,3 +24,28 @@ enum SpotifyFallbackReason {
   /// Spotify playback is switched off remotely for now (kill switch).
   disabled,
 }
+
+/// Why connecting a Spotify account failed (SpotifyService.connect). The
+/// text Spotify or the system gave stays in `lastError`, for the logs.
+enum SpotifyConnectError {
+  /// The person closed or cancelled the Spotify sign-in.
+  canceled,
+
+  /// The account isn't on the app's allow list (development mode).
+  notRegistered,
+
+  /// The sign-in answer didn't match what was asked (CSRF check).
+  stateMismatch,
+
+  /// Spotify answered without the code to sign in with.
+  noAuthCode,
+
+  /// Spotify refused the sign-in or answered with an error.
+  server,
+
+  /// No connection, or the request failed on the way.
+  network,
+
+  /// Anything else.
+  other,
+}

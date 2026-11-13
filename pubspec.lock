@@ -285,10 +285,10 @@ packages:
     dependency: "direct main"
     description:
       name: connectivity_plus
-      sha256: b5e72753cf63becce2c61fd04dfe0f1c430cc5278b53a1342dc5ad839eab29ec
+      sha256: "762c99f890ca8bf87f7337236f99edd42793843bc6c3631da294a76653a54bd0"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.5"
+    version: "7.3.1"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -365,18 +365,18 @@ packages:
     dependency: "direct main"
     description:
       name: drift
-      sha256: "3179e7323b36d1852b42997b92ac72e8abcb61b1d58cfa8c6da9b540ab02a540"
+      sha256: "3eafa443c385724806a8648129583b4b140b7472f3feb6d1f321bdcf0fc853d4"
       url: "https://pub.dev"
     source: hosted
-    version: "2.35.3"
+    version: "2.35.4"
   drift_dev:
     dependency: "direct dev"
     description:
       name: drift_dev
-      sha256: ff4201b38dfbbbc85ffcd85597ad63c7146d2303126241623ebfce89fc4c4bfe
+      sha256: "9a0fc61d9c32f4edf7d7b239a41ef00de4dc85634aaf9bbf6fbd80b924415671"
       url: "https://pub.dev"
     source: hosted
-    version: "2.35.2"
+    version: "2.35.3"
   drift_flutter:
     dependency: "direct main"
     description:
@@ -553,6 +553,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.9.2"
+  firebase_messaging:
+    dependency: "direct main"
+    description:
+      name: firebase_messaging
+      sha256: e19c73b369ae83f4580a0676597f9ac3a0cd91e1b18be69ea16299c153dd9310
+      url: "https://pub.dev"
+    source: hosted
+    version: "17.0.1"
+  firebase_messaging_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_messaging_platform_interface
+      sha256: "1627f161b85bf842cba5227b02aafaad4e4ff9236a0a8490e6ec72b6fde294a5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.11.1"
+  firebase_messaging_web:
+    dependency: transitive
+    description:
+      name: firebase_messaging_web
+      sha256: "593d73330500896d9dd81680ee6207c69ad80f258712beb6de2e32dc14a9cb26"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.3.1"
   firebase_performance:
     dependency: "direct main"
     description:
@@ -647,34 +671,42 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_local_notifications
-      sha256: "19ffb0a8bb7407875555e5e98d7343a633bb73707bae6c6a5f37c90014077875"
+      sha256: fd5fc8966a8b34337ac182dc394f3506139b69d8138d4e9e174a13d6468adcd4
       url: "https://pub.dev"
     source: hosted
-    version: "19.5.0"
+    version: "22.3.3"
   flutter_local_notifications_linux:
     dependency: transitive
     description:
       name: flutter_local_notifications_linux
-      sha256: e3c277b2daab8e36ac5a6820536668d07e83851aeeb79c446e525a70710770a5
+      sha256: "3b89a4bf095fa5f8a99beeabf982c5bd506c3ad25e7b9e61da945e994dc5b615"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.0"
+    version: "8.0.2"
   flutter_local_notifications_platform_interface:
     dependency: transitive
     description:
       name: flutter_local_notifications_platform_interface
-      sha256: "277d25d960c15674ce78ca97f57d0bae2ee401c844b6ac80fcd972a9c99d09fe"
+      sha256: "43c3761d916c9bd3d5c7ebbc44d82f4990329840c0c5d62ad5260cc1b5d399bd"
       url: "https://pub.dev"
     source: hosted
-    version: "9.1.0"
+    version: "12.2.0"
+  flutter_local_notifications_web:
+    dependency: transitive
+    description:
+      name: flutter_local_notifications_web
+      sha256: "516afaf97a2d1e67a036c6617321b00d205d72f7a67b6eccf936cd565f985878"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   flutter_local_notifications_windows:
     dependency: transitive
     description:
       name: flutter_local_notifications_windows
-      sha256: "8d658f0d367c48bd420e7cf2d26655e2d1130147bca1eea917e576ca76668aaf"
+      sha256: "6f43bdd03b171b7a90f22647506fea33e2bb12294b7c7c7a3d690e960a382945"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.3"
+    version: "3.1.1"
   flutter_localizations:
     dependency: "direct main"
     description: flutter
@@ -684,10 +716,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_riverpod
-      sha256: "2b7f9d2a3c730ac1a98221b420cef966b990fca7ab546ede324642ca57a533e3"
+      sha256: "2ae1a93a868ae5f2d5358f521a4bfae0da7a3bfe77a60515ab5c28953b50557f"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.3"
+    version: "3.5.0"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -883,10 +915,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: f1c2d3c2b0b2096b435d7af033dd4e586fa31f51d988c5985e64495cd926d872
+      sha256: d4105f50c438c37d0d1372b1fbf1617fe9be398b559fa29d2067756ebbd42b69
       url: "https://pub.dev"
     source: hosted
-    version: "18.1.2"
+    version: "18.1.4"
   go_router_builder:
     dependency: "direct dev"
     description:
@@ -1464,10 +1496,10 @@ packages:
     dependency: transitive
     description:
       name: riverpod
-      sha256: "484dfc873ea4c4f4240e5635444fa066f87b07862b7279ebd004a2b71fba4b7a"
+      sha256: "24cbce92e87088cae0dd06caac3876c0b3abfd084901e7a93a3254d6daf4937d"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.3"
+    version: "3.5.0"
   rx:
     dependency: transitive
     description:
@@ -1645,42 +1677,42 @@ packages:
     dependency: "direct main"
     description:
       name: spotify_sdk
-      sha256: dc9916d5e440e57ce4e89fd12c35e80ea4a8fd0806335a3be16647c97fd6288a
+      sha256: "00f50620ac7b6e64554546dbdda7dc08315fe3df18b47cd5f0eaad101d3592ce"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.0"
+    version: "4.3.4"
   spotify_sdk_android:
     dependency: transitive
     description:
       name: spotify_sdk_android
-      sha256: af78d1c7b1da8bf375f6c2a33743260c716cc6791c8284d29f9a173e310e22b4
+      sha256: "87999a6ae0c4b92ffca5cbe42d4b7613051d9c3f8623ac38de1b1bd13b829fa5"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_ios:
     dependency: transitive
     description:
       name: spotify_sdk_ios
-      sha256: "8308510916c5be7be2eba09d7036e1ac2ed422d6f7aeecdbdbb2a808041b3f74"
+      sha256: "2a1776ad7a6673e60cb6b83be7ce70f9bdc0ae764aa1bfe67ef661e002b0afc9"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_platform_interface:
     dependency: transitive
     description:
       name: spotify_sdk_platform_interface
-      sha256: "66b9ffa05df29f48ef59996e5920dacea200346e39e5a7b13f3df90e363c1f77"
+      sha256: a021c6bee8f8da66542430c53db0184db43dc7ff57994f075c500ee9b4a680b5
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   spotify_sdk_web:
     dependency: transitive
     description:
       name: spotify_sdk_web
-      sha256: "0058afc09f5d65ce76b49e40a91fb202042a6bd61ef1850c08f51ed043170859"
+      sha256: "0a1e22e93f6acf82cc9b2dfdecb1a989491243881f92b91baa0258e5a2fd0e95"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.3.4"
   sqflite:
     dependency: transitive
     description:
@@ -1805,10 +1837,10 @@ packages:
     dependency: transitive
     description:
       name: synchronized
-      sha256: "3a7b5d17422dd0f8d5c6c14feaa5a1c65638b9455f871a96f08437562c046931"
+      sha256: a77637ebe1460f3b48cac89a790d2eb634f0a8593cab0d3f340c6db174ba9b94
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.1+2"
+    version: "3.6.1+1"
   term_glyph:
     dependency: transitive
     description:
@@ -1829,10 +1861,10 @@ packages:
     dependency: "direct main"
     description:
       name: timezone
-      sha256: dd14a3b83cfd7cb19e7888f1cbc20f258b8d71b54c06f79ac585f14093a287d1
+      sha256: "9f4e5a1a0e4fef7dd3424842c0575db01bfb7a11730e8d55753fcd5c5c98767b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.1"
+    version: "0.11.2"
   typed_data:
     dependency: transitive
     description:
@@ -1941,10 +1973,10 @@ packages:
     dependency: transitive
     description:
       name: web
-      sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
+      sha256: e119e82ac4795c7925103b7cf3768191f33941b99e7ccffbd6c645201d9f606b
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.1"
+    version: "1.1.2"
   web_socket:
     dependency: transitive
     description:

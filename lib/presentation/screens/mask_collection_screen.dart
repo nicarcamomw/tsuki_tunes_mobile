@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/lore/tsuki_lore.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -22,7 +23,9 @@ class MaskCollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final masks = ref.watch(maskProvider);
+    // P-04: rebuilt when what it shows changes, not on every mask notification.
+    ref.watch(maskProvider.select((m) => (m.equipped, m.unlockedCount)));
+    final masks = ref.read(maskProvider);
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final equipped = masks.equipped;
@@ -40,7 +43,7 @@ class MaskCollectionScreen extends ConsumerWidget {
         title: Text(
           strings.masksTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 1.5,
@@ -51,12 +54,12 @@ class MaskCollectionScreen extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 16),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: (equipped?.rarityColor ?? AppColors.border).withValues(alpha: 0.45),
                   ),
@@ -71,7 +74,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                         height: 92,
                         decoration: BoxDecoration(
                           color: AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           border: Border.all(color: AppColors.border),
                         ),
                         child: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
@@ -84,7 +87,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                           Text(
                             equipped?.name(locale.currentLanguage) ?? strings.masksNoneYet,
                             style: locale.getTextStyle(
-                              fontSize: 16,
+                              fontSize: AppFontSize.titleLg,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textBright,
                             ),
@@ -92,14 +95,14 @@ class MaskCollectionScreen extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             strings.masksEquippedHint,
-                            style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+                            style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                           ),
                           const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(3),
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
                                   child: LinearProgressIndicator(
                                     value: masks.unlockedCount / masks.totalCount,
                                     minHeight: 5,
@@ -112,7 +115,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                               Text(
                                 strings.masksCount(masks.unlockedCount, masks.totalCount),
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textBright,
                                 ),
@@ -127,21 +130,21 @@ class MaskCollectionScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: EcoLevelCard(margin: EdgeInsets.fromLTRB(16, 0, 16, 16))),
+          const SliverToBoxAdapter(child: EcoLevelCard(margin: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 16))),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 16),
               child: _LoreButton(label: strings.loreButton, onTap: () { Haptics.tap(); LoreScreen.open(context); }),
             ),
           ),
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 18),
+              padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 18),
               child: WeeklyChallengesCard(),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 32),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
@@ -170,11 +173,11 @@ class _LoreButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-    const gold = Color(0xFFFFE9A8);
+    const gold = AppColors.gold;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () {
           Haptics.tap();
           onTap();
@@ -182,8 +185,8 @@ class _LoreButton extends ConsumerWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(colors: [Color(0xFF241F38), Color(0xFF11111B)]),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            gradient: const LinearGradient(colors: [AppColors.shrineViolet, AppColors.shrineCard]),
             border: Border.all(color: gold.withValues(alpha: 0.5)),
             boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.12), blurRadius: 16)],
           ),
@@ -195,15 +198,15 @@ class _LoreButton extends ConsumerWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFF4EFE0),
+                  color: AppColors.parchment,
                   boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.6), blurRadius: 12)],
                 ),
-                child: const Text('月', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF1A1A28))),
+                child: const Text('月', style: TextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(label,
-                    style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: gold, letterSpacing: 0.4)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: gold, letterSpacing: 0.4)),
               ),
               const Icon(Icons.auto_stories_rounded, color: gold, size: 20),
             ],
@@ -272,7 +275,7 @@ class _MaskTile extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: locale.getTextStyle(
-                fontSize: 10.5,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w700,
                 color: unlocked ? AppColors.textBright : AppColors.textMuted,
               ),
@@ -288,7 +291,7 @@ class _MaskTile extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 9,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w700,
                   color: (unlocked ? mask.rarityColor : AppColors.textMuted).withValues(alpha: 0.9),
                   letterSpacing: 0.8,
@@ -315,7 +318,7 @@ class _ProgressBar extends ConsumerWidget {
       children: [
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: LinearProgressIndicator(
               value: goal == 0 ? 0 : current / goal,
               minHeight: 3,
@@ -327,7 +330,7 @@ class _ProgressBar extends ConsumerWidget {
         const SizedBox(width: 4),
         Text(
           '$current/$goal',
-          style: locale.getTextStyle(fontSize: 8.5, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
       ],
     );
@@ -371,15 +374,7 @@ class _MaskDetail extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 18),
-              decoration: BoxDecoration(
-                color: AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const SheetHandle(),
             if (seen)
               Opacity(opacity: 0.5, child: OniMaskArt(mask: mask, size: 168, unlocked: true))
             else
@@ -389,7 +384,7 @@ class _MaskDetail extends ConsumerWidget {
               hidden ? strings.maskSecretName : mask.name(lang),
               textAlign: TextAlign.center,
               style: locale.getTextStyle(
-                fontSize: 20,
+                fontSize: AppFontSize.headline,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textBright,
               ),
@@ -399,13 +394,13 @@ class _MaskDetail extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: color.withValues(alpha: 0.5)),
               ),
               child: Text(
                 '${unlocked ? '${mask.kanji} · ' : ''}${strings.maskRarity(mask.rarity)} · ${strings.maskTierName(mask)}',
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w800,
                   color: color,
                   letterSpacing: 1,
@@ -424,7 +419,7 @@ class _MaskDetail extends ConsumerWidget {
                     child: Text(
                       strings.maskSecretHint,
                       textAlign: TextAlign.center,
-                      style: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.35),
+                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted, height: 1.35),
                     ),
                   ),
                 ],
@@ -437,7 +432,7 @@ class _MaskDetail extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: rColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       border: Border.all(color: rColor.withValues(alpha: 0.3)),
                     ),
                     child: Column(
@@ -445,7 +440,7 @@ class _MaskDetail extends ConsumerWidget {
                         Text(
                           strings.maskRiddleLabel,
                           style: locale.getTextStyle(
-                            fontSize: 10,
+                            fontSize: AppFontSize.micro,
                             fontWeight: FontWeight.w800,
                             color: rColor.withValues(alpha: 0.8),
                             letterSpacing: 1.2,
@@ -456,7 +451,7 @@ class _MaskDetail extends ConsumerWidget {
                           riddle,
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             color: AppColors.textPrimary,
                             height: 1.35,
                           ).copyWith(fontStyle: FontStyle.italic),
@@ -468,7 +463,7 @@ class _MaskDetail extends ConsumerWidget {
                   Text(
                     strings.maskRiddleAfter(MaskProvider.secretHintsAfter),
                     textAlign: TextAlign.center,
-                    style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
                   ),
               ],
             ]
@@ -484,7 +479,7 @@ class _MaskDetail extends ConsumerWidget {
                       Text(
                         strings.maskHowToUnlock,
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w800,
                           color: rColor.withValues(alpha: 0.7),
                           letterSpacing: 0.8,
@@ -498,7 +493,7 @@ class _MaskDetail extends ConsumerWidget {
                 child: Text(
                   mask.description(lang),
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.35),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.35),
                 ),
               ),
             ],
@@ -517,7 +512,7 @@ class _MaskDetail extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: rColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: rColor.withValues(alpha: 0.2)),
                 ),
                 child: Row(
@@ -528,7 +523,7 @@ class _MaskDetail extends ConsumerWidget {
                     Text(
                       strings.maskLocked,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: rColor.withValues(alpha: 0.6),
                       ),
@@ -552,7 +547,7 @@ class _MaskDetail extends ConsumerWidget {
               const SizedBox(height: 10),
               Text(
                 strings.maskUnlockedOn(strings.longDate(at)),
-                style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
               ),
             ],
             const SizedBox(height: 20),
@@ -571,14 +566,14 @@ class _MaskDetail extends ConsumerWidget {
                   icon: Icon(isEquipped ? Icons.close_rounded : Icons.face_retouching_natural, size: 18),
                   label: Text(
                     isEquipped ? strings.maskUnequip : strings.maskEquip,
-                    style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1),
+                    style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: isEquipped ? AppColors.textSecondary : Colors.white,
                     backgroundColor: isEquipped ? AppColors.bgMid.withValues(alpha: 0.5) : rColor.withValues(alpha: 0.25),
                     side: BorderSide(color: isEquipped ? AppColors.border : rColor, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                   ),
                 ),
               ),
@@ -618,7 +613,7 @@ class _Whisper extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: tone.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: tone.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -629,7 +624,7 @@ class _Whisper extends ConsumerWidget {
               Icon(heard ? Icons.hearing_rounded : Icons.hearing_disabled_rounded, size: 13, color: tone),
               const SizedBox(width: 6),
               Text(strings.ecoWhisper,
-                  style: locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: tone, letterSpacing: 1.4)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: tone, letterSpacing: 1.4)),
             ],
           ),
           const SizedBox(height: 4),
@@ -637,7 +632,7 @@ class _Whisper extends ConsumerWidget {
             text,
             textAlign: TextAlign.center,
             style: locale
-                .getTextStyle(fontSize: 13, color: heard ? AppColors.textPrimary : AppColors.textMuted, height: 1.35)
+                .getTextStyle(fontSize: AppFontSize.bodyLg, color: heard ? AppColors.textPrimary : AppColors.textMuted, height: 1.35)
                 .copyWith(fontStyle: heard ? FontStyle.italic : FontStyle.normal),
           ),
         ],

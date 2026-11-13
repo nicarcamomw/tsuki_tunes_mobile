@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
@@ -67,7 +69,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
   @override
   Widget build(BuildContext context) {
     final ambient = ref.watch(ambientProvider);
-    final level = ref.watch(maskProvider.select((m) => m.level));
+    final level = ref.watch(maskProvider.select((m) => m.unlockLevel));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final remaining = ambient.stopRemaining;
@@ -80,17 +82,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Row(
               children: [
                 const Icon(Icons.spa_rounded, color: _color, size: 20),
@@ -99,7 +91,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   child: Text(
                     strings.ambientTitle,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w800,
                       color: _color,
                       letterSpacing: 1.5,
@@ -111,7 +103,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
             const SizedBox(height: 4),
             Text(
               strings.ambientSubtitle,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
 
@@ -134,13 +126,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     onTap: () {
                       Haptics.selection();
                       if (!EcoLevels.soundOpen(sound, level)) {
-                        ScaffoldMessenger.of(context)
-                          ..clearSnackBars()
-                          ..showSnackBar(SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: AppColors.bgCard,
-                            content: Text('${strings.ambientName(sound)} · ${strings.ecoOpensAt(EcoLevels.soundLevels[sound]!)}'),
-                          ));
+                        AppSnack.of(context).info('${strings.ambientName(sound)} · ${strings.ecoOpensAt(EcoLevels.soundLevels[sound]!)}');
                         return;
                       }
                       ambient.toggle(sound);
@@ -155,7 +141,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: AppColors.border),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
@@ -173,7 +159,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                                 strings.ambientName(sound),
                                 overflow: TextOverflow.ellipsis,
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textBright,
                                 ),
@@ -219,14 +205,14 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       label: Text(
                         ambient.isPlaying ? strings.ambientPause : strings.ambientResume,
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: _color,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: _color.withValues(alpha: 0.6)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -242,14 +228,14 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       label: Text(
                         strings.ambientStopAll,
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -267,7 +253,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   child: Text(
                     strings.ambientAfterTimerTitle,
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
                     ),
@@ -290,7 +276,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     },
                     showCheckmark: false,
                     labelStyle: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w600,
                       color: ambient.afterTimerMinutes == m ? AppColors.bgDeep : AppColors.textPrimary,
                     ),
@@ -299,7 +285,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     side: BorderSide(
                       color: ambient.afterTimerMinutes == m ? _color : AppColors.border,
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
                   ),
               ],
             ),
@@ -308,7 +294,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
               Text(
                 strings.ambientStopsIn(_fmt(remaining)),
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: _color,
                 ),
@@ -317,7 +303,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
             const SizedBox(height: 14),
             Text(
               strings.ambientHint,
-              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -356,12 +342,12 @@ class _SoundTile extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.fast,
           decoration: BoxDecoration(
             color: active ? color.withValues(alpha: 0.12) : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               color: active ? color.withValues(alpha: 0.8) : AppColors.border,
             ),
@@ -394,7 +380,7 @@ class _SoundTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: locale.getTextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSize.micro,
                     fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     color: active ? AppColors.textBright : AppColors.textSecondary,
                   ),

@@ -208,7 +208,8 @@ class SongRadio {
       if (reasons is Map) {
         for (final e in reasons.entries) {
           final v = e.value;
-          final s = v is Map ? v['s'] : null;
+          if (v is! Map) continue;
+          final s = v['s'];
           if (s is int && s >= 0 && s < RadioSource.values.length) {
             radio._reasons[e.key.toString()] = RadioReason(
                 RadioSource.values[s], '${v['t'] ?? ''}', '${v['a'] ?? ''}');

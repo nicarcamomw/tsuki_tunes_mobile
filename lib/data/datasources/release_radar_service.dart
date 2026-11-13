@@ -202,7 +202,7 @@ class ReleaseRadarService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           _releasesKey, json.encode(updated.map((r) => r.toJson()).toList()));
-      await _notifications.cancel(_notificationId);
+      await _notifications.cancel(id: _notificationId);
     } catch (e) {
       _log.severe('markAllRead failed: $e');
     }
@@ -370,23 +370,23 @@ class ReleaseRadarService {
         checked++;
       }
 
+      // A push may have come in while this check ran (handlePush): keep what
+      // it wrote (and what was marked read meanwhile), and don't tell about
+      // its releases a second time.
+      await prefs.reload();
+      for (final r in _decodeReleases(prefs)) {
+        timeline[r.albumId] = r;
+        fresh.removeWhere((f) => f.albumId == r.albumId);
+      }
+
       state.removeWhere((id, _) => !watchedIds.contains(id));
-      final cutoff = now.subtract(timelineWindow);
-      final kept = timeline.values.where((r) {
-        final at = r.releasedAt;
-        return watchedIds.contains(r.artistId) &&
-            at != null &&
-            at.isAfter(cutoff);
-      }).toList()
-        ..sort((a, b) {
-          final byDate = b.releaseDate.compareTo(a.releaseDate);
-          return byDate != 0 ? byDate : b.detectedAt.compareTo(a.detectedAt);
-        });
+      final kept = _sortedTimeline(timeline.values, now,
+          keep: (r) => watchedIds.contains(r.artistId));
 
       await prefs.setString(_stateKey,
           json.encode(state.map((k, v) => MapEntry(k, v.toJson()))));
       await prefs.setString(_releasesKey,
-          json.encode(kept.take(_maxTimeline).map((r) => r.toJson()).toList()));
+          json.encode(kept.map((r) => r.toJson()).toList()));
       if (checked > 0) {
         await prefs.setString(_lastCheckKey, now.toIso8601String());
       }
@@ -404,6 +404,104 @@ class ReleaseRadarService {
         } catch (_) {}
       }
     }
+  }
+
+  /// The timeline as saved: releases of the last [timelineWindow] that
+  /// [keep] allows, newest first, at most [_maxTimeline].
+  static List<RadarRelease> _sortedTimeline(
+    Iterable<RadarRelease> releases,
+    DateTime now, {
+    bool Function(RadarRelease)? keep,
+  }) {
+    final cutoff = now.subtract(timelineWindow);
+    final kept = releases.where((r) {
+      final at = r.releasedAt;
+      return (keep?.call(r) ?? true) && at != null && at.isAfter(cutoff);
+    }).toList()
+      ..sort((a, b) {
+        final byDate = b.releaseDate.compareTo(a.releaseDate);
+        return byDate != 0 ? byDate : b.detectedAt.compareTo(a.detectedAt);
+      });
+    return kept.take(_maxTimeline).toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pushes from the server (functions/src/radar.ts)
+  // ---------------------------------------------------------------------------
+
+  /// A release-radar push: its releases join the timeline as new, and the
+  /// ones this phone hadn't heard of are told about ([notify]: false when
+  /// the system already showed it, on iOS). Releases the phone's own check
+  /// found first are skipped, and the check skips the ones a push brought,
+  /// so nothing is told twice. Runs in the app or in the push's background
+  /// isolate. Returns how many releases were new here.
+  Future<int> handlePush(Map<String, dynamic> data, {bool notify = true}) async {
+    if (data['type'] != NotificationPayloads.releaseRadar) return 0;
+    final now = DateTime.now();
+    final pushed = <RadarRelease>[];
+    try {
+      final raw = data['releases'];
+      final list = raw is String ? json.decode(raw) : raw;
+      for (final e in list as List) {
+        if (e is! Map) continue;
+        final m = Map<String, dynamic>.from(e);
+        final release = RadarRelease.fromJson({
+          ...m,
+          'detectedAt': now.toIso8601String(),
+          'isNew': true,
+          'read': false,
+        });
+        if (release.albumId.isNotEmpty) pushed.add(release);
+      }
+    } catch (e) {
+      _log.warning('unreadable push: $e');
+      return 0;
+    }
+    if (pushed.isEmpty) return 0;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final timeline = {for (final r in _decodeReleases(prefs)) r.albumId: r};
+      final state = _decodeState(prefs);
+      final fresh = [
+        for (final r in pushed)
+          if (!timeline.containsKey(r.albumId) &&
+              !(state[r.artistId]?.ids.contains(r.albumId) ?? false))
+            r,
+      ];
+      if (fresh.isEmpty) return 0;
+
+      for (final r in fresh) {
+        timeline[r.albumId] = r;
+        // Only artists the check already watches: a first state holding
+        // just this album would make the check take the artist's other
+        // recent albums for new ones.
+        state[r.artistId]?.ids.add(r.albumId);
+      }
+      await prefs.setString(_stateKey,
+          json.encode(state.map((k, v) => MapEntry(k, v.toJson()))));
+      await prefs.setString(
+          _releasesKey,
+          json.encode(_sortedTimeline(timeline.values, now)
+              .map((r) => r.toJson())
+              .toList()));
+
+      if (notify && (prefs.getBool(_notifyKey) ?? true)) {
+        await _notify(fresh, prefs);
+      }
+      await _reloadUiState();
+      return fresh.length;
+    } catch (e) {
+      _log.severe('push handling failed: $e');
+      return 0;
+    }
+  }
+
+  /// A push notification the system showed (iOS) was tapped: open the radar.
+  void openFromPush() {
+    _pendingPayload = _payload;
+    openRequests.value++;
   }
 
   Future<List<Album>?> _fetchAlbums(String artistId) async {
@@ -448,7 +546,10 @@ class ReleaseRadarService {
   Future<void> _initNotifications({required bool foreground}) async {
     if (_notificationsReady) return;
     const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      // F-02: the status bar draws only a small icon's alpha, so the colour
+      // launcher icon showed as a white blob; the mask's silhouette (the
+      // themed icon's monochrome layer) reads as Tsuki.
+      android: AndroidInitializationSettings('@mipmap/ic_launcher_monochrome'),
       iOS: DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
@@ -456,7 +557,7 @@ class ReleaseRadarService {
       ),
     );
     await _notifications.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: foreground ? _onNotificationTap : null,
     );
     if (foreground) {
@@ -489,10 +590,10 @@ class ReleaseRadarService {
     try {
       await _initNotifications(foreground: false);
       await _notifications.show(
-        id,
-        title,
-        body,
-        NotificationDetails(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,
             channelName,
@@ -527,13 +628,13 @@ class ReleaseRadarService {
     try {
       await _initNotifications(foreground: true);
       await _notifications.zonedSchedule(
-        id,
-        title,
-        body,
+        id: id,
+        title: title,
+        body: body,
         // An instant: the reminder is set again every day, so the zone's
         // rules (summer time) never come into it.
-        tz.TZDateTime.from(at, tz.UTC),
-        NotificationDetails(
+        scheduledDate: tz.TZDateTime.from(at, tz.UTC),
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,
             channelName,
@@ -559,11 +660,15 @@ class ReleaseRadarService {
     if (!isSupported) return;
     try {
       await _initNotifications(foreground: true);
-      await _notifications.cancel(id);
+      await _notifications.cancel(id: id);
     } catch (e) {
       _log.fine('cancel failed: $e');
     }
   }
+
+  /// The radar's notification switch, readable from any isolate.
+  static bool notifyFromPrefs(SharedPreferences prefs) =>
+      prefs.getBool(_notifyKey) ?? true;
 
   /// The user's app language, readable from a background isolate.
   static AppLanguage languageFromPrefs(SharedPreferences prefs) {
@@ -598,10 +703,10 @@ class ReleaseRadarService {
           : null;
 
       await _notifications.show(
-        _notificationId,
-        title,
-        body,
-        NotificationDetails(
+        id: _notificationId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
             strings.radarChannelName,

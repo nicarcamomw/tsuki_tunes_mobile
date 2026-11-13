@@ -1,21 +1,24 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
+import '../state/cover_colors.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/moon_loader.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
 
 /// Full-screen synced lyrics over the album's color, with the song's
@@ -29,8 +32,8 @@ class LyricsScreen extends ConsumerStatefulWidget {
     required LyricsController controller,
   }) {
     return PageRouteBuilder<void>(
-      transitionDuration: const Duration(milliseconds: 380),
-      reverseTransitionDuration: const Duration(milliseconds: 280),
+      transitionDuration: AppMotion.slow,
+      reverseTransitionDuration: AppMotion.normal,
       pageBuilder: (_, __, ___) =>
           LyricsScreen(controller: controller),
       transitionsBuilder: (_, animation, __, child) {
@@ -93,14 +96,14 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.bgMid,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               side: BorderSide(
                   color: AppColors.borderGlow.withValues(alpha: 0.5)),
             ),
             title: Text(
               strings.downloadModelTitle,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1,
@@ -109,7 +112,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
             content: Text(
               strings.downloadModelDesc('${models * 30}'),
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 color: AppColors.textPrimary,
                 height: 1.5,
               ),
@@ -119,7 +122,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text(strings.cancel,
                     style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted)),
               ),
@@ -127,7 +130,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text(strings.downloadModelConfirm,
                     style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent)),
               ),
@@ -143,16 +146,14 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     if (!ecoAllows(context, EcoFeature.lyricsTranslate)) return;
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     final controller = widget.controller;
     final current = controller.translatedTo;
     final suggested = current ?? await LyricsController.lastTarget() ?? locale.currentLanguage.code;
     if (!mounted) return;
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showAppSheet<String>(
       context: context,
-      backgroundColor: AppColors.bgCard,
-      showDragHandle: true,
-      isScrollControlled: true,
+      drawHandle: true,
       builder: (sheetCtx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetCtx).height * 0.7),
@@ -160,11 +161,11 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
             shrinkWrap: true,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 8),
                 child: Text(
                   strings.lyricsTranslateTo,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -178,7 +179,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                   dense: true,
                   title: Text(
                     entry.value,
-                    style: locale.getTextStyle(fontSize: 14, color: Colors.white),
+                    style: locale.getTextStyle(fontSize: AppFontSize.title, color: Colors.white),
                   ),
                   trailing: (entry.key.isEmpty ? current == null : entry.key == current)
                       ? const Icon(Icons.check, color: AppColors.accent, size: 18)
@@ -207,10 +208,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
       TranslationOutcome.shown || TranslationOutcome.cancelled => null,
     };
     if (message != null) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.bgCard,
-      ));
+      messenger.info(message);
     }
   }
 
@@ -244,24 +242,36 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
       body: LyricsBackdrop(
         child: Stack(
           children: [
-            // The cover, blurred into a faint glow behind the words.
+            // R-03: the cover's colour as a faint glow behind the words. It
+            // was the cover blurred at sigma 60 (the screen's dearest paint
+            // on a low-end phone); at 22% it read as a colour anyway, so the
+            // colour, computed off the UI thread, is drawn flat.
             if (track.coverUrl.isNotEmpty)
               Positioned(
                 top: -80,
                 left: -80,
                 right: -80,
                 height: MediaQuery.sizeOf(context).height * 0.6,
-                child: RepaintBoundary(
-                  child: Opacity(
-                    opacity: 0.22,
-                    child: ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                      child: CachedNetworkImage(
-                        imageUrl: track.coverUrl,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 200,
-                      ),
-                    ),
+                child: IgnorePointer(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final glow = ref.watch(coverColorsForProvider(track.coverUrl).select((c) => c.value?.accent));
+                      return AnimatedOpacity(
+                        opacity: glow == null ? 0 : 1,
+                        duration: AppMotion.slow,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              radius: 0.75,
+                              colors: [
+                                (glow ?? Colors.transparent).withValues(alpha: 0.22),
+                                (glow ?? Colors.transparent).withValues(alpha: 0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -285,7 +295,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                       final translatedTo = widget.controller.translatedTo;
                       final translated = translatedTo != null;
                       return Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 8),
                         child: Row(
                           children: [
                             _Chip(
@@ -386,7 +396,7 @@ class _Header extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: 15,
+                      fontSize: AppFontSize.titleLg,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
@@ -398,7 +408,7 @@ class _Header extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       color: Colors.white70,
                     ),
                   ),
@@ -406,7 +416,7 @@ class _Header extends StatelessWidget {
                   Text(
                     '歌詞 // LIVE.SYNC',
                     style: locale.getTextStyle(
-                      fontSize: 8,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent.withValues(alpha: 0.9),
                       letterSpacing: 1.6,
@@ -450,13 +460,13 @@ class _Chip extends ConsumerWidget {
             },
       scaleDown: 0.92,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppMotion.fast,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: active
               ? AppColors.accent.withValues(alpha: 0.25)
               : Colors.black.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           border: Border.all(
             color: active
                 ? AppColors.accent.withValues(alpha: 0.8)
@@ -479,7 +489,7 @@ class _Chip extends ConsumerWidget {
             Text(
               label,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -517,7 +527,7 @@ class _Progress extends ConsumerWidget {
         thumbGlowColor: AppColors.accent.withValues(alpha: 0.5),
         thumbRadius: 6,
         timeLabelTextStyle: locale.getTextStyle(
-          fontSize: 11,
+          fontSize: AppFontSize.caption,
           color: Colors.white70,
         ),
       ),
@@ -612,19 +622,15 @@ class _Message extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (loading)
-            const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white70),
-            )
+            // P-08: the moon's phases while the words are found.
+            const MoonLoader(size: 26, color: Colors.white70)
           else if (icon != null)
             Icon(icon, size: 38, color: Colors.white70),
           const SizedBox(height: 14),
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: 11,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
               letterSpacing: 1.2,

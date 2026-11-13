@@ -5,14 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/public_profile.dart';
 import '../../domain/entities/social.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/moon_loader.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -40,7 +45,9 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final social = ref.watch(socialProvider);
+    // P-04: only what the tabs show (signed in, the requests badge).
+    ref.watch(socialProvider.select((s) => (s.available, s.pending)));
+    final social = ref.read(socialProvider);
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
       appBar: AppBar(
@@ -49,7 +56,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
         title: Text(
           strings.bondsTitle.toUpperCase(),
           style: locale.getTextStyle(
-            fontSize: 15,
+            fontSize: AppFontSize.titleLg,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 3,
@@ -68,7 +75,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                   icon: Badge(
                     isLabelVisible: invites > 0,
                     backgroundColor: AppColors.accent,
-                    label: Text('$invites', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+                    label: Text('$invites', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
                     child: Icon(Icons.headphones_rounded, color: inParty ? AppColors.success : AppColors.textBright),
                   ),
                 );
@@ -81,7 +88,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                 indicatorColor: AppColors.accent,
                 labelColor: AppColors.textBright,
                 unselectedLabelColor: AppColors.textMuted,
-                labelStyle: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1),
+                labelStyle: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),
                 tabs: [
                   Tab(text: strings.bondsTabResonances),
                   Tab(
@@ -91,7 +98,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                       offset: const Offset(12, -6),
                       label: Text(
                         '${social.pending}',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: Colors.white),
                       ),
                       child: Text(strings.bondsTabBonds),
                     ),
@@ -132,12 +139,11 @@ class _ObserverPanel extends StatelessWidget {
           Text(
             strings.bondsObserver,
             textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.45),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textPrimary, height: 1.45),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-            onPressed: () => becomeBearer(context),
+                        onPressed: () => becomeBearer(context),
             icon: const Icon(Icons.login_rounded, size: 18),
             label: Text(strings.ecoObserverAction, style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
@@ -199,7 +205,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
         future: _feed,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const SkeletonRowList(count: 6, round: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
+            return const SkeletonRowList(count: 6, round: true, padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 0));
           }
           final feed = snap.data ?? const [];
           if (feed.isEmpty) {
@@ -211,7 +217,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
             itemCount: feed.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) => ResonanceTile(resonance: feed[i]),
@@ -249,13 +255,13 @@ class ResonanceTile extends ConsumerWidget {
       label: '${showPerson ? '${resonance.person.name} ' : ''}$what, $ago',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: showPerson ? () { Haptics.tap(); UserProfileRoute(uid: resonance.person.uid).push<void>(context); } : null,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -272,20 +278,20 @@ class ResonanceTile extends ConsumerWidget {
                             TextSpan(
                               text: '${resonance.person.name} ',
                               style: locale.getTextStyle(
-                                fontSize: 13,
+                                fontSize: AppFontSize.bodyLg,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.textBright,
                               ),
                             ),
                           TextSpan(
                             text: what,
-                            style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.35),
+                            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.35),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(ago, style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted)),
+                    Text(ago, style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
                   ],
                 ),
               ),
@@ -312,7 +318,9 @@ class _BondsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final social = ref.watch(socialProvider);
+    // P-04: the three lists (replaced, never edited in place, on each change).
+    ref.watch(socialProvider.select((s) => (s.bonds, s.received, s.sent)));
+    final social = ref.read(socialProvider);
     if (social.bonds.isEmpty && social.received.isEmpty && social.sent.isEmpty) {
       return _Empty(
         icon: Icons.people_outline_rounded,
@@ -323,7 +331,7 @@ class _BondsTab extends ConsumerWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
       children: [
         if (social.received.isNotEmpty) ...[
           _SectionLabel(text: strings.bondsRequests, count: social.received.length, locale: locale),
@@ -364,16 +372,15 @@ class _RequestButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.watch(stringsProvider);
-    final social = ref.watch(socialProvider);
+    ref.watch(socialProvider.select((s) => s.isBusy(person.uid)));
+    final social = ref.read(socialProvider);
     if (social.isBusy(person.uid)) return const SizedBox(height: 40, child: Center(child: _Spinner()));
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              side: const BorderSide(color: AppColors.border),
-              minimumSize: const Size(0, 40),
+            minimumSize: const Size(0, 40),
             ),
             onPressed: () async {
               Haptics.remove();
@@ -386,7 +393,7 @@ class _RequestButtons extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: const Size(0, 40)),
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await social.accept(person.uid);
@@ -467,18 +474,18 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
     final strings = locale.strings;
     final results = _results;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 120),
       children: [
         TextField(
           controller: _field,
           onChanged: _onChanged,
           textInputAction: TextInputAction.search,
           onSubmitted: (q) => _search(q.trim()),
-          style: locale.getTextStyle(fontSize: 14, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textBright),
           cursorColor: AppColors.accent,
           decoration: InputDecoration(
             hintText: strings.bondsSearchHint,
-            hintStyle: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted),
+            hintStyle: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted),
             prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted),
             suffixIcon: _searching
                 ? const Padding(padding: EdgeInsets.all(14), child: _Spinner())
@@ -494,14 +501,14 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
                   ),
             filled: true,
             fillColor: AppColors.bgCard,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.card), borderSide: BorderSide.none),
           ),
         ),
         const SizedBox(height: 10),
         if (results == null && !_failed)
           Text(
             strings.bondsSearchHelp,
-            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textMuted, height: 1.4),
+            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted, height: 1.4),
           )
         else if (_failed)
           _Empty(icon: Icons.wifi_off_rounded, text: strings.bondsSearchFailed, locale: locale)
@@ -534,7 +541,9 @@ class BondButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = ref.watch(stringsProvider);
-    final social = ref.watch(socialProvider);
+    // P-04: this person's button only redraws when its own state changes.
+    ref.watch(socialProvider.select((s) => (s.available, s.me, s.isBusy(person.uid), s.stateWith(person.uid))));
+    final social = ref.read(socialProvider);
     if (!social.available || social.me == person.uid) return const SizedBox.shrink();
     if (social.isBusy(person.uid)) {
       return SizedBox(
@@ -548,7 +557,7 @@ class BondButton extends ConsumerWidget {
     switch (state) {
       case BondState.none:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.request(person);
@@ -563,8 +572,6 @@ class BondButton extends ConsumerWidget {
       case BondState.sent:
         return OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            side: const BorderSide(color: AppColors.border),
             minimumSize: size,
             padding: pad,
           ),
@@ -578,7 +585,7 @@ class BondButton extends ConsumerWidget {
         );
       case BondState.received:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.accept(person.uid);
@@ -643,13 +650,13 @@ class PersonRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () { Haptics.tap(); UserProfileRoute(uid: person.uid).push<void>(context); },
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(
@@ -667,7 +674,7 @@ class PersonRow extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textBright,
                           ),
@@ -678,7 +685,7 @@ class PersonRow extends ConsumerWidget {
                             subtitle!,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
+                            style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
                           ),
                         ],
                       ],
@@ -715,16 +722,23 @@ class PersonAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mask = MaskCatalog.byId(person.maskId);
+    final Widget initial = Text(
+      person.name.isEmpty ? '?' : person.name.characters.first.toUpperCase(),
+      style: TextStyle(color: AppColors.textBright, fontSize: size * 0.42, fontWeight: FontWeight.w800),
+    );
     final Widget inner = mask != null
         ? OniMaskArt.image(mask, size * 0.82)
         : person.photoUrl != null
         ? ClipOval(
-            child: Image.network(person.photoUrl!, width: size, height: size, fit: BoxFit.cover),
+            child: Image.network(person.photoUrl!,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                cacheWidth: imageCacheSize(context, size),
+                // An expired or offline photo falls back to the initial.
+                errorBuilder: (_, _, _) => Center(child: initial)),
           )
-        : Text(
-            person.name.isEmpty ? '?' : person.name.characters.first.toUpperCase(),
-            style: TextStyle(color: AppColors.textBright, fontSize: size * 0.42, fontWeight: FontWeight.w800),
-          );
+        : initial;
     return ExcludeSemantics(
       child: Container(
         width: size,
@@ -753,7 +767,7 @@ class _SectionLabel extends StatelessWidget {
     child: Text(
       '${text.toUpperCase()} · $count',
       style: locale.getTextStyle(
-        fontSize: 11,
+        fontSize: AppFontSize.caption,
         fontWeight: FontWeight.w800,
         color: AppColors.textMuted,
         letterSpacing: 2,
@@ -771,34 +785,7 @@ class _Empty extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: AppColors.textMuted),
-          const SizedBox(height: 12),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.45),
-          ),
-          if (action != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentText,
-                side: const BorderSide(color: AppColors.accent),
-              ),
-              onPressed: onAction,
-              child: Text(action!),
-            ),
-          ],
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => EmptyState(icon: icon, message: text, actionLabel: action, onAction: onAction, padding: const EdgeInsets.all(32));
 }
 
 class _Spinner extends StatelessWidget {
@@ -806,8 +793,9 @@ class _Spinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2));
+      // P-08: the app's loading moon.
+      const MoonLoader(size: 18);
 }
 
 void _toast(BuildContext context, String text) =>
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(text)));
+    AppSnack.maybeOf(context)?.info(text);

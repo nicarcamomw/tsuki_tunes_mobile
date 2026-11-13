@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -33,20 +34,14 @@ class _EqualizerSheet extends ConsumerWidget {
       controller: controller,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 16),
         Text(strings.eqTitle.toUpperCase(),
             style: locale.getTextStyle(
-                fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
         const SizedBox(height: 6),
         Text(audio.hasEqualizer ? strings.eqSubtitle : strings.eqUnavailable,
-            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 14),
         _Curve(preset: current),
         const SizedBox(height: 14),
@@ -95,7 +90,7 @@ class _PresetTile extends StatelessWidget {
       label: '$name. $hint',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: enabled ? onTap : null,
         child: Opacity(
           opacity: enabled ? 1 : 0.4,
@@ -103,7 +98,7 @@ class _PresetTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: selected ? AppColors.accent : AppColors.border),
             ),
             child: Row(
@@ -117,9 +112,9 @@ class _PresetTile extends StatelessWidget {
                     children: [
                       Text(name,
                           style: locale.getTextStyle(
-                              fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                              fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                       const SizedBox(height: 2),
-                      Text(hint, style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted)),
+                      Text(hint, style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
                     ],
                   ),
                 ),
@@ -143,13 +138,13 @@ class _Curve extends StatelessWidget {
           height: 92,
           decoration: BoxDecoration(
             color: const Color(0xFF0E0F15),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: TweenAnimationBuilder<double>(
             key: ValueKey(preset),
             tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 350),
+            duration: AppMotion.normal,
             curve: Curves.easeOutCubic,
             builder: (context, t, _) => CustomPaint(painter: _CurvePainter(preset, t)),
           ),

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/album_progress.dart';
@@ -16,33 +17,32 @@ import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/radar_release.dart';
 import '../../domain/entities/top_artist.dart';
 import '../../domain/logic/completion_recommendations.dart';
+import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
+import '../state/daily_guess.dart';
+import '../state/home_snapshot.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
-import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/eco_widgets.dart';
-import '../widgets/glass_card.dart';
+import '../widgets/entry_cards.dart';
+import '../widgets/feature_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
-import '../widgets/weekly_challenges_card.dart';
-import '../widgets/wrapped_picker_sheet.dart';
-import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
-import 'run_mode_screen.dart';
 import 'streak_screen.dart';
-import 'time_machine_screen.dart';
 
 part 'home/affinity_sheet.dart';
 part 'home/completion_sections.dart';
-part 'home/entry_cards.dart';
 part 'home/gear_profile_button.dart';
 part 'home/home_widgets.dart';
 
@@ -71,7 +71,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _completionLoad = 0;
   bool _isLoading = true;
   bool _hasError = false;
-  bool _dailyDone = false;
+  bool _releasesLoading = true;
+  bool _snapshotTried = false;
 
   @override
   void initState() {
@@ -80,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     NavigationEvents.onHomeOpenProfile = openProfile;
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
-    _refreshDailyDone();
+    unawaited(DailyGuess.refresh());
     _radar.openRequests.addListener(_openRadarIfRequested);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _openRadarIfRequested());
@@ -119,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (scrollController.hasClients) {
       scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 380),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     }
@@ -130,53 +131,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ProfileBottomSheet.show(context, auth);
   }
 
+  /// Loads the catalog's part of the home.
+  ///
+  /// I-01: the first time, the last home saved shows at once (no skeleton
+  /// when there's one); featured artists and the top artists' pictures
+  /// load side by side, the artists show as soon as they're in and the
+  /// releases follow. I-02: a refresh keeps what's on screen until the new
+  /// data replaces it; only an empty home shows the skeleton or the error.
   Future<void> _loadHomeData() async {
+    if (!_snapshotTried && !_hasContent) {
+      _snapshotTried = true;
+      final snapshot = await HomeSnapshot.load();
+      if (!mounted) return;
+      if (snapshot != null && !snapshot.isEmpty && !_hasContent) _applySnapshot(snapshot);
+    }
+    final hadContent = _hasContent;
     setState(() {
-      _isLoading = true;
+      _isLoading = !hadContent;
       _hasError = false;
-      _recommendedArtists = [];
+      _releasesLoading = true;
       _completionSeedKey = null;
     });
     try {
-      final featured = await ref.read(musicCatalogProvider).getFeaturedArtists();
-      if (!mounted) return;
-
       final library = ref.read(libraryProvider);
       final topEntries = library.getTopArtists(limit: 5);
 
-      List<_TopArtistDisplay> topDisplay = [];
-      List<Album> releases = [];
-
-      if (topEntries.isNotEmpty) {
-        topDisplay = await _fetchTopArtistPictures(topEntries);
-        if (!mounted) return;
-        releases = await ref.read(getLatestReleasesProvider)([
-          for (final t in topDisplay)
-            if (t.artist != null) t.artist!,
-        ]);
-      } else if (featured.isNotEmpty) {
-        releases =
-            await ref.read(getLatestReleasesProvider)(featured.take(6).toList());
-      }
+      final (featured, topDisplay) = await (
+        ref.read(musicCatalogProvider).getFeaturedArtists(),
+        topEntries.isEmpty ? Future.value(<_TopArtistDisplay>[]) : _fetchTopArtistPictures(topEntries),
+      ).wait;
       if (!mounted) return;
-
       setState(() {
         _featuredArtists = featured;
         _topArtistsDisplay = topDisplay;
-        _latestReleases = releases;
         _isLoading = false;
       });
       unawaited(_loadPersonalizedRecommendations(topDisplay));
       unawaited(_loadCompletionRecommendations());
+
+      final seeds = topEntries.isNotEmpty
+          ? [for (final t in topDisplay) if (t.artist != null) t.artist!]
+          : featured.take(6).toList();
+      final releases = seeds.isEmpty ? <Album>[] : await ref.read(getLatestReleasesProvider)(seeds);
+      if (!mounted) return;
+      setState(() {
+        _latestReleases = releases;
+        _releasesLoading = false;
+      });
+      unawaited(HomeSnapshot(
+        featured: featured,
+        topArtists: {for (final t in topDisplay) if (t.artist != null) t.entry.name: t.artist!},
+        releases: releases,
+      ).save());
     } catch (e) {
       _log.severe('loadHomeData error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasError = true;
+          _releasesLoading = false;
+          // With something on screen (the snapshot, the last load) it
+          // stays; the offline banner says why it isn't fresh.
+          _hasError = !_hasContent;
         });
       }
     }
+  }
+
+  bool get _hasContent =>
+      _featuredArtists.isNotEmpty || _topArtistsDisplay.isNotEmpty || _latestReleases.isNotEmpty;
+
+  /// The saved home, with the library's current top artists (their
+  /// pictures from the snapshot when it has them).
+  void _applySnapshot(HomeSnapshot snapshot) {
+    final topEntries = ref.read(libraryProvider).getTopArtists(limit: 5);
+    setState(() {
+      _featuredArtists = snapshot.featured;
+      _topArtistsDisplay = [
+        for (final e in topEntries) _TopArtistDisplay(entry: e, artist: snapshot.topArtists[e.name]),
+      ];
+      _latestReleases = snapshot.releases;
+      _isLoading = false;
+    });
   }
 
   /// Each top artist (the library knows names) with their catalog entry,
@@ -292,7 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 locale: locale,
                 icon: Icon(
                   Icons.wifi_off_rounded,
-                  color: AppColors.accent,
+                  color: AppColors.textMuted,
                   size: 28,
                   semanticLabel: strings.a11yOffline,
                 ),
@@ -313,7 +348,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 title: strings.homeEmptyTitle,
                 subtitle: strings.homeEmptySubtitle,
                 actionLabel: strings.homeEmptyAction,
-                onAction: () => NavigationEvents.switchTab?.call(1),
+                onAction: () => NavigationEvents.switchTab?.call(MainTab.search),
               )
             else ...[
               if (isLoggedIn)
@@ -329,74 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-              SliverToBoxAdapter(child: _buildFeatureCards(locale)),
-
-              // Reasons to come back: the daily streak, and this week's
-              // challenges and their mask.
-              if (isLoggedIn) const SliverToBoxAdapter(child: EcoLevelCard()),
-              if (isLoggedIn)
-                const SliverToBoxAdapter(
-                  child: EcoLocked(feature: EcoFeature.streak, child: StreakCard()),
-                ),
-              const SliverToBoxAdapter(
-                child: EcoLocked(feature: EcoFeature.weekly, child: WeeklyChallengesCard(compact: true)),
-              ),
-
-              if (isLoggedIn && listenedCount > 0)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: EcoLocked(
-                                feature: EcoFeature.wrapped,
-                                child: _WrappedEntryCard(locale: locale, strings: strings))),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: EcoLocked(
-                                feature: EcoFeature.listeningClock,
-                                child: _ListeningClockEntryCard(locale: locale, strings: strings))),
-                      ],
-                    ),
-                  ),
-                ),
-
-              if (isLoggedIn && listenedCount > 0)
-                const SliverToBoxAdapter(
-                  child: EcoLocked(feature: EcoFeature.timeMachine, child: TimeMachineEntryCard()),
-                ),
-
-              if (isLoggedIn && ref.watch(releaseRadarSupportedProvider))
-                SliverToBoxAdapter(
-                  child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
-                ),
-
-              if (isLoggedIn)
-                SliverToBoxAdapter(
-                  child: EcoLocked(
-                    feature: EcoFeature.discovery,
-                    child: _DiscoveryEntryCard(locale: locale),
-                  ),
-                ),
-
-              if (hasArtists)
-                SliverToBoxAdapter(
-                  child: EcoLocked(
-                    feature: EcoFeature.rabbitHole,
-                    child: _RabbitHoleEntryCard(
-                    locale: locale,
-                    strings: strings,
-                    seedArtist: _topArtistsDisplay.isNotEmpty &&
-                            _topArtistsDisplay.first.artist != null
-                        ? _topArtistsDisplay.first.artist!
-                        : _featuredArtists.isNotEmpty
-                            ? _featuredArtists.first
-                            : null,
-                  ),
-                  ),
-                ),
+              SliverToBoxAdapter(child: _buildToday(locale, isLoggedIn: isLoggedIn)),
 
               ..._buildTopArtistsSlivers(locale),
               if (isLoggedIn && listenedCount > 0)
@@ -427,7 +395,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     final strings = locale.strings;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: loaded ? null : const NeverScrollableScrollPhysics(),
@@ -478,13 +446,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
             child: Row(
               children: [
                 // The title takes all the room left by the (?)
                 // button: a Spacer here would take half of it.
                 Expanded(
-                  child: _SectionTitle(
+                  child: SectionTitle(
                     locale: locale,
                     text: strings.topArtistsTitle,
                     maxLines: 2,
@@ -551,8 +519,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-          child: _SectionTitle(locale: locale, text: strings.topArtistsTitle),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
+          child: SectionTitle(locale: locale, text: strings.topArtistsTitle),
         ),
       ),
       SliverList(
@@ -598,18 +566,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-          child: _SectionTitle(locale: locale, text: strings.latestReleasesTitle),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 28, AppSpacing.page, 12),
+          child: SectionTitle(locale: locale, text: strings.latestReleasesTitle),
         ),
       ),
       SliverToBoxAdapter(
-        child: _latestReleases.isEmpty
+        child: _latestReleases.isEmpty && _releasesLoading
+            ? SizedBox(
+                height: 185,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+                  children: [
+                    for (var i = 0; i < 3; i++)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: SkeletonLoader(width: 140, height: 140, borderRadius: AppRadius.chip),
+                      ),
+                  ],
+                ),
+              )
+            : _latestReleases.isEmpty
             ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                 child: Text(
                   strings.emptyReleases,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -619,7 +603,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16),
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                   itemCount: _latestReleases.length,
                   itemBuilder: (context, index) {
                     return AlbumCard(
@@ -637,8 +621,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       for (final rec in _completionRecs) ...[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-            child: _SectionTitle(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
+            child: SectionTitle(
               locale: locale,
               text: locale.strings.becauseYouCompleted(rec.album.title),
               maxLines: 2,
@@ -650,7 +634,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             height: 160,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: rec.artists.length,
               itemBuilder: (context, index) =>
                   ArtistCard(artist: rec.artists[index]),
@@ -677,8 +661,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-          child: _SectionTitle(locale: locale, text: locale.strings.recommendedTitle),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
+          child: SectionTitle(locale: locale, text: locale.strings.recommendedTitle),
         ),
       ),
       SliverToBoxAdapter(
@@ -686,7 +670,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             itemCount: artists.length,
             itemBuilder: (context, index) => ArtistCard(artist: artists[index]),
           ),
@@ -695,82 +679,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
   }
 
-  Future<void> _refreshDailyDone() async {
-    final done = await GuessSongScreen.isDailyDone();
-    if (mounted && done != _dailyDone) setState(() => _dailyDone = done);
-  }
-
   Future<void> _openGuessGame() async {
     if (!ecoAllows(context, EcoFeature.guessSong)) return;
     Haptics.tap();
-    await const GuessSongRoute().push(context);
-    await _refreshDailyDone();
+    await const GuessSongRoute().push<void>(context);
+    await DailyGuess.refresh();
   }
 
-  Widget _buildFeatureCards(LocaleProvider locale) {
+  /// One card for today, the most pressing of: new releases on the radar,
+  /// the daily game still to play, the streak, the Eco level. The rest
+  /// of what there is to do lives in Explore, a tap from the heading.
+  Widget _buildToday(LocaleProvider locale, {required bool isLoggedIn}) {
     final strings = locale.strings;
-    final ambientCount = ref.watch(ambientProvider.select(
-        (a) => a.isPlaying ? a.activeSounds.length : 0));
-    final run = ref.watch(runProvider.select(
-        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled)));
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        children: [
-          Row(
+    final radarSupported = isLoggedIn && ref.watch(releaseRadarSupportedProvider);
+    final guessOpen =
+        ref.watch(maskProvider.select((m) => m.hasFeature(EcoFeature.guessSong)));
+    final streakOpen = ref.watch(maskProvider.select((m) => m.hasFeature(EcoFeature.streak)));
+    return ValueListenableBuilder<List<RadarRelease>>(
+      valueListenable: _radar.releases,
+      builder: (context, releases, _) => ValueListenableBuilder<bool>(
+        valueListenable: DailyGuess.done,
+        builder: (context, dailyDone, _) {
+          final Widget? card;
+          if (radarSupported && releases.any((r) => r.isUnread)) {
+            card = ReleaseRadarEntryCard(locale: locale, strings: strings);
+          } else if (guessOpen && !dailyDone) {
+            card = Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: FeatureCard(
+                locale: locale,
+                icon: Icons.music_note_rounded,
+                color: AppColors.accent,
+                title: strings.guessTitle,
+                subtitle: strings.guessModeDaily,
+                highlight: true,
+                onTap: _openGuessGame,
+              ),
+            );
+          } else if (isLoggedIn && streakOpen) {
+            card = const StreakCard();
+          } else if (isLoggedIn) {
+            // Nothing unlocked yet: the way to the next level.
+            card = const EcoLevelCard();
+          } else {
+            card = null;
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _FeatureCard(
-                  locale: locale,
-                  icon: Icons.music_note_rounded,
-                  color: AppColors.accent,
-                  title: strings.guessTitle,
-                  subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
-                  highlight: !_dailyDone,
-                  onTap: _openGuessGame,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, 8, 2),
+                child: Row(
+                  children: [
+                    Expanded(child: SectionTitle(locale: locale, text: strings.homeToday)),
+                    TextButton.icon(
+                      onPressed: () {
+                        Haptics.selection();
+                        NavigationEvents.switchTab?.call(MainTab.explore);
+                      },
+                      iconAlignment: IconAlignment.end,
+                      icon: const Icon(Icons.chevron_right, size: 18),
+                      label: Text(
+                        strings.navExplore,
+                        style: locale.getTextStyle(
+                          fontSize: AppFontSize.caption,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accentText,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _FeatureCard(
-                  locale: locale,
-                  icon: Icons.water_drop_rounded,
-                  color: AppColors.neonCyan,
-                  title: strings.ambientTitle,
-                  subtitle: ambientCount > 0
-                      ? strings.ambientPlayingCount(ambientCount)
-                      : strings.homeAmbientCardSubtitle,
-                  highlight: ambientCount > 0,
-                  onTap: () {
-                    if (!ecoAllows(context, EcoFeature.ambient)) return;
-                    Haptics.tap();
-                    AmbientMixerSheet.show(context);
-                  },
-                ),
-              ),
+              ?card,
             ],
-          ),
-          if (run.$3) ...[
-            const SizedBox(height: 10),
-            _FeatureCard(
-              locale: locale,
-              icon: Icons.directions_run_rounded,
-              color: AppColors.neonGreen,
-              title: strings.runTitle,
-              subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
-              highlight: run.$1,
-              onTap: () {
-                if (!ecoAllows(context, EcoFeature.running)) return;
-                Haptics.tap();
-                RunModeScreen.open(context);
-              },
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }
-
 }
 
 class _TopArtistDisplay {

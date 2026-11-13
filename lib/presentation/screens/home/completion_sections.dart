@@ -20,15 +20,15 @@ class _AlmostCompleteSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-          child: _SectionTitle(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 12),
+          child: SectionTitle(
               locale: locale, text: locale.strings.almostCompleteTitle),
         ),
         SizedBox(
           height: 205,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             itemCount: albums.length,
             itemBuilder: (context, index) =>
                 _AlmostCompleteCard(locale: locale, progress: albums[index]),
@@ -77,11 +77,11 @@ class _AlmostCompleteCard extends StatelessWidget {
                 width: _width,
                 height: _width,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: progress.coverUrl.isNotEmpty
                       ? CachedNetworkImage(
                           memCacheWidth: imageCacheSize(context, _width),
@@ -104,7 +104,7 @@ class _AlmostCompleteCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: progress.share,
                   minHeight: 3,
@@ -118,7 +118,7 @@ class _AlmostCompleteCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -128,7 +128,7 @@ class _AlmostCompleteCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),

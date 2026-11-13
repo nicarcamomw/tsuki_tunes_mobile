@@ -180,4 +180,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(seen, AppColors.neonCyan);
   });
+
+  test('T-02: a header asks any cover its colours; no cover, no tint', () async {
+    final container = ProviderContainer(overrides: [
+      coverColorsReaderProvider.overrideWithValue((url) async => CoverColors.fromSeed(const Color(0xFF2E6BFF))),
+    ]);
+    addTearDown(container.dispose);
+    expect(await container.read(coverColorsForProvider('').future), isNull);
+    final colors = await container.read(coverColorsForProvider('https://x/cover.jpg').future);
+    expect(colors, isNotNull);
+    expect(colors!.background.computeLuminance(), lessThan(0.1), reason: 'white text stays legible on it');
+  });
 }

@@ -12,6 +12,7 @@ import '../../data/datasources/battery_guide.dart';
 import '../../data/datasources/beat_clock.dart';
 import '../../data/datasources/bpm_flow.dart';
 import '../../data/datasources/deezer_api_service.dart';
+import '../../data/datasources/firebase_service.dart';
 import '../../data/datasources/lyrics_service.dart';
 import '../../data/datasources/play_history.dart';
 import '../../data/datasources/playback_log.dart';
@@ -29,6 +30,7 @@ import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/playback_source.dart';
 import '../../domain/repositories/party_repository.dart';
 import '../../domain/repositories/product_events.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -40,6 +42,7 @@ import 'ambient_provider.dart';
 import 'audio_provider.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
+import 'image_quality_setting.dart';
 import 'locale_provider.dart';
 import 'mask_provider.dart';
 import 'moon_provider.dart';
@@ -68,7 +71,8 @@ final connectivityProvider = ChangeNotifierProvider<ConnectivityProvider>(
   (ref) => ConnectivityProvider(),
 );
 
-final authProvider = ChangeNotifierProvider<AuthProvider>((ref) => AuthProvider());
+final authProvider = ChangeNotifierProvider<AuthProvider>(
+    (ref) => AuthProvider(firebase: getIt<FirebaseService>()));
 
 final libraryProvider = ChangeNotifierProvider<LibraryRepositoryImpl>(
   disposeNotifier: false,
@@ -141,7 +145,13 @@ final rainMixProvider = Provider((ref) => ({
           search: ref.read(trackSearchProvider),
         ));
 
-final searchProvider = ChangeNotifierProvider<SearchProvider>((ref) => SearchProvider());
+final searchProvider = ChangeNotifierProvider<SearchProvider>(
+    (ref) => SearchProvider(api: getIt<DeezerApiService>(), lyrics: getIt<LyricsService>()));
+
+/// How big the large images are fetched (Settings > Storage).
+final imageQualityProvider = ChangeNotifierProvider<ImageQualitySetting>(
+  (ref) => ImageQualitySetting(getIt<StorageService>()),
+);
 
 final localeProvider = ChangeNotifierProvider<LocaleProvider>(
   (ref) => LocaleProvider(storage: getIt<StorageService>()),
@@ -176,6 +186,7 @@ final maskProvider = ChangeNotifierProvider<MaskProvider>((ref) {
   final auth = ref.read(authProvider);
   void follow() {
     masks.observer = auth.isGuest;
+    masks.isAdmin = auth.isAdmin;
     masks.setUser(auth.isAuthenticated ? auth.uid : null);
   }
 
@@ -199,6 +210,26 @@ final audioProvider = ChangeNotifierProvider<AudioProvider>(
   disposeNotifier: false,
   (ref) => getIt<AudioProvider>(),
 );
+
+/// What plays now: the whole song (Spotify) or a 30 s preview, and why
+/// (the player's badge).
+final playbackSourceProvider = Provider<PlaybackSource>((ref) {
+  final (full, fallback, connected, premium, restricted) = ref.watch(audioProvider.select((a) => (
+        a.playsFullSong,
+        a.lastSpotifyError,
+        a.spotify.isConnected,
+        a.spotify.isPremium,
+        a.spotify.accessRestricted,
+      )));
+  return PlaybackSource.of(
+    playsFullSong: full,
+    spotifyConnected: connected,
+    premium: premium,
+    notAllowed: restricted,
+    online: ref.watch(connectivityProvider.select((c) => c.isOnline)),
+    fallback: fallback,
+  );
+});
 
 /// Connects the player to the library, masks, ambient sounds and history.
 /// Read once when the app's tree is built.

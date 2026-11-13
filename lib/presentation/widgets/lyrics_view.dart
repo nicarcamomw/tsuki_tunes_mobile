@@ -5,12 +5,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/lyrics_controller.dart';
 import 'audio_progress_selector.dart';
 import 'haptics.dart';
+import 'motion.dart';
 import 'skeleton_loader.dart';
 
 export '../state/lyrics_controller.dart';
@@ -71,7 +73,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
       } else {
         _scroll.animateTo(
           target,
-          duration: const Duration(milliseconds: 520),
+          duration: AppMotion.slow,
           curve: Curves.easeOutCubic,
         );
       }
@@ -166,7 +168,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
                 locale.strings.lyricsPreviewNote,
                 style: locale
                     .getTextStyle(
-                      fontSize: widget.compact ? 10 : 12,
+                      fontSize: widget.compact ? AppFontSize.micro : AppFontSize.body,
                       color: AppColors.textMuted,
                     )
                     .copyWith(fontStyle: FontStyle.italic),
@@ -275,14 +277,14 @@ class _LyricLine extends StatelessWidget {
         child: AnimatedScale(
           scale: current ? 1.03 : 1.0,
           alignment: Alignment.centerLeft,
-          duration: const Duration(milliseconds: 300),
+          duration: AppMotion.normal,
           curve: Curves.easeOutCubic,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
+                duration: AppMotion.normal,
                 curve: Curves.easeOut,
                 style: style,
                 child: Text(text),
@@ -321,7 +323,7 @@ class _FollowPill extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           border: Border.all(color: AppColors.accent.withValues(alpha: 0.8)),
           boxShadow: [
             BoxShadow(
@@ -338,7 +340,7 @@ class _FollowPill extends ConsumerWidget {
             Text(
               locale.strings.lyricsFollowing,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: 0.8,
@@ -457,7 +459,7 @@ class LyricsCard extends ConsumerWidget {
       builder: (context, _) {
         final lyrics = controller.lyrics;
         final hasText = controller.hasText;
-        final radius = BorderRadius.circular(18);
+        final radius = BorderRadius.circular(AppRadius.sheet);
 
         Widget body;
         if (controller.loading) {
@@ -523,7 +525,7 @@ class LyricsCard extends ConsumerWidget {
                                   Text(
                                     strings.lyricsCardTitle,
                                     style: locale.getTextStyle(
-                                      fontSize: 15,
+                                      fontSize: AppFontSize.titleLg,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -536,7 +538,7 @@ class LyricsCard extends ConsumerWidget {
                                         ? '歌詞 // LIVE.SYNC'
                                         : '歌詞 // LYRICS',
                                     style: locale.getTextStyle(
-                                      fontSize: 8.5,
+                                      fontSize: AppFontSize.micro,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.accent
                                           .withValues(alpha: 0.9),
@@ -595,7 +597,7 @@ class _CardMessage extends ConsumerWidget {
             child: Text(
               text,
               style: locale.getTextStyle(
-                fontSize: 10.5,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w700,
                 color: Colors.white70,
                 letterSpacing: 1,
@@ -611,13 +613,13 @@ class _CardMessage extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: Colors.white24),
                 ),
                 child: Text(
                   actionLabel!,
                   style: locale.getTextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -661,6 +663,67 @@ class _RoundIcon extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// R-05: the line being sung, one row under the player's title; a tap
+/// opens the lyrics. Nothing without synced lyrics, during an
+/// instrumental break, or under a preview (its position isn't the song's).
+class CurrentLyricLine extends ConsumerWidget {
+  final LyricsController controller;
+  final VoidCallback onTap;
+
+  const CurrentLyricLine({super.key, required this.controller, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final fullSong = ref.watch(audioProvider.select((a) => a.playsFullSong));
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final lyrics = controller.lyrics;
+        if (!fullSong || lyrics == null || !lyrics.isSynced || !controller.hasText) {
+          return const SizedBox.shrink();
+        }
+        return AudioProgressSelector<int>(
+          selector: (a) => lyrics.inBreakAt(a.position) ? -1 : lyrics.activeIndexAt(a.position),
+          builder: (context, active) {
+            final text = active >= 0 && active < lyrics.lines.length ? lyrics.lines[active].text.trim() : '';
+            return Semantics(
+              button: true,
+              label: text.isEmpty ? locale.strings.lyrics : '${locale.strings.lyrics}: $text',
+              excludeSemantics: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Haptics.tap();
+                  onTap();
+                },
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 24),
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion(context) ? Duration.zero : AppMotion.fast,
+                    child: Text(
+                      text.isEmpty ? '· · ·' : text,
+                      key: ValueKey(active),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(
+                        fontSize: AppFontSize.bodyLg,
+                        fontWeight: FontWeight.w600,
+                        // D-12: it's what's playing.
+                        color: AppColors.accentText.withValues(alpha: 0.9),
+                      ).copyWith(fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

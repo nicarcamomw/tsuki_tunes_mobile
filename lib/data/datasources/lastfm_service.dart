@@ -102,13 +102,10 @@ class LastFmService {
       if (list is! List) return [];
       return [
         for (final t in list)
-          if (t is Map &&
-              t['name'] != null &&
-              t['artist'] is Map &&
-              t['artist']['name'] != null)
+          if (t case {'name': final Object name, 'artist': {'name': final Object artistName}})
             SimilarTrack(
-              t['artist']['name'].toString(),
-              t['name'].toString(),
+              artistName.toString(),
+              name.toString(),
               double.tryParse('${t['match']}') ?? 0,
             ),
       ];
@@ -126,10 +123,13 @@ class LastFmService {
         'artist': artistName,
         'lang': 'es',
       });
-      final tagData = data?['artist']?['tags']?['tag'];
+      final tagData = switch (data?['artist']) {
+        {'tags': {'tag': final Object tag}} => tag,
+        _ => null,
+      };
       if (tagData is List) {
         return tagData
-            .map<String>((t) => t['name']?.toString() ?? '')
+            .map<String>((t) => t is Map ? t['name']?.toString() ?? '' : '')
             .where((s) => s.isNotEmpty)
             .toList();
       } else if (tagData is Map && tagData['name'] != null) {

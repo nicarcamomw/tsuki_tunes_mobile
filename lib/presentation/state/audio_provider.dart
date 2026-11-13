@@ -34,6 +34,7 @@ import '../../domain/entities/smart_shuffle.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/playback_queue.dart';
+import '../../domain/logic/playback_restore.dart';
 import '../../domain/logic/song_radio.dart' show SongRadio;
 import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
@@ -536,7 +537,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      _persistPlaybackState();
+      unawaited(_savePlaybackStateNow());
     }
     if (state == AppLifecycleState.resumed) {
       _sleepCtrl.check();
@@ -1028,7 +1029,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       return;
     }
     try {
-      await AudioPrecacheService().precacheTrack(await _withFreshPreview(track));
+      await AudioPrecacheService().precacheTrack(
+        await _withFreshPreview(track),
+        // Revoked before its expiry: renew it once more.
+        onStale: (t) => _withFreshPreview(t, force: true),
+      );
     } catch (e) {
       _log.warning('Precache non-fatal error: $e');
     }

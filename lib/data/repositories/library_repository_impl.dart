@@ -19,6 +19,7 @@ import '../local/app_database.dart';
 import '../local/library_store.dart';
 import '../sync/outbox.dart';
 import 'album_completion_index.dart';
+import 'favorites_local_store.dart';
 import 'followed_artists_repository.dart';
 import 'listened_tracks_repository.dart';
 
@@ -29,8 +30,8 @@ final _log = Log.named('LibraryRepositoryImpl');
 
 /// The user's library as the screens see it. Listened tracks, followed
 /// artists and album completion live in their own classes; this one wires
-/// them to the signed-in user, adds the local favorites, recents and artist
-/// visits, and notifies the UI.
+/// them to the signed-in user (favorites live in FavoritesLocalStore), adds
+/// the recents and artist visits, and notifies the UI.
 class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository {
   final StorageService _storage;
   final FirebaseService _firebase;
@@ -38,6 +39,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   late final AlbumCompletionIndex _albums;
   late final ListenedTracksRepository _listened;
   late final FollowedArtistsRepository _followed;
+  late final FavoritesLocalStore _favorites;
 
   /// Called when a newly-registered track count reveals a completed album.
   /// Wired to the album_completed product event in app_providers so events
@@ -46,9 +48,7 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
       _albums.onAlbumCompleted = cb;
 
   // Local data
-  List<Track> _favoriteTracks = [];
   List<Track> _recentTracks = [];
-  List<Artist> _favoriteArtists = [];
   bool _isLoaded = false;
 
   bool _syncing = false;
@@ -95,13 +95,14 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
       onChanged: notifyListeners,
       tracked: _tracked,
     );
+    _favorites = FavoritesLocalStore(_storage, onChanged: notifyListeners);
     _loadLocalData();
   }
 
   // Public getters
-  List<Track> get favoriteTracks => _favoriteTracks;
+  List<Track> get favoriteTracks => _favorites.tracks;
   List<Track> get recentTracks => _recentTracks;
-  List<Artist> get favoriteArtists => _favoriteArtists;
+  List<Artist> get favoriteArtists => _favorites.artists;
   bool get isLoaded => _isLoaded;
 
   List<ListenedTrackData> get listenedTracks => _listened.tracks;
@@ -139,9 +140,8 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   }
 
   Future<void> _loadLocalData() async {
-    _favoriteTracks = await _storage.getFavoriteTracks();
+    await _favorites.load();
     _recentTracks = await _storage.getRecentTracks();
-    _favoriteArtists = await _storage.getFavoriteArtists();
     _artistVisits = await _storage.getArtistVisits();
     await _albums.load();
     _isLoaded = true;
@@ -239,6 +239,15 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   }
 
   @visibleForTesting
+  set failFullDownloadsForTesting(int n) => _listened.failFullDownloadsForTesting = n;
+
+  @visibleForTesting
+  bool get owesFullSyncForTesting => _listened.owesFullSyncForTesting;
+
+  @visibleForTesting
+  Future<void> retryOwedFullSyncForTesting() => _listened.retryOwedFullSyncForTesting();
+
+  @visibleForTesting
   set followSendHandlerForTesting(Future<void> Function(OutboxEntry entry)? handler) =>
       _followed.sendHandlerForTesting = handler;
 
@@ -301,6 +310,19 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     final uid = _writeUid;
     if (uid == null) return;
     await _listened.unmarkAll(uid, trackIds);
+  }
+
+  @override
+  List<ListenedTrackData> listenedRecords(Iterable<String> trackIds) {
+    final wanted = trackIds.toSet();
+    return [for (final t in _listened.tracks) if (wanted.contains(t.trackId)) t];
+  }
+
+  @override
+  Future<void> restoreListened(List<ListenedTrackData> records) async {
+    final uid = _writeUid;
+    if (uid == null) return;
+    await _listened.restoreAll(uid, records);
   }
 
   // --- Testing hooks ---
@@ -459,24 +481,13 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     await _storage.saveArtistVisits(_artistVisits);
   }
 
-  // --- Favorites (local, same as before) ---
+  // --- Favorites (local; FavoritesLocalStore) ---
 
   @override
-  bool isFavoriteTrack(String trackId) {
-    return _favoriteTracks.any((t) => t.id == trackId);
-  }
+  bool isFavoriteTrack(String trackId) => _favorites.isFavoriteTrack(trackId);
 
   @override
-  Future<void> toggleFavoriteTrack(Track track) async {
-    final index = _favoriteTracks.indexWhere((t) => t.id == track.id);
-    if (index >= 0) {
-      _favoriteTracks.removeAt(index);
-    } else {
-      _favoriteTracks.insert(0, track);
-    }
-    notifyListeners();
-    await _storage.saveFavoriteTracks(_favoriteTracks);
-  }
+  Future<void> toggleFavoriteTrack(Track track) => _favorites.toggleTrack(track);
 
   @override
   Future<void> addRecentTrack(Track track) async {
@@ -490,21 +501,10 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
   }
 
   @override
-  bool isFavoriteArtist(String artistId) {
-    return _favoriteArtists.any((a) => a.id == artistId);
-  }
+  bool isFavoriteArtist(String artistId) => _favorites.isFavoriteArtist(artistId);
 
   @override
-  Future<void> toggleFavoriteArtist(Artist artist) async {
-    final index = _favoriteArtists.indexWhere((a) => a.id == artist.id);
-    if (index >= 0) {
-      _favoriteArtists.removeAt(index);
-    } else {
-      _favoriteArtists.insert(0, artist);
-    }
-    notifyListeners();
-    await _storage.saveFavoriteArtists(_favoriteArtists);
-  }
+  Future<void> toggleFavoriteArtist(Artist artist) => _favorites.toggleArtist(artist);
 
   // --- Followed artists (Firestore-synced) ---
 

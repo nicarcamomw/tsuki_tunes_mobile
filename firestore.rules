@@ -85,6 +85,25 @@ service cloud.firestore {
       return !isWritten(f) || request.resource.data.get(f, null) == id;
     }
 
+    // createdAt set by the server: written once, while the document has
+    // none, as the server's clock (FieldValue.serverTimestamp()), so it
+    // can't be backdated or rewritten later. Removing it is still fine.
+    function wCreatedNow() {
+      return !isWritten('createdAt')
+          || ((resource == null || !('createdAt' in resource.data))
+              && request.resource.data.createdAt == request.time);
+    }
+
+    // createdAt of a document made offline: the phone's clock, so it isn't
+    // compared with the server's beyond a day ahead. Only written when the
+    // document is created, never changed after.
+    function wCreatedOnce() {
+      return !isWritten('createdAt')
+          || (resource == null
+              && request.resource.data.createdAt is timestamp
+              && request.resource.data.createdAt <= request.time + duration.value(1, 'd'));
+    }
+
     // users/{uid}: profile basics, counters, masks and the rate-limit stamp.
     // stats and masks are merged into, so older keys inside them may stay:
     // only their size and the values the app writes are checked.
@@ -95,7 +114,7 @@ service cloud.firestore {
           && wString('displayName', 500, true)
           && wString('email', 500, true)
           && wString('photoURL', 2000, true)
-          && wTime('createdAt')
+          && wCreatedNow()
           && wTime('lastLoginAt')
           && wMap('stats', 20)
           && (!isWritten('stats') || !('totalTracks' in d.stats)
@@ -145,7 +164,7 @@ service cloud.firestore {
           && (resource != null || ('name' in d && 'tracks' in d))
           && wName('name', 100)
           && wList('tracks', 1000)
-          && wTime('createdAt')
+          && wCreatedOnce()
           && wNow('updatedAt');
     }
 
@@ -163,6 +182,19 @@ service cloud.firestore {
           && wString('pictureXl', 2000, true)
           && wCount('fansCount', 1000000000)
           && wCount('albumsCount', 100000);
+    }
+
+    // users/{uid}/devices/{deviceId}: where this phone gets pushes about new
+    // releases (functions/src/radar.ts reads it): its Firebase Installation
+    // ID. Rewritten when that changes or the app opens (at most daily), so
+    // no rate limit.
+    function validDevice(d) {
+      return d.keys().hasOnly(['fid', 'platform', 'lang', 'notify', 'updatedAt'])
+          && d.fid is string && d.fid.size() > 0 && d.fid.size() <= 200
+          && d.platform in ['android', 'ios']
+          && d.lang is string && d.lang.size() <= 10
+          && d.notify is bool
+          && d.updatedAt == request.time;
     }
 
     // users/{uid}/listenedDeletions/{trackId}: when the song was unmarked.
@@ -282,6 +314,13 @@ service cloud.firestore {
             && validFollowedArtist(request.resource.data, artistId)
             && notRateLimited(userId);
         allow delete: if isOwner(userId) && notRateLimited(userId);
+      }
+
+      match /devices/{deviceId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+            && deviceId.matches('^[A-Za-z0-9_-]{8,64}$')
+            && validDevice(request.resource.data);
       }
 
       // Bonds. The one who accepts a request writes both sides, while the

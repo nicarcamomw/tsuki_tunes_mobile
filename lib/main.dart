@@ -17,6 +17,7 @@ import 'core/constants/app_colors.dart';
 import 'core/constants/app_environment.dart';
 import 'core/logger.dart';
 import 'core/theme/cyber_theme.dart';
+import 'data/datasources/audio_precache_service.dart';
 import 'data/datasources/auto_media_library.dart';
 import 'data/datasources/crash_reporter.dart';
 import 'data/datasources/deezer_disk_cache.dart';
@@ -28,6 +29,7 @@ import 'data/datasources/media_session_handler.dart';
 import 'data/datasources/perf_tracker.dart';
 import 'data/datasources/playback_log.dart';
 import 'data/datasources/product_analytics.dart';
+import 'data/datasources/push_radar_service.dart';
 import 'data/datasources/release_radar_service.dart';
 import 'data/datasources/storage_service.dart';
 import 'di/injection.dart';
@@ -73,6 +75,8 @@ void main() async {
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.
   await _initFirebaseCore();
+  // Before runApp: where release pushes go while the app is in the background.
+  PushRadarService.registerBackgroundHandler();
   // Built here, not in the widget tree: when Android Auto starts the app
   // there is no screen, so no widgets (and no providers) get built, yet the
   // car still needs the player.
@@ -115,7 +119,12 @@ void _deferredInit() {
     if (started) return;
     started = true;
     final mediaFuture = _initMediaSession();
-    await Future.wait([_initCrashReporting(), DeezerDiskCache().init(), mediaFuture]);
+    await Future.wait([
+      _initCrashReporting(),
+      DeezerDiskCache().init(),
+      AudioPrecacheService().init(),
+      mediaFuture,
+    ]);
     final handler = await mediaFuture;
     if (handler != null) {
       // Album art for Android Auto's lists, served by ArtworkProvider.
@@ -135,6 +144,7 @@ void _deferredInit() {
     // Rooted phone or emulator: only reported (Crashlytics, analytics).
     unawaited(DeviceIntegrity.report());
     unawaited(ReleaseRadarService().initForeground());
+    unawaited(PushRadarService().init());
     unawaited(HomeWidgetService().initialize());
     unawaited(HomeWidgetService().registerInteractivityCallback());
   }
@@ -184,6 +194,9 @@ Future<TsukiAudioHandler?> _initMediaSession() async {
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.tsuki.tsuki_tunes_mobile.playback',
         androidNotificationChannelName: 'Tsuki Tunes',
+        // F-02: the mask's silhouette in the status bar (the colour launcher
+        // icon, the default, is drawn as a white blob there).
+        androidNotificationIcon: 'mipmap/ic_launcher_monochrome',
         // Keeping the service in the foreground while paused avoids
         // ForegroundServiceStartNotAllowedException when resuming from the
         // background on Android 12+.

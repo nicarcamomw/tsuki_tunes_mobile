@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/lore/tsuki_lore.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -12,7 +14,7 @@ import '../widgets/haptics.dart';
 import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
-const _gold = Color(0xFFFFE9A8);
+const _gold = AppColors.gold;
 
 /// Tsuki Lore: the world of the masks, by volumes and chapters. Chapters
 /// open as the masks they speak of awaken.
@@ -20,19 +22,19 @@ class LoreScreen extends ConsumerWidget {
   const LoreScreen({super.key});
 
   static Future<void> open(BuildContext context) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const LoreScreen()));
+      Navigator.of(context).push(cyberRoute<void>(const LoreScreen()));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final level = ref.watch(maskProvider.select((m) => m.level));
+    final level = ref.watch(maskProvider.select((m) => m.unlockLevel));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07080D),
+      backgroundColor: AppColors.shrineBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF07080D),
+        backgroundColor: AppColors.shrineBg,
         elevation: 0,
         leading: IconButton(
   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -40,17 +42,17 @@ class LoreScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(strings.loreTitle,
-            style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _gold, letterSpacing: 3)),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: _gold, letterSpacing: 3)),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         children: [
           _Header(locale: locale, strings: strings, open: TsukiLore.openCount(level), total: TsukiLore.chapters.length),
           for (final tomo in TsukiLore.tomos) ...[
             const SizedBox(height: 22),
             Row(
               children: [
-                Text(tomo.kanji, style: GoogleFonts.notoSansJp(fontSize: 22, fontWeight: FontWeight.w900, color: _gold)),
+                Text(tomo.kanji, style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: _gold)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -58,11 +60,20 @@ class LoreScreen extends ConsumerWidget {
                     children: [
                       Text(strings.loreTomo(tomo.numeral),
                           style: locale.getTextStyle(
-                              fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2)),
+                              fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2)),
                       Text(tomo.title.of(lang),
-                          style: locale.getTextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                          style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                     ],
                   ),
+                ),
+                // P-11: each volume's progress at a glance.
+                _TomoProgress(
+                  locale: locale,
+                  label: strings.loreChaptersOpen(
+                      TsukiLore.chaptersOf(tomo.number).where((c) => TsukiLore.isOpen(c, level)).length,
+                      TsukiLore.chaptersOf(tomo.number).length),
+                  open: TsukiLore.chaptersOf(tomo.number).where((c) => TsukiLore.isOpen(c, level)).length,
+                  total: TsukiLore.chaptersOf(tomo.number).length,
                 ),
               ],
             ),
@@ -91,11 +102,11 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: const RadialGradient(
           center: Alignment(0.7, -0.6),
           radius: 1.2,
-          colors: [Color(0xFF2A2440), Color(0xFF12121C), Color(0xFF0A0A12)],
+          colors: [AppColors.shrineViolet, AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: _gold.withValues(alpha: 0.35)),
       ),
@@ -106,11 +117,11 @@ class _Header extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFF4EFE0),
+              color: AppColors.parchment,
               boxShadow: [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 28, spreadRadius: 2)],
             ),
             alignment: Alignment.center,
-            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: 30, fontWeight: FontWeight.w900, color: const Color(0xFF1A1A28))),
+            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -118,10 +129,10 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.loreSubtitle,
-                    style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textBright, height: 1.25)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w800, color: AppColors.textBright, height: 1.25)),
                 const SizedBox(height: 8),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: LinearProgressIndicator(
                     value: total == 0 ? 0 : open / total,
                     minHeight: 4,
@@ -131,11 +142,52 @@ class _Header extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(strings.loreChaptersOpen(open, total),
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A volume's "3/5" and a thin bar, in gold once it's all open.
+class _TomoProgress extends StatelessWidget {
+  final LocaleProvider locale;
+  final String label;
+  final int open;
+  final int total;
+  const _TomoProgress({required this.locale, required this.label, required this.open, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final done = total > 0 && open == total;
+    return Semantics(
+      label: label,
+      excludeSemantics: true,
+      child: SizedBox(
+        width: 48,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('$open/$total',
+                style: locale.getTextStyle(
+                    fontSize: AppFontSize.caption,
+                    fontWeight: FontWeight.w800,
+                    color: done ? _gold : AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: LinearProgressIndicator(
+                value: total == 0 ? 0 : open / total,
+                minHeight: 3,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                color: done ? _gold : _gold.withValues(alpha: 0.55),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -155,7 +207,7 @@ class _ComingSoon extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -167,9 +219,9 @@ class _ComingSoon extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.ecoOpensAt(level),
-                    style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
                 Text(strings.ecoLockedBody,
-                    style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -195,18 +247,18 @@ class _ChapterTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: open
             ? () {
                 Haptics.tap();
-                Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => LoreChapterScreen(chapter: chapter)));
+                Navigator.of(context).push(cyberRoute<void>(LoreChapterScreen(chapter: chapter)));
               }
             : null,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: open ? accent.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.02),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: open ? accent.withValues(alpha: 0.45) : AppColors.border),
           ),
           child: Row(
@@ -222,7 +274,7 @@ class _ChapterTile extends ConsumerWidget {
                 ),
                 child: open
                     ? Text(chapter.kanji,
-                        style: GoogleFonts.notoSansJp(fontSize: 20, fontWeight: FontWeight.w900, color: accent))
+                        style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: accent))
                     : const Icon(Icons.lock_rounded, size: 18, color: AppColors.textMuted),
               ),
               const SizedBox(width: 12),
@@ -232,17 +284,17 @@ class _ChapterTile extends ConsumerWidget {
                   children: [
                     Text(strings.loreChapter(chapter.numeral),
                         style: locale.getTextStyle(
-                            fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
+                            fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
                     const SizedBox(height: 2),
                     Text(chapter.title.of(lang),
                         style: locale.getTextStyle(
-                            fontSize: 14.5,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w800,
                             color: open ? AppColors.textBright : AppColors.textSecondary)),
                     if (!open) ...[
                       const SizedBox(height: 3),
                       Text(strings.ecoOpensAt(chapter.level),
-                          style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
                     ],
                   ],
                 ),
@@ -263,7 +315,9 @@ class LoreChapterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final owned = ref.watch(maskProvider).unlockedIds;
+    // P-04: a new mask is a new count; the ids are read then.
+    ref.watch(maskProvider.select((m) => m.unlockedCount));
+    final owned = ref.read(maskProvider).unlockedIds;
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;
@@ -271,12 +325,12 @@ class LoreChapterScreen extends ConsumerWidget {
     final accent = faction != null ? Color(faction.color) : _gold;
     final tomo = TsukiLore.tomos.firstWhere((t) => t.number == chapter.tomo);
 
-    TextStyle body() => locale.getTextStyle(fontSize: 15, color: const Color(0xFFDAD6CC), height: 1.65);
+    TextStyle body() => locale.getTextStyle(fontSize: AppFontSize.titleLg, color: AppColors.loreBody, height: 1.65);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07080D),
+      backgroundColor: AppColors.shrineBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF07080D),
+        backgroundColor: AppColors.shrineBg,
         elevation: 0,
         leading: IconButton(
   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -284,15 +338,19 @@ class LoreChapterScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('${strings.loreTomo(tomo.numeral)} · ${strings.loreChapter(chapter.numeral)}',
-            style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
+            style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(22, 8, 22, 48),
+      // P-10: a reading measure (about 65 characters) on a tablet too.
+      body: LayoutBuilder(
+        builder: (context, box) {
+        final side = box.maxWidth > 604 ? (box.maxWidth - 560) / 2 : 22.0;
+        return ListView(
+        padding: EdgeInsets.fromLTRB(side, 8, side, 48),
         children: [
           Center(
             child: Text(chapter.kanji,
                 style: GoogleFonts.notoSansJp(
-                  fontSize: 64,
+                  fontSize: AppFontSize.mega,
                   fontWeight: FontWeight.w900,
                   color: accent,
                   shadows: [Shadow(color: accent.withValues(alpha: 0.6), blurRadius: 28)],
@@ -301,18 +359,21 @@ class LoreChapterScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(chapter.title.of(lang),
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textBright, height: 1.2)),
+              style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright, height: 1.2)),
           if (faction != null) ...[
             const SizedBox(height: 6),
             Text(faction.motto.of(lang),
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 13, color: accent).copyWith(fontStyle: FontStyle.italic)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: accent).copyWith(fontStyle: FontStyle.italic)),
           ],
           const SizedBox(height: 22),
           for (final p in chapter.body.of(lang).split('\n\n')) ...[
             LoreText(p, style: body()),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
           ],
+          // P-10: where the story ends and the beings' records begin.
+          if (faction != null || const {'guerras', 'cinco', 'ultras', 'caras'}.contains(chapter.id))
+            Divider(color: accent.withValues(alpha: 0.25), height: 28, thickness: 1),
           if (faction != null) _FactionSection(faction: faction, owned: owned),
           if (chapter.id == 'guerras') _BondsSection(bonds: TsukiLore.bonds, owned: owned),
           if (chapter.id == 'cinco') _MaskRow(ids: TsukiLore.crossed, owned: owned),
@@ -321,13 +382,15 @@ class LoreChapterScreen extends ConsumerWidget {
           if (chapter.id == 'caras')
             for (final f in TsukiLore.faces) _FaceCard(face: f, owned: owned.contains(f.mask)),
         ],
+      );
+        },
       ),
     );
   }
 }
 
 TextStyle _label(LocaleProvider locale, Color color) =>
-    locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.8);
+    locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.8);
 
 class _FactionSection extends ConsumerWidget {
   final LoreFaction faction;
@@ -376,7 +439,7 @@ class _FactionSection extends ConsumerWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Column(
@@ -393,7 +456,7 @@ class _FactionSection extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 TsukiLore.complete(faction, owned) ? faction.secret.of(lang) : strings.loreSecretLocked(have, total),
-                style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.5),
+                style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textPrimary, height: 1.5),
               ),
             ],
           ),
@@ -412,10 +475,10 @@ class _FactionSection extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(owned.contains(reward.id) ? reward.name(lang) : '???',
-                          style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                          style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                       const SizedBox(height: 4),
                       Text(owned.contains(reward.id) ? reward.description(lang) : strings.loreRewardHint,
-                          style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4)),
+                          style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.5)),
                     ],
                   ),
                 ),
@@ -441,10 +504,10 @@ class _Chip extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
-      child: Text(text, style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      child: Text(text, style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
@@ -492,7 +555,7 @@ class _BondsSection extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.border),
               ),
               child: Column(
@@ -513,7 +576,7 @@ class _BondsSection extends ConsumerWidget {
                           children: [
                             Text(strings.loreBondKind(b.kind.name), style: _label(locale, AppColors.textMuted)),
                             Text(known ? b.title.of(lang) : '???',
-                                style: locale.getTextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                                style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                           ],
                         ),
                       ),
@@ -522,7 +585,7 @@ class _BondsSection extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(known ? b.text.of(lang) : strings.loreBondLocked,
                       style: locale.getTextStyle(
-                          fontSize: 12.5, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                          fontSize: AppFontSize.title, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.5)),
                 ],
               ),
             );
@@ -549,7 +612,7 @@ class _FaceCard extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _gold.withValues(alpha: god ? 0.08 : 0.04),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: _gold.withValues(alpha: god ? 0.6 : 0.3)),
       ),
       child: Row(
@@ -562,12 +625,12 @@ class _FaceCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(owned ? mask.name(lang) : '???',
-                    style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                 Text(face.title.of(lang), style: _label(locale, _gold)),
                 const SizedBox(height: 6),
                 Text(owned ? face.text.of(lang) : strings.loreFaceVeiled,
                     style: locale.getTextStyle(
-                        fontSize: 12.5, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                        fontSize: AppFontSize.title, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.5)),
               ],
             ),
           ),

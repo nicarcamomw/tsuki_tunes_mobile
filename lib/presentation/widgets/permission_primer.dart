@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
+import 'swipeable_sheet.dart';
 
 /// Why Tsuki wants a permission, just before Android asks for it: what it
 /// gives, in a sentence or two, then "Allow" (which opens the system's own
@@ -35,12 +38,8 @@ class PermissionPrimer extends ConsumerWidget {
     // As tall as its content, so both buttons always show (a fixed share
     // of the screen hid them on small phones and with large text); it
     // scrolls if the text needs more than the screen. Swipe down closes.
-    final allowed = await showModalBottomSheet<bool>(
+    final allowed = await showAppSheet<bool>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => SafeArea(
         child: SingleChildScrollView(
           child: PermissionPrimer(icon: icon, color: color, title: title, body: body),
@@ -92,11 +91,7 @@ class PermissionPrimer extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 24),
           ExcludeSemantics(
             child: Container(
@@ -116,14 +111,14 @@ class PermissionPrimer extends ConsumerWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textBright),
+              style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w800, color: AppColors.textBright),
             ),
           ),
           const SizedBox(height: 10),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary, height: 1.45),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -135,7 +130,7 @@ class PermissionPrimer extends ConsumerWidget {
                 Navigator.of(context).pop(true);
               },
               child: Text(strings.permAllow,
-                  style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w800, color: AppColors.textBright)),
             ),
           ),
           const SizedBox(height: 8),
@@ -145,7 +140,7 @@ class PermissionPrimer extends ConsumerWidget {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(strings.permNotNow,
-                  style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
             ),
           ),
         ],
@@ -159,19 +154,9 @@ class PermissionPrimer extends ConsumerWidget {
 void showNotificationsBlocked(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   final strings = container.read(stringsProvider);
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgCard,
-      content: Text(strings.permNotifBlocked, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
-      action: SnackBarAction(
-        label: strings.permOpenSettings,
-        textColor: AppColors.accentText,
-        onPressed: () {
-          Haptics.tap();
-          container.read(batteryGuideProvider).openTsukiSettings();
-        },
-      ),
-    ));
+  AppSnack.of(context).info(
+    strings.permNotifBlocked,
+    actionLabel: strings.permOpenSettings,
+    onAction: () => container.read(batteryGuideProvider).openTsukiSettings(),
+  );
 }

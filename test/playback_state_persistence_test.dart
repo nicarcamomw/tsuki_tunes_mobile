@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/storage_service.dart';
@@ -36,7 +37,7 @@ void main() {
       const MethodChannel('com.ryanheise.just_audio.methods'),
       (MethodCall methodCall) async {
         if (methodCall.method == 'init') {
-          final id = methodCall.arguments['id'];
+          final id = (methodCall.arguments as Map)['id'];
           messenger.setMockMethodCallHandler(
             MethodChannel('com.ryanheise.just_audio.methods.$id'),
             (MethodCall call) async => {},
@@ -145,6 +146,28 @@ void main() {
       expect((await storage.getPlaybackState())?['radio'], isNull);
     });
 
+    // B13: the position is saved every ~10 s and on pause; going to the
+    // background now saves at once, since the system may kill the app
+    // before a delayed save runs.
+    test('going to the background saves the position at once', () async {
+      final storage = StorageService();
+      final tracks = [createTestTrack('t1'), createTestTrack('t2')];
+      await storage.savePlaybackState(tracks, 1, 60000);
+      final provider = AudioProvider(storage: storage);
+      await provider.restorePlaybackStateForTesting();
+
+      // Something older on disk, as if the last save didn't run.
+      await storage.savePlaybackState(tracks, 0, 0);
+
+      provider.didChangeAppLifecycleState(AppLifecycleState.paused);
+      await Future<void>.delayed(const Duration(milliseconds: 50)); // well under the 500 ms delay
+
+      final saved = await storage.getPlaybackState();
+      expect(saved?['currentIndex'], 1);
+      expect(saved?['position'], 60000);
+      provider.dispose();
+    });
+
     test('stop() clears persisted playback state in storage', () async {
       final storage = StorageService();
       final tracks = [createTestTrack('t1'), createTestTrack('t2')];
@@ -177,7 +200,7 @@ void main() {
       var saved = await storage.getPlaybackState();
       expect(saved, isNotNull);
       var savedQueue = (saved!['queue'] as List);
-      expect(savedQueue[2]['id'], equals('t1'));
+      expect((savedQueue[2] as Map)['id'], equals('t1'));
 
       // Remove from queue
       provider.removeFromQueue(1);
@@ -196,7 +219,7 @@ void main() {
       expect(saved, isNotNull);
       savedQueue = (saved!['queue'] as List);
       expect(savedQueue.length, equals(1));
-      expect(savedQueue[0]['id'], equals('t1'));
+      expect((savedQueue[0] as Map)['id'], equals('t1'));
     });
   });
 }

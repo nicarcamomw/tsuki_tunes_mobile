@@ -47,10 +47,12 @@ abstract class Track with _$Track {
 
   /// Reads a track from the Deezer API.
   factory Track.fromDeezer(Map<String, dynamic> json) {
-    final artistJson =
-        json['artist'] is Map<String, dynamic> ? json['artist'] : null;
-    final albumJson =
-        json['album'] is Map<String, dynamic> ? json['album'] : null;
+    final artistJson = json['artist'] is Map<String, dynamic>
+        ? json['artist'] as Map<String, dynamic>
+        : null;
+    final albumJson = json['album'] is Map<String, dynamic>
+        ? json['album'] as Map<String, dynamic>
+        : null;
 
     final String cover = albumJson?['cover_medium'] ??
         albumJson?['cover_big'] ??

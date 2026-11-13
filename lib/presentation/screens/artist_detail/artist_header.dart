@@ -4,7 +4,6 @@ part of '../artist_detail_screen.dart';
 class _ArtistHeroAppBar extends StatelessWidget {
   final Artist artist;
   final LocaleProvider locale;
-  final bool showTitle;
   final bool reduceMotion;
   final bool isComplete;
   final int completedReleases;
@@ -13,7 +12,6 @@ class _ArtistHeroAppBar extends StatelessWidget {
   const _ArtistHeroAppBar({
     required this.artist,
     required this.locale,
-    required this.showTitle,
     required this.reduceMotion,
     required this.isComplete,
     required this.completedReleases,
@@ -23,91 +21,49 @@ class _ArtistHeroAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = locale.strings;
-    return SliverAppBar(
-      expandedHeight: 270,
-      pinned: true,
-      backgroundColor: AppColors.bgDeep,
-      title: AnimatedOpacity(
-        opacity: showTitle ? 1.0 : 0.0,
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-        child: Text(
-          artist.name,
-          style: locale.getTextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textBright,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-      centerTitle: true,
-      leading: IconButton(
-        tooltip: strings.a11yBack,
-        icon: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.bgDeep.withValues(alpha: 0.7),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.accent.withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Icon(Icons.chevron_left,
-              color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
-        ),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
+    // T-01: the detail pages' shared header.
+    return DetailHeader(
+      title: artist.name,
+      backLabel: strings.a11yBack,
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Tooltip(
-            triggerMode: TooltipTriggerMode.tap,
-            message: isComplete
-                ? strings.artistCompleteTooltip
-                : strings.artistDiscographyProgress(
-                    completedReleases, totalReleases),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.bgDeep.withValues(alpha: 0.7),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isComplete
-                      ? AppColors.accent
-                      : AppColors.accent.withValues(alpha: 0.4),
-                  width: isComplete ? 1.5 : 1,
-                ),
-                boxShadow: isComplete
-                    ? [
-                        const BoxShadow(
-                          color: AppColors.accentGlow,
-                          blurRadius: 8,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: OniMaskIcon(
-                isActive: isComplete,
-                size: 22,
-                showContainer: false,
+        DetailHeaderButton(
+          icon: Icons.share_rounded,
+          tooltip: strings.shareAction,
+          onPressed: () {
+            Haptics.tap();
+            SharePlus.instance.share(ShareParams(
+                text: strings.artistShareText(artist.name, appLink('artist/${artist.id}'))));
+          },
+        ),
+        Tooltip(
+          triggerMode: TooltipTriggerMode.tap,
+          message: isComplete
+              ? strings.artistCompleteTooltip
+              : strings.artistDiscographyProgress(completedReleases, totalReleases),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: DetailHeaderDisc(
+                highlighted: isComplete,
+                child: OniMaskIcon(isActive: isComplete, size: 22, showContainer: false),
               ),
             ),
           ),
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
+      background: Stack(
           fit: StackFit.expand,
           children: [
             if (artist.pictureUrl.isNotEmpty)
               ExcludeSemantics(
-                child: CachedNetworkImage(
+                child: Consumer(
+                  builder: (context, ref, _) => CachedNetworkImage(
                   memCacheWidth: imageCacheSize(context, (420).toDouble()),
-                  imageUrl: artist.getBestImage(size: 'xl'),
+                  imageUrl: ref.watch(imageQualityProvider).large(artist.getBestImage(size: 'xl')),
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
+                ),
                 ),
               ),
             Container(
@@ -135,13 +91,12 @@ class _ArtistHeroAppBar extends StatelessWidget {
                 child: DistortedArtistName(
                   name: artist.name,
                   artistId: artist.id,
-                  fontSize: 30,
+                  fontSize: AppFontSize.display,
                 ),
               ),
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -183,7 +138,7 @@ class _ArtistInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = locale.strings;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -215,7 +170,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.popularTracks,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -243,7 +198,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.artistFans(Formatters.formatNumber(artist.fansCount)),
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -273,7 +228,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 Text(
                   strings.artistReleases(artist.albumsCount),
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     decoration: showStats
@@ -286,7 +241,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 const SizedBox(width: 4),
                 AnimatedRotation(
                   turns: showStats ? 0.25 : 0.0,
-                  duration: const Duration(milliseconds: 250),
+                  duration: AppMotion.normal,
                   child: const Icon(
                     Icons.chevron_right,
                     size: 16,
@@ -313,14 +268,14 @@ class _ArtistInfoSection extends StatelessWidget {
       value: isFollowed,
       peak: 1.08,
       child: AnimatedContainer(
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
+        duration: reduceMotion ? Duration.zero : AppMotion.normal,
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 9),
         decoration: BoxDecoration(
           color: isFollowed
               ? AppColors.accent.withValues(alpha: 0.15)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: isFollowed
                 ? AppColors.accent
@@ -341,7 +296,7 @@ class _ArtistInfoSection extends StatelessWidget {
           children: [
             // The + turns into a check (and back) instead of jumping.
             AnimatedSwitcher(
-              duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+              duration: reduceMotion ? Duration.zero : AppMotion.fast,
               transitionBuilder: (child, anim) => RotationTransition(
                 turns: Tween(begin: 0.25, end: 0.0).animate(anim),
                 child: ScaleTransition(scale: anim, child: child),
@@ -360,7 +315,7 @@ class _ArtistInfoSection extends StatelessWidget {
                   ? strings.unfollowArtist
                   : strings.followArtist,
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.5,
@@ -386,7 +341,7 @@ class _ArtistInfoSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
           decoration: BoxDecoration(
             color: AppColors.accent,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             boxShadow: [
               BoxShadow(color: AppColors.accentGlow.withValues(alpha: 0.35), blurRadius: 10),
             ],
@@ -399,7 +354,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.artistRadioButton,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 1.5,
@@ -424,7 +379,7 @@ class _ArtistInfoSection extends StatelessWidget {
             horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0x730C0C12),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.16),
             width: 1,
@@ -473,7 +428,7 @@ class _ArtistInfoSection extends StatelessWidget {
       crossFadeState: showStats
           ? CrossFadeState.showSecond
           : CrossFadeState.showFirst,
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.normal,
     );
   }
 
@@ -486,7 +441,7 @@ class _ArtistInfoSection extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: 11,
+            fontSize: AppFontSize.caption,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -507,12 +462,12 @@ class _ArtistInfoSection extends StatelessWidget {
             color: AppColors.accent.withValues(alpha: 0.1),
             border:
                 Border.all(color: AppColors.accent, width: 1),
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             tag.toUpperCase(),
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.0,
               color: AppColors.textPrimary,

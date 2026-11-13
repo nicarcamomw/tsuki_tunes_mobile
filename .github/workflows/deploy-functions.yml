@@ -1,19 +1,22 @@
 name: Deploy Cloud Functions
 
-# Builds, tests and deploys functions/ (the Last.fm / Deezer proxy) when it
-# changes on main, or by hand from the Actions tab, where the project can
-# be chosen (dev to try a change first).
+# Builds, tests and deploys functions/ (the Last.fm / Deezer proxy, and the
+# daily release radar that pushes new releases) when it changes on main, or
+# by hand from the Actions tab, where the project can be chosen (dev to try
+# a change first).
 #
 # Needs, once (see README "Backend propio"):
-# - Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc
-#   and Secret Manager APIs enabled in the project (the first manual
-#   `firebase deploy --only functions` offers to enable them).
+# - Cloud Functions, Cloud Build, Artifact Registry, Cloud Run, Eventarc,
+#   Secret Manager, Cloud Scheduler and Firebase Cloud Messaging APIs
+#   enabled in the project (the first manual `firebase deploy --only
+#   functions` offers to enable them).
 # - The secret LASTFM_API_KEY in Secret Manager:
 #   `firebase functions:secrets:set LASTFM_API_KEY --project <project>`.
 # - The repository secret FIREBASE_SERVICE_ACCOUNT with, besides its rules
 #   roles: Cloud Functions Admin, Service Account User, Cloud Build Editor,
-#   Artifact Registry Administrator, Secret Manager Viewer and Cloud Run
-#   Admin. Without the secret the deploy is skipped (tests still run).
+#   Artifact Registry Administrator, Secret Manager Viewer, Cloud Run Admin
+#   and Cloud Scheduler Admin (the radar's daily job). Without the secret
+#   the deploy is skipped (tests still run).
 # - The repository variable DEPLOY_FUNCTIONS set to true (Settings >
 #   Secrets and variables > Actions > Variables) once the above is done;
 #   until then the deploy is skipped, so main doesn't go red.

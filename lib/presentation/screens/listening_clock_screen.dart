@@ -7,8 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/motion.dart';
 
 class ListeningClockScreen extends ConsumerStatefulWidget {
@@ -99,66 +101,30 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
     );
   }
 
-  Widget _buildEmptyState(LocaleProvider locale, dynamic strings) {
+  Widget _buildEmptyState(LocaleProvider locale, AppStrings strings) {
     return Column(
       children: [
         _buildHeader(locale, strings),
         Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.accent.withValues(alpha: 0.1),
-                      border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Icons.access_time,
-                        color: AppColors.accent, size: 36),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    strings.clockNoData,
-                    textAlign: TextAlign.center,
-                    style: locale.getTextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textBright,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    strings.clockNoDataSubtitle,
-                    textAlign: TextAlign.center,
-                    style: locale.getTextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          child: EmptyState(
+            icon: Icons.access_time,
+            tone: AppColors.neonCyan,
+            title: strings.clockNoData,
+            message: strings.clockNoDataSubtitle,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeader(LocaleProvider locale, dynamic strings) {
+  Widget _buildHeader(LocaleProvider locale, AppStrings strings) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back,
+            icon: const Icon(Icons.arrow_back_rounded,
                 color: AppColors.textBright, size: 22),
             tooltip: strings.a11yBack,
           ),
@@ -166,7 +132,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             strings.clockTitle,
             style: locale.getTextStyle(
-              fontSize: 16,
+              fontSize: AppFontSize.titleLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 1.2,
@@ -176,7 +142,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             '◈ $_year',
             style: GoogleFonts.notoSansJp(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
               letterSpacing: 2,
@@ -187,7 +153,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
     );
   }
 
-  Widget _buildContent(LocaleProvider locale, dynamic strings) {
+  Widget _buildContent(LocaleProvider locale, AppStrings strings) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,16 +221,16 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           // Hour detail badge (selected or peak)
           Center(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.fast,
               child: Container(
                 key: ValueKey(_selectedHour ?? -1),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 10),
                 decoration: BoxDecoration(
                   color: (_selectedHour != null
                           ? AppColors.textBright
                           : AppColors.accent)
                       .withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: (_selectedHour != null
                             ? AppColors.textBright
@@ -283,7 +249,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                           _hourCounts[_peakHour] ?? 0,
                         ),
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
                   ),
@@ -316,7 +282,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             child: Text(
               strings.clockTotalYear(_totalTracks),
               style: GoogleFonts.notoSansJp(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accent.withValues(alpha: 0.5),
                 letterSpacing: 2,
@@ -333,7 +299,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
   Widget _buildSectionLabel(
       LocaleProvider locale, String text, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
         children: [
           Container(width: 4, height: 16, color: color),
@@ -341,7 +307,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: 11,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w800,
               color: color,
               letterSpacing: 2,
@@ -608,7 +574,7 @@ class _SharinganRadarPainter extends CustomPainter {
         text: TextSpan(
           text: '$i',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 9,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted.withValues(alpha: 0.8),
           ),
@@ -660,7 +626,7 @@ class _DailyActivityBars extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         reverse: true,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: List.generate(currentMonth, (m) {
@@ -708,7 +674,7 @@ class _DailyActivityBars extends StatelessWidget {
                                     ? AppColors.textBright
                                     : color,
                                 borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(1.5)),
+                                    top: Radius.circular(AppRadius.chip)),
                                 boxShadow: isToday
                                     ? [
                                         BoxShadow(
@@ -740,7 +706,7 @@ class _DailyActivityBars extends StatelessWidget {
                   Text(
                     month.toString().padLeft(2, '0'),
                     style: locale.getTextStyle(
-                      fontSize: 8,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: month == currentMonth && year == now.year
                           ? AppColors.neonCyan

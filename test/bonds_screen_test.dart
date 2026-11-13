@@ -65,7 +65,7 @@ void main() {
     final social = controller();
     await open(tester, social, tab: 0);
     expect(find.textContaining('Crea tu primer Lazo'), findsOneWidget);
-    await tester.tap(find.text('Crear Lazo'));
+    await tester.tap(find.text('CREAR LAZO'));
     await tester.pumpAndSettle();
     expect(find.text('Busca un Portador por su nombre'), findsOneWidget);
     expect(tester.takeException(), isNull);

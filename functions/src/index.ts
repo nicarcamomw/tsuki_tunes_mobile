@@ -1,14 +1,21 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAppCheck } from 'firebase-admin/app-check';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 import { logger } from 'firebase-functions';
 import { defineBoolean, defineSecret } from 'firebase-functions/params';
 import { onRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import { TtlCache } from './cache.js';
 import { handleProxy } from './proxy.js';
+import { firestoreRadarDeps } from './radar_deps.js';
+import { runRadar } from './radar.js';
 import { RateLimiter } from './rate_limit.js';
 
 initializeApp();
+
+const USER_AGENT = 'TsukiTunes/1.0 (+https://github.com/nicarcamomw/tsuki_tunes_mobile)';
 
 /** Last.fm's key: in Secret Manager, never in the app. */
 const lastFmKey = defineSecret('LASTFM_API_KEY');
@@ -65,7 +72,7 @@ export const api = onRequest(
         {
           fetch: (url) =>
             fetch(url, {
-              headers: { 'User-Agent': 'TsukiTunes/1.0 (+https://github.com/nicarcamomw/tsuki_tunes_mobile)' },
+              headers: { 'User-Agent': USER_AGENT },
               signal: AbortSignal.timeout(10000),
             }),
           lastFmKey: () => lastFmKey.value(),
@@ -88,5 +95,27 @@ export const api = onRequest(
       logger.error('proxy error', e);
       res.status(500).set('Access-Control-Allow-Origin', '*').json({ error: 'internal' });
     }
+  },
+);
+
+/**
+ * The release radar: every day, the artists people follow are checked on
+ * Deezer and phones are told about new releases (see radar.ts). Morning in
+ * Chile, when Friday's releases are already out everywhere.
+ */
+export const releaseRadar = onSchedule(
+  {
+    schedule: '17 11 * * *',
+    timeZone: 'America/Santiago',
+    region: 'us-central1',
+    timeoutSeconds: 540,
+    memory: '256MiB',
+    maxInstances: 1,
+    // A failed run is not retried: the next day's picks up where it left.
+    retryCount: 0,
+  },
+  async () => {
+    const summary = await runRadar(firestoreRadarDeps(getFirestore(), getMessaging(), USER_AGENT));
+    logger.info('release radar done', summary);
   },
 );

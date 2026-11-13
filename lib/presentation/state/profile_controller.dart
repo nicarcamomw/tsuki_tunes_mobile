@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/public_profile.dart';
@@ -84,7 +85,7 @@ class ProfileController extends ChangeNotifier {
   String? get uid => _account;
 
   /// The link others open the profile with.
-  String? get shareLink => _account == null ? null : 'tsukitunes://user/$_account';
+  String? get shareLink => _account == null ? null : appLink('user/$_account');
 
   /// The profile as it would be published now.
   PublicProfile? get current {

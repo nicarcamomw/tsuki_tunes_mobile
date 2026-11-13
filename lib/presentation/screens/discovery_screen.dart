@@ -9,6 +9,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
 import '../navigation/routes.dart';
@@ -168,7 +169,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 12),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -261,7 +262,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         centerTitle: true,
         title: Text(strings.discoveryTitle.toUpperCase(),
             style: locale.getTextStyle(
-                fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
+                fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
         actions: [
           if (deck.liked > 0)
             TextButton.icon(
@@ -277,14 +278,14 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   }
 }
 
-class _SongCard extends StatelessWidget {
+class _SongCard extends ConsumerWidget {
   const _SongCard({required this.card, required this.locale});
 
   final DiscoveryCard card;
   final LocaleProvider locale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = locale.strings;
     final t = card.track;
     return Semantics(
@@ -293,7 +294,7 @@ class _SongCard extends StatelessWidget {
         aspectRatio: 0.72,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             color: AppColors.bgCard,
             border: Border.all(color: AppColors.border),
             boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10))],
@@ -304,7 +305,7 @@ class _SongCard extends StatelessWidget {
             children: [
               if (t.coverUrl.isNotEmpty)
                 CachedNetworkImage(
-                  imageUrl: t.coverUrl.replaceAll('250x250', '500x500'),
+                  imageUrl: ref.watch(imageQualityProvider).large(t.coverUrl.replaceAll('250x250', '500x500')),
                   memCacheWidth: imageCacheSize(context, 360),
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const ColoredBox(color: AppColors.bgCard),
@@ -332,12 +333,12 @@ class _SongCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15)),
+                            fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15)),
                     const SizedBox(height: 4),
                     Text(t.artistName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white70)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w700, color: Colors.white70)),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -349,7 +350,7 @@ class _SongCard extends StatelessWidget {
                             card.because == null ? strings.discoveryFromCharts : strings.discoveryBecause(card.because!),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: locale.getTextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white60),
+                            style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: Colors.white60),
                           ),
                         ),
                       ],
@@ -378,11 +379,11 @@ class _Stamp extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             border: Border.all(color: color, width: 3),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             color: Colors.black38,
           ),
           child: Text(text.toUpperCase(),
-              style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
+              style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
         ),
       );
 }
@@ -452,7 +453,7 @@ class _Message extends StatelessWidget {
               const SizedBox(height: 16),
               Text(text,
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary, height: 1.45)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.45)),
               if (action != null && onAction != null) ...[
                 const SizedBox(height: 16),
                 OutlinedButton(
@@ -478,13 +479,13 @@ class _CardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => SkeletonScope(
         label: label,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 12),
           child: Center(
             child: AspectRatio(
               aspectRatio: 0.72,
               child: Stack(
                 children: [
-                  const Positioned.fill(child: SkeletonLoader(height: double.infinity, borderRadius: 18)),
+                  const Positioned.fill(child: SkeletonLoader(height: double.infinity, borderRadius: AppRadius.sheet)),
                   // Lighter lines where the title and artist will be.
                   Positioned(
                     left: 18,

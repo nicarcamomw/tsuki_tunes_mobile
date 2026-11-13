@@ -118,6 +118,42 @@ test('profile create and login update are accepted', async () => {
   await assertSucceeds(updateDoc(doc(db, 'users/alice'), { lastLoginAt: serverTimestamp() }));
 });
 
+test('user createdAt is the server\'s clock, set once', async () => {
+  const db = alice();
+  const backdated = Timestamp.fromMillis(Date.UTC(2000, 0, 1));
+  await assertFails(setDoc(doc(db, 'users/alice'), { displayName: 'Alice', createdAt: backdated }));
+  await assertSucceeds(setDoc(doc(db, 'users/alice'), { displayName: 'Alice', createdAt: serverTimestamp() }));
+  // Once there, it can't be rewritten, not even with the server's clock.
+  await assertFails(updateDoc(doc(db, 'users/alice'), { createdAt: backdated }));
+  await assertFails(updateDoc(doc(db, 'users/alice'), { createdAt: serverTimestamp() }));
+});
+
+test('user createdAt can be added later to a doc made without it', async () => {
+  // Masks can create the doc (merge) before the profile is written.
+  await seed('users/alice', { masks: { equipped: 'oni' } });
+  const db = alice();
+  await assertFails(updateDoc(doc(db, 'users/alice'), { createdAt: Timestamp.fromMillis(0) }));
+  await assertSucceeds(updateDoc(doc(db, 'users/alice'), { createdAt: serverTimestamp() }));
+});
+
+test('playlist createdAt is written on create only', async () => {
+  const db = alice();
+  const now = Timestamp.now();
+  await seed('users/alice', oldStamp());
+  await assertFails(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'),
+    { name: 'Mix', tracks: [], createdAt: Timestamp.fromMillis(Date.now() + 3 * 86_400_000) })));
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'),
+    { name: 'Mix', tracks: [], createdAt: now, updatedAt: serverTimestamp() })));
+  await seed('users/alice', oldStamp());
+  await assertFails(stampedBatch(db, 'alice', (b) => b.update(doc(db, 'users/alice/playlists/p1'),
+    { createdAt: Timestamp.fromMillis(0), updatedAt: serverTimestamp() })));
+  // Rewriting the same value isn't a change.
+  await seed('users/alice', oldStamp());
+  await assertSucceeds(stampedBatch(db, 'alice', (b) => b.set(doc(db, 'users/alice/playlists/p1'),
+    { name: 'Mix 2', tracks: [], createdAt: now, updatedAt: serverTimestamp() })));
+});
+
 test('stats increment with stamp and masks merge are accepted', async () => {
   await seed('users/alice', { ...oldStamp(), stats: { totalTracks: 3 } });
   const db = alice();
@@ -605,6 +641,29 @@ test('only Bonds are invited; they join with their name; members cannot steer th
   await assertFails(deleteDoc(doc(bob(), 'parties/alice')));
   await assertSucceeds(updateDoc(doc(bob(), 'parties/alice'), { members: arrayRemove('bob'), updatedAt: serverTimestamp() }));
   await assertSucceeds(deleteDoc(doc(alice(), 'parties/alice')));
+});
+
+test('push devices: the owner registers, updates and removes their phone', async () => {
+  const device = (extra = {}) => ({ fid: 'cKx1-fid', platform: 'android', lang: 'es', notify: true, updatedAt: serverTimestamp(), ...extra });
+  const db = alice();
+  const ref = doc(db, 'users/alice/devices/abcdef0123456789');
+  await assertSucceeds(setDoc(ref, device()));
+  await assertSucceeds(setDoc(ref, device({ fid: 'new-fid', notify: false })));
+  await assertSucceeds(getDoc(ref));
+  // Not someone else's, and nothing outside the shape.
+  await assertFails(getDoc(doc(bob(), 'users/alice/devices/abcdef0123456789')));
+  await assertFails(setDoc(doc(bob(), 'users/alice/devices/bobsphone0001'), device()));
+  await assertFails(setDoc(ref, device({ extra: 1 })));
+  await assertFails(setDoc(ref, device({ platform: 'web' })));
+  await assertFails(setDoc(ref, device({ fid: '' })));
+  await assertFails(setDoc(ref, device({ updatedAt: Timestamp.fromMillis(0) })));
+  await assertFails(setDoc(doc(db, 'users/alice/devices/x'), device()));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test('the radar state is the server\'s alone', async () => {
+  await assertFails(getDoc(doc(alice(), 'radarArtists/27')));
+  await assertFails(setDoc(doc(alice(), 'radarArtists/27'), { ids: [], checkedAt: serverTimestamp() }));
 });
 
 let failed = 0;

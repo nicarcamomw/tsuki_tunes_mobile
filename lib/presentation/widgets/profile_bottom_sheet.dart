@@ -15,6 +15,7 @@ import '../../core/constants/firebase_emulators.dart';
 import '../../core/constants/legal_links.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../navigation/app_router.dart';
 import '../navigation/routes.dart';
@@ -22,7 +23,9 @@ import '../screens/mask_collection_screen.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/auth_provider.dart';
+import '../state/image_quality_setting.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'equalizer_sheet.dart';
 import 'haptics.dart';
@@ -41,33 +44,69 @@ part 'profile/spotify_card.dart';
 
 final _log = Log.named('Profile');
 
+/// Profile and settings (S-01): a full screen with its sections, not a
+/// sheet with twenty-odd options. The name stays so the callers don't
+/// change.
 class ProfileBottomSheet {
-  static void show(BuildContext context, AuthProvider auth) {
+  static Future<void> show(BuildContext context, AuthProvider auth) {
     FocusScope.of(context).unfocus();
     FocusManager.instance.primaryFocus?.unfocus();
-
-    SwipeableSheet.show(
-      context,
-      initialChildSize: 0.75,
-      maxChildSize: 0.92,
-      builder: (ctx, sheetController) =>
-          _ProfileSheet(hostContext: context, auth: auth),
-    ).whenComplete(() {
-      FocusManager.instance.primaryFocus?.unfocus();
-    });
+    return Navigator.of(context, rootNavigator: true).push(cyberRoute<void>(_ProfileScreen(hostContext: context, auth: auth)));
   }
 }
 
-/// The sheet's content. [hostContext] is the screen that opened it: it
-/// outlives the sheet, so navigation and snack bars that follow closing the
-/// sheet go through it.
+class _ProfileScreen extends ConsumerWidget {
+  const _ProfileScreen({required this.hostContext, required this.auth});
+
+  final BuildContext hostContext;
+  final AuthProvider auth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final strings = locale.strings;
+    return Scaffold(
+      backgroundColor: AppColors.bgDeep,
+      appBar: AppBar(
+        backgroundColor: AppColors.bgDeep,
+        leading: IconButton(
+          tooltip: strings.a11yBack,
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textBright, semanticLabel: strings.a11yBack),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: Semantics(
+          header: true,
+          child: Text(
+            strings.profileTitle,
+            style: locale.getTextStyle(
+              fontSize: AppFontSize.titleLg,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textBright,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: _ProfileSheet(hostContext: hostContext, auth: auth),
+        ),
+      ),
+    );
+  }
+}
+
+/// The page's content. [hostContext] is the screen that opened it: it
+/// outlives the page, so navigation that follows closing it goes through
+/// it (snack bars shown while it's open use the page's own context).
 class _ProfileSheet extends ConsumerWidget {
   final BuildContext hostContext;
   final AuthProvider auth;
 
   const _ProfileSheet({required this.hostContext, required this.auth});
 
-  /// Closes the sheet, then runs [then] on the host once it has gone.
+  /// Closes the page, then runs [then] on the host once it has gone.
   Future<void> _closeThen(
       BuildContext sheetContext, Future<void> Function() then) async {
     Navigator.pop(sheetContext);
@@ -92,18 +131,6 @@ class _ProfileSheet extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             _buildHeader(context, locale, strings),
             if (ref.watch(authProvider.select((a) => a.isAuthenticated))) ...[
               const SizedBox(height: 14),
@@ -127,6 +154,10 @@ class _ProfileSheet extends ConsumerWidget {
               locale: locale,
               closeThen: (then) => _closeThen(context, then),
             ),
+            const SizedBox(height: 20),
+            _SectionHeader(locale: locale, title: strings.settingsAdvancedSection),
+            const SizedBox(height: 8),
+            _AdvancedSettings(locale: locale),
             const SizedBox(height: 24),
             // ── Logout ──
             SizedBox(
@@ -140,7 +171,7 @@ class _ProfileSheet extends ConsumerWidget {
                 label: Text(
                   strings.logoutOption,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
                   ),
@@ -148,7 +179,7 @@ class _ProfileSheet extends ConsumerWidget {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.accent),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -168,7 +199,7 @@ class _ProfileSheet extends ConsumerWidget {
                 label: Text(
                   strings.deleteAccountOption,
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                   ),
@@ -184,7 +215,7 @@ class _ProfileSheet extends ConsumerWidget {
               child: Text(
                 locale.strings.dataCredits,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 9.5, color: AppColors.textMuted, height: 1.4),
+                style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted, height: 1.4),
               ),
             ),
           ],
@@ -230,7 +261,7 @@ class _ProfileSheet extends ConsumerWidget {
         Text(
           auth.user?.displayName ?? '',
           style: locale.getTextStyle(
-            fontSize: 16,
+            fontSize: AppFontSize.titleLg,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -238,20 +269,20 @@ class _ProfileSheet extends ConsumerWidget {
         Text(
           auth.user?.email ?? '',
           style: locale.getTextStyle(
-            fontSize: 11,
+            fontSize: AppFontSize.caption,
             color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 12),
         InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           onTap: () { Haptics.tap(); _closeThen(
               context, () => MaskCollectionScreen.open(hostContext)); },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.accentDim,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
             ),
             child: Row(
@@ -262,7 +293,7 @@ class _ProfileSheet extends ConsumerWidget {
                 Text(
                   '${strings.masksProfileRow} · ${strings.masksCount(masks.unlockedCount, masks.totalCount)}',
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
                   ),
@@ -277,12 +308,12 @@ class _ProfileSheet extends ConsumerWidget {
         if (auth.isAuthenticated && auth.uid != null) ...[
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             onTap: () { Haptics.tap(); _closeThen(context, () => UserProfileRoute(uid: auth.uid!).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(
@@ -292,7 +323,7 @@ class _ProfileSheet extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     strings.profileViewMine,
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textBright),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textBright),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),
@@ -302,12 +333,12 @@ class _ProfileSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             onTap: () { Haptics.tap(); _closeThen(context, () => const BondsRoute(tab: 1).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(
@@ -317,7 +348,7 @@ class _ProfileSheet extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     strings.bondsTitle,
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textBright),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textBright),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textMuted),

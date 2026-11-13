@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import 'haptics.dart';
 
 class CyberButton extends StatefulWidget {
@@ -39,8 +40,8 @@ class _CyberButtonState extends State<CyberButton>
     super.initState();
     _scaleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 250),
+      duration: AppMotion.micro,
+      reverseDuration: AppMotion.normal,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(
@@ -92,13 +93,13 @@ class _CyberButtonState extends State<CyberButton>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
+        duration: AppMotion.micro,
         width: widget.width,
         height: widget.height,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
           color: _isPressed ? bgColor.withValues(alpha: 0.8) : bgColor,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: _isPressed ? AppColors.neonCyan : borderColor,
             width: 1.2,
@@ -134,7 +135,7 @@ class _CyberButtonState extends State<CyberButton>
             Text(
               widget.text.toUpperCase(),
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: textColor,
                 letterSpacing: 1.2,

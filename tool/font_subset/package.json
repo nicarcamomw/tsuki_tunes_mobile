@@ -1,0 +1,9 @@
+{
+  "name": "tsuki-font-subset",
+  "private": true,
+  "type": "module",
+  "description": "Subsets the artist fonts to Latin + Latin-1 (see subset.mjs).",
+  "dependencies": {
+    "harfbuzzjs": "0.4.15"
+  }
+}

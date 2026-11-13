@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../core/utils/image_cache_size.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/public_profile.dart';
@@ -63,7 +65,9 @@ class _Unavailable extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // A private profile reached by its link can still be asked for a Bond.
-    final social = ref.watch(socialProvider);
+    // P-04: what the profile reads, not every social notification.
+    ref.watch(socialProvider.select((s) => (s.available, s.me, s.bonds, s.received, s.sent)));
+    final social = ref.read(socialProvider);
     final known = [...social.received, ...social.sent, ...social.bonds].where((p) => p.uid == uid).firstOrNull;
     final person = known ?? SocialPerson(uid: uid, name: ref.watch(stringsProvider).ecoRankName(EcoRank.portador));
     return Center(
@@ -103,11 +107,11 @@ class _ProfileBody extends ConsumerWidget {
         locale.getTextStyle(fontSize: size, fontWeight: weight, color: color);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 140),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
       children: [
         Center(child: _Avatar(photoUrl: profile.photoUrl, mask: mask, name: profile.displayName)),
         const SizedBox(height: 12),
-        Text(profile.displayName, textAlign: TextAlign.center, style: style(22, weight: FontWeight.w800)),
+        Text(profile.displayName, textAlign: TextAlign.center, style: style(AppFontSize.headline, weight: FontWeight.w800)),
         if (!own) ...[
           const SizedBox(height: 16),
           BondButton(
@@ -131,23 +135,25 @@ class _ProfileBody extends ConsumerWidget {
         ),
         if (profile.topArtists.isNotEmpty) ...[
           const SizedBox(height: 28),
-          Text(strings.profileTopArtists, style: style(12, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
+          Text(strings.profileTopArtists, style: style(AppFontSize.body, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
           const SizedBox(height: 10),
           for (final (i, a) in profile.topArtists.indexed)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
-                  SizedBox(width: 26, child: Text('${i + 1}', style: style(16, color: AppColors.accent))),
+                  SizedBox(width: 26, child: Text('${i + 1}', style: style(AppFontSize.titleLg, color: AppColors.accent))),
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.bgCard,
-                    backgroundImage: a.pictureUrl == null ? null : NetworkImage(a.pictureUrl!),
+                    backgroundImage: a.pictureUrl == null
+                        ? null
+                        : ResizeImage(NetworkImage(a.pictureUrl!), width: imageCacheSize(context, 40)),
                     child: a.pictureUrl == null ? const Icon(Icons.person, color: AppColors.textMuted) : null,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(a.name, style: style(14), overflow: TextOverflow.ellipsis)),
-                  Text(strings.profileArtistSongs(a.count), style: style(12, color: AppColors.textSecondary, weight: FontWeight.w500)),
+                  Expanded(child: Text(a.name, style: style(AppFontSize.title), overflow: TextOverflow.ellipsis)),
+                  Text(strings.profileArtistSongs(a.count), style: style(AppFontSize.body, color: AppColors.textSecondary, weight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -155,7 +161,7 @@ class _ProfileBody extends ConsumerWidget {
         if (profile.milestones.isNotEmpty) ...[
           const SizedBox(height: 28),
           Text((own ? strings.bondsYourResonances : strings.bondsTabResonances).toUpperCase(),
-              style: style(12, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
+              style: style(AppFontSize.body, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
           const SizedBox(height: 10),
           for (final m in profile.milestones)
             Padding(
@@ -200,7 +206,7 @@ class _SintoniaCard extends ConsumerWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: color.withValues(alpha: 0.6)),
         ),
         child: Column(
@@ -210,15 +216,15 @@ class _SintoniaCard extends ConsumerWidget {
               children: [
                 Text(strings.sintoniaTitle.toUpperCase(),
                     style: locale.getTextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
+                        fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
                 const Spacer(),
                 Text('${s.percent}%',
-                    style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: color)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color)),
               ],
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: s.percent / 100),
                 duration: const Duration(milliseconds: 900),
@@ -233,13 +239,13 @@ class _SintoniaCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(strings.sintoniaLabel(s.percent),
-                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
             const SizedBox(height: 4),
             Text(
               s.shared.isEmpty
                   ? strings.sintoniaNone
                   : '${strings.sintoniaShared(s.shared.length)}: ${s.shared.take(5).join(', ')}${s.shared.length > 5 ? '…' : ''}',
-              style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4),
+              style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4),
             ),
           ],
         ),
@@ -258,12 +264,21 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const size = 96.0;
+    final Widget initial = Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+        style: const TextStyle(color: AppColors.textBright, fontSize: AppFontSize.hero, fontWeight: FontWeight.w800));
     final Widget inner = mask != null
         ? OniMaskArt.image(mask!, size * 0.8)
         : photoUrl != null
-            ? ClipOval(child: Image.network(photoUrl!, width: size, height: size, fit: BoxFit.cover))
-            : Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                style: const TextStyle(color: AppColors.textBright, fontSize: 40, fontWeight: FontWeight.w800));
+            ? ClipOval(
+                child: Image.network(photoUrl!,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    cacheWidth: imageCacheSize(context, size),
+                    // An expired or offline photo falls back to the initial,
+                    // not Flutter's broken-image box.
+                    errorBuilder: (_, _, _) => Center(child: initial)))
+            : initial;
     return Container(
       width: size,
       height: size,
@@ -292,17 +307,17 @@ class _Stat extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
-            Text('$value', style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.accent)),
+            Text('$value', style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w800, color: AppColors.accent)),
             const SizedBox(height: 4),
             Text(label,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: locale.getTextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ],
         ),
       ),

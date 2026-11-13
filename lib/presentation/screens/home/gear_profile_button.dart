@@ -18,7 +18,7 @@ class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: AppMotion.slow,
     );
   }
 

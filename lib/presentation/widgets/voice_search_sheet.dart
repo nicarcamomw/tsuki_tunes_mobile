@@ -6,10 +6,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/voice_error.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 import 'motion.dart';
+import 'swipeable_sheet.dart';
 
 enum _SheetState { initializing, listening, done, failed }
 
@@ -22,10 +24,8 @@ class VoiceSearchSheet extends StatefulWidget {
     BuildContext context, {
     required String langCode,
   }) {
-    return showModalBottomSheet<String>(
+    return showAppSheet<String>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => VoiceSearchSheet(langCode: langCode),
     );
@@ -213,7 +213,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           end: Alignment.bottomCenter,
           colors: [Color(0xF0141720), Color(0xF00D0F18)],
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         border: Border(
           top: BorderSide(color: Color(0x33FF1919), width: 1),
           left: BorderSide(color: Color(0x33FF1919), width: 1),
@@ -230,21 +230,14 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         children: [
           const SizedBox(height: 12),
           // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.textMuted.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           // Telemetry header
           // Flavour, not information: screen readers skip it.
           ExcludeSemantics(child: Text(
             '◈ VOICE.SCAN // ACTIVE',
             style: GoogleFonts.notoSansJp(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.accentText,
               letterSpacing: 1.2,
@@ -266,14 +259,14 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.fast,
               child: Text(
                 failed && showHint
                     ? _errorDetail
                     : (showHint ? _hintText : _recognizedText),
                 key: ValueKey(failed ? 'error' : (showHint ? 'hint' : 'text')),
                 style: TextStyle(
-                  fontSize: showHint ? 13 : 18,
+                  fontSize: showHint ? AppFontSize.bodyLg : AppFontSize.titleLg,
                   fontWeight: showHint ? FontWeight.w400 : FontWeight.w600,
                   color: showHint ? AppColors.textMuted : AppColors.textBright,
                   height: 1.4,
@@ -289,7 +282,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           Text(
             _statusText,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: failed ? AppColors.accent : AppColors.textSecondary,
               letterSpacing: 1.5,
@@ -432,7 +425,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: outlined ? Colors.transparent : AppColors.accent.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: outlined
                 ? AppColors.border
@@ -442,7 +435,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: AppFontSize.caption,
             fontWeight: FontWeight.w800,
             color: outlined ? AppColors.textSecondary : AppColors.accent,
             letterSpacing: 1.5,

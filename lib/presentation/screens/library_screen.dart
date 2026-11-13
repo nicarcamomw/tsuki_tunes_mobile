@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -16,33 +17,23 @@ import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
+import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
+import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_chip.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/listened_undo.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
 import 'shared_playlist_screen.dart' show createSharedPlaylist;
-
-class _AlbumGroupData {
-  final String albumId;
-  final String albumTitle;
-  final String artistName;
-  final String coverUrl;
-  final List<ListenedTrackData> tracks;
-  DateTime? latestListened;
-
-  _AlbumGroupData({
-    required this.albumId,
-    required this.albumTitle,
-    required this.artistName,
-    required this.coverUrl,
-    required this.tracks,
-  });
-}
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -60,11 +51,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
   bool _hasError = false;
-
-  // Cached album grouping — rebuilt only when the source list identity changes.
-  List<ListenedTrackData>? _cachedSource;
-  List<_AlbumGroupData> _cachedGroups = const [];
-  int _cachedTotalTracks = 0;
 
   @override
   void initState() {
@@ -99,7 +85,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (scrollController.hasClients) {
       scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 380),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     }
@@ -119,67 +105,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
-    final library = ref.watch(libraryProvider);
-    final listenedTracks = library.listenedTracks;
+    // L-01: rebuilt when the songs change (the library hands out a new
+    // list then) or the followed artists do, not on every notification
+    // (sync state, play counts…).
+    final listenedTracks = ref.watch(libraryProvider.select((l) => l.listenedTracks));
+    ref.watch(libraryProvider.select((l) => (l.followedArtists, l.followedArtists.length)));
 
-    // Rebuild the album grouping only when the source list changes.
-    if (!identical(listenedTracks, _cachedSource)) {
-      _cachedSource = listenedTracks;
-      _cachedTotalTracks = listenedTracks.length;
-      final Map<String, _AlbumGroupData> albumMap = {};
-      for (final t in listenedTracks) {
-        final key = t.albumId.isNotEmpty ? t.albumId : t.albumTitle.isNotEmpty ? t.albumTitle : 'unknown';
-        if (!albumMap.containsKey(key)) {
-          albumMap[key] = _AlbumGroupData(
-            albumId: t.albumId,
-            albumTitle: t.albumTitle,
-            artistName: t.artistName,
-            coverUrl: t.coverUrl,
-            tracks: [],
-          );
-        }
-        albumMap[key]!.tracks.add(t);
-        if (t.listenedAt != null) {
-          final current = albumMap[key]!.latestListened;
-          if (current == null || t.listenedAt!.isAfter(current)) {
-            albumMap[key]!.latestListened = t.listenedAt;
-          }
-        }
-      }
-      _cachedGroups = albumMap.values.toList();
-    }
-
-    final totalTracks = _cachedTotalTracks;
-    var albumGroups = List<_AlbumGroupData>.of(_cachedGroups);
-    final totalAlbums = albumGroups.length;
-
-    // Filter
-    final filterText = _filterController.text.toLowerCase();
-    if (filterText.isNotEmpty) {
-      albumGroups = albumGroups.where((g) {
-        return g.albumTitle.toLowerCase().contains(filterText) ||
-            g.artistName.toLowerCase().contains(filterText);
-      }).toList();
-    }
-
-    // Sort
-    switch (_sortBy) {
-      case 'alpha':
-        albumGroups.sort(
-            (a, b) => a.albumTitle.toLowerCase().compareTo(b.albumTitle.toLowerCase()));
-        break;
-      case 'artist':
-        albumGroups.sort(
-            (a, b) => a.artistName.toLowerCase().compareTo(b.artistName.toLowerCase()));
-        break;
-      case 'recent':
-      default:
-        albumGroups.sort((a, b) {
-          final aTime = a.latestListened ?? DateTime(2000);
-          final bTime = b.latestListened ?? DateTime(2000);
-          return bTime.compareTo(aTime);
-        });
-    }
+    // Grouped, filtered and sorted only when the songs, the filter or the
+    // order change (LibraryAlbumList); loading the next page reuses it.
+    final albumList = ref.read(libraryAlbumsProvider);
+    final totalTracks = listenedTracks.length;
+    final totalAlbums = albumList.groups(listenedTracks).length;
+    final albumGroups = albumList.view(
+      listenedTracks,
+      filter: _filterController.text,
+      sortBy: _sortBy,
+    );
 
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
@@ -196,32 +137,38 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           children: [
             // Page Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Semantics(
                     header: true,
-                    child: Row(
-                      children: [
-                        Text(
-                          strings.libraryTitle.toUpperCase(),
-                          style: locale.getTextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textBright,
-                            letterSpacing: 2,
+                    child: FittedBox(
+                      // Shrinks rather than overflow on a narrow phone or with big text.
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            strings.libraryTitle.toUpperCase(),
+                            style: locale.getTextStyle(
+                              fontSize: AppFontSize.display,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textBright,
+                              letterSpacing: 2,
+                            ),
                           ),
-                        ),
-                        Text(
-                          ' // 03',
-                          style: locale.getTextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.accent,
+                          Text(
+                            ' // 04',
+                            style: locale.getTextStyle(
+                              fontSize: AppFontSize.display,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.accent,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -229,7 +176,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   ExcludeSemantics(child: Text(
                     strings.libraryTelemetry,
                     style: GoogleFonts.notoSansJp(
-                      fontSize: 9,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentText,
                       letterSpacing: 1.2,
@@ -239,9 +186,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   Text(
                     strings.libraryStats(totalTracks, totalAlbums),
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.accent,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -250,10 +197,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
             // Tab Bar
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.bgMid,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border),
               ),
               child: TabBar(
@@ -263,11 +210,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 labelColor: AppColors.accent,
                 unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w600,
                 ),
                 dividerHeight: 0,
@@ -303,12 +250,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     LocaleProvider locale,
     AppStrings strings,
     List<ListenedTrackData> listenedTracks,
-    List<_AlbumGroupData> albumGroups,
-    List<_AlbumGroupData> visible,
+    List<LibraryAlbumGroup> albumGroups,
+    List<LibraryAlbumGroup> visible,
     int totalTracks,
   ) {
     final filterText = _filterController.text.toLowerCase();
-    final allFollowed = ref.watch(libraryProvider).followedArtists;
+    final allFollowed = ref.read(libraryProvider).followedArtists;
     final followedArtists = filterText.isEmpty
         ? allFollowed
         : allFollowed
@@ -320,23 +267,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       children: [
         // Filter + Sort
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
           child: Column(
             children: [
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: TextField(
                   controller: _filterController,
                   style: locale.getTextStyle(
-                      color: AppColors.textBright, fontSize: 13),
+                      color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
                   decoration: InputDecoration(
                     hintText: strings.filterHint,
                     hintStyle: locale.getTextStyle(
-                        color: AppColors.textMuted, fontSize: 13),
+                        color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
                     prefixIcon: Icon(Icons.filter_list,
                         color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
                     suffixIcon: _filterController.text.isNotEmpty
@@ -373,7 +320,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         // Play controls
         if (totalTracks > 0)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
             child: Row(
               children: [
                 Expanded(
@@ -388,14 +335,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     label: Text(
                       strings.playAll,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -409,18 +356,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         ref.read(playTracksProvider)(allTracks, shuffled: true);
                       }
                     },
-                    icon: Icon(Icons.shuffle, color: AppColors.accent, size: 18, semanticLabel: strings.a11yShuffleAll),
+                    icon: Icon(Icons.shuffle, color: AppColors.textPrimary, size: 18, semanticLabel: strings.a11yShuffleAll),
                     label: Text(
                       strings.shuffle,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
+                        color: AppColors.textPrimary,
                       ),
                     ),
+                    // D-12: the second action is neutral; red is for "play all".
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      side: const BorderSide(color: AppColors.borderGlow),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -447,108 +395,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: _hasError
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        strings.loadError,
-                                        style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 14),
-                                      Semantics(
-                                        button: true,
-                                        label: strings.retry,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Haptics.tap();
-                                            _refreshData();
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.accent.withValues(alpha: 0.15),
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                                            ),
-                                            child: Text(
-                                              strings.retry,
-                                              style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accent, letterSpacing: 1.5),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 28),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Opacity(
-                                  opacity: 0.3,
-                                  child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyLibrary),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  strings.emptyLibraryTitle,
-                                  textAlign: TextAlign.center,
-                                  style: locale.getTextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  strings.emptyLibrarySubtitle,
-                                  textAlign: TextAlign.center,
-                                  style: locale.getTextStyle(
-                                      fontSize: 12, color: AppColors.textMuted),
-                                ),
-                                const SizedBox(height: 16),
-                                Semantics(
-                                  button: true,
-                                  label: strings.a11yGoToSearch,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Haptics.selection();
-                                      NavigationEvents.switchTab?.call(1);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 24, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: AppColors.accent.withValues(alpha: 0.6),
-                                        ),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        strings.homeEmptyAction,
-                                        style: locale.getTextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.accent,
-                                          letterSpacing: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ? ErrorState(message: strings.loadError, onRetry: _refreshData)
+                            : EmptyState(
+                            image: 'assets/images/oni.png',
+                            artLabel: strings.a11yEmptyLibrary,
+                            lore: strings.emptyLoreOni,
+                            title: strings.emptyLibraryTitle,
+                            message: strings.emptyLibrarySubtitle,
+                            actionLabel: strings.homeEmptyAction,
+                            actionSemanticLabel: strings.a11yGoToSearch,
+                            onAction: () => NavigationEvents.switchTab?.call(MainTab.search),
                           ),
-                        ),
                       ),
                     ],
                   )
@@ -568,7 +425,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         index--;
                       }
                       if (index == visible.length) {
-                        return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8));
+                        return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8));
                       }
                       return _AlbumGroupTile(
                         group: visible[index],
@@ -606,7 +463,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       children: [
         // Create playlist buttons: mine, and one with my Bonds.
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
           child: Row(
             children: [
           Expanded(
@@ -616,7 +473,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               label: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),
@@ -624,7 +481,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.accent),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4)),
+                    borderRadius: BorderRadius.circular(AppRadius.chip)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -634,16 +491,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () { Haptics.tap(); createSharedPlaylist(context, ref); },
-                    icon: const Icon(Icons.group_add_rounded, color: AppColors.accent, size: 18),
+                    icon: const Icon(Icons.group_add_rounded, color: AppColors.social, size: 18),
                     label: Text(
                       strings.sharedNew,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.social),
                     ),
+                    // D-12: shared with Bonds is social, so purple.
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      side: BorderSide(color: AppColors.social.withValues(alpha: 0.7)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
@@ -656,58 +514,35 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         // Playlist list or empty state
         Expanded(
           child: playlists.isEmpty && !hasShared
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Opacity(
-                          opacity: 0.3,
-                          child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyPlaylist),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          strings.noPlaylistsTitle,
-                          textAlign: TextAlign.center,
-                          style: locale.getTextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          strings.noPlaylistsSubtitle,
-                          textAlign: TextAlign.center,
-                          style: locale.getTextStyle(
-                              fontSize: 12, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
+              ? EmptyState(
+                  image: 'assets/images/hannya.png',
+                  artLabel: strings.a11yEmptyPlaylist,
+                  lore: strings.emptyLoreHannya,
+                  actionLabel: strings.createPlaylist,
+                  onAction: () => _showCreatePlaylistDialog(context),
+                  title: strings.noPlaylistsTitle,
+                  message: strings.noPlaylistsSubtitle,
                 )
               : ListView(
                   padding: const EdgeInsets.only(bottom: 120),
                   children: [
                     if (hasShared) ...[
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 4),
                         child: Text(strings.sharedTitle.toUpperCase(),
                             style: locale.getTextStyle(
-                                fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
+                                fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
                       ),
                       for (final p in [...shared.invitations, ...shared.mine])
                         ListTile(
                           leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             child: SizedBox(
                               width: 48,
                               height: 48,
                               child: p.coverUrl.isEmpty
                                   ? const ColoredBox(
-                                      color: AppColors.bgMid, child: Icon(Icons.groups_rounded, color: AppColors.accent))
+                                      color: AppColors.bgMid, child: Icon(Icons.groups_rounded, color: AppColors.social))
                                   : CachedNetworkImage(
                                       imageUrl: p.coverUrl,
                                       memCacheWidth: imageCacheSize(context, 48),
@@ -718,14 +553,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: locale.getTextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                                  fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           subtitle: Text(
                             shared.me != null && p.isInvited(shared.me!) && !p.isMember(shared.me!)
                                 ? strings.sharedInvitedBy(p.nameOf(p.owner))
                                 : '${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
-                            style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                           ),
-                          trailing: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
+                          trailing: const Icon(Icons.groups_rounded, color: AppColors.social, size: 18),
                           onTap: () { Haptics.tap(); SharedPlaylistRoute(id: p.id).push<void>(context); },
                         ),
                       const Divider(color: AppColors.border, height: 16),
@@ -747,11 +582,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.newPlaylist,
           style: locale.getTextStyle(
-            fontSize: 16,
+            fontSize: AppFontSize.titleLg,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -761,13 +596,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           autofocus: true,
           maxLength: PlaylistRepository.maxNameLength,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             color: AppColors.textBright,
           ),
           decoration: InputDecoration(
             hintText: strings.playlistNameHint,
             hintStyle: locale.getTextStyle(
-              fontSize: 14,
+              fontSize: AppFontSize.title,
               color: AppColors.textMuted,
             ),
             enabledBorder: const UnderlineInputBorder(
@@ -785,7 +620,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             child: Text(
               strings.cancel,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -796,7 +631,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             child: Text(
               strings.create,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accent,
               ),
@@ -810,23 +645,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       await ref.read(createPlaylistProvider)(name);
       if (context.mounted) {
         unawaited(SemanticsService.sendAnnouncement(View.of(context), strings.playlistCreated, TextDirection.ltr));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              strings.playlistCreated,
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBright,
-              ),
-            ),
-            backgroundColor: AppColors.bgCard,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        AppSnack.of(context).info(strings.playlistCreated);
       }
     }
   }
@@ -855,16 +674,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
             child: Row(
               children: [
                 Icon(Icons.person_add_alt_1_rounded,
-                    size: 16, color: AppColors.accent, semanticLabel: locale.strings.a11yFollowArtist),
+                    size: 16, color: AppColors.textSecondary, semanticLabel: locale.strings.a11yFollowArtist),
                 const SizedBox(width: 8),
                 Text(
                   locale.strings.followedArtistsTitle,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                     letterSpacing: 1.2,
@@ -874,9 +693,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Text(
                   '${artists.length}',
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -887,7 +706,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             height: 130,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               itemCount: artists.length,
               itemBuilder: (context, index) => ArtistCard(
                 key: ValueKey(artists[index].id),
@@ -902,44 +721,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
-    final isSelected = _sortBy == value;
     return Expanded(
-      child: Semantics(
-        button: true,
+      child: AppChip(
         label: label,
-        selected: isSelected,
-        child: GestureDetector(
-          onTap: () {
-            Haptics.selection();
-            setState(() => _sortBy = value);
-          },
-          child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.accent : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: isSelected ? AppColors.accent : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: isSelected ? AppColors.textBright : AppColors.textSecondary,
-            ),
-          ),
-        ),
-        ),
+        selected: _sortBy == value,
+        expand: true,
+        onTap: () => setState(() => _sortBy = value),
       ),
     );
   }
 }
 
 class _AlbumGroupTile extends ConsumerStatefulWidget {
-  final _AlbumGroupData group;
+  final LibraryAlbumGroup group;
   final bool isExpanded;
   final VoidCallback onToggle;
 
@@ -955,14 +749,18 @@ class _AlbumGroupTile extends ConsumerStatefulWidget {
 
 class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     with SingleTickerProviderStateMixin {
-  _AlbumGroupData get group => widget.group;
+  LibraryAlbumGroup get group => widget.group;
   bool get isExpanded => widget.isExpanded;
   VoidCallback get onToggle => widget.onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final currentTrackId =
-        ref.watch(audioProvider.select((a) => a.currentTrack?.id));
+    // L-01: only the album that holds the playing song (before or after
+    // a change) redraws when the song changes, not every row on screen.
+    final currentTrackId = ref.watch(audioProvider.select((a) {
+      final id = a.currentTrack?.id;
+      return id != null && group.tracks.any((t) => t.trackId == id) ? id : null;
+    }));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
 
@@ -970,7 +768,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
             color: isExpanded
                 ? AppColors.accent.withValues(alpha: 0.4)
@@ -980,7 +778,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
         children: [
           // Header
           InkWell(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             onTap: onToggle,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -988,7 +786,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                 children: [
                   // Cover
                   ExcludeSemantics(child: ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 44,
                       height: 44,
@@ -1017,7 +815,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                               ? group.albumTitle
                               : strings.unknownAlbum,
                           style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textBright,
                           ),
@@ -1030,7 +828,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                               child: Text(
                                 group.artistName,
                                 style: locale.getTextStyle(
-                                  fontSize: 12,
+                                  fontSize: AppFontSize.body,
                                   color: AppColors.textSecondary,
                                 ),
                                 maxLines: 1,
@@ -1040,7 +838,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               ' · ${strings.trackCountLabel(group.tracks.length)}',
                               style: locale.getTextStyle(
-                                fontSize: 10,
+                                fontSize: AppFontSize.micro,
                                 color: AppColors.textMuted,
                               ),
                             ),
@@ -1065,8 +863,8 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       child: Text(
                         strings.viewAlbum,
                         style: locale.getTextStyle(
-                          fontSize: 10,
-                          color: AppColors.accent,
+                          fontSize: AppFontSize.micro,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1086,7 +884,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
           // Expanded track list
           AnimatedSize(
-            duration: const Duration(milliseconds: 250),
+            duration: AppMotion.normal,
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
             child: isExpanded
@@ -1099,7 +897,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       ...group.tracks.map((trackData) {
               final isCurrentTrack = currentTrackId == trackData.trackId;
               return InkWell(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 onTap: () { Haptics.tap();
                   final queue = group.tracks
                       .map((td) => Track(
@@ -1147,7 +945,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               trackData.title,
                               style: locale.getTextStyle(
-                                fontSize: 13,
+                                fontSize: AppFontSize.bodyLg,
                                 fontWeight: FontWeight.w500,
                                 color: isCurrentTrack
                                     ? AppColors.accent
@@ -1159,7 +957,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               trackData.artistName,
                               style: locale.getTextStyle(
-                                fontSize: 11,
+                                fontSize: AppFontSize.caption,
                                 color: AppColors.textSecondary,
                               ),
                               maxLines: 1,
@@ -1171,7 +969,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       Text(
                         Formatters.formatSeconds(trackData.duration),
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -1183,7 +981,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         tooltip: strings.a11yRemoveFromPlaylist,
                         icon: Icon(Icons.remove_circle_outline,
                             color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
-                        onPressed: () { Haptics.selection(); ref.read(unmarkTrackListenedProvider)(trackData.trackId); },
+                        onPressed: () { Haptics.selection(); unawaited(unmarkWithUndo(context, ref, [trackData.trackId])); },
                       ),
                     ],
                   ),
@@ -1199,7 +997,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     );
   }
 
-  static Album _buildAlbumFromGroup(_AlbumGroupData group) {
+  static Album _buildAlbumFromGroup(LibraryAlbumGroup group) {
     return Album(
       id: group.albumId,
       title: group.albumTitle,
@@ -1225,11 +1023,11 @@ class _PlaylistListTile extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: () { Haptics.tap();
           PlaylistRoute(id: playlist.id).push(context);
         },
@@ -1238,7 +1036,7 @@ class _PlaylistListTile extends ConsumerWidget {
           child: Row(
             children: [
               ExcludeSemantics(child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 48,
                   height: 48,
@@ -1266,7 +1064,7 @@ class _PlaylistListTile extends ConsumerWidget {
                     Text(
                       playlist.name,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -1280,7 +1078,7 @@ class _PlaylistListTile extends ConsumerWidget {
                         Formatters.formatSeconds(playlist.totalDurationSeconds),
                       ),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),

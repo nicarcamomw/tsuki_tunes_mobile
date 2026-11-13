@@ -1,7 +1,7 @@
 enum AppLanguage {
-  es('es', 'Español', 'ES', 'Español (Latinoamérica)', 'INICIO', 'BUSCAR', 'BIBLIOTECA'),
-  en('en', 'English', 'EN', 'English (International)', 'HOME', 'SEARCH', 'LIBRARY'),
-  ja('ja', '日本語', 'JA', '日本語 (Kanji & Katakana)', 'ホーム', '探索', '保管庫');
+  es('es', 'Español', 'ES', 'Español (Latinoamérica)', 'INICIO', 'BUSCAR', 'EXPLORAR', 'BIBLIOTECA'),
+  en('en', 'English', 'EN', 'English (International)', 'HOME', 'SEARCH', 'EXPLORE', 'LIBRARY'),
+  ja('ja', '日本語', 'JA', '日本語 (Kanji & Katakana)', 'ホーム', '探索', '発見', '保管庫');
 
   final String code;
   final String label;
@@ -9,6 +9,7 @@ enum AppLanguage {
   final String subtitle;
   final String navHome;
   final String navSearch;
+  final String navExplore;
   final String navLibrary;
 
   const AppLanguage(
@@ -18,6 +19,7 @@ enum AppLanguage {
     this.subtitle,
     this.navHome,
     this.navSearch,
+    this.navExplore,
     this.navLibrary,
   );
 

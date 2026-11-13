@@ -4,6 +4,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
@@ -11,7 +12,9 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
+import 'empty_state.dart';
 import 'flow_sheet.dart';
 import 'haptics.dart';
 import 'playlist_selector_sheet.dart';
@@ -60,16 +63,10 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final before = _audio.queueSnapshot();
     edit();
     _announce(message);
-    showTrackSnack(
-      context,
-      message,
-      bottom: _snackBottom,
-      action: SnackBarAction(
-        label: _locale.strings.undo,
-        textColor: AppColors.accent,
-        onPressed: () { Haptics.tap(); _audio.restoreQueue(before); },
-      ),
-    );
+    AppSnack.of(context, bottom: _snackBottom).undo(message, onUndo: () {
+      Haptics.tap();
+      _audio.restoreQueue(before);
+    });
   }
 
   void _remove(int queueIndex) {
@@ -159,7 +156,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgMid.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(
           color: AppColors.borderGlow.withValues(alpha: 0.5),
           width: 1.0,
@@ -184,7 +181,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               child: Text(
                 strings.queueGesturesHint,
                 style: locale.getTextStyle(
-                  fontSize: 9,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ).copyWith(fontStyle: FontStyle.italic),
               ),
@@ -254,7 +251,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                         color: Colors.transparent,
                         elevation: 6,
                         shadowColor: AppColors.accent.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
                         child: child,
                       ),
                       itemBuilder: (context, k) =>
@@ -268,7 +265,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: Text(
                         strings.queueMoreShuffled(hidden),
                         style: locale.getTextStyle(
-                          fontSize: 10.5,
+                          fontSize: AppFontSize.caption,
                           color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
                         ),
@@ -306,7 +303,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 Text(
                   strings.queueUpNext,
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 0.6,
@@ -318,7 +315,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                   Text(
                     strings.queueSummary(count, minutes),
                     style: locale.getTextStyle(
-                      fontSize: 9.5,
+                      fontSize: AppFontSize.caption,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -357,7 +354,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           if (count > 0)
             _headerButton(
               icon: Icons.delete_sweep_outlined,
-              label: strings.queueClear,
+              // Icon only (R-01): the header's title and summary need the
+              // room; TalkBack still says what it does.
               semanticLabel: strings.queueClearLabel,
               color: AppColors.textMuted,
               onTap: _clear,
@@ -381,7 +379,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       child: Tooltip(
         message: semanticLabel,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
           child: Container(
             constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
@@ -391,7 +389,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: color.withValues(alpha: 0.45)),
               ),
               child: Row(
@@ -403,7 +401,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     Text(
                       label,
                       style: _locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w800,
                         color: color,
                         letterSpacing: 0.8,
@@ -433,7 +431,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               Text(
                 locale.strings.queuePlayedHeader(count),
                 style: locale.getTextStyle(
-                  fontSize: 9.5,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textMuted,
                   letterSpacing: 1,
@@ -463,7 +461,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: 9.5,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.textSecondary,
               letterSpacing: 1,
@@ -476,7 +474,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             Text(
               tag,
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neonCyan,
                 letterSpacing: 0.8,
@@ -491,35 +489,12 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   Widget _buildEmpty() {
     final locale = _locale;
     final strings = locale.strings;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Column(
-        children: [
-          Icon(Icons.queue_music_rounded,
-              size: 40,
-              color: AppColors.textMuted.withValues(alpha: 0.4),
-              semanticLabel: strings.a11yEmptyQueue),
-          const SizedBox(height: 8),
-          Text(
-            strings.queueNothingNext,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            strings.queueEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.queue_music_rounded,
+      artLabel: strings.a11yEmptyQueue,
+      title: strings.queueNothingNext,
+      message: strings.queueEmptySubtitle,
+      compact: true,
     );
   }
 
@@ -640,7 +615,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       alignment: alignment,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -660,7 +635,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   }
 
   TextStyle _swipeLabelStyle(Color color) => _locale.getTextStyle(
-        fontSize: 11,
+        fontSize: AppFontSize.caption,
         fontWeight: FontWeight.w700,
         color: color,
       );
@@ -669,7 +644,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
         n.toString().padLeft(2, '0'),
         style: _locale.getTextStyle(
           color: AppColors.textMuted,
-          fontSize: 11,
+          fontSize: AppFontSize.caption,
           fontWeight: FontWeight.w600,
         ),
         textAlign: TextAlign.center,
@@ -715,7 +690,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
         color: isCurrent
             ? AppColors.accent.withValues(alpha: 0.12)
             : AppColors.bgMid.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: isCurrent
               ? AppColors.accent.withValues(alpha: 0.5)
@@ -730,7 +705,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       child: Semantics(
         label: '${t.title}, ${t.fullArtistName}',
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.fromLTRB(10, 6, trailing.isEmpty ? 10 : 0, 6),
@@ -740,7 +715,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 const SizedBox(width: 8),
                 ExcludeSemantics(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 36,
                       height: 36,
@@ -769,7 +744,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                         style: locale.getTextStyle(
                           color: isCurrent ? AppColors.accent : AppColors.textBright,
                           fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
-                          fontSize: 12.5,
+                          fontSize: AppFontSize.bodyLg,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -787,7 +762,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                               : recommended
                                   ? AppColors.accent.withValues(alpha: 0.9)
                                   : AppColors.textSecondary,
-                          fontSize: 10.5,
+                          fontSize: AppFontSize.caption,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -801,7 +776,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
                               color: AppColors.neonCyan.withValues(alpha: 0.75),
-                              fontSize: 8.5,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.3,
                             ),
@@ -820,7 +795,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: Text(
                         '${bpm.round()}',
                         style: locale.getTextStyle(
-                          fontSize: 9.5,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.neonCyan.withValues(alpha: 0.8),
                         ),
@@ -834,7 +809,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     child: Text(
                       Formatters.formatSeconds(t.durationSeconds),
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textMuted,
                       ),
                     ),

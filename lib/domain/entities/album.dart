@@ -37,18 +37,21 @@ abstract class Album with _$Album {
   /// Reads an album from the Deezer API; its tracks get the album's cover,
   /// title and artist, which Deezer leaves out of them.
   factory Album.fromDeezer(Map<String, dynamic> json) {
-    final artistJson =
-        json['artist'] is Map<String, dynamic> ? json['artist'] : null;
+    final artistJson = json['artist'] is Map<String, dynamic>
+        ? json['artist'] as Map<String, dynamic>
+        : null;
 
     List<Track> parsedTracks = [];
-    if (json['tracks'] != null && json['tracks']['data'] is List) {
-      final List list = json['tracks']['data'];
+    final tracksJson = json['tracks'];
+    if (tracksJson is Map && tracksJson['data'] is List) {
+      final list = tracksJson['data'] as List;
       parsedTracks = list.map((t) {
         final trackMap = Map<String, dynamic>.from(t as Map);
         trackMap['album_cover'] = json['cover_medium'] ?? json['cover_big'];
         trackMap['album_title'] = json['title'];
+        final trackArtist = trackMap['artist'];
         trackMap['artist_name'] =
-            trackMap['artist']?['name'] ?? artistJson?['name'];
+            (trackArtist is Map ? trackArtist['name'] : null) ?? artistJson?['name'];
         trackMap['album_id'] = json['id']?.toString();
         return Track.fromDeezer(trackMap);
       }).toList();
@@ -68,8 +71,8 @@ abstract class Album with _$Album {
           json['nb_tracks'] is int ? json['nb_tracks'] : parsedTracks.length,
       link: json['link'],
       genres: [
-        if (json['genres'] is Map && json['genres']['data'] is List)
-          for (final g in json['genres']['data'] as List)
+        if (json['genres'] case {'data': final List data})
+          for (final g in data)
             if (g is Map && g['name'] is String) g['name'] as String,
       ],
       tracks: parsedTracks,

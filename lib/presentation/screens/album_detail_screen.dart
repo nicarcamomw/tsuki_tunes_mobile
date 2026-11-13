@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -15,8 +18,12 @@ import '../state/album_downloads_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
+import '../widgets/app_snack.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/listened_undo.dart';
 import '../widgets/pop_on_change.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
@@ -123,13 +130,11 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   Future<void> _onDownload(Album albumData) async {
     final strings = ref.read(localeProvider).strings;
     final downloads = ref.read(albumDownloadsProvider);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     Haptics.tap();
     if (ref.read(maskProvider).isObserver) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(strings.downloadAlbumObserver),
-        action: SnackBarAction(label: strings.ecoObserverAction, onPressed: () => becomeBearer(context)),
-      ));
+      messenger.info(strings.downloadAlbumObserver,
+          actionLabel: strings.ecoObserverAction, onAction: () => becomeBearer(context));
       return;
     }
     if (downloads.isDownloaded(albumData.id)) {
@@ -152,17 +157,23 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       return;
     }
     if (!albumData.tracks.any((t) => t.previewUrl.isNotEmpty)) {
-      messenger.showSnackBar(SnackBar(content: Text(strings.downloadAlbumNone)));
+      messenger.info(strings.downloadAlbumNone);
       return;
     }
     final all = await downloads.download(albumData);
     if (!mounted) return;
-    messenger.showSnackBar(SnackBar(content: Text(all ? strings.downloadAlbumDone : strings.downloadAlbumPartial)));
+    messenger.info(all ? strings.downloadAlbumDone : strings.downloadAlbumPartial);
   }
 
   void _toggleAll(Album albumData) {
     Haptics.confirm();
-    ref.read(toggleAlbumListenedProvider)(albumData);
+    final toggle = ref.read(toggleAlbumListenedProvider);
+    if (toggle.isAllListened(albumData)) {
+      // A whole album unmarked by mistake comes back with one tap.
+      unawaited(unmarkWithUndo(context, ref, [for (final t in albumData.tracks) t.id]));
+    } else {
+      unawaited(toggle(albumData));
+    }
   }
 
   @override
@@ -200,31 +211,26 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         controller: _scroll,
         slivers: [
           // App Bar
-          SliverAppBar(
-            expandedHeight: 0,
-            pinned: true,
-            backgroundColor: AppColors.bgDeep,
-            leading: IconButton(
-              tooltip: strings.a11yBack,
-              icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              strings.albumDetailsTitle,
-              style: locale.getTextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textBright,
-              ),
-            ),
-            centerTitle: true,
+          // T-01: the detail pages' shared header, the cover in it.
+          DetailHeader(
+            title: albumData.title,
+            backLabel: strings.a11yBack,
             actions: [
+              DetailHeaderButton(
+                icon: Icons.share_rounded,
+                tooltip: strings.shareAction,
+                onPressed: () {
+                  Haptics.tap();
+                  SharePlus.instance.share(ShareParams(
+                      text: strings.albumShareText(
+                          albumData.title, albumData.artistName, appLink('album/${albumData.id}'))));
+                },
+              ),
               if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
-                IconButton(
+                DetailHeaderButton(
+                  icon: Icons.open_in_new,
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
-                  icon: Icon(Icons.open_in_new,
-                      color: AppColors.accent, size: 20, semanticLabel: strings.a11yOpenExternal),
                   onPressed: () async { Haptics.tap();
                     try {
                       if (audio.useSpotify) {
@@ -251,33 +257,21 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     }
                   },
                 ),
-            ],
-          ),
-
-          // Album Hero
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                children: [
-                  // Cover with parallax
-                  AnimatedBuilder(
-                    animation: _scroll,
-                    builder: (context, child) {
-                      final offset = _scroll.hasClients ? _scroll.offset : 0.0;
-                      return Transform.translate(
-                        offset: Offset(0, offset * 0.25),
-                        child: child,
-                      );
-                    },
-                    child: Center(
+                        ],
+            background: CoverTintBackdrop(
+              coverUrl: albumData.coverUrl,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: kToolbarHeight - 8, bottom: 16),
+                  child: Center(
                     child: Hero(
                       tag: 'album-cover-${widget.album.id}',
                       child: Container(
-                        width: 200,
-                        height: 200,
+                        width: 180,
+                        height: 180,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           border: Border.all(
                             color: allListened
                                 ? AppColors.accent
@@ -295,14 +289,14 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           child: ExcludeSemantics(
                             child: (albumData.coverXl ?? albumData.coverUrl)
                                     .isNotEmpty
                                 ? CachedNetworkImage(
                                   memCacheWidth: imageCacheSize(context, (260).toDouble()),
-                                    imageUrl:
-                                        albumData.coverXl ?? albumData.coverUrl,
+                                    imageUrl: ref.watch(imageQualityProvider)
+                                        .large(albumData.coverXl ?? albumData.coverUrl),
                                     fit: BoxFit.cover,
                                     placeholder: (_, __) =>
                                         Container(color: AppColors.bgMid),
@@ -322,24 +316,31 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       ),
                     ),
                   ),
-                  ),
+                ),
+              ),
+            ),
+          ),
 
-                  const SizedBox(height: 16),
-
+          // Album Hero
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 12),
+              child: Column(
+                children: [
                   // Type badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.accentDim,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                           color: AppColors.accent.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       typeLabel.toUpperCase(),
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                         letterSpacing: 1.5,
@@ -355,7 +356,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     child: Text(
                       albumData.title,
                       style: locale.getTextStyle(
-                        fontSize: 18,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -380,7 +381,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       child: Text(
                         albumData.artistName,
                         style: locale.getTextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSize.title,
                           color: AppColors.accent,
                           fontWeight: FontWeight.w600,
                         ),
@@ -398,7 +399,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       Formatters.formatSeconds(totalDuration),
                     ),
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
                     ),
@@ -426,17 +427,17 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             color: allListened
                                 ? AppColors.accent.withValues(alpha: 0.15)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             child: InkWell(
                               onTap: tracks.isNotEmpty
                                   ? () => _toggleAll(albumData)
                                   : null,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 10, horizontal: 12),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
                                   border: Border.all(
                                     color: allListened
                                         ? AppColors.accent
@@ -473,7 +474,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                               ? strings.allListened
                                               : strings.markAll),
                                       style: locale.getTextStyle(
-                                        fontSize: 10,
+                                        fontSize: AppFontSize.micro,
                                         fontWeight: FontWeight.w700,
                                         color: allListened
                                             ? AppColors.accent
@@ -498,7 +499,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           label: Text(
                             strings.play,
                             style: locale.getTextStyle(
-                              fontSize: 10,
+                              fontSize: AppFontSize.micro,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
                             ),
@@ -506,7 +507,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: AppColors.accent),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                           ),
                         ),
@@ -529,53 +530,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             const AlbumDetailSkeletonLoader()
           else if (_hasError && tracks.isEmpty)
             SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted, semanticLabel: strings.a11yOffline),
-                      const SizedBox(height: 10),
-                      Text(
-                        strings.loadError,
-                        style: locale.getTextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-                      Semantics(
-                        button: true,
-                        label: strings.retry,
-                        child: GestureDetector(
-                        onTap: () {
-                          Haptics.tap();
-                          _loadAlbumDetails();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            strings.retry,
-                            style: locale.getTextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: ErrorState(message: strings.loadError, onRetry: _loadAlbumDetails),
             )
           else if (tracks.isEmpty)
             SliverToBoxAdapter(
@@ -627,12 +582,12 @@ class _DownloadButton extends ConsumerWidget {
     final progress = downloads.progressOf(album.id);
     if (progress != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Semantics(
           label: strings.downloadAlbumProgress((progress * 100).round()),
           child: SizedBox(
-            width: 20,
-            height: 20,
+            width: 36,
+            height: 36,
             child: CircularProgressIndicator(
               value: progress == 0 ? null : progress,
               strokeWidth: 2.4,
@@ -644,12 +599,11 @@ class _DownloadButton extends ConsumerWidget {
       );
     }
     final saved = downloads.isDownloaded(album.id);
-    return IconButton(
+    return DetailHeaderButton(
+      icon: saved ? Icons.download_done_rounded : Icons.download_rounded,
       tooltip: saved ? strings.downloadAlbumRemove : strings.downloadAlbum,
-      icon: Icon(saved ? Icons.download_done_rounded : Icons.download_rounded,
-          color: saved ? AppColors.accent : AppColors.textBright,
-          size: 22,
-          semanticLabel: saved ? strings.downloadAlbumSaved : strings.downloadAlbum),
+      // Saved is a state that's on: the accent (D-12).
+      color: saved ? AppColors.accent : AppColors.textBright,
       onPressed: onTap,
     );
   }

@@ -23,7 +23,7 @@ class _PlayerControls extends StatelessWidget {
     final strings = locale.strings;
     final isShuffle = shuffleMode != ShuffleMode.off;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [

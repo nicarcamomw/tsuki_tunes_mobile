@@ -489,15 +489,20 @@ class PlaybackQueue {
     }
 
     if (!online) {
-      final target = _findFrom(-1, canPlay);
+      // Like online: with repeat off it never wraps to the end of the
+      // queue, so with no earlier song saved on the phone the one playing
+      // starts over (when it can play offline).
+      final target = _repeatMode == PlaybackRepeatMode.off
+          ? _findBackwardNoWrap(canPlay)
+          : _findFrom(-1, canPlay);
       if (target != -1) {
         _currentIndex = target;
-      } else if (_tracks.length == 1 && canPlay(_tracks[0])) {
-        _currentIndex = 0;
-      } else {
-        return QueueStep.unavailable;
+        return QueueStep.play(_currentIndex);
       }
-      return QueueStep.play(_currentIndex);
+      if (_isValid(_currentIndex) && canPlay(_tracks[_currentIndex])) {
+        return QueueStep.seekToStart;
+      }
+      return QueueStep.unavailable;
     }
 
     if (_currentIndex <= 0) {
@@ -546,6 +551,14 @@ class PlaybackQueue {
     }
     _consumeCurrent();
     return target;
+  }
+
+  /// The closest earlier song that [canPlay], without wrapping; -1 if none.
+  int _findBackwardNoWrap(bool Function(Track) canPlay) {
+    for (var idx = _currentIndex - 1; idx >= 0; idx--) {
+      if (canPlay(_tracks[idx])) return idx;
+    }
+    return -1;
   }
 
   int _findFrom(int direction, bool Function(Track) canPlay) {

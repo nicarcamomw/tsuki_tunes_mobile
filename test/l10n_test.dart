@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_language.dart';
 import 'package:tsuki_tunes_mobile/core/localization/app_strings.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/weekly_challenge.dart';
 
 // Spanish is the template; every other language must have the same texts
 // with the same placeholders, or the app silently shows Spanish (or a text
@@ -84,6 +85,36 @@ void main() {
       expect(en.moonMixProgress(0), 'Listen to music this cycle to fill it');
       expect(en.moonMixProgress(1), '1 song so far this cycle');
       expect(en.moonMixProgress(3), '3 songs so far this cycle');
+    });
+
+    test('weekly challenges and Wrapped recaps', () {
+      expect(es.weeklyTimeLeft(const Duration(days: 1, hours: 3)), 'Queda 1 día');
+      expect(es.weeklyTimeLeft(const Duration(days: 3)), 'Quedan 3 días');
+      expect(en.weeklyTimeLeft(const Duration(hours: 5)), '5 h left');
+      expect(ja.weeklyTimeLeft(const Duration(days: 2)), '残り2日');
+      expect(es.weeklyChallengeText(const WeeklyChallenge(ChallengeKind.album, 1)),
+          'Escucha un álbum en orden (5+ canciones seguidas)');
+      expect(en.weeklyChallengeText(const WeeklyChallenge(ChallengeKind.album, 2)), 'Play 2 albums in order');
+      expect(en.weeklyChallengeText(const WeeklyChallenge(ChallengeKind.oneArtist, 15)), 'Listen to 15 songs by one artist');
+      expect(es.wrappedHoursOfMusic(1), 'Eso es 1 hora de música');
+      expect(en.wrappedHoursOfMusic(4), "That's 4 hours of music");
+      expect(es.wrappedVsPrevious(-12, 'septiembre'), '12% menos que en septiembre');
+      expect(ja.wrappedVsPrevious(23, '9月'), '9月より23%多い');
+      expect(es.wrappedPeriod(2026, 10), 'OCTUBRE 2026');
+      expect(ja.wrappedPeriod(2026, 10), '2026年10月');
+      expect(en.wrappedPeriod(2026, null), '2026');
+      expect(en.monthName(12), 'December');
+      expect(en.wrappedAura('loyal').$1, 'Loyal soul');
+      expect(es.wrappedAura('anything').$1, 'Equilibrio');
+      expect(en.wrappedDayPart(0), 'Late night');
+      expect(en.wrappedNoDataFor(monthly: true), 'Not enough data for this month');
+    });
+
+    test('each language keeps its clock', () {
+      expect(en.wrappedHourLabel(0), '12:00 AM');
+      expect(es.wrappedHourLabel(13), '1:00 PM');
+      expect(en.wrappedHourLabel(12), '12:00 PM');
+      expect(ja.wrappedHourLabel(23), '23:00');
     });
 
     test('numbers are not grouped', () {

@@ -3,15 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import 'ascension_screen.dart';
 
-const _bg = Color(0xFF08090E);
+const _bg = AppColors.shrineBg;
 
 /// The Eco levels: where the account stands, how Eco is earned, the player
 /// colours the levels opened, all 100 levels with what each opens, and the
@@ -22,7 +25,7 @@ class EcoLevelsScreen extends ConsumerWidget {
   /// Opens the levels, also from above the navigator (the level-up banner).
   static Future<void> open(BuildContext context) {
     final nav = Navigator.maybeOf(context, rootNavigator: true) ?? rootNavigatorKey.currentState;
-    return nav?.push(MaterialPageRoute<void>(builder: (_) => const EcoLevelsScreen())) ?? Future.value();
+    return nav?.push(cyberRoute<void>(const EcoLevelsScreen())) ?? Future.value();
   }
 
   @override
@@ -59,13 +62,13 @@ class EcoLevelsScreen extends ConsumerWidget {
         ),
         title: Text(strings.ecoTitle,
             style: locale.getTextStyle(
-                fontSize: 14,
+                fontSize: AppFontSize.title,
                 fontWeight: FontWeight.w900,
                 color: masks.isObserver ? ecoObserverColor : ecoRankColor(masks.rank),
                 letterSpacing: 3)),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 4, AppSpacing.page, 40),
         itemCount: items.length + EcoLevels.maxLevel + 1,
         itemBuilder: (context, i) {
           if (i < items.length) return items[i];
@@ -88,7 +91,7 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
+      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
 }
 
 class _Header extends StatelessWidget {
@@ -105,11 +108,11 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: RadialGradient(
           center: const Alignment(0, -0.8),
           radius: 1.2,
-          colors: [color.withValues(alpha: 0.22), const Color(0xFF12131B), const Color(0xFF0B0B11)],
+          colors: [color.withValues(alpha: 0.22), AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
@@ -121,7 +124,7 @@ class _Header extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF14151D),
+              color: AppColors.shrineCard,
               border: Border.all(color: color, width: 2.5),
               boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 30)],
             ),
@@ -133,16 +136,16 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 12),
           Text((observer ? strings.ecoObserver : strings.ecoRankName(rank)).toUpperCase(),
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
+              style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
           const SizedBox(height: 16),
           if (observer) ...[
             Text(strings.ecoObserverBody,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.45)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.45)),
             const SizedBox(height: 16),
             FilledButton.icon(
               style: FilledButton.styleFrom(
-                  backgroundColor: ecoRankColor(EcoRank.portador), foregroundColor: const Color(0xFF111217)),
+                  backgroundColor: ecoRankColor(EcoRank.portador), foregroundColor: AppColors.shrineCard),
               onPressed: () {
                 Navigator.of(context).pop();
                 becomeBearer(context);
@@ -155,7 +158,7 @@ class _Header extends StatelessWidget {
           if (masks.choicePending) ...[
             const SizedBox(height: 16),
             FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFFF4D6), foregroundColor: const Color(0xFF111217)),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.moonlight, foregroundColor: AppColors.shrineCard),
               onPressed: () { Haptics.tap(); AscensionScreen.open(context); },
               icon: const Icon(Icons.auto_awesome_rounded, size: 18),
               label: Text(strings.ecoChoicePending, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -178,7 +181,7 @@ class _HowToEarn extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -191,10 +194,10 @@ class _HowToEarn extends StatelessWidget {
                   const Icon(Icons.graphic_eq_rounded, size: 15, color: AppColors.textMuted),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(what, style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                    child: Text(what, style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary)),
                   ),
                   Text(amount,
-                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                 ],
               ),
             ),
@@ -214,7 +217,7 @@ class _ColorPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chosen = masks.playerColor?.id;
-    final level = masks.level;
+    final level = masks.unlockLevel; // what's open (all, for an admin)
     Widget dot(String? id, Color color, String name, int? lockedAt) {
       final selected = chosen == id;
       return Semantics(
@@ -226,13 +229,7 @@ class _ColorPicker extends StatelessWidget {
           onTap: () {
             Haptics.tap();
             if (lockedAt != null) {
-              ScaffoldMessenger.of(context)
-                ..clearSnackBars()
-                ..showSnackBar(SnackBar(
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppColors.bgCard,
-                  content: Text('$name · ${strings.ecoOpensAt(lockedAt)}'),
-                ));
+              AppSnack.of(context).info('$name · ${strings.ecoOpensAt(lockedAt)}');
               return;
             }
             masks.setPlayerColor(id);
@@ -254,7 +251,7 @@ class _ColorPicker extends StatelessWidget {
                 ),
                 child: lockedAt == null
                     ? null
-                    : Center(child: Text('$lockedAt', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textMuted))),
+                    : Center(child: Text('$lockedAt', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.textMuted))),
               ),
               const SizedBox(height: 4),
               SizedBox(
@@ -263,7 +260,7 @@ class _ColorPicker extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: locale.getTextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
             ],
           ),
@@ -315,7 +312,7 @@ class _LevelRow extends StatelessWidget {
                 Container(width: 14, height: 2, color: color),
                 const SizedBox(width: 8),
                 Text(strings.ecoRankName(rank).toUpperCase(),
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
               ],
             ),
           ),
@@ -324,7 +321,7 @@ class _LevelRow extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(10, 9, 12, 9),
           decoration: BoxDecoration(
             color: current ? color.withValues(alpha: 0.1) : AppColors.bgCard.withValues(alpha: reached ? 1 : 0.55),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: current ? color : (reached ? color.withValues(alpha: 0.3) : AppColors.border)),
           ),
           child: Row(
@@ -342,7 +339,7 @@ class _LevelRow extends StatelessWidget {
                     style: TextStyle(
                         fontSize: level >= 100 ? 11 : 13,
                         fontWeight: FontWeight.w900,
-                        color: reached ? const Color(0xFF111217) : AppColors.textMuted)),
+                        color: reached ? AppColors.shrineCard : AppColors.textMuted)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -357,7 +354,7 @@ class _LevelRow extends StatelessWidget {
                                 reached ? '«${r.fragment!.of(lang)}»' : strings.ecoRewardLabel(r),
                                 style: locale
                                     .getTextStyle(
-                                      fontSize: 12,
+                                      fontSize: AppFontSize.body,
                                       color: reached ? AppColors.textPrimary : AppColors.textMuted,
                                       height: 1.35,
                                     )
@@ -374,7 +371,7 @@ class _LevelRow extends StatelessWidget {
                                   Expanded(
                                     child: Text(strings.ecoRewardLabel(r),
                                         style: locale.getTextStyle(
-                                            fontSize: 12.5,
+                                            fontSize: AppFontSize.bodyLg,
                                             fontWeight: FontWeight.w700,
                                             color: reached ? AppColors.textBright : AppColors.textMuted)),
                                   ),
@@ -422,43 +419,43 @@ class _Legend extends StatelessWidget {
       margin: const EdgeInsets.only(top: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF1C1A10), Color(0xFF0B0B11)],
+          colors: [AppColors.shrineGoldDeep, AppColors.shrineCardDeep],
         ),
-        border: Border.all(color: const Color(0xFFFFE9A8).withValues(alpha: 0.5)),
-        boxShadow: [BoxShadow(color: const Color(0xFFFFE9A8).withValues(alpha: 0.12), blurRadius: 30)],
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: AppColors.gold.withValues(alpha: 0.12), blurRadius: 30)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.wb_sunny_rounded, color: Color(0xFFFFE9A8), size: 18),
+              const Icon(Icons.wb_sunny_rounded, color: AppColors.gold, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(strings.ecoLegendTitle,
                     style: locale.getTextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1.6)),
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: AppColors.gold, letterSpacing: 1.6)),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(strings.ecoLegendText,
-              style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.45)),
+              style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.45)),
           const SizedBox(height: 14),
           // How much Eco a Supreme God holds is not for anyone to know.
           Text(strings.ecoLegendAmount(masks.eco),
               style: locale.getTextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1)),
+                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.gold, letterSpacing: 1)),
           const SizedBox(height: 6),
           Text(broken ? strings.ecoBalanceBroken : strings.ecoLegendNever,
               style: locale.getTextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
-                  color: broken ? const Color(0xFFFFE9A8) : AppColors.textMuted,
+                  color: broken ? AppColors.gold : AppColors.textMuted,
                   letterSpacing: 1.2)),
         ],
       ),

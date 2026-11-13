@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../navigation/main_tab.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';
@@ -111,7 +113,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (_currentPage < 2) {
       _pageController.animateToPage(
         _currentPage + 1,
-        duration: const Duration(milliseconds: 400),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     } else {
@@ -236,7 +238,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final pulse = (sin(t * 2.5) * 0.5 + 0.5);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -267,7 +269,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   Text(
                     strings.onboardingHeaderPrefix,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 1.8,
@@ -276,7 +278,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   CyberGlitchText(
                     text: strings.onboardingHeaderGlitch,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w900,
                       color: AppColors.accent,
                       letterSpacing: 1.8,
@@ -294,7 +296,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: () { Haptics.tap(); _completeOnboarding(); },
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               splashColor: AppColors.accent.withValues(alpha: 0.2),
               highlightColor: AppColors.accent.withValues(alpha: 0.1),
               child: Container(
@@ -304,7 +306,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   border: Border.all(
                     color: AppColors.border.withValues(alpha: 0.6),
                     width: 0.8,
@@ -316,7 +318,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     Text(
                       strings.onboardingSkip,
                       style: locale.getTextStyle(
-                        fontSize: 9.5,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
                         letterSpacing: 1.2,
@@ -354,13 +356,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             children: List.generate(3, (index) {
               final isActive = _currentPage == index;
               return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+                duration: AppMotion.normal,
                 curve: Curves.easeOutCubic,
                 margin: const EdgeInsets.only(right: 6),
                 width: isActive ? 24 : 8,
                 height: 6,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   color: isActive
                       ? AppColors.accent
                       : AppColors.textMuted.withValues(alpha: 0.3),
@@ -387,18 +389,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: () { Haptics.tap(); _nextPage(); },
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               splashColor: AppColors.accent.withValues(alpha: 0.3),
               highlightColor: AppColors.accent.withValues(alpha: 0.15),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
+                duration: AppMotion.normal,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
                   color: isLastPage ? AppColors.accent : AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isLastPage
                         ? AppColors.accent
@@ -423,7 +425,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     Text(
                       isLastPage ? strings.onboardingStart : strings.onboardingNext,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w900,
                         color: isLastPage ? Colors.white : AppColors.textBright,
                         letterSpacing: 1.5,
@@ -456,7 +458,7 @@ Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widg
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
       color: AppColors.bgCard.withValues(alpha: 0.75),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.sheet),
       border: Border.all(
         color: AppColors.border.withValues(alpha: 0.6),
         width: 0.7,
@@ -473,13 +475,13 @@ Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widg
         Text(
           text,
           style: locale?.getTextStyle(
-                fontSize: 8.5,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,
               ) ??
               GoogleFonts.plusJakartaSans(
-                fontSize: 8.5,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.8,
