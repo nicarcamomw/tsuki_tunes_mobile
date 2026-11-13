@@ -78,11 +78,11 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         ),
         title: Text(
           strings.eqTitle,
-          style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
         ),
         subtitle: Text(
           strings.eqPresetName(audio.eqPreset),
-          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
         ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
         onTap: () async {
@@ -129,7 +129,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '0s',
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: 9,
                 color: AppColors.textMuted,
               ),
             ),
@@ -163,7 +163,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '12s',
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: 9,
                 color: AppColors.textMuted,
               ),
             ),
@@ -183,7 +183,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
                 ? locale.strings.crossfadeGapless
                 : locale.strings.crossfadeSecondsLabel(audio.crossfadeSeconds),
             style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
             ),
@@ -252,7 +252,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         title: Text(
           strings.smartShuffleTitle,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.body,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -260,7 +260,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         subtitle: Text(
           strings.smartShuffleSubtitle,
           style: locale.getTextStyle(
-              fontSize: AppFontSize.caption, color: AppColors.textMuted),
+              fontSize: 10, color: AppColors.textMuted),
         ),
         trailing: const Icon(Icons.chevron_right,
             color: AppColors.textMuted, size: 18),
@@ -405,7 +405,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           child: Text(
             locale.currentLanguage.tag,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
             ),
@@ -545,7 +545,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
               child: Text(
                 widget.strings.birthdayTitle,
                 style: widget.locale.getTextStyle(
-                  fontSize: AppFontSize.body,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textBright,
                 ),
@@ -557,7 +557,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
                     ? _formatBirthday(_birthday!)
                     : widget.strings.birthdayNotSet,
                 style: widget.locale.getTextStyle(
-                  fontSize: AppFontSize.label,
+                  fontSize: 11,
                   color: _birthday != null ? AppColors.sakura : AppColors.textMuted,
                 ),
               ),
@@ -599,11 +599,11 @@ class _ImageQualityRow extends ConsumerWidget {
       ),
       title: Text(
         strings.imageQualityTitle,
-        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: AppColors.textBright),
+        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
       ),
       subtitle: Text(
         '${strings.imageQualityName(quality)} · ${strings.imageQualityDescription(quality)}',
-        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
+        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
       ),
       trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
       onTap: () {
@@ -643,7 +643,7 @@ class _ImageQualitySheet extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(strings.imageQualityTitle,
-              style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+              style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
         ),
         const SizedBox(height: 8),
         for (final q in [ImageQuality.dataSaver, ImageQuality.normal, ImageQuality.high])
@@ -651,9 +651,9 @@ class _ImageQualitySheet extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             selected: setting.quality == q,
             title: Text(strings.imageQualityName(q),
-                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textBright)),
             subtitle: Text(strings.imageQualityDescription(q),
-                style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
+                style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
             trailing: setting.quality == q ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20) : null,
             onTap: () {
               Haptics.selection();

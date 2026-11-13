@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/theme/app_font_size.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/motion.dart';
@@ -128,7 +127,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                     strings.clockNoData,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.heading,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                       letterSpacing: 1,
@@ -139,7 +138,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                     strings.clockNoDataSubtitle,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.bodyLg,
+                      fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -167,7 +166,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             strings.clockTitle,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.heading,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 1.2,
@@ -177,7 +176,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             '◈ $_year',
             style: GoogleFonts.notoSansJp(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
               letterSpacing: 2,
@@ -284,7 +283,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                           _hourCounts[_peakHour] ?? 0,
                         ),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.bodyLg,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textBright,
                   ),
@@ -317,7 +316,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             child: Text(
               strings.clockTotalYear(_totalTracks),
               style: GoogleFonts.notoSansJp(
-                fontSize: AppFontSize.micro,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accent.withValues(alpha: 0.5),
                 letterSpacing: 2,
@@ -342,7 +341,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.label,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
               color: color,
               letterSpacing: 2,
@@ -609,7 +608,7 @@ class _SharinganRadarPainter extends CustomPainter {
         text: TextSpan(
           text: '$i',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: AppFontSize.micro,
+            fontSize: 9,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted.withValues(alpha: 0.8),
           ),
@@ -741,7 +740,7 @@ class _DailyActivityBars extends StatelessWidget {
                   Text(
                     month.toString().padLeft(2, '0'),
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
+                      fontSize: 8,
                       fontWeight: FontWeight.w700,
                       color: month == currentMonth && year == now.year
                           ? AppColors.neonCyan

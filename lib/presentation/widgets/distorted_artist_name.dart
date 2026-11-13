@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/artist_fonts.dart';
 import '../state/app_providers.dart';
 
@@ -17,7 +16,7 @@ class DistortedArtistName extends ConsumerWidget {
     super.key,
     required this.name,
     required this.artistId,
-    this.fontSize = AppFontSize.display,
+    this.fontSize = 32,
     this.textAlign = TextAlign.left,
     this.strokeWidth,
   });

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/oni_mask.dart';
@@ -109,7 +108,7 @@ class _ProfileBody extends ConsumerWidget {
       children: [
         Center(child: _Avatar(photoUrl: profile.photoUrl, mask: mask, name: profile.displayName)),
         const SizedBox(height: 12),
-        Text(profile.displayName, textAlign: TextAlign.center, style: style(AppFontSize.headline, weight: FontWeight.w800)),
+        Text(profile.displayName, textAlign: TextAlign.center, style: style(22, weight: FontWeight.w800)),
         if (!own) ...[
           const SizedBox(height: 16),
           BondButton(
@@ -133,14 +132,14 @@ class _ProfileBody extends ConsumerWidget {
         ),
         if (profile.topArtists.isNotEmpty) ...[
           const SizedBox(height: 28),
-          Text(strings.profileTopArtists, style: style(AppFontSize.body, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
+          Text(strings.profileTopArtists, style: style(12, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
           const SizedBox(height: 10),
           for (final (i, a) in profile.topArtists.indexed)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
-                  SizedBox(width: 26, child: Text('${i + 1}', style: style(AppFontSize.heading, color: AppColors.accent))),
+                  SizedBox(width: 26, child: Text('${i + 1}', style: style(16, color: AppColors.accent))),
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.bgCard,
@@ -150,8 +149,8 @@ class _ProfileBody extends ConsumerWidget {
                     child: a.pictureUrl == null ? const Icon(Icons.person, color: AppColors.textMuted) : null,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(a.name, style: style(AppFontSize.title), overflow: TextOverflow.ellipsis)),
-                  Text(strings.profileArtistSongs(a.count), style: style(AppFontSize.body, color: AppColors.textSecondary, weight: FontWeight.w500)),
+                  Expanded(child: Text(a.name, style: style(14), overflow: TextOverflow.ellipsis)),
+                  Text(strings.profileArtistSongs(a.count), style: style(12, color: AppColors.textSecondary, weight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -159,7 +158,7 @@ class _ProfileBody extends ConsumerWidget {
         if (profile.milestones.isNotEmpty) ...[
           const SizedBox(height: 28),
           Text((own ? strings.bondsYourResonances : strings.bondsTabResonances).toUpperCase(),
-              style: style(AppFontSize.body, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
+              style: style(12, color: AppColors.textSecondary).copyWith(letterSpacing: 2)),
           const SizedBox(height: 10),
           for (final m in profile.milestones)
             Padding(
@@ -214,10 +213,10 @@ class _SintoniaCard extends ConsumerWidget {
               children: [
                 Text(strings.sintoniaTitle.toUpperCase(),
                     style: locale.getTextStyle(
-                        fontSize: AppFontSize.label, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
+                        fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
                 const Spacer(),
                 Text('${s.percent}%',
-                    style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color)),
+                    style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: color)),
               ],
             ),
             const SizedBox(height: 6),
@@ -237,13 +236,13 @@ class _SintoniaCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(strings.sintoniaLabel(s.percent),
-                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
             const SizedBox(height: 4),
             Text(
               s.shared.isEmpty
                   ? strings.sintoniaNone
                   : '${strings.sintoniaShared(s.shared.length)}: ${s.shared.take(5).join(', ')}${s.shared.length > 5 ? '…' : ''}',
-              style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4),
+              style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4),
             ),
           ],
         ),
@@ -269,7 +268,7 @@ class _Avatar extends StatelessWidget {
                 child: Image.network(photoUrl!,
                     width: size, height: size, fit: BoxFit.cover, cacheWidth: imageCacheSize(context, size)))
             : Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                style: const TextStyle(color: AppColors.textBright, fontSize: AppFontSize.hero, fontWeight: FontWeight.w800));
+                style: const TextStyle(color: AppColors.textBright, fontSize: 40, fontWeight: FontWeight.w800));
     return Container(
       width: size,
       height: size,
@@ -303,12 +302,12 @@ class _Stat extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Text('$value', style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w800, color: AppColors.accent)),
+            Text('$value', style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.accent)),
             const SizedBox(height: 4),
             Text(label,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                style: locale.getTextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
           ],
         ),
       ),

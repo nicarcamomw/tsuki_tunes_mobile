@@ -117,7 +117,7 @@ class _FeaturesSliver extends StatelessWidget {
                     child: Text(
                       strings.tabAppearsOn,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.bodyLg,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -128,7 +128,7 @@ class _FeaturesSliver extends StatelessWidget {
                 Text(
                   '${tracks.length}',
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.label,
+                    fontSize: 11,
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -212,7 +212,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
                   Text(
                     showAll ? strings.showLessTracks : strings.showMoreTracks,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.body,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),

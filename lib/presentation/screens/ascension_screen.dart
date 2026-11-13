@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -94,11 +93,11 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
             const Icon(Icons.warning_amber_rounded, color: loreNameColor),
             const SizedBox(width: 8),
             Text(strings.ascensionWarningTitle,
-                style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: loreNameColor, letterSpacing: 2)),
+                style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: loreNameColor, letterSpacing: 2)),
           ],
         ),
         content: Text(strings.ascensionWarning,
-            style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textPrimary, height: 1.5)),
+            style: locale.getTextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -133,29 +132,29 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
                 controller: _reveal,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: Text(lines[i], textAlign: TextAlign.center, style: line(AppFontSize.heading)),
+                  child: Text(lines[i], textAlign: TextAlign.center, style: line(16)),
                 ),
               ),
             _Reveal(
               at: lines.length / (lines.length + 2),
               controller: _reveal,
               child: LoreText('[[${strings.ascensionBeing}]]',
-                  textAlign: TextAlign.center, style: line(AppFontSize.display, w: FontWeight.w900)),
+                  textAlign: TextAlign.center, style: line(26, w: FontWeight.w900)),
             ),
           ],
         ),
       _Step.name => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(strings.ascensionNameTitle, textAlign: TextAlign.center, style: line(AppFontSize.heading, c: _moon, w: FontWeight.w800)),
+            Text(strings.ascensionNameTitle, textAlign: TextAlign.center, style: line(18, c: _moon, w: FontWeight.w800)),
             const SizedBox(height: 10),
-            Text(strings.ascensionNameHint, textAlign: TextAlign.center, style: line(AppFontSize.bodyLg, c: AppColors.textSecondary)),
+            Text(strings.ascensionNameHint, textAlign: TextAlign.center, style: line(13, c: AppColors.textSecondary)),
             const SizedBox(height: 22),
             TextField(
               controller: _maskName,
               maxLength: 40,
               textAlign: TextAlign.center,
-              style: line(AppFontSize.heading, c: Colors.white, w: FontWeight.w800),
+              style: line(18, c: Colors.white, w: FontWeight.w800),
               cursorColor: _moon,
               decoration: InputDecoration(
                 counterStyle: const TextStyle(color: AppColors.textMuted),
@@ -181,7 +180,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
           children: [
             if (MaskCatalog.byId('portador') case final m?) OniMaskArt(mask: m, size: 150, unlocked: true),
             const SizedBox(height: 24),
-            Text(strings.ascensionCrossed, textAlign: TextAlign.center, style: line(AppFontSize.heading)),
+            Text(strings.ascensionCrossed, textAlign: TextAlign.center, style: line(16)),
             const SizedBox(height: 30),
             _ChoiceButton(label: strings.ascensionDone, filled: true, onTap: () => Navigator.of(context).pop()),
           ],
@@ -189,7 +188,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
       _Step.stayed => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(strings.ascensionStayed, textAlign: TextAlign.center, style: line(AppFontSize.heading)),
+            Text(strings.ascensionStayed, textAlign: TextAlign.center, style: line(16)),
             const SizedBox(height: 30),
             _ChoiceButton(label: strings.ascensionDone, filled: true, onTap: () => Navigator.of(context).pop()),
           ],

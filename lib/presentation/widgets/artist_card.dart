@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
@@ -75,7 +74,7 @@ class ArtistCard extends ConsumerWidget {
             Text(
               artist.name,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.bodyLg,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -87,7 +86,7 @@ class ArtistCard extends ConsumerWidget {
               Text(
                 locale.strings.artistFansCompact(Formatters.formatNumber(artist.fansCount)),
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: 10,
                   color: AppColors.accent,
                   fontWeight: FontWeight.w600,
                 ),

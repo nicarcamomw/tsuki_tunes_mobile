@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
@@ -87,7 +86,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -109,7 +108,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                           strings.genreEmpty,
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
-                              fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
+                              fontSize: 13, color: AppColors.textSecondary),
                         ),
                       ),
                     )
@@ -148,7 +147,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
           child: Text(
             text,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
               letterSpacing: 1.2,

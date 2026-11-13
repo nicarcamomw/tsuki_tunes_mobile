@@ -37,7 +37,7 @@ class _AmbientButton extends ConsumerWidget {
               Text(
                 '$count',
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.neonCyan,
                 ),
@@ -98,7 +98,7 @@ class _SleepTimerButton extends ConsumerWidget {
               Text(
                 label.isNotEmpty ? label : strings.sleepTimerEndOfTrackShort,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                   letterSpacing: 0.5,
@@ -158,7 +158,7 @@ class _SleepTimerButton extends ConsumerWidget {
                     Text(
                       strings.sleepTimer,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.bodyLg,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
                         letterSpacing: 1.5,
@@ -203,7 +203,7 @@ class _SleepTimerButton extends ConsumerWidget {
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
+                  fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? AppColors.accent : AppColors.textPrimary,
                   letterSpacing: 1,
@@ -257,7 +257,7 @@ void _showSongOptionsSheet(
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -276,7 +276,7 @@ void _showSongOptionsSheet(
                 child: Text(
                   trailing,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.label,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,
                   ),
@@ -344,7 +344,7 @@ void _showSongOptionsSheet(
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.title,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textBright,
                           ),
@@ -355,7 +355,7 @@ void _showSongOptionsSheet(
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.body,
+                            fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
                         ),

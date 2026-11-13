@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
 import '../navigation/routes.dart';
@@ -342,7 +341,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
           backgroundColor: AppColors.bgCard,
           content: Text(
             strings.noTracksFound,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
           ),
         ));
         return;
@@ -376,7 +375,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         duration: const Duration(seconds: 6),
         content: Text(
           strings.rabbitHoleMaxReached,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
         ),
         action: focused != null && focused.depth > 0
             ? SnackBarAction(
@@ -695,7 +694,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         title: Text(
           strings.rabbitHoleTitle,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -1041,7 +1040,7 @@ class _NodeView extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: (focused || node.depth == 0) ? AppFontSize.label : AppFontSize.caption,
+                  fontSize: (focused || node.depth == 0) ? 11 : 9.5,
                   fontWeight: focused ? FontWeight.w800 : FontWeight.w600,
                   color: (focused ? AppColors.textBright : AppColors.textPrimary)
                       .withValues(alpha: labelAlpha),
@@ -1289,7 +1288,7 @@ class _HintPill extends StatelessWidget {
             text,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.label,
+              fontSize: 10.5,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               height: 1.4,
@@ -1327,7 +1326,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             offline ? strings.rabbitHoleOffline : strings.rabbitHoleEmpty,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.title,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 2,
@@ -1340,7 +1339,7 @@ class _EmptyState extends StatelessWidget {
                 : strings.rabbitHoleEmptySubtitle,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.label,
+              fontSize: 11,
               color: AppColors.textSecondary,
               height: 1.4,
             ),
@@ -1504,7 +1503,7 @@ class _Breadcrumbs extends StatelessWidget {
                     child: Text(
                       n.artist.name,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: i == trail.length - 1
                             ? AppColors.textBright
@@ -1594,7 +1593,7 @@ class _FocusCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.heading,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         height: 1.15,
@@ -1606,7 +1605,7 @@ class _FocusCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: 9,
                         fontWeight: FontWeight.w700,
                         color: statusColor,
                         letterSpacing: 1,
@@ -1708,7 +1707,7 @@ class _FocusAction extends StatelessWidget {
                   Text(
                     label,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
+                      fontSize: 9,
                       fontWeight: FontWeight.w800,
                       color: enabled ? AppColors.textBright : AppColors.textMuted,
                       letterSpacing: 1,
@@ -1748,7 +1747,7 @@ class _Stat extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.micro,
+            fontSize: 9,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted,
             letterSpacing: 1.5,

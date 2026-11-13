@@ -6,7 +6,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/voice_error.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
@@ -245,7 +244,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           ExcludeSemantics(child: Text(
             '◈ VOICE.SCAN // ACTIVE',
             style: GoogleFonts.notoSansJp(
-              fontSize: AppFontSize.micro,
+              fontSize: 9,
               fontWeight: FontWeight.w700,
               color: AppColors.accentText,
               letterSpacing: 1.2,
@@ -274,7 +273,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
                     : (showHint ? _hintText : _recognizedText),
                 key: ValueKey(failed ? 'error' : (showHint ? 'hint' : 'text')),
                 style: TextStyle(
-                  fontSize: showHint ? AppFontSize.bodyLg : AppFontSize.heading,
+                  fontSize: showHint ? 13 : 18,
                   fontWeight: showHint ? FontWeight.w400 : FontWeight.w600,
                   color: showHint ? AppColors.textMuted : AppColors.textBright,
                   height: 1.4,
@@ -290,7 +289,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           Text(
             _statusText,
             style: TextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: 10,
               fontWeight: FontWeight.w800,
               color: failed ? AppColors.accent : AppColors.textSecondary,
               letterSpacing: 1.5,
@@ -443,7 +442,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         child: Text(
           label,
           style: TextStyle(
-            fontSize: AppFontSize.label,
+            fontSize: 11,
             fontWeight: FontWeight.w800,
             color: outlined ? AppColors.textSecondary : AppColors.accent,
             letterSpacing: 1.5,

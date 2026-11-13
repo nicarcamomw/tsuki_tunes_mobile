@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/playlist.dart';
@@ -76,7 +75,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           child: Text(
             strings.noTracksAvailable,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.title,
+              fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
@@ -111,7 +110,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   child: Text(
                     strings.playlistEditDone,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.body,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accent,
                       letterSpacing: 1,
@@ -148,7 +147,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           Text(
                             strings.playlistEdit,
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.bodyLg,
+                              fontSize: 13,
                               color: AppColors.textBright,
                             ),
                           ),
@@ -164,7 +163,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         Text(
                           strings.renamePlaylist,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.bodyLg,
+                            fontSize: 13,
                             color: AppColors.textBright,
                           ),
                         ),
@@ -181,7 +180,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         Text(
                           strings.deletePlaylist,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.bodyLg,
+                            fontSize: 13,
                             color: Colors.redAccent,
                           ),
                         ),
@@ -235,7 +234,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                             child: Text(
                               playlist.name,
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.headline,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textBright,
                               ),
@@ -254,7 +253,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                                 playlist.totalDurationSeconds),
                           ),
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.body,
+                            fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -274,7 +273,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   strings.playlistEditHint,
                   textAlign: TextAlign.center,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.label,
+                    fontSize: 11,
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -299,7 +298,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         label: Text(
                           strings.playAll,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppColors.accent,
                           ),
@@ -324,7 +323,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         label: Text(
                           strings.shuffle,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppColors.accent,
                           ),
@@ -360,7 +359,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         strings.emptyPlaylistTitle,
                         textAlign: TextAlign.center,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.bodyLg,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                           letterSpacing: 1.5,
@@ -371,7 +370,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         strings.emptyPlaylistSubtitle,
                         textAlign: TextAlign.center,
                         style: locale.getTextStyle(
-                            fontSize: AppFontSize.body, color: AppColors.textMuted),
+                            fontSize: 12, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -455,7 +454,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         title: Text(
           strings.renamePlaylist,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.heading,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -465,13 +464,13 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           autofocus: true,
           maxLength: PlaylistRepository.maxNameLength,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
+            fontSize: 14,
             color: AppColors.textBright,
           ),
           decoration: InputDecoration(
             hintText: strings.playlistNameHint,
             hintStyle: locale.getTextStyle(
-              fontSize: AppFontSize.title,
+              fontSize: 14,
               color: AppColors.textMuted,
             ),
             enabledBorder: const UnderlineInputBorder(
@@ -489,7 +488,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             child: Text(
               strings.cancel,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -500,7 +499,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             child: Text(
               strings.rename,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accent,
               ),
@@ -517,7 +516,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           content: Text(
             strings.playlistRenamed,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textBright,
             ),
@@ -546,7 +545,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         title: Text(
           strings.deletePlaylist,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.heading,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -554,7 +553,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
         content: Text(
           strings.deletePlaylistConfirm(playlist.name),
           style: locale.getTextStyle(
-            fontSize: AppFontSize.bodyLg,
+            fontSize: 13,
             color: AppColors.textSecondary,
           ),
         ),
@@ -564,7 +563,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             child: Text(
               strings.cancel,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -575,7 +574,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
             child: Text(
               strings.delete,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Colors.redAccent,
               ),
@@ -593,7 +592,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           content: Text(
             strings.playlistDeleted,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textBright,
             ),
@@ -676,7 +675,7 @@ class _EditRow extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.title,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -687,7 +686,7 @@ class _EditRow extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.body,
+                    fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
                 ),

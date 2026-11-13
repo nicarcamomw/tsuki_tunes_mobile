@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/radar_release.dart';
@@ -50,7 +49,7 @@ class WrappedEntryCard extends StatelessWidget {
                   child: Text(
                     '月',
                     style: GoogleFonts.notoSansJp(
-                      fontSize: AppFontSize.heading,
+                      fontSize: 17,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent,
                     ),
@@ -61,7 +60,7 @@ class WrappedEntryCard extends StatelessWidget {
               Text(
                 'WRAPPED',
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.label,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -72,7 +71,7 @@ class WrappedEntryCard extends StatelessWidget {
               Text(
                 strings.wrappedHomeSubtitle,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                   letterSpacing: 0.8,
@@ -127,7 +126,7 @@ class ListeningClockEntryCard extends StatelessWidget {
               Text(
                 strings.clockTitle,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.label,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -140,7 +139,7 @@ class ListeningClockEntryCard extends StatelessWidget {
               Text(
                 strings.clockViewClock,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: AppColors.neonCyan,
                   letterSpacing: 0.8,
@@ -196,7 +195,7 @@ class DiscoveryEntryCard extends StatelessWidget {
                     Text(
                       strings.discoveryTitle.toUpperCase(),
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -206,7 +205,7 @@ class DiscoveryEntryCard extends StatelessWidget {
                     Text(
                       strings.discoverySubtitle,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: 9,
                         fontWeight: FontWeight.w600,
                         color: AppColors.success.withValues(alpha: 0.85),
                         letterSpacing: 0.5,
@@ -276,7 +275,7 @@ class RabbitHoleEntryCard extends StatelessWidget {
                     Text(
                       strings.rabbitHoleTitle,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -286,7 +285,7 @@ class RabbitHoleEntryCard extends StatelessWidget {
                     Text(
                       strings.rabbitHoleSubtitle,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: 9,
                         fontWeight: FontWeight.w600,
                         color: AppColors.neonPurple.withValues(alpha: 0.8),
                         letterSpacing: 0.5,
@@ -388,7 +387,7 @@ class ReleaseRadarEntryCard extends ConsumerWidget {
                                 child: Text(
                                   unread > 9 ? '9+' : '$unread',
                                   style: locale.getTextStyle(
-                                    fontSize: AppFontSize.micro,
+                                    fontSize: 9,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textBright,
                                   ),
@@ -405,7 +404,7 @@ class ReleaseRadarEntryCard extends ConsumerWidget {
                             Text(
                               strings.radarTitle,
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.body,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textBright,
                                 letterSpacing: 1.2,
@@ -417,7 +416,7 @@ class ReleaseRadarEntryCard extends ConsumerWidget {
                                   ? strings.radarNewCount(unread)
                                   : strings.radarWatching(watched),
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.micro,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w700,
                                 color: accent.withValues(alpha: 0.85),
                                 letterSpacing: 0.5,

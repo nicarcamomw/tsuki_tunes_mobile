@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/shared_playlist.dart';
 import '../../domain/entities/social.dart';
@@ -47,7 +46,7 @@ class SharedPlaylistScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(32),
           child: Text(strings.sharedGone,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary)),
+              style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary)),
         ),
       );
     } else {
@@ -182,15 +181,15 @@ class _Body extends ConsumerWidget {
                 children: [
                   Text(strings.sharedTitle.toUpperCase(),
                       style: locale.getTextStyle(
-                          fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
+                          fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
                   const SizedBox(height: 4),
                   Text(p.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                   const SizedBox(height: 4),
                   Text('${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
-                      style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary)),
+                      style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -279,7 +278,7 @@ class _Body extends ConsumerWidget {
                                       : strings.sharedInvitedTag,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
+                              style: locale.getTextStyle(fontSize: 10, color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -296,7 +295,7 @@ class _Body extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(strings.sharedEmpty,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted, height: 1.4)),
+                style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.4)),
           )
         else
           for (final (i, s) in p.tracks.indexed)
@@ -316,11 +315,11 @@ class _Body extends ConsumerWidget {
               title: Text(s.track.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
               subtitle: Text('${s.track.artistName} · ${strings.sharedAddedBy(p.nameOf(s.addedBy))}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
+                  style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
               trailing: p.isMember(me) && (owner || s.addedBy == me)
                   ? IconButton(
                       tooltip: strings.cancel,
@@ -380,13 +379,13 @@ class _Body extends ConsumerWidget {
             children: [
               Text(strings.sharedInviteTitle.toUpperCase(),
                   style: locale.getTextStyle(
-                      fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                      fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
               const SizedBox(height: 10),
               if (bonds.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(strings.sharedInviteNone,
-                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.4)),
+                      style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4)),
                 )
               else
                 Flexible(
@@ -399,7 +398,7 @@ class _Body extends ConsumerWidget {
                           leading: PersonAvatar(person: b, size: 40),
                           title: Text(b.name,
                               style: locale.getTextStyle(
-                                  fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                                  fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           trailing: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.accent),
                           onTap: () async {
                             Haptics.confirm();

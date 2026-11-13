@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/location.dart';
 import '../../domain/entities/weather.dart';
 import '../state/app_providers.dart';
@@ -119,7 +118,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
               Row(
                 children: [
                   Text(strings.weatherTitle,
-                      style: label(AppFontSize.title, weight: FontWeight.w900, color: AppColors.textBright, spacing: 2)),
+                      style: label(14, weight: FontWeight.w900, color: AppColors.textBright, spacing: 2)),
                   const Spacer(),
                   if (weather.enabled)
                     IconButton(
@@ -153,7 +152,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                           children: [
                             Text(
                               '${now.temperature.round()}°  ${strings.skyName(now.sky)}',
-                              style: label(AppFontSize.heading, weight: FontWeight.w900, color: AppColors.textBright),
+                              style: label(18, weight: FontWeight.w900, color: AppColors.textBright),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -161,7 +160,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                               '  ·  ${strings.weatherUpdated(DateTime.now().difference(now.fetchedAt).inMinutes)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: label(AppFontSize.label, color: AppColors.textMuted),
+                              style: label(11, color: AppColors.textMuted),
                             ),
                           ],
                         ),
@@ -183,12 +182,12 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                 ),
                 const SizedBox(height: 14),
               ] else ...[
-                Text(strings.weatherSettingSubtitle, style: label(AppFontSize.body, color: AppColors.textMuted)),
+                Text(strings.weatherSettingSubtitle, style: label(12, color: AppColors.textMuted)),
                 const SizedBox(height: 14),
               ],
 
               if (weather.enabled && weather.offline && now == null) ...[
-                Text(strings.weatherOffline, style: label(AppFontSize.body, color: AppColors.warning)),
+                Text(strings.weatherOffline, style: label(11.5, color: AppColors.warning)),
                 const SizedBox(height: 10),
               ],
 
@@ -211,11 +210,11 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                         weather.useDeviceLocation();
                       },
                 icon: const Icon(Icons.my_location_rounded, size: 18),
-                label: Text(strings.weatherUseLocation, style: label(AppFontSize.bodyLg, weight: FontWeight.w700, color: AppColors.neonCyan)),
+                label: Text(strings.weatherUseLocation, style: label(12.5, weight: FontWeight.w700, color: AppColors.neonCyan)),
               ),
               if (problem != null) ...[
                 const SizedBox(height: 8),
-                Text(problem, style: label(AppFontSize.body, color: AppColors.warning)),
+                Text(problem, style: label(11.5, color: AppColors.warning)),
                 if (weather.locationProblem == LocationStatus.deniedForever ||
                     weather.locationProblem == LocationStatus.serviceOff)
                   Align(
@@ -228,26 +227,26 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                             : weather.openAppSettings();
                       },
                       child: Text(strings.weatherOpenSettings,
-                          style: label(AppFontSize.body, weight: FontWeight.w700, color: AppColors.neonCyan)),
+                          style: label(12, weight: FontWeight.w700, color: AppColors.neonCyan)),
                     ),
                   ),
               ],
               const SizedBox(height: 8),
-              Text(strings.weatherPrivacy, style: label(AppFontSize.label, color: AppColors.textMuted)),
+              Text(strings.weatherPrivacy, style: label(10.5, color: AppColors.textMuted)),
               const SizedBox(height: 18),
 
               // A city by hand.
               Text(strings.weatherOrCity.toUpperCase(),
-                  style: label(AppFontSize.caption, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.5)),
+                  style: label(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.5)),
               const SizedBox(height: 8),
               TextField(
                 controller: _query,
                 onChanged: _onQuery,
                 textInputAction: TextInputAction.search,
-                style: label(AppFontSize.bodyLg, color: AppColors.textBright),
+                style: label(13, color: AppColors.textBright),
                 decoration: InputDecoration(
                   hintText: strings.weatherSearchHint,
-                  hintStyle: label(AppFontSize.bodyLg, color: AppColors.textMuted),
+                  hintStyle: label(13, color: AppColors.textMuted),
                   prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
                   suffixIcon: _searching
                       ? const Padding(
@@ -279,7 +278,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       _searchFailed ? strings.weatherOffline : strings.weatherNoResults,
-                      style: label(AppFontSize.body, color: AppColors.textMuted),
+                      style: label(11.5, color: AppColors.textMuted),
                     ),
                   )
                 else
@@ -288,10 +287,10 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                       dense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                       leading: const Icon(Icons.place_outlined, color: AppColors.textMuted, size: 20),
-                      title: Text(p.name, style: label(AppFontSize.bodyLg, weight: FontWeight.w700, color: AppColors.textBright)),
+                      title: Text(p.name, style: label(13, weight: FontWeight.w700, color: AppColors.textBright)),
                       subtitle: p.detail.isEmpty
                           ? null
-                          : Text(p.detail, style: label(AppFontSize.label, color: AppColors.textMuted)),
+                          : Text(p.detail, style: label(11, color: AppColors.textMuted)),
                       trailing: weather.enabled &&
                               weather.source == WeatherSource.place &&
                               weather.place?.latitude == p.latitude &&
@@ -317,7 +316,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                     Expanded(
                       child: Text(
                         [weather.place!.name, weather.place!.detail].where((s) => s.isNotEmpty).join(' · '),
-                        style: label(AppFontSize.body, color: AppColors.textPrimary),
+                        style: label(12, color: AppColors.textPrimary),
                       ),
                     ),
                   ],

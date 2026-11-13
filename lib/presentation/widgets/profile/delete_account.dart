@@ -23,7 +23,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
             child: Text(
               strings.deleteAccountConfirmTitle,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.title,
+                fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: 1.5,
@@ -34,7 +34,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
       ),
       content: Text(
         strings.deleteAccountConfirmMessage,
-        style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
+        style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
       ),
       actions: [
         TextButton(
@@ -42,7 +42,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
@@ -58,7 +58,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
           child: Text(
             strings.deleteAccountConfirm,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
               color: Colors.white,
@@ -96,7 +96,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
               Expanded(
                 child: Text(
                   strings.deleteAccountInProgress,
-                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
+                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
                 ),
               ),
             ],
@@ -161,7 +161,7 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
         ),
         content: Text(
           strings.deleteAccountClosing,
-          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
         ),
         actions: [
           TextButton(
@@ -169,7 +169,7 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
             child: Text(
               strings.deleteAccountCloseApp,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
               ),

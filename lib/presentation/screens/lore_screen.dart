@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../domain/lore/tsuki_lore.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -41,7 +40,7 @@ class LoreScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(strings.loreTitle,
-            style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: _gold, letterSpacing: 3)),
+            style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _gold, letterSpacing: 3)),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
@@ -51,7 +50,7 @@ class LoreScreen extends ConsumerWidget {
             const SizedBox(height: 22),
             Row(
               children: [
-                Text(tomo.kanji, style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: _gold)),
+                Text(tomo.kanji, style: GoogleFonts.notoSansJp(fontSize: 22, fontWeight: FontWeight.w900, color: _gold)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -59,9 +58,9 @@ class LoreScreen extends ConsumerWidget {
                     children: [
                       Text(strings.loreTomo(tomo.numeral),
                           style: locale.getTextStyle(
-                              fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2)),
+                              fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2)),
                       Text(tomo.title.of(lang),
-                          style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                          style: locale.getTextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                     ],
                   ),
                 ),
@@ -111,7 +110,7 @@ class _Header extends StatelessWidget {
               boxShadow: [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 28, spreadRadius: 2)],
             ),
             alignment: Alignment.center,
-            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: const Color(0xFF1A1A28))),
+            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: 30, fontWeight: FontWeight.w900, color: const Color(0xFF1A1A28))),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -119,7 +118,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.loreSubtitle,
-                    style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w800, color: AppColors.textBright, height: 1.25)),
+                    style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textBright, height: 1.25)),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
@@ -132,7 +131,7 @@ class _Header extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(strings.loreChaptersOpen(open, total),
-                    style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -168,9 +167,9 @@ class _ComingSoon extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(strings.ecoOpensAt(level),
-                    style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
                 Text(strings.ecoLockedBody,
-                    style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
+                    style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -223,7 +222,7 @@ class _ChapterTile extends ConsumerWidget {
                 ),
                 child: open
                     ? Text(chapter.kanji,
-                        style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: accent))
+                        style: GoogleFonts.notoSansJp(fontSize: 20, fontWeight: FontWeight.w900, color: accent))
                     : const Icon(Icons.lock_rounded, size: 18, color: AppColors.textMuted),
               ),
               const SizedBox(width: 12),
@@ -233,17 +232,17 @@ class _ChapterTile extends ConsumerWidget {
                   children: [
                     Text(strings.loreChapter(chapter.numeral),
                         style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
+                            fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
                     const SizedBox(height: 2),
                     Text(chapter.title.of(lang),
                         style: locale.getTextStyle(
-                            fontSize: AppFontSize.title,
+                            fontSize: 14.5,
                             fontWeight: FontWeight.w800,
                             color: open ? AppColors.textBright : AppColors.textSecondary)),
                     if (!open) ...[
                       const SizedBox(height: 3),
                       Text(strings.ecoOpensAt(chapter.level),
-                          style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
+                          style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
                     ],
                   ],
                 ),
@@ -272,7 +271,7 @@ class LoreChapterScreen extends ConsumerWidget {
     final accent = faction != null ? Color(faction.color) : _gold;
     final tomo = TsukiLore.tomos.firstWhere((t) => t.number == chapter.tomo);
 
-    TextStyle body() => locale.getTextStyle(fontSize: AppFontSize.heading, color: const Color(0xFFDAD6CC), height: 1.65);
+    TextStyle body() => locale.getTextStyle(fontSize: 15, color: const Color(0xFFDAD6CC), height: 1.65);
 
     return Scaffold(
       backgroundColor: const Color(0xFF07080D),
@@ -285,7 +284,7 @@ class LoreChapterScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('${strings.loreTomo(tomo.numeral)} · ${strings.loreChapter(chapter.numeral)}',
-            style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
+            style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(22, 8, 22, 48),
@@ -293,7 +292,7 @@ class LoreChapterScreen extends ConsumerWidget {
           Center(
             child: Text(chapter.kanji,
                 style: GoogleFonts.notoSansJp(
-                  fontSize: AppFontSize.giant,
+                  fontSize: 64,
                   fontWeight: FontWeight.w900,
                   color: accent,
                   shadows: [Shadow(color: accent.withValues(alpha: 0.6), blurRadius: 28)],
@@ -302,12 +301,12 @@ class LoreChapterScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(chapter.title.of(lang),
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright, height: 1.2)),
+              style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textBright, height: 1.2)),
           if (faction != null) ...[
             const SizedBox(height: 6),
             Text(faction.motto.of(lang),
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: accent).copyWith(fontStyle: FontStyle.italic)),
+                style: locale.getTextStyle(fontSize: 13, color: accent).copyWith(fontStyle: FontStyle.italic)),
           ],
           const SizedBox(height: 22),
           for (final p in chapter.body.of(lang).split('\n\n')) ...[
@@ -328,7 +327,7 @@ class LoreChapterScreen extends ConsumerWidget {
 }
 
 TextStyle _label(LocaleProvider locale, Color color) =>
-    locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.8);
+    locale.getTextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.8);
 
 class _FactionSection extends ConsumerWidget {
   final LoreFaction faction;
@@ -394,7 +393,7 @@ class _FactionSection extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 TsukiLore.complete(faction, owned) ? faction.secret.of(lang) : strings.loreSecretLocked(have, total),
-                style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textPrimary, height: 1.5),
+                style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textPrimary, height: 1.5),
               ),
             ],
           ),
@@ -413,10 +412,10 @@ class _FactionSection extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(owned.contains(reward.id) ? reward.name(lang) : '???',
-                          style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                          style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                       const SizedBox(height: 4),
                       Text(owned.contains(reward.id) ? reward.description(lang) : strings.loreRewardHint,
-                          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.4)),
+                          style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4)),
                     ],
                   ),
                 ),
@@ -445,7 +444,7 @@ class _Chip extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
-      child: Text(text, style: locale.getTextStyle(fontSize: AppFontSize.label, fontWeight: FontWeight.w700, color: color)),
+      child: Text(text, style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
@@ -514,7 +513,7 @@ class _BondsSection extends ConsumerWidget {
                           children: [
                             Text(strings.loreBondKind(b.kind.name), style: _label(locale, AppColors.textMuted)),
                             Text(known ? b.title.of(lang) : '???',
-                                style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                                style: locale.getTextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                           ],
                         ),
                       ),
@@ -523,7 +522,7 @@ class _BondsSection extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(known ? b.text.of(lang) : strings.loreBondLocked,
                       style: locale.getTextStyle(
-                          fontSize: AppFontSize.bodyLg, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                          fontSize: 12.5, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
                 ],
               ),
             );
@@ -563,12 +562,12 @@ class _FaceCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(owned ? mask.name(lang) : '???',
-                    style: locale.getTextStyle(fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                    style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                 Text(face.title.of(lang), style: _label(locale, _gold)),
                 const SizedBox(height: 6),
                 Text(owned ? face.text.of(lang) : strings.loreFaceVeiled,
                     style: locale.getTextStyle(
-                        fontSize: AppFontSize.bodyLg, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                        fontSize: 12.5, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
               ],
             ),
           ),

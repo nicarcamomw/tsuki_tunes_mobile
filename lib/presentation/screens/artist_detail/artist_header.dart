@@ -33,7 +33,7 @@ class _ArtistHeroAppBar extends StatelessWidget {
         child: Text(
           artist.name,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -158,7 +158,7 @@ class _ArtistHeroAppBar extends StatelessWidget {
                 child: DistortedArtistName(
                   name: artist.name,
                   artistId: artist.id,
-                  fontSize: AppFontSize.display,
+                  fontSize: 30,
                 ),
               ),
             ),
@@ -238,7 +238,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.popularTracks,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.title,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -266,7 +266,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.artistFans(Formatters.formatNumber(artist.fansCount)),
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -296,7 +296,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 Text(
                   strings.artistReleases(artist.albumsCount),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.bodyLg,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     decoration: showStats
@@ -383,7 +383,7 @@ class _ArtistInfoSection extends StatelessWidget {
                   ? strings.unfollowArtist
                   : strings.followArtist,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.label,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.5,
@@ -422,7 +422,7 @@ class _ArtistInfoSection extends StatelessWidget {
               Text(
                 strings.artistRadioButton,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.label,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 1.5,
@@ -509,7 +509,7 @@ class _ArtistInfoSection extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.label,
+            fontSize: 11,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -535,7 +535,7 @@ class _ArtistInfoSection extends StatelessWidget {
           child: Text(
             tag.toUpperCase(),
             style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.0,
               color: AppColors.textPrimary,

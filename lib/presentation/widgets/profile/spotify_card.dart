@@ -27,7 +27,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
     return SnackBar(
       content: Text(
         message,
-        style: widget.locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
+        style: widget.locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
       ),
       backgroundColor: AppColors.bgCard,
       behavior: SnackBarBehavior.floating,
@@ -77,7 +77,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             Expanded(
               child: Text(
                 strings.spotifyConnectError,
-                style: widget.locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                style: widget.locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
               ),
             ),
           ],
@@ -116,7 +116,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
               child: Text(
                 strings.spotifyNotRegisteredTitle,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.title,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
@@ -126,7 +126,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         ),
         content: Text(
           strings.spotifyNotRegisteredMessage,
-          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
+          style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -134,7 +134,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             child: Text(
               strings.spotifyNotRegisteredOk,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
               ),
@@ -186,7 +186,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                     Text(
                       'Spotify',
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.title,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                       ),
@@ -200,7 +200,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                                   : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
                               : strings.spotifyNotConnected,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: 10,
                         color: _isConnecting
                             ? AppColors.accent
                             : spotify.isConnected
@@ -235,7 +235,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                       child: Text(
                         strings.spotifyDisconnect,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.caption,
+                          fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                         ),
@@ -266,7 +266,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   child: Text(
                     strings.spotifyConnect,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent,
                     ),
@@ -286,7 +286,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                 Expanded(
                   child: Text(
                     strings.spotifyLimitedNote,
-                    style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
+                    style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
                   ),
                 ),
               ],
@@ -311,7 +311,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                             : strings.spotifyPremiumActive)
                         : strings.spotifyStandardPreview,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
                   ),

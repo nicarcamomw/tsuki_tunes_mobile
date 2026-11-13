@@ -122,7 +122,7 @@ class _IsolatedProgressBar extends ConsumerWidget {
         thumbGlowColor: PlayerTint.glowOf(context),
         thumbRadius: 7.0,
         timeLabelTextStyle: locale.getTextStyle(
-          fontSize: AppFontSize.label,
+          fontSize: 11,
           color: AppColors.textSecondary,
         ),
       ),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../navigation/routes.dart';
@@ -79,7 +78,7 @@ class AlbumCard extends ConsumerWidget {
             Text(
               album.title,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.bodyLg,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -89,7 +88,7 @@ class AlbumCard extends ConsumerWidget {
             Text(
               album.artistName,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.label,
+                fontSize: 11,
                 color: AppColors.textSecondary,
               ),
               maxLines: 1,

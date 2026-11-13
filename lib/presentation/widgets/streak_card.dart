@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../screens/streak_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -64,7 +63,7 @@ class StreakCard extends ConsumerWidget {
                         alive ? '${strings.streakTitle} · ${strings.streakDays(streak).toUpperCase()}' : strings.streakTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: t(AppFontSize.label, w: FontWeight.w800, c: alive ? streakFlame : AppColors.textMuted, spacing: 1.4),
+                        style: t(11, w: FontWeight.w800, c: alive ? streakFlame : AppColors.textMuted, spacing: 1.4),
                       ),
                       const SizedBox(height: 7),
                       Row(
@@ -93,7 +92,7 @@ class StreakCard extends ConsumerWidget {
                               strings.streakStateShort(state.name),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: t(AppFontSize.label,
+                              style: t(10.5,
                                   w: FontWeight.w600,
                                   c: state == StreakState.atRisk ? AppColors.warning : AppColors.textSecondary),
                             ),
@@ -188,7 +187,7 @@ class _WeekDot extends StatelessWidget {
           : Text(
               label,
               style: TextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: 9,
                 fontWeight: FontWeight.w800,
                 color: played
                     ? const Color(0xFF2A1206)

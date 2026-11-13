@@ -4,7 +4,6 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
@@ -185,7 +184,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               child: Text(
                 strings.queueGesturesHint,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: 9,
                   color: AppColors.textMuted,
                 ).copyWith(fontStyle: FontStyle.italic),
               ),
@@ -269,7 +268,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: Text(
                         strings.queueMoreShuffled(hidden),
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.label,
+                          fontSize: 10.5,
                           color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
                         ),
@@ -307,7 +306,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 Text(
                   strings.queueUpNext,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.label,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 0.6,
@@ -319,7 +318,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                   Text(
                     strings.queueSummary(count, minutes),
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: 9.5,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -404,7 +403,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     Text(
                       label,
                       style: _locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: color,
                         letterSpacing: 0.8,
@@ -434,7 +433,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               Text(
                 locale.strings.queuePlayedHeader(count),
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textMuted,
                   letterSpacing: 1,
@@ -464,7 +463,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: 9.5,
               fontWeight: FontWeight.w800,
               color: AppColors.textSecondary,
               letterSpacing: 1,
@@ -477,7 +476,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             Text(
               tag,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neonCyan,
                 letterSpacing: 0.8,
@@ -505,7 +504,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             strings.queueNothingNext,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.textMuted,
             ),
@@ -515,7 +514,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             strings.queueEmptySubtitle,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.label,
+              fontSize: 11,
               color: AppColors.textSecondary,
             ),
           ),
@@ -661,7 +660,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   }
 
   TextStyle _swipeLabelStyle(Color color) => _locale.getTextStyle(
-        fontSize: AppFontSize.label,
+        fontSize: 11,
         fontWeight: FontWeight.w700,
         color: color,
       );
@@ -670,7 +669,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
         n.toString().padLeft(2, '0'),
         style: _locale.getTextStyle(
           color: AppColors.textMuted,
-          fontSize: AppFontSize.label,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
         textAlign: TextAlign.center,
@@ -770,7 +769,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                         style: locale.getTextStyle(
                           color: isCurrent ? AppColors.accent : AppColors.textBright,
                           fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
-                          fontSize: AppFontSize.bodyLg,
+                          fontSize: 12.5,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -788,7 +787,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                               : recommended
                                   ? AppColors.accent.withValues(alpha: 0.9)
                                   : AppColors.textSecondary,
-                          fontSize: AppFontSize.label,
+                          fontSize: 10.5,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -802,7 +801,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
                               color: AppColors.neonCyan.withValues(alpha: 0.75),
-                              fontSize: AppFontSize.micro,
+                              fontSize: 8.5,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.3,
                             ),
@@ -821,7 +820,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: Text(
                         '${bpm.round()}',
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.caption,
+                          fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.neonCyan.withValues(alpha: 0.8),
                         ),
@@ -835,7 +834,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     child: Text(
                       Formatters.formatSeconds(t.durationSeconds),
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: 10,
                         color: AppColors.textMuted,
                       ),
                     ),

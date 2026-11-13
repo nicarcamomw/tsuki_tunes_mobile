@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 
 /// CyberGlitchText: Ultra-realistic Cyberpunk glitch & distortion text widget.
 /// Calm for random intervals, then triggers violent, crisp digital glitch bursts
@@ -166,7 +165,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
   Widget build(BuildContext context) {
     final baseStyle = widget.style ??
         GoogleFonts.plusJakartaSans(
-          fontSize: AppFontSize.body,
+          fontSize: 11.5,
           fontWeight: FontWeight.w900,
           letterSpacing: 2.4,
           color: AppColors.accent,

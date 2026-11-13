@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'eco_widgets.dart';
@@ -177,7 +176,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                   Text(
                                     strings.maskUnlockedTitle,
                                     style: locale.getTextStyle(
-                                      fontSize: AppFontSize.caption,
+                                      fontSize: 9.5,
                                       fontWeight: FontWeight.w900,
                                       color: color,
                                       letterSpacing: 1.6,
@@ -189,7 +188,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: locale.getTextStyle(
-                                      fontSize: AppFontSize.heading,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.textBright,
                                     ),
@@ -199,7 +198,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                     mask.description(locale.currentLanguage),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textSecondary),
+                                    style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textSecondary),
                                   ),
                                 ],
                               ),

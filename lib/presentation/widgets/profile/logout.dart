@@ -21,7 +21,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           Text(
             strings.logoutConfirmTitle,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.title,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: Colors.white,
               letterSpacing: 1.5,
@@ -33,7 +33,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
         // A guest's playlists live only on this phone and go with them.
         auth.isGuest ? strings.logoutGuestConfirmMessage : strings.logoutConfirmMessage,
         style: locale.getTextStyle(
-          fontSize: AppFontSize.bodyLg,
+          fontSize: 13,
           color: AppColors.textSecondary,
         ),
       ),
@@ -43,7 +43,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
@@ -59,7 +59,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           child: Text(
             strings.logout,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
               color: Colors.white,

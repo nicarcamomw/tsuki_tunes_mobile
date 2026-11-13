@@ -18,7 +18,7 @@ class _BondsButton extends ConsumerWidget {
       icon: Badge(
         isLabelVisible: pending > 0,
         backgroundColor: AppColors.accent,
-        label: Text('$pending', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
+        label: Text('$pending', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
         child: const Icon(Icons.link_rounded, color: AppColors.textBright, size: 22),
       ),
     );
@@ -60,7 +60,7 @@ class _HomeHeader extends StatelessWidget {
                             Text(
                               strings.homeHeader.replaceAll(' // 01', ''),
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.display,
+                                fontSize: 26,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.textBright,
                                 letterSpacing: 2,
@@ -69,7 +69,7 @@ class _HomeHeader extends StatelessWidget {
                             Text(
                               ' // 01',
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.display,
+                                fontSize: 26,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.accent,
                               ),
@@ -85,7 +85,7 @@ class _HomeHeader extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.notoSansJp(
-                          fontSize: AppFontSize.micro,
+                          fontSize: 9,
                           fontWeight: FontWeight.w700,
                           color: AppColors.accentText,
                           letterSpacing: 1.2,
@@ -182,7 +182,7 @@ class _SourceBadge extends StatelessWidget {
               Text(
                 badgeText,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: badgeColor,
                   letterSpacing: 1.5,
@@ -240,7 +240,7 @@ class _HomeMessage extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accent,
                   letterSpacing: 1.2,
@@ -251,7 +251,7 @@ class _HomeMessage extends StatelessWidget {
                 subtitle,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
+                  fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -274,7 +274,7 @@ class _HomeMessage extends StatelessWidget {
                   child: Text(
                     actionLabel,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.body,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accent,
                       letterSpacing: 1.5,
@@ -325,7 +325,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 1,
@@ -347,7 +347,7 @@ class _StatCard extends StatelessWidget {
                       builder: (context, val, _) => Text(
                         '$val',
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.headline,
+                          fontSize: 22,
                           fontWeight: FontWeight.w900,
                           color: AppColors.accent,
                         ),
@@ -359,12 +359,12 @@ class _StatCard extends StatelessWidget {
                       value,
                       style: isTextValue
                           ? locale.getTextStyle(
-                              fontSize: AppFontSize.heading,
+                              fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,
                             )
                           : locale.getTextStyle(
-                              fontSize: AppFontSize.headline,
+                              fontSize: 22,
                               fontWeight: FontWeight.w900,
                               color: AppColors.accent,
                             ),
@@ -377,7 +377,7 @@ class _StatCard extends StatelessWidget {
           Text(
             meta,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: 9,
               color: AppColors.textMuted,
               letterSpacing: 0.8,
             ),
@@ -436,7 +436,7 @@ class _ArtistRow extends StatelessWidget {
               child: Text(
                 '$rank',
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.title,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
                 ),
@@ -470,7 +470,7 @@ class _ArtistRow extends StatelessWidget {
                   Text(
                     name,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.title,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -480,7 +480,7 @@ class _ArtistRow extends StatelessWidget {
                   Text(
                     subtitle,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.label,
+                      fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
                   ),

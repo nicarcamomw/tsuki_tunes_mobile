@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/track_matcher.dart';
 import '../navigation/routes.dart';
@@ -50,7 +49,7 @@ class SpotifyImportScreen extends ConsumerWidget {
 
     Widget body;
     if (!connected) {
-      body = _Center(icon: Icons.link_off_rounded, text: strings.importNotConnected, style: style(AppFontSize.title));
+      body = _Center(icon: Icons.link_off_rounded, text: strings.importNotConnected, style: style(13.5));
     } else if (c.loading || c.playlists == null) {
       body = const SkeletonRowList(count: 8, leading: 52, trailing: true, padding: EdgeInsets.fromLTRB(16, 12, 16, 0));
     } else if (c.running || c.results.isNotEmpty) {
@@ -58,7 +57,7 @@ class SpotifyImportScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
         children: [
           if (c.running) ...[
-            Text(c.current ?? '', style: style(AppFontSize.heading, w: FontWeight.w900)),
+            Text(c.current ?? '', style: style(16, w: FontWeight.w900)),
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(3),
@@ -70,9 +69,9 @@ class SpotifyImportScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(strings.importProgress(c.done, c.total), style: style(AppFontSize.body, color: AppColors.textSecondary)),
+            Text(strings.importProgress(c.done, c.total), style: style(12, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            Text(strings.importKeepOpen, style: style(AppFontSize.body, color: AppColors.textMuted)),
+            Text(strings.importKeepOpen, style: style(11.5, color: AppColors.textMuted)),
             const SizedBox(height: 16),
             OutlinedButton(
               style: OutlinedButton.styleFrom(
@@ -82,7 +81,7 @@ class SpotifyImportScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
           ] else ...[
-            Text(strings.importDone, style: style(AppFontSize.title, w: FontWeight.w800)),
+            Text(strings.importDone, style: style(14, w: FontWeight.w800)),
             const SizedBox(height: 16),
           ],
           for (final r in c.results)
@@ -90,17 +89,17 @@ class SpotifyImportScreen extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: Icon(r.found > 0 ? Icons.check_circle_rounded : Icons.error_outline_rounded,
                   color: r.found > 0 ? AppColors.success : AppColors.textMuted),
-              title: Text(r.name, style: style(AppFontSize.title, w: FontWeight.w800)),
-              subtitle: Text(strings.importFound(r.found, r.total), style: style(AppFontSize.body, color: AppColors.textSecondary)),
+              title: Text(r.name, style: style(13.5, w: FontWeight.w800)),
+              subtitle: Text(strings.importFound(r.found, r.total), style: style(11.5, color: AppColors.textSecondary)),
               trailing: r.playlistId == null ? null : const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
               onTap: r.playlistId == null ? null : () { Haptics.tap(); PlaylistRoute(id: r.playlistId!).push<void>(context); },
             ),
         ],
       );
     } else if (c.needsReconnect) {
-      body = _Center(icon: Icons.lock_reset_rounded, text: strings.importReconnect, style: style(AppFontSize.title));
+      body = _Center(icon: Icons.lock_reset_rounded, text: strings.importReconnect, style: style(13.5));
     } else if (c.playlists!.isEmpty) {
-      body = _Center(icon: Icons.queue_music_rounded, text: strings.importNone, style: style(AppFontSize.title));
+      body = _Center(icon: Icons.queue_music_rounded, text: strings.importNone, style: style(13.5));
     } else {
       final list = c.playlists!;
       body = Column(
@@ -109,7 +108,7 @@ class SpotifyImportScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               children: [
-                Text(strings.importHint, style: style(AppFontSize.body, color: AppColors.textSecondary)),
+                Text(strings.importHint, style: style(12, color: AppColors.textSecondary)),
                 const SizedBox(height: 12),
                 for (final p in list)
                   CheckboxListTile(
@@ -139,8 +138,8 @@ class SpotifyImportScreen extends ConsumerWidget {
                                   ),
                       ),
                     ),
-                    title: Text(c.nameOf(p), maxLines: 1, overflow: TextOverflow.ellipsis, style: style(AppFontSize.title, w: FontWeight.w800)),
-                    subtitle: Text(strings.importSongs(p.total), style: style(AppFontSize.body, color: AppColors.textMuted)),
+                    title: Text(c.nameOf(p), maxLines: 1, overflow: TextOverflow.ellipsis, style: style(13.5, w: FontWeight.w800)),
+                    subtitle: Text(strings.importSongs(p.total), style: style(11.5, color: AppColors.textMuted)),
                   ),
               ],
             ),
@@ -181,7 +180,7 @@ class SpotifyImportScreen extends ConsumerWidget {
           centerTitle: true,
           title: Text(strings.importTitle.toUpperCase(),
               style: locale.getTextStyle(
-                  fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                  fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
         ),
         body: body,
       ),

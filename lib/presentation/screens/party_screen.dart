@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/party.dart';
 import '../../domain/entities/social.dart';
@@ -39,7 +38,7 @@ class PartyScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.visibility_outlined, size: 44, color: AppColors.textMuted),
             const SizedBox(height: 14),
-            Text(strings.partyObserver, textAlign: TextAlign.center, style: style(AppFontSize.title)),
+            Text(strings.partyObserver, textAlign: TextAlign.center, style: style(13.5)),
             const SizedBox(height: 18),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
@@ -57,7 +56,7 @@ class PartyScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 140),
         children: [
           Text((hosting ? strings.partyYouHost : strings.partyHostedBy(p.hostName)).toUpperCase(),
-              style: style(AppFontSize.label, color: AppColors.accent, w: FontWeight.w900).copyWith(letterSpacing: 2)),
+              style: style(11, color: AppColors.accent, w: FontWeight.w900).copyWith(letterSpacing: 2)),
           const SizedBox(height: 14),
           _NowPlaying(track: track, locale: locale, empty: strings.partyNothing),
           const SizedBox(height: 10),
@@ -71,14 +70,14 @@ class PartyScreen extends ConsumerWidget {
                   hosting
                       ? strings.partyListening(p.members.length)
                       : (p.playing ? strings.partySynced : strings.partyHostPaused),
-                  style: style(AppFontSize.body, color: AppColors.success, w: FontWeight.w800),
+                  style: style(12, color: AppColors.success, w: FontWeight.w800),
                 ),
               ),
             ],
           ),
           if (!ref.watch(audioProvider.select((a) => a.useSpotify))) ...[
             const SizedBox(height: 6),
-            Text(strings.partyPreviewNote, style: style(AppFontSize.label, color: AppColors.textMuted)),
+            Text(strings.partyPreviewNote, style: style(11, color: AppColors.textMuted)),
           ],
           const SizedBox(height: 22),
           Wrap(
@@ -97,7 +96,7 @@ class PartyScreen extends ConsumerWidget {
                         Text(p.invited.contains(uid) ? '...' : p.nameOf(uid),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: style(AppFontSize.caption, color: AppColors.textSecondary)),
+                            style: style(10, color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
@@ -123,7 +122,7 @@ class PartyScreen extends ConsumerWidget {
               unawaited(party.leave());
             },
             child: Text(hosting ? strings.partyEnd : strings.partyLeave,
-                style: style(AppFontSize.bodyLg, color: AppColors.textSecondary, w: FontWeight.w800)),
+                style: style(13, color: AppColors.textSecondary, w: FontWeight.w800)),
           ),
         ],
       );
@@ -132,12 +131,12 @@ class PartyScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 140),
         children: [
           if (party.ended) ...[
-            Text(strings.partyEnded, style: style(AppFontSize.bodyLg, color: AppColors.textMuted)),
+            Text(strings.partyEnded, style: style(13, color: AppColors.textMuted)),
             const SizedBox(height: 12),
           ],
           const Icon(Icons.headphones_rounded, size: 56, color: AppColors.accent),
           const SizedBox(height: 14),
-          Text(strings.partyHint, textAlign: TextAlign.center, style: style(AppFontSize.title)),
+          Text(strings.partyHint, textAlign: TextAlign.center, style: style(14)),
           const SizedBox(height: 20),
           FilledButton.icon(
             style: FilledButton.styleFrom(
@@ -155,7 +154,7 @@ class PartyScreen extends ConsumerWidget {
           if (party.invitations.isNotEmpty) ...[
             const SizedBox(height: 28),
             Text(strings.partyInvitations.toUpperCase(),
-                style: style(AppFontSize.label, color: AppColors.textMuted, w: FontWeight.w900).copyWith(letterSpacing: 2)),
+                style: style(11, color: AppColors.textMuted, w: FontWeight.w900).copyWith(letterSpacing: 2)),
             const SizedBox(height: 8),
             for (final inv in party.invitations)
               Container(
@@ -175,7 +174,7 @@ class PartyScreen extends ConsumerWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(strings.partyHostedBy(inv.hostName),
-                              style: style(AppFontSize.title, w: FontWeight.w800)),
+                              style: style(13.5, w: FontWeight.w800)),
                         ),
                       ],
                     ),
@@ -220,7 +219,7 @@ class PartyScreen extends ConsumerWidget {
         centerTitle: true,
         title: Text(strings.partyTitle.toUpperCase(),
             style: locale.getTextStyle(
-                fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
+                fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
       ),
       body: body,
     );
@@ -249,13 +248,13 @@ class PartyScreen extends ConsumerWidget {
             children: [
               Text(strings.partyInvite.toUpperCase(),
                   style: locale.getTextStyle(
-                      fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                      fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
               const SizedBox(height: 8),
               if (bonds.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(strings.sharedInviteNone,
-                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary)),
+                      style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
                 )
               else
                 Flexible(
@@ -268,7 +267,7 @@ class PartyScreen extends ConsumerWidget {
                           leading: PersonAvatar(person: b, size: 40),
                           title: Text(b.name,
                               style: locale.getTextStyle(
-                                  fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                                  fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           trailing: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.accent),
                           onTap: () {
                             Haptics.confirm();
@@ -318,7 +317,7 @@ class _NowPlaying extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: t == null
-                ? Text(empty, style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary))
+                ? Text(empty, style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -326,12 +325,12 @@ class _NowPlaying extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                              fontSize: AppFontSize.heading, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                              fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                       const SizedBox(height: 3),
                       Text(t.artistName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary)),
+                          style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
                     ],
                   ),
           ),

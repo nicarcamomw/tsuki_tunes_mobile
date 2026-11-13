@@ -25,7 +25,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide2Badge,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
               color: AppColors.neonCyan,
               letterSpacing: 1.6,
@@ -39,7 +39,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide2Title,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.headline,
+            fontSize: 22,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 1.8,
@@ -58,7 +58,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide2Desc,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.bodyLg,
+            fontSize: 12.5,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -155,7 +155,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                     child: Text(
                       '$activeQuery$blink',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: AppFontSize.body,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                         letterSpacing: 0.5,
@@ -173,7 +173,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                     child: Text(
                       'DEEZER',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: AppFontSize.micro,
+                        fontSize: 7.5,
                         fontWeight: FontWeight.w900,
                         color: AppColors.neonCyan,
                         letterSpacing: 0.8,
@@ -230,7 +230,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Around The World',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: AppFontSize.label,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textBright,
                             ),
@@ -240,7 +240,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Daft Punk • Discovery',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: AppFontSize.micro,
+                              fontSize: 9.0,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,
@@ -305,7 +305,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Chop Suey!',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: AppFontSize.label,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textBright,
                             ),
@@ -315,7 +315,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'System of a Down • Toxicity',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: AppFontSize.micro,
+                              fontSize: 9.0,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,

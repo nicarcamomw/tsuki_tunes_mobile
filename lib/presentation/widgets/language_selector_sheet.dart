@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
-import '../../core/theme/app_font_size.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
@@ -77,7 +76,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                       Text(
                         strings.languageSelectorTitle,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.bodyLg,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textBright,
                           letterSpacing: 1.2,
@@ -87,7 +86,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                       Text(
                         strings.languageSelectorSubtitle,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.caption,
+                          fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textSecondary,
                           letterSpacing: 0.8,
@@ -173,7 +172,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                           child: Text(
                             lang.tag,
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.bodyLg,
+                              fontSize: 13,
                               fontWeight: FontWeight.w900,
                               color: isSelected
                                   ? Colors.white
@@ -192,7 +191,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                               Text(
                                 lang.label,
                                 style: locale.getTextStyle(
-                                  fontSize: AppFontSize.title,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? AppColors.textBright
@@ -204,14 +203,14 @@ class LanguageSelectorSheet extends ConsumerWidget {
                                 strings.languageCardSubtitle(lang),
                                 style: lang == AppLanguage.ja
                                     ? GoogleFonts.notoSansJp(
-                                        fontSize: AppFontSize.label,
+                                        fontSize: 10.5,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected
                                             ? AppColors.accent
                                             : AppColors.textSecondary,
                                       )
                                     : locale.getTextStyle(
-                                        fontSize: AppFontSize.label,
+                                        fontSize: 10.5,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected
                                             ? AppColors.accent
@@ -258,7 +257,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                                 Text(
                                   strings.activeStatus,
                                   style: locale.getTextStyle(
-                                    fontSize: AppFontSize.micro,
+                                    fontSize: 9,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.accent,
                                     letterSpacing: 0.6,
@@ -301,7 +300,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
               child: Text(
                 strings.languageInfoNotice,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: 10,
                   color: AppColors.textMuted,
                   height: 1.3,
                 ),

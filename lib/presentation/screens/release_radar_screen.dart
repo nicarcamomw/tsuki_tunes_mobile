@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../domain/entities/radar_release.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -104,7 +103,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
         title: Text(
           strings.radarTitle,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -214,7 +213,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                         strings.radarIosNote,
                         textAlign: TextAlign.center,
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.caption,
+                          fontSize: 10,
                           color: AppColors.textMuted,
                           height: 1.4,
                         ),
@@ -247,7 +246,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
               Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.label,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.6,
@@ -265,7 +264,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                   child: Text(
                     '$count',
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
+                      fontSize: 9,
                       fontWeight: FontWeight.w800,
                       color: color,
                     ),
@@ -335,7 +334,7 @@ class _RadarHeader extends StatelessWidget {
                       ? strings.radarNewCount(unread)
                       : strings.radarWatching(watched).toUpperCase(),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.bodyLg,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: unread > 0 ? AppColors.accent : AppColors.textBright,
                     letterSpacing: 1,
@@ -346,7 +345,7 @@ class _RadarHeader extends StatelessWidget {
                   Text(
                     strings.radarWatching(watched),
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -355,7 +354,7 @@ class _RadarHeader extends StatelessWidget {
                 Text(
                   status,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.caption,
+                    fontSize: 10,
                     fontWeight: checking ? FontWeight.w700 : FontWeight.w500,
                     color: checking ? AppColors.neonCyan : AppColors.textMuted,
                     letterSpacing: checking ? 1.5 : 0.2,
@@ -379,7 +378,7 @@ class _RadarHeader extends StatelessWidget {
                     label: Text(
                       strings.radarCheckNow,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.label,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -595,7 +594,7 @@ class _NotifyRow extends StatelessWidget {
               title: Text(
                 strings.radarNotifyToggle,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                 ),
@@ -603,7 +602,7 @@ class _NotifyRow extends StatelessWidget {
               subtitle: Text(
                 strings.radarNotifyToggleSubtitle,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: 10,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -621,7 +620,7 @@ class _NotifyRow extends StatelessWidget {
                     child: Text(
                       strings.radarPermissionDenied,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.label,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -633,7 +632,7 @@ class _NotifyRow extends StatelessWidget {
                     child: Text(
                       strings.radarPermissionAction,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.label,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                       ),
@@ -728,7 +727,7 @@ class _ReleaseTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.bodyLg,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -739,7 +738,7 @@ class _ReleaseTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.label,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -760,7 +759,7 @@ class _ReleaseTile extends StatelessWidget {
                           Text(
                             when,
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.micro,
+                              fontSize: 9,
                               fontWeight: FontWeight.w700,
                               color: days != null && days <= 1
                                   ? AppColors.accent
@@ -826,7 +825,7 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: AppFontSize.micro,
+          fontSize: 8.5,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1,
@@ -897,7 +896,7 @@ class _EmptyState extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.bodyLg,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 1.6,
@@ -908,7 +907,7 @@ class _EmptyState extends StatelessWidget {
             body,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
+              fontSize: 11.5,
               color: AppColors.textSecondary,
               height: 1.45,
             ),

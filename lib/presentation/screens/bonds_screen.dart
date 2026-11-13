@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/oni_mask.dart';
 import '../../domain/entities/public_profile.dart';
@@ -51,7 +50,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
         title: Text(
           strings.bondsTitle.toUpperCase(),
           style: locale.getTextStyle(
-            fontSize: AppFontSize.heading,
+            fontSize: 15,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 3,
@@ -70,7 +69,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                   icon: Badge(
                     isLabelVisible: invites > 0,
                     backgroundColor: AppColors.accent,
-                    label: Text('$invites', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
+                    label: Text('$invites', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
                     child: Icon(Icons.headphones_rounded, color: inParty ? AppColors.success : AppColors.textBright),
                   ),
                 );
@@ -83,7 +82,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                 indicatorColor: AppColors.accent,
                 labelColor: AppColors.textBright,
                 unselectedLabelColor: AppColors.textMuted,
-                labelStyle: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),
+                labelStyle: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1),
                 tabs: [
                   Tab(text: strings.bondsTabResonances),
                   Tab(
@@ -93,7 +92,7 @@ class _BondsScreenState extends ConsumerState<BondsScreen> with SingleTickerProv
                       offset: const Offset(12, -6),
                       label: Text(
                         '${social.pending}',
-                        style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white),
                       ),
                       child: Text(strings.bondsTabBonds),
                     ),
@@ -134,7 +133,7 @@ class _ObserverPanel extends StatelessWidget {
           Text(
             strings.bondsObserver,
             textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textPrimary, height: 1.45),
+            style: locale.getTextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.45),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -274,20 +273,20 @@ class ResonanceTile extends ConsumerWidget {
                             TextSpan(
                               text: '${resonance.person.name} ',
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.bodyLg,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.textBright,
                               ),
                             ),
                           TextSpan(
                             text: what,
-                            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.35),
+                            style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.35),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(ago, style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted)),
+                    Text(ago, style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted)),
                   ],
                 ),
               ),
@@ -476,11 +475,11 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
           onChanged: _onChanged,
           textInputAction: TextInputAction.search,
           onSubmitted: (q) => _search(q.trim()),
-          style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: 14, color: AppColors.textBright),
           cursorColor: AppColors.accent,
           decoration: InputDecoration(
             hintText: strings.bondsSearchHint,
-            hintStyle: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted),
+            hintStyle: locale.getTextStyle(fontSize: 13, color: AppColors.textMuted),
             prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted),
             suffixIcon: _searching
                 ? const Padding(padding: EdgeInsets.all(14), child: _Spinner())
@@ -503,7 +502,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
         if (results == null && !_failed)
           Text(
             strings.bondsSearchHelp,
-            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted, height: 1.4),
+            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textMuted, height: 1.4),
           )
         else if (_failed)
           _Empty(icon: Icons.wifi_off_rounded, text: strings.bondsSearchFailed, locale: locale)
@@ -669,7 +668,7 @@ class PersonRow extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.title,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textBright,
                           ),
@@ -680,7 +679,7 @@ class PersonRow extends ConsumerWidget {
                             subtitle!,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: locale.getTextStyle(fontSize: AppFontSize.label, color: AppColors.textMuted),
+                            style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
                         ],
                       ],
@@ -756,7 +755,7 @@ class _SectionLabel extends StatelessWidget {
     child: Text(
       '${text.toUpperCase()} · $count',
       style: locale.getTextStyle(
-        fontSize: AppFontSize.label,
+        fontSize: 11,
         fontWeight: FontWeight.w800,
         color: AppColors.textMuted,
         letterSpacing: 2,
@@ -785,7 +784,7 @@ class _Empty extends StatelessWidget {
           Text(
             text,
             textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.45),
+            style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.45),
           ),
           if (action != null && onAction != null) ...[
             const SizedBox(height: 16),

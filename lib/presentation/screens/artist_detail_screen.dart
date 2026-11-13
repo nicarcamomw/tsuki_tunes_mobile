@@ -9,7 +9,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_environment.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
-import '../../core/theme/app_font_size.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
@@ -291,7 +290,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 TextSpan(
                   text: '// ',
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.heading,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: AppColors.accent,
                     letterSpacing: 1.5,
@@ -300,7 +299,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 TextSpan(
                   text: strings.discography.replaceAll('// ', ''),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.heading,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textBright,
                     letterSpacing: 1.5,
@@ -354,7 +353,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                   Text(
                     title,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.bodyLg,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
@@ -392,7 +391,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     child: Text(
                       strings.seeMore,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.label,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accent,
                       ),
@@ -459,7 +458,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             Text(
               album.title,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: isCompleted ? AppColors.accent : AppColors.textPrimary,
               ),
@@ -469,7 +468,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             Text(
               subtitle,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.caption,
+                fontSize: 10,
                 color: AppColors.textMuted,
               ),
               maxLines: 1,
@@ -532,7 +531,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               child: Text(
                 strings.radarFollowSnack(_artist.name),
                 style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: AppFontSize.body),
+                    color: AppColors.textPrimary, fontSize: 12),
               ),
             ),
           ],
@@ -553,7 +552,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               Text(
                 strings.similarArtists,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -591,7 +590,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         Text(
                           strings.rabbitHoleViewGraph,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: AppColors.neonPurple,
                             letterSpacing: 1,
@@ -655,7 +654,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         Text(
                           artist.name,
                           style: locale.getTextStyle(
-                            fontSize: AppFontSize.label,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
@@ -668,7 +667,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             strings.artistFansCompact(
                                 Formatters.formatNumber(artist.fansCount)),
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.micro,
+                              fontSize: 9,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,
@@ -718,7 +717,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   strings.storedContentTitle,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.bodyLg,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                     letterSpacing: 1.2,
@@ -785,7 +784,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                               Text(
                                 strings.storedContentSongs(songCount),
                                 style: locale.getTextStyle(
-                                  fontSize: AppFontSize.heading,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textBright,
                                 ),
@@ -793,7 +792,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                               Text(
                                 strings.storedContentFrom(artistName),
                                 style: locale.getTextStyle(
-                                  fontSize: AppFontSize.label,
+                                  fontSize: 11,
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -920,7 +919,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   label.toUpperCase(),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.micro,
+                    fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                     letterSpacing: 0.8,
@@ -930,7 +929,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   '$completed/$total',
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.label,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: completed > 0 ? AppColors.accent : AppColors.textMuted,
                   ),
