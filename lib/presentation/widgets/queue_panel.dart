@@ -181,7 +181,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               child: Text(
                 strings.queueGesturesHint,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ).copyWith(fontStyle: FontStyle.italic),
               ),
@@ -315,7 +315,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                   Text(
                     strings.queueSummary(count, minutes),
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
+                      fontSize: AppFontSize.caption,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -354,7 +354,8 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           if (count > 0)
             _headerButton(
               icon: Icons.delete_sweep_outlined,
-              label: strings.queueClear,
+              // Icon only (R-01): the header's title and summary need the
+              // room; TalkBack still says what it does.
               semanticLabel: strings.queueClearLabel,
               color: AppColors.textMuted,
               onTap: _clear,
@@ -775,7 +776,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
                               color: AppColors.neonCyan.withValues(alpha: 0.75),
-                              fontSize: AppFontSize.micro,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.3,
                             ),
@@ -794,7 +795,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: Text(
                         '${bpm.round()}',
                         style: locale.getTextStyle(
-                          fontSize: AppFontSize.micro,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.neonCyan.withValues(alpha: 0.8),
                         ),
@@ -808,7 +809,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                     child: Text(
                       Formatters.formatSeconds(t.durationSeconds),
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textMuted,
                       ),
                     ),

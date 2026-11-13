@@ -89,6 +89,29 @@ class _Online extends ChangeNotifier implements ConnectivityProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+const _upNext = [
+  Track(id: '2', title: 'Instant Crush', artistId: 'a', artistName: 'Daft Punk', albumId: 'b',
+      albumTitle: 'Random Access Memories', coverUrl: '', previewUrl: '', durationSeconds: 337),
+  Track(id: '3', title: 'Lose Yourself to Dance', artistId: 'a', artistName: 'Daft Punk', albumId: 'b',
+      albumTitle: 'Random Access Memories', coverUrl: '', previewUrl: '', durationSeconds: 353),
+  Track(id: '4', title: 'Doin\' it Right', artistId: 'a', artistName: 'Daft Punk', albumId: 'b',
+      albumTitle: 'Random Access Memories', coverUrl: '', previewUrl: '', durationSeconds: 251),
+];
+
+/// A queue with the song playing and three up next.
+class _QueueAudio extends _StillAudio {
+  @override
+  List<Track> get queue => const [_song, ..._upNext];
+  @override
+  int get currentIndex => 0;
+  @override
+  List<int> upcomingOrder([int max = 60]) => const [1, 2, 3];
+  @override
+  int get upcomingCount => 3;
+  @override
+  List<Track> get upcomingTracks => _upNext;
+}
+
 /// Deezer as a screen sees it: two genres, nothing else. The fonts never
 /// answer.
 final _deezer = MockClient((req) async {
@@ -330,7 +353,7 @@ void main() {
 
   testWidgets('queue', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'queue', scaffold: true,
-        overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())], const QueuePanel());
+        overrides: [...base, audioProvider.overrideWith((ref) => _QueueAudio())], const QueuePanel());
   });
 
   testWidgets('profile', skip: skip != null, (tester) async {
