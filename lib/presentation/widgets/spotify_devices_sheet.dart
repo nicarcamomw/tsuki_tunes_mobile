@@ -86,7 +86,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
           child: Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
         ),
         const SizedBox(height: 16),
@@ -138,7 +138,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
         label: '$name${active ? '. ${strings.devicesPlayingHere}' : ''}',
         excludeSemantics: true,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: restricted || active ? null : () => _choose(d),
           child: Opacity(
             opacity: restricted ? 0.45 : 1,
@@ -146,7 +146,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.bgCard,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: active ? AppColors.success : AppColors.border),
               ),
               child: Row(

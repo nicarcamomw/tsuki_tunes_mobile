@@ -106,7 +106,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -140,7 +140,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
               ),
               const SizedBox(height: 8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: _toLookUp == 0 ? null : _done / _toLookUp,
                   minHeight: 5,
@@ -176,7 +176,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
               ),
               const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: coverage,
                   minHeight: 5,
@@ -250,14 +250,14 @@ class _ModeTile extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: AppColors.bgMid,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.border),
             ),
             child: Row(

@@ -171,7 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               backgroundColor: AppColors.bgCard,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 side: const BorderSide(color: AppColors.error, width: 1.2),
               ),
             ),
@@ -312,7 +312,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () { Haptics.tap(); _handleGuestExplore(); },
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.sheet),
                       splashColor: AppColors.accent.withValues(alpha: 0.2),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -320,7 +320,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           border: Border.all(
                             color: AppColors.accent.withValues(alpha: 0.35),
                             width: 0.8,
@@ -414,7 +414,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: AppColors.accent.withValues(alpha: 0.3),
                     width: 0.7,

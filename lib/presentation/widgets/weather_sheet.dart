@@ -111,7 +111,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderGlow,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
               ),
@@ -139,7 +139,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.bgDeep,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
@@ -202,7 +202,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                         : AppColors.borderGlow,
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                 ),
                 onPressed: weather.loading
                     ? null
@@ -263,11 +263,11 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                   fillColor: AppColors.bgDeep,
                   isDense: true,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     borderSide: const BorderSide(color: AppColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     borderSide: const BorderSide(color: AppColors.border),
                   ),
                 ),

@@ -1033,7 +1033,7 @@ class _NodeView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.bgDeep.withValues(alpha: 0.72),
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
               child: Text(
                 node.artist.name,
@@ -1282,7 +1282,7 @@ class _HintPill extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.bgCard.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.35)),
           ),
           child: Text(
@@ -1354,7 +1354,7 @@ class _EmptyState extends StatelessWidget {
               foregroundColor: AppColors.neonCyan,
               side: BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.6)),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
+                  borderRadius: BorderRadius.circular(AppRadius.chip)),
             ),
           ),
         ],
@@ -1493,7 +1493,7 @@ class _Breadcrumbs extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                         color: (i == trail.length - 1
                                 ? AppColors.accent
@@ -1559,7 +1559,7 @@ class _FocusCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.neonPurple.withValues(alpha: 0.35)),
       ),
       child: Column(
@@ -1688,11 +1688,11 @@ class _FocusAction extends StatelessWidget {
     final button = Material(
       color: filled ? tint.withValues(alpha: 0.18) : Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         side: BorderSide(color: tint.withValues(alpha: filled ? 0 : 0.4)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: onTap,
         child: SizedBox(
           height: 38,

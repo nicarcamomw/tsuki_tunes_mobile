@@ -334,7 +334,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.bgMid,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: TextField(
@@ -411,7 +411,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.accent : AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           border: Border.all(
                             color: isSelected ? AppColors.accent : AppColors.border,
                           ),
@@ -889,7 +889,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
               ),
               child: const Icon(Icons.lyrics_outlined, color: AppColors.accent, size: 22),
@@ -1164,7 +1164,7 @@ class _QueryChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: AppColors.bgMid,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -1212,7 +1212,7 @@ class _GenreTile extends StatelessWidget {
           GenreRoute(id: genre.id, name: genre.name).push(context);
         },
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -1237,7 +1237,7 @@ class _GenreTile extends StatelessWidget {
                     ],
                   ),
                   border: Border.all(color: AppColors.border),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
               Padding(

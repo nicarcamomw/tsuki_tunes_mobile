@@ -251,13 +251,13 @@ class ResonanceTile extends ConsumerWidget {
       label: '${showPerson ? '${resonance.person.name} ' : ''}$what, $ago',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: showPerson ? () { Haptics.tap(); UserProfileRoute(uid: resonance.person.uid).push<void>(context); } : null,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -496,7 +496,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
                   ),
             filled: true,
             fillColor: AppColors.bgCard,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.card), borderSide: BorderSide.none),
           ),
         ),
         const SizedBox(height: 10),
@@ -645,13 +645,13 @@ class PersonRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () { Haptics.tap(); UserProfileRoute(uid: person.uid).push<void>(context); },
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: Column(

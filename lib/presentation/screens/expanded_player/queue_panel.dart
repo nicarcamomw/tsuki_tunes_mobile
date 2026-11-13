@@ -91,7 +91,7 @@ class _QueueView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border:
                       Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
                 ),

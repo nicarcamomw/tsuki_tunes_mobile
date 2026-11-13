@@ -18,7 +18,7 @@ class _WrappedEntryCard extends StatelessWidget {
           highlightAlpha: 0.12,
           dimAlpha: 0.04,
           borderAlpha: 0.4,
-          borderRadius: 6,
+          borderRadius: AppRadius.chip,
           padding: const EdgeInsets.all(14),
           child: Column(
             children: [
@@ -91,7 +91,7 @@ class _ListeningClockEntryCard extends StatelessWidget {
           highlightAlpha: 0.08,
           dimAlpha: 0.03,
           borderAlpha: 0.3,
-          borderRadius: 6,
+          borderRadius: AppRadius.chip,
           padding: const EdgeInsets.all(14),
           child: Column(
             children: [
@@ -158,7 +158,7 @@ class _DiscoveryEntryCard extends StatelessWidget {
           highlightAlpha: 0.10,
           dimAlpha: 0.04,
           borderAlpha: 0.3,
-          borderRadius: 6,
+          borderRadius: AppRadius.chip,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -234,7 +234,7 @@ class _RabbitHoleEntryCard extends StatelessWidget {
           highlightAlpha: 0.10,
           dimAlpha: 0.04,
           borderAlpha: 0.3,
-          borderRadius: 6,
+          borderRadius: AppRadius.chip,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -332,7 +332,7 @@ class _ReleaseRadarEntryCard extends ConsumerWidget {
                   highlightAlpha: hasNews ? 0.12 : 0.08,
                   dimAlpha: hasNews ? 0.04 : 0.03,
                   borderAlpha: hasNews ? 0.55 : 0.3,
-                  borderRadius: 6,
+                  borderRadius: AppRadius.chip,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   padding:
@@ -363,7 +363,7 @@ class _ReleaseRadarEntryCard extends ConsumerWidget {
                                     const EdgeInsets.symmetric(horizontal: 4),
                                 decoration: BoxDecoration(
                                   color: AppColors.accent,
-                                  borderRadius: BorderRadius.circular(9),
+                                  borderRadius: BorderRadius.circular(AppRadius.card),
                                   border: Border.all(
                                       color: AppColors.bgDeep, width: 2),
                                 ),

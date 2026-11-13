@@ -31,7 +31,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
       ),
       backgroundColor: AppColors.bgCard,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       duration: duration,
     );
   }
@@ -85,7 +85,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         backgroundColor: AppColors.bgCard,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           side: const BorderSide(color: AppColors.error, width: 1.2),
         ),
       ));
@@ -105,7 +105,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),
         ),
         title: Row(
@@ -159,7 +159,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.bgMid,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               color: spotify.isConnected
                   ? AppColors.accent.withValues(alpha: 0.5)
@@ -173,7 +173,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
                 child: Icon(Icons.music_note,
                     color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
@@ -258,7 +258,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.accent),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 6),

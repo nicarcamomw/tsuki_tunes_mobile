@@ -38,17 +38,16 @@ def font_token(v):
 
 
 def radius_token(v):
+    """By band: up to 6 a chip, up to 14 a card, up to 24 a sheet, beyond a pill."""
     if v <= 0:
         return None
-    table = [(4, 'chip'), (12, 'card'), (20, 'sheet')]
-    if v >= 24:
-        return 'pill'
-    best = None
-    for size, name in table:
-        d = abs(size - v)
-        if best is None or d < best[0] or (d == best[0] and size < best[1]):
-            best = (d, size, name)
-    return best[2]
+    if v <= 6:
+        return 'chip'
+    if v <= 14:
+        return 'card'
+    if v <= 24:
+        return 'sheet'
+    return 'pill'
 
 
 def rel_import(path):
@@ -132,6 +131,21 @@ def migrate(kind):
                         tok = radius_token(float(m.group(2)))
                         return m.group(0) if tok is None else f'{m.group(1)}AppRadius.{tok})'
                     new = re.sub(r'(Radius\.circular\( *)(\d+(?:\.\d+)?)\)', rep_c, new)
+                    # A corner radius passed by name (SkeletonLoader, GlassCard,
+                    # covers): `borderRadius: 6`, `this.borderRadius = 10`.
+                    # Half the height on the same line is a pill.
+                    def rep_named(m):
+                        v = float(m.group(2))
+                        line = new[new.rfind('\n', 0, m.start()) + 1:new.find('\n', m.end())]
+                        h = re.search(r'height: *(\d+(?:\.\d+)?)', line)
+                        tok = 'pill' if h and abs(float(h.group(1)) / 2 - v) < 0.01 else radius_token(v)
+                        return m.group(0) if tok is None else f'{m.group(1)}AppRadius.{tok}'
+                    new = re.sub(r'((?:borderRadius|this\.borderRadius)(?:: *| = ))(\d+(?:\.\d+)?)(?![\d.])', rep_named, new)
+                    if '_Cover(' in new:
+                        new = re.sub(r'(_Cover\([^;]*?radius: *)(\d+(?:\.\d+)?)(?![\d.])',
+                                     lambda m: m.group(0) if radius_token(float(m.group(2))) is None
+                                     else f'{m.group(1)}AppRadius.{radius_token(float(m.group(2)))}', new)
+                        new = re.sub(r'(this\.radius = )(\d+(?:\.\d+)?)', lambda m: f'{m.group(1)}AppRadius.{radius_token(float(m.group(2)))}', new)
                 if new != text:
                     open(path, 'w').write(new)
                     changed.add(library_of(path, new))

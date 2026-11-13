@@ -62,7 +62,7 @@ class GuestLibraryGate extends ConsumerWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
                 child: Text(

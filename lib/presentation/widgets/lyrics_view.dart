@@ -322,7 +322,7 @@ class _FollowPill extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           border: Border.all(color: AppColors.accent.withValues(alpha: 0.8)),
           boxShadow: [
             BoxShadow(
@@ -458,7 +458,7 @@ class LyricsCard extends ConsumerWidget {
       builder: (context, _) {
         final lyrics = controller.lyrics;
         final hasText = controller.hasText;
-        final radius = BorderRadius.circular(18);
+        final radius = BorderRadius.circular(AppRadius.sheet);
 
         Widget body;
         if (controller.loading) {
@@ -612,7 +612,7 @@ class _CardMessage extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: Colors.white24),
                 ),
                 child: Text(

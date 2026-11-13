@@ -38,7 +38,7 @@ class _SettingsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.bgMid,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -188,7 +188,7 @@ class _AppVersionLabel extends StatelessWidget {
         if (info == null) return const SizedBox(height: 16);
         final text = _describe(info);
         return InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           onTap: () {
             Haptics.tap();
             Clipboard.setData(ClipboardData(text: text));

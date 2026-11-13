@@ -95,7 +95,7 @@ class CyberTheme {
         color: AppColors.bgCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
@@ -110,15 +110,15 @@ class CyberTheme {
         suffixIconColor: AppColors.textSecondary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
       ),
@@ -141,7 +141,7 @@ class CyberTheme {
   }) {
     return BoxDecoration(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       border: Border.all(
         color: glow ? AppColors.accent : borderColor,
         width: 1,

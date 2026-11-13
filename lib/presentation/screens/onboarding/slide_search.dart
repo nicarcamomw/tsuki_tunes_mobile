@@ -16,7 +16,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: AppColors.neonCyan.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: AppColors.neonCyan.withValues(alpha: 0.4),
               width: 0.8,
@@ -130,7 +130,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
                   color: AppColors.neonCyan.withValues(alpha: 0.6),
                   width: 1.2,
@@ -168,7 +168,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                         horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.neonCyan.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
                     child: Text(
                       'DEEZER',
@@ -195,7 +195,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: AppColors.accent.withValues(alpha: 0.4),
                     width: 1.0,
@@ -214,7 +214,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
                           colors: [AppColors.accent, Color(0xFF8B0000)],
                         ),
@@ -270,7 +270,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: AppColors.neonCyan.withValues(alpha: 0.45),
                     width: 1.0,
@@ -289,7 +289,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
                           colors: [AppColors.neonCyan, Color(0xFF0055AA)],
                         ),

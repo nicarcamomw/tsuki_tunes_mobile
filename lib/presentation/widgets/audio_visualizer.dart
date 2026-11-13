@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 class AudioVisualizer extends StatefulWidget {
   final bool isPlaying;
@@ -100,7 +101,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
                     height: widget.maxHeight * heightFactor,
                     decoration: BoxDecoration(
                       color: widget.isPlaying ? widget.activeColor : AppColors.borderGlow,
-                      borderRadius: BorderRadius.circular(1.5),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       boxShadow: widget.isPlaying
                           ? [
                               BoxShadow(

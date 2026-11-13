@@ -290,7 +290,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
         child: Transform.scale(
           scale: 1 - math.min(_dragDown / size.height, 0.1),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(_dragDown > 0 ? 24 : 0),
+            borderRadius: BorderRadius.circular(_dragDown > 0 ? AppRadius.sheet : 0),
             child: Stack(
               children: [
                 PageView.builder(
@@ -323,7 +323,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
                     child: i < _page
                         ? const _BarFill(value: 1)
@@ -380,7 +380,7 @@ class _BarFill extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.accent,
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 6)],
         ),
       ),
@@ -569,7 +569,7 @@ class _Cover extends StatelessWidget {
   final double size;
   final double radius;
   final bool glow;
-  const _Cover(this.url, {required this.size, this.radius = 8, this.glow = false});
+  const _Cover(this.url, {required this.size, this.radius = AppRadius.card, this.glow = false});
 
   @override
   Widget build(BuildContext context) {
@@ -660,7 +660,7 @@ class _IntroSlide extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
             ),
             child: Text(c.monthly ? strings.wrappedMonthlyLabel : strings.wrappedYearlyLabel,
                 style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
@@ -732,7 +732,7 @@ class _MinutesSlide extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: (pct >= 0 ? AppColors.neonGreen : AppColors.sakura).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: (pct >= 0 ? AppColors.neonGreen : AppColors.sakura).withValues(alpha: 0.5)),
               ),
               child: Row(
@@ -830,7 +830,7 @@ class _DaysBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       child: SizedBox(
         height: 6,
         child: Stack(
@@ -875,7 +875,7 @@ class _TopSongSlide extends StatelessWidget {
           Center(
             child: LayoutBuilder(builder: (context, box) {
               final size = math.min(box.maxWidth * 0.62, 240.0);
-              return _Cover(top.coverUrl, size: size, radius: 6, glow: true);
+              return _Cover(top.coverUrl, size: size, radius: AppRadius.chip, glow: true);
             }),
           ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
           const SizedBox(height: 20),
@@ -901,7 +901,7 @@ class _TopSongSlide extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.5), blurRadius: 14)],
                 ),
                 child: Text(strings.wrappedPlays(top.playCount),
@@ -923,7 +923,7 @@ class _TopSongSlide extends StatelessWidget {
                       width: 26,
                       child: Text('${i + 2}', style: c.text(AppFontSize.titleLg, weight: FontWeight.w900, color: AppColors.accent)),
                     ),
-                    _Cover(rest[i].coverUrl, size: 38, radius: 4),
+                    _Cover(rest[i].coverUrl, size: 38, radius: AppRadius.chip),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -1032,7 +1032,7 @@ class _TopArtistSlide extends StatelessWidget {
                               style: c.text(AppFontSize.bodyLg, weight: FontWeight.w700)),
                           const SizedBox(height: 4),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             child: SizedBox(
                               height: 4,
                               child: FractionallySizedBox(
@@ -1094,7 +1094,7 @@ class _TopAlbumSlide extends StatelessWidget {
           Center(
             child: LayoutBuilder(builder: (context, box) {
               final size = math.min(box.maxWidth * 0.5, 190.0);
-              return _Cover(top.coverUrl, size: size, radius: 4, glow: true);
+              return _Cover(top.coverUrl, size: size, radius: AppRadius.chip, glow: true);
             }),
           ).animateCalm(context).fadeIn(duration: 600.ms).scaleXY(begin: 0.8, end: 1, curve: Curves.easeOutBack, duration: 700.ms),
           const SizedBox(height: 18),
@@ -1133,7 +1133,7 @@ class _TopAlbumSlide extends StatelessWidget {
                       width: 26,
                       child: Text('${i + 2}', style: c.text(AppFontSize.titleLg, weight: FontWeight.w900, color: _tint)),
                     ),
-                    _Cover(rest[i].coverUrl, size: 38, radius: 3),
+                    _Cover(rest[i].coverUrl, size: 38, radius: AppRadius.chip),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -1161,7 +1161,7 @@ class _TopAlbumSlide extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _tint.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: _tint.withValues(alpha: 0.4)),
               ),
               child: Column(
@@ -1185,7 +1185,7 @@ class _TopAlbumSlide extends StatelessWidget {
                       for (final a in done.take(5))
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: _Cover(a.coverUrl, size: 44, radius: 3),
+                          child: _Cover(a.coverUrl, size: 44, radius: AppRadius.chip),
                         ),
                     ],
                   ),
@@ -1254,7 +1254,7 @@ class _HourSlide extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: fav ? AppColors.warning : partColors[_partOf(h)].withValues(alpha: 0.55),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.chip)),
                           boxShadow: fav
                               ? [BoxShadow(color: AppColors.warning.withValues(alpha: 0.7), blurRadius: 10)]
                               : null,
@@ -1299,7 +1299,7 @@ class _HourSlide extends StatelessWidget {
                   ),
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       child: SizedBox(
                         height: 6,
                         child: Stack(
@@ -1435,7 +1435,7 @@ class _FactsSlide extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colors[i % colors.length].withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: colors[i % colors.length].withValues(alpha: 0.35)),
               ),
               child: Row(
@@ -1520,7 +1520,7 @@ class _SummarySlide extends StatelessWidget {
                     key: shareKey,
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.sheet),
                         border: Border.all(color: AppColors.accent.withValues(alpha: 0.8), width: 1.4),
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
@@ -1547,7 +1547,7 @@ class _SummarySlide extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    if (topCover != null) _Cover(topCover, size: 64, radius: 6, glow: true),
+                                    if (topCover != null) _Cover(topCover, size: 64, radius: AppRadius.chip, glow: true),
                                     if (topCover != null) const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
@@ -1621,7 +1621,7 @@ class _SummarySlide extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   decoration: BoxDecoration(
                                     color: AppColors.sakura.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppRadius.card),
                                     border: Border.all(color: AppColors.sakura.withValues(alpha: 0.35)),
                                   ),
                                   child: Row(
@@ -1672,7 +1672,7 @@ class _SummarySlide extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accentFill,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                     ),
                     icon: const Icon(Icons.ios_share_rounded, size: 18, color: Colors.white),
                     label: Text(strings.wrappedShareCta,

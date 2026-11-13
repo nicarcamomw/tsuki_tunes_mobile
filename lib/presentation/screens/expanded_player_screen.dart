@@ -390,7 +390,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           Expanded(
             child: InkWell(
               onTap: () { Haptics.tap(); _navigateToSource(context, track); },
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                     vertical: 4, horizontal: 8),

@@ -106,7 +106,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: RadialGradient(
           center: const Alignment(0, -0.8),
           radius: 1.2,
@@ -179,7 +179,7 @@ class _HowToEarn extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -325,7 +325,7 @@ class _LevelRow extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(10, 9, 12, 9),
           decoration: BoxDecoration(
             color: current ? color.withValues(alpha: 0.1) : AppColors.bgCard.withValues(alpha: reached ? 1 : 0.55),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: current ? color : (reached ? color.withValues(alpha: 0.3) : AppColors.border)),
           ),
           child: Row(
@@ -423,7 +423,7 @@ class _Legend extends StatelessWidget {
       margin: const EdgeInsets.only(top: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

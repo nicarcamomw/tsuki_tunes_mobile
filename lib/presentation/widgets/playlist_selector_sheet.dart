@@ -21,7 +21,7 @@ Future<void> showPlaylistSelector(BuildContext context, Track track) {
     backgroundColor: AppColors.bgCard,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (ctx) => _PlaylistSelectorContent(track: track),
   );
@@ -102,7 +102,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                           backgroundColor: AppColors.bgCard,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
+                              borderRadius: BorderRadius.circular(AppRadius.chip)),
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -121,7 +121,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                     leading: Container(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(color: AppColors.bgMid, borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: AppColors.bgMid, borderRadius: BorderRadius.circular(AppRadius.chip)),
                       child: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
                     ),
                     title: Text(sp.name,
@@ -160,7 +160,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       selected: alreadyAdded,
                       child: ListTile(
                       leading: ExcludeSemantics(child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         child: SizedBox(
                           width: 40,
                           height: 40,
@@ -222,7 +222,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                   backgroundColor: AppColors.bgCard,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6)),
+                                      borderRadius: BorderRadius.circular(AppRadius.chip)),
                                   duration: const Duration(seconds: 2),
                                 ),
                               );
@@ -254,7 +254,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                     behavior: SnackBarBehavior.floating,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(6)),
+                                            BorderRadius.circular(AppRadius.chip)),
                                     duration: const Duration(seconds: 2),
                                   ),
                                 );
@@ -284,7 +284,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.bgCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
       title: Text(
         strings.newPlaylist,
         style: locale.getTextStyle(
@@ -367,7 +367,7 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
       ),
       backgroundColor: AppColors.bgCard,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       duration: const Duration(seconds: 2),
     ),
   );

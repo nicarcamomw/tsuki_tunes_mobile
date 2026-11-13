@@ -68,7 +68,7 @@ class ErrorState extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
                           color: AppColors.accent.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
                         ),
                         child: Text(

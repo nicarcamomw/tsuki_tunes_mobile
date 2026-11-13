@@ -61,7 +61,7 @@ class SpotifyImportScreen extends ConsumerWidget {
             Text(c.current ?? '', style: style(AppFontSize.titleLg, w: FontWeight.w900)),
             const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: LinearProgressIndicator(
                 value: c.total == 0 ? null : c.done / c.total,
                 minHeight: 6,
@@ -121,7 +121,7 @@ class SpotifyImportScreen extends ConsumerWidget {
                     activeColor: AppColors.success,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                     secondary: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       child: SizedBox(
                         width: 44,
                         height: 44,

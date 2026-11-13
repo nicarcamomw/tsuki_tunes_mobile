@@ -92,7 +92,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: const RadialGradient(
           center: Alignment(0.7, -0.6),
           radius: 1.2,
@@ -122,7 +122,7 @@ class _Header extends StatelessWidget {
                     style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w800, color: AppColors.textBright, height: 1.25)),
                 const SizedBox(height: 8),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: LinearProgressIndicator(
                     value: total == 0 ? 0 : open / total,
                     minHeight: 4,
@@ -156,7 +156,7 @@ class _ComingSoon extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -196,7 +196,7 @@ class _ChapterTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: open
             ? () {
                 Haptics.tap();
@@ -207,7 +207,7 @@ class _ChapterTile extends ConsumerWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: open ? accent.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.02),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: open ? accent.withValues(alpha: 0.45) : AppColors.border),
           ),
           child: Row(
@@ -377,7 +377,7 @@ class _FactionSection extends ConsumerWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Column(
@@ -442,7 +442,7 @@ class _Chip extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
       child: Text(text, style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: color)),
@@ -493,7 +493,7 @@ class _BondsSection extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.border),
               ),
               child: Column(
@@ -550,7 +550,7 @@ class _FaceCard extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _gold.withValues(alpha: god ? 0.08 : 0.04),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: _gold.withValues(alpha: god ? 0.6 : 0.3)),
       ),
       child: Row(

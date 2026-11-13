@@ -16,7 +16,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: AppColors.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: AppColors.accent.withValues(alpha: 0.35),
               width: 0.8,
@@ -98,7 +98,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.bgCard.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             border: Border.all(
               color: AppColors.accent.withValues(alpha: 0.45),
               width: 1.2,
@@ -128,7 +128,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                     width: 4,
                     height: h,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
@@ -202,7 +202,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                         ),
                       ),
                       FractionallySizedBox(
@@ -213,7 +213,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                             gradient: const LinearGradient(
                               colors: [AppColors.neonCyan, AppColors.accent],
                             ),
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             boxShadow: [
                               BoxShadow(
                                 color:

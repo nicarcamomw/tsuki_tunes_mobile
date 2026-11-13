@@ -84,7 +84,7 @@ class RunModeScreen extends ConsumerWidget {
                     backgroundColor: run.active ? AppColors.bgCard : AppColors.accentFill,
                     foregroundColor: AppColors.textBright,
                     side: run.active ? const BorderSide(color: AppColors.accent) : null,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                   ),
                   onPressed: () {
                     Haptics.confirm();
@@ -176,7 +176,7 @@ class _CadenceGauge extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(color: color.withValues(alpha: 0.5)),
                     ),
                     child: Text(
@@ -408,7 +408,7 @@ class _MusicPanel extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -469,7 +469,7 @@ class _MusicPanel extends ConsumerWidget {
             Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: track.coverUrl.isEmpty
                       ? Container(width: 44, height: 44, color: AppColors.bgHover)
                       : CachedNetworkImage(
@@ -543,7 +543,7 @@ class _TempoChip extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
@@ -597,7 +597,7 @@ class _SyncRow extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -714,7 +714,7 @@ class _SessionStatsState extends ConsumerState<_SessionStats> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(

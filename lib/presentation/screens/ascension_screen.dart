@@ -86,7 +86,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF0E0E14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: BorderSide(color: loreNameColor.withValues(alpha: 0.6)),
         ),
         title: Row(
@@ -305,7 +305,7 @@ class _ChoiceButton extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: _moon,
                 foregroundColor: const Color(0xFF111217),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),
@@ -314,7 +314,7 @@ class _ChoiceButton extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _moon,
                 side: BorderSide(color: _moon.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),

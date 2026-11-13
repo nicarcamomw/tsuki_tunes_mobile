@@ -88,7 +88,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -156,7 +156,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: AppColors.border),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
@@ -227,7 +227,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: _color.withValues(alpha: 0.6)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -250,7 +250,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -300,7 +300,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     side: BorderSide(
                       color: ambient.afterTimerMinutes == m ? _color : AppColors.border,
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
                   ),
               ],
             ),
@@ -357,12 +357,12 @@ class _SoundTile extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: active ? color.withValues(alpha: 0.12) : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               color: active ? color.withValues(alpha: 0.8) : AppColors.border,
             ),

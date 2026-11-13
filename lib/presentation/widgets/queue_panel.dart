@@ -160,7 +160,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgMid.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(
           color: AppColors.borderGlow.withValues(alpha: 0.5),
           width: 1.0,
@@ -255,7 +255,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                         color: Colors.transparent,
                         elevation: 6,
                         shadowColor: AppColors.accent.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
                         child: child,
                       ),
                       itemBuilder: (context, k) =>
@@ -382,7 +382,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       child: Tooltip(
         message: semanticLabel,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
           child: Container(
             constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
@@ -392,7 +392,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: color.withValues(alpha: 0.45)),
               ),
               child: Row(
@@ -641,7 +641,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       alignment: alignment,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -716,7 +716,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
         color: isCurrent
             ? AppColors.accent.withValues(alpha: 0.12)
             : AppColors.bgMid.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: isCurrent
               ? AppColors.accent.withValues(alpha: 0.5)
@@ -731,7 +731,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       child: Semantics(
         label: '${t.title}, ${t.fullArtistName}',
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.fromLTRB(10, 6, trailing.isEmpty ? 10 : 0, 6),
@@ -741,7 +741,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                 const SizedBox(width: 8),
                 ExcludeSemantics(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 36,
                       height: 36,

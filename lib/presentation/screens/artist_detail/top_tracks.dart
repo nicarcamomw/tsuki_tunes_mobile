@@ -201,7 +201,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.textBright.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
                   color: AppColors.textBright.withValues(alpha: 0.08),
                 ),

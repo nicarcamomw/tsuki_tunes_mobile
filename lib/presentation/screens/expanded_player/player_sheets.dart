@@ -21,7 +21,7 @@ class _AmbientButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: active ? AppColors.neonCyan.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: active ? Border.all(color: AppColors.neonCyan.withValues(alpha: 0.4)) : null,
         ),
         child: Row(
@@ -81,7 +81,7 @@ class _SleepTimerButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isActive ? AppColors.accent.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: isActive ? Border.all(color: AppColors.accent.withValues(alpha: 0.4)) : null,
         ),
         child: Row(
@@ -133,7 +133,7 @@ class _SleepTimerButton extends ConsumerWidget {
       context: context,
       backgroundColor: AppColors.bgMid,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
       builder: (_) {
         return SafeArea(
@@ -147,7 +147,7 @@ class _SleepTimerButton extends ConsumerWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.textMuted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -188,14 +188,14 @@ class _SleepTimerButton extends ConsumerWidget {
       label: label,
       child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         margin: const EdgeInsets.only(bottom: 2),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Row(
           children: [
@@ -245,7 +245,7 @@ void _showSongOptionsSheet(
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(
@@ -270,7 +270,7 @@ void _showSongOptionsSheet(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
                 ),
                 child: Text(
@@ -299,7 +299,7 @@ void _showSongOptionsSheet(
       maxHeight: MediaQuery.of(context).size.height * 0.85,
     ),
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (_) {
       return SafeArea(
@@ -313,7 +313,7 @@ void _showSongOptionsSheet(
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.textMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
               const SizedBox(height: 16),
@@ -321,7 +321,7 @@ void _showSongOptionsSheet(
               Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     child: SizedBox(
                       width: 44,
                       height: 44,

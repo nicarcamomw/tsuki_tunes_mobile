@@ -176,7 +176,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: AppColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             audio.crossfadeSeconds == 0
@@ -292,7 +292,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         iconSemanticLabel: strings.a11yClearCache,
         label: strings.clearAudioCache,
         labelColor: AppColors.textSecondary,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.card)),
         onTap: () {
           Haptics.remove();
           ref.read(audioCacheProvider).clearCache();
@@ -400,7 +400,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: AppColors.accentDim,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             locale.currentLanguage.tag,
@@ -438,7 +438,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         iconColor: AppColors.textSecondary,
         label: strings.termsOption,
         labelColor: AppColors.textSecondary,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.card)),
         onTap: () { Haptics.tap(); _openLegalPage(termsOfServiceUrl); },
       ),
     ]);
@@ -510,7 +510,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
           ),
           dialogTheme: const DialogThemeData(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.card)),
             ),
           ),
         ),
@@ -636,7 +636,7 @@ class _ImageQualitySheet extends ConsumerWidget {
           child: Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
         ),
         const SizedBox(height: 16),

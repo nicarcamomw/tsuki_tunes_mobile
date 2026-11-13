@@ -38,7 +38,7 @@ class _EqualizerSheet extends ConsumerWidget {
           child: Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
         ),
         const SizedBox(height: 16),
@@ -96,7 +96,7 @@ class _PresetTile extends StatelessWidget {
       label: '$name. $hint',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: enabled ? onTap : null,
         child: Opacity(
           opacity: enabled ? 1 : 0.4,
@@ -104,7 +104,7 @@ class _PresetTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: selected ? AppColors.accent : AppColors.border),
             ),
             child: Row(
@@ -144,7 +144,7 @@ class _Curve extends StatelessWidget {
           height: 92,
           decoration: BoxDecoration(
             color: const Color(0xFF0E0F15),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: AppColors.border),
           ),
           child: TweenAnimationBuilder<double>(

@@ -214,7 +214,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           end: Alignment.bottomCenter,
           colors: [Color(0xF0141720), Color(0xF00D0F18)],
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         border: Border(
           top: BorderSide(color: Color(0x33FF1919), width: 1),
           left: BorderSide(color: Color(0x33FF1919), width: 1),
@@ -236,7 +236,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             height: 4,
             decoration: BoxDecoration(
               color: AppColors.textMuted.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
           ),
           const SizedBox(height: 16),
@@ -433,7 +433,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: outlined ? Colors.transparent : AppColors.accent.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: outlined
                 ? AppColors.border

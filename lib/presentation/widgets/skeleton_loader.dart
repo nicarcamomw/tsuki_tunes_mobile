@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 
 // Skeletons: the shape of what's coming, while it comes.
@@ -90,7 +91,7 @@ class SkeletonLoader extends StatefulWidget {
     super.key,
     this.width = double.infinity,
     required this.height,
-    this.borderRadius = 4,
+    this.borderRadius = AppRadius.chip,
   });
 
   /// A round bone (an avatar or an artist).
@@ -293,7 +294,7 @@ class SkeletonListRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing) ...[const SizedBox(width: 12), const SkeletonLoader(width: 22, height: 22, borderRadius: 6)],
+            if (trailing) ...[const SizedBox(width: 12), const SkeletonLoader(width: 22, height: 22, borderRadius: AppRadius.chip)],
           ],
         ),
       );
@@ -400,7 +401,7 @@ class SkeletonDetailPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             children: [
-              const SkeletonLoader(width: 200, height: 200, borderRadius: 8),
+              const SkeletonLoader(width: 200, height: 200, borderRadius: AppRadius.card),
               const SizedBox(height: 20),
               const FractionallySizedBox(widthFactor: 0.6, child: SkeletonLoader(height: 20)),
               const SizedBox(height: 10),
@@ -433,11 +434,11 @@ class SkeletonProfile extends StatelessWidget {
               const SizedBox(height: 24),
               const Row(
                 children: [
-                  Expanded(child: SkeletonLoader(height: 64, borderRadius: 10)),
+                  Expanded(child: SkeletonLoader(height: 64, borderRadius: AppRadius.card)),
                   SizedBox(width: 10),
-                  Expanded(child: SkeletonLoader(height: 64, borderRadius: 10)),
+                  Expanded(child: SkeletonLoader(height: 64, borderRadius: AppRadius.card)),
                   SizedBox(width: 10),
-                  Expanded(child: SkeletonLoader(height: 64, borderRadius: 10)),
+                  Expanded(child: SkeletonLoader(height: 64, borderRadius: AppRadius.card)),
                 ],
               ),
               const SizedBox(height: 28),
@@ -467,18 +468,18 @@ class SkeletonStory extends StatelessWidget {
                   children: [
                     for (var i = 0; i < 6; i++) ...[
                       if (i > 0) const SizedBox(width: 4),
-                      const Expanded(child: SkeletonLoader(height: 3, borderRadius: 2)),
+                      const Expanded(child: SkeletonLoader(height: 3, borderRadius: AppRadius.chip)),
                     ],
                   ],
                 ),
                 const Spacer(),
                 const FractionallySizedBox(widthFactor: 0.4, child: SkeletonLoader(height: 14)),
                 const SizedBox(height: 16),
-                const FractionallySizedBox(widthFactor: 0.85, child: SkeletonLoader(height: 36, borderRadius: 6)),
+                const FractionallySizedBox(widthFactor: 0.85, child: SkeletonLoader(height: 36, borderRadius: AppRadius.chip)),
                 const SizedBox(height: 10),
-                const FractionallySizedBox(widthFactor: 0.6, child: SkeletonLoader(height: 36, borderRadius: 6)),
+                const FractionallySizedBox(widthFactor: 0.6, child: SkeletonLoader(height: 36, borderRadius: AppRadius.chip)),
                 const SizedBox(height: 32),
-                const SkeletonLoader(height: 180, borderRadius: 16),
+                const SkeletonLoader(height: 180, borderRadius: AppRadius.sheet),
                 const Spacer(),
               ],
             ),
@@ -703,7 +704,7 @@ class _ArtistRowSkeleton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.bgMid.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
       ),
       child: Row(
         children: [

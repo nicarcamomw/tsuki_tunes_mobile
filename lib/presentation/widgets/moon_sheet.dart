@@ -118,7 +118,7 @@ class MoonSheet extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -172,7 +172,7 @@ class MoonSheet extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   border: Border.all(color: accent.withValues(alpha: 0.35)),
                 ),
                 child: Row(
@@ -330,7 +330,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                 padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
                 decoration: BoxDecoration(
                   color: isToday ? widget.accent.withValues(alpha: 0.10) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isToday ? widget.accent.withValues(alpha: 0.55) : Colors.transparent,
                   ),
@@ -506,7 +506,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -574,7 +574,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                 itemCount: mix.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (_, i) => ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: mix[i].coverUrl.isEmpty
                       ? Container(width: 46, height: 46, color: AppColors.bgCard)
                       : CachedNetworkImage(
@@ -605,7 +605,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _silver,
                       foregroundColor: AppColors.bgDeep,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -632,7 +632,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: _silver.withValues(alpha: 0.6)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),

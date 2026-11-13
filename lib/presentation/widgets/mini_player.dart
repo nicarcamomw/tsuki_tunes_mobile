@@ -171,7 +171,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
           child: Container(
             margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: PlayerTint.of(context), width: 1.2),
               boxShadow: [
                 BoxShadow(
@@ -182,7 +182,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
@@ -419,7 +419,7 @@ class _BreathingCoverState extends State<_BreathingCover>
 
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: PlayerTint.of(context).withValues(alpha: borderAlpha),
               width: 1.5,
@@ -442,7 +442,7 @@ class _BreathingCoverState extends State<_BreathingCover>
         isPlaying: widget.isPlaying,
         child: ExcludeSemantics(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(3.5),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: SizedBox(
               width: 44,
               height: 44,

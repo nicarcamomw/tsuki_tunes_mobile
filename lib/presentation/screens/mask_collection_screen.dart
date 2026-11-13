@@ -57,7 +57,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: (equipped?.rarityColor ?? AppColors.border).withValues(alpha: 0.45),
                   ),
@@ -72,7 +72,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                         height: 92,
                         decoration: BoxDecoration(
                           color: AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           border: Border.all(color: AppColors.border),
                         ),
                         child: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
@@ -100,7 +100,7 @@ class MaskCollectionScreen extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(3),
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
                                   child: LinearProgressIndicator(
                                     value: masks.unlockedCount / masks.totalCount,
                                     minHeight: 5,
@@ -175,7 +175,7 @@ class _LoreButton extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () {
           Haptics.tap();
           onTap();
@@ -183,7 +183,7 @@ class _LoreButton extends ConsumerWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             gradient: const LinearGradient(colors: [Color(0xFF241F38), Color(0xFF11111B)]),
             border: Border.all(color: gold.withValues(alpha: 0.5)),
             boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.12), blurRadius: 16)],
@@ -316,7 +316,7 @@ class _ProgressBar extends ConsumerWidget {
       children: [
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: LinearProgressIndicator(
               value: goal == 0 ? 0 : current / goal,
               minHeight: 3,
@@ -378,7 +378,7 @@ class _MaskDetail extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
                 color: AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
             if (seen)
@@ -400,7 +400,7 @@ class _MaskDetail extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: color.withValues(alpha: 0.5)),
               ),
               child: Text(
@@ -438,7 +438,7 @@ class _MaskDetail extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: rColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       border: Border.all(color: rColor.withValues(alpha: 0.3)),
                     ),
                     child: Column(
@@ -518,7 +518,7 @@ class _MaskDetail extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: rColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: rColor.withValues(alpha: 0.2)),
                 ),
                 child: Row(
@@ -579,7 +579,7 @@ class _MaskDetail extends ConsumerWidget {
                     backgroundColor: isEquipped ? AppColors.bgMid.withValues(alpha: 0.5) : rColor.withValues(alpha: 0.25),
                     side: BorderSide(color: isEquipped ? AppColors.border : rColor, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                   ),
                 ),
               ),
@@ -619,7 +619,7 @@ class _Whisper extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: tone.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: tone.withValues(alpha: 0.3)),
       ),
       child: Column(

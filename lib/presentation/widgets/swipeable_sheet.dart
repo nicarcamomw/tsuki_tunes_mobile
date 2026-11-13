@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// A reusable bottom-sheet wrapper that can be dismissed by swiping down,
 /// even when the content is scrollable. Uses [DraggableScrollableSheet] so
@@ -46,7 +47,7 @@ class SwipeableSheet extends StatelessWidget {
         minChildSize: minChildSize,
         builder: (ctx, controller) => Material(
           color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
           clipBehavior: Clip.antiAlias,
           child: builder(ctx, controller),
         ),

@@ -343,7 +343,7 @@ class _ArtistInfoSection extends StatelessWidget {
           color: isFollowed
               ? AppColors.accent.withValues(alpha: 0.15)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: isFollowed
                 ? AppColors.accent
@@ -409,7 +409,7 @@ class _ArtistInfoSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
           decoration: BoxDecoration(
             color: AppColors.accent,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             boxShadow: [
               BoxShadow(color: AppColors.accentGlow.withValues(alpha: 0.35), blurRadius: 10),
             ],
@@ -447,7 +447,7 @@ class _ArtistInfoSection extends StatelessWidget {
             horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0x730C0C12),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.16),
             width: 1,
@@ -530,7 +530,7 @@ class _ArtistInfoSection extends StatelessWidget {
             color: AppColors.accent.withValues(alpha: 0.1),
             border:
                 Border.all(color: AppColors.accent, width: 1),
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             tag.toUpperCase(),

@@ -704,7 +704,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             selectedColor: AppColors.accentFill,
             backgroundColor: AppColors.bgCard,
             side: BorderSide(color: selected ? AppColors.accent : AppColors.border),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
           );
         },
       ),
@@ -738,7 +738,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -787,7 +787,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
     Widget artistRow(Artist a) => InkWell(
           onTap: () => _pickArtist(a),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
             child: Row(
@@ -836,15 +836,15 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.textMuted),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               borderSide: const BorderSide(color: AppColors.accent),
             ),
           ),
@@ -885,7 +885,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                       ),
                       backgroundColor: AppColors.bgCard,
                       side: const BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
                     ),
                 ],
               ),
@@ -920,7 +920,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
               decoration: BoxDecoration(
                 color: AppColors.sakura.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.sakura.withValues(alpha: 0.3)),
               ),
               child: Row(
@@ -971,7 +971,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -1015,7 +1015,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: done || isCurrent ? color.withValues(alpha: 0.07) : AppColors.bgCard,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: color.withValues(alpha: done ? 0.4 : isCurrent ? 0.5 : 0.15),
         ),
@@ -1068,7 +1068,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: isCurrent ? AppColors.neonPurple : AppColors.bgMid,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
             child: Text(
               '${GuessGame.clipSeconds[i]}s',
@@ -1117,7 +1117,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -1130,7 +1130,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.neonPurple.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
               ),
@@ -1145,7 +1145,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                     gradient: const LinearGradient(
                       colors: [AppColors.accent, AppColors.sakura],
                     ),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
               ),
@@ -1257,7 +1257,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
                             color: AppColors.bgCard,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.card),
                             border: Border.all(color: AppColors.border),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -1280,7 +1280,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                 child: Row(
                                   children: [
                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(AppRadius.chip),
                                       child: t.coverUrl.isEmpty
                                           ? Container(
                                               width: 38,
@@ -1365,15 +1365,15 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                     prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.textMuted),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       borderSide: const BorderSide(color: AppColors.accent),
                     ),
                   ),
@@ -1405,7 +1405,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                   backgroundColor: AppColors.bgCard,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   minimumSize: const Size(0, 36),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
                 ),
               ),
             ],
@@ -1433,7 +1433,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             margin: EdgeInsets.only(right: i < GuessGame.maxAttempts - 1 ? 4 : 0),
             decoration: BoxDecoration(
               color: done ? color : null,
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               border: done ? null : Border.all(color: AppColors.border),
             ),
           ),
@@ -1455,7 +1455,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: color.withValues(alpha: 0.4)),
         boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 24, spreadRadius: -4)],
       ),
@@ -1474,7 +1474,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: color.withValues(alpha: 0.4)),
                 ),
                 child: Text(
@@ -1496,11 +1496,11 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12)],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   child: t.coverUrl.isEmpty
                       ? Container(width: 80, height: 80, color: AppColors.bgMid)
                       : CachedNetworkImage(
@@ -1569,7 +1569,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: AppColors.bgMid,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1610,7 +1610,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       style: OutlinedButton.styleFrom(
         backgroundColor: filled ? AppColors.accent : Colors.transparent,
         side: const BorderSide(color: AppColors.accent),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
@@ -1639,7 +1639,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       useRootNavigator: true,
       backgroundColor: AppColors.bgCard,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
       builder: (_) => SafeArea(
         child: Padding(
@@ -1655,7 +1655,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
                     color: AppColors.borderGlow,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
               ),
@@ -1720,7 +1720,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                 color: i < GuessGame.maxAttempts
                                     ? AppColors.success.withValues(alpha: 0.7)
                                     : AppColors.accent.withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(AppRadius.chip),
                               ),
                               child: Text(
                                 '${s.distribution[i]}',
@@ -1758,15 +1758,15 @@ class _RoundSkeleton extends StatelessWidget {
           children: [
             const Align(
               alignment: Alignment.centerLeft,
-              child: SkeletonLoader(width: 90, height: 24, borderRadius: 12),
+              child: SkeletonLoader(width: 90, height: 24, borderRadius: AppRadius.pill),
             ),
             const SizedBox(height: 10),
-            const SkeletonLoader(height: 140, borderRadius: 16),
+            const SkeletonLoader(height: 140, borderRadius: AppRadius.sheet),
             const SizedBox(height: 16),
             for (var i = 0; i < 5; i++)
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
-                child: SkeletonLoader(height: 44, borderRadius: 10),
+                child: SkeletonLoader(height: 44, borderRadius: AppRadius.card),
               ),
           ],
         ),

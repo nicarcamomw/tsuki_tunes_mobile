@@ -43,7 +43,7 @@ class AlbumCard extends ConsumerWidget {
                 width: width,
                 height: width,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                   boxShadow: const [
                     BoxShadow(
@@ -54,7 +54,7 @@ class AlbumCard extends ConsumerWidget {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: ExcludeSemantics(
                     child: album.coverUrl.isNotEmpty
                         ? CachedNetworkImage(

@@ -295,7 +295,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: () { Haptics.tap(); _completeOnboarding(); },
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               splashColor: AppColors.accent.withValues(alpha: 0.2),
               highlightColor: AppColors.accent.withValues(alpha: 0.1),
               child: Container(
@@ -305,7 +305,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   border: Border.all(
                     color: AppColors.border.withValues(alpha: 0.6),
                     width: 0.8,
@@ -361,7 +361,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 width: isActive ? 24 : 8,
                 height: 6,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   color: isActive
                       ? AppColors.accent
                       : AppColors.textMuted.withValues(alpha: 0.3),
@@ -388,7 +388,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: () { Haptics.tap(); _nextPage(); },
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               splashColor: AppColors.accent.withValues(alpha: 0.3),
               highlightColor: AppColors.accent.withValues(alpha: 0.15),
               child: AnimatedContainer(
@@ -399,7 +399,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 ),
                 decoration: BoxDecoration(
                   color: isLastPage ? AppColors.accent : AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isLastPage
                         ? AppColors.accent
@@ -457,7 +457,7 @@ Widget _buildTechPill(IconData? icon, String text, [LocaleProvider? locale, Widg
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(
       color: AppColors.bgCard.withValues(alpha: 0.75),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.sheet),
       border: Border.all(
         color: AppColors.border.withValues(alpha: 0.6),
         width: 0.7,

@@ -102,7 +102,7 @@ class _ProfileSheet extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
                   color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -150,7 +150,7 @@ class _ProfileSheet extends ConsumerWidget {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.accent),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -246,14 +246,14 @@ class _ProfileSheet extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           onTap: () { Haptics.tap(); _closeThen(
               context, () => MaskCollectionScreen.open(hostContext)); },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.accentDim,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
             ),
             child: Row(
@@ -279,12 +279,12 @@ class _ProfileSheet extends ConsumerWidget {
         if (auth.isAuthenticated && auth.uid != null) ...[
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             onTap: () { Haptics.tap(); _closeThen(context, () => UserProfileRoute(uid: auth.uid!).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(
@@ -304,12 +304,12 @@ class _ProfileSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             onTap: () { Haptics.tap(); _closeThen(context, () => const BondsRoute(tab: 1).push(hostContext)); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(

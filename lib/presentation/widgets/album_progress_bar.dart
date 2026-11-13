@@ -58,14 +58,14 @@ class AlbumProgressBar extends ConsumerWidget {
           height: 6,
           decoration: BoxDecoration(
             color: AppColors.bgMid,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: AppColors.border.withValues(alpha: 0.5),
               width: 0.5,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: Stack(
               children: [
                 // Fill

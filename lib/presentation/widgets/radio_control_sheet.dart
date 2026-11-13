@@ -99,7 +99,7 @@ void _snack(
     ..showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.bgCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       margin: EdgeInsets.only(bottom: bottomMargin, left: 16, right: 16),
       duration: const Duration(seconds: 3),
       content: Row(
@@ -165,7 +165,7 @@ class _RadioControlSheet extends ConsumerWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -173,7 +173,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: SizedBox.square(
                     dimension: 56,
                     child: (radioArtist?.pictureUrl ?? seed.coverUrl).isNotEmpty
@@ -452,7 +452,7 @@ class _SteerButton extends StatelessWidget {
         foregroundColor: color,
         side: BorderSide(color: color.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       ),
     );
   }

@@ -99,7 +99,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: AppColors.accent.withValues(alpha: 0.7),
           width: 1.2,
@@ -113,7 +113,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: Stack(
           children: [
             Container(
@@ -243,7 +243,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                   height: 28,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(AppRadius.chip),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withValues(alpha: 0.25),

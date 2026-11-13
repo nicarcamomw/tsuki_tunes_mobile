@@ -94,7 +94,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.bgMid,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
               side: BorderSide(
                   color: AppColors.borderGlow.withValues(alpha: 0.5)),
             ),
@@ -457,7 +457,7 @@ class _Chip extends ConsumerWidget {
           color: active
               ? AppColors.accent.withValues(alpha: 0.25)
               : Colors.black.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
           border: Border.all(
             color: active
                 ? AppColors.accent.withValues(alpha: 0.8)

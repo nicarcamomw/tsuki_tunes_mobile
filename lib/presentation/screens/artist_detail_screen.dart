@@ -347,7 +347,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
                   ],
@@ -446,11 +446,11 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               aspectRatio: 1,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: _buildAlbumCover(album, isCompleted, strings),
                 ),
               ),
@@ -563,7 +563,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   onTap: () {
                     if (!ecoAllows(context, EcoFeature.rabbitHole)) return;
                     Haptics.tap();
@@ -577,7 +577,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                         color: AppColors.neonPurple.withValues(alpha: 0.5),
                       ),
@@ -728,7 +728,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             ),
           ),
           ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         // An opaque plate looks the same as the old backdrop blur over this
         // dark page, without blurring the screen on every scroll frame.
         child: DecoratedBox(
@@ -736,7 +736,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.bgCard.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(
                 color: AppColors.accent.withValues(alpha: 0.2),
               ),
@@ -762,7 +762,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             width: 44,
                             height: 44,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(AppRadius.sheet),
                               child: _artist.pictureUrl.isNotEmpty
                                   ? CachedNetworkImage(
                                     memCacheWidth: imageCacheSize(context, (44).toDouble()),
@@ -903,7 +903,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.bgDeep.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: completed > 0
                 ? AppColors.accent.withValues(alpha: 0.3)
@@ -939,7 +939,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 3,

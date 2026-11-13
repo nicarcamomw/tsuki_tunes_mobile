@@ -9,7 +9,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
     isScrollControlled: true,
     backgroundColor: AppColors.bgCard,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (context) => SafeArea(
       top: false,
@@ -25,7 +25,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.textMuted.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
           ),
@@ -81,7 +81,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.bgDeep,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
             ),
             child: Row(
@@ -179,7 +179,7 @@ class _AffinityFactor extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -224,7 +224,7 @@ class _AffinityFactor extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
             child: Text(
               points,

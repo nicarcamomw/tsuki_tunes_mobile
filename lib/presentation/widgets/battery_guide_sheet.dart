@@ -73,7 +73,7 @@ class BatteryGuideSheet extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
                 color: AppColors.borderGlow,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
           ),
@@ -160,7 +160,7 @@ class BatteryGuideSheet extends ConsumerWidget {
                 backgroundColor: AppColors.accentFill,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
             ),
           ),

@@ -265,7 +265,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
                           ? AppColors.textBright
                           : AppColors.accent)
                       .withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: (_selectedHour != null
                             ? AppColors.textBright
@@ -709,7 +709,7 @@ class _DailyActivityBars extends StatelessWidget {
                                     ? AppColors.textBright
                                     : color,
                                 borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(1.5)),
+                                    top: Radius.circular(AppRadius.chip)),
                                 boxShadow: isToday
                                     ? [
                                         BoxShadow(

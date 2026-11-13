@@ -99,7 +99,7 @@ class _CyberButtonState extends State<CyberButton>
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
           color: _isPressed ? bgColor.withValues(alpha: 0.8) : bgColor,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
             color: _isPressed ? AppColors.neonCyan : borderColor,
             width: 1.2,

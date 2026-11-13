@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -140,7 +141,7 @@ class _OniMaskIconState extends ConsumerState<OniMaskIcon>
           decoration: BoxDecoration(
             // A dark plate keeps colored collectible masks readable on the glow.
             color: equipped != null ? AppColors.bgDeep : Colors.transparent,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(color: borderColor, width: 2),
             boxShadow: t > 0.01
                 ? [

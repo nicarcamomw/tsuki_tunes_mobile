@@ -251,7 +251,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
               margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.borderSub),
               ),
               child: MergeSemantics(
@@ -466,13 +466,13 @@ class _MomentView extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: accent.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: _Cover(url: hero.track.coverUrl, size: 104),
               ),
               const SizedBox(width: 14),
@@ -541,7 +541,7 @@ class _MomentView extends StatelessWidget {
                 backgroundColor: accent.withValues(alpha: 0.85),
                 foregroundColor: AppColors.textBright,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(AppRadius.chip)),
               ),
             ),
           ),
@@ -555,7 +555,7 @@ class _MomentView extends StatelessWidget {
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: _Cover(url: t.track.coverUrl, size: 44),
                   ),
                   const SizedBox(width: 12),
@@ -640,7 +640,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Text(
@@ -773,7 +773,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
           highlightAlpha: 0.10,
           dimAlpha: 0.04,
           borderAlpha: 0.35,
-          borderRadius: 6,
+          borderRadius: AppRadius.chip,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -819,7 +819,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
               ),
               if (m != null && m.hero.track.coverUrl.isNotEmpty) ...[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: _Cover(url: m.hero.track.coverUrl, size: 34),
                 ),
                 const SizedBox(width: 8),
@@ -849,9 +849,9 @@ class _MomentSkeleton extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   children: [
-                    SkeletonLoader(width: 84, height: 22, borderRadius: 11),
+                    SkeletonLoader(width: 84, height: 22, borderRadius: AppRadius.pill),
                     SizedBox(width: 8),
-                    SkeletonLoader(width: 70, height: 22, borderRadius: 11),
+                    SkeletonLoader(width: 70, height: 22, borderRadius: AppRadius.pill),
                   ],
                 ),
               ),
@@ -861,9 +861,9 @@ class _MomentSkeleton extends StatelessWidget {
                 child: SkeletonLine(factor: 0.7, height: 18),
               ),
               SizedBox(height: 14),
-              SkeletonLoader(height: 132, borderRadius: 8),
+              SkeletonLoader(height: 132, borderRadius: AppRadius.card),
               SizedBox(height: 12),
-              SkeletonLoader(height: 46, borderRadius: 23),
+              SkeletonLoader(height: 46, borderRadius: AppRadius.pill),
             ],
           ),
         ),

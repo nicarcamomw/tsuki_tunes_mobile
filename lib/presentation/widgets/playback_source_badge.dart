@@ -30,7 +30,7 @@ class PlaybackSourceBadge extends ConsumerWidget {
       hint: source.isFullSong ? strings.sourceFullTitle : strings.sourcePreviewTitle,
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () {
           Haptics.tap();
           unawaited(showPlaybackSourceSheet(context));
@@ -82,7 +82,7 @@ class _SourceSheet extends ConsumerWidget {
           child: Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
         ),
         const SizedBox(height: 18),

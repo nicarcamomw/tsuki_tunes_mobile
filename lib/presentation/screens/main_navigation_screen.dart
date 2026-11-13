@@ -206,7 +206,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 right: 16,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
               duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
             ),
@@ -256,7 +256,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 right: 16,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 side: const BorderSide(
                   color: AppColors.error,
                   width: 1.2,
@@ -302,7 +302,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 right: 16,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
               duration: const Duration(seconds: 4),
             ),

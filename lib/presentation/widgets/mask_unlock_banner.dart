@@ -143,7 +143,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           gradient: LinearGradient(
                             colors: [color.withValues(alpha: 0.22), AppColors.bgCard],
                             begin: Alignment.centerLeft,

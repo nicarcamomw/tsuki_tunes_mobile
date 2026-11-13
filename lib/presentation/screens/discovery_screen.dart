@@ -294,7 +294,7 @@ class _SongCard extends ConsumerWidget {
         aspectRatio: 0.72,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
             color: AppColors.bgCard,
             border: Border.all(color: AppColors.border),
             boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10))],
@@ -379,7 +379,7 @@ class _Stamp extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             border: Border.all(color: color, width: 3),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             color: Colors.black38,
           ),
           child: Text(text.toUpperCase(),
@@ -485,7 +485,7 @@ class _CardSkeleton extends StatelessWidget {
               aspectRatio: 0.72,
               child: Stack(
                 children: [
-                  const Positioned.fill(child: SkeletonLoader(height: double.infinity, borderRadius: 18)),
+                  const Positioned.fill(child: SkeletonLoader(height: double.infinity, borderRadius: AppRadius.sheet)),
                   // Lighter lines where the title and artist will be.
                   Positioned(
                     left: 18,

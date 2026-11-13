@@ -77,11 +77,11 @@ class _AlmostCompleteCard extends StatelessWidget {
                 width: _width,
                 height: _width,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: progress.coverUrl.isNotEmpty
                       ? CachedNetworkImage(
                           memCacheWidth: imageCacheSize(context, _width),
@@ -104,7 +104,7 @@ class _AlmostCompleteCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: progress.share,
                   minHeight: 3,

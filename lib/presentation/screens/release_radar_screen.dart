@@ -260,7 +260,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
                   child: Text(
                     '$count',
@@ -319,7 +319,7 @@ class _RadarHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -391,7 +391,7 @@ class _RadarHeader extends StatelessWidget {
                           color: AppColors.neonCyan.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(AppRadius.chip)),
                     ),
                   ),
                 ),
@@ -570,7 +570,7 @@ class _NotifyRow extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
           color: blocked
               ? AppColors.warning.withValues(alpha: 0.5)
@@ -685,7 +685,7 @@ class _ReleaseTile extends StatelessWidget {
       label: '${release.title}, ${release.artistName}, $type, $when',
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -694,7 +694,7 @@ class _ReleaseTile extends StatelessWidget {
             color: unread
                 ? AppColors.accent.withValues(alpha: 0.07)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: unread
                   ? AppColors.accent.withValues(alpha: 0.4)
@@ -704,7 +704,7 @@ class _ReleaseTile extends StatelessWidget {
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: release.coverUrl.isEmpty
                     ? _coverPlaceholder()
                     : CachedNetworkImage(
@@ -820,7 +820,7 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Text(
@@ -846,7 +846,7 @@ class _SkeletonTile extends StatelessWidget {
           height: h,
           decoration: BoxDecoration(
             color: AppColors.bgCard,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
         );
     return Padding(

@@ -109,7 +109,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
       height: height,
       decoration: BoxDecoration(
         color: AppColors.accent,
-        borderRadius: BorderRadius.circular(1.5),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
       ),
     );
   }
@@ -212,7 +212,7 @@ class TrackTile extends ConsumerWidget {
               // Album Cover Thumbnail
               ExcludeSemantics(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 46,
                   height: 46,
@@ -267,7 +267,7 @@ class TrackTile extends ConsumerWidget {
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
                               color: AppColors.border,
-                              borderRadius: BorderRadius.circular(2),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                             child: Text(
                               'E',
@@ -393,7 +393,7 @@ void showTrackSnack(BuildContext context, String message,
       ),
       backgroundColor: AppColors.bgCard,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       margin: EdgeInsets.only(
           bottom: bottom ?? (hasTrack ? 152 : 12), left: 16, right: 16),
       duration: Duration(seconds: action == null ? 2 : 4),
@@ -439,7 +439,7 @@ void showTrackActions(BuildContext context, Track track,
         height: 36,
         decoration: BoxDecoration(
           color: AppColors.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Icon(icon, color: AppColors.accent, size: 20, semanticLabel: semanticLabel),
       ),
@@ -471,7 +471,7 @@ void showTrackActions(BuildContext context, Track track,
       maxHeight: MediaQuery.of(context).size.height * 0.85,
     ),
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (ctx) => SafeArea(
       child: SingleChildScrollView(
@@ -483,7 +483,7 @@ void showTrackActions(BuildContext context, Track track,
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 56,
                       height: 56,

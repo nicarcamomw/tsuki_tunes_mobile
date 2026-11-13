@@ -12,7 +12,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     builder: (dialogCtx) => AlertDialog(
       backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         side: const BorderSide(color: AppColors.border, width: 1.0),
       ),
       title: Row(
@@ -53,7 +53,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentFill,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
           child: Text(
             strings.deleteAccountConfirm,
@@ -156,7 +156,7 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
       child: AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),
         ),
         content: Text(

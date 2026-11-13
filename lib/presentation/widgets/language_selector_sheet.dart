@@ -47,7 +47,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
             ),
@@ -60,7 +60,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.accentDim,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
                   ),
                   child: const Icon(
@@ -134,7 +134,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.accentDim : AppColors.bgMid,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.accent
@@ -162,7 +162,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                             color: isSelected
                                 ? AppColors.accent
                                 : AppColors.bgDeep,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.accent
@@ -230,7 +230,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               border: Border.all(
                                 color: AppColors.accent.withValues(alpha: 0.6),
                                 width: 1.0,
@@ -295,7 +295,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.bgMid.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
               ),
               child: Text(

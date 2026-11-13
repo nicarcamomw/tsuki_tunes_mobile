@@ -299,7 +299,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         width: 200,
                         height: 200,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           border: Border.all(
                             color: allListened
                                 ? AppColors.accent
@@ -317,7 +317,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           child: ExcludeSemantics(
                             child: (albumData.coverXl ?? albumData.coverUrl)
                                     .isNotEmpty
@@ -354,7 +354,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                         horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.accentDim,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                           color: AppColors.accent.withValues(alpha: 0.4)),
                     ),
@@ -448,17 +448,17 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                             color: allListened
                                 ? AppColors.accent.withValues(alpha: 0.15)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             child: InkWell(
                               onTap: tracks.isNotEmpty
                                   ? () => _toggleAll(albumData)
                                   : null,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 10, horizontal: 12),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius: BorderRadius.circular(AppRadius.chip),
                                   border: Border.all(
                                     color: allListened
                                         ? AppColors.accent
@@ -528,7 +528,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: AppColors.accent),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                           ),
                         ),

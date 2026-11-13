@@ -210,7 +210,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                       children: [
                         // Cover
                         ExcludeSemantics(child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
                           child: SizedBox(
                             width: 140,
                             height: 140,
@@ -307,7 +307,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.accent),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4)),
+                              borderRadius: BorderRadius.circular(AppRadius.chip)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 10),
                         ),
@@ -332,7 +332,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.accent),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4)),
+                              borderRadius: BorderRadius.circular(AppRadius.chip)),
                           padding:
                               const EdgeInsets.symmetric(vertical: 10),
                         ),
@@ -451,7 +451,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.renamePlaylist,
           style: locale.getTextStyle(
@@ -525,7 +525,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           backgroundColor: AppColors.bgCard,
           behavior: SnackBarBehavior.floating,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -542,7 +542,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.deletePlaylist,
           style: locale.getTextStyle(
@@ -601,7 +601,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
           backgroundColor: AppColors.bgCard,
           behavior: SnackBarBehavior.floating,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -649,7 +649,7 @@ class _EditRow extends ConsumerWidget {
           ),
           ExcludeSemantics(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: SizedBox(
                 width: 42,
                 height: 42,

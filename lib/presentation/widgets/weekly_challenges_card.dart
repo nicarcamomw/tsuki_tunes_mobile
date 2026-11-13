@@ -66,7 +66,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
             MaskCollectionScreen.open(context);
@@ -75,7 +75,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
             ),
             child: Row(
@@ -93,7 +93,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                           for (var i = 0; i < challenges.length; i++) ...[
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(AppRadius.chip),
                                 child: LinearProgressIndicator(
                                   value: masks.weeklyProgress(challenges[i]) / challenges[i].target,
                                   minHeight: 4,
@@ -126,7 +126,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
         boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.08), blurRadius: 18)],
       ),
@@ -224,7 +224,7 @@ class _ChallengeRow extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         child: LinearProgressIndicator(
                           value: progress / challenge.target,
                           minHeight: 5,

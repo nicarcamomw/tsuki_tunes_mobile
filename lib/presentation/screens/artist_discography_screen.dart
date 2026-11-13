@@ -291,14 +291,14 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                           button: true,
                           label: strings.retryLoading,
                           child: InkWell(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           onTap: () { Haptics.tap(); _loadMoreAlbums(); },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: AppColors.bgMid,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               border: Border.all(
                                   color: AppColors.accent
                                       .withValues(alpha: 0.5)),
@@ -367,7 +367,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.accent : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: isSelected ? AppColors.accent : AppColors.border,
             ),
@@ -479,11 +479,11 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
             aspectRatio: 1,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border, width: 1),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: _buildCover(album, isCompleted, strings),
               ),
             ),

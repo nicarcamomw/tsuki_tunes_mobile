@@ -204,7 +204,7 @@ class _SintoniaCard extends ConsumerWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: color.withValues(alpha: 0.6)),
         ),
         child: Column(
@@ -222,7 +222,7 @@ class _SintoniaCard extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: s.percent / 100),
                 duration: const Duration(milliseconds: 900),
@@ -305,7 +305,7 @@ class _Stat extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(

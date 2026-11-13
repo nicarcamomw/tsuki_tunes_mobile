@@ -187,7 +187,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.bgMid,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border),
               ),
               child: TabBar(
@@ -260,7 +260,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: TextField(
@@ -329,7 +329,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -354,7 +354,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -426,7 +426,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                         border: Border.all(
                                           color: AppColors.accent.withValues(alpha: 0.6),
                                         ),
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(AppRadius.card),
                                       ),
                                       child: Text(
                                         strings.homeEmptyAction,
@@ -519,7 +519,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.accent),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4)),
+                    borderRadius: BorderRadius.circular(AppRadius.chip)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -538,7 +538,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
@@ -596,7 +596,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       for (final p in [...shared.invitations, ...shared.mine])
                         ListTile(
                           leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
                             child: SizedBox(
                               width: 48,
                               height: 48,
@@ -642,7 +642,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.newPlaylist,
           style: locale.getTextStyle(
@@ -718,7 +718,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             backgroundColor: AppColors.bgCard,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6)),
+                borderRadius: BorderRadius.circular(AppRadius.chip)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -812,7 +812,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.accent : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: isSelected ? AppColors.accent : AppColors.border,
             ),
@@ -865,7 +865,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
             color: isExpanded
                 ? AppColors.accent.withValues(alpha: 0.4)
@@ -875,7 +875,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
         children: [
           // Header
           InkWell(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             onTap: onToggle,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -883,7 +883,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                 children: [
                   // Cover
                   ExcludeSemantics(child: ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 44,
                       height: 44,
@@ -994,7 +994,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       ...group.tracks.map((trackData) {
               final isCurrentTrack = currentTrackId == trackData.trackId;
               return InkWell(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 onTap: () { Haptics.tap();
                   final queue = group.tracks
                       .map((td) => Track(
@@ -1120,11 +1120,11 @@ class _PlaylistListTile extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: () { Haptics.tap();
           PlaylistRoute(id: playlist.id).push(context);
         },
@@ -1133,7 +1133,7 @@ class _PlaylistListTile extends ConsumerWidget {
           child: Row(
             children: [
               ExcludeSemantics(child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 48,
                   height: 48,

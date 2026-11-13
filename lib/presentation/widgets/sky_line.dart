@@ -113,7 +113,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
       button: true,
       label: text,
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: () {
           Haptics.tap();
           WeatherSheet.show(context);
@@ -158,7 +158,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(color: AppColors.borderGlow),
                   ),
                   child: Row(
@@ -447,7 +447,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

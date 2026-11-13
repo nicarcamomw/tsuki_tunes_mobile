@@ -164,7 +164,7 @@ class _Body extends ConsumerWidget {
         Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: SizedBox(
                 width: 96,
                 height: 96,
@@ -303,7 +303,7 @@ class _Body extends ConsumerWidget {
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               leading: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 44,
                   height: 44,
@@ -369,7 +369,7 @@ class _Body extends ConsumerWidget {
       context: context,
       backgroundColor: AppColors.bgCard,
       useRootNavigator: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(

@@ -32,4 +32,9 @@ void main() {
     expect(AppFontSize.micro, greaterThanOrEqualTo(10));
     expect(_offenders(RegExp(r'fontSize: *[0-9]')), isEmpty);
   });
+
+  test('D-03: every corner radius is a token', () {
+    expect(_offenders(RegExp(r'Radius\.circular\( *\d')), isEmpty);
+    expect(_offenders(RegExp(r'(borderRadius: *|this\.borderRadius = )\d')), isEmpty);
+  });
 }

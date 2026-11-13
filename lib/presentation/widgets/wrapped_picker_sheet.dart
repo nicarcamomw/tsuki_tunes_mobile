@@ -87,7 +87,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
             child: Container(
               width: 36,
               height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
             ),
           ),
           const SizedBox(height: 16),
@@ -110,12 +110,12 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
 
           // The whole year, up top.
           InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             onTap: () => _open(year: _now.year),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.accent, width: 1.2),
                 gradient: LinearGradient(colors: [
                   AppColors.accent.withValues(alpha: 0.22),
@@ -157,7 +157,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
             ),
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             onTap: () => _open(year: _now.year - 1),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -201,14 +201,14 @@ class _MonthRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: current ? AppColors.accent.withValues(alpha: 0.08) : AppColors.bgMid.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
               color: current ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border.withValues(alpha: 0.6)),
         ),
@@ -227,7 +227,7 @@ class _MonthRow extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.card),
                           ),
                           child: Text(currentLabel, style: style(AppFontSize.micro, w: FontWeight.w800, c: Colors.white)),
                         ),
@@ -245,7 +245,7 @@ class _MonthRow extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: SizedBox(
                 height: 4,
                 child: Stack(

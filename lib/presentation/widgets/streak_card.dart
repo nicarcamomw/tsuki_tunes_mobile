@@ -40,7 +40,7 @@ class StreakCard extends ConsumerWidget {
         button: true,
         label: strings.a11yStreak,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
             StreakScreen.open(context);
@@ -49,7 +49,7 @@ class StreakCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: (alive ? streakFlame : AppColors.border).withValues(alpha: alive ? 0.45 : 1)),
             ),
             child: Row(

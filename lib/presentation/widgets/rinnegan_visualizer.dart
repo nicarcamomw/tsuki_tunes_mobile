@@ -497,7 +497,7 @@ class _SyncChip extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgDeep.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.7)),
       ),
       child: Text(

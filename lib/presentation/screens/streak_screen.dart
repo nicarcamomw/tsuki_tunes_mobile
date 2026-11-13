@@ -91,7 +91,7 @@ class _Hero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         gradient: RadialGradient(
           center: const Alignment(0, -0.7),
           radius: 1.1,
@@ -116,7 +116,7 @@ class _Hero extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: Row(
               children: [
@@ -171,7 +171,7 @@ class _Stats extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.border),
             ),
             child: Column(
@@ -230,7 +230,7 @@ class _Calendar extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -280,7 +280,7 @@ class _DayCell extends StatelessWidget {
       height: 34,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         color: played
             ? streakFlame.withValues(alpha: 0.85)
             : shielded
@@ -338,7 +338,7 @@ class _Goals extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
               decoration: BoxDecoration(
                 color: AppColors.bgCard,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: reached ? streakFlame.withValues(alpha: 0.45) : AppColors.border),
               ),
               child: Row(
@@ -371,7 +371,7 @@ class _Goals extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           child: LinearProgressIndicator(
                             value: reached ? 1 : current / g,
                             minHeight: 4,
@@ -414,7 +414,7 @@ class _ShieldInfo extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: streakShield.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: streakShield.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -470,7 +470,7 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
         padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(color: AppColors.border),
         ),
         child: Row(

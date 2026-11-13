@@ -163,7 +163,7 @@ class PartyScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -238,7 +238,7 @@ class PartyScreen extends ConsumerWidget {
       context: context,
       useRootNavigator: true,
       backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(
@@ -300,13 +300,13 @@ class _NowPlaying extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             child: SizedBox(
               width: 72,
               height: 72,

@@ -148,7 +148,7 @@ class _SourceBadge extends StatelessWidget {
               horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: badgeBg,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: badgeColor.withValues(alpha: 0.5),
               width: 0.8,
@@ -268,7 +268,7 @@ class _HomeMessage extends StatelessWidget {
                     border: Border.all(
                       color: AppColors.accent.withValues(alpha: 0.6),
                     ),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     color: AppColors.accent.withValues(alpha: 0.08),
                   ),
                   child: Text(
@@ -356,7 +356,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
@@ -455,7 +455,7 @@ class _FeatureCard extends StatelessWidget {
       label: '$title, $subtitle',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: GlassCard(
           color: color,
           highlightAlpha: highlight ? 0.18 : 0.08,
@@ -528,14 +528,14 @@ class _ArtistRow extends StatelessWidget {
       button: true,
       label: semanticsLabel,
       child: InkWell(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.bgMid,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
         ),
         child: Row(

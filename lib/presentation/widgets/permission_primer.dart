@@ -41,7 +41,7 @@ class PermissionPrimer extends ConsumerWidget {
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.bgCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
       builder: (_) => SafeArea(
         child: SingleChildScrollView(
           child: PermissionPrimer(icon: icon, color: color, title: title, body: body),
@@ -96,7 +96,7 @@ class PermissionPrimer extends ConsumerWidget {
           Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
           const SizedBox(height: 24),
           ExcludeSemantics(

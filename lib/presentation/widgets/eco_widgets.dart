@@ -77,7 +77,7 @@ class _LockedSheet extends ConsumerWidget {
           child: Container(
             width: 36,
             height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
         ),
         const SizedBox(height: 18),
@@ -189,7 +189,7 @@ class EcoProgressBar extends ConsumerWidget {
               style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color, letterSpacing: 1))
         else
           ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: LinearProgressIndicator(
               value: masks.levelProgress,
               minHeight: 5,
@@ -255,7 +255,7 @@ class EcoLocked extends ConsumerWidget {
   final EcoFeature feature;
   final Widget child;
   final BorderRadius borderRadius;
-  const EcoLocked({super.key, required this.feature, required this.child, this.borderRadius = const BorderRadius.all(Radius.circular(10))});
+  const EcoLocked({super.key, required this.feature, required this.child, this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.card))});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -283,7 +283,7 @@ class EcoLocked extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xE6101118),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   border: Border.all(color: color.withValues(alpha: 0.7)),
                 ),
                 child: Row(
@@ -391,7 +391,7 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.sheet),
                     gradient: LinearGradient(colors: [color.withValues(alpha: 0.25), AppColors.bgCard]),
                     border: Border.all(color: color.withValues(alpha: 0.75)),
                     boxShadow: [
@@ -484,7 +484,7 @@ class EcoLevelCard extends ConsumerWidget {
         button: true,
         label: strings.a11yEcoLevels,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
             EcoLevelsScreen.open(context);
@@ -493,7 +493,7 @@ class EcoLevelCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: color.withValues(alpha: 0.45)),
             ),
             child: Row(

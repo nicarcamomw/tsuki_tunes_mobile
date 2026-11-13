@@ -40,3 +40,19 @@ abstract final class AppFontSize {
   /// Decorative giants (drop caps, watermark glyphs).
   static const double mega = 64;
 }
+
+/// Corner radii (D-03). Four, by what the thing is, not by its size.
+abstract final class AppRadius {
+  /// Chips, filter buttons, small tags, thumbnails, thin bars: the sharp,
+  /// technical corner of the HUD.
+  static const double chip = 4;
+
+  /// Cards, tiles, inputs, dialogs.
+  static const double card = 12;
+
+  /// Bottom sheets and big panels.
+  static const double sheet = 20;
+
+  /// Stadium shapes: badges, pills, round buttons (any height).
+  static const double pill = 999;
+}
