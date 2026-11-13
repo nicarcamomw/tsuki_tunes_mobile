@@ -493,6 +493,9 @@ class PlaylistRepositoryImpl extends ChangeNotifier implements PlaylistRepositor
               case tracksKind:
                 await db.runTransaction((tx) async {
                   final snap = await tx.get(docRef);
+                  // Deleted on another device meanwhile: the delete wins and
+                  // there's nothing to merge into (not a refusal).
+                  if (!snap.exists) return;
                   final raw = snap.data()?['tracks'];
                   final server = raw is List
                       ? raw.map((t) => Map<String, dynamic>.from(t as Map)).toList()
