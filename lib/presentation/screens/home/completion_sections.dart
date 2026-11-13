@@ -21,7 +21,7 @@ class _AlmostCompleteSection extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-          child: _SectionTitle(
+          child: SectionTitle(
               locale: locale, text: locale.strings.almostCompleteTitle),
         ),
         SizedBox(

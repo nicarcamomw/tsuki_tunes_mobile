@@ -2,7 +2,13 @@
   "@@locale": "es",
   "homeTelemetry": "◈ 軍事通信 // TSUKI.SYS.01",
   "searchTelemetry": "◈ 探索 // FREQ.SCAN.02",
-  "libraryTelemetry": "◈ 保管庫 // DATA.VAULT.03",
+  "libraryTelemetry": "◈ 保管庫 // DATA.VAULT.04",
+  "exploreTelemetry": "◈ 発見 // ROAM.NET.03",
+  "exploreDiscover": "MÚSICA NUEVA",
+  "explorePlay": "JUGAR",
+  "explorePath": "TU CAMINO",
+  "exploreLoreSubtitle": "La historia de Tsuki",
+  "homeToday": "HOY",
   "homeHeader": "INICIO // 01",
   "statsTracks": "CANCIONES",
   "statsArtists": "ARTISTAS",
@@ -1012,7 +1018,7 @@
   "autoFavorites": "Favoritos",
   "autoPlaylists": "Mis playlists",
   "autoTopChart": "Top mundial",
-  "navHudSubtitle": "{tab, select, home{ホーム // 01} search{探索 // 02} other{保管庫 // 03}}",
+  "navHudSubtitle": "{tab, select, home{ホーム // 01} search{探索 // 02} explore{発見 // 03} other{保管庫 // 04}}",
   "@navHudSubtitle": {
     "placeholders": {
       "tab": {

@@ -16,6 +16,7 @@ import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
+import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/library_albums.dart';
@@ -147,7 +148,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                           ),
                         ),
                         Text(
-                          ' // 03',
+                          ' // 04',
                           style: locale.getTextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
@@ -416,7 +417,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                   child: GestureDetector(
                                     onTap: () {
                                       Haptics.selection();
-                                      NavigationEvents.switchTab?.call(1);
+                                      NavigationEvents.switchTab?.call(MainTab.search);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(

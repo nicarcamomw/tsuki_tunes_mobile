@@ -414,7 +414,7 @@ class _MusicVaultGraphic extends StatelessWidget {
             child: Row(
               children: [
                 const CyberNavIcon(
-                  index: 2,
+                  tab: MainTab.library,
                   isSelected: true,
                   size: 16,
                 ),

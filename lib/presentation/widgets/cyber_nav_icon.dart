@@ -1,22 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../navigation/main_tab.dart';
 
 /// CyberNavIcon: Ícono vectorial temático Cyberpunk / Japanese Folklore
 /// dibujado en Canvas de alto rendimiento (Zero-GC, 120 FPS).
 ///
 /// Pestañas:
-/// - 0 (HOME): Torii Gate Cyberpunk (鸟居) con pilares neón y núcleo pulsante.
-/// - 1 (SEARCH): Visor HUD / Escáner Óptico Oni con retícula y bloqueo de objetivo.
-/// - 2 (LIBRARY): Bóveda / Cartucho Tecnológico con disco vinilo holográfico emergente.
+/// - HOME: Torii Gate Cyberpunk (鸟居) con pilares neón y núcleo pulsante.
+/// - SEARCH: Visor HUD / Escáner Óptico Oni con retícula y bloqueo de objetivo.
+/// - EXPLORE: Brújula / rosa de los vientos cuya aguja gira y se enciende.
+/// - LIBRARY: Bóveda / Cartucho Tecnológico con disco vinilo holográfico emergente.
 class CyberNavIcon extends StatefulWidget {
-  final int index;
+  final MainTab tab;
   final bool isSelected;
   final double size;
 
   const CyberNavIcon({
     super.key,
-    required this.index,
+    required this.tab,
     required this.isSelected,
     this.size = 24.0,
   });
@@ -98,7 +100,7 @@ class _CyberNavIconState extends State<CyberNavIcon>
               height: widget.size,
               child: CustomPaint(
                 painter: _CyberNavIconPainter(
-                  index: widget.index,
+                  tab: widget.tab,
                   progress: progress,
                 ),
               ),
@@ -111,11 +113,11 @@ class _CyberNavIconState extends State<CyberNavIcon>
 }
 
 class _CyberNavIconPainter extends CustomPainter {
-  final int index;
+  final MainTab tab;
   final double progress;
 
   _CyberNavIconPainter({
-    required this.index,
+    required this.tab,
     required this.progress,
   });
 
@@ -178,14 +180,17 @@ class _CyberNavIconPainter extends CustomPainter {
       _glowPaint.color = AppColors.accentGlow.withValues(alpha: 0.7 * progress);
     }
 
-    switch (index) {
-      case 0:
+    switch (tab) {
+      case MainTab.home:
         _drawCyberTorii(canvas, size, progress, _strokePaint, hasGlow ? _glowPaint : null);
         break;
-      case 1:
+      case MainTab.search:
         _drawCyberScan(canvas, size, progress, _strokePaint, hasGlow ? _glowPaint : null);
         break;
-      case 2:
+      case MainTab.explore:
+        _drawCyberCompass(canvas, size, progress, _strokePaint, hasGlow ? _glowPaint : null);
+        break;
+      case MainTab.library:
         _drawCyberVault(canvas, size, progress, _strokePaint, hasGlow ? _glowPaint : null);
         break;
     }
@@ -373,7 +378,70 @@ class _CyberNavIconPainter extends CustomPainter {
     }
   }
 
-  /// 2. LIBRARY: Cartucho Tecnológico con Disco Vinilo Holográfico Emergente
+  /// EXPLORE: Brújula cyber. Anillo con cuatro marcas cardinales y una
+  /// aguja romboidal que gira hasta el noreste y enciende su mitad norte.
+  void _drawCyberCompass(
+    Canvas canvas,
+    Size size,
+    double t,
+    Paint strokePaint,
+    Paint? glowPaint,
+  ) {
+    final sx = size.width / 24.0;
+    final center = Offset(12.0 * sx, 12.0 * sx);
+    final ringRadius = 8.4 * sx;
+
+    if (glowPaint != null) canvas.drawCircle(center, ringRadius, glowPaint);
+    canvas.drawCircle(center, ringRadius, strokePaint);
+
+    // Marcas cardinales: salen del anillo al activarse.
+    final tickOut = (1.6 + t * 0.9) * sx;
+    for (var i = 0; i < 4; i++) {
+      final a = i * math.pi / 2;
+      final dir = Offset(math.cos(a), math.sin(a));
+      canvas.drawLine(center + dir * ringRadius, center + dir * (ringRadius + tickOut), strokePaint);
+    }
+
+    // Aguja: de norte (reposo) a noreste (activa).
+    final tip = 5.6 * sx;
+    final half = 2.1 * sx;
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(t * math.pi / 4);
+
+    final north = _p1
+      ..reset()
+      ..moveTo(0, -tip)
+      ..lineTo(half, 0)
+      ..lineTo(-half, 0)
+      ..close();
+    final south = _p2
+      ..reset()
+      ..moveTo(0, tip)
+      ..lineTo(half, 0)
+      ..lineTo(-half, 0)
+      ..close();
+
+    if (t > 0.0) {
+      if (glowPaint != null) {
+        _fillGlow.color = AppColors.accentGlow.withValues(alpha: 0.85 * t);
+        canvas.drawPath(north, _fillGlow);
+      }
+      _fillPaint.color = AppColors.accent.withValues(alpha: t);
+      canvas.drawPath(north, _fillPaint);
+    }
+    canvas.drawPath(north, strokePaint);
+    canvas.drawPath(south, strokePaint);
+    canvas.restore();
+
+    // Eje central: punto láser blanco al activarse.
+    _fillPaint.color = t > 0.0
+        ? Colors.white.withValues(alpha: 0.95 * t)
+        : strokePaint.color.withValues(alpha: 0.45);
+    canvas.drawCircle(center, 1.1 * sx, _fillPaint);
+  }
+
+  /// LIBRARY: Cartucho Tecnológico con Disco Vinilo Holográfico Emergente
   void _drawCyberVault(
     Canvas canvas,
     Size size,
@@ -456,6 +524,6 @@ class _CyberNavIconPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CyberNavIconPainter oldDelegate) {
-    return oldDelegate.index != index || oldDelegate.progress != progress;
+    return oldDelegate.tab != tab || oldDelegate.progress != progress;
   }
 }

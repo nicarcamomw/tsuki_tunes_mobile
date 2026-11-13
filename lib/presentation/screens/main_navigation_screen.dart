@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../navigation/app_router.dart';
+import '../navigation/main_tab.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
@@ -20,6 +21,7 @@ import '../widgets/mini_player.dart';
 import '../widgets/permission_primer.dart';
 import '../widgets/playback_error_text.dart';
 import '../widgets/tap_scale.dart';
+import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
 import 'search_screen.dart';
@@ -33,8 +35,9 @@ class NavigationEvents {
   static VoidCallback? onHomeRefresh;
   static VoidCallback? onSearchFocus;
   static VoidCallback? onSearchClear;
+  static VoidCallback? onExploreScrollToTop;
   static VoidCallback? onLibraryScrollToTop;
-  static void Function(int)? switchTab;
+  static void Function(MainTab)? switchTab;
   static final ValueNotifier<bool> isPlayerExpanded = ValueNotifier<bool>(false);
 }
 
@@ -75,17 +78,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     });
   }
 
-  final ValueNotifier<int> _tabNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<MainTab> _tabNotifier = ValueNotifier<MainTab>(MainTab.home);
   SpotifyFallbackReason? _lastShownError;
   PlaybackError? _lastShownPlaybackError;
   String? _lastShownSyncError;
 
   // Timestamps para detección de Double-Tap a 0 ms de latencia
   DateTime? _lastTapTime;
-  int? _lastTapIndex;
+  MainTab? _lastTapTab;
 
   // Carga Perezosa (Lazy Loading): Tab 0 (Home) inicia montado; Search y Library se montan al visitarse
-  final Set<int> _loadedTabs = {0};
+  final Set<MainTab> _loadedTabs = {MainTab.home};
   int? _lastSeenLibraryCount;
 
   // Manejo reactivo de Predictive Back para Android 13+ (inicializados inline para sobrevivir a hot-reloads)
@@ -104,10 +107,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     unawaited(ref.read(batteryGuideProvider).load());
   }
 
-  void _switchToTab(int index) {
-    if (index >= 0 && index < 3) {
-      _tabNotifier.value = index;
-    }
+  void _switchToTab(MainTab tab) {
+    _loadedTabs.add(tab);
+    _tabNotifier.value = tab;
   }
 
   @override
@@ -121,7 +123,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   void _updateCanPop() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final canPop = _tabNotifier.value == 0 &&
+      final canPop = _tabNotifier.value == MainTab.home &&
           !(appNavigatorKey.currentState?.canPop() ?? false);
       if (_canPopNotifier.value != canPop) {
         _canPopNotifier.value = canPop;
@@ -320,10 +322,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             final navigator = appNavigatorKey.currentState;
             if (navigator != null && navigator.canPop()) {
               navigator.pop();
-            } else if (_tabNotifier.value != 0) {
+            } else if (_tabNotifier.value != MainTab.home) {
               navigator?.popUntil((route) => route.isFirst);
-              _loadedTabs.add(0);
-              _tabNotifier.value = 0;
+              _loadedTabs.add(MainTab.home);
+              _tabNotifier.value = MainTab.home;
             } else {
               SystemNavigator.pop();
             }
@@ -446,22 +448,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   // Desacoplado con ValueListenableBuilder para evitar rebuilds globales de Scaffold
   Widget _buildCyberBottomNav() {
-    return ValueListenableBuilder<int>(
+    return ValueListenableBuilder<MainTab>(
       valueListenable: _tabNotifier,
-      builder: (context, selectedIndex, _) {
+      builder: (context, selected, _) {
         final currentLibraryCount =
             ref.watch(libraryProvider.select((l) => l.listenedCount));
         final locale = ref.read(localeProvider);
-        final strings = locale.strings;
         _lastSeenLibraryCount ??= currentLibraryCount;
 
-        // Si el usuario entra o está en la pestaña LIBRARY (2), sincronizamos inmediatamente
-        if (selectedIndex == 2) {
+        // Si el usuario entra o está en la biblioteca, sincronizamos inmediatamente
+        if (selected == MainTab.library) {
           _lastSeenLibraryCount = currentLibraryCount;
         }
 
         // El badge SOLO se muestra si el usuario NO está en la biblioteca y hay temas nuevos
-        final hasNewLibraryTracks = selectedIndex != 2 && currentLibraryCount > _lastSeenLibraryCount!;
+        final hasNewLibraryTracks =
+            selected != MainTab.library && currentLibraryCount > _lastSeenLibraryCount!;
 
         return Container(
           decoration: const BoxDecoration(
@@ -482,27 +484,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(
-                    index: 0,
-                    label: strings.navHome,
-                    selectedIndex: selectedIndex,
-                    locale: locale,
-                  ),
-                  _buildNavItem(
-                    index: 1,
-                    label: strings.navSearch,
-                    selectedIndex: selectedIndex,
-                    locale: locale,
-                  ),
-                  _buildNavItem(
-                    index: 2,
-                    label: strings.navLibrary,
-                    selectedIndex: selectedIndex,
-                    showBadge: hasNewLibraryTracks,
-                    locale: locale,
-                  ),
+                  for (final tab in MainTab.values)
+                    Expanded(
+                      child: _buildNavItem(
+                        tab: tab,
+                        selected: selected,
+                        showBadge: tab == MainTab.library && hasNewLibraryTracks,
+                        locale: locale,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -512,120 +503,115 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     );
   }
 
-  void _onNavItemTap(int index) {
+  String _navLabel(MainTab tab, LocaleProvider locale) {
+    final strings = locale.strings;
+    return switch (tab) {
+      MainTab.home => strings.navHome,
+      MainTab.search => strings.navSearch,
+      MainTab.explore => strings.navExplore,
+      MainTab.library => strings.navLibrary,
+    };
+  }
+
+  void _markLibrarySeen() =>
+      _lastSeenLibraryCount = ref.read(libraryProvider).listenedCount;
+
+  /// The shortcut a tab runs when it's tapped again or long-pressed.
+  VoidCallback? _shortcutOf(MainTab tab, {required bool longPress}) => switch (tab) {
+        MainTab.home =>
+          longPress ? NavigationEvents.onHomeOpenProfile : NavigationEvents.onHomeScrollToTop,
+        MainTab.search => longPress ? NavigationEvents.onSearchClear : NavigationEvents.onSearchFocus,
+        MainTab.explore => NavigationEvents.onExploreScrollToTop,
+        MainTab.library => NavigationEvents.onLibraryScrollToTop,
+      };
+
+  void _onNavItemTap(MainTab tab) {
     // Cerrar teclado virtual si el usuario estaba escribiendo
     FocusScope.of(context).unfocus();
 
     final now = DateTime.now();
-    final isDoubleTap = _lastTapIndex == index &&
+    final isDoubleTap = _lastTapTab == tab &&
         _lastTapTime != null &&
         now.difference(_lastTapTime!) < const Duration(milliseconds: 320);
 
     _lastTapTime = now;
-    _lastTapIndex = index;
+    _lastTapTab = tab;
 
     if (isDoubleTap) {
-      _onNavItemDoubleTap(index);
+      _onNavItemDoubleTap(tab);
       return;
     }
 
     Haptics.selection();
     appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
 
-    if (_tabNotifier.value != index) {
-      _loadedTabs.add(index);
-      _tabNotifier.value = index;
-      if (index == 2) {
-        final lib = ref.read(libraryProvider);
-        _lastSeenLibraryCount = lib.listenedCount;
-      }
+    if (_tabNotifier.value != tab) {
+      _loadedTabs.add(tab);
+      _tabNotifier.value = tab;
+      if (tab == MainTab.library) _markLibrarySeen();
     } else {
       // Tap adicional en la pestaña ya activa: Acción inteligente instantánea
-      if (index == 0) {
-        NavigationEvents.onHomeScrollToTop?.call();
-      } else if (index == 1) {
-        NavigationEvents.onSearchFocus?.call();
-      } else if (index == 2) {
-        final lib = ref.read(libraryProvider);
-        if (_lastSeenLibraryCount != lib.listenedCount) {
-          _lastSeenLibraryCount = lib.listenedCount;
-        }
-        NavigationEvents.onLibraryScrollToTop?.call();
-      }
+      if (tab == MainTab.library) _markLibrarySeen();
+      _shortcutOf(tab, longPress: false)?.call();
     }
   }
 
-  void _onNavItemDoubleTap(int index) {
+  void _onNavItemDoubleTap(MainTab tab) {
     FocusScope.of(context).unfocus();
     Haptics.tap();
-    if (index == 0) {
-      NavigationEvents.onHomeScrollToTop?.call();
-      NavigationEvents.onHomeRefresh?.call();
-    } else if (index == 1) {
-      NavigationEvents.onSearchClear?.call();
-    } else if (index == 2) {
-      NavigationEvents.onLibraryScrollToTop?.call();
+    switch (tab) {
+      case MainTab.home:
+        NavigationEvents.onHomeScrollToTop?.call();
+        NavigationEvents.onHomeRefresh?.call();
+      case MainTab.search:
+        NavigationEvents.onSearchClear?.call();
+      case MainTab.explore:
+        NavigationEvents.onExploreScrollToTop?.call();
+      case MainTab.library:
+        NavigationEvents.onLibraryScrollToTop?.call();
     }
   }
 
-  void _onNavItemLongPress(int index) {
+  /// Long-press: opens the tab and runs its shortcut (Home: the profile;
+  /// Search: a clean, focused field; Explore and Library: back to the top).
+  void _onNavItemLongPress(MainTab tab) {
     FocusScope.of(context).unfocus();
     Haptics.longPress();
-    if (index == 0) {
-      // Long-press en HOME: Abre el modal de perfil y configuración de Spotify
-      if (_tabNotifier.value != 0) {
-        _tabNotifier.value = 0;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          NavigationEvents.onHomeOpenProfile?.call();
-        });
-      } else {
-        NavigationEvents.onHomeOpenProfile?.call();
-      }
-    } else if (index == 1) {
-      // Long-press en SEARCH: Limpia el texto de búsqueda y enfoca el teclado
-      if (_tabNotifier.value != 1) {
-        _loadedTabs.add(1);
-        _tabNotifier.value = 1;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          NavigationEvents.onSearchClear?.call();
-        });
-      } else {
-        NavigationEvents.onSearchClear?.call();
-      }
-    } else if (index == 2) {
-      // Long-press en LIBRARY: Scroll to top suave y feedback táctil
-      if (_tabNotifier.value != 2) {
-        _loadedTabs.add(2);
-        _tabNotifier.value = 2;
-        final lib = ref.read(libraryProvider);
-        _lastSeenLibraryCount = lib.listenedCount;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          NavigationEvents.onLibraryScrollToTop?.call();
-        });
-      } else {
-        NavigationEvents.onLibraryScrollToTop?.call();
-      }
+    if (_tabNotifier.value == tab) {
+      _shortcutOf(tab, longPress: true)?.call();
+      return;
     }
+    _loadedTabs.add(tab);
+    _tabNotifier.value = tab;
+    if (tab == MainTab.library) _markLibrarySeen();
+    // The tab may be built for the first time now: its shortcut is read
+    // after the frame, once the tab has registered it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shortcutOf(tab, longPress: true)?.call();
+    });
   }
 
   Widget _buildNavItem({
-    required int index,
-    required String label,
-    required int selectedIndex,
+    required MainTab tab,
+    required MainTab selected,
     required LocaleProvider locale,
     bool showBadge = false,
   }) {
-    final isSelected = selectedIndex == index;
+    final isSelected = selected == tab;
+    final label = _navLabel(tab, locale);
 
     return Semantics(
       selected: isSelected,
       child: TapScale(
       semanticLabel: label,
-      onTap: () => _onNavItemTap(index),
-      onLongPress: () => _onNavItemLongPress(index),
+      onTap: () => _onNavItemTap(tab),
+      onLongPress: () => _onNavItemLongPress(tab),
       scaleDown: 0.85,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        // Four tabs share the width: each fills its quarter, so the whole
+        // column is the touch target, and a long name shrinks to fit.
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -634,7 +620,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               children: [
                 // Ícono temático Cyberpunk con micro-shake, glow y morfología vectorial
                 CyberNavIcon(
-                  index: index,
+                  tab: tab,
                   isSelected: isSelected,
                   size: 24,
                 ),
@@ -667,25 +653,33 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ],
             ),
             const SizedBox(height: 3),
-            Text(
-              label,
-              style: locale.getTextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? AppColors.accent : AppColors.textSecondary,
-                letterSpacing: 1,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: locale.getTextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                  color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                  letterSpacing: 1,
+                ),
               ),
             ),
             const SizedBox(height: 1),
-            Text(
-              locale.strings.navHudSubtitle(index),
-              style: GoogleFonts.notoSansJp(
-                fontSize: 8.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected
-                    ? AppColors.accent.withValues(alpha: 0.9)
-                    : AppColors.textMuted.withValues(alpha: 0.6),
-                letterSpacing: 0.6,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                locale.strings.navHudSubtitle(tab.name),
+                maxLines: 1,
+                style: GoogleFonts.notoSansJp(
+                  fontSize: 8.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  color: isSelected
+                      ? AppColors.accent.withValues(alpha: 0.9)
+                      : AppColors.textMuted.withValues(alpha: 0.6),
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
             CyberTabIndicator(isSelected: isSelected),
@@ -707,10 +701,10 @@ class MainTabsScope extends InheritedWidget {
     required super.child,
   });
 
-  final ValueNotifier<int> tab;
+  final ValueNotifier<MainTab> tab;
 
-  /// Search and Library are built the first time they're shown.
-  final Set<int> loadedTabs;
+  /// Every tab but Home is built the first time it's shown.
+  final Set<MainTab> loadedTabs;
 
   static MainTabsScope of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<MainTabsScope>()!;
@@ -720,32 +714,34 @@ class MainTabsScope extends InheritedWidget {
       tab != oldWidget.tab || loadedTabs != oldWidget.loadedTabs;
 }
 
-/// The three tabs (Home, Search, Library), the first page of the shell
-/// navigator; detail pages are pushed over them.
+/// The four tabs (Home, Search, Explore, Library), the first page of the
+/// shell navigator; detail pages are pushed over them.
 class MainTabsView extends StatelessWidget {
   const MainTabsView({super.key});
+
+  Widget _screen(MainTab tab) => switch (tab) {
+        MainTab.home => const HomeScreen(),
+        MainTab.search => const SearchScreen(),
+        MainTab.explore => const ExploreScreen(),
+        MainTab.library => const AuthGuard(child: LibraryScreen()),
+      };
 
   @override
   Widget build(BuildContext context) {
     final scope = MainTabsScope.of(context);
-    return ValueListenableBuilder<int>(
+    return ValueListenableBuilder<MainTab>(
       valueListenable: scope.tab,
-      builder: (context, activeIndex, _) {
-        scope.loadedTabs.add(activeIndex);
+      builder: (context, active, _) {
+        scope.loadedTabs.add(active);
         return FocusTraversalGroup(
           child: FadeIndexedStack(
-            index: activeIndex,
+            index: active.index,
             duration: const Duration(milliseconds: 150),
             children: [
-              const RepaintBoundary(child: HomeScreen()),
-              RepaintBoundary(
-                child: scope.loadedTabs.contains(1) ? const SearchScreen() : const SizedBox.shrink(),
-              ),
-              RepaintBoundary(
-                child: scope.loadedTabs.contains(2)
-                    ? const AuthGuard(child: LibraryScreen())
-                    : const SizedBox.shrink(),
-              ),
+              for (final tab in MainTab.values)
+                RepaintBoundary(
+                  child: scope.loadedTabs.contains(tab) ? _screen(tab) : const SizedBox.shrink(),
+                ),
             ],
           ),
         );

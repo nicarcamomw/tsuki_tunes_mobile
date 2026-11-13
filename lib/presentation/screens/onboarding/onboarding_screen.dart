@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../navigation/main_tab.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/cyber_glitch_text.dart';

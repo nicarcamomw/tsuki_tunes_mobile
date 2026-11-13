@@ -1,9 +1,24 @@
-part of '../home_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class _WrappedEntryCard extends StatelessWidget {
+import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_strings.dart';
+import '../../core/utils/image_cache_size.dart';
+import '../../domain/entities/artist.dart';
+import '../../domain/entities/radar_release.dart';
+import '../navigation/routes.dart';
+import '../state/app_providers.dart';
+import '../state/locale_provider.dart';
+import 'glass_card.dart';
+import 'haptics.dart';
+import 'wrapped_picker_sheet.dart';
+
+class WrappedEntryCard extends StatelessWidget {
   final LocaleProvider locale;
   final AppStrings strings;
-  const _WrappedEntryCard({required this.locale, required this.strings});
+  const WrappedEntryCard({super.key, required this.locale, required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +86,11 @@ class _WrappedEntryCard extends StatelessWidget {
   }
 }
 
-class _ListeningClockEntryCard extends StatelessWidget {
+class ListeningClockEntryCard extends StatelessWidget {
   final LocaleProvider locale;
   final AppStrings strings;
-  const _ListeningClockEntryCard(
-      {required this.locale, required this.strings});
+  const ListeningClockEntryCard(
+      {super.key, required this.locale, required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +155,9 @@ class _ListeningClockEntryCard extends StatelessWidget {
 }
 
 /// Discovery: new songs to swipe through.
-class _DiscoveryEntryCard extends StatelessWidget {
+class DiscoveryEntryCard extends StatelessWidget {
   final LocaleProvider locale;
-  const _DiscoveryEntryCard({required this.locale});
+  const DiscoveryEntryCard({super.key, required this.locale});
 
   @override
   Widget build(BuildContext context) {
@@ -208,11 +223,12 @@ class _DiscoveryEntryCard extends StatelessWidget {
   }
 }
 
-class _RabbitHoleEntryCard extends StatelessWidget {
+class RabbitHoleEntryCard extends StatelessWidget {
   final LocaleProvider locale;
   final AppStrings strings;
   final Artist? seedArtist;
-  const _RabbitHoleEntryCard({
+  const RabbitHoleEntryCard({
+    super.key,
     required this.locale,
     required this.strings,
     this.seedArtist,
@@ -299,10 +315,10 @@ class _RabbitHoleEntryCard extends StatelessWidget {
   }
 }
 
-class _ReleaseRadarEntryCard extends ConsumerWidget {
+class ReleaseRadarEntryCard extends ConsumerWidget {
   final LocaleProvider locale;
   final AppStrings strings;
-  const _ReleaseRadarEntryCard({required this.locale, required this.strings});
+  const ReleaseRadarEntryCard({super.key, required this.locale, required this.strings});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -17,33 +16,30 @@ import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/radar_release.dart';
 import '../../domain/entities/top_artist.dart';
 import '../../domain/logic/completion_recommendations.dart';
+import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
+import '../state/daily_guess.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
-import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/eco_widgets.dart';
-import '../widgets/glass_card.dart';
+import '../widgets/entry_cards.dart';
+import '../widgets/feature_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/moon_button.dart';
 import '../widgets/profile_bottom_sheet.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/sky_line.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/tap_scale.dart';
-import '../widgets/weekly_challenges_card.dart';
-import '../widgets/wrapped_picker_sheet.dart';
-import 'guess_song_screen.dart';
 import 'main_navigation_screen.dart';
-import 'run_mode_screen.dart';
 import 'streak_screen.dart';
-import 'time_machine_screen.dart';
 
 part 'home/affinity_sheet.dart';
 part 'home/completion_sections.dart';
-part 'home/entry_cards.dart';
 part 'home/gear_profile_button.dart';
 part 'home/home_widgets.dart';
 
@@ -72,7 +68,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _completionLoad = 0;
   bool _isLoading = true;
   bool _hasError = false;
-  bool _dailyDone = false;
 
   @override
   void initState() {
@@ -81,7 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     NavigationEvents.onHomeOpenProfile = openProfile;
     NavigationEvents.onHomeRefresh = _loadHomeData;
     _loadHomeData();
-    _refreshDailyDone();
+    unawaited(DailyGuess.refresh());
     _radar.openRequests.addListener(_openRadarIfRequested);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _openRadarIfRequested());
@@ -314,7 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 title: strings.homeEmptyTitle,
                 subtitle: strings.homeEmptySubtitle,
                 actionLabel: strings.homeEmptyAction,
-                onAction: () => NavigationEvents.switchTab?.call(1),
+                onAction: () => NavigationEvents.switchTab?.call(MainTab.search),
               )
             else ...[
               if (isLoggedIn)
@@ -330,74 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-              SliverToBoxAdapter(child: _buildFeatureCards(locale)),
-
-              // Reasons to come back: the daily streak, and this week's
-              // challenges and their mask.
-              if (isLoggedIn) const SliverToBoxAdapter(child: EcoLevelCard()),
-              if (isLoggedIn)
-                const SliverToBoxAdapter(
-                  child: EcoLocked(feature: EcoFeature.streak, child: StreakCard()),
-                ),
-              const SliverToBoxAdapter(
-                child: EcoLocked(feature: EcoFeature.weekly, child: WeeklyChallengesCard(compact: true)),
-              ),
-
-              if (isLoggedIn && listenedCount > 0)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: EcoLocked(
-                                feature: EcoFeature.wrapped,
-                                child: _WrappedEntryCard(locale: locale, strings: strings))),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: EcoLocked(
-                                feature: EcoFeature.listeningClock,
-                                child: _ListeningClockEntryCard(locale: locale, strings: strings))),
-                      ],
-                    ),
-                  ),
-                ),
-
-              if (isLoggedIn && listenedCount > 0)
-                const SliverToBoxAdapter(
-                  child: EcoLocked(feature: EcoFeature.timeMachine, child: TimeMachineEntryCard()),
-                ),
-
-              if (isLoggedIn && ref.watch(releaseRadarSupportedProvider))
-                SliverToBoxAdapter(
-                  child: _ReleaseRadarEntryCard(locale: locale, strings: strings),
-                ),
-
-              if (isLoggedIn)
-                SliverToBoxAdapter(
-                  child: EcoLocked(
-                    feature: EcoFeature.discovery,
-                    child: _DiscoveryEntryCard(locale: locale),
-                  ),
-                ),
-
-              if (hasArtists)
-                SliverToBoxAdapter(
-                  child: EcoLocked(
-                    feature: EcoFeature.rabbitHole,
-                    child: _RabbitHoleEntryCard(
-                    locale: locale,
-                    strings: strings,
-                    seedArtist: _topArtistsDisplay.isNotEmpty &&
-                            _topArtistsDisplay.first.artist != null
-                        ? _topArtistsDisplay.first.artist!
-                        : _featuredArtists.isNotEmpty
-                            ? _featuredArtists.first
-                            : null,
-                  ),
-                  ),
-                ),
+              SliverToBoxAdapter(child: _buildToday(locale, isLoggedIn: isLoggedIn)),
 
               ..._buildTopArtistsSlivers(locale),
               if (isLoggedIn && listenedCount > 0)
@@ -485,7 +413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 // The title takes all the room left by the (?)
                 // button: a Spacer here would take half of it.
                 Expanded(
-                  child: _SectionTitle(
+                  child: SectionTitle(
                     locale: locale,
                     text: strings.topArtistsTitle,
                     maxLines: 2,
@@ -553,7 +481,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
-          child: _SectionTitle(locale: locale, text: strings.topArtistsTitle),
+          child: SectionTitle(locale: locale, text: strings.topArtistsTitle),
         ),
       ),
       SliverList(
@@ -600,7 +528,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-          child: _SectionTitle(locale: locale, text: strings.latestReleasesTitle),
+          child: SectionTitle(locale: locale, text: strings.latestReleasesTitle),
         ),
       ),
       SliverToBoxAdapter(
@@ -639,7 +567,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-            child: _SectionTitle(
+            child: SectionTitle(
               locale: locale,
               text: locale.strings.becauseYouCompleted(rec.album.title),
               maxLines: 2,
@@ -679,7 +607,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-          child: _SectionTitle(locale: locale, text: locale.strings.recommendedTitle),
+          child: SectionTitle(locale: locale, text: locale.strings.recommendedTitle),
         ),
       ),
       SliverToBoxAdapter(
@@ -696,82 +624,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
   }
 
-  Future<void> _refreshDailyDone() async {
-    final done = await GuessSongScreen.isDailyDone();
-    if (mounted && done != _dailyDone) setState(() => _dailyDone = done);
-  }
-
   Future<void> _openGuessGame() async {
     if (!ecoAllows(context, EcoFeature.guessSong)) return;
     Haptics.tap();
-    await const GuessSongRoute().push(context);
-    await _refreshDailyDone();
+    await const GuessSongRoute().push<void>(context);
+    await DailyGuess.refresh();
   }
 
-  Widget _buildFeatureCards(LocaleProvider locale) {
+  /// One card for today, the most pressing of: new releases on the radar,
+  /// the daily game still to play, the streak, the Eco level. The rest
+  /// of what there is to do lives in Explore, a tap from the heading.
+  Widget _buildToday(LocaleProvider locale, {required bool isLoggedIn}) {
     final strings = locale.strings;
-    final ambientCount = ref.watch(ambientProvider.select(
-        (a) => a.isPlaying ? a.activeSounds.length : 0));
-    final run = ref.watch(runProvider.select(
-        (r) => (r.active, r.active ? r.reading.spm?.round() : null, r.enabled)));
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        children: [
-          Row(
+    final radarSupported = isLoggedIn && ref.watch(releaseRadarSupportedProvider);
+    final guessOpen =
+        ref.watch(maskProvider.select((m) => m.hasFeature(EcoFeature.guessSong)));
+    final streakOpen = ref.watch(maskProvider.select((m) => m.hasFeature(EcoFeature.streak)));
+    return ValueListenableBuilder<List<RadarRelease>>(
+      valueListenable: _radar.releases,
+      builder: (context, releases, _) => ValueListenableBuilder<bool>(
+        valueListenable: DailyGuess.done,
+        builder: (context, dailyDone, _) {
+          final Widget? card;
+          if (radarSupported && releases.any((r) => r.isUnread)) {
+            card = ReleaseRadarEntryCard(locale: locale, strings: strings);
+          } else if (guessOpen && !dailyDone) {
+            card = Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: FeatureCard(
+                locale: locale,
+                icon: Icons.music_note_rounded,
+                color: AppColors.accent,
+                title: strings.guessTitle,
+                subtitle: strings.guessModeDaily,
+                highlight: true,
+                onTap: _openGuessGame,
+              ),
+            );
+          } else if (isLoggedIn && streakOpen) {
+            card = const StreakCard();
+          } else if (isLoggedIn) {
+            // Nothing unlocked yet: the way to the next level.
+            card = const EcoLevelCard();
+          } else {
+            card = null;
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _FeatureCard(
-                  locale: locale,
-                  icon: Icons.music_note_rounded,
-                  color: AppColors.accent,
-                  title: strings.guessTitle,
-                  subtitle: _dailyDone ? strings.guessDailyDone : strings.guessModeDaily,
-                  highlight: !_dailyDone,
-                  onTap: _openGuessGame,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 8, 2),
+                child: Row(
+                  children: [
+                    Expanded(child: SectionTitle(locale: locale, text: strings.homeToday)),
+                    TextButton.icon(
+                      onPressed: () {
+                        Haptics.selection();
+                        NavigationEvents.switchTab?.call(MainTab.explore);
+                      },
+                      iconAlignment: IconAlignment.end,
+                      icon: const Icon(Icons.chevron_right, size: 18),
+                      label: Text(
+                        strings.navExplore,
+                        style: locale.getTextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accentText,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _FeatureCard(
-                  locale: locale,
-                  icon: Icons.water_drop_rounded,
-                  color: AppColors.neonCyan,
-                  title: strings.ambientTitle,
-                  subtitle: ambientCount > 0
-                      ? strings.ambientPlayingCount(ambientCount)
-                      : strings.homeAmbientCardSubtitle,
-                  highlight: ambientCount > 0,
-                  onTap: () {
-                    if (!ecoAllows(context, EcoFeature.ambient)) return;
-                    Haptics.tap();
-                    AmbientMixerSheet.show(context);
-                  },
-                ),
-              ),
+              ?card,
             ],
-          ),
-          if (run.$3) ...[
-            const SizedBox(height: 10),
-            _FeatureCard(
-              locale: locale,
-              icon: Icons.directions_run_rounded,
-              color: AppColors.neonGreen,
-              title: strings.runTitle,
-              subtitle: run.$1 ? strings.runCardActive(run.$2) : strings.runCardSubtitle,
-              highlight: run.$1,
-              onTap: () {
-                if (!ecoAllows(context, EcoFeature.running)) return;
-                Haptics.tap();
-                RunModeScreen.open(context);
-              },
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }
-
 }
 
 class _TopArtistDisplay {

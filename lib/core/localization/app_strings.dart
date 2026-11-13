@@ -45,13 +45,19 @@ class AppStrings {
   // --- Bottom Navigation ---
   String get navHome => language.navHome;
   String get navSearch => language.navSearch;
+  String get navExplore => language.navExplore;
   String get navLibrary => language.navLibrary;
 
-  String navHudSubtitle(int index) => _l.navHudSubtitle(switch (index) {
-        0 => 'home',
-        1 => 'search',
-        _ => 'library',
-      });
+  /// [tab] is the tab's name: home, search, explore or library.
+  String navHudSubtitle(String tab) => _l.navHudSubtitle(tab);
+
+  // --- Explore ---
+  String get exploreTelemetry => _l.exploreTelemetry;
+  String get exploreDiscover => _l.exploreDiscover;
+  String get explorePlay => _l.explorePlay;
+  String get explorePath => _l.explorePath;
+  String get exploreLoreSubtitle => _l.exploreLoreSubtitle;
+  String get homeToday => _l.homeToday;
 
   // --- Telemetría Militar Cyberpunk ---
   String get homeTelemetry => _l.homeTelemetry;
