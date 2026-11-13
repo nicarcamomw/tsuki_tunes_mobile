@@ -66,6 +66,15 @@ class LoreScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // P-11: each volume's progress at a glance.
+                _TomoProgress(
+                  locale: locale,
+                  label: strings.loreChaptersOpen(
+                      TsukiLore.chaptersOf(tomo.number).where((c) => TsukiLore.isOpen(c, level)).length,
+                      TsukiLore.chaptersOf(tomo.number).length),
+                  open: TsukiLore.chaptersOf(tomo.number).where((c) => TsukiLore.isOpen(c, level)).length,
+                  total: TsukiLore.chaptersOf(tomo.number).length,
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -138,6 +147,47 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A volume's "3/5" and a thin bar, in gold once it's all open.
+class _TomoProgress extends StatelessWidget {
+  final LocaleProvider locale;
+  final String label;
+  final int open;
+  final int total;
+  const _TomoProgress({required this.locale, required this.label, required this.open, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final done = total > 0 && open == total;
+    return Semantics(
+      label: label,
+      excludeSemantics: true,
+      child: SizedBox(
+        width: 48,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('$open/$total',
+                style: locale.getTextStyle(
+                    fontSize: AppFontSize.caption,
+                    fontWeight: FontWeight.w800,
+                    color: done ? _gold : AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: LinearProgressIndicator(
+                value: total == 0 ? 0 : open / total,
+                minHeight: 3,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                color: done ? _gold : _gold.withValues(alpha: 0.55),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
