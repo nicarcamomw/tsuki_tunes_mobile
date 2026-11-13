@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="月"
-        android:textColor="#FFFF6B9D"
+        android:textColor="@color/tsuki_sakura"
         android:textSize="16sp"
         android:textStyle="bold"
         android:fontFamily="sans-serif-medium" />
@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:text="Moon Phase"
-        android:textColor="#99E5E5E5"
+        android:textColor="@color/tsuki_text_muted"
         android:textSize="10sp" />
 
     <!-- Divider line -->
@@ -44,7 +44,7 @@
         android:layout_width="40dp"
         android:layout_height="1dp"
         android:layout_marginTop="10dp"
-        android:background="#33FF6B9D" />
+        android:background="@color/tsuki_sakura_line" />
 
     <!-- Now playing section -->
     <LinearLayout
@@ -60,8 +60,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="♪ now playing"
-            android:textColor="#66E5E5E5"
-            android:textSize="9sp"
+            android:textColor="@color/tsuki_text_muted"
+            android:textSize="10sp"
             android:letterSpacing="0.15" />
 
         <TextView
@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="—"
-            android:textColor="#FFE5E5E5"
+            android:textColor="@color/tsuki_text_primary"
             android:textSize="12sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -83,7 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="1dp"
             android:text=""
-            android:textColor="#99888888"
+            android:textColor="@color/tsuki_text_secondary"
             android:textSize="10sp"
             android:maxLines="1"
             android:ellipsize="end"
