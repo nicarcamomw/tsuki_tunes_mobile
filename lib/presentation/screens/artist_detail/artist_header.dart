@@ -60,6 +60,27 @@ class _ArtistHeroAppBar extends StatelessWidget {
         onPressed: () => Navigator.of(context).pop(),
       ),
       actions: [
+        IconButton(
+          tooltip: strings.shareAction,
+          icon: Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.bgDeep.withValues(alpha: 0.7),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Icon(Icons.share_rounded,
+                color: AppColors.accent, size: 20, semanticLabel: strings.shareAction),
+          ),
+          onPressed: () {
+            Haptics.tap();
+            SharePlus.instance.share(ShareParams(
+                text: strings.artistShareText(artist.name, appLink('artist/${artist.id}'))));
+          },
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: Tooltip(

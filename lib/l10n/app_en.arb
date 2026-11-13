@@ -886,5 +886,8 @@
   "wrappedWholeYear": "All of {year}",
   "wrappedMonthlyLabel": "MONTHLY",
   "wrappedYearlyLabel": "YEARLY",
-  "wrappedHomeSubtitle": "MONTH & YEAR"
+  "wrappedHomeSubtitle": "MONTH & YEAR",
+  "shareAction": "Share",
+  "albumShareText": "“{title}” by {artist}, on Tsuki Tunes: {link}",
+  "artistShareText": "{name} on Tsuki Tunes: {link}"
 }

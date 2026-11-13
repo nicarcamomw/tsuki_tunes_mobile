@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
@@ -219,6 +221,17 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             ),
             centerTitle: true,
             actions: [
+              IconButton(
+                tooltip: strings.shareAction,
+                icon: Icon(Icons.share_rounded,
+                    color: AppColors.accent, size: 20, semanticLabel: strings.shareAction),
+                onPressed: () {
+                  Haptics.tap();
+                  SharePlus.instance.share(ShareParams(
+                      text: strings.albumShareText(
+                          albumData.title, albumData.artistName, appLink('album/${albumData.id}'))));
+                },
+              ),
               if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
                 IconButton(

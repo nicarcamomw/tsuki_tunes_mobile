@@ -1790,6 +1790,12 @@ class AppStrings {
   String get profileShare => _l.profileShare;
   String profileShareText(String link) => _l.profileShareText(link);
   String get profileUnavailable => _l.profileUnavailable;
+
+  // --- Sharing an album or an artist (an app link: appLink) ---
+  String get shareAction => _l.shareAction;
+  String albumShareText(String title, String artist, String link) =>
+      _l.albumShareText(title, artist, link);
+  String artistShareText(String name, String link) => _l.artistShareText(name, link);
   String get profileMakePublicFirst => _l.profileMakePublicFirst;
 
 

@@ -31,6 +31,14 @@ void main() {
           '/artist/27/albums?filter=single');
     });
 
+    // What the share buttons send (album, artist, profile) opens that page.
+    test('shared links open the page they were shared from', () {
+      expect(appLink('album/302127'), '$deepLinkScheme://album/302127');
+      expect(deepLinkLocation(Uri.parse(appLink('album/302127'))), '/album/302127');
+      expect(deepLinkLocation(Uri.parse(appLink('artist/27'))), '/artist/27');
+      expect(deepLinkLocation(Uri.parse(appLink('user/abc123'))), '/user/abc123');
+    });
+
     test('other links and app locations are left alone', () {
       expect(deepLinkLocation(Uri.parse('/album/123')), isNull);
       expect(deepLinkLocation(Uri.parse('https://deezer.com/album/123')), isNull);

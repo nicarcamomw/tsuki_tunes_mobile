@@ -886,5 +886,8 @@
   "wrappedWholeYear": "{year}年の一年",
   "wrappedMonthlyLabel": "月間",
   "wrappedYearlyLabel": "年間",
-  "wrappedHomeSubtitle": "月と年"
+  "wrappedHomeSubtitle": "月と年",
+  "shareAction": "共有",
+  "albumShareText": "{artist}の『{title}』をTsuki Tunesで：{link}",
+  "artistShareText": "Tsuki Tunesで{name}を：{link}"
 }

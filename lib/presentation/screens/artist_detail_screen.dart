@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_environment.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../core/utils/album_categorizer.dart';

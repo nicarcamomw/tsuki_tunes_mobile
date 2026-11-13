@@ -2097,5 +2097,31 @@
   },
   "wrappedMonthlyLabel": "MENSUAL",
   "wrappedYearlyLabel": "ANUAL",
-  "wrappedHomeSubtitle": "MES Y AÑO"
+  "wrappedHomeSubtitle": "MES Y AÑO",
+  "shareAction": "Compartir",
+  "albumShareText": "«{title}» de {artist}, en Tsuki Tunes: {link}",
+  "@albumShareText": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "artist": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "artistShareText": "{name} en Tsuki Tunes: {link}",
+  "@artistShareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -10,6 +10,10 @@ final bool isDevEnvironment = appFlavor == 'dev';
 /// so links open the build they're meant for).
 final String deepLinkScheme = isDevEnvironment ? 'tsukitunes-dev' : 'tsukitunes';
 
+/// A link to a page of the app, to share: appLink('album/123') is
+/// tsukitunes://album/123, which opens that page (app_router.dart).
+String appLink(String path) => '$deepLinkScheme://$path';
+
 /// Where Spotify sends the sign-in back to; each environment's scheme is
 /// registered in the Spotify app's dashboard and in the manifest.
 final String spotifyRedirectScheme =
