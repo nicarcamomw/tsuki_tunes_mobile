@@ -7,8 +7,8 @@ Documento de trabajo para ir apartado por apartado. Cada tarea tiene un código 
 - App Flutter de música. Código en `lib/`, interfaz en `lib/presentation/` (pantallas en `screens/`, piezas compartidas en `widgets/`, estado en `state/`).
 - Tema y colores: `lib/core/theme/cyber_theme.dart` y `lib/core/constants/app_colors.dart`.
 - Tamaños de letra: `lib/core/theme/app_font_size.dart` (`AppFontSize`). Ningún `fontSize` con número suelto en `presentation/`.
-- Textos: `lib/l10n/app_es.arb` (plantilla), `app_en.arb`, `app_ja.arb`, expuestos por `lib/core/localization/app_strings.dart`. Tras tocar un `.arb`: `flutter gen-l10n`.
-- Identidad visual: cyberpunk japonés. Fondo oscuro, acento carmesí, neones cian/púrpura/verde, luna, máscaras Oni/Tengu/Hannya, tarjetas de "tinta" (`GlassCard`), subtítulos en japonés tipo HUD.
+- Textos: `lib/l10n/app_es.arb` (plantilla), `app_en.arb`, `app_ja.arb`, expuestos por `lib/core/localization/app_strings.dart`. El código de traducciones se regenera solo en cada `flutter pub get` y en cada build (no se commitea); `test/l10n_test.dart` falla si un texto falta en alguno de los tres idiomas.
+- Identidad visual: cyberpunk japonés. Fondo oscuro, acento rojo puro (`AppColors.accent`, `#FF1919`), neones cian/púrpura/verde, luna, máscaras (Oni, Tengu y Hannya como ilustraciones base, más unas 130 coleccionables en `lib/domain/entities/oni_mask.dart`: Namahage, Raijin, Kitsune…), tarjetas de "tinta" (`GlassCard`), subtítulos en japonés tipo HUD.
 
 ## 2. Reglas (no negociables)
 
