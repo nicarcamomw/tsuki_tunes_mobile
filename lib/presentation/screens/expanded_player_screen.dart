@@ -400,7 +400,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     Text(
                       strings.playingFrom,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
                         letterSpacing: 2.0,

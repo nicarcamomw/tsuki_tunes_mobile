@@ -272,7 +272,7 @@ class TrackTile extends ConsumerWidget {
                             child: Text(
                               'E',
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.caption,
+                                fontSize: AppFontSize.micro,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textSecondary,
                               ),

@@ -258,7 +258,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                                 Text(
                                   strings.activeStatus,
                                   style: locale.getTextStyle(
-                                    fontSize: AppFontSize.caption,
+                                    fontSize: AppFontSize.micro,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.accent,
                                     letterSpacing: 0.6,

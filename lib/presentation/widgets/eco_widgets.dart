@@ -292,7 +292,7 @@ class EcoLocked extends ConsumerWidget {
                     Icon(Icons.lock_rounded, size: 10, color: color),
                     const SizedBox(width: 3),
                     Text(strings.ecoLevelShort(feature.level),
-                        style: TextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.6)),
+                        style: TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.6)),
                   ],
                 ),
               ),

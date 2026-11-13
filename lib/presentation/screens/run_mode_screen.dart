@@ -700,7 +700,7 @@ class _SessionStatsState extends ConsumerState<_SessionStats> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
                   letterSpacing: 1,

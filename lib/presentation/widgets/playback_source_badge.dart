@@ -42,7 +42,7 @@ class PlaybackSourceBadge extends ConsumerWidget {
             children: [
               Text(
                 label,
-                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: PlayerTint.of(context), letterSpacing: 2),
+                style: locale.getTextStyle(fontSize: AppFontSize.micro, color: PlayerTint.of(context), letterSpacing: 2),
               ),
               const SizedBox(width: 4),
               Icon(Icons.info_outline_rounded, size: 11, color: PlayerTint.of(context).withValues(alpha: 0.7)),

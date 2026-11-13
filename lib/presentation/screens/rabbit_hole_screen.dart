@@ -1606,7 +1606,7 @@ class _FocusCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: statusColor,
                         letterSpacing: 1,
@@ -1708,7 +1708,7 @@ class _FocusAction extends StatelessWidget {
                   Text(
                     label,
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w800,
                       color: enabled ? AppColors.textBright : AppColors.textMuted,
                       letterSpacing: 1,
@@ -1748,7 +1748,7 @@ class _Stat extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.caption,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted,
             letterSpacing: 1.5,

@@ -91,7 +91,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                 Text(
                   '${strings.affinityFormulaLabel}  ',
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.caption,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 1.4,

@@ -1072,7 +1072,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
             child: Text(
               '${GuessGame.clipSeconds[i]}s',
               style: locale.getTextStyle(
-                fontSize: AppFontSize.caption,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: isCurrent ? Colors.white : AppColors.textMuted,
               ),
@@ -1100,7 +1100,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     final unlocked = _unlockedSeconds / total;
     final head = (_clipPos.inMilliseconds / (total * 1000)).clamp(0.0, 1.0);
     final timeStyle = locale.getTextStyle(
-      fontSize: AppFontSize.caption,
+      fontSize: AppFontSize.micro,
       fontWeight: FontWeight.w700,
       color: AppColors.textMuted,
       letterSpacing: 0.5,
@@ -1324,7 +1324,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: locale.getTextStyle(
-                                                  fontSize: AppFontSize.caption, color: AppColors.textMuted),
+                                                  fontSize: AppFontSize.micro, color: AppColors.textMuted),
                                             ),
                                         ],
                                       ),

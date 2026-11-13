@@ -646,7 +646,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: AppFontSize.caption,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1.2,

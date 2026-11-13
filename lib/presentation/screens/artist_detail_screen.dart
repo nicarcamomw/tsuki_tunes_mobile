@@ -668,7 +668,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             strings.artistFansCompact(
                                 Formatters.formatNumber(artist.fansCount)),
                             style: locale.getTextStyle(
-                              fontSize: AppFontSize.caption,
+                              fontSize: AppFontSize.micro,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,
@@ -920,7 +920,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   label.toUpperCase(),
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.caption,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                     letterSpacing: 0.8,

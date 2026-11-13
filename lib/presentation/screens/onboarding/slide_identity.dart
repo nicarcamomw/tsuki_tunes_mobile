@@ -56,7 +56,7 @@ class _IdentitySlide extends StatelessWidget {
             child: Text(
               strings.onboardingSlide1Badge,
               style: locale.getTextStyle(
-                fontSize: AppFontSize.caption,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.6,
@@ -310,7 +310,7 @@ class _StateSample extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: AppFontSize.caption,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w800,
             color: color,
             letterSpacing: 0.8,

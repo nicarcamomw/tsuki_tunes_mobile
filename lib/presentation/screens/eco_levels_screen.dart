@@ -264,7 +264,7 @@ class _ColorPicker extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
             ],
           ),

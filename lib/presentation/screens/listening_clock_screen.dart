@@ -317,7 +317,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
             child: Text(
               strings.clockTotalYear(_totalTracks),
               style: GoogleFonts.notoSansJp(
-                fontSize: AppFontSize.caption,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accent.withValues(alpha: 0.5),
                 letterSpacing: 2,
@@ -609,7 +609,7 @@ class _SharinganRadarPainter extends CustomPainter {
         text: TextSpan(
           text: '$i',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: AppFontSize.caption,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted.withValues(alpha: 0.8),
           ),
@@ -741,7 +741,7 @@ class _DailyActivityBars extends StatelessWidget {
                   Text(
                     month.toString().padLeft(2, '0'),
                     style: locale.getTextStyle(
-                      fontSize: AppFontSize.caption,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: month == currentMonth && year == now.year
                           ? AppColors.neonCyan

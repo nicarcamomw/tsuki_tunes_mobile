@@ -25,7 +25,7 @@ Widget _buildSlide3Player(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide3Badge,
             style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
               letterSpacing: 1.6,

@@ -69,7 +69,7 @@ class _QueueView extends StatelessWidget {
                     Text(
                       '${strings.radioLabel} · ${modeLabel.toUpperCase()}',
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,
                         letterSpacing: 1.4,
@@ -98,7 +98,7 @@ class _QueueView extends StatelessWidget {
                 child: Text(
                   strings.radioTune,
                   style: locale.getTextStyle(
-                    fontSize: AppFontSize.caption,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 0.8,

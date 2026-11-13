@@ -312,7 +312,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
             .clamp(0.0, (phases.length * _itemWidth - c.maxWidth).clamp(0.0, double.infinity)),
       );
       return SizedBox(
-        height: 116,
+        height: 112,
         child: ListView.builder(
           controller: _scroll,
           scrollDirection: Axis.horizontal,
@@ -342,7 +342,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                           ? Text(
                               strings.moonToday,
                               style: locale.getTextStyle(
-                                fontSize: AppFontSize.caption,
+                                fontSize: AppFontSize.micro,
                                 fontWeight: FontWeight.w900,
                                 color: widget.accent,
                                 letterSpacing: 1.2,
@@ -375,7 +375,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
+                        fontSize: AppFontSize.micro,
                         height: 1.15,
                         fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
                         color: isToday ? AppColors.textBright : AppColors.textSecondary,
@@ -384,7 +384,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                     const Spacer(),
                     Text(
                       strings.shortDate(p.time.toLocal()),
-                      style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
+                      style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
                     ),
                   ],
                 ),
@@ -450,7 +450,7 @@ class _PhaseTile extends ConsumerWidget {
         Text(
           '${strings.shortDate(local)} · $hh:$mm',
           textAlign: TextAlign.center,
-          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
       ],
     );
