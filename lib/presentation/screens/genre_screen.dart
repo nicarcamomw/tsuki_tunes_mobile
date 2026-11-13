@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/logger.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
@@ -11,6 +12,8 @@ import '../widgets/artist_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
+
+final _log = Log.named('GenreScreen');
 
 /// A genre opened from the search screen: its best known artists and its
 /// most played songs right now.
@@ -50,7 +53,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         _loading = false;
       });
     } catch (e) {
-      debugPrint('[GenreScreen] load ${widget.genreId} error: $e');
+      _log.severe('load ${widget.genreId} error: $e');
       if (mounted) {
         setState(() {
           _loading = false;
