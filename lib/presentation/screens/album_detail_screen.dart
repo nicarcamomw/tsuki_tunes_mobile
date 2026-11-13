@@ -20,6 +20,7 @@ import '../widgets/album_progress_bar.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/listened_undo.dart';
 import '../widgets/pop_on_change.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/spectrum_wave_visualizer.dart';
@@ -165,7 +166,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
 
   void _toggleAll(Album albumData) {
     Haptics.confirm();
-    ref.read(toggleAlbumListenedProvider)(albumData);
+    final toggle = ref.read(toggleAlbumListenedProvider);
+    if (toggle.isAllListened(albumData)) {
+      // A whole album unmarked by mistake comes back with one tap.
+      unawaited(unmarkWithUndo(context, ref, [for (final t in albumData.tracks) t.id]));
+    } else {
+      unawaited(toggle(albumData));
+    }
   }
 
   @override

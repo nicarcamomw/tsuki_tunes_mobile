@@ -17,11 +17,11 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/cover_colors.dart';
 import '../state/locale_provider.dart';
-import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
+import '../widgets/listened_undo.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/motion.dart';
 import '../widgets/oni_mask_icon.dart';
@@ -503,7 +503,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           if (!ref.watch(authProvider.select((a) => a.isGuest)))
             TapScale(
               semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
-              onTap: () => ref.read(toggleTrackListenedProvider)(track),
+              onTap: () => unawaited(toggleListenedWithUndo(context, ref, track)),
               scaleDown: 0.8,
               child: Padding(
                 padding: const EdgeInsets.all(8),

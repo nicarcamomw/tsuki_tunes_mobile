@@ -903,5 +903,6 @@
   "previewReasonTrackUnavailable": "This song isn't on Spotify (or there's no sure match), so its preview plays.",
   "previewReasonOpenApp": "Spotify didn't answer on this phone. Open the Spotify app and press play again.",
   "previewReasonDisabled": "Spotify is paused in Tsuki for a moment, so previews play.",
-  "previewReasonOther": "Spotify couldn't play this song, so its preview plays."
+  "previewReasonOther": "Spotify couldn't play this song, so its preview plays.",
+  "unmarkedSongs": "{count, plural, =1{Song unmarked} other{{count} songs unmarked}}"
 }

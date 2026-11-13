@@ -1,5 +1,6 @@
 import '../entities/album.dart';
 import '../entities/artist.dart';
+import '../entities/listened_track.dart';
 import '../entities/track.dart';
 
 /// The user's library: songs marked as listened (and so the albums they
@@ -15,6 +16,13 @@ abstract interface class LibraryRepository {
   /// songs the album has, so it can count as completed.
   Future<void> markAlbumTracks(List<Track> tracks, {String? albumId, int? totalTracks});
   Future<void> unmarkAlbumTracks(List<String> trackIds);
+
+  /// The listened records of [trackIds] as they are now (to put back if an
+  /// unmark is undone).
+  List<ListenedTrackData> listenedRecords(Iterable<String> trackIds);
+
+  /// Puts [records] back as listened, with their own dates (undo).
+  Future<void> restoreListened(List<ListenedTrackData> records);
   void registerAlbumTrackCount(String albumId, int count);
   int getAlbumTracksCount(String albumId);
   bool isAlbumCompleted(String albumId, {int albumTracksCount = 0});

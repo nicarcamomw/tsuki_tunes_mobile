@@ -312,6 +312,19 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     await _listened.unmarkAll(uid, trackIds);
   }
 
+  @override
+  List<ListenedTrackData> listenedRecords(Iterable<String> trackIds) {
+    final wanted = trackIds.toSet();
+    return [for (final t in _listened.tracks) if (wanted.contains(t.trackId)) t];
+  }
+
+  @override
+  Future<void> restoreListened(List<ListenedTrackData> records) async {
+    final uid = _writeUid;
+    if (uid == null) return;
+    await _listened.restoreAll(uid, records);
+  }
+
   // --- Testing hooks ---
 
   @visibleForTesting

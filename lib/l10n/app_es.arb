@@ -2137,5 +2137,13 @@
   "previewReasonTrackUnavailable": "Esta canción no está en Spotify (o no hay una versión segura), así que suena su vista previa.",
   "previewReasonOpenApp": "Spotify no respondió en este teléfono. Abre la app de Spotify y vuelve a darle a play.",
   "previewReasonDisabled": "Spotify está en pausa por un momento en Tsuki, así que suenan las vistas previas.",
-  "previewReasonOther": "Spotify no pudo reproducir esta canción, así que suena su vista previa."
+  "previewReasonOther": "Spotify no pudo reproducir esta canción, así que suena su vista previa.",
+  "unmarkedSongs": "{count, plural, =1{Canción desmarcada} other{{count} canciones desmarcadas}}",
+  "@unmarkedSongs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -1689,6 +1689,7 @@ class AppStrings {
   String get stoppedPlayback => _l.stoppedPlayback;
 
   String get undo => _l.undo;
+  String unmarkedSongs(int count) => _l.unmarkedSongs(count);
 
   // Gesture hints
   String get swipeToRemoveHint => _l.swipeToRemoveHint;

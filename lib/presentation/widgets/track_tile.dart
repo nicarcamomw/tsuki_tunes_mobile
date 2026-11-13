@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -13,6 +15,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import 'haptics.dart';
+import 'listened_undo.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'pop_on_change.dart';
@@ -318,7 +321,7 @@ class TrackTile extends ConsumerWidget {
                       if (isListened && onUnmark != null) {
                         onUnmark!();
                       } else {
-                        ref.read(toggleTrackListenedProvider)(track);
+                        unawaited(toggleListenedWithUndo(context, ref, track));
                       }
                     },
                     scaleDown: 0.8,

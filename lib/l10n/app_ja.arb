@@ -903,5 +903,6 @@
   "previewReasonTrackUnavailable": "この曲はSpotifyにない（または確実な一致がない）ため、プレビューを再生しています。",
   "previewReasonOpenApp": "このスマホでSpotifyが応答しませんでした。Spotifyアプリを開いて、もう一度再生してください。",
   "previewReasonDisabled": "TsukiでのSpotify再生は一時停止中のため、プレビューを再生しています。",
-  "previewReasonOther": "Spotifyでこの曲を再生できなかったため、プレビューを再生しています。"
+  "previewReasonOther": "Spotifyでこの曲を再生できなかったため、プレビューを再生しています。",
+  "unmarkedSongs": "{count}曲を未聴に戻しました"
 }

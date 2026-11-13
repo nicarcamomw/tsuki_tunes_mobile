@@ -32,7 +32,9 @@ ListenedTrackData listenedTrackFromFirestore(Map<String, dynamic> data,
 }
 
 extension ListenedTrackFirestore on ListenedTrackData {
-  Map<String, dynamic> toFirestore() => {
+  /// [keepDate] sends the record's own date (an undone unmark puts a song
+  /// back where it was); otherwise the server's clock stamps it.
+  Map<String, dynamic> toFirestore({bool keepDate = false}) => {
         'trackId': trackId,
         'title': title,
         'artistName': artistName,
@@ -41,7 +43,7 @@ extension ListenedTrackFirestore on ListenedTrackData {
         'coverUrl': coverUrl,
         'previewUrl': previewUrl,
         'duration': duration,
-        'listenedAt': FieldValue.serverTimestamp(),
+        'listenedAt': keepDate && listenedAt != null ? Timestamp.fromDate(listenedAt!) : FieldValue.serverTimestamp(),
         if (hasArtistList) 'artists': artists,
       };
 }
@@ -628,26 +630,40 @@ class ListenedTracksRepository {
         if (!_ids.contains(t.id) && seen.add(t.id)) t,
     ];
     if (toMark.isEmpty) return;
-    _uid = uid;
+    await _markData(uid, toMark.map(ListenedTrackData.fromTrack).toList());
+  }
 
-    final data = toMark.map(ListenedTrackData.fromTrack).toList();
+  /// Puts back songs just unmarked, as they were (their date included), so
+  /// undoing an unmark doesn't move them to the top of the history.
+  Future<void> restoreAll(String uid, List<ListenedTrackData> records) async {
+    final seen = <String>{};
+    final toRestore = [
+      for (final r in records)
+        if (!_ids.contains(r.trackId) && seen.add(r.trackId)) r,
+    ];
+    if (toRestore.isEmpty) return;
+    await _markData(uid, toRestore, keepDate: true);
+  }
+
+  Future<void> _markData(String uid, List<ListenedTrackData> data, {bool keepDate = false}) async {
+    _uid = uid;
     _localVersion++;
     _tracks.addAll(data);
-    _ids.addAll(toMark.map((t) => t.id));
-    for (final t in toMark) {
-      _pendingUnmarks.remove(t.id);
-      _pendingMarks.add(t.id);
+    _ids.addAll(data.map((d) => d.trackId));
+    for (final d in data) {
+      _pendingUnmarks.remove(d.trackId);
+      _pendingMarks.add(d.trackId);
     }
-    if (toMark.length > 1 || (toMark.first.albumId.isNotEmpty && _albums.hasTrackCount(toMark.first.albumId))) {
+    if (data.length > 1 || (data.first.albumId.isNotEmpty && _albums.hasTrackCount(data.first.albumId))) {
       _albums.prune(forceSave: true);
     }
     _lastSyncError = null;
     _changed();
 
-    final ids = [for (final t in toMark) t.id];
+    final ids = [for (final d in data) d.trackId];
     await _store.markListenedLocally(uid, [for (final d in data) d.toJson()], () async {
       for (final chunk in ids.slices(_markBatch)) {
-        await _outbox.enqueue(uid, markKind, chunk.first, {'ids': chunk});
+        await _outbox.enqueue(uid, markKind, chunk.first, {'ids': chunk, if (keepDate) 'keepDate': true});
       }
     });
     _outbox.kick(uid);
@@ -687,6 +703,7 @@ class ListenedTracksRepository {
   Future<void> _sendMarks(OutboxEntry entry) async {
     final uid = entry.uid;
     final ids = _idsOf(entry);
+    final keepDate = entry.payload['keepDate'] == true;
     final rows = (await _store.listenedByIds(uid, ids)).map(ListenedTrackData.fromJson).toList();
     if (rows.isNotEmpty) {
       await _tracked(() async {
@@ -698,7 +715,7 @@ class ListenedTracksRepository {
           final userDoc = db.collection('users').doc(uid);
           final batch = db.batch();
           for (final data in rows) {
-            batch.set(userDoc.collection('listenedTracks').doc(data.trackId), data.toFirestore(),
+            batch.set(userDoc.collection('listenedTracks').doc(data.trackId), data.toFirestore(keepDate: keepDate),
                 SetOptions(merge: true));
           }
           batch.set(userDoc, {

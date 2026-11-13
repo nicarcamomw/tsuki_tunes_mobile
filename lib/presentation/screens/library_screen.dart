@@ -24,6 +24,7 @@ import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/listened_undo.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
 import 'main_navigation_screen.dart';
@@ -1076,7 +1077,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         tooltip: strings.a11yRemoveFromPlaylist,
                         icon: Icon(Icons.remove_circle_outline,
                             color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
-                        onPressed: () { Haptics.selection(); ref.read(unmarkTrackListenedProvider)(trackData.trackId); },
+                        onPressed: () { Haptics.selection(); unawaited(unmarkWithUndo(context, ref, [trackData.trackId])); },
                       ),
                     ],
                   ),
