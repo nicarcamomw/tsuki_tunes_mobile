@@ -184,17 +184,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                 ],
               ),
                         ],
-            background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.accent.withValues(alpha: 0.15),
-                      AppColors.bgDeep,
-                    ],
-                  ),
-                ),
+            background: CoverTintBackdrop(
+                coverUrl: playlist.coverUrl,
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 56),

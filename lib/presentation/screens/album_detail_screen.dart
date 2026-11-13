@@ -258,14 +258,8 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                   },
                 ),
                         ],
-            background: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [AppColors.bgMid, AppColors.bgDeep],
-                ),
-              ),
+            background: CoverTintBackdrop(
+              coverUrl: albumData.coverUrl,
               child: SafeArea(
                 bottom: false,
                 child: Padding(

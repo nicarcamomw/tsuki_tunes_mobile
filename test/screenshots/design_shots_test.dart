@@ -312,14 +312,19 @@ void main() {
     await _pumpShot(
       tester,
       'album',
-      overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+      overrides: [
+        ...base,
+        audioProvider.overrideWith((ref) => AudioProvider()),
+        // A blue cover, for the header's tint (T-02).
+        coverColorsForProvider.overrideWith((ref, url) async => CoverColors.fromSeed(const Color(0xFF2E6BFF))),
+      ],
       const AlbumDetailScreen(
         album: Album(
           id: '302127',
           title: 'Discovery',
           artistId: '27',
           artistName: 'Daft Punk',
-          coverUrl: '',
+          coverUrl: 'https://example.com/cover.jpg',
           tracks: [_song],
           tracksCount: 1,
         ),

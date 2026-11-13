@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
+import '../state/cover_colors.dart';
 import 'motion.dart';
 
 /// The header of every detail page (artist, album, playlist), T-01: the
@@ -162,6 +164,33 @@ class DetailHeaderDisc extends StatelessWidget {
         border: Border.all(
           color: highlighted ? AppColors.accent : AppColors.textMuted.withValues(alpha: 0.35),
           width: highlighted ? 1.5 : 1,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// T-02: a header's backdrop tinted with its cover's colour (computed off
+/// the UI thread, cached like the player's); the app's dark gradient until
+/// it's known or when the cover is grey.
+class CoverTintBackdrop extends ConsumerWidget {
+  const CoverTintBackdrop({super.key, required this.coverUrl, required this.child});
+
+  final String coverUrl;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tint = ref.watch(coverColorsForProvider(coverUrl).select((c) => c.value?.background));
+    return AnimatedContainer(
+      duration: reduceMotion(context) ? Duration.zero : AppMotion.slow,
+      curve: AppMotion.move,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [tint ?? AppColors.bgMid, AppColors.bgDeep],
         ),
       ),
       child: child,
