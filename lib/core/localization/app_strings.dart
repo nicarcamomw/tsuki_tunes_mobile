@@ -152,6 +152,12 @@ class AppStrings {
   String get emptyLoreOni => _l.emptyLoreOni;
   String get emptyLoreHannya => _l.emptyLoreHannya;
   String get emptyLoreTengu => _l.emptyLoreTengu;
+  String get navGesturesHint => _l.navGesturesHint;
+  String navLongPressHint(int index) => switch (index) {
+        0 => _l.navLongPressHome,
+        1 => _l.navLongPressSearch,
+        _ => _l.navLongPressLibrary,
+      };
 
   String get normalizeTitle => _l.normalizeTitle;
 

@@ -102,4 +102,40 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
     }, () => _noNetwork);
   });
+
+  testWidgets('E-02: the bar teaches its gestures once, on the third tab change', (tester) async {
+    tester.view.physicalSize = const Size(400 * 3, 860 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
+          connectivityProvider.overrideWith((ref) => _Online()),
+          audioProvider.overrideWith((ref) => _StillAudio()),
+          playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
+          playerBackgroundColorProvider.overrideWithValue(null),
+          playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
+        ],
+        child: const MaterialApp(home: MainNavigationScreen(child: SizedBox.expand())),
+      ));
+      await tester.pump(const Duration(milliseconds: 100));
+      final hint = find.textContaining('toca dos veces');
+      // Two changes: nothing yet.
+      for (final tab in ['BUSCAR', 'BIBLIOTECA']) {
+        await tester.tap(find.text(tab));
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+      expect(hint, findsNothing);
+      await tester.tap(find.text('INICIO'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(hint, findsOneWidget);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('nav_gestures_hint_shown'), isTrue);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 8));
+    }, () => _noNetwork);
+  });
 }

@@ -915,5 +915,9 @@
   "imageQualityDataSaverDesc": "大きなジャケットと写真を250pxで：通信量を抑えます",
   "emptyLoreOni": "鬼はあなたが印をつけた曲をすべて守る。その箱はまだ空っぽだ。",
   "emptyLoreHannya": "般若は月の糸でプレイリストを織る。まだ一つも織っていない。",
-  "emptyLoreTengu": "天狗は森の頂から耳を澄ます。どんな曲でも尋ねてみて。"
+  "emptyLoreTengu": "天狗は森の頂から耳を澄ます。どんな曲でも尋ねてみて。",
+  "navGesturesHint": "ヒント：タブをダブルタップで先頭へ。ホームを長押しでプロフィールを開きます。",
+  "navLongPressHome": "プロフィールと設定を開く",
+  "navLongPressSearch": "新しく検索する",
+  "navLongPressLibrary": "先頭に戻る"
 }

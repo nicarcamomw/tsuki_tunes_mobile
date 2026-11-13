@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
@@ -129,6 +130,24 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         _canPopNotifier.value = canPop;
       }
     });
+  }
+
+  static const _gesturesHintKey = 'nav_gestures_hint_shown';
+  int _tabSwitches = 0;
+
+  /// E-02: the bar's double tap and long press are taught once, on the
+  /// third tab change (the user knows the bar by then).
+  Future<void> _maybeTeachGestures() async {
+    if (++_tabSwitches != 3) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_gesturesHintKey) ?? false) return;
+    await prefs.setBool(_gesturesHintKey, true);
+    if (!mounted) return;
+    AppSnack.of(context, bottom: _snackBottom).info(
+      ref.read(localeProvider).strings.navGesturesHint,
+      icon: Icons.touch_app_rounded,
+      duration: const Duration(seconds: 6),
+    );
   }
 
   /// The shell's own snack bars (playback, Spotify, sync) clear its dock.
@@ -448,6 +467,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (_tabNotifier.value != index) {
       _loadedTabs.add(index);
       _tabNotifier.value = index;
+      unawaited(_maybeTeachGestures());
       if (index == 2) {
         final lib = ref.read(libraryProvider);
         _lastSeenLibraryCount = lib.listenedCount;
@@ -534,6 +554,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     return Expanded(
       child: Semantics(
       selected: isSelected,
+      // E-02: TalkBack says what holding the tab does.
+      onLongPressHint: locale.strings.navLongPressHint(index),
       child: TapScale(
       semanticLabel: label,
       onTap: () => _onNavItemTap(index),

@@ -2159,5 +2159,13 @@
   "emptyLoreHannya": "Hannya teje listas con hilos de luna. Todavía no ha tejido ninguna.",
   "@emptyLoreHannya": {"description": "P-06: the lore line under an empty state, told by its mask."},
   "emptyLoreTengu": "El Tengu escucha desde lo alto del bosque. Pregúntale por cualquier canción.",
-  "@emptyLoreTengu": {"description": "P-06: the lore line under an empty state, told by its mask."}
+  "@emptyLoreTengu": {"description": "P-06: the lore line under an empty state, told by its mask."},
+  "navGesturesHint": "Consejo: toca dos veces una pestaña para volver arriba, y mantén pulsado Inicio para abrir tu perfil.",
+  "@navGesturesHint": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."},
+  "navLongPressHome": "abrir perfil y ajustes",
+  "@navLongPressHome": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."},
+  "navLongPressSearch": "empezar una búsqueda nueva",
+  "@navLongPressSearch": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."},
+  "navLongPressLibrary": "volver arriba",
+  "@navLongPressLibrary": {"description": "E-02: the nav bar's hidden gestures, taught once / read by TalkBack."}
 }

@@ -915,5 +915,9 @@
   "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data",
   "emptyLoreOni": "The Oni keeps every song you mark. Its chest is still empty.",
   "emptyLoreHannya": "Hannya weaves playlists from moon threads. None woven yet.",
-  "emptyLoreTengu": "The Tengu listens from the top of the forest. Ask it for any song."
+  "emptyLoreTengu": "The Tengu listens from the top of the forest. Ask it for any song.",
+  "navGesturesHint": "Tip: double-tap a tab to go back to the top, and long-press Home to open your profile.",
+  "navLongPressHome": "open profile and settings",
+  "navLongPressSearch": "start a new search",
+  "navLongPressLibrary": "go back to the top"
 }
