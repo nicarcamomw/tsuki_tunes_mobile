@@ -1149,7 +1149,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     // A media volume the sleep timer left down goes back first.
     if (!_isPlaying) await _sleepCtrl.restoreVolume();
     if (_currentTrack == null && !_q.isEmpty) {
-      await playTrack(_q.tracks.first);
+      // After a stop the queue keeps its place: play goes on from the song
+      // it was on (the headphones' or the car's play), not the first one.
+      await playTrack(_q.current ?? _q.tracks.first);
       return;
     }
 
@@ -1908,8 +1910,18 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       if (gen != _playGeneration) return;
       _crossfadeTriggered = false;
       try {
-        await _service.playTrack(nextTrack);
-      } catch (_) {}
+        // A fresh link: the preview's may be what failed.
+        final fresh = await _withFreshPreview(nextTrack, force: true);
+        if (gen != _playGeneration) return;
+        await _service.playTrack(fresh);
+      } catch (e2) {
+        // Nothing plays: say so, instead of showing the song as playing.
+        if (gen != _playGeneration) return;
+        _log.severe('Crossfade fallback failed too: $e2');
+        _isBuffering = false;
+        _lastPlaybackError = _classifyPlaybackError(e2, nextTrack);
+        notifyListeners();
+      }
     }
   }
 
