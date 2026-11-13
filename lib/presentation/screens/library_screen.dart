@@ -22,6 +22,7 @@ import '../state/app_providers.dart';
 import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_chip.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
@@ -715,37 +716,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
-    final isSelected = _sortBy == value;
     return Expanded(
-      child: Semantics(
-        button: true,
+      child: AppChip(
         label: label,
-        selected: isSelected,
-        child: GestureDetector(
-          onTap: () {
-            Haptics.selection();
-            setState(() => _sortBy = value);
-          },
-          child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.accent : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-              color: isSelected ? AppColors.accent : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
-              fontWeight: FontWeight.w700,
-              color: isSelected ? AppColors.textBright : AppColors.textSecondary,
-            ),
-          ),
-        ),
-        ),
+        selected: _sortBy == value,
+        expand: true,
+        onTap: () => setState(() => _sortBy = value),
       ),
     );
   }

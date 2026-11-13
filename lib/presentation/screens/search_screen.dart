@@ -21,6 +21,7 @@ import '../state/locale_provider.dart';
 import '../state/search_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
+import '../widgets/app_chip.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
@@ -398,47 +399,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               // Tabs: ['Todo', 'Artistas', 'Álbumes', 'Canciones'] (localizadas)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 0),
                 child: Row(
                   children: List.generate(tabs.length, (index) {
-                    final isSelected = _selectedTabIndex == index;
-                    return Semantics(
-                      button: true,
-                      label: tabs[index],
-                      child: TapScale(
-                      scaleDown: 0.93,
-                      haptic: Haptics.selection,
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        final prev = _selectedTabIndex;
-                        setState(() => _selectedTabIndex = index);
-                        if (index == 4 && prev != 4) {
-                          final q = _controller.text.trim();
-                          if (q.length >= 3) {
-                            ref.read(searchProvider).searchLyrics(q);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: AppChip(
+                        label: tabs[index],
+                        selected: _selectedTabIndex == index,
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          final prev = _selectedTabIndex;
+                          setState(() => _selectedTabIndex = index);
+                          if (index == 4 && prev != 4) {
+                            final q = _controller.text.trim();
+                            if (q.length >= 3) {
+                              ref.read(searchProvider).searchLyrics(q);
+                            }
                           }
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.accent : AppColors.bgMid,
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                          border: Border.all(
-                            color: isSelected ? AppColors.accent : AppColors.border,
-                          ),
-                        ),
-                        child: Text(
-                          tabs[index],
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected ? AppColors.textBright : AppColors.textSecondary,
-                          ),
-                        ),
+                        },
                       ),
-                    ),
                     );
                   }),
                 ),
