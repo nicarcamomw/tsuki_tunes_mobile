@@ -19,24 +19,148 @@ Documento de trabajo para ir apartado por apartado. Cada tarea tiene un código 
 6. **Accesibilidad ya ganada, no se pierde:** contraste AA, objetivos táctiles de 48 dp, etiquetas para TalkBack y respeto a "reducir movimiento" (`lib/presentation/widgets/motion.dart`).
 7. **Texto nuevo siempre en los tres idiomas** (es, en, ja).
 
-## 3. Mapa de apartados
+## 3. Mapa completo de apartados
 
-| # | Apartado | Secciones | Archivos principales |
-|---|---|---|---|
-| 0 | Sistema de diseño | Colores, tipografía, radios, espaciado, animaciones, botones, sheets, snackbars, diálogos, estados vacío/error/carga | `core/theme`, `core/constants`, `presentation/widgets` |
-| 1 | Acceso | Carga inicial, Login, Onboarding (3 slides), Tutorial | `screens/login/`, `screens/onboarding/` |
-| 2 | Estructura | Barra inferior, mini player, avisos globales, transiciones | `screens/main_navigation_screen.dart`, `widgets/mini_player.dart`, `navigation/routes.dart` |
-| 3 | Inicio | Cabecera, stats, tarjeta de hoy, top artistas, casi completos, lanzamientos, recomendados | `screens/home_screen.dart`, `screens/home/` |
-| 4 | Buscar | Barra y voz, sugerencias, recientes, géneros, resultados, letras, pantalla de género | `screens/search_screen.dart`, `screens/genre_screen.dart` |
-| 5 | Explorar (nuevo) | Música nueva, Jugar, Tu camino | `screens/explore_screen.dart` |
-| 6 | Biblioteca | Álbumes, playlists, artistas seguidos, bloqueo de invitado | `screens/library_screen.dart` |
-| 7 | Detalle | Artista, discografía, álbum, playlist, playlist compartida, fila de canción | `screens/artist_detail_screen.dart`, `album_detail_screen.dart`, `playlist_detail_screen.dart`, `widgets/track_tile.dart` |
-| 8 | Reproductor | Expandido, visualizador, controles, cola, letras, sheets | `screens/expanded_player_screen.dart`, `widgets/queue_panel.dart`, `screens/lyrics_screen.dart` |
-| 9 | Perfil y ajustes | Sheet de perfil, Spotify, reproducción, almacenamiento, general, idioma, cuenta | `widgets/profile_bottom_sheet.dart`, `widgets/profile/` |
-| 10 | Social | Bonds, perfil de usuario, Party | `screens/bonds_screen.dart`, `user_profile_screen.dart`, `party_screen.dart` |
-| 11 | Descubrimiento | Discovery, Rabbit Hole, Radar, Máquina del tiempo, Importar de Spotify | `screens/discovery_screen.dart`, `rabbit_hole_screen.dart`, `release_radar_screen.dart`, `time_machine_screen.dart` |
-| 12 | Stats y juegos | Wrapped, Reloj de escucha, Adivina la canción, Modo correr | `screens/wrapped_screen.dart`, `listening_clock_screen.dart`, `guess_song_screen.dart`, `run_mode_screen.dart` |
-| 13 | Progresión y ambiente | Eco, racha, retos, máscaras, Ascensión, Lore, luna, clima | `widgets/eco_widgets.dart`, `screens/eco_levels_screen.dart`, `streak_screen.dart`, `mask_collection_screen.dart`, `lore_screen.dart` |
+Inventario hecho contra el código el 13-11-2026: las 26 rutas, todos los archivos de `screens/` y `widgets/`, y lo que vive fuera de la app en `android/`. Si algo no está aquí, no existe en el código.
+
+Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentation/widgets/`.
+
+### 0. Sistema de diseño (transversal)
+
+- **Tema y colores:** `core/theme/cyber_theme.dart`, `core/constants/app_colors.dart`.
+- **Tipografía:** Plus Jakarta Sans y Noto Sans JP (google_fonts); tipografías propias por artista (`core/utils/artist_fonts.dart`, 26 fuentes en `assets/fonts/`).
+- **Superficies:** `GlassCard` (tarjeta de tinta), `cyberCardBox`.
+- **Botones y toques:** `CyberButton`, `TapScale`, `MoonButton`, vibración (`haptics.dart`).
+- **Texto con efecto:** `GlitchText`, `CyberGlitchText`, `DistortedArtistName`, `LoreText`.
+- **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (7 versiones sueltas), sin conexión (franja superior).
+- **Hojas inferiores:** `SwipeableSheet` y unas 25 hojas (listadas en su apartado).
+- **Títulos de sección:** `SectionTitle` y 5 versiones sueltas.
+- **Movimiento:** `motion.dart` (reducir movimiento), transiciones `cyberPage` y `fadePage`.
+- **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material.
+
+### 1. Acceso
+
+- **Carga inicial** (`LoadingRoute`) y control de sesión (`navigation/session_gate.dart`).
+- **Login** (`login/login_screen.dart`): fondo animado (`login/painters.dart`), botón de Google (`login/google_button.dart`), entrar como observador (invitado), avisos de error.
+- **Onboarding** (`onboarding/`): tres slides (identidad, reproductor, búsqueda), sus fondos animados, indicador de paso y botones.
+- **Tutorial** (`TutorialRoute`): el mismo onboarding abierto desde ajustes.
+- **Permisos explicados** (`permission_primer.dart`): notificaciones y segundo plano.
+
+### 2. Estructura
+
+- **Barra inferior** (`main_navigation_screen.dart`): 4 pestañas, ícono animado, subtítulo japonés, indicador, punto de novedades en Biblioteca, gestos (doble toque, mantener).
+- **Mini player** (`mini_player.dart`): portada que respira, título en marquesina, barra de progreso, marcar escuchada, tinte por portada.
+- **Avisos globales:** error de Spotify (con guía de batería), error de reproducción, error de sincronización, franja sin conexión.
+- **Capas sobre toda la app:** aviso de máscara desbloqueada (`mask_unlock_banner.dart`), aviso de subida de nivel (`EcoLevelUpBanner`), hora bruja (`witching_hour_overlay.dart`), sakura (`sakura_overlay.dart`), atmósfera lunar (`moon_atmosphere.dart`).
+- **Transiciones y retroceso:** `navigation/routes.dart`, gesto predictivo de Android.
+- **Enlaces profundos:** abrir álbum, artista, playlist, canción o perfil por enlace (`load_by_id.dart`, `TrackRoute`).
+- **Bloqueos:** invitado sin biblioteca (`guest_library_gate.dart`, `auth_guard.dart`), función bloqueada por nivel (`EcoLocked` y su hoja).
+
+### 3. Inicio (`home_screen.dart`, `home/`)
+
+- **Cabecera:** título, línea de telemetría, botón de luna, insignia de fuente (Spotify/Deezer) y su hoja, botón de Bonds, engranaje de perfil.
+- **Línea del cielo** (`sky_line.dart`): momento del día, fase lunar, clima; oferta de mezcla de lluvia (`RainOfferCard`).
+- **Hojas que abre:** luna (`moon_sheet.dart`: ciclo, fases, mezcla de luna llena), clima (`weather_sheet.dart`), afinidad (`home/affinity_sheet.dart`).
+- **Stats:** canciones, artistas, álbumes, artista top.
+- **Tarjeta de hoy** y enlace a Explorar.
+- **Top artistas** (o destacados si no hay historial) con botón de ayuda de afinidad.
+- **Casi completos** (`home/completion_sections.dart`).
+- **Últimos lanzamientos**, **"porque completaste…"** y **recomendados**.
+- **Estados:** esqueleto, error de red, biblioteca vacía.
+
+### 4. Buscar (`search_screen.dart`, `genre_screen.dart`)
+
+- **Barra de búsqueda**, botón de voz y hoja de voz (`voice_search_sheet.dart`).
+- **Estado inicial:** búsquedas recientes, sugerencias, mosaico de géneros.
+- **Sugerencias mientras se escribe** y **"¿quisiste decir?"**.
+- **Pestañas de resultados:** todo, artistas, álbumes, canciones, letras (con fragmento resaltado).
+- **Pantalla de género.**
+- **Estados:** esqueletos por pestaña, error, sin resultados.
+
+### 5. Explorar (`explore_screen.dart`)
+
+- **Música nueva:** Discovery, Rabbit Hole, Radar, Máquina del tiempo.
+- **Jugar:** Adivina, Ambiente, Correr.
+- **Tu camino:** nivel Eco, racha, retos semanales, Wrapped, Reloj, Máscaras, Lore.
+
+### 6. Biblioteca (`library_screen.dart`)
+
+- **Cabecera** con totales.
+- **Pestaña Álbumes:** filtro, orden (recientes, alfabético, por artista), grupos desplegables con sus canciones, barra de progreso de álbum, deshacer al desmarcar.
+- **Pestaña Playlists:** lista, crear, playlists compartidas, artistas seguidos.
+- **Bloqueo de invitado.**
+- **Estados:** esqueleto, error, vacíos.
+
+### 7. Detalle
+
+- **Artista** (`artist_detail_screen.dart`, `artist_detail/`): cabecera con tipografía propia, seguir, radio, compartir, canciones top, álbumes, relacionados, acceso a Rabbit Hole.
+- **Discografía** (`artist_discography_screen.dart`): por tipo, paginada.
+- **Álbum** (`album_detail_screen.dart`): cabecera, progreso, descargar, marcar todo, lista de canciones.
+- **Playlist** (`playlist_detail_screen.dart`): cabecera, editar, reordenar, borrar.
+- **Playlist compartida** (`shared_playlist_screen.dart`): colaborativa con Bonds.
+- **Fila de canción** (`track_tile.dart`): indicador de reproducción, marca de escuchada, menú de acciones.
+- **Hoja "añadir a playlist"** (`playlist_selector_sheet.dart`).
+- **Tarjetas** de álbum y artista (`album_card.dart`, `artist_card.dart`).
+
+### 8. Reproductor
+
+- **Expandido** (`expanded_player_screen.dart`, `expanded_player/`): fondo por portada, portada que viaja desde el mini player, visualizador (`rinnegan_visualizer.dart`, `spectrum_wave_visualizer.dart`, `audio_visualizer.dart`, `cyber_orb.dart`), título en marquesina, barra de progreso, controles (aleatorio, anterior, play, siguiente, repetir), aviso de vista previa de 30 s.
+- **Cola** (`queue_panel.dart`): en curso, siguientes, reordenar.
+- **Letras** (`lyrics_screen.dart`, `lyrics_view.dart`): sincronizadas, traducción, botón de seguir.
+- **Hojas:** ambiente (`ambient_mixer_sheet.dart`), ecualizador (`equalizer_sheet.dart`), temporizador de sueño, radio (`radio_control_sheet.dart`), aleatorio inteligente (`smart_shuffle_sheet.dart`), flow por BPM (`flow_sheet.dart`), dispositivos Spotify (`spotify_devices_sheet.dart`), fuente de reproducción (`playback_source_badge.dart`), guía de batería (`battery_guide_sheet.dart`).
+
+### 9. Perfil y ajustes (`profile_bottom_sheet.dart`, `profile/`)
+
+- **Cabecera:** avatar con máscara equipada, nombre, correo, acceso a máscaras.
+- **Tarjeta de Spotify:** vincular, desvincular, estado.
+- **Reproducción:** crossfade, marcar automático, normalizar, ecualizador, agitar para saltar, modo correr.
+- **Almacenamiento:** precarga solo con Wi-Fi, reproducción automática, aleatorio inteligente, copiar registro, borrar caché.
+- **General:** atmósfera lunar, clima, vibración, analítica, cumpleaños, calidad de imagen (y su hoja), idioma (`language_selector_sheet.dart`), tutorial, privacidad, términos, versión.
+- **Cuenta:** cerrar sesión (`profile/logout.dart`), borrar cuenta (`profile/delete_account.dart`).
+
+### 10. Social
+
+- **Bonds** (`bonds_screen.dart`): pestañas Resonancias, Bonds y Buscar; solicitudes; panel de observador.
+- **Perfil de usuario** (`user_profile_screen.dart`): avatar, stats, tarjeta de sintonía, controles propios.
+- **Party** (`party_screen.dart`): escuchar en sincronía.
+
+### 11. Descubrimiento
+
+- **Discovery** (`discovery_screen.dart`): tarjetas para deslizar, sellos de guardar/pasar.
+- **Rabbit Hole** (`rabbit_hole_screen.dart`): grafo de artistas, migas, tarjeta de foco, panel inferior.
+- **Radar de lanzamientos** (`release_radar_screen.dart`): barrido, fila de notificaciones, lista.
+- **Máquina del tiempo** (`time_machine_screen.dart`): fecha, momento, portada.
+- **Importar de Spotify** (`spotify_import_screen.dart`).
+
+### 12. Stats y juegos
+
+- **Wrapped** (`wrapped_screen.dart`, selector en `wrapped_picker_sheet.dart`): historias de intro, minutos, canción, artista y álbum top, hora, aura, datos, resumen; imagen para compartir (`wrapped/story_image.dart`).
+- **Reloj de escucha** (`listening_clock_screen.dart`): radar de 24 horas, barras por día.
+- **Adivina la canción** (`guess_song_screen.dart`): modos diario, por artista, top mundial y biblioteca; ronda y resultado.
+- **Modo correr** (`run_mode_screen.dart`): medidor de cadencia, panel de música, ritmo, estadísticas de sesión.
+
+### 13. Progresión, lore y ambiente
+
+- **Niveles Eco** (`eco_levels_screen.dart`, `eco_widgets.dart`): cabecera, cómo ganar Eco, selector de color, lista de niveles, leyenda; tarjeta de nivel, barra, insignia.
+- **Racha** (`streak_screen.dart`, `streak_card.dart`): cabecera, stats, calendario, metas, escudo, recordatorio.
+- **Retos semanales** (`weekly_challenges_card.dart`): retos y premio.
+- **Máscaras / Seres etéreos** (`mask_collection_screen.dart`, `oni_mask_art.dart`): rejilla, barra de progreso, detalle, susurro, botón a Lore.
+- **Ascensión** (`ascension_screen.dart`): aviso, elección, revelación.
+- **Lore** (`lore_screen.dart`, contenido en `domain/lore/tsuki_lore.dart`):
+  - Portada: título, subtítulo, capítulos abiertos de total.
+  - Tomos y lista de capítulos, cada uno abierto o bloqueado por nivel.
+  - "Próximamente" para lo que aún no se publica.
+  - Pantalla de capítulo: texto, facciones (líder, rival, miembros, secreto, recompensa), vínculos entre máscaras y rostros (velados hasta desbloquear).
+- **Ambiente:** luna (`moon_glyph.dart`, `moon_button.dart`), clima, hora bruja, sakura.
+
+### 14. Fuera de la app (Android)
+
+- **Widgets de pantalla de inicio:** luna y reproductor (`android/app/src/main/res/layout/widget_luna.xml`, `widget_player.xml`).
+- **Atajo de ajustes rápidos:** mezcla de lluvia (`RainMixTileService.kt`).
+- **Notificaciones:** reproducción, nuevos lanzamientos, racha, máquina del tiempo.
+- **Android Auto** (`data/datasources/auto_media_library.dart`).
+- **Ícono de la app** (con capa monocroma) y pantalla de arranque.
+- **Compartir:** enlaces de álbum, artista y playlist; imagen de Wrapped.
 
 ## 4. Ya hecho: barra inferior de 4 pestañas
 
@@ -168,7 +292,7 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 | S-03 | `settings_sections.dart` tiene 16 `setState`: cada interruptor redibuja su sección entera. | B |
 | S-04 | Pantalla de identidad: máscara como avatar, nivel Eco, racha y géneros top; ajustes debajo. | B |
 
-### 10 a 13. Social, descubrimiento, juegos y progresión
+### 10 a 13. Social, descubrimiento, juegos, progresión y lore
 
 | Código | Tarea | Prio |
 |---|---|---|
@@ -181,6 +305,22 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 | P-07 | Máscaras como santuario (inclinación con el sensor) y ceremonia a pantalla completa al desbloquear. | C |
 | P-08 | Cargas con marca: la luna pasando por sus fases en vez del círculo genérico. | C |
 | P-09 | La fase lunar modula fondo y brillos en toda la app. | C |
+| P-10 | **Lore, lectura:** revisar la pantalla de capítulo como texto para leer: tamaño, interlineado y ancho de línea; facciones, vínculos y rostros con la misma jerarquía. | A |
+| P-11 | **Lore, portada:** tomos y capítulos con progreso visible, y un estado bloqueado claro (qué nivel lo abre). | B |
+| P-12 | **Lore, técnica:** abre con transición estándar (ver E-04), tiene 9 colores escritos a mano (ver D-11) y escucha el proveedor entero 8 veces (ver P-04). | B |
+| P-13 | **Racha:** revisar la pantalla completa (calendario, metas, escudo, recordatorio); tiene 5 colores a mano. | B |
+| P-14 | **Ceremonias:** Ascensión, máscara desbloqueada y subida de nivel con un mismo lenguaje visual. | B |
+| P-15 | **Niveles Eco:** lista de niveles y "cómo ganar Eco" más fáciles de recorrer; 13 colores a mano. | B |
+
+### 14. Fuera de la app (Android)
+
+| Código | Tarea | Prio |
+|---|---|---|
+| F-01 | Widgets de luna y reproductor con el mismo lenguaje visual de la app. | B |
+| F-02 | Notificaciones (reproducción, lanzamientos, racha, máquina del tiempo): revisar textos, ícono y arte. | B |
+| F-03 | Android Auto: revisar cómo se ven las listas y portadas. | C |
+| F-04 | Ícono y pantalla de arranque enlazados con la carga inicial (ver A-03). | C |
+| F-05 | Imágenes y enlaces para compartir (álbum, artista, playlist, Wrapped) con plantilla común. | B |
 
 ## 6. Orden de trabajo
 
