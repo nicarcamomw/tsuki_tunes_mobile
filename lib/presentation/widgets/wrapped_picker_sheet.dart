@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/wrapped_service.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/app_providers.dart';
@@ -82,24 +83,18 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
         controller: widget.controller,
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('月', style: GoogleFonts.notoSansJp(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.accent)),
+              Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.accent)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TSUKI WRAPPED', style: t(16, w: FontWeight.w900, spacing: 2)),
-                    Text(strings.wrappedPickerSubtitle, style: t(11, w: FontWeight.w500, c: AppColors.textSecondary)),
+                    Text('TSUKI WRAPPED', style: t(AppFontSize.titleLg, w: FontWeight.w900, spacing: 2)),
+                    Text(strings.wrappedPickerSubtitle, style: t(AppFontSize.caption, w: FontWeight.w500, c: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -109,12 +104,12 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
 
           // The whole year, up top.
           InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             onTap: () => _open(year: _now.year),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.accent, width: 1.2),
                 gradient: LinearGradient(colors: [
                   AppColors.accent.withValues(alpha: 0.22),
@@ -124,14 +119,14 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
               ),
               child: Row(
                 children: [
-                  Text('${_now.year}', style: t(30, w: FontWeight.w900, c: AppColors.accent, spacing: 2)),
+                  Text('${_now.year}', style: t(AppFontSize.display, w: FontWeight.w900, c: AppColors.accent, spacing: 2)),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(strings.wrappedYearlyLabel, style: t(10, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
-                        Text(strings.wrappedWholeYear(_now.year), style: t(14, w: FontWeight.w800)),
+                        Text(strings.wrappedYearlyLabel, style: t(AppFontSize.micro, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
+                        Text(strings.wrappedWholeYear(_now.year), style: t(AppFontSize.title, w: FontWeight.w800)),
                       ],
                     ),
                   ),
@@ -141,7 +136,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
             ),
           ),
           const SizedBox(height: 20),
-          Text(strings.wrappedMonthlyLabel, style: t(10, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
+          Text(strings.wrappedMonthlyLabel, style: t(AppFontSize.micro, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
           const SizedBox(height: 8),
           for (final m in _months)
             _MonthRow(
@@ -156,7 +151,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
             ),
           const SizedBox(height: 8),
           InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             onTap: () => _open(year: _now.year - 1),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -164,7 +159,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
                 children: [
                   const Icon(Icons.history_rounded, color: AppColors.textMuted, size: 18),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(strings.wrappedWholeYear(_now.year - 1), style: t(13))),
+                  Expanded(child: Text(strings.wrappedWholeYear(_now.year - 1), style: t(AppFontSize.bodyLg))),
                   const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
                 ],
               ),
@@ -200,14 +195,14 @@ class _MonthRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: current ? AppColors.accent.withValues(alpha: 0.08) : AppColors.bgMid.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
               color: current ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border.withValues(alpha: 0.6)),
         ),
@@ -219,16 +214,16 @@ class _MonthRow extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: style(13, w: FontWeight.w800))),
+                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: style(AppFontSize.bodyLg, w: FontWeight.w800))),
                       if (current) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.card),
                           ),
-                          child: Text(currentLabel, style: style(9, w: FontWeight.w800, c: Colors.white)),
+                          child: Text(currentLabel, style: style(AppFontSize.micro, w: FontWeight.w800, c: Colors.white)),
                         ),
                       ],
                     ],
@@ -236,7 +231,7 @@ class _MonthRow extends StatelessWidget {
                 ),
                 Text(
                   minutes == null ? '…' : (minutes == 0 ? '—' : minutesLabel(minutes!)),
-                  style: style(11, w: FontWeight.w600, c: AppColors.textSecondary),
+                  style: style(AppFontSize.caption, w: FontWeight.w600, c: AppColors.textSecondary),
                 ),
                 const SizedBox(width: 4),
                 const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
@@ -244,14 +239,14 @@ class _MonthRow extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: SizedBox(
                 height: 4,
                 child: Stack(
                   children: [
                     Container(color: Colors.white.withValues(alpha: 0.06)),
                     AnimatedFractionallySizedBox(
-                      duration: const Duration(milliseconds: 600),
+                      duration: AppMotion.slow,
                       curve: Curves.easeOutCubic,
                       widthFactor: fraction.clamp(0.0, 1.0),
                       child: Container(color: AppColors.accent.withValues(alpha: current ? 1 : 0.7)),

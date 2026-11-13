@@ -6,6 +6,7 @@ import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -105,8 +106,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     Navigator.of(context)
         .push(
           PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 320),
-            reverseTransitionDuration: const Duration(milliseconds: 280),
+            transitionDuration: AppMotion.normal,
+            reverseTransitionDuration: AppMotion.normal,
             pageBuilder: (_, __, ___) => const ExpandedPlayerScreen(),
             transitionsBuilder: (_, anim, __, child) {
               final curved = CurvedAnimation(
@@ -170,7 +171,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
           child: Container(
             margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: PlayerTint.of(context), width: 1.2),
               boxShadow: [
                 BoxShadow(
@@ -181,7 +182,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
@@ -212,7 +213,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                               child: Opacity(
                                 opacity: 1.0 - (1.0 - swipeOpacity) * 0.7,
                                 child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
+                                  duration: AppMotion.normal,
                                   switchInCurve: Curves.easeOutCubic,
                                   switchOutCurve: Curves.easeInCubic,
                                   transitionBuilder: (child, animation) {
@@ -249,7 +250,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                             _MarqueeText(
                                               text: track.title,
                                               style: locale.getTextStyle(
-                                                fontSize: 13,
+                                                fontSize: AppFontSize.bodyLg,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.textBright,
                                               ),
@@ -260,7 +261,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                                   ? '${track.fullArtistName}  ·  ${locale.strings.sourcePreviewShort}'
                                                   : track.fullArtistName,
                                               style: locale.getTextStyle(
-                                                fontSize: 11,
+                                                fontSize: AppFontSize.caption,
                                                 color: spotifyFallbackActive
                                                     ? PlayerTint.of(context)
                                                         .withValues(alpha: 0.7)
@@ -418,7 +419,7 @@ class _BreathingCoverState extends State<_BreathingCover>
 
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: PlayerTint.of(context).withValues(alpha: borderAlpha),
               width: 1.5,
@@ -441,7 +442,7 @@ class _BreathingCoverState extends State<_BreathingCover>
         isPlaying: widget.isPlaying,
         child: ExcludeSemantics(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(3.5),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             child: SizedBox(
               width: 44,
               height: 44,

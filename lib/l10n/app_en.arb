@@ -51,6 +51,7 @@
   "settingsPlaybackSection": "PLAYBACK",
   "settingsStorageSection": "STORAGE",
   "settingsGeneralSection": "GENERAL",
+  "settingsAdvancedSection": "ADVANCED",
   "normalizeTitle": "Normalize volume",
   "normalizeSubtitle": "Evens out Deezer preview volume. Spotify already does this itself.",
   "flowTitle": "FLOW · ORDER BY TEMPO",
@@ -917,5 +918,14 @@
   "imageQualityHigh": "High",
   "imageQualityHighDesc": "Large covers and photos at 1000 px",
   "imageQualityDataSaver": "Data saver",
-  "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data"
+  "imageQualityDataSaverDesc": "Large covers and photos at 250 px: uses less data",
+  "emptyLoreOni": "The Oni keeps every song you mark. Its chest is still empty.",
+  "emptyLoreHannya": "Hannya weaves playlists from moon threads. None woven yet.",
+  "emptyLoreTengu": "The Tengu listens from the top of the forest. Ask it for any song.",
+  "navGesturesHint": "Tip: double-tap a tab to go back to the top, and long-press Home to open your profile.",
+  "navLongPressHome": "open profile and settings",
+  "navLongPressSearch": "start a new search",
+  "navLongPressLibrary": "go back to the top",
+  "searchTopResult": "TOP RESULT",
+  "searchTopArtistKind": "Artist"
 }

@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_environment.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
@@ -23,6 +24,8 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
+import '../widgets/app_snack.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/error_state.dart';
@@ -67,7 +70,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   bool _hasError = false;
   bool _showStats = false;
   bool _showAllTracks = false;
-  bool _showTitleInAppBar = false;
   bool _showStoredContent = false;
   bool _hasMoreAlbums = false;
   bool _reduceMotion = false;
@@ -75,7 +77,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _loadArtistInfo();
     _loadArtistData();
     _trackVisit();
@@ -87,16 +88,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     _reduceMotion = MediaQuery.of(context).disableAnimations;
   }
 
-  void _onScroll() {
-    final show = _scrollController.offset > 200;
-    if (show != _showTitleInAppBar) {
-      setState(() => _showTitleInAppBar = show);
-    }
-  }
-
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -204,7 +197,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           _ArtistHeroAppBar(
             artist: _artist,
             locale: locale,
-            showTitle: _showTitleInAppBar,
             reduceMotion: _reduceMotion,
             isComplete: completion.isComplete,
             completedReleases: completion.completed,
@@ -225,7 +217,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 final followed = await ref.read(toggleFollowArtistProvider)(_artist);
                 if (followed) unawaited(_announceRadar(strings));
               },
-              onStartRadio: () => startArtistRadioWithFeedback(context, _artist, bottomMargin: 90),
+              onStartRadio: () => startArtistRadioWithFeedback(context, _artist),
               reduceMotion: _reduceMotion,
             ),
           ),
@@ -283,14 +275,14 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
           child: Text.rich(
             TextSpan(
               children: [
                 TextSpan(
                   text: '// ',
                   style: locale.getTextStyle(
-                    fontSize: 15,
+                    fontSize: AppFontSize.titleLg,
                     fontWeight: FontWeight.w900,
                     color: AppColors.accent,
                     letterSpacing: 1.5,
@@ -299,7 +291,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 TextSpan(
                   text: strings.discography.replaceAll('// ', ''),
                   style: locale.getTextStyle(
-                    fontSize: 15,
+                    fontSize: AppFontSize.titleLg,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textBright,
                     letterSpacing: 1.5,
@@ -330,7 +322,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -346,14 +338,14 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
                     ),
                   ],
                   Text(
                     title,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
@@ -391,7 +383,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     child: Text(
                       strings.seeMore,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accent,
                       ),
@@ -403,7 +395,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -445,11 +437,11 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               aspectRatio: 1,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: _buildAlbumCover(album, isCompleted, strings),
                 ),
               ),
@@ -458,7 +450,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             Text(
               album.title,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: isCompleted ? AppColors.accent : AppColors.textPrimary,
               ),
@@ -468,7 +460,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             Text(
               subtitle,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 color: AppColors.textMuted,
               ),
               maxLines: 1,
@@ -517,31 +509,12 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       explain: () => mounted ? PermissionPrimer.notifications(context) : Future.value(false),
     );
     if (!mounted || !radar.notifyEnabled.value) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        duration: const Duration(seconds: 3),
-        content: Row(
-          children: [
-            const Icon(Icons.radar, size: 16, color: AppColors.neonCyan),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                strings.radarFollowSnack(_artist.name),
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ));
+    AppSnack.of(context).info(strings.radarFollowSnack(_artist.name), icon: Icons.radar, duration: const Duration(seconds: 3));
   }
 
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -552,7 +525,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               Text(
                 strings.similarArtists,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textBright,
                   letterSpacing: 1.2,
@@ -562,7 +535,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   onTap: () {
                     if (!ecoAllows(context, EcoFeature.rabbitHole)) return;
                     Haptics.tap();
@@ -576,7 +549,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                         color: AppColors.neonPurple.withValues(alpha: 0.5),
                       ),
@@ -590,7 +563,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         Text(
                           strings.rabbitHoleViewGraph,
                           style: locale.getTextStyle(
-                            fontSize: 10,
+                            fontSize: AppFontSize.micro,
                             fontWeight: FontWeight.w700,
                             color: AppColors.neonPurple,
                             letterSpacing: 1,
@@ -654,7 +627,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         Text(
                           artist.name,
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
@@ -667,7 +640,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             strings.artistFansCompact(
                                 Formatters.formatNumber(artist.fansCount)),
                             style: locale.getTextStyle(
-                              fontSize: 9,
+                              fontSize: AppFontSize.micro,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,
@@ -704,7 +677,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -717,7 +690,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   strings.storedContentTitle,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                     letterSpacing: 1.2,
@@ -727,7 +700,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             ),
           ),
           ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         // An opaque plate looks the same as the old backdrop blur over this
         // dark page, without blurring the screen on every scroll frame.
         child: DecoratedBox(
@@ -735,7 +708,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.bgCard.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(
                 color: AppColors.accent.withValues(alpha: 0.2),
               ),
@@ -761,7 +734,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                             width: 44,
                             height: 44,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(22),
+                              borderRadius: BorderRadius.circular(AppRadius.sheet),
                               child: _artist.pictureUrl.isNotEmpty
                                   ? CachedNetworkImage(
                                     memCacheWidth: imageCacheSize(context, (44).toDouble()),
@@ -784,7 +757,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                               Text(
                                 strings.storedContentSongs(songCount),
                                 style: locale.getTextStyle(
-                                  fontSize: 15,
+                                  fontSize: AppFontSize.titleLg,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textBright,
                                 ),
@@ -792,7 +765,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                               Text(
                                 strings.storedContentFrom(artistName),
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -801,7 +774,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         ),
                         AnimatedRotation(
                           turns: _showStoredContent ? 0.25 : 0.0,
-                          duration: const Duration(milliseconds: 250),
+                          duration: AppMotion.normal,
                           child: Icon(
                             Icons.chevron_right,
                             size: 20,
@@ -818,7 +791,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
                 // Expandable content
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 350),
+                  duration: AppMotion.normal,
                   curve: Curves.easeInOut,
                   child: _showStoredContent
                       ? Padding(
@@ -902,7 +875,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.bgDeep.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: completed > 0
                 ? AppColors.accent.withValues(alpha: 0.3)
@@ -919,7 +892,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   label.toUpperCase(),
                   style: locale.getTextStyle(
-                    fontSize: 9,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
                     letterSpacing: 0.8,
@@ -929,7 +902,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 Text(
                   '$completed/$total',
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     fontWeight: FontWeight.w800,
                     color: completed > 0 ? AppColors.accent : AppColors.textMuted,
                   ),
@@ -938,7 +911,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 3,

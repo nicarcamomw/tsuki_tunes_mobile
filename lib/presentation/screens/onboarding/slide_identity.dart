@@ -47,7 +47,7 @@ class _IdentitySlide extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
                 color: AppColors.accent.withValues(alpha: 0.35),
                 width: 0.8,
@@ -56,7 +56,7 @@ class _IdentitySlide extends StatelessWidget {
             child: Text(
               strings.onboardingSlide1Badge,
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.6,
@@ -70,7 +70,7 @@ class _IdentitySlide extends StatelessWidget {
             strings.onboardingSlide1Title,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 23,
+              fontSize: AppFontSize.headline,
               fontWeight: FontWeight.w900,
               color: AppColors.textBright,
               letterSpacing: 2.0,
@@ -89,7 +89,7 @@ class _IdentitySlide extends StatelessWidget {
             strings.onboardingSlide1Desc,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 12.5,
+              fontSize: AppFontSize.bodyLg,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
               height: 1.5,
@@ -176,7 +176,7 @@ class _IdentitySlide extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   color: AppColors.bgMid,
                   border: Border.all(
                     color: AppColors.textMuted.withValues(alpha: 0.3),
@@ -198,7 +198,7 @@ class _IdentitySlide extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   gradient: const LinearGradient(
                     colors: [AppColors.accent, Color(0xFF8B0000)],
                   ),
@@ -248,7 +248,7 @@ class _BeforeAfterCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: AppColors.accent.withValues(alpha: 0.3),
           width: 0.8,
@@ -276,7 +276,7 @@ class _BeforeAfterCard extends StatelessWidget {
             hint,
             textAlign: hintAlign,
             style: locale.getTextStyle(
-              fontSize: 10.5,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
@@ -310,7 +310,7 @@ class _StateSample extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: 8,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w800,
             color: color,
             letterSpacing: 0.8,
@@ -393,7 +393,7 @@ class _MusicVaultGraphic extends StatelessWidget {
       height: 155,
       decoration: BoxDecoration(
         color: AppColors.bgCard.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: AppColors.accent.withValues(alpha: 0.4),
           width: 1.2,
@@ -422,7 +422,7 @@ class _MusicVaultGraphic extends StatelessWidget {
                 Text(
                   'VAULT // TRACKS',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textSecondary,
                     letterSpacing: 1.2,
@@ -446,7 +446,7 @@ class _MusicVaultGraphic extends StatelessWidget {
                   height: h,
                   decoration: BoxDecoration(
                     color: AppColors.accent.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 );
               }),
@@ -473,10 +473,6 @@ class _MusicVaultGraphic extends StatelessWidget {
             color: AppColors.accent.withValues(alpha: 0.25),
             blurRadius: 14,
             spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.7),
-            blurRadius: 12,
           ),
         ],
       ),
@@ -549,7 +545,7 @@ class _MusicVaultGraphic extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(
           color: AppColors.accent,
           width: 1.2,
@@ -579,7 +575,7 @@ class _MusicVaultGraphic extends StatelessWidget {
           Text(
             strings.tabFavorites.toUpperCase(),
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 1.0,

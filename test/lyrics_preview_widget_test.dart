@@ -37,6 +37,15 @@ class _Player extends AudioPlayerService {
   Future<void> seek(Duration position) async => seeks.add(position);
 }
 
+/// A full song at 0:06, for the line peeking under the player's title.
+class _FullSongAt extends AudioProvider {
+  _FullSongAt(AudioPlayerService service) : super(service: service, storage: StorageService());
+  @override
+  bool get playsFullSong => true;
+  @override
+  Duration get position => const Duration(seconds: 6);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -87,6 +96,36 @@ void main() {
     await tester.tap(find.text('Late line'));
     await tester.pump(const Duration(seconds: 1));
     expect(player.seeks, isEmpty, reason: '2:15 is past a 30 s preview: it would skip the song');
+
+    controller.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('R-05: the line being sung shows under the title, and opens the lyrics', (tester) async {
+    final audio = _FullSongAt(_Player());
+    final controller = LyricsController();
+    final client = MockClient((req) async => req.url.path == '/api/get'
+        ? http.Response.bytes(
+            utf8.encode(jsonEncode({'syncedLyrics': '[00:05.00]First line\n[02:15.00]Late line'})), 200)
+        : http.Response('[]', 200));
+    await tester.runAsync(() => http.runWithClient(() async {
+          controller.ensureFor(_track);
+          while (controller.loading) {
+            await Future<void>.delayed(const Duration(milliseconds: 5));
+          }
+        }, () => client));
+
+    var opened = 0;
+    await tester.pumpWidget(ProviderScope(
+      overrides: [audioProvider.overrideWith((ref) => audio)],
+      child: MaterialApp(
+        home: Scaffold(body: CurrentLyricLine(controller: controller, onTap: () => opened++)),
+      ),
+    ));
+    await tester.pump();
+    expect(find.text('First line'), findsOneWidget);
+    await tester.tap(find.text('First line'));
+    expect(opened, 1);
 
     controller.dispose();
     await tester.pumpWidget(const SizedBox());

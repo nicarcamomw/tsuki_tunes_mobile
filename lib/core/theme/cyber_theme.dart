@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
+import 'design_tokens.dart';
 
 class CyberTheme {
   static ThemeData get darkTheme {
@@ -21,64 +22,78 @@ class CyberTheme {
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       textTheme: TextTheme(
         displayLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 32,
+          fontSize: AppFontSize.display,
           fontWeight: FontWeight.w900,
           color: AppColors.textBright,
           letterSpacing: 2.0,
         ),
         displayMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 24,
+          fontSize: AppFontSize.headline,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.5,
         ),
         headlineSmall: GoogleFonts.plusJakartaSans(
-          fontSize: 18,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: 1.0,
         ),
         titleLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 16,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         titleMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         bodyLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
         bodyMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
+          fontSize: AppFontSize.body,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
         labelSmall: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w700,
           color: AppColors.accentText,
           letterSpacing: 1.5,
         ),
       ),
-      // Buttons readable at AA: white text on a deeper crimson, and the
-      // accent's readable red for text buttons (the default primary red on
-      // these backgrounds is under 4.5:1).
+      // D-10, three buttons. Primary: white on a deeper crimson (AA, 4.6:1),
+      // for the screen's main action. Secondary: a quiet outline, neutral
+      // (D-12). Text: the accent's readable red. All with the HUD's chip
+      // corner and Android's 48 dp to tap.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accentFill,
           foregroundColor: AppColors.textBright,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textPrimary,
+          side: const BorderSide(color: AppColors.borderGlow),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700),
+          tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.accentText),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(foregroundColor: AppColors.accentText),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accentText,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(foregroundColor: AppColors.accentText),
@@ -94,7 +109,7 @@ class CyberTheme {
         color: AppColors.bgCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
@@ -103,21 +118,21 @@ class CyberTheme {
         fillColor: AppColors.bgMid,
         hintStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.textMuted,
-          fontSize: 13,
+          fontSize: AppFontSize.bodyLg,
         ),
         prefixIconColor: AppColors.accent,
         suffixIconColor: AppColors.textSecondary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
       ),
@@ -140,7 +155,7 @@ class CyberTheme {
   }) {
     return BoxDecoration(
       color: backgroundColor,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       border: Border.all(
         color: glow ? AppColors.accent : borderColor,
         width: 1,

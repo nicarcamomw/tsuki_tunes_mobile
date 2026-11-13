@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
 import 'eco_widgets.dart';
@@ -65,7 +66,7 @@ class _UnlockBanner extends ConsumerStatefulWidget {
 
 class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProviderStateMixin {
   late final AnimationController _enter =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
+      AnimationController(vsync: this, duration: AppMotion.slow);
   late final AnimationController _burst =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
   Timer? _autoClose;
@@ -142,7 +143,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           gradient: LinearGradient(
                             colors: [color.withValues(alpha: 0.22), AppColors.bgCard],
                             begin: Alignment.centerLeft,
@@ -176,7 +177,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                   Text(
                                     strings.maskUnlockedTitle,
                                     style: locale.getTextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: AppFontSize.micro,
                                       fontWeight: FontWeight.w900,
                                       color: color,
                                       letterSpacing: 1.6,
@@ -188,7 +189,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: locale.getTextStyle(
-                                      fontSize: 15,
+                                      fontSize: AppFontSize.titleLg,
                                       fontWeight: FontWeight.w900,
                                       color: AppColors.textBright,
                                     ),
@@ -198,7 +199,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
                                     mask.description(locale.currentLanguage),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+                                    style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                                   ),
                                 ],
                               ),

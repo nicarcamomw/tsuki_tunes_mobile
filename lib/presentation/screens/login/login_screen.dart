@@ -14,10 +14,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
+import '../../widgets/app_snack.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_orb.dart';
 import '../../widgets/haptics.dart';
@@ -149,32 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           final msg = auth.authError == AuthError.throttled
               ? strings.loginThrottled
               : strings.loginGoogleError;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yLoginError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      msg,
-                      style: locale.getTextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(color: AppColors.error, width: 1.2),
-              ),
-            ),
-          );
+          AppSnack.of(context).error(msg);
         }
       }
     }
@@ -276,7 +253,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               child: Column(
                 children: [
                   const SizedBox(height: 6),
@@ -311,7 +288,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () { Haptics.tap(); _handleGuestExplore(); },
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.sheet),
                       splashColor: AppColors.accent.withValues(alpha: 0.2),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -319,7 +296,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(AppRadius.sheet),
                           border: Border.all(
                             color: AppColors.accent.withValues(alpha: 0.35),
                             width: 0.8,
@@ -328,7 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: Text(
                           strings.loginGuestExplore,
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textSecondary,
                             letterSpacing: 1.0,
@@ -402,7 +379,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               Text(
                 'TSUKI TUNES',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10.5,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textBright,
                   letterSpacing: 2.0,
@@ -413,7 +390,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: AppColors.accent.withValues(alpha: 0.3),
                     width: 0.7,
@@ -422,7 +399,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 child: Text(
                   _getCountryKanji(context),
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8.0,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 0.5,
@@ -462,7 +439,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           child: Text(
             'METAWORKS COMPANY',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 9.5,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 2.2,
@@ -526,7 +503,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             Text(
               'TSUKI',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 28,
+                fontSize: AppFontSize.display,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 4.5,
                 color: Colors.white,
@@ -542,7 +519,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             Text(
               'TUNES',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 28,
+                fontSize: AppFontSize.display,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 4.5,
                 color: AppColors.accent,
@@ -570,7 +547,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             Text(
               strings.loginSubtitlePrefix,
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary,
                 letterSpacing: 2.2,

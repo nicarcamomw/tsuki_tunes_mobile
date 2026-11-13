@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// The size stories expect (Instagram, WhatsApp, TikTok): 9:16.
 const storySize = Size(1080, 1920);
@@ -37,7 +38,8 @@ Future<ui.Image> composeStory(ui.Image slide, {String footer = 'TSUKI TUNES'}) a
   final area = const Rect.fromLTRB(side, top, w - side, h - bottom);
   final fitted = applyBoxFit(BoxFit.contain, src.size, area.size).destination;
   final dst = Alignment.center.inscribe(fitted, area);
-  final frame = RRect.fromRectAndRadius(dst, const Radius.circular(32));
+  // A sheet's corner at the share image's scale.
+  final frame = RRect.fromRectAndRadius(dst, const Radius.circular(AppRadius.sheet * 1.6));
   canvas.drawRRect(
     frame,
     Paint()
@@ -62,7 +64,7 @@ Future<ui.Image> composeStory(ui.Image slide, {String footer = 'TSUKI TUNES'}) a
       text: footer,
       style: const TextStyle(
         color: Color(0xE6FFFFFF),
-        fontSize: 32,
+        fontSize: AppFontSize.display,
         fontWeight: FontWeight.w800,
         letterSpacing: 6,
       ),

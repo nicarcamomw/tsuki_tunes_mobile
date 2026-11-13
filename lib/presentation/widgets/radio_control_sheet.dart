@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
@@ -14,6 +15,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
@@ -22,18 +24,16 @@ import 'swipeable_sheet.dart';
 Future<void> startRadioWithFeedback(
   BuildContext context,
   Track track, {
-  double bottomMargin = 12,
+  double? bottomMargin,
 }) async {
   Haptics.confirm();
   final locale = context.readState(localeProvider);
-  final messenger = ScaffoldMessenger.of(context);
+  final snack = AppSnack.of(context, bottom: bottomMargin);
   final ok = await context.readState(startRadioProvider)(track);
-  _snack(
-    messenger,
-    locale,
+  snack.info(
     ok ? locale.strings.radioStarted(track.title) : locale.strings.radioNoResults,
-    bottomMargin: bottomMargin,
     icon: ok ? Icons.sensors : Icons.sensors_off,
+    duration: const Duration(seconds: 3),
   );
 }
 
@@ -41,19 +41,17 @@ Future<void> startRadioWithFeedback(
 Future<void> startArtistRadioWithFeedback(
   BuildContext context,
   Artist artist, {
-  double bottomMargin = 12,
+  double? bottomMargin,
 }) async {
   if (!ecoAllows(context, EcoFeature.artistRadio)) return;
   Haptics.confirm();
   final locale = context.readState(localeProvider);
-  final messenger = ScaffoldMessenger.of(context);
+  final snack = AppSnack.of(context, bottom: bottomMargin);
   final ok = await context.readState(startArtistRadioProvider)(artist);
-  _snack(
-    messenger,
-    locale,
+  snack.info(
     ok ? locale.strings.artistRadioStarted(artist.name) : locale.strings.radioNoResults,
-    bottomMargin: bottomMargin,
     icon: ok ? Icons.sensors : Icons.sensors_off,
+    duration: const Duration(seconds: 3),
   );
 }
 
@@ -86,40 +84,6 @@ String radioStatusLabel(AppStrings strings, RadioStatus status) =>
       RadioStatus.exhausted => strings.radioExhausted,
     };
 
-void _snack(
-  ScaffoldMessengerState messenger,
-  LocaleProvider locale,
-  String text, {
-  double bottomMargin = 12,
-  IconData icon = Icons.sensors,
-}) {
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      margin: EdgeInsets.only(bottom: bottomMargin, left: 16, right: 16),
-      duration: const Duration(seconds: 3),
-      content: Row(
-        children: [
-          Icon(icon, size: 16, color: AppColors.accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: locale.getTextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBright,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
-}
-
 class _RadioControlSheet extends ConsumerWidget {
   const _RadioControlSheet();
 
@@ -148,8 +112,7 @@ class _RadioControlSheet extends ConsumerWidget {
       RadioMode.balanced => strings.radioModeBalancedDesc,
       RadioMode.adventurous => strings.radioModeAdventurousDesc,
     };
-    final messenger = ScaffoldMessenger.of(context);
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
+    final messenger = AppSnack.of(context, bottom: MediaQuery.paddingOf(context).bottom + 12);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -158,21 +121,12 @@ class _RadioControlSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             const SizedBox(height: 16),
             Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: SizedBox.square(
                     dimension: 56,
                     child: (radioArtist?.pictureUrl ?? seed.coverUrl).isNotEmpty
@@ -195,7 +149,7 @@ class _RadioControlSheet extends ConsumerWidget {
                           Text(
                             strings.radioLabel,
                             style: locale.getTextStyle(
-                              fontSize: 10,
+                              fontSize: AppFontSize.micro,
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,
                               letterSpacing: 2,
@@ -209,7 +163,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                          fontSize: 15,
+                          fontSize: AppFontSize.titleLg,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textBright,
                         ),
@@ -219,7 +173,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSize.body,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -236,7 +190,7 @@ class _RadioControlSheet extends ConsumerWidget {
                   ? strings.radioSourcesBoth
                   : strings.radioSourcesDeezerOnly,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 color: AppColors.textMuted,
               ),
             ),
@@ -244,7 +198,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               strings.radioModeTitle,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textMuted,
                 letterSpacing: 1.6,
@@ -288,7 +242,7 @@ class _RadioControlSheet extends ConsumerWidget {
                     AppColors.accent.withValues(alpha: 0.25),
                 side: const BorderSide(color: AppColors.border),
                 textStyle: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -297,7 +251,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               modeDesc,
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textSecondary,
                 height: 1.35,
               ),
@@ -316,9 +270,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         Haptics.confirm();
                         Navigator.of(context).pop();
                         audio.radioMoreLikeThis();
-                        _snack(messenger, locale, strings.radioMoreSnack,
-                            bottomMargin: bottomPad + 12,
-                            icon: Icons.thumb_up_alt_outlined);
+                        messenger.info(strings.radioMoreSnack, icon: Icons.thumb_up_alt_outlined, duration: const Duration(seconds: 3));
                       },
                     ),
                   ),
@@ -334,9 +286,7 @@ class _RadioControlSheet extends ConsumerWidget {
                         final artist = SongRadio.primaryArtist(current);
                         Navigator.of(context).pop();
                         audio.radioLessLikeThis();
-                        _snack(messenger, locale, strings.radioLessSnack(artist),
-                            bottomMargin: bottomPad + 12,
-                            icon: Icons.thumb_down_alt_outlined);
+                        messenger.info(strings.radioLessSnack(artist), icon: Icons.thumb_down_alt_outlined, duration: const Duration(seconds: 3));
                       },
                     ),
                   ),
@@ -347,7 +297,7 @@ class _RadioControlSheet extends ConsumerWidget {
             Text(
               strings.radioLearnHint,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 color: AppColors.textMuted,
                 height: 1.4,
               ),
@@ -360,8 +310,7 @@ class _RadioControlSheet extends ConsumerWidget {
                   Haptics.remove();
                   Navigator.of(context).pop();
                   audio.stopRadio();
-                  _snack(messenger, locale, strings.radioStopped,
-                      bottomMargin: bottomPad + 12, icon: Icons.sensors_off);
+                  messenger.info(strings.radioStopped, icon: Icons.sensors_off, duration: const Duration(seconds: 3));
                 },
                 icon: const Icon(Icons.stop_circle_outlined, size: 18),
                 label: Text(strings.radioStop),
@@ -409,7 +358,7 @@ class _StatusLine extends StatelessWidget {
             child: Text(
               radioStatusLabel(locale.strings, status),
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -445,13 +394,13 @@ class _SteerButton extends StatelessWidget {
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700),
       ),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: color.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
       ),
     );
   }

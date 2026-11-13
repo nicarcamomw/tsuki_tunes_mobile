@@ -51,6 +51,7 @@
   "settingsPlaybackSection": "再生",
   "settingsStorageSection": "ストレージ",
   "settingsGeneralSection": "一般",
+  "settingsAdvancedSection": "詳細設定",
   "normalizeTitle": "音量を均一化",
   "normalizeSubtitle": "Deezerプレビューの音量を揃えます。Spotifyは自動で調整済み。",
   "flowTitle": "FLOW · テンポで並べ替え",
@@ -917,5 +918,14 @@
   "imageQualityHigh": "高画質",
   "imageQualityHighDesc": "大きなジャケットと写真を1000pxで",
   "imageQualityDataSaver": "データ節約",
-  "imageQualityDataSaverDesc": "大きなジャケットと写真を250pxで：通信量を抑えます"
+  "imageQualityDataSaverDesc": "大きなジャケットと写真を250pxで：通信量を抑えます",
+  "emptyLoreOni": "鬼はあなたが印をつけた曲をすべて守る。その箱はまだ空っぽだ。",
+  "emptyLoreHannya": "般若は月の糸でプレイリストを織る。まだ一つも織っていない。",
+  "emptyLoreTengu": "天狗は森の頂から耳を澄ます。どんな曲でも尋ねてみて。",
+  "navGesturesHint": "ヒント：タブをダブルタップで先頭へ。ホームを長押しでプロフィールを開きます。",
+  "navLongPressHome": "プロフィールと設定を開く",
+  "navLongPressSearch": "新しく検索する",
+  "navLongPressLibrary": "先頭に戻る",
+  "searchTopResult": "トップ結果",
+  "searchTopArtistKind": "アーティスト"
 }

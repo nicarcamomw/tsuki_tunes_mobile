@@ -5,23 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/usecases/playlists/add_track_to_playlist.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
+import 'swipeable_sheet.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
-  return showModalBottomSheet(
+  return showAppSheet(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: AppColors.bgCard,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
     builder: (ctx) => _PlaylistSelectorContent(track: track),
   );
 }
@@ -56,7 +53,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                   Text(
                     strings.selectPlaylist,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -71,7 +68,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
               title: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accent,
                 ),
@@ -86,25 +83,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                     final added = created.tracks.any((t) => t.id == track.id);
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            added
-                                ? strings.addedToPlaylist(created.name)
-                                : strings.playlistCreated,
-                            style: locale.getTextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textBright,
-                            ),
-                          ),
-                          backgroundColor: AppColors.bgCard,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6)),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
+                      AppSnack.of(context).info(added ? strings.addedToPlaylist(created.name) : strings.playlistCreated);
                     }
                   }
                 }
@@ -120,27 +99,27 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                     leading: Container(
                       width: 40,
                       height: 40,
-                      decoration: BoxDecoration(color: AppColors.bgMid, borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: AppColors.bgMid, borderRadius: BorderRadius.circular(AppRadius.chip)),
                       child: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
                     ),
                     title: Text(sp.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w600,
                             color: added ? AppColors.textMuted : AppColors.textBright)),
                     subtitle: Text('${strings.sharedTitle} · ${strings.sharedMembers(sp.members.length)}',
-                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
                     trailing: added ? const Icon(Icons.check, color: AppColors.accent, size: 18) : null,
                     onTap: added
                         ? null
                         : () async {
                             Haptics.confirm();
-                            final messenger = ScaffoldMessenger.of(context);
+                            final messenger = AppSnack.of(context);
                             Navigator.pop(context);
                             final ok = await sharedState.addTrack(sp.id, track);
-                            messenger.showSnackBar(SnackBar(content: Text(ok ? sp.name : strings.bondsFailed)));
+                            messenger.show(ok ? sp.name : strings.bondsFailed, kind: ok ? SnackKind.info : SnackKind.error);
                           },
                   );
                 }),
@@ -159,7 +138,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       selected: alreadyAdded,
                       child: ListTile(
                       leading: ExcludeSemantics(child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         child: SizedBox(
                           width: 40,
                           height: 40,
@@ -184,7 +163,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       title: Text(
                         playlist.name,
                         style: locale.getTextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSize.title,
                           fontWeight: FontWeight.w600,
                           color: alreadyAdded
                               ? AppColors.textMuted
@@ -196,7 +175,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       subtitle: Text(
                         strings.trackCountLabel(playlist.trackCount),
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -208,23 +187,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                           ? () {
                               Haptics.confirm();
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    strings.trackAlreadyInPlaylist,
-                                    style: locale.getTextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textBright,
-                                    ),
-                                  ),
-                                  backgroundColor: AppColors.bgCard,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6)),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                              AppSnack.of(context).info(strings.trackAlreadyInPlaylist);
                             }
                           : () {
                               Haptics.confirm();
@@ -236,27 +199,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                               if (!full) unawaited(add(playlist, track));
                               {
                                 Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      full
-                                          ? strings.playlistFull
-                                          : strings
-                                              .addedToPlaylist(playlist.name),
-                                      style: locale.getTextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textBright,
-                                      ),
-                                    ),
-                                    backgroundColor: AppColors.bgCard,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(6)),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
+                                AppSnack.of(context).info(full ? strings.playlistFull : strings.addedToPlaylist(playlist.name));
                               }
                             },
                     ),
@@ -283,11 +226,11 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.bgCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
       title: Text(
         strings.newPlaylist,
         style: locale.getTextStyle(
-          fontSize: 16,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textBright,
         ),
@@ -297,13 +240,13 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
         autofocus: true,
         maxLength: PlaylistRepository.maxNameLength,
         style: locale.getTextStyle(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           color: AppColors.textBright,
         ),
         decoration: InputDecoration(
           hintText: strings.playlistNameHint,
           hintStyle: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             color: AppColors.textMuted,
           ),
           enabledBorder: const UnderlineInputBorder(
@@ -321,7 +264,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
@@ -332,7 +275,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
           child: Text(
             strings.create,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
             ),
@@ -353,22 +296,6 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
       await context.readState(createPlaylistProvider)(name, tracks: tracks);
   if (created == null || !context.mounted) return created != null;
   final strings = context.readState(stringsProvider);
-  final locale = context.readState(localeProvider);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        strings.playlistCreated,
-        style: locale.getTextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textBright,
-        ),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      duration: const Duration(seconds: 2),
-    ),
-  );
+  AppSnack.of(context).info(strings.playlistCreated);
   return true;
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/playback_source.dart';
 import '../state/app_providers.dart';
 import '../state/cover_colors.dart';
@@ -29,7 +30,7 @@ class PlaybackSourceBadge extends ConsumerWidget {
       hint: source.isFullSong ? strings.sourceFullTitle : strings.sourcePreviewTitle,
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () {
           Haptics.tap();
           unawaited(showPlaybackSourceSheet(context));
@@ -41,7 +42,7 @@ class PlaybackSourceBadge extends ConsumerWidget {
             children: [
               Text(
                 label,
-                style: locale.getTextStyle(fontSize: 9, color: PlayerTint.of(context), letterSpacing: 2),
+                style: locale.getTextStyle(fontSize: AppFontSize.micro, color: PlayerTint.of(context), letterSpacing: 2),
               ),
               const SizedBox(width: 4),
               Icon(Icons.info_outline_rounded, size: 11, color: PlayerTint.of(context).withValues(alpha: 0.7)),
@@ -77,13 +78,7 @@ class _SourceSheet extends ConsumerWidget {
       controller: controller,
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 18),
         Row(
           children: [
@@ -103,11 +98,11 @@ class _SourceSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(source.isFullSong ? strings.sourceFullTitle : strings.sourcePreviewTitle,
-                      style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                   const SizedBox(height: 2),
                   Text(source.isFullSong ? strings.sourceFullSong : strings.sourcePreview,
                       style: locale.getTextStyle(
-                          fontSize: 10.5, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.2)),
+                          fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color, letterSpacing: 1.2)),
                 ],
               ),
             ),
@@ -115,7 +110,7 @@ class _SourceSheet extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(reason == null ? strings.sourceFullBody : strings.previewReason(reason),
-            style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.4)),
         if (reason == PreviewReason.noSpotify && !isGuest) ...[
           const SizedBox(height: 18),
           FilledButton.icon(

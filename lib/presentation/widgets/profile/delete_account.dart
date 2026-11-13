@@ -12,7 +12,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     builder: (dialogCtx) => AlertDialog(
       backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         side: const BorderSide(color: AppColors.border, width: 1.0),
       ),
       title: Row(
@@ -23,7 +23,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
             child: Text(
               strings.deleteAccountConfirmTitle,
               style: locale.getTextStyle(
-                fontSize: 14,
+                fontSize: AppFontSize.title,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: 1.5,
@@ -34,7 +34,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
       ),
       content: Text(
         strings.deleteAccountConfirmMessage,
-        style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+        style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
       ),
       actions: [
         TextButton(
@@ -42,7 +42,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
@@ -53,12 +53,12 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentFill,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
           child: Text(
             strings.deleteAccountConfirm,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
               color: Colors.white,
@@ -70,7 +70,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
   );
   if (confirmed != true || !context.mounted) return;
 
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = AppSnack.of(context);
   final router = GoRouter.of(context);
   final navigator = Navigator.of(context, rootNavigator: true);
   var progressShown = false;
@@ -96,7 +96,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
               Expanded(
                 child: Text(
                   strings.deleteAccountInProgress,
-                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
                 ),
               ),
             ],
@@ -137,7 +137,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     AccountDeletionResult.deleted || AccountDeletionResult.cancelled => null,
   };
   if (message != null) {
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.info(message);
   }
   if (!auth.isLoggedIn) router.go(AppPaths.login);
 }
@@ -156,12 +156,12 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
       child: AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),
         ),
         content: Text(
           strings.deleteAccountClosing,
-          style: locale.getTextStyle(fontSize: 13, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textBright),
         ),
         actions: [
           TextButton(
@@ -169,7 +169,7 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
             child: Text(
               strings.deleteAccountCloseApp,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
               ),

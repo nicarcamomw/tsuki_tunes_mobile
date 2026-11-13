@@ -5,13 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/shared_playlist.dart';
 import '../../domain/entities/social.dart';
+import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
+import '../widgets/swipeable_sheet.dart';
 import 'bonds_screen.dart' show PersonAvatar;
 
 /// One collaborative playlist, live.
@@ -46,7 +49,7 @@ class SharedPlaylistScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(32),
           child: Text(strings.sharedGone,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary)),
+              style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary)),
         ),
       );
     } else {
@@ -139,7 +142,7 @@ Future<void> createSharedPlaylist(BuildContext context, WidgetRef ref) async {
   if (name == null || name.trim().isEmpty) return;
   final id = await c.create(name.trim());
   if (id != null && context.mounted) {
-    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => SharedPlaylistScreen(id: id))));
+    unawaited(Navigator.of(context).push(cyberRoute<void>(SharedPlaylistScreen(id: id))));
   }
 }
 
@@ -158,12 +161,12 @@ class _Body extends ConsumerWidget {
     final owner = p.owner == me;
     final invitedMe = p.isInvited(me) && !p.isMember(me);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
       children: [
         Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: SizedBox(
                 width: 96,
                 height: 96,
@@ -181,15 +184,15 @@ class _Body extends ConsumerWidget {
                 children: [
                   Text(strings.sharedTitle.toUpperCase(),
                       style: locale.getTextStyle(
-                          fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
+                          fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.accent, letterSpacing: 2)),
                   const SizedBox(height: 4),
                   Text(p.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                   const SizedBox(height: 4),
                   Text('${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
-                      style: locale.getTextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -210,8 +213,7 @@ class _Body extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-                  onPressed: () {
+                                    onPressed: () {
                     Haptics.confirm();
                     c.join(p.id);
                   },
@@ -225,8 +227,7 @@ class _Body extends ConsumerWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-                  onPressed: p.tracks.isEmpty
+                                    onPressed: p.tracks.isEmpty
                       ? null
                       : () { Haptics.tap();
                           final songs = [for (final s in p.tracks) s.track];
@@ -278,7 +279,7 @@ class _Body extends ConsumerWidget {
                                       : strings.sharedInvitedTag,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: locale.getTextStyle(fontSize: 10, color: AppColors.textSecondary),
+                              style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -295,14 +296,14 @@ class _Body extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(strings.sharedEmpty,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.4)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted, height: 1.4)),
           )
         else
           for (final (i, s) in p.tracks.indexed)
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               leading: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 44,
                   height: 44,
@@ -315,11 +316,11 @@ class _Body extends ConsumerWidget {
               title: Text(s.track.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
               subtitle: Text('${s.track.artistName} · ${strings.sharedAddedBy(p.nameOf(s.addedBy))}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
               trailing: p.isMember(me) && (owner || s.addedBy == me)
                   ? IconButton(
                       tooltip: strings.cancel,
@@ -364,28 +365,25 @@ class _Body extends ConsumerWidget {
     final strings = ref.read(stringsProvider);
     final locale = ref.read(localeProvider);
     final bonds = ref.read(socialProvider).bonds.where((b) => !p.isMember(b.uid) && !p.isInvited(b.uid)).toList();
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      backgroundColor: AppColors.bgCard,
-      useRootNavigator: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (sheet) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(strings.sharedInviteTitle.toUpperCase(),
                   style: locale.getTextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                      fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
               const SizedBox(height: 10),
               if (bonds.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(strings.sharedInviteNone,
-                      style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.4)),
                 )
               else
                 Flexible(
@@ -398,7 +396,7 @@ class _Body extends ConsumerWidget {
                           leading: PersonAvatar(person: b, size: 40),
                           title: Text(b.name,
                               style: locale.getTextStyle(
-                                  fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                                  fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           trailing: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.accent),
                           onTap: () async {
                             Haptics.confirm();

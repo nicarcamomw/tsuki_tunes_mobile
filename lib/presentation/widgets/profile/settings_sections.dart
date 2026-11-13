@@ -51,7 +51,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setAutoMarkListened(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -63,7 +62,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setNormalizeVolume(v);
-          setState(() {});
         },
       ),
       ListTile(
@@ -78,11 +76,11 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         ),
         title: Text(
           strings.eqTitle,
-          style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
+          style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: AppColors.textBright),
         ),
         subtitle: Text(
           strings.eqPresetName(audio.eqPreset),
-          style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
         onTap: () async {
@@ -100,7 +98,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
         onChanged: (v) {
           Haptics.selection();
           shakeSkip.setEnabled(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -113,7 +110,6 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           if (v && !ecoAllows(context, EcoFeature.running)) return;
           Haptics.selection();
           run.setEnabled(v);
-          setState(() {});
         },
       ),
     ]);
@@ -129,7 +125,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '0s',
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 color: AppColors.textMuted,
               ),
             ),
@@ -163,7 +159,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
             Text(
               '12s',
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 color: AppColors.textMuted,
               ),
             ),
@@ -176,14 +172,14 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: AppColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             audio.crossfadeSeconds == 0
                 ? locale.strings.crossfadeGapless
                 : locale.strings.crossfadeSecondsLabel(audio.crossfadeSeconds),
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
             ),
@@ -221,7 +217,6 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setPrecacheWifiOnly(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -233,7 +228,6 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onChanged: (v) {
           Haptics.selection();
           audio.setAutoplaySimilar(v);
-          setState(() {});
         },
       ),
       _ImageQualityRow(locale: locale, hostContext: widget.hostContext),
@@ -252,7 +246,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         title: Text(
           strings.smartShuffleTitle,
           style: locale.getTextStyle(
-            fontSize: 12,
+            fontSize: AppFontSize.body,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -260,7 +254,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         subtitle: Text(
           strings.smartShuffleSubtitle,
           style: locale.getTextStyle(
-              fontSize: 10, color: AppColors.textMuted),
+              fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
         trailing: const Icon(Icons.chevron_right,
             color: AppColors.textMuted, size: 18),
@@ -270,6 +264,21 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
           showSmartShuffleSheet(widget.hostContext);
         },
       ),
+    ]);
+  }
+}
+
+/// S-02: what's for troubleshooting (the playback log, the audio cache),
+/// last and apart from the everyday settings.
+class _AdvancedSettings extends ConsumerWidget {
+  final LocaleProvider locale;
+
+  const _AdvancedSettings({required this.locale});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = locale.strings;
+    return _SettingsCard(rows: [
       _SettingLink(
         locale: locale,
         icon: Icons.receipt_long_rounded,
@@ -280,9 +289,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onTap: () {
           Haptics.tap();
           Clipboard.setData(ClipboardData(text: ref.read(playbackLogProvider).dump()));
-          ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-            SnackBar(content: Text(strings.playbackLogCopied)),
-          );
+          AppSnack.of(context).info(strings.playbackLogCopied);
         },
       ),
       _SettingLink(
@@ -292,13 +299,11 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         iconSemanticLabel: strings.a11yClearCache,
         label: strings.clearAudioCache,
         labelColor: AppColors.textSecondary,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.card)),
         onTap: () {
           Haptics.remove();
           ref.read(audioCacheProvider).clearCache();
-          ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-            SnackBar(content: Text(strings.audioCacheCleared)),
-          );
+          AppSnack.of(context).info(strings.audioCacheCleared);
         },
       ),
     ]);
@@ -346,7 +351,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         onChanged: (v) {
           Haptics.selection();
           moon.setAtmosphereEnabled(v);
-          setState(() {});
         },
       ),
       _SettingSwitch(
@@ -376,7 +380,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           await Haptics.setEnabled(v);
           // Turning it on answers with the feel it brings back.
           Haptics.selection();
-          if (mounted) setState(() {});
         },
       ),
       _SettingSwitch(
@@ -388,7 +391,6 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         onChanged: (v) async {
           Haptics.selection();
           await ref.read(analyticsProvider).setEnabled(v);
-          if (mounted) setState(() {});
         },
       ),
       _SettingLink(
@@ -400,12 +402,12 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: AppColors.accentDim,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             locale.currentLanguage.tag,
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
             ),
@@ -438,7 +440,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         iconColor: AppColors.textSecondary,
         label: strings.termsOption,
         labelColor: AppColors.textSecondary,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.card)),
         onTap: () { Haptics.tap(); _openLegalPage(termsOfServiceUrl); },
       ),
     ]);
@@ -510,7 +512,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
           ),
           dialogTheme: const DialogThemeData(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.card)),
             ),
           ),
         ),
@@ -545,7 +547,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
               child: Text(
                 widget.strings.birthdayTitle,
                 style: widget.locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textBright,
                 ),
@@ -557,7 +559,7 @@ class _BirthdayRowState extends State<_BirthdayRow> {
                     ? _formatBirthday(_birthday!)
                     : widget.strings.birthdayNotSet,
                 style: widget.locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   color: _birthday != null ? AppColors.sakura : AppColors.textMuted,
                 ),
               ),
@@ -599,11 +601,11 @@ class _ImageQualityRow extends ConsumerWidget {
       ),
       title: Text(
         strings.imageQualityTitle,
-        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textBright),
+        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: AppColors.textBright),
       ),
       subtitle: Text(
         '${strings.imageQualityName(quality)} · ${strings.imageQualityDescription(quality)}',
-        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+        style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
       ),
       trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
       onTap: () {
@@ -632,18 +634,12 @@ class _ImageQualitySheet extends ConsumerWidget {
       controller: controller,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(strings.imageQualityTitle,
-              style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textBright)),
+              style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
         ),
         const SizedBox(height: 8),
         for (final q in [ImageQuality.dataSaver, ImageQuality.normal, ImageQuality.high])
@@ -651,9 +647,9 @@ class _ImageQualitySheet extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             selected: setting.quality == q,
             title: Text(strings.imageQualityName(q),
-                style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700, color: AppColors.textBright)),
             subtitle: Text(strings.imageQualityDescription(q),
-                style: locale.getTextStyle(fontSize: 11, color: AppColors.textMuted)),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
             trailing: setting.quality == q ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20) : null,
             onTap: () {
               Haptics.selection();

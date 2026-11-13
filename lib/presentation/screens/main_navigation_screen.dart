@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
 import '../navigation/main_tab.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/auth_guard.dart';
 import '../widgets/battery_guide_sheet.dart';
 import '../widgets/cyber_nav_icon.dart';
@@ -131,6 +134,27 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     });
   }
 
+  static const _gesturesHintKey = 'nav_gestures_hint_shown';
+  int _tabSwitches = 0;
+
+  /// E-02: the bar's double tap and long press are taught once, on the
+  /// third tab change (the user knows the bar by then).
+  Future<void> _maybeTeachGestures() async {
+    if (++_tabSwitches != 3) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_gesturesHintKey) ?? false) return;
+    await prefs.setBool(_gesturesHintKey, true);
+    if (!mounted) return;
+    AppSnack.of(context, bottom: _snackBottom).info(
+      ref.read(localeProvider).strings.navGesturesHint,
+      icon: Icons.touch_app_rounded,
+      duration: const Duration(seconds: 6),
+    );
+  }
+
+  /// The shell's own snack bars (playback, Spotify, sync) clear its dock.
+  double get _snackBottom => (MediaQuery.viewInsetsOf(context).bottom > 0 ? 0 : SnackDock.shellHeight) + 12;
+
   @override
   void dispose() {
     if (NavigationEvents.switchTab == _switchToTab) {
@@ -171,46 +195,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       final offerBatteryGuide = ref.read(batteryGuideProvider).offerFor(spotifyError);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              action: offerBatteryGuide
-                  ? SnackBarAction(
-                      label: strings.batteryGuideAction,
-                      textColor: AppColors.accent,
-                      onPressed: () { Haptics.tap(); BatteryGuideSheet.show(context); },
-                    )
-                  : null,
-              content: Row(
-                children: [
-                  Icon(offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
-                      color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yPlaybackError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      offerBatteryGuide
-                          ? strings.batteryGuideSnack
-                          : spotifyError.message(strings),
-                      style: locale.getTextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-              duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
-            ),
+          // E-03: the app's snack bar, over the dock.
+          AppSnack.of(context, bottom: _snackBottom).show(
+            offerBatteryGuide ? strings.batteryGuideSnack : spotifyError.message(strings),
+            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
+            actionLabel: offerBatteryGuide ? strings.batteryGuideAction : null,
+            onAction: offerBatteryGuide ? () => BatteryGuideSheet.show(context) : null,
+            duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
           );
         }
       });
@@ -222,49 +213,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownPlaybackError = playbackError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    playbackError == PlaybackError.network
-                        ? Icons.wifi_off_rounded
-                        : (playbackError == PlaybackError.noPreview
-                            ? Icons.music_off_rounded
-                            : Icons.error_outline),
-                    color: AppColors.error,
-                    size: 18,
-                    semanticLabel: strings.a11yPlaybackError,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      playbackError.message(strings, isOnline: isOnline),
-                      style: locale.getTextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-                side: const BorderSide(
-                  color: AppColors.error,
-                  width: 1.2,
-                ),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
+          AppSnack.of(context, bottom: _snackBottom).error(
+            playbackError.message(strings, isOnline: isOnline),
+            icon: playbackError == PlaybackError.network
+                ? Icons.wifi_off_rounded
+                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline),
           );
         }
       });
@@ -277,37 +230,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownSyncError = syncError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.sync_problem, color: AppColors.accent, size: 18, semanticLabel: strings.a11ySyncError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      strings.syncError,
-                      style: locale.getTextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem);
         }
       });
     }
@@ -341,16 +264,18 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             // Navigator with tab screens (reactivo con Lazy Loading)
             // Fix Bug 4: En caso de teclado abierto, el body toma la pantalla completa y SearchScreen gestiona su scroll
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 320),
+              duration: AppMotion.normal,
               curve: Curves.easeInOutCubic,
               left: 0,
               right: 0,
               top: 0,
               bottom: isKeyboardOpen ? 0 : bottomBarHeight,
-              child: MainTabsScope(
-                tab: _tabNotifier,
-                loadedTabs: _loadedTabs,
-                child: widget.child,
+              child: SnackDock(
+                child: MainTabsScope(
+                  tab: _tabNotifier,
+                  loadedTabs: _loadedTabs,
+                  child: widget.child,
+                ),
               ),
             ),
             // Mini Player animado + Bottom Nav
@@ -364,11 +289,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 builder: (context) {
                   final isOnline = ref.watch(isOnlineProvider);
                   return AnimatedSlide(
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppMotion.normal,
                     curve: Curves.easeInOutCubic,
                     offset: isOnline ? const Offset(0, -1) : Offset.zero,
                     child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
+                      duration: AppMotion.normal,
                       opacity: isOnline ? 0.0 : 1.0,
                       child: SafeArea(
                         bottom: false,
@@ -384,7 +309,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               Text(
                                 strings.offline,
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -408,19 +333,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 builder: (context, isExpanded, _) {
                   final shouldHide = isKeyboardOpen || isExpanded;
                   return AnimatedSlide(
-                    duration: const Duration(milliseconds: 280),
+                    duration: AppMotion.normal,
                     curve: Curves.easeInOutCubic,
                     offset: shouldHide ? const Offset(0, 1.2) : Offset.zero,
-                    child: Column(
+                    // R-04: slid away (keyboard up, player open) the dock's
+                    // animations stop: the breathing cover, the marquee, the
+                    // nav icons.
+                    child: TickerMode(
+                      enabled: !shouldHide,
+                      child: DockSizeReporter(
+                      child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Deslizamiento fluido hacia abajo al pausar/cerrar (AnimatedSlide + AnimatedCrossFade)
                         AnimatedSlide(
-                          duration: const Duration(milliseconds: 320),
+                          duration: AppMotion.normal,
                           curve: Curves.easeInOutCubic,
                           offset: hasTrack ? Offset.zero : const Offset(0, 0.4),
                           child: AnimatedCrossFade(
-                            duration: const Duration(milliseconds: 300),
+                            duration: AppMotion.normal,
                             firstCurve: Curves.easeInOutCubic,
                             secondCurve: Curves.easeInOutCubic,
                             crossFadeState: hasTrack
@@ -435,6 +366,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         ),
                         _buildCyberBottomNav(),
                       ],
+                    ),
+                    ),
                     ),
                   );
                 },
@@ -486,13 +419,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               child: Row(
                 children: [
                   for (final tab in MainTab.values)
-                    Expanded(
-                      child: _buildNavItem(
-                        tab: tab,
-                        selected: selected,
-                        showBadge: tab == MainTab.library && hasNewLibraryTracks,
-                        locale: locale,
-                      ),
+                    _buildNavItem(
+                      tab: tab,
+                      selected: selected,
+                      showBadge: tab == MainTab.library && hasNewLibraryTracks,
+                      locale: locale,
                     ),
                 ],
               ),
@@ -548,6 +479,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (_tabNotifier.value != tab) {
       _loadedTabs.add(tab);
       _tabNotifier.value = tab;
+      unawaited(_maybeTeachGestures());
       if (tab == MainTab.library) _markLibrarySeen();
     } else {
       // Tap adicional en la pestaña ya activa: Acción inteligente instantánea
@@ -600,8 +532,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final isSelected = selected == tab;
     final label = _navLabel(tab, locale);
 
-    return Semantics(
+    // Equal widths: the labels fit at the type scale's floor on any phone.
+    return Expanded(
+      child: Semantics(
       selected: isSelected,
+      // E-02: TalkBack says what holding the tab does.
+      onLongPressHint: locale.strings.navLongPressHint(tab.name),
       child: TapScale(
       semanticLabel: label,
       onTap: () => _onNavItemTap(tab),
@@ -659,7 +595,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 label,
                 maxLines: 1,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.micro,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   color: isSelected ? AppColors.accent : AppColors.textSecondary,
                   letterSpacing: 1,
@@ -667,18 +603,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ),
             ),
             const SizedBox(height: 1),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                locale.strings.navHudSubtitle(tab.name),
-                maxLines: 1,
-                style: GoogleFonts.notoSansJp(
-                  fontSize: 8.5,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: isSelected
-                      ? AppColors.accent.withValues(alpha: 0.9)
-                      : AppColors.textMuted.withValues(alpha: 0.6),
-                  letterSpacing: 0.6,
+            // E-01: the Japanese HUD line is ornament: at the scale's floor
+            // and only on the active tab. It keeps its room so the bar
+            // doesn't jump; TalkBack reads the label only.
+            ExcludeSemantics(
+              child: AnimatedOpacity(
+                opacity: isSelected ? 1 : 0,
+                duration: AppMotion.fast,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    locale.strings.navHudSubtitle(tab.name),
+                    maxLines: 1,
+                    style: GoogleFonts.notoSansJp(
+                      fontSize: AppFontSize.micro,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent.withValues(alpha: 0.9),
+                      letterSpacing: 0.6,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -686,6 +629,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ],
         ),
       ),
+    ),
     ),
     );
   }
@@ -736,7 +680,7 @@ class MainTabsView extends StatelessWidget {
         return FocusTraversalGroup(
           child: FadeIndexedStack(
             index: active.index,
-            duration: const Duration(milliseconds: 150),
+            duration: AppMotion.fast,
             children: [
               for (final tab in MainTab.values)
                 RepaintBoundary(

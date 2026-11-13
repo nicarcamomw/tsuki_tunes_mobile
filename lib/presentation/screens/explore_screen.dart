@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/artist.dart';
 import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
@@ -66,7 +67,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     if (!_scroll.hasClients) return;
     unawaited(_scroll.animateTo(
       0,
-      duration: const Duration(milliseconds: 380),
+      duration: AppMotion.slow,
       curve: Curves.easeOutCubic,
     ));
   }
@@ -110,7 +111,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final masks = ref.watch(maskProvider.select((m) => (m.unlockedCount, m.totalCount)));
 
     const cardGap = SizedBox(height: 10);
-    const sidePadding = EdgeInsets.symmetric(horizontal: 16);
+    const sidePadding = EdgeInsets.symmetric(horizontal: AppSpacing.page);
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -218,7 +219,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
                 if (isLoggedIn && hasListened)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.page, 6, AppSpacing.page, 6),
                     child: Row(
                       children: [
                         Expanded(
@@ -238,7 +239,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.page, 6, AppSpacing.page, 0),
                   child: Row(
                     children: [
                       if (isLoggedIn) ...[
@@ -293,7 +294,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = locale.strings;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -307,7 +308,7 @@ class _Header extends StatelessWidget {
                   Text(
                     strings.navExplore,
                     style: locale.getTextStyle(
-                      fontSize: 26,
+                      fontSize: AppFontSize.display,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 2,
@@ -316,7 +317,7 @@ class _Header extends StatelessWidget {
                   Text(
                     ' // ${MainTab.explore.number}',
                     style: locale.getTextStyle(
-                      fontSize: 26,
+                      fontSize: AppFontSize.display,
                       fontWeight: FontWeight.w900,
                       color: AppColors.accent,
                     ),
@@ -333,7 +334,7 @@ class _Header extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.notoSansJp(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accentText,
                 letterSpacing: 1.2,
@@ -353,7 +354,7 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 10),
         child: Align(
           alignment: Alignment.centerLeft,
           child: SectionTitle(locale: locale, text: text),

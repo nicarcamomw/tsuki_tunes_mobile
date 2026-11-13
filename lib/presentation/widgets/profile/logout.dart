@@ -11,7 +11,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
     builder: (dialogCtx) => AlertDialog(
       backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         side: const BorderSide(color: AppColors.border, width: 1.0),
       ),
       title: Row(
@@ -21,7 +21,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           Text(
             strings.logoutConfirmTitle,
             style: locale.getTextStyle(
-              fontSize: 14,
+              fontSize: AppFontSize.title,
               fontWeight: FontWeight.w800,
               color: Colors.white,
               letterSpacing: 1.5,
@@ -33,7 +33,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
         // A guest's playlists live only on this phone and go with them.
         auth.isGuest ? strings.logoutGuestConfirmMessage : strings.logoutConfirmMessage,
         style: locale.getTextStyle(
-          fontSize: 13,
+          fontSize: AppFontSize.bodyLg,
           color: AppColors.textSecondary,
         ),
       ),
@@ -43,7 +43,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
@@ -54,12 +54,12 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentFill,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
           ),
           child: Text(
             strings.logout,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
               color: Colors.white,

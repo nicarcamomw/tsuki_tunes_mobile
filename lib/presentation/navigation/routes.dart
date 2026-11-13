@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
@@ -427,8 +428,8 @@ class WrappedRoute extends GoRouteData with $WrappedRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) => CustomTransitionPage(
         key: state.pageKey,
-        transitionDuration: const Duration(milliseconds: 420),
-        reverseTransitionDuration: const Duration(milliseconds: 260),
+        transitionDuration: AppMotion.slow,
+        reverseTransitionDuration: AppMotion.normal,
         child: WrappedScreen(year: year, month: month),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: animation,
@@ -446,7 +447,7 @@ class WrappedRoute extends GoRouteData with $WrappedRoute {
 CustomTransitionPage<void> fadePage(GoRouterState state, Widget child) => CustomTransitionPage(
       key: state.pageKey,
       child: child,
-      transitionDuration: const Duration(milliseconds: 350),
+      transitionDuration: AppMotion.normal,
       transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
     );
 
@@ -454,8 +455,27 @@ CustomTransitionPage<void> fadePage(GoRouterState state, Widget child) => Custom
 CustomTransitionPage<void> cyberPage(GoRouterState state, Widget child) => CustomTransitionPage(
       key: state.pageKey,
       child: child,
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: AppMotion.normal,
+      reverseTransitionDuration: AppMotion.normal,
+      transitionsBuilder: (_, animation, __, child) {
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+
+/// [cyberPage]'s transition for a route pushed with Navigator (E-04): the
+/// screens that aren't go_router routes open like the rest of the app.
+PageRouteBuilder<T> cyberRoute<T>(Widget child, {bool fullscreenDialog = false}) => PageRouteBuilder<T>(
+      fullscreenDialog: fullscreenDialog,
+      transitionDuration: AppMotion.normal,
+      reverseTransitionDuration: AppMotion.normal,
+      pageBuilder: (_, __, ___) => child,
       transitionsBuilder: (_, animation, __, child) {
         final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
         return FadeTransition(

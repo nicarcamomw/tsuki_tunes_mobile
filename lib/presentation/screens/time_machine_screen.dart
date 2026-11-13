@@ -7,12 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/time_machine.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
@@ -121,15 +123,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   }
 
   void _snack(String text) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        duration: const Duration(seconds: 2),
-        content: Text(text,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
-      ));
+    AppSnack.of(context).info(text);
   }
 
   String _periodLabel(AppStrings s, _Period p) => switch (p) {
@@ -153,7 +147,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
           color: AppColors.textBright,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
@@ -162,7 +156,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         title: Text(
           strings.timeMachineTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -177,7 +171,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
               children: [
                 for (final p in _Period.values)
                   Padding(
@@ -191,7 +185,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                       onSelected: (_) => _select(p),
                       showCheckmark: false,
                       labelStyle: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w700,
                         color: _period == p
                             ? AppColors.textBright
@@ -211,7 +205,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
           ),
           _DateHeader(anchor: _anchor, loading: _loading, locale: locale),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
+            duration: AppMotion.normal,
             child: _loading
                 ? const _MomentSkeleton(key: ValueKey('loading'))
                 : moment == null
@@ -239,7 +233,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                     : strings.timeMachineCountingStarts,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                   height: 1.4,
                 ),
@@ -247,10 +241,10 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
             ),
           if (ref.watch(releaseRadarSupportedProvider))
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              margin: const EdgeInsets.fromLTRB(AppSpacing.page, 24, AppSpacing.page, 0),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.borderSub),
               ),
               child: MergeSemantics(
@@ -272,7 +266,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                   title: Text(
                     strings.timeMachineNotifyToggle,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -280,7 +274,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                   subtitle: Text(
                     strings.timeMachineNotifyToggleSubtitle,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -309,7 +303,7 @@ class _DateHeader extends StatelessWidget {
     final strings = locale.strings;
     final reduce = MediaQuery.of(context).disableAnimations;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
       child: Row(
         children: [
           ExcludeSemantics(
@@ -349,7 +343,7 @@ class _DateHeader extends StatelessWidget {
                   Text(
                     strings.longDate(anchor).toUpperCase(),
                     style: locale.getTextStyle(
-                      fontSize: 20,
+                      fontSize: AppFontSize.headline,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 1.5,
@@ -361,7 +355,7 @@ class _DateHeader extends StatelessWidget {
                         ? strings.timeMachineRewinding
                         : strings.weekdayName(anchor.weekday),
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w700,
                       color: loading ? AppColors.neonPurple : AppColors.textMuted,
                       letterSpacing: 1.5,
@@ -424,7 +418,7 @@ class _MomentView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
           child: Wrap(
             spacing: 8,
             children: [
@@ -446,18 +440,18 @@ class _MomentView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 12),
           child: Text(
             headline,
             style: locale.getTextStyle(
-              fontSize: 18,
+              fontSize: AppFontSize.titleLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
             ),
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -465,13 +459,13 @@ class _MomentView extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(color: accent.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: _Cover(url: hero.track.coverUrl, size: 104),
               ),
               const SizedBox(width: 14),
@@ -484,7 +478,7 @@ class _MomentView extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 16,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -495,7 +489,7 @@ class _MomentView extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -503,7 +497,7 @@ class _MomentView extends StatelessWidget {
                     Text(
                       _caption(s, hero),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: accent,
                         letterSpacing: 0.4,
@@ -516,7 +510,7 @@ class _MomentView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 4),
           child: SizedBox(
             height: 46,
             child: FilledButton.icon(
@@ -531,7 +525,7 @@ class _MomentView extends StatelessWidget {
               label: Text(
                 s.timeMachinePlay,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                 ),
@@ -540,21 +534,21 @@ class _MomentView extends StatelessWidget {
                 backgroundColor: accent.withValues(alpha: 0.85),
                 foregroundColor: AppColors.textBright,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(AppRadius.chip)),
               ),
             ),
           ),
         ),
         for (final t in moment.tracks.skip(1))
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 3),
             child: Semantics(
               label: '${t.track.title}, ${t.track.artistName}. ${_caption(s, t)}',
               excludeSemantics: true,
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: _Cover(url: t.track.coverUrl, size: 44),
                   ),
                   const SizedBox(width: 12),
@@ -567,7 +561,7 @@ class _MomentView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textBright,
                           ),
@@ -577,7 +571,7 @@ class _MomentView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -588,7 +582,7 @@ class _MomentView extends StatelessWidget {
                   Text(
                     isPlays ? '×${t.count}' : _caption(s, t),
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
                     ),
@@ -639,13 +633,13 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 9,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1.2,
@@ -673,7 +667,7 @@ class _Nothing extends StatelessWidget {
           Text(
             s.timeMachineNothingTitle,
             style: locale.getTextStyle(
-              fontSize: 13,
+              fontSize: AppFontSize.bodyLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 1.6,
@@ -684,7 +678,7 @@ class _Nothing extends StatelessWidget {
             s.timeMachineNothing,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 11.5,
+              fontSize: AppFontSize.body,
               color: AppColors.textSecondary,
               height: 1.4,
             ),
@@ -772,9 +766,9 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
           highlightAlpha: 0.10,
           dimAlpha: 0.04,
           borderAlpha: 0.35,
-          borderRadius: 6,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          borderRadius: AppRadius.chip,
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 14),
           child: Row(
             children: [
               Container(
@@ -796,7 +790,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                     Text(
                       s.timeMachineTitle,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -808,7 +802,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w600,
                         color: AppColors.neonPurple.withValues(alpha: 0.9),
                       ),
@@ -818,7 +812,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
               ),
               if (m != null && m.hero.track.coverUrl.isNotEmpty) ...[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: _Cover(url: m.hero.track.coverUrl, size: 34),
                 ),
                 const SizedBox(width: 8),
@@ -840,7 +834,7 @@ class _MomentSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const SkeletonScope(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -848,9 +842,9 @@ class _MomentSkeleton extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   children: [
-                    SkeletonLoader(width: 84, height: 22, borderRadius: 11),
+                    SkeletonLoader(width: 84, height: 22, borderRadius: AppRadius.pill),
                     SizedBox(width: 8),
-                    SkeletonLoader(width: 70, height: 22, borderRadius: 11),
+                    SkeletonLoader(width: 70, height: 22, borderRadius: AppRadius.pill),
                   ],
                 ),
               ),
@@ -860,9 +854,9 @@ class _MomentSkeleton extends StatelessWidget {
                 child: SkeletonLine(factor: 0.7, height: 18),
               ),
               SizedBox(height: 14),
-              SkeletonLoader(height: 132, borderRadius: 8),
+              SkeletonLoader(height: 132, borderRadius: AppRadius.card),
               SizedBox(height: 12),
-              SkeletonLoader(height: 46, borderRadius: 23),
+              SkeletonLoader(height: 46, borderRadius: AppRadius.pill),
             ],
           ),
         ),

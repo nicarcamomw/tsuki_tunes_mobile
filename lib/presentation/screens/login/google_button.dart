@@ -36,7 +36,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
     super.initState();
     _rippleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: AppMotion.slow,
     );
     _loadMaskImages();
   }
@@ -99,7 +99,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: AppColors.accent.withValues(alpha: 0.7),
           width: 1.2,
@@ -113,7 +113,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: Stack(
           children: [
             Container(
@@ -184,7 +184,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
               child: SizedBox(
                 height: 54,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
+                  duration: AppMotion.normal,
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
                   child: widget.loginSuccess
@@ -201,7 +201,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                             Text(
                               widget.strings.loginGranted,
                               style: widget.locale.getTextStyle(
-                                fontSize: 12.0,
+                                fontSize: AppFontSize.body,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
                                 letterSpacing: 2.2,
@@ -226,7 +226,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                 Text(
                                   widget.strings.loginLoading,
                                   style: widget.locale.getTextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: AppFontSize.bodyLg,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     letterSpacing: 1.8,
@@ -243,7 +243,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                   height: 28,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(AppRadius.chip),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withValues(alpha: 0.25),
@@ -262,7 +262,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                                 Text(
                                   widget.strings.loginGoogle,
                                   style: widget.locale.getTextStyle(
-                                    fontSize: 12.5,
+                                    fontSize: AppFontSize.bodyLg,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     letterSpacing: 1.8,

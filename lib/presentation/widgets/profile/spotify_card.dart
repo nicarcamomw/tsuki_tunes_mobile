@@ -17,23 +17,10 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
 
   AudioProvider get _audio => ref.read(audioProvider);
 
-  void _showSnack(SnackBar snackBar) {
-    if (widget.hostContext.mounted) {
-      ScaffoldMessenger.of(widget.hostContext).showSnackBar(snackBar);
-    }
-  }
-
-  SnackBar _plainSnack(String message, Duration duration) {
-    return SnackBar(
-      content: Text(
-        message,
-        style: widget.locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      duration: duration,
-    );
+  void _showSnack(String message, {SnackKind kind = SnackKind.info, Duration? duration}) {
+    // Its own context: the snack shows over whatever holds the card (the
+    // settings page), not under it.
+    if (mounted) AppSnack.of(context).show(message, kind: kind, duration: duration);
   }
 
   Future<void> _disconnect() async {
@@ -52,7 +39,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         ref.read(analyticsProvider).log('spotify_connected', {'premium': _audio.spotify.isPremium});
         await _audio.updateSpotifyState();
         if (mounted) setState(() {});
-        _showSnack(_plainSnack(strings.spotifySyncSuccess, const Duration(seconds: 2)));
+        _showSnack(strings.spotifySyncSuccess);
       } else if (_audio.spotify.isNotRegistered) {
         if (mounted) setState(() {});
         ref.read(analyticsProvider).log('spotify_connect_failed', {'reason': 'not_registered'});
@@ -64,31 +51,12 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             : strings.spotifyConnectError;
         ref.read(analyticsProvider).log('spotify_connect_failed',
             {'canceled': msg == strings.spotifyCanceledByUser});
-        _showSnack(_plainSnack(msg, const Duration(seconds: 3)));
+        _showSnack(msg, duration: const Duration(seconds: 3));
       }
     } catch (e) {
       _isConnecting = false;
       if (mounted) setState(() {});
-      _showSnack(SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yPlaybackError),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                strings.spotifyConnectError,
-                style: widget.locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.bgCard,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: AppColors.error, width: 1.2),
-        ),
-      ));
+      _showSnack(strings.spotifyConnectError, kind: SnackKind.error);
     }
   }
 
@@ -105,7 +73,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),
         ),
         title: Row(
@@ -116,7 +84,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
               child: Text(
                 strings.spotifyNotRegisteredTitle,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
@@ -126,7 +94,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         ),
         content: Text(
           strings.spotifyNotRegisteredMessage,
-          style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -134,7 +102,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             child: Text(
               strings.spotifyNotRegisteredOk,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
               ),
@@ -159,7 +127,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.bgMid,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             border: Border.all(
               color: spotify.isConnected
                   ? AppColors.accent.withValues(alpha: 0.5)
@@ -173,7 +141,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
                 child: Icon(Icons.music_note,
                     color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
@@ -186,7 +154,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                     Text(
                       'Spotify',
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                       ),
@@ -200,7 +168,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                                   : '${strings.spotifyConnected} · ${spotify.displayName ?? strings.spotifyDefaultUser}')
                               : strings.spotifyNotConnected,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         color: _isConnecting
                             ? AppColors.accent
                             : spotify.isConnected
@@ -235,7 +203,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                       child: Text(
                         strings.spotifyDisconnect,
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                         ),
@@ -258,7 +226,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.accent),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 6),
@@ -266,7 +234,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   child: Text(
                     strings.spotifyConnect,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent,
                     ),
@@ -286,7 +254,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                 Expanded(
                   child: Text(
                     strings.spotifyLimitedNote,
-                    style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+                    style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
                   ),
                 ),
               ],
@@ -311,7 +279,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                             : strings.spotifyPremiumActive)
                         : strings.spotifyStandardPreview,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textSecondary,
                     ),
                   ),

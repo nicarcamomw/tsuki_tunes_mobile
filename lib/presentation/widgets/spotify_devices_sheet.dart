@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'skeleton_loader.dart';
 import 'swipeable_sheet.dart';
@@ -53,11 +55,11 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
     setState(() => _moving = id);
     final audio = ref.read(audioProvider);
     final strings = ref.read(localeProvider).strings;
-    final messenger = ScaffoldMessenger.maybeOf(widget.host);
+    final messenger = AppSnack.maybeOf(widget.host);
     final ok = await audio.spotify.listenOn(id, name: name, isPhone: d['type'] == 'Smartphone');
     if (!mounted) return;
     Navigator.of(context).pop();
-    messenger?.showSnackBar(SnackBar(content: Text(ok ? strings.devicesMoved(name) : strings.devicesFailed)));
+    messenger?.info(ok ? strings.devicesMoved(name) : strings.devicesFailed);
   }
 
   static IconData _icon(String? type) => switch (type) {
@@ -81,13 +83,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
       controller: widget.controller,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
       children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
-        ),
+        const SheetHandle(),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -96,7 +92,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
             Expanded(
               child: Text(strings.devicesTitle.toUpperCase(),
                   style: locale.getTextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                      fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
             ),
             IconButton(
               tooltip: strings.devicesRefresh,
@@ -106,7 +102,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
           ],
         ),
         Text(strings.devicesHint,
-            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 14),
         if (devices == null)
           const SkeletonRowList(count: 3, leading: 36, round: true, padding: EdgeInsets.symmetric(vertical: 8))
@@ -115,7 +111,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Text(strings.devicesEmpty,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.4)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted, height: 1.4)),
           )
         else
           for (final d in devices) _tile(d, locale, strings),
@@ -137,7 +133,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
         label: '$name${active ? '. ${strings.devicesPlayingHere}' : ''}',
         excludeSemantics: true,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: restricted || active ? null : () => _choose(d),
           child: Opacity(
             opacity: restricted ? 0.45 : 1,
@@ -145,7 +141,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.bgCard,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: active ? AppColors.success : AppColors.border),
               ),
               child: Row(
@@ -160,11 +156,11 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                                fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                         if (active || restricted) ...[
                           const SizedBox(height: 2),
                           Text(active ? strings.devicesPlayingHere : strings.devicesRestricted,
-                              style: locale.getTextStyle(fontSize: 10.5, color: color)),
+                              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: color)),
                         ],
                       ],
                     ),

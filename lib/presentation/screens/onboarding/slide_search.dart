@@ -16,7 +16,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: AppColors.neonCyan.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: AppColors.neonCyan.withValues(alpha: 0.4),
               width: 0.8,
@@ -25,7 +25,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           child: Text(
             strings.onboardingSlide2Badge,
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w800,
               color: AppColors.neonCyan,
               letterSpacing: 1.6,
@@ -39,7 +39,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide2Title,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 22,
+            fontSize: AppFontSize.headline,
             fontWeight: FontWeight.w900,
             color: AppColors.textBright,
             letterSpacing: 1.8,
@@ -58,7 +58,7 @@ Widget _buildSlide2Search(Size size, double t, LocaleProvider locale, AppStrings
           strings.onboardingSlide2Desc,
           textAlign: TextAlign.center,
           style: locale.getTextStyle(
-            fontSize: 12.5,
+            fontSize: AppFontSize.bodyLg,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -130,7 +130,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.bgCard.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
                   color: AppColors.neonCyan.withValues(alpha: 0.6),
                   width: 1.2,
@@ -155,7 +155,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                     child: Text(
                       '$activeQuery$blink',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                         letterSpacing: 0.5,
@@ -168,12 +168,12 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                         horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.neonCyan.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
                     child: Text(
                       'DEEZER',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 7.5,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w900,
                         color: AppColors.neonCyan,
                         letterSpacing: 0.8,
@@ -195,7 +195,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: AppColors.accent.withValues(alpha: 0.4),
                     width: 1.0,
@@ -214,7 +214,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
                           colors: [AppColors.accent, Color(0xFF8B0000)],
                         ),
@@ -230,7 +230,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Around The World',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textBright,
                             ),
@@ -240,7 +240,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Daft Punk • Discovery',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9.0,
+                              fontSize: AppFontSize.micro,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,
@@ -270,7 +270,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: AppColors.bgCard.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: AppColors.neonCyan.withValues(alpha: 0.45),
                     width: 1.0,
@@ -289,7 +289,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
                           colors: [AppColors.neonCyan, Color(0xFF0055AA)],
                         ),
@@ -305,7 +305,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'Chop Suey!',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textBright,
                             ),
@@ -315,7 +315,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                           Text(
                             'System of a Down • Toxicity',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9.0,
+                              fontSize: AppFontSize.micro,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,

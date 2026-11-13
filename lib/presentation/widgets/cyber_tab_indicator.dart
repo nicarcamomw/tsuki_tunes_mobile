@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// CyberTabIndicator: Barra luminosa activa con micro-partículas de chispa de circuito
 /// que emanan brevemente (~380 ms) al cambiar de pestaña activa.
@@ -41,7 +42,7 @@ class _CyberTabIndicatorState extends State<CyberTabIndicator>
     super.initState();
     _sparkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: AppMotion.slow,
     );
     _sparkAnimation = CurvedAnimation(
       parent: _sparkController,
@@ -179,7 +180,7 @@ class _CyberTabIndicatorPainter extends CustomPainter {
       width: barWidth,
       height: barHeight,
     );
-    final rrect = RRect.fromRectAndRadius(barRect, const Radius.circular(1.0));
+    final rrect = RRect.fromRectAndRadius(barRect, const Radius.circular(AppRadius.chip));
 
     // Dibujar barra luminosa con halo de neón
     canvas.drawRRect(rrect, _barGlowPaint);

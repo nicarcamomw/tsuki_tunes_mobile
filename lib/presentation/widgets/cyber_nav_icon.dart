@@ -1,6 +1,9 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../navigation/main_tab.dart';
 
 /// CyberNavIcon: Ícono vectorial temático Cyberpunk / Japanese Folklore
@@ -37,7 +40,7 @@ class _CyberNavIconState extends State<CyberNavIcon>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 260),
+      duration: AppMotion.normal,
       value: widget.isSelected ? 1.0 : 0.0,
     );
     _curveAnimation = CurvedAnimation(

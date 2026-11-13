@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/locale_provider.dart';
 
 /// A section's heading: white fading into the accent.
@@ -33,7 +34,7 @@ class SectionTitle extends StatelessWidget {
           maxLines: maxLines,
           overflow: maxLines != null ? TextOverflow.ellipsis : null,
           style: locale.getTextStyle(
-            fontSize: 13,
+            fontSize: AppFontSize.bodyLg,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: 1.2,

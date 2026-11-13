@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// The player's accent colour: the aura of an equipped UL or DS mask, the
 /// colour the user chose, the cover's colour, or the app's red. Set above
@@ -26,7 +27,7 @@ class AnimatedPlayerTint extends StatelessWidget {
   final Color color;
   final Widget child;
 
-  static const duration = Duration(milliseconds: 600);
+  static const duration = AppMotion.slow;
 
   const AnimatedPlayerTint({super.key, required this.color, required this.child});
 

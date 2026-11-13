@@ -7,6 +7,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
@@ -36,6 +38,7 @@ import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/shuffle_mode_icon.dart';
 import '../widgets/smart_shuffle_sheet.dart';
 import '../widgets/spotify_devices_sheet.dart';
+import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
 import 'lyrics_screen.dart';
@@ -73,7 +76,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     super.initState();
     _snapBack = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.normal,
     );
     _snapAnimation = const AlwaysStoppedAnimation(0.0);
     _snapBack.addListener(() {
@@ -283,7 +286,12 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                   else ...[
                     const Spacer(),
                     ExcludeSemantics(
-                    child: PlayerArtHero(
+                    // R-06: swipe the cover to change song (the buttons stay
+                    // for TalkBack).
+                    child: _SwipeToSkip(
+                      onNext: audio.next,
+                      onPrevious: audio.previous,
+                      child: PlayerArtHero(
                       trackId: track.id,
                       coverUrl: track.coverUrl,
                       isPlaying: isPlaying,
@@ -296,6 +304,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         position: () => audio.position,
                         speed: () => audio.playbackSpeed,
                       ),
+                    ),
                     ),
                     ),
                     const SizedBox(height: 24),
@@ -321,7 +330,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                         Text(
                           playbackError.message(strings),
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             color: AppColors.error,
                             fontWeight: FontWeight.w600,
                           ),
@@ -389,7 +398,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           Expanded(
             child: InkWell(
               onTap: () { Haptics.tap(); _navigateToSource(context, track); },
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                     vertical: 4, horizontal: 8),
@@ -399,7 +408,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     Text(
                       strings.playingFrom,
                       style: locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
                         letterSpacing: 2.0,
@@ -413,7 +422,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                               ? track.artistName
                               : 'DEEZER PREVIEW'),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: PlayerTint.of(context),
                       ),
@@ -466,7 +475,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                   child: _TitleMarquee(
                     text: track.title,
                     style: locale.getTextStyle(
-                      fontSize: 18,
+                      fontSize: AppFontSize.titleLg,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                       letterSpacing: 0.5,
@@ -488,7 +497,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     child: Text(
                       track.fullArtistName,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 1,
@@ -496,6 +505,8 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     ),
                   ),
                 ),
+                // R-05: the line being sung peeks under the title.
+                CurrentLyricLine(controller: _lyrics, onTap: _openLyrics),
               ],
             ),
           ),
@@ -545,3 +556,77 @@ class _CoverBackdrop extends ConsumerWidget {
     );
   }
 }
+
+/// Drags its child sideways; past a third of its width (or flung) it
+/// changes song, then springs back.
+class _SwipeToSkip extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
+
+  const _SwipeToSkip({required this.child, required this.onNext, required this.onPrevious});
+
+  @override
+  State<_SwipeToSkip> createState() => _SwipeToSkipState();
+}
+
+class _SwipeToSkipState extends State<_SwipeToSkip> with SingleTickerProviderStateMixin {
+  late final AnimationController _back = AnimationController(vsync: this, duration: AppMotion.normal)
+    ..addListener(() => setState(() => _dx = _from * (1 - AppMotion.enter.transform(_back.value))));
+  double _dx = 0;
+  double _from = 0;
+  bool _armed = false;
+
+  @override
+  void dispose() {
+    _back.dispose();
+    super.dispose();
+  }
+
+  void _update(DragUpdateDetails d, double width) {
+    _back.stop();
+    setState(() => _dx = (_dx + d.delta.dx).clamp(-width * 0.6, width * 0.6));
+    final past = _dx.abs() > width / 3;
+    if (past != _armed) {
+      _armed = past;
+      if (past) Haptics.selection();
+    }
+  }
+
+  void _end(DragEndDetails d, double width) {
+    final v = d.primaryVelocity ?? 0;
+    final fling = v.abs() > 900;
+    if (_dx.abs() > width / 3 || fling) {
+      final next = fling ? v < 0 : _dx < 0;
+      Haptics.confirm();
+      next ? widget.onNext() : widget.onPrevious();
+    }
+    _armed = false;
+    _from = _dx;
+    _back.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) {
+      final width = box.maxWidth.isFinite ? box.maxWidth : MediaQuery.sizeOf(context).width;
+      final still = reduceMotion(context);
+      final t = width == 0 ? 0.0 : (_dx / width).clamp(-1.0, 1.0);
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragUpdate: (d) => _update(d, width),
+        onHorizontalDragEnd: (d) => _end(d, width),
+        child: still
+            ? widget.child
+            : Transform.translate(
+                offset: Offset(_dx, 0),
+                child: Transform.rotate(
+                  angle: t * 0.12,
+                  child: Opacity(opacity: (1 - t.abs() * 0.6).clamp(0.3, 1.0), child: widget.child),
+                ),
+              ),
+      );
+    });
+  }
+}
+

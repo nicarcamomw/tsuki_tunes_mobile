@@ -50,7 +50,7 @@ class _TopTracksSliver extends StatelessWidget {
             TrackTile(track: tracks[i], index: i, queue: tracks),
           if (tracks.length > 5) ...[
             AnimatedSize(
-              duration: const Duration(milliseconds: 350),
+              duration: AppMotion.normal,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: Column(
@@ -102,7 +102,7 @@ class _FeaturesSliver extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 6),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 6),
             child: Row(
               children: [
                 const Icon(
@@ -117,7 +117,7 @@ class _FeaturesSliver extends StatelessWidget {
                     child: Text(
                       strings.tabAppearsOn,
                       style: locale.getTextStyle(
-                        fontSize: 13,
+                        fontSize: AppFontSize.bodyLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -128,7 +128,7 @@ class _FeaturesSliver extends StatelessWidget {
                 Text(
                   '${tracks.length}',
                   style: locale.getTextStyle(
-                    fontSize: 11,
+                    fontSize: AppFontSize.caption,
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -139,7 +139,7 @@ class _FeaturesSliver extends StatelessWidget {
             TrackTile(track: tracks[i], index: i, queue: tracks),
           if (tracks.length > _collapsed) ...[
             AnimatedSize(
-              duration: const Duration(milliseconds: 350),
+              duration: AppMotion.normal,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: Column(
@@ -196,12 +196,12 @@ class _ShowMoreTracksButton extends StatelessWidget {
             child: AnimatedContainer(
               duration: reduceMotion
                   ? Duration.zero
-                  : const Duration(milliseconds: 300),
+                  : AppMotion.normal,
               curve: Curves.easeOutCubic,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.textBright.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
                   color: AppColors.textBright.withValues(alpha: 0.08),
                 ),
@@ -212,7 +212,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
                   Text(
                     showAll ? strings.showLessTracks : strings.showMoreTracks,
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     ),
@@ -220,7 +220,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
                   const SizedBox(width: 4),
                   AnimatedRotation(
                     turns: showAll ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppMotion.normal,
                     curve: Curves.easeOutCubic,
                     child: const Icon(
                       Icons.keyboard_arrow_down,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
@@ -75,7 +76,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.arrow_back_rounded, size: 22),
           color: AppColors.textBright,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
@@ -86,7 +87,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -108,7 +109,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                           strings.genreEmpty,
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
-                              fontSize: 13, color: AppColors.textSecondary),
+                              fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
                         ),
                       ),
                     )
@@ -122,7 +123,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                             height: 155,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                               itemCount: _artists.length,
                               itemBuilder: (context, i) =>
                                   ArtistCard(artist: _artists[i]),
@@ -141,13 +142,13 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   }
 
   Widget _header(LocaleProvider locale, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
         child: Semantics(
           header: true,
           child: Text(
             text,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w800,
               color: AppColors.accent,
               letterSpacing: 1.2,

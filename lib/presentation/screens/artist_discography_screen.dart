@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/album_categorizer.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -208,7 +209,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           title: Text(
             widget.artistName,
             style: locale.getTextStyle(
-              fontSize: 14,
+              fontSize: AppFontSize.title,
               fontWeight: FontWeight.w700,
               color: AppColors.textBright,
             ),
@@ -226,7 +227,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                   width: 1,
                 ),
               ),
-              child: Icon(Icons.chevron_left,
+              child: Icon(Icons.arrow_back_rounded,
                   color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
             ),
             onPressed: () => Navigator.of(context).pop(_allAlbums),
@@ -240,7 +241,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 16),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -267,7 +268,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                         child: Text(
                           strings.noResults,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -290,14 +291,14 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                           button: true,
                           label: strings.retryLoading,
                           child: InkWell(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
                           onTap: () { Haptics.tap(); _loadMoreAlbums(); },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: AppColors.bgMid,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                               border: Border.all(
                                   color: AppColors.accent
                                       .withValues(alpha: 0.5)),
@@ -311,7 +312,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                                 Text(
                                   strings.retryLoading,
                                   style: locale.getTextStyle(
-                                    fontSize: 11,
+                                    fontSize: AppFontSize.caption,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textBright,
                                   ),
@@ -332,7 +333,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                         child: Text(
                           '${strings.allAlbumsLoaded} (${_filtered.length})',
                           style: locale.getTextStyle(
-                            fontSize: 10,
+                            fontSize: AppFontSize.micro,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textMuted,
                             letterSpacing: 1.0,
@@ -366,7 +367,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.accent : AppColors.bgMid,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: isSelected ? AppColors.accent : AppColors.border,
             ),
@@ -374,7 +375,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           child: Text(
             label,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
             ),
@@ -398,7 +399,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       if (items == null || items.isEmpty) continue;
       sections.add(SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 10),
           child: Row(
             children: [
               Icon(icon, size: 16, color: AppColors.accent, semanticLabel: label),
@@ -406,7 +407,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
@@ -416,7 +417,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
               Text(
                 '${items.length}',
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -435,7 +436,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
       {bool isAppearsOn = false}) {
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -478,11 +479,11 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
             aspectRatio: 1,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(color: AppColors.border, width: 1),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: _buildCover(album, isCompleted, strings),
               ),
             ),
@@ -491,7 +492,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           Text(
             album.title,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w600,
               color: isCompleted ? AppColors.accent : AppColors.textPrimary,
             ),
@@ -501,7 +502,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           Text(
             subtitle,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               color: AppColors.textMuted,
             ),
             maxLines: 1,

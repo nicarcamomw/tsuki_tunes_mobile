@@ -18,7 +18,7 @@ class _BondsButton extends ConsumerWidget {
       icon: Badge(
         isLabelVisible: pending > 0,
         backgroundColor: AppColors.accent,
-        label: Text('$pending', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900)),
+        label: Text('$pending', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900)),
         child: const Icon(Icons.link_rounded, color: AppColors.textBright, size: 22),
       ),
     );
@@ -42,7 +42,7 @@ class _HomeHeader extends StatelessWidget {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -60,7 +60,7 @@ class _HomeHeader extends StatelessWidget {
                             Text(
                               strings.homeHeader.replaceAll(' // 01', ''),
                               style: locale.getTextStyle(
-                                fontSize: 26,
+                                fontSize: AppFontSize.display,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.textBright,
                                 letterSpacing: 2,
@@ -69,7 +69,7 @@ class _HomeHeader extends StatelessWidget {
                             Text(
                               ' // 01',
                               style: locale.getTextStyle(
-                                fontSize: 26,
+                                fontSize: AppFontSize.display,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.accent,
                               ),
@@ -85,7 +85,7 @@ class _HomeHeader extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.notoSansJp(
-                          fontSize: 9,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w700,
                           color: AppColors.accentText,
                           letterSpacing: 1.2,
@@ -118,7 +118,7 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+            padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 6),
             child: SkyLine(),
           ),
         ],
@@ -148,7 +148,7 @@ class _SourceBadge extends StatelessWidget {
               horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: badgeBg,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
               color: badgeColor.withValues(alpha: 0.5),
               width: 0.8,
@@ -182,7 +182,7 @@ class _SourceBadge extends StatelessWidget {
               Text(
                 badgeText,
                 style: locale.getTextStyle(
-                  fontSize: 10,
+                  fontSize: AppFontSize.micro,
                   fontWeight: FontWeight.w800,
                   color: badgeColor,
                   letterSpacing: 1.5,
@@ -240,7 +240,7 @@ class _HomeMessage extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSize.bodyLg,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accent,
                   letterSpacing: 1.2,
@@ -251,7 +251,7 @@ class _HomeMessage extends StatelessWidget {
                 subtitle,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -268,13 +268,13 @@ class _HomeMessage extends StatelessWidget {
                     border: Border.all(
                       color: AppColors.accent.withValues(alpha: 0.6),
                     ),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     color: AppColors.accent.withValues(alpha: 0.08),
                   ),
                   child: Text(
                     actionLabel,
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accent,
                       letterSpacing: 1.5,
@@ -316,7 +316,7 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
@@ -325,7 +325,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: locale.getTextStyle(
-              fontSize: 10,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 1,
@@ -347,9 +347,9 @@ class _StatCard extends StatelessWidget {
                       builder: (context, val, _) => Text(
                         '$val',
                         style: locale.getTextStyle(
-                          fontSize: 22,
+                          fontSize: AppFontSize.headline,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
+                          color: AppColors.textBright,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -359,14 +359,14 @@ class _StatCard extends StatelessWidget {
                       value,
                       style: isTextValue
                           ? locale.getTextStyle(
-                              fontSize: 15,
+                              fontSize: AppFontSize.titleLg,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
+                              color: AppColors.textBright,
                             )
                           : locale.getTextStyle(
-                              fontSize: 22,
+                              fontSize: AppFontSize.headline,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.accent,
+                              color: AppColors.textBright,
                             ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -377,7 +377,7 @@ class _StatCard extends StatelessWidget {
           Text(
             meta,
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               color: AppColors.textMuted,
               letterSpacing: 0.8,
             ),
@@ -419,14 +419,14 @@ class _ArtistRow extends StatelessWidget {
       button: true,
       label: semanticsLabel,
       child: InkWell(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.bgMid,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
         ),
         child: Row(
@@ -436,7 +436,7 @@ class _ArtistRow extends StatelessWidget {
               child: Text(
                 '$rank',
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w800,
                   color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
                 ),
@@ -470,7 +470,7 @@ class _ArtistRow extends StatelessWidget {
                   Text(
                     name,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -480,7 +480,7 @@ class _ArtistRow extends StatelessWidget {
                   Text(
                     subtitle,
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       color: AppColors.textSecondary,
                     ),
                   ),

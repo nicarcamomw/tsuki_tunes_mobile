@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../screens/mask_collection_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
@@ -55,9 +56,9 @@ class WeeklyChallengesCard extends ConsumerWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(strings.weeklyTitle,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: t(11, w: FontWeight.w800, c: AppColors.accent, spacing: 1.4)),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: t(AppFontSize.caption, w: FontWeight.w800, c: AppColors.accent, spacing: 1.4)),
         ),
-        Text(strings.weeklyTimeLeft(masks.weekTimeLeft), style: t(10, w: FontWeight.w600, c: AppColors.textMuted)),
+        Text(strings.weeklyTimeLeft(masks.weekTimeLeft), style: t(AppFontSize.micro, w: FontWeight.w600, c: AppColors.textMuted)),
       ],
     );
 
@@ -65,7 +66,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
             MaskCollectionScreen.open(context);
@@ -74,7 +75,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
             decoration: BoxDecoration(
               color: AppColors.bgCard,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
             ),
             child: Row(
@@ -92,7 +93,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                           for (var i = 0; i < challenges.length; i++) ...[
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(AppRadius.chip),
                                 child: LinearProgressIndicator(
                                   value: masks.weeklyProgress(challenges[i]) / challenges[i].target,
                                   minHeight: 4,
@@ -108,7 +109,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                       const SizedBox(height: 5),
                       Text(
                         won ? reward.name(lang) : strings.weeklyDoneCount(done),
-                        style: t(10.5, w: FontWeight.w600, c: AppColors.textSecondary),
+                        style: t(AppFontSize.caption, w: FontWeight.w600, c: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -125,7 +126,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
         boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.08), blurRadius: 18)],
       ),
@@ -153,7 +154,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                           ],
                           Text(
                             prizeWon ? strings.maskRarity(prize.rarity) : '$needs/3 · ${strings.maskRarity(prize.rarity)}',
-                            style: t(9.5, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
+                            style: t(AppFontSize.micro, w: FontWeight.w800, c: prizeWon ? AppColors.neonGreen : AppColors.textMuted),
                           ),
                         ],
                       ),
@@ -166,7 +167,7 @@ class WeeklyChallengesCard extends ConsumerWidget {
                   rPrize == null && srPrize == null
                       ? strings.weeklyAllCollected
                       : '${strings.weeklyPrizes(rPrize?.name(lang), srPrize?.name(lang))}\n${strings.weeklyPrizesHint}',
-                  style: t(11.5, w: FontWeight.w600, c: AppColors.textSecondary),
+                  style: t(AppFontSize.body, w: FontWeight.w600, c: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -211,7 +212,7 @@ class _ChallengeRow extends ConsumerWidget {
                 Text(
                   strings.weeklyChallengeText(challenge),
                   style: locale.getTextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w700,
                     color: done ? AppColors.textSecondary : AppColors.textBright,
                     decoration: done ? TextDecoration.lineThrough : null,
@@ -223,7 +224,7 @@ class _ChallengeRow extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         child: LinearProgressIndicator(
                           value: progress / challenge.target,
                           minHeight: 5,
@@ -234,7 +235,7 @@ class _ChallengeRow extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text('$progress/${challenge.target}',
-                        style: locale.getTextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: color)),
                   ],
                 ),
               ],

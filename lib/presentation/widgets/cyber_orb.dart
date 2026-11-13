@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import 'motion.dart';
 
 /// CyberOrb: Ultra-Premium 3D Glassmorphic Holographic Plasma Sphere
@@ -199,7 +200,7 @@ class _CyberOrbState extends State<CyberOrb>
             child: Text(
               'SYS // TS-01',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 8,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent.withValues(alpha: 0.75),
                 letterSpacing: 1.2,
@@ -213,7 +214,7 @@ class _CyberOrbState extends State<CyberOrb>
             child: Text(
               'ORB.CORE: 432HZ',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 8,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary.withValues(alpha: 0.6),
                 letterSpacing: 1.0,
@@ -227,7 +228,7 @@ class _CyberOrbState extends State<CyberOrb>
             child: Text(
               'RADIAL: LOCK',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 8,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary.withValues(alpha: 0.6),
                 letterSpacing: 1.0,
@@ -253,7 +254,7 @@ class _CyberOrbState extends State<CyberOrb>
                 Text(
                   'SYNC: 99.8%',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 1.0,

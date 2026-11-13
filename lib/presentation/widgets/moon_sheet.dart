@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/moon_provider.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'cyber_glitch_text.dart';
 import 'eco_widgets.dart';
 import 'haptics.dart';
@@ -110,21 +112,11 @@ class MoonSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Text(
               strings.moonTonightTitle,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w800,
                 color: accent,
                 letterSpacing: 2,
@@ -143,7 +135,7 @@ class MoonSheet extends ConsumerWidget {
                   ? CyberGlitchText(
                       text: strings.moonEclipseNow,
                       style: locale.getTextStyle(
-                        fontSize: 16,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w900,
                         color: _blood,
                         letterSpacing: 1.5,
@@ -152,7 +144,7 @@ class MoonSheet extends ConsumerWidget {
                   : Text(
                       strings.moonPhaseName(s.name),
                       style: locale.getTextStyle(
-                        fontSize: 20,
+                        fontSize: AppFontSize.headline,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -162,7 +154,7 @@ class MoonSheet extends ConsumerWidget {
             Center(
               child: Text(
                 '${strings.moonIlluminated((s.illumination * 100).round())} · ${strings.moonAge(s.ageDays.floor() + 1)}',
-                style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
               ),
             ),
             const SizedBox(height: 10),
@@ -171,7 +163,7 @@ class MoonSheet extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.sheet),
                   border: Border.all(color: accent.withValues(alpha: 0.35)),
                 ),
                 child: Row(
@@ -182,7 +174,7 @@ class MoonSheet extends ConsumerWidget {
                     Text(
                       countdown(strings, s),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                       ),
@@ -199,7 +191,7 @@ class MoonSheet extends ConsumerWidget {
             Text(
               strings.moonCycleTitle,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textMuted,
                 letterSpacing: 1.5,
@@ -212,7 +204,7 @@ class MoonSheet extends ConsumerWidget {
             Text(
               strings.moonUpcomingTitle,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textMuted,
                 letterSpacing: 1.5,
@@ -238,7 +230,7 @@ class MoonSheet extends ConsumerWidget {
                         strings.longDate(moon.nextEclipse!.greatest.toLocal()),
                         moon.nextEclipse!.kind,
                       ),
-                      style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -258,14 +250,14 @@ class MoonSheet extends ConsumerWidget {
               title: Text(
                 strings.moonAtmosphereTitle,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textBright,
                 ),
               ),
               subtitle: Text(
                 strings.moonAtmosphereSubtitle,
-                style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+                style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
               ),
             ),
           ],
@@ -311,7 +303,8 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
             .clamp(0.0, (phases.length * _itemWidth - c.maxWidth).clamp(0.0, double.infinity)),
       );
       return SizedBox(
-        height: 112,
+        // Room for two lines of phase name at the type scale's floor (D-02).
+        height: 120,
         child: ListView.builder(
           controller: _scroll,
           scrollDirection: Axis.horizontal,
@@ -328,7 +321,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                 padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
                 decoration: BoxDecoration(
                   color: isToday ? widget.accent.withValues(alpha: 0.10) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isToday ? widget.accent.withValues(alpha: 0.55) : Colors.transparent,
                   ),
@@ -336,12 +329,12 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                 child: Column(
                   children: [
                     SizedBox(
-                      height: 12,
+                      height: 14,
                       child: isToday
                           ? Text(
                               strings.moonToday,
                               style: locale.getTextStyle(
-                                fontSize: 8,
+                                fontSize: AppFontSize.micro,
                                 fontWeight: FontWeight.w900,
                                 color: widget.accent,
                                 letterSpacing: 1.2,
@@ -374,7 +367,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 9,
+                        fontSize: AppFontSize.micro,
                         height: 1.15,
                         fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
                         color: isToday ? AppColors.textBright : AppColors.textSecondary,
@@ -383,7 +376,7 @@ class _CycleStripState extends ConsumerState<_CycleStrip> {
                     const Spacer(),
                     Text(
                       strings.shortDate(p.time.toLocal()),
-                      style: locale.getTextStyle(fontSize: 8.5, color: AppColors.textMuted),
+                      style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
                     ),
                   ],
                 ),
@@ -441,7 +434,7 @@ class _PhaseTile extends ConsumerWidget {
           textAlign: TextAlign.center,
           maxLines: 2,
           style: locale.getTextStyle(
-            fontSize: 9.5,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -449,7 +442,7 @@ class _PhaseTile extends ConsumerWidget {
         Text(
           '${strings.shortDate(local)} · $hh:$mm',
           textAlign: TextAlign.center,
-          style: locale.getTextStyle(fontSize: 9, color: AppColors.textMuted),
+          style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
       ],
     );
@@ -475,13 +468,8 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     final created = await ref.read(createPlaylistProvider)(name, tracks: mix);
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(created != null ? strings.moonMixSaved : strings.moonMixSaveFailed),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-      ),
-    );
+    AppSnack.of(context).show(created != null ? strings.moonMixSaved : strings.moonMixSaveFailed,
+        kind: created != null ? SnackKind.info : SnackKind.error);
   }
 
   @override
@@ -504,7 +492,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -534,7 +522,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                 child: Text(
                   strings.moonMixTitle,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w800,
                     color: unlocked ? AppColors.textBright : AppColors.textSecondary,
                     letterSpacing: 1.5,
@@ -547,22 +535,22 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
           if (!unlocked) ...[
             Text(
               strings.moonMixLocked(strings.shortDate(s.nextFull.time.toLocal())),
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 2),
             Text(
               strings.moonMixProgress(cycleCount),
-              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
             ),
           ] else if (mix.isEmpty)
             Text(
               strings.moonMixEmpty,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
             )
           else ...[
             Text(
               strings.moonMixUnlocked(mix.length),
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textPrimary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -572,7 +560,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                 itemCount: mix.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (_, i) => ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: mix[i].coverUrl.isEmpty
                       ? Container(width: 46, height: 46, color: AppColors.bgCard)
                       : CachedNetworkImage(
@@ -598,12 +586,12 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                     icon: const Icon(Icons.play_arrow_rounded, size: 18),
                     label: Text(
                       strings.moonMixPlay,
-                      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _silver,
                       foregroundColor: AppColors.bgDeep,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -623,14 +611,14 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                       strings.moonMixSave,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w800,
                         color: _silver,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: _silver.withValues(alpha: 0.6)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -771,7 +759,7 @@ class _TappableMoonState extends State<_TappableMoon>
                         child: Text(
                           '月のうさぎ',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             fontWeight: FontWeight.w600,
                             color: _silver.withValues(alpha: 0.7),
                             letterSpacing: 2,

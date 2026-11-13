@@ -15,7 +15,7 @@ class _SectionHeader extends StatelessWidget {
         child: Text(
           title,
           style: locale.getTextStyle(
-            fontSize: 10,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
             color: AppColors.textMuted,
@@ -34,12 +34,16 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // A Material, not a coloured box: the rows' tap ripples paint on it
+    // (a decoration hid them).
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.bgMid,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+      child: Material(
+      color: AppColors.bgMid,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        side: const BorderSide(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -50,11 +54,15 @@ class _SettingsCard extends StatelessWidget {
           ],
         ],
       ),
+    ),
     );
   }
 }
 
-class _SettingSwitch extends StatelessWidget {
+/// A settings switch. It keeps its own value (S-03): flipping it redraws
+/// the switch, not the whole section around it; a new [value] from the
+/// section still wins.
+class _SettingSwitch extends StatefulWidget {
   final LocaleProvider locale;
   final IconData icon;
   final String title;
@@ -72,26 +80,46 @@ class _SettingSwitch extends StatelessWidget {
   });
 
   @override
+  State<_SettingSwitch> createState() => _SettingSwitchState();
+}
+
+class _SettingSwitchState extends State<_SettingSwitch> {
+  late bool _value = widget.value;
+
+  // When the section does redraw, the setting's real value wins (a
+  // permission refused turns the weather switch back off).
+  @override
+  void didUpdateWidget(_SettingSwitch old) {
+    super.didUpdateWidget(old);
+    _value = widget.value;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = widget.locale;
+    final value = _value;
     return SwitchListTile(
       value: value,
-      onChanged: onChanged,
+      onChanged: (v) {
+        widget.onChanged(v);
+        setState(() => _value = v);
+      },
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       activeThumbColor: AppColors.accent,
-      secondary: Icon(icon,
+      secondary: Icon(widget.icon,
           size: 18, color: value ? AppColors.accent : AppColors.textMuted),
       title: Text(
-        title,
+        widget.title,
         style: locale.getTextStyle(
-          fontSize: 12,
+          fontSize: AppFontSize.body,
           fontWeight: FontWeight.w700,
           color: AppColors.textBright,
         ),
       ),
       subtitle: Text(
-        subtitle,
-        style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+        widget.subtitle,
+        style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
       ),
     );
   }
@@ -136,7 +164,7 @@ class _SettingLink extends StatelessWidget {
               child: Text(
                 label,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w600,
                   color: labelColor,
                 ),
@@ -188,20 +216,18 @@ class _AppVersionLabel extends StatelessWidget {
         if (info == null) return const SizedBox(height: 16);
         final text = _describe(info);
         return InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
           onTap: () {
             Haptics.tap();
             Clipboard.setData(ClipboardData(text: text));
-            ScaffoldMessenger.of(hostContext).showSnackBar(
-              SnackBar(content: Text(locale.strings.appVersionCopied)),
-            );
+            AppSnack.of(context).info(locale.strings.appVersionCopied);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Text(
               text,
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
             ),
           ),
         );

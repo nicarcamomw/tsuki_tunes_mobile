@@ -6,7 +6,7 @@ Documento de trabajo para ir apartado por apartado. Cada tarea tiene un código 
 
 - App Flutter de música. Código en `lib/`, interfaz en `lib/presentation/` (pantallas en `screens/`, piezas compartidas en `widgets/`, estado en `state/`).
 - Tema y colores: `lib/core/theme/cyber_theme.dart` y `lib/core/constants/app_colors.dart`.
-- Tamaños de letra: `lib/core/theme/app_font_size.dart` (`AppFontSize`). Ningún `fontSize` con número suelto en `presentation/`.
+- Tokens de diseño: `lib/core/theme/design_tokens.dart` (`AppFontSize`, `AppRadius`, `AppMotion`, `AppSpacing`); `test/design_tokens_test.dart` falla si aparece un valor suelto. Tras fusionar código con valores sueltos: `python3 tool/design_tokens/migrate.py fonts radii durations margins`.
 - Textos: `lib/l10n/app_es.arb` (plantilla), `app_en.arb`, `app_ja.arb`, expuestos por `lib/core/localization/app_strings.dart`. El código de traducciones se regenera solo en cada `flutter pub get` y en cada build (no se commitea); `test/l10n_test.dart` falla si un texto falta en alguno de los tres idiomas.
 - Identidad visual: cyberpunk japonés. Fondo oscuro, acento rojo puro (`AppColors.accent`, `#FF1919`), neones cian/púrpura/verde, luna, máscaras (Oni, Tengu y Hannya como ilustraciones base, más unas 130 coleccionables en `lib/domain/entities/oni_mask.dart`: Namahage, Raijin, Kitsune…), tarjetas de "tinta" (`GlassCard`), subtítulos en japonés tipo HUD.
 
@@ -180,14 +180,16 @@ Orden: **Inicio · Buscar · Explorar · Biblioteca**.
 
 ## 5. Tareas por apartado
 
+Lo que ya está hecho en `main` (D-01 a D-12 salvo D-07, y muchas tareas de los demás apartados) lo resume `Documentos/Informe de la noche - pulido front.md`.
+
 Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 
 ### 0. Sistema de diseño (hacer primero: abarata todo lo demás)
 
 | Código | Tarea | Hecho cuando… | Prio |
 |---|---|---|---|
-| D-01 | ~~Escala tipográfica: hoy hay 33 tamaños, con medios puntos (10.5, 11.5, 12.5). Definir 7 u 8 tokens y migrar.~~ **Hecho (13-11-2026).** `AppFontSize`: 8 de lectura (`micro` 9, `caption` 10, `label` 11, `body` 12, `bodyLg` 13, `title` 14, `heading` 16, `headline` 22) y 3 de display (`display` 26, `hero` 40, `giant` 64). Los medios puntos se redondearon hacia arriba (10.5 → 11), y lo de 7.5 a 8.5 subió a 9. Excepciones: tamaños proporcionales a su pieza (`size * 0.42`), cifras de póster de Wrapped y el lienzo de la imagen de historia. | No queda ningún `fontSize:` suelto fuera de los tokens en `presentation/`. | A |
-| D-02 | Texto diminuto: tras D-01 son 85 usos de `AppFontSize.micro` (9 px); ya no hay nada por debajo. Mínimo 10 u 11 en todo lo que informe. | Ningún texto informativo bajo el mínimo; solo adornos pueden ir por debajo. | A |
+| D-01 | ~~Escala tipográfica: 33 tamaños, con medios puntos. Definir 7 u 8 tokens y migrar.~~ **Hecho** en `design_tokens.dart`: 10, 11, 12, 13, 14, 16, 22 y 28, más 40 y 64 para cifras y adornos. Detalle en `Documentos/Informe de la noche - pulido front.md`. | No queda ningún `fontSize:` suelto fuera de los tokens en `presentation/`. | A |
+| D-02 | ~~Texto diminuto: mínimo 10 en todo lo que informe.~~ **Hecho:** el paso más bajo de la escala (`AppFontSize.micro`) ya es 10. | Ningún texto informativo bajo el mínimo; solo adornos pueden ir por debajo. | A |
 | D-03 | Radios: 21 valores distintos. Dejar 4 tokens (chip, tarjeta, sheet, píldora). | Todos los `BorderRadius.circular` usan un token. | A |
 | D-04 | Animaciones: unas 25 duraciones sueltas. Tokens rápido / normal / lento y curvas comunes. | Las duraciones salen de los tokens. | B |
 | D-05 | Margen lateral: alterna 16 y 20 según pantalla. Unificar. | Un solo valor de margen de página. | B |

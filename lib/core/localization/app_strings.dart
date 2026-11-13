@@ -154,6 +154,19 @@ class AppStrings {
   String get settingsStorageSection => _l.settingsStorageSection;
 
   String get settingsGeneralSection => _l.settingsGeneralSection;
+  String get settingsAdvancedSection => _l.settingsAdvancedSection;
+  String get emptyLoreOni => _l.emptyLoreOni;
+  String get emptyLoreHannya => _l.emptyLoreHannya;
+  String get emptyLoreTengu => _l.emptyLoreTengu;
+  String get navGesturesHint => _l.navGesturesHint;
+  String get searchTopResult => _l.searchTopResult;
+  String get searchTopArtistKind => _l.searchTopArtistKind;
+  /// [tab] is a MainTab name. Explore and Library both go back to the top.
+  String navLongPressHint(String tab) => switch (tab) {
+        'home' => _l.navLongPressHome,
+        'search' => _l.navLongPressSearch,
+        _ => _l.navLongPressLibrary,
+      };
 
   String get normalizeTitle => _l.normalizeTitle;
 

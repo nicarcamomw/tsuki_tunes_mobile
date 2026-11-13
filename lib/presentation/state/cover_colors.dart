@@ -195,3 +195,10 @@ class _CoverColorsCache {
     });
   }
 }
+
+/// Any cover's colours (T-02: the album and playlist headers), through the
+/// same cache as the player's. Null for an empty URL or a grey cover.
+final coverColorsForProvider = FutureProvider.family<CoverColors?, String>((ref, url) async {
+  if (url.isEmpty) return null;
+  return ref.read(coverColorsReaderProvider)(url);
+});

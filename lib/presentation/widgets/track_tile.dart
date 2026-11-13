@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -14,12 +15,14 @@ import '../../domain/entities/track.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'listened_undo.dart';
 import 'oni_mask_icon.dart';
 import 'playlist_selector_sheet.dart';
 import 'pop_on_change.dart';
 import 'radio_control_sheet.dart';
+import 'swipeable_sheet.dart';
 import 'tap_scale.dart';
 
 class _PlayingIndicator extends StatefulWidget {
@@ -41,7 +44,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: AppMotion.slow,
     );
     if (widget.isPlaying) _controller.repeat(reverse: true);
   }
@@ -108,7 +111,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
       height: height,
       decoration: BoxDecoration(
         color: AppColors.accent,
-        borderRadius: BorderRadius.circular(1.5),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
       ),
     );
   }
@@ -198,7 +201,7 @@ class TrackTile extends ConsumerWidget {
                     child: Text(
                       (index! + 1).toString().padLeft(2, '0'),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w600,
                       ),
@@ -211,7 +214,7 @@ class TrackTile extends ConsumerWidget {
               // Album Cover Thumbnail
               ExcludeSemantics(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: SizedBox(
                   width: 46,
                   height: 46,
@@ -248,7 +251,7 @@ class TrackTile extends ConsumerWidget {
                     Text(
                       track.title,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w600,
                         color:
                             isCurrent ? AppColors.accent : AppColors.textPrimary,
@@ -266,12 +269,12 @@ class TrackTile extends ConsumerWidget {
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
                               color: AppColors.border,
-                              borderRadius: BorderRadius.circular(2),
+                              borderRadius: BorderRadius.circular(AppRadius.chip),
                             ),
                             child: Text(
                               'E',
                               style: locale.getTextStyle(
-                                fontSize: 9,
+                                fontSize: AppFontSize.micro,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textSecondary,
                               ),
@@ -282,7 +285,7 @@ class TrackTile extends ConsumerWidget {
                           child: Text(
                             track.fullArtistName,
                             style: locale.getTextStyle(
-                              fontSize: 12,
+                              fontSize: AppFontSize.body,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,
@@ -299,7 +302,7 @@ class TrackTile extends ConsumerWidget {
               Text(
                 Formatters.formatSeconds(track.durationSeconds),
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -359,7 +362,7 @@ class TrackTile extends ConsumerWidget {
             Text(
               strings.addToQueue,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neonCyan,
               ),
@@ -380,25 +383,8 @@ class TrackTile extends ConsumerWidget {
 /// [bottom] from the screen's edge), with an optional undo-like [action].
 void showTrackSnack(BuildContext context, String message,
     {SnackBarAction? action, double? bottom}) {
-  final locale = context.readState(localeProvider);
-  final hasTrack = context.readState(audioProvider).currentTrack != null;
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.clearSnackBars();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        message,
-        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      margin: EdgeInsets.only(
-          bottom: bottom ?? (hasTrack ? 152 : 12), left: 16, right: 16),
-      duration: Duration(seconds: action == null ? 2 : 4),
-      action: action,
-    ),
-  );
+  AppSnack.of(context, bottom: bottom)
+      .show(message, kind: action == null ? SnackKind.info : SnackKind.undo, actionLabel: action?.label, onAction: action?.onPressed);
 }
 
 /// An extra entry for [showTrackActions], shown first.
@@ -420,8 +406,6 @@ void showTrackActions(BuildContext context, Track track,
     {List<TrackMenuAction> extra = const []}) {
   final strings = context.readState(stringsProvider);
   final locale = context.readState(localeProvider);
-  final hasTrack = context.readState(audioProvider).currentTrack != null;
-
   void showConfirmation(String message) => showTrackSnack(context, message);
 
   Widget menuItem({
@@ -438,14 +422,14 @@ void showTrackActions(BuildContext context, Track track,
         height: 36,
         decoration: BoxDecoration(
           color: AppColors.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Icon(icon, color: AppColors.accent, size: 20, semanticLabel: semanticLabel),
       ),
       title: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w500,
           color: AppColors.textBright,
         ),
@@ -459,18 +443,12 @@ void showTrackActions(BuildContext context, Track track,
 
   // Root navigator so the sheet sits above the bottom bar and mini player
   // instead of being partially hidden behind them.
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: AppColors.bgCard,
+    drawHandle: true,
     constraints: BoxConstraints(
       maxWidth: 600,
       maxHeight: MediaQuery.of(context).size.height * 0.85,
-    ),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => SafeArea(
       child: SingleChildScrollView(
@@ -482,7 +460,7 @@ void showTrackActions(BuildContext context, Track track,
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
                       width: 56,
                       height: 56,
@@ -505,7 +483,7 @@ void showTrackActions(BuildContext context, Track track,
                         Text(
                           track.title,
                           style: locale.getTextStyle(
-                            fontSize: 15,
+                            fontSize: AppFontSize.titleLg,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textBright,
                           ),
@@ -516,7 +494,7 @@ void showTrackActions(BuildContext context, Track track,
                         Text(
                           track.fullArtistName,
                           style: locale.getTextStyle(
-                            fontSize: 12,
+                            fontSize: AppFontSize.body,
                             color: AppColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -526,7 +504,7 @@ void showTrackActions(BuildContext context, Track track,
                           Text(
                             track.albumTitle,
                             style: locale.getTextStyle(
-                              fontSize: 11,
+                              fontSize: AppFontSize.caption,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,
@@ -556,8 +534,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.radioStart,
               onTap: () {
                 Navigator.pop(ctx);
-                startRadioWithFeedback(context, track,
-                    bottomMargin: hasTrack ? 152 : 12);
+                startRadioWithFeedback(context, track);
               },
             ),
             menuItem(

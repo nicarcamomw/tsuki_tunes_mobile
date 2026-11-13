@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/locale_provider.dart';
 import 'glass_card.dart';
 
@@ -32,7 +33,7 @@ class FeatureCard extends StatelessWidget {
       label: '$title, $subtitle',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: GlassCard(
           color: color,
           highlightAlpha: highlight ? 0.18 : 0.08,
@@ -51,7 +52,7 @@ class FeatureCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 0.8,
@@ -62,7 +63,7 @@ class FeatureCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 10, color: color),
+                      style: locale.getTextStyle(fontSize: AppFontSize.micro, color: color),
                     ),
                   ],
                 ),

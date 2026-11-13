@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/bpm_flow.dart';
 import '../state/app_providers.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
@@ -70,17 +72,13 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
     final result = BpmFlow.arrange(audio.upcomingTracks, _bpms, mode);
     Haptics.confirm();
     audio.setUpcomingOrder(result.order);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     Navigator.of(context).pop();
     final from = result.fromBpm?.round() ?? 0;
     final to = result.toBpm?.round() ?? 0;
-    messenger.showSnackBar(SnackBar(
-      content: Text(mode == FlowMode.wave
-          ? strings.flowAppliedWave(from, result.peakBpm?.round() ?? 0, to)
-          : strings.flowApplied(from, to)),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgCard,
-    ));
+    messenger.info(mode == FlowMode.wave
+        ? strings.flowAppliedWave(from, result.peakBpm?.round() ?? 0, to)
+        : strings.flowApplied(from, to));
   }
 
   @override
@@ -98,17 +96,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.borderGlow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const SheetHandle(),
             Row(
               children: [
                 const Icon(Icons.show_chart_rounded, color: _color, size: 20),
@@ -117,7 +105,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                   child: Text(
                     strings.flowTitle,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w800,
                       color: _color,
                       letterSpacing: 1.2,
@@ -129,17 +117,17 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
             const SizedBox(height: 4),
             Text(
               strings.flowSubtitle,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 18),
             if (_loading) ...[
               Text(
                 strings.flowAnalyzing(_done, _toLookUp),
-                style: locale.getTextStyle(fontSize: 12, color: AppColors.textPrimary),
+                style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: _toLookUp == 0 ? null : _done / _toLookUp,
                   minHeight: 5,
@@ -149,7 +137,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
               ),
             ] else if (_failed)
               Text(strings.flowError,
-                  style: locale.getTextStyle(fontSize: 12, color: AppColors.textPrimary))
+                  style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textPrimary))
             else ...[
               Row(
                 children: [
@@ -157,7 +145,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                     child: Text(
                       strings.flowCoverage(known, _total),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textBright,
                       ),
@@ -166,7 +154,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                   Text(
                     '${(coverage * 100).round()}%',
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       fontWeight: FontWeight.w800,
                       color: coverage >= BpmFlow.minUsefulCoverage ? _color : AppColors.warning,
                     ),
@@ -175,7 +163,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
               ),
               const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
                 child: LinearProgressIndicator(
                   value: coverage,
                   minHeight: 5,
@@ -186,14 +174,14 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
               const SizedBox(height: 12),
               if (known < 3)
                 Text(strings.flowNotEnough,
-                    style: locale.getTextStyle(fontSize: 12, color: AppColors.textPrimary))
+                    style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textPrimary))
               else ...[
                 if (coverage < BpmFlow.minUsefulCoverage)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       strings.flowLowCoverage,
-                      style: locale.getTextStyle(fontSize: 11, color: AppColors.warning),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.warning),
                     ),
                   ),
                 for (final mode in FlowMode.values)
@@ -207,7 +195,7 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
                 const SizedBox(height: 6),
                 Text(
                   strings.flowHalfTimeNote,
-                  style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+                  style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
                 ),
               ],
             ],
@@ -249,14 +237,14 @@ class _ModeTile extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: AppColors.bgMid,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.border),
             ),
             child: Row(
@@ -270,7 +258,7 @@ class _ModeTile extends ConsumerWidget {
                       Text(
                         strings.flowModeName(mode),
                         style: locale.getTextStyle(
-                          fontSize: 13,
+                          fontSize: AppFontSize.bodyLg,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textBright,
                         ),
@@ -278,7 +266,7 @@ class _ModeTile extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         strings.flowModeDescription(mode),
-                        style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textSecondary),
+                        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                       ),
                     ],
                   ),

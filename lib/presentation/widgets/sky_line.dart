@@ -6,12 +6,14 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/entities/weather.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../state/weather_provider.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'moon_glyph.dart';
 import 'weather_sheet.dart';
@@ -112,7 +114,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
       button: true,
       label: text,
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         onTap: () {
           Haptics.tap();
           WeatherSheet.show(context);
@@ -136,7 +138,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: locale.getTextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.3,
@@ -157,7 +159,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(color: AppColors.borderGlow),
                   ),
                   child: Row(
@@ -169,7 +171,7 @@ class _SkyLineState extends ConsumerState<SkyLine> {
                       Text(
                         strings.weatherTitle,
                         style: locale.getTextStyle(
-                          fontSize: 9,
+                          fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textMuted,
                           letterSpacing: 1,
@@ -407,7 +409,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     final ambient = ref.read(ambientProvider);
     final weather = ref.read(weatherProvider);
     final strings = ref.read(stringsProvider);
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final messenger = AppSnack.maybeOf(context);
 
     final tracks =
         widget.library ?? [...library.favoriteTracks, ...library.recentTracks];
@@ -426,8 +428,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     }
     unawaited(weather.dismissRainOffer());
     setState(() => _state = _OfferState.asking);
-    messenger?.showSnackBar(
-        SnackBar(content: Text(strings.rainOfferPlaying(list.length))));
+    messenger?.info(strings.rainOfferPlaying(list.length));
   }
 
   @override
@@ -446,7 +447,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -469,7 +470,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   child: Text(
                     strings.rainOfferTitle(place),
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                     ),
@@ -487,7 +488,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   _OfferState.empty => strings.rainOfferEmpty,
                 },
                 style: locale.getTextStyle(
-                    fontSize: 12, color: AppColors.textMuted, height: 1.35),
+                    fontSize: AppFontSize.body, color: AppColors.textMuted, height: 1.35),
               ),
             ),
             const SizedBox(height: 8),
@@ -504,7 +505,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                           size: 14, color: AppColors.neonCyan),
                       label: Text(strings.rainOfferAddRain),
                       labelStyle: locale.getTextStyle(
-                          fontSize: 11, color: AppColors.textPrimary),
+                          fontSize: AppFontSize.caption, color: AppColors.textPrimary),
                       showCheckmark: false,
                       selectedColor: AppColors.neonCyan.withValues(alpha: 0.2),
                       backgroundColor: AppColors.bgDeep,
@@ -531,7 +532,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                             child: Text(
                               strings.rainOfferNo,
                               style: locale.getTextStyle(
-                                  fontSize: 12, color: AppColors.textMuted),
+                                  fontSize: AppFontSize.body, color: AppColors.textMuted),
                             ),
                           ),
                           FilledButton(
@@ -543,7 +544,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                             child: Text(
                               strings.rainOfferYes,
                               style: locale.getTextStyle(
-                                fontSize: 12,
+                                fontSize: AppFontSize.body,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.bgDeep,
                               ),
@@ -575,7 +576,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
                   child: Text(
                     MaterialLocalizations.of(context).closeButtonLabel,
                     style: locale.getTextStyle(
-                        fontSize: 12, color: AppColors.textMuted),
+                        fontSize: AppFontSize.body, color: AppColors.textMuted),
                   ),
                 ),
               ),
@@ -584,7 +585,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
       );
     }
     return AnimatedSize(
-      duration: const Duration(milliseconds: 280),
+      duration: AppMotion.normal,
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
       child: body,

@@ -546,7 +546,10 @@ class ReleaseRadarService {
   Future<void> _initNotifications({required bool foreground}) async {
     if (_notificationsReady) return;
     const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      // F-02: the status bar draws only a small icon's alpha, so the colour
+      // launcher icon showed as a white blob; the mask's silhouette (the
+      // themed icon's monochrome layer) reads as Tsuki.
+      android: AndroidInitializationSettings('@mipmap/ic_launcher_monochrome'),
       iOS: DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,

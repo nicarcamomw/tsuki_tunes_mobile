@@ -2,4 +2,16 @@
 <resources>
     <color name="ic_launcher_background">#181B22</color>
     <color name="splash_background">#181B22</color>
+    <!-- F-01: the app's palette (lib/core/constants/app_colors.dart) for the
+         home-screen widgets, so they speak the app's language. -->
+    <color name="tsuki_bg_deep">#F0141720</color>
+    <color name="tsuki_bg_ink">#F00D0F18</color>
+    <color name="tsuki_border">#332A2F3D</color>
+    <color name="tsuki_text_primary">#FFE5E5E5</color>
+    <!-- AA on the widget's dark (the app moved #888888 to this). -->
+    <color name="tsuki_text_secondary">#FF919191</color>
+    <color name="tsuki_text_muted">#B3E5E5E5</color>
+    <color name="tsuki_sakura">#FFFF6B9D</color>
+    <color name="tsuki_sakura_line">#33FF6B9D</color>
+    <color name="tsuki_sakura_edge">#22FF6B9D</color>
 </resources>
