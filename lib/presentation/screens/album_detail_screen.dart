@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_environment.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -222,7 +223,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
             title: Text(
               strings.albumDetailsTitle,
               style: locale.getTextStyle(
-                fontSize: 14,
+                fontSize: AppFontSize.title,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textBright,
               ),
@@ -360,7 +361,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     child: Text(
                       typeLabel.toUpperCase(),
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                         letterSpacing: 1.5,
@@ -376,7 +377,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     child: Text(
                       albumData.title,
                       style: locale.getTextStyle(
-                        fontSize: 18,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -401,7 +402,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       child: Text(
                         albumData.artistName,
                         style: locale.getTextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSize.title,
                           color: AppColors.accent,
                           fontWeight: FontWeight.w600,
                         ),
@@ -419,7 +420,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       Formatters.formatSeconds(totalDuration),
                     ),
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
                     ),
@@ -494,7 +495,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                               ? strings.allListened
                                               : strings.markAll),
                                       style: locale.getTextStyle(
-                                        fontSize: 10,
+                                        fontSize: AppFontSize.micro,
                                         fontWeight: FontWeight.w700,
                                         color: allListened
                                             ? AppColors.accent
@@ -519,7 +520,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           label: Text(
                             strings.play,
                             style: locale.getTextStyle(
-                              fontSize: 10,
+                              fontSize: AppFontSize.micro,
                               fontWeight: FontWeight.w700,
                               color: AppColors.accent,
                             ),

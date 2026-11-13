@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/beat_clock.dart';
 import '../state/app_providers.dart';
@@ -502,7 +503,7 @@ class _SyncChip extends ConsumerWidget {
       child: Text(
         text,
         style: locale.getTextStyle(
-          fontSize: 10,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.2,

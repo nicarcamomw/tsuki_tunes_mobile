@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -59,7 +60,7 @@ class EcoLevelsScreen extends ConsumerWidget {
         ),
         title: Text(strings.ecoTitle,
             style: locale.getTextStyle(
-                fontSize: 14,
+                fontSize: AppFontSize.title,
                 fontWeight: FontWeight.w900,
                 color: masks.isObserver ? ecoObserverColor : ecoRankColor(masks.rank),
                 letterSpacing: 3)),
@@ -88,7 +89,7 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
+      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
 }
 
 class _Header extends StatelessWidget {
@@ -133,12 +134,12 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 12),
           Text((observer ? strings.ecoObserver : strings.ecoRankName(rank)).toUpperCase(),
               textAlign: TextAlign.center,
-              style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
+              style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: color, letterSpacing: 3)),
           const SizedBox(height: 16),
           if (observer) ...[
             Text(strings.ecoObserverBody,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.45)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.45)),
             const SizedBox(height: 16),
             FilledButton.icon(
               style: FilledButton.styleFrom(
@@ -191,10 +192,10 @@ class _HowToEarn extends StatelessWidget {
                   const Icon(Icons.graphic_eq_rounded, size: 15, color: AppColors.textMuted),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(what, style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                    child: Text(what, style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary)),
                   ),
                   Text(amount,
-                      style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                 ],
               ),
             ),
@@ -254,7 +255,7 @@ class _ColorPicker extends StatelessWidget {
                 ),
                 child: lockedAt == null
                     ? null
-                    : Center(child: Text('$lockedAt', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textMuted))),
+                    : Center(child: Text('$lockedAt', style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.textMuted))),
               ),
               const SizedBox(height: 4),
               SizedBox(
@@ -263,7 +264,7 @@ class _ColorPicker extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: locale.getTextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
             ],
           ),
@@ -315,7 +316,7 @@ class _LevelRow extends StatelessWidget {
                 Container(width: 14, height: 2, color: color),
                 const SizedBox(width: 8),
                 Text(strings.ecoRankName(rank).toUpperCase(),
-                    style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
               ],
             ),
           ),
@@ -357,7 +358,7 @@ class _LevelRow extends StatelessWidget {
                                 reached ? '«${r.fragment!.of(lang)}»' : strings.ecoRewardLabel(r),
                                 style: locale
                                     .getTextStyle(
-                                      fontSize: 12,
+                                      fontSize: AppFontSize.body,
                                       color: reached ? AppColors.textPrimary : AppColors.textMuted,
                                       height: 1.35,
                                     )
@@ -374,7 +375,7 @@ class _LevelRow extends StatelessWidget {
                                   Expanded(
                                     child: Text(strings.ecoRewardLabel(r),
                                         style: locale.getTextStyle(
-                                            fontSize: 12.5,
+                                            fontSize: AppFontSize.bodyLg,
                                             fontWeight: FontWeight.w700,
                                             color: reached ? AppColors.textBright : AppColors.textMuted)),
                                   ),
@@ -441,22 +442,22 @@ class _Legend extends StatelessWidget {
               Expanded(
                 child: Text(strings.ecoLegendTitle,
                     style: locale.getTextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1.6)),
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1.6)),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(strings.ecoLegendText,
-              style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.45)),
+              style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textPrimary, height: 1.45)),
           const SizedBox(height: 14),
           // How much Eco a Supreme God holds is not for anyone to know.
           Text(strings.ecoLegendAmount(masks.eco),
               style: locale.getTextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1)),
+                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1)),
           const SizedBox(height: 6),
           Text(broken ? strings.ecoBalanceBroken : strings.ecoLegendNever,
               style: locale.getTextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
                   color: broken ? const Color(0xFFFFE9A8) : AppColors.textMuted,
                   letterSpacing: 1.2)),

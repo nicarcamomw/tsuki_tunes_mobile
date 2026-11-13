@@ -6,6 +6,7 @@ import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../screens/expanded_player_screen.dart';
 import '../screens/main_navigation_screen.dart';
@@ -249,7 +250,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                             _MarqueeText(
                                               text: track.title,
                                               style: locale.getTextStyle(
-                                                fontSize: 13,
+                                                fontSize: AppFontSize.bodyLg,
                                                 fontWeight: FontWeight.w700,
                                                 color: AppColors.textBright,
                                               ),
@@ -260,7 +261,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                                   ? '${track.fullArtistName}  ·  ${locale.strings.sourcePreviewShort}'
                                                   : track.fullArtistName,
                                               style: locale.getTextStyle(
-                                                fontSize: 11,
+                                                fontSize: AppFontSize.caption,
                                                 color: spotifyFallbackActive
                                                     ? PlayerTint.of(context)
                                                         .withValues(alpha: 0.7)

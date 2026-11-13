@@ -9,6 +9,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
 import '../navigation/routes.dart';
@@ -261,7 +262,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         centerTitle: true,
         title: Text(strings.discoveryTitle.toUpperCase(),
             style: locale.getTextStyle(
-                fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
+                fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 3)),
         actions: [
           if (deck.liked > 0)
             TextButton.icon(
@@ -332,12 +333,12 @@ class _SongCard extends ConsumerWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15)),
+                            fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15)),
                     const SizedBox(height: 4),
                     Text(t.artistName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: locale.getTextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white70)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w700, color: Colors.white70)),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -349,7 +350,7 @@ class _SongCard extends ConsumerWidget {
                             card.because == null ? strings.discoveryFromCharts : strings.discoveryBecause(card.because!),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: locale.getTextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white60),
+                            style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w700, color: Colors.white60),
                           ),
                         ),
                       ],
@@ -382,7 +383,7 @@ class _Stamp extends StatelessWidget {
             color: Colors.black38,
           ),
           child: Text(text.toUpperCase(),
-              style: locale.getTextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
+              style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
         ),
       );
 }
@@ -452,7 +453,7 @@ class _Message extends StatelessWidget {
               const SizedBox(height: 16),
               Text(text,
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 13.5, color: AppColors.textSecondary, height: 1.45)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.45)),
               if (action != null && onAction != null) ...[
                 const SizedBox(height: 16),
                 OutlinedButton(

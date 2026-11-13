@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import 'haptics.dart';
@@ -39,13 +40,13 @@ class _SmartShuffleSheet extends ConsumerWidget {
         : 3;
 
     TextStyle label() => locale.getTextStyle(
-          fontSize: 10,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: AppColors.textMuted,
           letterSpacing: 1.6,
         );
     TextStyle hint() => locale.getTextStyle(
-          fontSize: 11,
+          fontSize: AppFontSize.caption,
           color: AppColors.textSecondary,
           height: 1.35,
         );
@@ -54,7 +55,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
       selectedForegroundColor: AppColors.textBright,
       selectedBackgroundColor: AppColors.accent.withValues(alpha: 0.25),
       side: const BorderSide(color: AppColors.border),
-      textStyle: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+      textStyle: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700),
     );
 
     return SafeArea(
@@ -85,7 +86,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
                     Text(
                       strings.smartShuffleTitle,
                       style: locale.getTextStyle(
-                        fontSize: 16,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -137,7 +138,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             title: Text(
               strings.shuffleAvoidArtistTitle,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textBright,
               ),
@@ -200,7 +201,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
             title: Text(
               strings.shuffleRecoSwitch,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textBright,
               ),
@@ -225,7 +226,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
           const SizedBox(height: 18),
           Text(
             strings.shuffleHoldHint,
-            style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+            style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
           ),
         ],
       ),

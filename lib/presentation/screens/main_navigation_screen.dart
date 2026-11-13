@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
@@ -189,7 +190,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           ? strings.batteryGuideSnack
                           : spotifyError.message(strings),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -239,7 +240,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: Text(
                       playbackError.message(strings, isOnline: isOnline),
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -285,7 +286,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: Text(
                       strings.syncError,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -382,7 +383,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               Text(
                                 strings.offline,
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -482,7 +483,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildNavItem(
                     index: 0,
@@ -617,7 +617,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }) {
     final isSelected = selectedIndex == index;
 
-    return Semantics(
+    // Equal widths: the labels fit at the type scale's floor on any phone.
+    return Expanded(
+      child: Semantics(
       selected: isSelected,
       child: TapScale(
       semanticLabel: label,
@@ -625,7 +627,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       onLongPress: () => _onNavItemLongPress(index),
       scaleDown: 0.85,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -667,31 +669,47 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ],
             ),
             const SizedBox(height: 3),
-            Text(
-              label,
-              style: locale.getTextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? AppColors.accent : AppColors.textSecondary,
-                letterSpacing: 1,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: locale.getTextStyle(
+                  fontSize: AppFontSize.micro,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                  color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                  letterSpacing: 1,
+                ),
               ),
             ),
             const SizedBox(height: 1),
-            Text(
-              locale.strings.navHudSubtitle(index),
-              style: GoogleFonts.notoSansJp(
-                fontSize: 8.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected
-                    ? AppColors.accent.withValues(alpha: 0.9)
-                    : AppColors.textMuted.withValues(alpha: 0.6),
-                letterSpacing: 0.6,
+            // E-01: the Japanese HUD line is ornament: at the scale's floor
+            // and only on the active tab. It keeps its room so the bar
+            // doesn't jump; TalkBack reads the label only.
+            ExcludeSemantics(
+              child: AnimatedOpacity(
+                opacity: isSelected ? 1 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    locale.strings.navHudSubtitle(index),
+                    maxLines: 1,
+                    style: GoogleFonts.notoSansJp(
+                      fontSize: AppFontSize.micro,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent.withValues(alpha: 0.9),
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
               ),
             ),
             CyberTabIndicator(isSelected: isSelected),
           ],
         ),
       ),
+    ),
     ),
     );
   }

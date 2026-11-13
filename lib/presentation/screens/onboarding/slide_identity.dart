@@ -56,7 +56,7 @@ class _IdentitySlide extends StatelessWidget {
             child: Text(
               strings.onboardingSlide1Badge,
               style: locale.getTextStyle(
-                fontSize: 9,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1.6,
@@ -70,7 +70,7 @@ class _IdentitySlide extends StatelessWidget {
             strings.onboardingSlide1Title,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 23,
+              fontSize: AppFontSize.headline,
               fontWeight: FontWeight.w900,
               color: AppColors.textBright,
               letterSpacing: 2.0,
@@ -89,7 +89,7 @@ class _IdentitySlide extends StatelessWidget {
             strings.onboardingSlide1Desc,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 12.5,
+              fontSize: AppFontSize.bodyLg,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
               height: 1.5,
@@ -276,7 +276,7 @@ class _BeforeAfterCard extends StatelessWidget {
             hint,
             textAlign: hintAlign,
             style: locale.getTextStyle(
-              fontSize: 10.5,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
@@ -310,7 +310,7 @@ class _StateSample extends StatelessWidget {
         Text(
           label,
           style: locale.getTextStyle(
-            fontSize: 8,
+            fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w800,
             color: color,
             letterSpacing: 0.8,
@@ -422,7 +422,7 @@ class _MusicVaultGraphic extends StatelessWidget {
                 Text(
                   'VAULT // TRACKS',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 8,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textSecondary,
                     letterSpacing: 1.2,
@@ -579,7 +579,7 @@ class _MusicVaultGraphic extends StatelessWidget {
           Text(
             strings.tabFavorites.toUpperCase(),
             style: locale.getTextStyle(
-              fontSize: 9,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 1.0,

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -140,7 +141,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         Text(
                           strings.libraryTitle.toUpperCase(),
                           style: locale.getTextStyle(
-                            fontSize: 26,
+                            fontSize: AppFontSize.display,
                             fontWeight: FontWeight.w900,
                             color: AppColors.textBright,
                             letterSpacing: 2,
@@ -149,7 +150,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         Text(
                           ' // 03',
                           style: locale.getTextStyle(
-                            fontSize: 26,
+                            fontSize: AppFontSize.display,
                             fontWeight: FontWeight.w900,
                             color: AppColors.accent,
                           ),
@@ -162,7 +163,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   ExcludeSemantics(child: Text(
                     strings.libraryTelemetry,
                     style: GoogleFonts.notoSansJp(
-                      fontSize: 9,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentText,
                       letterSpacing: 1.2,
@@ -172,7 +173,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   Text(
                     strings.libraryStats(totalTracks, totalAlbums),
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       fontWeight: FontWeight.bold,
                       color: AppColors.accent,
                     ),
@@ -196,11 +197,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 labelColor: AppColors.accent,
                 unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w600,
                 ),
                 dividerHeight: 0,
@@ -265,11 +266,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 child: TextField(
                   controller: _filterController,
                   style: locale.getTextStyle(
-                      color: AppColors.textBright, fontSize: 13),
+                      color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
                   decoration: InputDecoration(
                     hintText: strings.filterHint,
                     hintStyle: locale.getTextStyle(
-                        color: AppColors.textMuted, fontSize: 13),
+                        color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
                     prefixIcon: Icon(Icons.filter_list,
                         color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
                     suffixIcon: _filterController.text.isNotEmpty
@@ -321,7 +322,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     label: Text(
                       strings.playAll,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                       ),
@@ -346,7 +347,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     label: Text(
                       strings.shuffle,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent,
                       ),
@@ -396,7 +397,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                   strings.emptyLibraryTitle,
                                   textAlign: TextAlign.center,
                                   style: locale.getTextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppFontSize.bodyLg,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textSecondary,
                                     letterSpacing: 1.5,
@@ -407,7 +408,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                   strings.emptyLibrarySubtitle,
                                   textAlign: TextAlign.center,
                                   style: locale.getTextStyle(
-                                      fontSize: 12, color: AppColors.textMuted),
+                                      fontSize: AppFontSize.body, color: AppColors.textMuted),
                                 ),
                                 const SizedBox(height: 16),
                                 Semantics(
@@ -430,7 +431,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                       child: Text(
                                         strings.homeEmptyAction,
                                         style: locale.getTextStyle(
-                                          fontSize: 12,
+                                          fontSize: AppFontSize.body,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.accent,
                                           letterSpacing: 1.5,
@@ -510,7 +511,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               label: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),
@@ -533,7 +534,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       strings.sharedNew,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accent),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.accent),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accent),
@@ -565,7 +566,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                           strings.noPlaylistsTitle,
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textSecondary,
                             letterSpacing: 1.5,
@@ -576,7 +577,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                           strings.noPlaylistsSubtitle,
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
-                              fontSize: 12, color: AppColors.textMuted),
+                              fontSize: AppFontSize.body, color: AppColors.textMuted),
                         ),
                       ],
                     ),
@@ -590,7 +591,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                         child: Text(strings.sharedTitle.toUpperCase(),
                             style: locale.getTextStyle(
-                                fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
+                                fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: AppColors.textMuted, letterSpacing: 2)),
                       ),
                       for (final p in [...shared.invitations, ...shared.mine])
                         ListTile(
@@ -612,12 +613,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: locale.getTextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                                  fontSize: AppFontSize.title, fontWeight: FontWeight.w700, color: AppColors.textBright)),
                           subtitle: Text(
                             shared.me != null && p.isInvited(shared.me!) && !p.isMember(shared.me!)
                                 ? strings.sharedInvitedBy(p.nameOf(p.owner))
                                 : '${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
-                            style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                           ),
                           trailing: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
                           onTap: () { Haptics.tap(); SharedPlaylistRoute(id: p.id).push<void>(context); },
@@ -645,7 +646,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         title: Text(
           strings.newPlaylist,
           style: locale.getTextStyle(
-            fontSize: 16,
+            fontSize: AppFontSize.titleLg,
             fontWeight: FontWeight.w700,
             color: AppColors.textBright,
           ),
@@ -655,13 +656,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           autofocus: true,
           maxLength: PlaylistRepository.maxNameLength,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             color: AppColors.textBright,
           ),
           decoration: InputDecoration(
             hintText: strings.playlistNameHint,
             hintStyle: locale.getTextStyle(
-              fontSize: 14,
+              fontSize: AppFontSize.title,
               color: AppColors.textMuted,
             ),
             enabledBorder: const UnderlineInputBorder(
@@ -679,7 +680,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             child: Text(
               strings.cancel,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -690,7 +691,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             child: Text(
               strings.create,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accent,
               ),
@@ -709,7 +710,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             content: Text(
               strings.playlistCreated,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textBright,
               ),
@@ -758,7 +759,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Text(
                   locale.strings.followedArtistsTitle,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                     letterSpacing: 1.2,
@@ -768,7 +769,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Text(
                   '${artists.length}',
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                   ),
@@ -820,7 +821,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             label,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 11,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w700,
               color: isSelected ? AppColors.textBright : AppColors.textSecondary,
             ),
@@ -911,7 +912,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                               ? group.albumTitle
                               : strings.unknownAlbum,
                           style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textBright,
                           ),
@@ -924,7 +925,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                               child: Text(
                                 group.artistName,
                                 style: locale.getTextStyle(
-                                  fontSize: 12,
+                                  fontSize: AppFontSize.body,
                                   color: AppColors.textSecondary,
                                 ),
                                 maxLines: 1,
@@ -934,7 +935,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               ' · ${strings.trackCountLabel(group.tracks.length)}',
                               style: locale.getTextStyle(
-                                fontSize: 10,
+                                fontSize: AppFontSize.micro,
                                 color: AppColors.textMuted,
                               ),
                             ),
@@ -959,7 +960,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       child: Text(
                         strings.viewAlbum,
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           color: AppColors.accent,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1041,7 +1042,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               trackData.title,
                               style: locale.getTextStyle(
-                                fontSize: 13,
+                                fontSize: AppFontSize.bodyLg,
                                 fontWeight: FontWeight.w500,
                                 color: isCurrentTrack
                                     ? AppColors.accent
@@ -1053,7 +1054,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                             Text(
                               trackData.artistName,
                               style: locale.getTextStyle(
-                                fontSize: 11,
+                                fontSize: AppFontSize.caption,
                                 color: AppColors.textSecondary,
                               ),
                               maxLines: 1,
@@ -1065,7 +1066,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                       Text(
                         Formatters.formatSeconds(trackData.duration),
                         style: locale.getTextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSize.micro,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -1160,7 +1161,7 @@ class _PlaylistListTile extends ConsumerWidget {
                     Text(
                       playlist.name,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textBright,
                       ),
@@ -1174,7 +1175,7 @@ class _PlaylistListTile extends ConsumerWidget {
                         Formatters.formatSeconds(playlist.totalDurationSeconds),
                       ),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textSecondary,
                       ),
                     ),

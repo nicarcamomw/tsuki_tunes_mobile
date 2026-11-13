@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/time_machine.dart';
 import '../navigation/routes.dart';
@@ -128,7 +129,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         backgroundColor: AppColors.bgCard,
         duration: const Duration(seconds: 2),
         content: Text(text,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body)),
       ));
   }
 
@@ -162,7 +163,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
         title: Text(
           strings.timeMachineTitle,
           style: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             fontWeight: FontWeight.w800,
             color: AppColors.textBright,
             letterSpacing: 2,
@@ -191,7 +192,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                       onSelected: (_) => _select(p),
                       showCheckmark: false,
                       labelStyle: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w700,
                         color: _period == p
                             ? AppColors.textBright
@@ -239,7 +240,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                     : strings.timeMachineCountingStarts,
                 textAlign: TextAlign.center,
                 style: locale.getTextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                   height: 1.4,
                 ),
@@ -272,7 +273,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                   title: Text(
                     strings.timeMachineNotifyToggle,
                     style: locale.getTextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -280,7 +281,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
                   subtitle: Text(
                     strings.timeMachineNotifyToggleSubtitle,
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -349,7 +350,7 @@ class _DateHeader extends StatelessWidget {
                   Text(
                     strings.longDate(anchor).toUpperCase(),
                     style: locale.getTextStyle(
-                      fontSize: 20,
+                      fontSize: AppFontSize.headline,
                       fontWeight: FontWeight.w900,
                       color: AppColors.textBright,
                       letterSpacing: 1.5,
@@ -361,7 +362,7 @@ class _DateHeader extends StatelessWidget {
                         ? strings.timeMachineRewinding
                         : strings.weekdayName(anchor.weekday),
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w700,
                       color: loading ? AppColors.neonPurple : AppColors.textMuted,
                       letterSpacing: 1.5,
@@ -450,7 +451,7 @@ class _MomentView extends StatelessWidget {
           child: Text(
             headline,
             style: locale.getTextStyle(
-              fontSize: 18,
+              fontSize: AppFontSize.titleLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
             ),
@@ -484,7 +485,7 @@ class _MomentView extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 16,
+                        fontSize: AppFontSize.titleLg,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                       ),
@@ -495,7 +496,7 @@ class _MomentView extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -503,7 +504,7 @@ class _MomentView extends StatelessWidget {
                     Text(
                       _caption(s, hero),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: accent,
                         letterSpacing: 0.4,
@@ -531,7 +532,7 @@ class _MomentView extends StatelessWidget {
               label: Text(
                 s.timeMachinePlay,
                 style: locale.getTextStyle(
-                  fontSize: 12,
+                  fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                 ),
@@ -567,7 +568,7 @@ class _MomentView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSize.bodyLg,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textBright,
                           ),
@@ -577,7 +578,7 @@ class _MomentView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -588,7 +589,7 @@ class _MomentView extends StatelessWidget {
                   Text(
                     isPlays ? '×${t.count}' : _caption(s, t),
                     style: locale.getTextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
                     ),
@@ -645,7 +646,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 9,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w800,
           color: color,
           letterSpacing: 1.2,
@@ -673,7 +674,7 @@ class _Nothing extends StatelessWidget {
           Text(
             s.timeMachineNothingTitle,
             style: locale.getTextStyle(
-              fontSize: 13,
+              fontSize: AppFontSize.bodyLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
               letterSpacing: 1.6,
@@ -684,7 +685,7 @@ class _Nothing extends StatelessWidget {
             s.timeMachineNothing,
             textAlign: TextAlign.center,
             style: locale.getTextStyle(
-              fontSize: 11.5,
+              fontSize: AppFontSize.body,
               color: AppColors.textSecondary,
               height: 1.4,
             ),
@@ -796,7 +797,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                     Text(
                       s.timeMachineTitle,
                       style: locale.getTextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.body,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textBright,
                         letterSpacing: 1.2,
@@ -808,7 +809,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: locale.getTextStyle(
-                        fontSize: 10,
+                        fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w600,
                         color: AppColors.neonPurple.withValues(alpha: 0.9),
                       ),

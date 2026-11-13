@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -43,10 +44,10 @@ class _EqualizerSheet extends ConsumerWidget {
         const SizedBox(height: 16),
         Text(strings.eqTitle.toUpperCase(),
             style: locale.getTextStyle(
-                fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
         const SizedBox(height: 6),
         Text(audio.hasEqualizer ? strings.eqSubtitle : strings.eqUnavailable,
-            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 14),
         _Curve(preset: current),
         const SizedBox(height: 14),
@@ -117,9 +118,9 @@ class _PresetTile extends StatelessWidget {
                     children: [
                       Text(name,
                           style: locale.getTextStyle(
-                              fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                              fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                       const SizedBox(height: 2),
-                      Text(hint, style: locale.getTextStyle(fontSize: 10.5, color: AppColors.textMuted)),
+                      Text(hint, style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
                     ],
                   ),
                 ),

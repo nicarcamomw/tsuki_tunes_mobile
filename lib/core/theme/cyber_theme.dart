@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
+import 'design_tokens.dart';
 
 class CyberTheme {
   static ThemeData get darkTheme {
@@ -21,45 +22,45 @@ class CyberTheme {
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       textTheme: TextTheme(
         displayLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 32,
+          fontSize: AppFontSize.display,
           fontWeight: FontWeight.w900,
           color: AppColors.textBright,
           letterSpacing: 2.0,
         ),
         displayMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 24,
+          fontSize: AppFontSize.headline,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.5,
         ),
         headlineSmall: GoogleFonts.plusJakartaSans(
-          fontSize: 18,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: 1.0,
         ),
         titleLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 16,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         titleMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         bodyLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
         bodyMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
+          fontSize: AppFontSize.body,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
         labelSmall: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w700,
           color: AppColors.accentText,
           letterSpacing: 1.5,
@@ -103,7 +104,7 @@ class CyberTheme {
         fillColor: AppColors.bgMid,
         hintStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.textMuted,
-          fontSize: 13,
+          fontSize: AppFontSize.bodyLg,
         ),
         prefixIconColor: AppColors.accent,
         suffixIconColor: AppColors.textSecondary,

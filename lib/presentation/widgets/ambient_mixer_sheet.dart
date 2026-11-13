@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -99,7 +100,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   child: Text(
                     strings.ambientTitle,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w800,
                       color: _color,
                       letterSpacing: 1.5,
@@ -111,7 +112,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
             const SizedBox(height: 4),
             Text(
               strings.ambientSubtitle,
-              style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
 
@@ -173,7 +174,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                                 strings.ambientName(sound),
                                 overflow: TextOverflow.ellipsis,
                                 style: locale.getTextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textBright,
                                 ),
@@ -219,7 +220,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       label: Text(
                         ambient.isPlaying ? strings.ambientPause : strings.ambientResume,
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: _color,
                         ),
@@ -242,7 +243,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       label: Text(
                         strings.ambientStopAll,
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                         ),
@@ -267,7 +268,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                   child: Text(
                     strings.ambientAfterTimerTitle,
                     style: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
                     ),
@@ -290,7 +291,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     },
                     showCheckmark: false,
                     labelStyle: locale.getTextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSize.caption,
                       fontWeight: FontWeight.w600,
                       color: ambient.afterTimerMinutes == m ? AppColors.bgDeep : AppColors.textPrimary,
                     ),
@@ -308,7 +309,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
               Text(
                 strings.ambientStopsIn(_fmt(remaining)),
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
                   color: _color,
                 ),
@@ -317,7 +318,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
             const SizedBox(height: 14),
             Text(
               strings.ambientHint,
-              style: locale.getTextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -394,7 +395,7 @@ class _SoundTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: locale.getTextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSize.micro,
                     fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     color: active ? AppColors.textBright : AppColors.textSecondary,
                   ),

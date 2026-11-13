@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
@@ -198,7 +199,7 @@ class TrackTile extends ConsumerWidget {
                     child: Text(
                       (index! + 1).toString().padLeft(2, '0'),
                       style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w600,
                       ),
@@ -248,7 +249,7 @@ class TrackTile extends ConsumerWidget {
                     Text(
                       track.title,
                       style: locale.getTextStyle(
-                        fontSize: 14,
+                        fontSize: AppFontSize.title,
                         fontWeight: FontWeight.w600,
                         color:
                             isCurrent ? AppColors.accent : AppColors.textPrimary,
@@ -271,7 +272,7 @@ class TrackTile extends ConsumerWidget {
                             child: Text(
                               'E',
                               style: locale.getTextStyle(
-                                fontSize: 9,
+                                fontSize: AppFontSize.micro,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textSecondary,
                               ),
@@ -282,7 +283,7 @@ class TrackTile extends ConsumerWidget {
                           child: Text(
                             track.fullArtistName,
                             style: locale.getTextStyle(
-                              fontSize: 12,
+                              fontSize: AppFontSize.body,
                               color: AppColors.textSecondary,
                             ),
                             maxLines: 1,
@@ -299,7 +300,7 @@ class TrackTile extends ConsumerWidget {
               Text(
                 Formatters.formatSeconds(track.durationSeconds),
                 style: locale.getTextStyle(
-                  fontSize: 11,
+                  fontSize: AppFontSize.caption,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -359,7 +360,7 @@ class TrackTile extends ConsumerWidget {
             Text(
               strings.addToQueue,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: AppColors.neonCyan,
               ),
@@ -388,7 +389,7 @@ void showTrackSnack(BuildContext context, String message,
     SnackBar(
       content: Text(
         message,
-        style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textBright),
+        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
       ),
       backgroundColor: AppColors.bgCard,
       behavior: SnackBarBehavior.floating,
@@ -445,7 +446,7 @@ void showTrackActions(BuildContext context, Track track,
       title: Text(
         label,
         style: locale.getTextStyle(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           fontWeight: FontWeight.w500,
           color: AppColors.textBright,
         ),
@@ -505,7 +506,7 @@ void showTrackActions(BuildContext context, Track track,
                         Text(
                           track.title,
                           style: locale.getTextStyle(
-                            fontSize: 15,
+                            fontSize: AppFontSize.titleLg,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textBright,
                           ),
@@ -516,7 +517,7 @@ void showTrackActions(BuildContext context, Track track,
                         Text(
                           track.fullArtistName,
                           style: locale.getTextStyle(
-                            fontSize: 12,
+                            fontSize: AppFontSize.body,
                             color: AppColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -526,7 +527,7 @@ void showTrackActions(BuildContext context, Track track,
                           Text(
                             track.albumTitle,
                             style: locale.getTextStyle(
-                              fontSize: 11,
+                              fontSize: AppFontSize.caption,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,

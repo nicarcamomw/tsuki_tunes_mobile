@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
@@ -40,7 +41,7 @@ class StreakScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(strings.streakTitle,
-            style: locale.getTextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: streakFlame, letterSpacing: 3)),
+            style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w900, color: streakFlame, letterSpacing: 3)),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
@@ -73,7 +74,7 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-      style: locale.getTextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
+      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 2));
 }
 
 class _Hero extends StatelessWidget {
@@ -106,9 +107,9 @@ class _Hero extends StatelessWidget {
           const SizedBox(height: 12),
           Text(strings.streakUnit(streak),
               style: locale.getTextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w900, color: alive ? streakFlame : AppColors.textMuted, letterSpacing: 4)),
+                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: alive ? streakFlame : AppColors.textMuted, letterSpacing: 4)),
           Text(strings.streakInARow,
-              style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+              style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
@@ -138,7 +139,7 @@ class _Hero extends StatelessWidget {
                 Expanded(
                   child: Text(strings.streakStateText(state.name),
                       style: locale.getTextStyle(
-                          fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.3)),
+                          fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.3)),
                 ),
               ],
             ),
@@ -182,13 +183,13 @@ class _Stats extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(
-                        fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
+                        fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1)),
               ],
             ),
           ),
         );
 
-    final big = locale.getTextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textBright);
+    final big = locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: AppColors.textBright);
 
     return Row(
       children: [
@@ -240,7 +241,7 @@ class _Calendar extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: Text(d,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+                        style: const TextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
                   ),
                 ),
             ],
@@ -294,7 +295,7 @@ class _DayCell extends StatelessWidget {
           : Text(
               '${date.day}',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: played
                     ? const Color(0xFF2A1206)
@@ -366,7 +367,7 @@ class _Goals extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: locale.getTextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright),
+                              fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright),
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
@@ -382,7 +383,7 @@ class _Goals extends StatelessWidget {
                         Text(
                           reached ? strings.streakGoalReached : strings.streakGoalLeft(g - current),
                           style: locale.getTextStyle(
-                              fontSize: 10.5,
+                              fontSize: AppFontSize.caption,
                               fontWeight: FontWeight.w600,
                               color: reached ? streakFlame : AppColors.textSecondary),
                         ),
@@ -427,11 +428,11 @@ class _ShieldInfo extends StatelessWidget {
               children: [
                 Text(strings.streakShieldTitle,
                     style: locale.getTextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w900, color: streakShield, letterSpacing: 1.6)),
+                        fontSize: AppFontSize.caption, fontWeight: FontWeight.w900, color: streakShield, letterSpacing: 1.6)),
                 const SizedBox(height: 4),
                 Text(strings.streakShieldText(MaskProvider.shieldEvery, MaskProvider.maxShields),
                     style: locale.getTextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.35)),
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.35)),
               ],
             ),
           ),
@@ -481,11 +482,11 @@ class _ReminderSwitchState extends ConsumerState<_ReminderSwitch> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(strings.streakReminderTitle,
-                      style: locale.getTextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                   const SizedBox(height: 2),
                   Text(strings.streakReminderSubtitle(reminder.remindHour),
                       style: locale.getTextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.3)),
+                          fontSize: AppFontSize.caption, fontWeight: FontWeight.w500, color: AppColors.textSecondary, height: 1.3)),
                 ],
               ),
             ),

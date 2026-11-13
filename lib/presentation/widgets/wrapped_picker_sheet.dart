@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/wrapped_service.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/app_providers.dart';
@@ -92,14 +93,14 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('月', style: GoogleFonts.notoSansJp(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.accent)),
+              Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.accent)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TSUKI WRAPPED', style: t(16, w: FontWeight.w900, spacing: 2)),
-                    Text(strings.wrappedPickerSubtitle, style: t(11, w: FontWeight.w500, c: AppColors.textSecondary)),
+                    Text('TSUKI WRAPPED', style: t(AppFontSize.titleLg, w: FontWeight.w900, spacing: 2)),
+                    Text(strings.wrappedPickerSubtitle, style: t(AppFontSize.caption, w: FontWeight.w500, c: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -124,14 +125,14 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
               ),
               child: Row(
                 children: [
-                  Text('${_now.year}', style: t(30, w: FontWeight.w900, c: AppColors.accent, spacing: 2)),
+                  Text('${_now.year}', style: t(AppFontSize.display, w: FontWeight.w900, c: AppColors.accent, spacing: 2)),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(strings.wrappedYearlyLabel, style: t(10, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
-                        Text(strings.wrappedWholeYear(_now.year), style: t(14, w: FontWeight.w800)),
+                        Text(strings.wrappedYearlyLabel, style: t(AppFontSize.micro, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
+                        Text(strings.wrappedWholeYear(_now.year), style: t(AppFontSize.title, w: FontWeight.w800)),
                       ],
                     ),
                   ),
@@ -141,7 +142,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
             ),
           ),
           const SizedBox(height: 20),
-          Text(strings.wrappedMonthlyLabel, style: t(10, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
+          Text(strings.wrappedMonthlyLabel, style: t(AppFontSize.micro, w: FontWeight.w800, c: AppColors.textMuted, spacing: 2)),
           const SizedBox(height: 8),
           for (final m in _months)
             _MonthRow(
@@ -164,7 +165,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
                 children: [
                   const Icon(Icons.history_rounded, color: AppColors.textMuted, size: 18),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(strings.wrappedWholeYear(_now.year - 1), style: t(13))),
+                  Expanded(child: Text(strings.wrappedWholeYear(_now.year - 1), style: t(AppFontSize.bodyLg))),
                   const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
                 ],
               ),
@@ -219,7 +220,7 @@ class _MonthRow extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: style(13, w: FontWeight.w800))),
+                      Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: style(AppFontSize.bodyLg, w: FontWeight.w800))),
                       if (current) ...[
                         const SizedBox(width: 8),
                         Container(
@@ -228,7 +229,7 @@ class _MonthRow extends StatelessWidget {
                             color: AppColors.accent,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(currentLabel, style: style(9, w: FontWeight.w800, c: Colors.white)),
+                          child: Text(currentLabel, style: style(AppFontSize.micro, w: FontWeight.w800, c: Colors.white)),
                         ),
                       ],
                     ],
@@ -236,7 +237,7 @@ class _MonthRow extends StatelessWidget {
                 ),
                 Text(
                   minutes == null ? '…' : (minutes == 0 ? '—' : minutesLabel(minutes!)),
-                  style: style(11, w: FontWeight.w600, c: AppColors.textSecondary),
+                  style: style(AppFontSize.caption, w: FontWeight.w600, c: AppColors.textSecondary),
                 ),
                 const SizedBox(width: 4),
                 const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),

@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/wrapped_data.dart';
 import '../../domain/logic/wrapped_service.dart';
@@ -476,7 +477,7 @@ class _Backdrop extends StatelessWidget {
               child: Text(
                 kanji!,
                 style: GoogleFonts.notoSansJp(
-                  fontSize: 320,
+                  fontSize: AppFontSize.mega * 5, // a watermark glyph, not text
                   fontWeight: FontWeight.w900,
                   color: tint.withValues(alpha: 0.07),
                   height: 1,
@@ -523,13 +524,13 @@ class _Tag extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('◈', style: c.text(11, color: color)),
+        Text('◈', style: c.text(AppFontSize.caption, color: color)),
         const SizedBox(width: 8),
         Flexible(
           child: Text(text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: c.text(12, weight: FontWeight.w800, color: color, spacing: 2.4)),
+              style: c.text(AppFontSize.body, weight: FontWeight.w800, color: color, spacing: 2.4)),
         ),
       ],
     );
@@ -625,7 +626,7 @@ class _IntroSlide extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('T S U K I', style: c.text(15, weight: FontWeight.w800, color: AppColors.accent, spacing: 6))
+          Text('T S U K I', style: c.text(AppFontSize.titleLg, weight: FontWeight.w800, color: AppColors.accent, spacing: 6))
               .animateCalm(context)
               .fadeIn(duration: 500.ms),
           const SizedBox(height: 14),
@@ -635,7 +636,7 @@ class _IntroSlide extends StatelessWidget {
             child: Text(
               'WRAPPED',
               maxLines: 1,
-              style: c.text(72, weight: FontWeight.w900, spacing: 4, height: 1).copyWith(
+              style: c.text(AppFontSize.mega, weight: FontWeight.w900, spacing: 4, height: 1).copyWith(
                 shadows: [Shadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 30)],
               ),
             ),
@@ -662,25 +663,25 @@ class _IntroSlide extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(c.monthly ? strings.wrappedMonthlyLabel : strings.wrappedYearlyLabel,
-                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
           ).animateCalm(context).fadeIn(delay: 600.ms),
           const SizedBox(height: 18),
           Text(strings.wrappedIntro(monthly: c.monthly),
-                  textAlign: TextAlign.center, style: c.text(19, weight: FontWeight.w700))
+                  textAlign: TextAlign.center, style: c.text(AppFontSize.headline, weight: FontWeight.w700))
               .animateCalm(context)
               .fadeIn(duration: 600.ms, delay: 750.ms),
           if (note != null) ...[
             const SizedBox(height: 12),
             Text(note!,
                 textAlign: TextAlign.center,
-                style: c.text(12, weight: FontWeight.w500, color: AppColors.textMuted, height: 1.45))
+                style: c.text(AppFontSize.body, weight: FontWeight.w500, color: AppColors.textMuted, height: 1.45))
                 .animateCalm(context)
                 .fadeIn(delay: 950.ms),
           ],
           const SizedBox(height: 36),
           Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
               style: GoogleFonts.notoSansJp(
-                  fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
+                  fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
         ],
       ),
     );
@@ -715,16 +716,16 @@ class _MinutesSlide extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: _CountUp(
               value: d.totalMinutesListened,
-              style: c.text(110, weight: FontWeight.w900, height: 1).copyWith(
+              style: c.text(AppFontSize.mega, weight: FontWeight.w900, height: 1).copyWith(
                 shadows: [Shadow(color: AppColors.neonCyan.withValues(alpha: 0.5), blurRadius: 30)],
               ),
             ),
           ),
           Text(strings.wrappedMinutesLabel,
-              style: c.text(16, weight: FontWeight.w800, color: AppColors.neonCyan, spacing: 3)),
+              style: c.text(AppFontSize.titleLg, weight: FontWeight.w800, color: AppColors.neonCyan, spacing: 3)),
           const SizedBox(height: 10),
           Text(strings.wrappedHoursOfMusic(d.totalMinutesListened ~/ 60),
-              style: c.text(16, weight: FontWeight.w500, color: AppColors.textSecondary)),
+              style: c.text(AppFontSize.titleLg, weight: FontWeight.w500, color: AppColors.textSecondary)),
           if (pct != null) ...[
             const SizedBox(height: 16),
             Container(
@@ -742,7 +743,7 @@ class _MinutesSlide extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(strings.wrappedVsPrevious(pct, c.previousLabel),
-                        style: c.text(12, weight: FontWeight.w700, color: pct >= 0 ? AppColors.neonGreen : AppColors.sakura)),
+                        style: c.text(AppFontSize.body, weight: FontWeight.w700, color: pct >= 0 ? AppColors.neonGreen : AppColors.sakura)),
                   ),
                 ],
               ),
@@ -759,7 +760,7 @@ class _MinutesSlide extends StatelessWidget {
           if (d.periodDays > 0) ...[
             const SizedBox(height: 18),
             Text(strings.wrappedActiveDays(d.activeDays, d.periodDays),
-                style: c.text(12, weight: FontWeight.w600, color: AppColors.textMuted)),
+                style: c.text(AppFontSize.body, weight: FontWeight.w600, color: AppColors.textMuted)),
             const SizedBox(height: 8),
             _DaysBar(active: d.activeDays, total: d.periodDays),
           ],
@@ -772,7 +773,7 @@ class _MinutesSlide extends StatelessWidget {
                 Expanded(
                   child: Text(strings.wrappedStreak(d.longestStreak, d.streakStart),
                       maxLines: 2,
-                      style: c.text(12, weight: FontWeight.w700, color: AppColors.textSecondary)),
+                      style: c.text(AppFontSize.body, weight: FontWeight.w700, color: AppColors.textSecondary)),
                 ),
               ],
             ).animateCalm(context).fadeIn(delay: 1600.ms),
@@ -804,7 +805,7 @@ class _Stat extends StatelessWidget {
           children: [
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: _CountUp(value: value, style: c.text(24, weight: FontWeight.w900)),
+              child: _CountUp(value: value, style: c.text(AppFontSize.headline, weight: FontWeight.w900)),
             ),
             const SizedBox(height: 2),
             FittedBox(
@@ -812,7 +813,7 @@ class _Stat extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(label,
                   maxLines: 1,
-                  style: c.text(9, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+                  style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
             ),
           ],
         ),
@@ -883,7 +884,7 @@ class _TopSongSlide extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: c.text(26, weight: FontWeight.w900, height: 1.15)),
+                style: c.text(AppFontSize.display, weight: FontWeight.w900, height: 1.15)),
           ).animateCalm(context).fadeIn(delay: 300.ms),
           const SizedBox(height: 4),
           Center(
@@ -891,7 +892,7 @@ class _TopSongSlide extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: c.text(15, weight: FontWeight.w600, color: AppColors.textSecondary)),
+                style: c.text(AppFontSize.titleLg, weight: FontWeight.w600, color: AppColors.textSecondary)),
           ),
           if (d.basedOnPlays) ...[
             const SizedBox(height: 10),
@@ -904,14 +905,14 @@ class _TopSongSlide extends StatelessWidget {
                   boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.5), blurRadius: 14)],
                 ),
                 child: Text(strings.wrappedPlays(top.playCount),
-                    style: c.text(12, weight: FontWeight.w800, color: Colors.white)),
+                    style: c.text(AppFontSize.body, weight: FontWeight.w800, color: Colors.white)),
               ),
             ).animateCalm(context).fadeIn(delay: 500.ms),
           ],
           const Spacer(),
           if (rest.isNotEmpty) ...[
             Text(strings.wrappedRunnersUp,
-                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
             const SizedBox(height: 8),
             for (var i = 0; i < rest.length; i++)
               Padding(
@@ -920,7 +921,7 @@ class _TopSongSlide extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 26,
-                      child: Text('${i + 2}', style: c.text(16, weight: FontWeight.w900, color: AppColors.accent)),
+                      child: Text('${i + 2}', style: c.text(AppFontSize.titleLg, weight: FontWeight.w900, color: AppColors.accent)),
                     ),
                     _Cover(rest[i].coverUrl, size: 38, radius: 4),
                     const SizedBox(width: 10),
@@ -931,16 +932,16 @@ class _TopSongSlide extends StatelessWidget {
                           Text(rest[i].title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: c.text(13, weight: FontWeight.w700)),
+                              style: c.text(AppFontSize.bodyLg, weight: FontWeight.w700)),
                           Text(rest[i].artistName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: c.text(11, weight: FontWeight.w500, color: AppColors.textMuted)),
+                              style: c.text(AppFontSize.caption, weight: FontWeight.w500, color: AppColors.textMuted)),
                         ],
                       ),
                     ),
                     if (d.basedOnPlays)
-                      Text('${rest[i].playCount}', style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                      Text('${rest[i].playCount}', style: c.text(AppFontSize.bodyLg, weight: FontWeight.w800, color: AppColors.textSecondary)),
                   ],
                 ),
               ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 700 + i * 120)).slideX(begin: 0.15, end: 0),
@@ -990,7 +991,7 @@ class _TopArtistSlide extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(top.name.toUpperCase(),
                   maxLines: 1,
-                  style: c.text(34, weight: FontWeight.w900, spacing: 1.5).copyWith(
+                  style: c.text(AppFontSize.hero, weight: FontWeight.w900, spacing: 1.5).copyWith(
                     shadows: [Shadow(color: AppColors.neonPurple.withValues(alpha: 0.6), blurRadius: 24)],
                   )),
             ),
@@ -1001,13 +1002,13 @@ class _TopArtistSlide extends StatelessWidget {
               d.basedOnPlays
                   ? '${strings.wrappedPlays(top.playCount)} · ${strings.wrappedMinutes(top.totalSeconds ~/ 60)}'
                   : strings.wrappedDiscoveredSongs(top.playCount),
-              style: c.text(13, weight: FontWeight.w600, color: AppColors.textSecondary),
+              style: c.text(AppFontSize.bodyLg, weight: FontWeight.w600, color: AppColors.textSecondary),
             ),
           ),
           const Spacer(),
           if (rest.isNotEmpty) ...[
             Text(strings.wrappedRunnersUp,
-                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
             const SizedBox(height: 10),
             for (var i = 0; i < rest.length; i++)
               Padding(
@@ -1017,7 +1018,7 @@ class _TopArtistSlide extends StatelessWidget {
                     SizedBox(
                       width: 26,
                       child: Text('${i + 2}',
-                          style: c.text(16, weight: FontWeight.w900, color: AppColors.neonPurple)),
+                          style: c.text(AppFontSize.titleLg, weight: FontWeight.w900, color: AppColors.neonPurple)),
                     ),
                     ClipOval(child: _Cover(rest[i].coverUrl ?? '', size: 34, radius: 0)),
                     const SizedBox(width: 10),
@@ -1028,7 +1029,7 @@ class _TopArtistSlide extends StatelessWidget {
                           Text(rest[i].name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: c.text(13, weight: FontWeight.w700)),
+                              style: c.text(AppFontSize.bodyLg, weight: FontWeight.w700)),
                           const SizedBox(height: 4),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(2),
@@ -1051,7 +1052,7 @@ class _TopArtistSlide extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Text('${rest[i].playCount}',
-                        style: c.text(13, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                        style: c.text(AppFontSize.bodyLg, weight: FontWeight.w800, color: AppColors.textSecondary)),
                   ],
                 ),
               ).animateCalm(context).fadeIn(delay: Duration(milliseconds: 700 + i * 120)),
@@ -1102,7 +1103,7 @@ class _TopAlbumSlide extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: c.text(24, weight: FontWeight.w900, height: 1.15)),
+                style: c.text(AppFontSize.headline, weight: FontWeight.w900, height: 1.15)),
           ).animateCalm(context).fadeIn(delay: 300.ms),
           const SizedBox(height: 4),
           Center(
@@ -1110,18 +1111,18 @@ class _TopAlbumSlide extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: c.text(15, weight: FontWeight.w600, color: AppColors.textSecondary)),
+                style: c.text(AppFontSize.titleLg, weight: FontWeight.w600, color: AppColors.textSecondary)),
           ),
           const SizedBox(height: 8),
           Center(
             child: Text(detail(top),
                 textAlign: TextAlign.center,
-                style: c.text(12, weight: FontWeight.w700, color: _tint)),
+                style: c.text(AppFontSize.body, weight: FontWeight.w700, color: _tint)),
           ).animateCalm(context).fadeIn(delay: 500.ms),
           const Spacer(),
           if (rest.isNotEmpty) ...[
             Text(strings.wrappedRunnersUp,
-                style: c.text(10, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
             const SizedBox(height: 8),
             for (var i = 0; i < rest.length; i++)
               Padding(
@@ -1130,7 +1131,7 @@ class _TopAlbumSlide extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 26,
-                      child: Text('${i + 2}', style: c.text(16, weight: FontWeight.w900, color: _tint)),
+                      child: Text('${i + 2}', style: c.text(AppFontSize.titleLg, weight: FontWeight.w900, color: _tint)),
                     ),
                     _Cover(rest[i].coverUrl, size: 38, radius: 3),
                     const SizedBox(width: 10),
@@ -1141,11 +1142,11 @@ class _TopAlbumSlide extends StatelessWidget {
                           Text(rest[i].title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: c.text(13, weight: FontWeight.w700)),
+                              style: c.text(AppFontSize.bodyLg, weight: FontWeight.w700)),
                           Text('${rest[i].artistName} · ${detail(rest[i])}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: c.text(11, weight: FontWeight.w500, color: AppColors.textMuted)),
+                              style: c.text(AppFontSize.caption, weight: FontWeight.w500, color: AppColors.textMuted)),
                         ],
                       ),
                     ),
@@ -1174,7 +1175,7 @@ class _TopAlbumSlide extends StatelessWidget {
                         child: Text(strings.wrappedCompletedAlbums,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: c.text(10, weight: FontWeight.w800, color: _tint, spacing: 1.6)),
+                            style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: _tint, spacing: 1.6)),
                       ),
                     ],
                   ),
@@ -1195,7 +1196,7 @@ class _TopAlbumSlide extends StatelessWidget {
                         : strings.wrappedCompletedCount(done.length),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: c.text(12, weight: FontWeight.w600, color: AppColors.textSecondary),
+                    style: c.text(AppFontSize.body, weight: FontWeight.w600, color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -1232,7 +1233,7 @@ class _HourSlide extends StatelessWidget {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(strings.wrappedHourLabel(d.favoriteHour),
-                style: c.text(84, weight: FontWeight.w900, height: 1).copyWith(
+                style: c.text(AppFontSize.mega, weight: FontWeight.w900, height: 1).copyWith(
                   shadows: [Shadow(color: AppColors.warning.withValues(alpha: 0.5), blurRadius: 30)],
                 )),
           ).animateCalm(context).fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
@@ -1279,7 +1280,7 @@ class _HourSlide extends StatelessWidget {
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(strings.wrappedHourLabel(h), style: c.text(9, color: AppColors.textMuted)),
+                    child: Text(strings.wrappedHourLabel(h), style: c.text(AppFontSize.micro, color: AppColors.textMuted)),
                   ),
                 ),
             ],
@@ -1294,7 +1295,7 @@ class _HourSlide extends StatelessWidget {
                   const SizedBox(width: 10),
                   SizedBox(
                     width: 96,
-                    child: Text(strings.wrappedDayPart(p), style: c.text(13, weight: FontWeight.w700)),
+                    child: Text(strings.wrappedDayPart(p), style: c.text(AppFontSize.bodyLg, weight: FontWeight.w700)),
                   ),
                   Expanded(
                     child: ClipRRect(
@@ -1317,7 +1318,7 @@ class _HourSlide extends StatelessWidget {
                     width: 46,
                     child: Text('${(parts[p] * 100).round()}%',
                         textAlign: TextAlign.right,
-                        style: c.text(12, weight: FontWeight.w800, color: AppColors.textSecondary)),
+                        style: c.text(AppFontSize.body, weight: FontWeight.w800, color: AppColors.textSecondary)),
                   ),
                 ],
               ),
@@ -1372,7 +1373,7 @@ class _AuraSlide extends StatelessWidget {
               border: Border.all(color: AppColors.sakura.withValues(alpha: 0.6), width: 1.5),
             ),
             child: Text(kanjiFor[aura] ?? '和',
-                style: c.kanji(104, Colors.white).copyWith(
+                style: c.kanji(AppFontSize.mega, Colors.white).copyWith(
                   shadows: [
                     Shadow(color: AppColors.sakura.withValues(alpha: 0.9), blurRadius: 24),
                     Shadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 48),
@@ -1383,14 +1384,14 @@ class _AuraSlide extends StatelessWidget {
               .scaleXY(begin: 0.97, end: 1.03, duration: 2.seconds, curve: Curves.easeInOut),
           const SizedBox(height: 30),
           Text(name.toUpperCase(),
-                  textAlign: TextAlign.center, style: c.text(28, weight: FontWeight.w900, spacing: 2))
+                  textAlign: TextAlign.center, style: c.text(AppFontSize.display, weight: FontWeight.w900, spacing: 2))
               .animateCalm(context)
               .fadeIn(delay: 400.ms)
               .slideY(begin: 0.2, end: 0),
           const SizedBox(height: 12),
           Text(description,
                   textAlign: TextAlign.center,
-                  style: c.text(15, weight: FontWeight.w500, color: AppColors.textSecondary, height: 1.5))
+                  style: c.text(AppFontSize.titleLg, weight: FontWeight.w500, color: AppColors.textSecondary, height: 1.5))
               .animateCalm(context)
               .fadeIn(delay: 700.ms),
         ],
@@ -1452,7 +1453,7 @@ class _FactsSlide extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(_factText(facts[i]), style: c.text(14, weight: FontWeight.w600, height: 1.45)),
+                    child: Text(_factText(facts[i]), style: c.text(AppFontSize.title, weight: FontWeight.w600, height: 1.45)),
                   ),
                 ],
               ),
@@ -1535,7 +1536,7 @@ class _SummarySlide extends StatelessWidget {
                             right: -20,
                             top: -30,
                             child: Text(c.monthly ? '月' : '年',
-                                style: c.kanji(200, AppColors.accent.withValues(alpha: 0.08))),
+                                style: c.kanji(AppFontSize.mega, AppColors.accent.withValues(alpha: 0.08))),
                           ),
                           const Positioned.fill(child: CustomPaint(painter: _Scanlines())),
                           Padding(
@@ -1553,12 +1554,12 @@ class _SummarySlide extends StatelessWidget {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text('TSUKI WRAPPED',
-                                              style: c.text(11, weight: FontWeight.w800, color: AppColors.accent, spacing: 3)),
+                                              style: c.text(AppFontSize.caption, weight: FontWeight.w800, color: AppColors.accent, spacing: 3)),
                                           FittedBox(
                                             fit: BoxFit.scaleDown,
                                             alignment: Alignment.centerLeft,
                                             child: Text(c.period,
-                                                maxLines: 1, style: c.text(26, weight: FontWeight.w900, spacing: 1)),
+                                                maxLines: 1, style: c.text(AppFontSize.display, weight: FontWeight.w900, spacing: 1)),
                                           ),
                                         ],
                                       ),
@@ -1626,7 +1627,7 @@ class _SummarySlide extends StatelessWidget {
                                   child: Row(
                                     children: [
                                       Text(_AuraSlide.kanjiFor[aura] ?? '和',
-                                          style: c.kanji(26, Colors.white).copyWith(shadows: [
+                                          style: c.kanji(AppFontSize.display, Colors.white).copyWith(shadows: [
                                             Shadow(color: AppColors.sakura.withValues(alpha: 0.9), blurRadius: 12),
                                           ])),
                                       const SizedBox(width: 12),
@@ -1635,8 +1636,8 @@ class _SummarySlide extends StatelessWidget {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(strings.wrappedAuraTitle,
-                                                style: c.text(8.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
-                                            Text(auraName, style: c.text(16, weight: FontWeight.w900)),
+                                                style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+                                            Text(auraName, style: c.text(AppFontSize.titleLg, weight: FontWeight.w900)),
                                           ],
                                         ),
                                       ),
@@ -1646,7 +1647,7 @@ class _SummarySlide extends StatelessWidget {
                                 const SizedBox(height: 14),
                                 Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
                                     style: GoogleFonts.notoSansJp(
-                                        fontSize: 8.5,
+                                        fontSize: AppFontSize.micro,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.accent.withValues(alpha: 0.6),
                                         letterSpacing: 2)),
@@ -1662,7 +1663,7 @@ class _SummarySlide extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(strings.wrappedOutroFor(monthly: c.monthly),
-                    style: c.text(12, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
+                    style: c.text(AppFontSize.body, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 2)),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
@@ -1675,7 +1676,7 @@ class _SummarySlide extends StatelessWidget {
                     ),
                     icon: const Icon(Icons.ios_share_rounded, size: 18, color: Colors.white),
                     label: Text(strings.wrappedShareCta,
-                        style: c.text(13, weight: FontWeight.w900, color: Colors.white, spacing: 1.5)),
+                        style: c.text(AppFontSize.bodyLg, weight: FontWeight.w900, color: Colors.white, spacing: 1.5)),
                   ),
                 ),
               ],
@@ -1698,7 +1699,7 @@ class _SummaryList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: c.text(9.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.6)),
+        Text(title, style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.6)),
         const SizedBox(height: 8),
         for (var i = 0; i < items.length; i++)
           Padding(
@@ -1708,13 +1709,13 @@ class _SummaryList extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 16,
-                  child: Text('${i + 1}', style: c.text(12, weight: FontWeight.w900, color: AppColors.accent)),
+                  child: Text('${i + 1}', style: c.text(AppFontSize.body, weight: FontWeight.w900, color: AppColors.accent)),
                 ),
                 Expanded(
                   child: Text(items[i],
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: c.text(12, weight: i == 0 ? FontWeight.w800 : FontWeight.w600, height: 1.25)),
+                      style: c.text(AppFontSize.body, weight: i == 0 ? FontWeight.w800 : FontWeight.w600, height: 1.25)),
                 ),
               ],
             ),
@@ -1740,13 +1741,13 @@ class _SummaryNumber extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Text(label,
               maxLines: 1,
-              style: c.text(8.5, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
+              style: c.text(AppFontSize.micro, weight: FontWeight.w800, color: AppColors.textMuted, spacing: 1.2)),
         ),
         const SizedBox(height: 3),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text(value, maxLines: 1, style: c.text(20, weight: FontWeight.w900)),
+          child: Text(value, maxLines: 1, style: c.text(AppFontSize.headline, weight: FontWeight.w900)),
         ),
       ],
     );
@@ -1770,21 +1771,21 @@ class _Empty extends StatelessWidget {
             children: [
               Text(monthly ? '月' : '年',
                   style: GoogleFonts.notoSansJp(
-                      fontSize: 72, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
+                      fontSize: AppFontSize.mega, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
               const SizedBox(height: 18),
               Text(strings.wrappedNoDataFor(monthly: monthly),
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
               const SizedBox(height: 10),
               Text(strings.wrappedNoDataSubtitle,
                   textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary)),
               const SizedBox(height: 28),
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
                 child: Text(strings.a11yBack,
-                    style: locale.getTextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.accent)),
+                    style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, color: AppColors.accent)),
               ),
             ],
           ),

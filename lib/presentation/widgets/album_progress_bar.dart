@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 
 class AlbumProgressBar extends ConsumerWidget {
@@ -35,7 +36,7 @@ class AlbumProgressBar extends ConsumerWidget {
             Text(
               locale.strings.albumProgressListened(listened, total),
               style: locale.getTextStyle(
-                fontSize: 11,
+                fontSize: AppFontSize.caption,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
@@ -43,7 +44,7 @@ class AlbumProgressBar extends ConsumerWidget {
             Text(
               '$percentage%',
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w800,
                 color: isCompleted ? AppColors.accent : AppColors.accent,
               ),

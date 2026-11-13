@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -100,7 +101,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
             title: Text(
               strings.downloadModelTitle,
               style: locale.getTextStyle(
-                fontSize: 13,
+                fontSize: AppFontSize.bodyLg,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,
                 letterSpacing: 1,
@@ -109,7 +110,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
             content: Text(
               strings.downloadModelDesc('${models * 30}'),
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 color: AppColors.textPrimary,
                 height: 1.5,
               ),
@@ -119,7 +120,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text(strings.cancel,
                     style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted)),
               ),
@@ -127,7 +128,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text(strings.downloadModelConfirm,
                     style: locale.getTextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent)),
               ),
@@ -164,7 +165,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                 child: Text(
                   strings.lyricsTranslateTo,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -178,7 +179,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                   dense: true,
                   title: Text(
                     entry.value,
-                    style: locale.getTextStyle(fontSize: 14, color: Colors.white),
+                    style: locale.getTextStyle(fontSize: AppFontSize.title, color: Colors.white),
                   ),
                   trailing: (entry.key.isEmpty ? current == null : entry.key == current)
                       ? const Icon(Icons.check, color: AppColors.accent, size: 18)
@@ -386,7 +387,7 @@ class _Header extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: 15,
+                      fontSize: AppFontSize.titleLg,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
@@ -398,7 +399,7 @@ class _Header extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: locale.getTextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSize.body,
                       color: Colors.white70,
                     ),
                   ),
@@ -406,7 +407,7 @@ class _Header extends StatelessWidget {
                   Text(
                     '歌詞 // LIVE.SYNC',
                     style: locale.getTextStyle(
-                      fontSize: 8,
+                      fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent.withValues(alpha: 0.9),
                       letterSpacing: 1.6,
@@ -479,7 +480,7 @@ class _Chip extends ConsumerWidget {
             Text(
               label,
               style: locale.getTextStyle(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -517,7 +518,7 @@ class _Progress extends ConsumerWidget {
         thumbGlowColor: AppColors.accent.withValues(alpha: 0.5),
         thumbRadius: 6,
         timeLabelTextStyle: locale.getTextStyle(
-          fontSize: 11,
+          fontSize: AppFontSize.caption,
           color: Colors.white70,
         ),
       ),
@@ -624,7 +625,7 @@ class _Message extends ConsumerWidget {
           Text(
             text,
             style: locale.getTextStyle(
-              fontSize: 11,
+              fontSize: AppFontSize.caption,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
               letterSpacing: 1.2,

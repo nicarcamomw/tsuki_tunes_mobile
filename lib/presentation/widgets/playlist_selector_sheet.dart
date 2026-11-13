@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -56,7 +57,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                   Text(
                     strings.selectPlaylist,
                     style: locale.getTextStyle(
-                      fontSize: 14,
+                      fontSize: AppFontSize.title,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -71,7 +72,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
               title: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w600,
                   color: AppColors.accent,
                 ),
@@ -93,7 +94,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                 ? strings.addedToPlaylist(created.name)
                                 : strings.playlistCreated,
                             style: locale.getTextStyle(
-                              fontSize: 12,
+                              fontSize: AppFontSize.body,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textBright,
                             ),
@@ -127,11 +128,11 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: locale.getTextStyle(
-                            fontSize: 14,
+                            fontSize: AppFontSize.title,
                             fontWeight: FontWeight.w600,
                             color: added ? AppColors.textMuted : AppColors.textBright)),
                     subtitle: Text('${strings.sharedTitle} · ${strings.sharedMembers(sp.members.length)}',
-                        style: locale.getTextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
                     trailing: added ? const Icon(Icons.check, color: AppColors.accent, size: 18) : null,
                     onTap: added
                         ? null
@@ -184,7 +185,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       title: Text(
                         playlist.name,
                         style: locale.getTextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSize.title,
                           fontWeight: FontWeight.w600,
                           color: alreadyAdded
                               ? AppColors.textMuted
@@ -196,7 +197,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                       subtitle: Text(
                         strings.trackCountLabel(playlist.trackCount),
                         style: locale.getTextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -213,7 +214,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                   content: Text(
                                     strings.trackAlreadyInPlaylist,
                                     style: locale.getTextStyle(
-                                      fontSize: 12,
+                                      fontSize: AppFontSize.body,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textBright,
                                     ),
@@ -244,7 +245,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                           : strings
                                               .addedToPlaylist(playlist.name),
                                       style: locale.getTextStyle(
-                                        fontSize: 12,
+                                        fontSize: AppFontSize.body,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.textBright,
                                       ),
@@ -287,7 +288,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
       title: Text(
         strings.newPlaylist,
         style: locale.getTextStyle(
-          fontSize: 16,
+          fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textBright,
         ),
@@ -297,13 +298,13 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
         autofocus: true,
         maxLength: PlaylistRepository.maxNameLength,
         style: locale.getTextStyle(
-          fontSize: 14,
+          fontSize: AppFontSize.title,
           color: AppColors.textBright,
         ),
         decoration: InputDecoration(
           hintText: strings.playlistNameHint,
           hintStyle: locale.getTextStyle(
-            fontSize: 14,
+            fontSize: AppFontSize.title,
             color: AppColors.textMuted,
           ),
           enabledBorder: const UnderlineInputBorder(
@@ -321,7 +322,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
           child: Text(
             strings.cancel,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
@@ -332,7 +333,7 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
           child: Text(
             strings.create,
             style: locale.getTextStyle(
-              fontSize: 12,
+              fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
             ),
@@ -359,7 +360,7 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
       content: Text(
         strings.playlistCreated,
         style: locale.getTextStyle(
-          fontSize: 12,
+          fontSize: AppFontSize.body,
           fontWeight: FontWeight.w600,
           color: AppColors.textBright,
         ),

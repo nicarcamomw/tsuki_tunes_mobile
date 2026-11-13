@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import 'haptics.dart';
@@ -96,7 +97,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
             Expanded(
               child: Text(strings.devicesTitle.toUpperCase(),
                   style: locale.getTextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
+                      fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.textBright, letterSpacing: 2)),
             ),
             IconButton(
               tooltip: strings.devicesRefresh,
@@ -106,7 +107,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
           ],
         ),
         Text(strings.devicesHint,
-            style: locale.getTextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4)),
+            style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textSecondary, height: 1.4)),
         const SizedBox(height: 14),
         if (devices == null)
           const SkeletonRowList(count: 3, leading: 36, round: true, padding: EdgeInsets.symmetric(vertical: 8))
@@ -115,7 +116,7 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
             padding: const EdgeInsets.symmetric(vertical: 20),
             child: Text(strings.devicesEmpty,
                 textAlign: TextAlign.center,
-                style: locale.getTextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.4)),
+                style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textMuted, height: 1.4)),
           )
         else
           for (final d in devices) _tile(d, locale, strings),
@@ -160,11 +161,11 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: locale.getTextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                                fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
                         if (active || restricted) ...[
                           const SizedBox(height: 2),
                           Text(active ? strings.devicesPlayingHere : strings.devicesRestricted,
-                              style: locale.getTextStyle(fontSize: 10.5, color: color)),
+                              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: color)),
                         ],
                       ],
                     ),

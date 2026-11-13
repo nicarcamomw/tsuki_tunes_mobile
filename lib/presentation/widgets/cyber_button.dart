@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import 'haptics.dart';
 
 class CyberButton extends StatefulWidget {
@@ -134,7 +135,7 @@ class _CyberButtonState extends State<CyberButton>
             Text(
               widget.text.toUpperCase(),
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
+                fontSize: AppFontSize.body,
                 fontWeight: FontWeight.w700,
                 color: textColor,
                 letterSpacing: 1.2,

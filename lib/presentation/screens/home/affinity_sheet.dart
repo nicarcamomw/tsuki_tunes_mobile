@@ -33,7 +33,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Text(
             strings.affinityInfoTitle,
             style: locale.getTextStyle(
-              fontSize: 16,
+              fontSize: AppFontSize.titleLg,
               fontWeight: FontWeight.w800,
               color: AppColors.textBright,
             ),
@@ -42,7 +42,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Text(
             '親和性 // AFFINITY.SCORE',
             style: locale.getTextStyle(
-              fontSize: 8.5,
+              fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.accent.withValues(alpha: 0.85),
               letterSpacing: 1.4,
@@ -52,7 +52,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Text(
             strings.affinityInfoIntro,
             style: locale.getTextStyle(
-              fontSize: 13,
+              fontSize: AppFontSize.bodyLg,
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -91,7 +91,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                 Text(
                   '${strings.affinityFormulaLabel}  ',
                   style: locale.getTextStyle(
-                    fontSize: 9,
+                    fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,
                     letterSpacing: 1.4,
@@ -101,7 +101,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                   child: Text(
                     strings.affinityFormula,
                     style: locale.getTextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppFontSize.bodyLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textBright,
                     ),
@@ -121,7 +121,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
                 child: Text(
                   strings.affinityInfoOutro,
                   style: locale.getTextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textSecondary,
                     height: 1.45,
                   ),
@@ -141,7 +141,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
               child: Text(
                 strings.affinityInfoClose,
                 style: locale.getTextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),
@@ -202,7 +202,7 @@ class _AffinityFactor extends StatelessWidget {
                 Text(
                   title,
                   style: locale.getTextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSize.bodyLg,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textBright,
                   ),
@@ -211,7 +211,7 @@ class _AffinityFactor extends StatelessWidget {
                 Text(
                   body,
                   style: locale.getTextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppFontSize.body,
                     color: AppColors.textSecondary,
                     height: 1.35,
                   ),
@@ -229,7 +229,7 @@ class _AffinityFactor extends StatelessWidget {
             child: Text(
               points,
               style: locale.getTextStyle(
-                fontSize: 10,
+                fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: color,
                 letterSpacing: 0.8,

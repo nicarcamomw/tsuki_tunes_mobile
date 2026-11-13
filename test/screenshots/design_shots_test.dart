@@ -28,11 +28,13 @@ import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/library_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/search_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/streak_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
@@ -73,6 +75,13 @@ const _song = Track(
 class _StillAudio extends AudioProvider {
   @override
   Track? get currentTrack => _song;
+}
+
+class _Online extends ChangeNotifier implements ConnectivityProvider {
+  @override
+  bool get isOnline => true;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// Deezer as a screen sees it: two genres, nothing else. The fonts never
@@ -220,6 +229,7 @@ void main() {
 
   final base = <Override>[
     libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
+    connectivityProvider.overrideWith((ref) => _Online()),
   ];
 
   testWidgets('widgets', skip: skip != null, (tester) async {
@@ -239,6 +249,11 @@ void main() {
         ]),
       ),
     );
+  });
+
+  testWidgets('shell', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())],
+        const MainNavigationScreen(child: SizedBox.expand()));
   });
 
   testWidgets('home', skip: skip != null, (tester) async {
