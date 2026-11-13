@@ -25,6 +25,7 @@ import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/social.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
+import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/album_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/artist_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/bonds_screen.dart';
@@ -398,6 +399,19 @@ void main() {
   testWidgets('lore', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'lore', overrides: base, const LoreScreen());
   });
+
+  for (final id in ['elementos', 'caras']) {
+    testWidgets('lore_$id', skip: skip != null, (tester) async {
+      final chapter = TsukiLore.chapters.firstWhere((c) => c.id == id);
+      await _pumpShot(tester, 'lore_$id', overrides: base, LoreChapterScreen(chapter: chapter),
+          before: () async {
+            for (var i = 0; i < (id == 'caras' ? 3 : 0); i++) {
+              await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+              await tester.pump(const Duration(milliseconds: 50));
+            }
+          });
+    });
+  }
 
   testWidgets('streak', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'streak', overrides: base, const StreakScreen());

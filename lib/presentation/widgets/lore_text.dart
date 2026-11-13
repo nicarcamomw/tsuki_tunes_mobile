@@ -84,10 +84,14 @@ class _GlitchNameState extends State<GlitchName> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    // P-10: capitals read bigger than the words around them, so they're
+    // set a little smaller and lighter, and the name sits in the line
+    // instead of shouting over it.
     final base = widget.style.copyWith(
       color: loreNameColor,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.8,
+      fontSize: (widget.style.fontSize ?? 16) * 0.88,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
     );
     final text = widget.name.toUpperCase();
     return AnimatedBuilder(
@@ -101,10 +105,14 @@ class _GlitchNameState extends State<GlitchName> with SingleTickerProviderStateM
           offset: Offset(dx, 0),
           child: Text(
             text,
+            // The cyan and magenta ghosts only show while it slips: at rest
+            // a permanent fringe blurs the letters for reading.
             style: base.copyWith(shadows: [
-              Shadow(color: const Color(0xFF00E5FF).withValues(alpha: 0.30 + 0.3 * t), offset: Offset(-split, 0)),
-              Shadow(color: const Color(0xFFFF2BD6).withValues(alpha: 0.22 + 0.3 * t), offset: Offset(split, 0)),
-              Shadow(color: loreNameColor.withValues(alpha: 0.35), blurRadius: 6),
+              if (t > 0) ...[
+                Shadow(color: const Color(0xFF00E5FF).withValues(alpha: 0.3 + 0.3 * t), offset: Offset(-split, 0)),
+                Shadow(color: const Color(0xFFFF2BD6).withValues(alpha: 0.22 + 0.3 * t), offset: Offset(split, 0)),
+              ],
+              Shadow(color: loreNameColor.withValues(alpha: 0.3), blurRadius: 6),
             ]),
           ),
         );

@@ -289,8 +289,12 @@ class LoreChapterScreen extends ConsumerWidget {
         title: Text('${strings.loreTomo(tomo.numeral)} · ${strings.loreChapter(chapter.numeral)}',
             style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800, color: AppColors.textMuted, letterSpacing: 1.6)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(22, 8, 22, 48),
+      // P-10: a reading measure (about 65 characters) on a tablet too.
+      body: LayoutBuilder(
+        builder: (context, box) {
+        final side = box.maxWidth > 604 ? (box.maxWidth - 560) / 2 : 22.0;
+        return ListView(
+        padding: EdgeInsets.fromLTRB(side, 8, side, 48),
         children: [
           Center(
             child: Text(chapter.kanji,
@@ -314,8 +318,11 @@ class LoreChapterScreen extends ConsumerWidget {
           const SizedBox(height: 22),
           for (final p in chapter.body.of(lang).split('\n\n')) ...[
             LoreText(p, style: body()),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
           ],
+          // P-10: where the story ends and the beings' records begin.
+          if (faction != null || const {'guerras', 'cinco', 'ultras', 'caras'}.contains(chapter.id))
+            Divider(color: accent.withValues(alpha: 0.25), height: 28, thickness: 1),
           if (faction != null) _FactionSection(faction: faction, owned: owned),
           if (chapter.id == 'guerras') _BondsSection(bonds: TsukiLore.bonds, owned: owned),
           if (chapter.id == 'cinco') _MaskRow(ids: TsukiLore.crossed, owned: owned),
@@ -324,6 +331,8 @@ class LoreChapterScreen extends ConsumerWidget {
           if (chapter.id == 'caras')
             for (final f in TsukiLore.faces) _FaceCard(face: f, owned: owned.contains(f.mask)),
         ],
+      );
+        },
       ),
     );
   }
@@ -418,7 +427,7 @@ class _FactionSection extends ConsumerWidget {
                           style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                       const SizedBox(height: 4),
                       Text(owned.contains(reward.id) ? reward.description(lang) : strings.loreRewardHint,
-                          style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.4)),
+                          style: locale.getTextStyle(fontSize: AppFontSize.title, color: AppColors.textSecondary, height: 1.5)),
                     ],
                   ),
                 ),
@@ -516,7 +525,7 @@ class _BondsSection extends ConsumerWidget {
                           children: [
                             Text(strings.loreBondKind(b.kind.name), style: _label(locale, AppColors.textMuted)),
                             Text(known ? b.title.of(lang) : '???',
-                                style: locale.getTextStyle(fontSize: AppFontSize.title, fontWeight: FontWeight.w800, color: AppColors.textBright)),
+                                style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
                           ],
                         ),
                       ),
@@ -525,7 +534,7 @@ class _BondsSection extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(known ? b.text.of(lang) : strings.loreBondLocked,
                       style: locale.getTextStyle(
-                          fontSize: AppFontSize.bodyLg, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                          fontSize: AppFontSize.title, color: known ? AppColors.textPrimary : AppColors.textMuted, height: 1.5)),
                 ],
               ),
             );
@@ -570,7 +579,7 @@ class _FaceCard extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(owned ? face.text.of(lang) : strings.loreFaceVeiled,
                     style: locale.getTextStyle(
-                        fontSize: AppFontSize.bodyLg, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.45)),
+                        fontSize: AppFontSize.title, color: owned ? AppColors.textPrimary : AppColors.textMuted, height: 1.5)),
               ],
             ),
           ),
