@@ -24,7 +24,7 @@ class LoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final level = ref.watch(maskProvider.select((m) => m.level));
+    final level = ref.watch(maskProvider.select((m) => m.unlockLevel));
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final lang = locale.currentLanguage;

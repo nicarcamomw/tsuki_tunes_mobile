@@ -170,8 +170,22 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
         .toList();
   }
 
+  /// Admin accounts can play the daily again, with another chart song, as
+  /// often as they like. Only the first round of the day counts for the
+  /// stats, the streak and the masks.
+  bool get _isAdmin => ref.read(authProvider).isAdmin;
+  bool _dailyReplay = false;
+
+  Future<void> _replayDaily() {
+    _dailyReplay = true;
+    return _startRound();
+  }
+
   Future<void> _startRound() async {
     final gen = ++_roundGen;
+    final replay = _dailyReplay && _mode == GuessMode.daily;
+    final previousId = _target?.id;
+    _dailyReplay = false;
     _stopClip();
     _countdown?.cancel();
     setState(() {
@@ -198,14 +212,17 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
       if (_mode == GuessMode.daily) {
         final saved = DailyRoundState.decode(_prefs?.getString(GuessSongScreen.dailyStateKey));
-        if (saved != null && saved.day == _today) {
+        if (saved != null && saved.day == _today && !replay) {
           target = await _api.getTrack(saved.trackId, forceRefresh: true);
           outcomes = saved.outcomes;
           labels = saved.guessLabels;
         } else {
           final pool = await _chartPool();
           if (pool.isEmpty) throw StateError('empty chart');
-          final pick = GuessGame.dailyPick(_today, pool, (t) => t.id);
+          final others = pool.where((t) => t.id != previousId).toList()..shuffle(_rng);
+          final pick = replay && others.isNotEmpty
+              ? others.first
+              : GuessGame.dailyPick(_today, pool, (t) => t.id);
           target = await _api.getTrack(pick.id, forceRefresh: true) ?? pick;
           await _prefs?.setString(
             GuessSongScreen.dailyStateKey,
@@ -551,13 +568,17 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     if (!_finished) return;
 
     if (_mode == GuessMode.daily) {
+      // An admin's replays of the day don't count again.
+      final firstToday = _stats.lastPlayedDay != _today;
       _stats.record(_today, _outcomes);
       _prefs?.setString(_statsKey, _stats.encode());
-      ref.read(maskProvider).onDailyGuessFinished(
-            won: _won,
-            attempts: _outcomes.length,
-            streak: _stats.currentStreak(_today),
-          );
+      if (firstToday) {
+        ref.read(maskProvider).onDailyGuessFinished(
+              won: _won,
+              attempts: _outcomes.length,
+              streak: _stats.currentStreak(_today),
+            );
+      }
       _startCountdown();
     } else {
       _setSessionStreak(_won ? _sessionStreak + 1 : 0);
@@ -1551,6 +1572,9 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
               _actionButton(locale, Icons.copy_rounded, strings.guessShare, _share),
               if (_mode != GuessMode.daily)
                 _actionButton(locale, Icons.arrow_forward_rounded, strings.guessNext, _startRound,
+                    filled: true)
+              else if (_isAdmin)
+                _actionButton(locale, Icons.arrow_forward_rounded, strings.guessNext, _replayDaily,
                     filled: true),
             ],
           ),

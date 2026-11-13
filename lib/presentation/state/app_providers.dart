@@ -179,6 +179,7 @@ final maskProvider = ChangeNotifierProvider<MaskProvider>((ref) {
   final auth = ref.read(authProvider);
   void follow() {
     masks.observer = auth.isGuest;
+    masks.isAdmin = auth.isAdmin;
     masks.setUser(auth.isAuthenticated ? auth.uid : null);
   }
 

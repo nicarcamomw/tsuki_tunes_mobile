@@ -67,7 +67,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
   @override
   Widget build(BuildContext context) {
     final ambient = ref.watch(ambientProvider);
-    final level = ref.watch(maskProvider.select((m) => m.level));
+    final level = ref.watch(maskProvider.select((m) => m.unlockLevel));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final remaining = ambient.stopRemaining;

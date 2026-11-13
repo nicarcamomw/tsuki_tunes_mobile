@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/admin.dart';
 import '../../core/logger.dart';
 import '../../data/datasources/account_deletion_service.dart';
 import '../../data/datasources/firebase_service.dart';
@@ -57,6 +58,9 @@ class AuthProvider extends ChangeNotifier {
   AuthError? get authError => _authError;
   bool get wasCancelled => _wasCancelled;
   bool get isAuthenticated => _user != null && !_isGuest;
+
+  /// An admin account (see [adminEmails]): everything unlockable shows unlocked.
+  bool get isAdmin => isAuthenticated && isAdminEmail(_user!.email);
 
   bool get isLoginThrottled {
     if (_loginAttempts < _maxLoginAttempts) return false;

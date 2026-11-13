@@ -43,6 +43,44 @@ void main() {
     expect(masks.pendingCelebration, isNull);
   });
 
+  group('admin account', () {
+    test('sees and can equip every mask, without touching real progress', () {
+      masks.isAdmin = true;
+      expect(MaskCatalog.all.every((m) => masks.isUnlocked(m.id)), isTrue);
+      expect(masks.unlockedCount, masks.totalCount);
+      expect(masks.unlockedAt('sen'), isNull); // never really earned
+      masks.equip('oni');
+      expect(masks.equipped?.id, 'oni');
+
+      masks.isAdmin = false;
+      expect(masks.isUnlocked('sen'), isFalse);
+      expect(masks.unlockedCount, 0);
+    });
+
+    test('really earned masks still count, with no banner', () {
+      masks.isAdmin = true;
+      masks.onPlayCounted(_t('1'));
+      expect(masks.unlockedAt('hajime'), isNotNull);
+      expect(masks.pendingCelebration, isNull);
+      masks.isAdmin = false;
+      expect(masks.unlockedCount, 1);
+    });
+
+    test('every Eco level gate opens, but the real level stays', () {
+      final real = masks.level;
+      masks.isAdmin = true;
+      expect(EcoFeature.values.every(masks.hasFeature), isTrue);
+      expect(masks.unlockLevel, EcoLevels.maxLevel);
+      expect(masks.level, real);
+      expect(masks.choicePending, isFalse); // no level 100 choice or report
+      expect(masks.pendingLevelUp, isNull);
+
+      masks.isAdmin = false;
+      expect(masks.hasFeature(EcoFeature.ethereal), isFalse);
+      expect(masks.unlockLevel, real);
+    });
+  });
+
   test('play count goals show progress and unlock at 250', () {
     for (var i = 0; i < 249; i++) {
       masks.onPlayCounted(_t('$i', artist: 'A$i'));

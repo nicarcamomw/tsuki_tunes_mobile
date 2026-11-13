@@ -490,7 +490,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     final strings = locale.strings;
     final s = widget.snapshot;
     final history = ref.watch(playHistoryProvider);
-    final unlocked = s.isFullMoonWindow;
+    final unlocked = s.isFullMoonWindow || ref.read(authProvider).isAdmin;
     final library = ref.read(libraryProvider);
     final mix = unlocked
         ? MoonSheet.buildMix(s,

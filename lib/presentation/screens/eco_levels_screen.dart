@@ -214,7 +214,7 @@ class _ColorPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chosen = masks.playerColor?.id;
-    final level = masks.level;
+    final level = masks.unlockLevel; // what's open (all, for an admin)
     Widget dot(String? id, Color color, String name, int? lockedAt) {
       final selected = chosen == id;
       return Semantics(

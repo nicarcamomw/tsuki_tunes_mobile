@@ -109,11 +109,21 @@ class MaskProvider extends ChangeNotifier {
 
   bool get loaded => _loaded;
   Future<void> get ready => _ready.future;
-  bool isUnlocked(String id) => _unlocked.containsKey(id);
-  DateTime? unlockedAt(String id) => _unlocked[id];
-  int get unlockedCount => _unlocked.length;
+  /// Admin accounts see every mask unlocked. Only what's shown changes:
+  /// [unlockedAt] and the cloud collection keep the masks really earned.
+  bool get isAdmin => _admin;
+  bool _admin = false;
+  set isAdmin(bool value) {
+    if (value == _admin) return;
+    _admin = value;
+    notifyListeners();
+  }
 
-  /// The masks awakened so far.
+  bool isUnlocked(String id) => _admin || _unlocked.containsKey(id);
+  DateTime? unlockedAt(String id) => _unlocked[id];
+  int get unlockedCount => _admin ? totalCount : _unlocked.length;
+
+  /// The masks awakened so far (really earned, also for an admin).
   Set<String> get unlockedIds => _unlocked.keys.toSet();
   int get totalCount => MaskCatalog.all.length;
   OniMask? get equipped => MaskCatalog.byId(_equipped);
@@ -312,7 +322,12 @@ class MaskProvider extends ChangeNotifier {
   String? Function()? userName;
   double get levelProgress => EcoLevels.progressIn(eco);
 
-  bool hasFeature(EcoFeature f) => level >= f.level;
+  /// The level that decides what's open: features, sounds, colours and
+  /// lore chapters. For an admin, everything; [level] stays the real one,
+  /// so ranks, level-ups and the level 100 choice and report don't fire.
+  int get unlockLevel => _admin ? EcoLevels.maxLevel : level;
+
+  bool hasFeature(EcoFeature f) => unlockLevel >= f.level;
 
   /// Levels reached since they were last shown: (from, to), shown once.
   (int, int)? get pendingLevelUp => _levelUpFrom == null ? null : (_levelUpFrom!, _stats.lvl);
@@ -368,7 +383,7 @@ class MaskProvider extends ChangeNotifier {
   /// The player's colour, among those the levels opened (null: the app's).
   EcoColor? get playerColor {
     final c = EcoLevels.colorById(_stats.color);
-    return c != null && level >= c.level ? c : null;
+    return c != null && unlockLevel >= c.level ? c : null;
   }
 
   void setPlayerColor(String? id) {
@@ -825,7 +840,8 @@ class MaskProvider extends ChangeNotifier {
         }
       }
     }
-    _celebrations.addAll(newly);
+    // An admin already sees it unlocked: no "new mask" banner.
+    if (!_admin) _celebrations.addAll(newly);
     // The rarer beings are worth telling the Bonds about.
     for (final m in newly) {
       final mask = MaskCatalog.byId(m);
@@ -843,7 +859,7 @@ class MaskProvider extends ChangeNotifier {
   }
 
   void equip(String id) {
-    if (!_unlocked.containsKey(id) || _equipped == id) return;
+    if (!isUnlocked(id) || MaskCatalog.byId(id) == null || _equipped == id) return;
     _equipped = id;
     notifyListeners();
     unawaited(_saveLocal());
