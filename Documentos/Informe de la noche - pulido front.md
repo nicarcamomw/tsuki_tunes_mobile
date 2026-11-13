@@ -66,6 +66,7 @@ Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es u
 | T-03 | Ya existía: la portada viaja de la tarjeta de álbum a la cabecera y del mini player al reproductor. |
 | A-01 | Verificado: un solo `Ticker` mueve todas las capas del login, cada `CustomPaint` animado va en su `RepaintBoundary`, se pausa solo cuando la ruta queda tapada y no arranca con "reducir movimiento". |
 | F-02 | **Bug:** el icono pequeño de las notificaciones (lanzamientos, racha, máquina del tiempo y reproducción) era el ícono a color, que Android pinta como una mancha blanca. Ahora usa la silueta de la máscara. Textos y canales revisados en los tres idiomas. |
+| P-08 | `MoonLoader`: la luna pasando por sus fases en las cargas sueltas (Letras, Bonds). Los indicadores dentro de botones se quedan como estaban. |
 | E-07 | Ya estaba hecho en el código (deslizar a los lados cambia de canción y hacia arriba abre el reproductor). |
 | T-04 | Cubierto por D-02. |
 
@@ -76,7 +77,8 @@ Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es u
 - **I-03 a I-07** (cabecera, stats y carruseles de Inicio): Inicio es la pantalla que más cambió en tu copia local; preferí no tocar su diseño hasta fusionar.
 - **D-13** (tipografía display y monoespaciada): es un cambio de identidad visible y necesita tu ojo para elegir la fuente.
 - **E-05** (fundir barra y mini player): es un rediseño del muelle; mejor decidirlo viéndolo.
-- El resto de B y C que no aparece en la tabla quedó pendiente por tiempo.
+- **Pendientes que necesitan tu decisión o tu ojo:** D-14 (niveles de superficie), E-05 (fundir barra y mini player), I-06 (tarjeta "seguir escuchando"), L-04 (muro de portadas), S-04 (pantalla de identidad), P-05 y P-14 (identidad común de progresión y de las ceremonias; la paleta de D-11 ya es un primer paso), P-07 (santuario de máscaras con el sensor), P-09 (la fase lunar modulando toda la app), P-15 (lista de niveles Eco).
+- **Pendientes por tiempo (más mecánicos):** B-02 (depende de D-07), B-05, L-05, T-05, T-06, I-05, I-07, A-03, F-03, F-04 y F-05, y X-02.
 
 ## Herramientas que quedan
 
