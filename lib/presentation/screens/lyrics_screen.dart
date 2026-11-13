@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
+import '../state/cover_colors.dart';
 import '../state/locale_provider.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/audio_progress_selector.dart';
@@ -242,24 +241,36 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
       body: LyricsBackdrop(
         child: Stack(
           children: [
-            // The cover, blurred into a faint glow behind the words.
+            // R-03: the cover's colour as a faint glow behind the words. It
+            // was the cover blurred at sigma 60 (the screen's dearest paint
+            // on a low-end phone); at 22% it read as a colour anyway, so the
+            // colour, computed off the UI thread, is drawn flat.
             if (track.coverUrl.isNotEmpty)
               Positioned(
                 top: -80,
                 left: -80,
                 right: -80,
                 height: MediaQuery.sizeOf(context).height * 0.6,
-                child: RepaintBoundary(
-                  child: Opacity(
-                    opacity: 0.22,
-                    child: ImageFiltered(
-                      imageFilter: ui.ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                      child: CachedNetworkImage(
-                        imageUrl: track.coverUrl,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 200,
-                      ),
-                    ),
+                child: IgnorePointer(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final glow = ref.watch(coverColorsForProvider(track.coverUrl).select((c) => c.value?.accent));
+                      return AnimatedOpacity(
+                        opacity: glow == null ? 0 : 1,
+                        duration: AppMotion.slow,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              radius: 0.75,
+                              colors: [
+                                (glow ?? Colors.transparent).withValues(alpha: 0.22),
+                                (glow ?? Colors.transparent).withValues(alpha: 0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
