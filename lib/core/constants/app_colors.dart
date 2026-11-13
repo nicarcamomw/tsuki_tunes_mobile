@@ -78,4 +78,26 @@ class AppColors {
   static const Color success = Color(0xFF00E676);
   static const Color warning = Color(0xFFFFD600);
   static const Color error = Color(0xFFFF1744);
+
+  // The shrine (D-11, P-05): the palette of the progression screens (Eco
+  // levels, streak, masks, Lore, ascension), one ink-and-moonlight world
+  // instead of each screen's own near-identical darks.
+  static const Color shrineBg = Color(0xFF08090E);
+  static const Color shrineCardDeep = Color(0xFF0C0D13);
+  static const Color shrineCard = Color(0xFF111217);
+  static const Color shrineBorder = Color(0xFF1A1A28);
+  /// The masks' violet dusk (gradients behind a being).
+  static const Color shrineViolet = Color(0xFF272140);
+  /// Gold's shadow (behind the gold of a reward or a level).
+  static const Color shrineGoldDeep = Color(0xFF1C1A10);
+  static const Color gold = Color(0xFFFFE9A8);
+  static const Color moonlight = Color(0xFFFFF4D6);
+  /// Paper-white for a title in the shrine.
+  static const Color parchment = Color(0xFFF4EFE0);
+  /// The Lore's reading colour: warm, softer than white on the ink.
+  static const Color loreBody = Color(0xFFDAD6CC);
+  /// The streak's embers.
+  static const Color emberInk = Color(0xFF181010);
+  static const Color ember = Color(0xFF2A1206);
+  static const Color emberGlow = Color(0xFF3A1A0C);
 }

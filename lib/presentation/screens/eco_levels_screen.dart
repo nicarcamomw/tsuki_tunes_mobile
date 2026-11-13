@@ -14,7 +14,7 @@ import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import 'ascension_screen.dart';
 
-const _bg = Color(0xFF08090E);
+const _bg = AppColors.shrineBg;
 
 /// The Eco levels: where the account stands, how Eco is earned, the player
 /// colours the levels opened, all 100 levels with what each opens, and the
@@ -112,7 +112,7 @@ class _Header extends StatelessWidget {
         gradient: RadialGradient(
           center: const Alignment(0, -0.8),
           radius: 1.2,
-          colors: [color.withValues(alpha: 0.22), const Color(0xFF12131B), const Color(0xFF0B0B11)],
+          colors: [color.withValues(alpha: 0.22), AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
@@ -124,7 +124,7 @@ class _Header extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF14151D),
+              color: AppColors.shrineCard,
               border: Border.all(color: color, width: 2.5),
               boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 30)],
             ),
@@ -145,7 +145,7 @@ class _Header extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.icon(
               style: FilledButton.styleFrom(
-                  backgroundColor: ecoRankColor(EcoRank.portador), foregroundColor: const Color(0xFF111217)),
+                  backgroundColor: ecoRankColor(EcoRank.portador), foregroundColor: AppColors.shrineCard),
               onPressed: () {
                 Navigator.of(context).pop();
                 becomeBearer(context);
@@ -158,7 +158,7 @@ class _Header extends StatelessWidget {
           if (masks.choicePending) ...[
             const SizedBox(height: 16),
             FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFFF4D6), foregroundColor: const Color(0xFF111217)),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.moonlight, foregroundColor: AppColors.shrineCard),
               onPressed: () { Haptics.tap(); AscensionScreen.open(context); },
               icon: const Icon(Icons.auto_awesome_rounded, size: 18),
               label: Text(strings.ecoChoicePending, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -339,7 +339,7 @@ class _LevelRow extends StatelessWidget {
                     style: TextStyle(
                         fontSize: level >= 100 ? 11 : 13,
                         fontWeight: FontWeight.w900,
-                        color: reached ? const Color(0xFF111217) : AppColors.textMuted)),
+                        color: reached ? AppColors.shrineCard : AppColors.textMuted)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -423,22 +423,22 @@ class _Legend extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF1C1A10), Color(0xFF0B0B11)],
+          colors: [AppColors.shrineGoldDeep, AppColors.shrineCardDeep],
         ),
-        border: Border.all(color: const Color(0xFFFFE9A8).withValues(alpha: 0.5)),
-        boxShadow: [BoxShadow(color: const Color(0xFFFFE9A8).withValues(alpha: 0.12), blurRadius: 30)],
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: AppColors.gold.withValues(alpha: 0.12), blurRadius: 30)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.wb_sunny_rounded, color: Color(0xFFFFE9A8), size: 18),
+              const Icon(Icons.wb_sunny_rounded, color: AppColors.gold, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(strings.ecoLegendTitle,
                     style: locale.getTextStyle(
-                        fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1.6)),
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w900, color: AppColors.gold, letterSpacing: 1.6)),
               ),
             ],
           ),
@@ -449,13 +449,13 @@ class _Legend extends StatelessWidget {
           // How much Eco a Supreme God holds is not for anyone to know.
           Text(strings.ecoLegendAmount(masks.eco),
               style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: const Color(0xFFFFE9A8), letterSpacing: 1)),
+                  fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w900, color: AppColors.gold, letterSpacing: 1)),
           const SizedBox(height: 6),
           Text(broken ? strings.ecoBalanceBroken : strings.ecoLegendNever,
               style: locale.getTextStyle(
                   fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w800,
-                  color: broken ? const Color(0xFFFFE9A8) : AppColors.textMuted,
+                  color: broken ? AppColors.gold : AppColors.textMuted,
                   letterSpacing: 1.2)),
         ],
       ),

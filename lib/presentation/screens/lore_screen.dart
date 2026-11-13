@@ -14,7 +14,7 @@ import '../widgets/haptics.dart';
 import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
-const _gold = Color(0xFFFFE9A8);
+const _gold = AppColors.gold;
 
 /// Tsuki Lore: the world of the masks, by volumes and chapters. Chapters
 /// open as the masks they speak of awaken.
@@ -32,9 +32,9 @@ class LoreScreen extends ConsumerWidget {
     final lang = locale.currentLanguage;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07080D),
+      backgroundColor: AppColors.shrineBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF07080D),
+        backgroundColor: AppColors.shrineBg,
         elevation: 0,
         leading: IconButton(
   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -97,7 +97,7 @@ class _Header extends StatelessWidget {
         gradient: const RadialGradient(
           center: Alignment(0.7, -0.6),
           radius: 1.2,
-          colors: [Color(0xFF2A2440), Color(0xFF12121C), Color(0xFF0A0A12)],
+          colors: [AppColors.shrineViolet, AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: _gold.withValues(alpha: 0.35)),
       ),
@@ -108,11 +108,11 @@ class _Header extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFF4EFE0),
+              color: AppColors.parchment,
               boxShadow: [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 28, spreadRadius: 2)],
             ),
             alignment: Alignment.center,
-            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: const Color(0xFF1A1A28))),
+            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -275,12 +275,12 @@ class LoreChapterScreen extends ConsumerWidget {
     final accent = faction != null ? Color(faction.color) : _gold;
     final tomo = TsukiLore.tomos.firstWhere((t) => t.number == chapter.tomo);
 
-    TextStyle body() => locale.getTextStyle(fontSize: AppFontSize.titleLg, color: const Color(0xFFDAD6CC), height: 1.65);
+    TextStyle body() => locale.getTextStyle(fontSize: AppFontSize.titleLg, color: AppColors.loreBody, height: 1.65);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07080D),
+      backgroundColor: AppColors.shrineBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF07080D),
+        backgroundColor: AppColors.shrineBg,
         elevation: 0,
         leading: IconButton(
   tooltip: MaterialLocalizations.of(context).backButtonTooltip,

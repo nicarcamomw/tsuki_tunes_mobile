@@ -173,7 +173,7 @@ class _LoreButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-    const gold = Color(0xFFFFE9A8);
+    const gold = AppColors.gold;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -186,7 +186,7 @@ class _LoreButton extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            gradient: const LinearGradient(colors: [Color(0xFF241F38), Color(0xFF11111B)]),
+            gradient: const LinearGradient(colors: [AppColors.shrineViolet, AppColors.shrineCard]),
             border: Border.all(color: gold.withValues(alpha: 0.5)),
             boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.12), blurRadius: 16)],
           ),
@@ -198,10 +198,10 @@ class _LoreButton extends ConsumerWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFF4EFE0),
+                  color: AppColors.parchment,
                   boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.6), blurRadius: 12)],
                 ),
-                child: const Text('月', style: TextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: Color(0xFF1A1A28))),
+                child: const Text('月', style: TextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -13,8 +13,8 @@ import '../widgets/haptics.dart';
 import '../widgets/lore_text.dart';
 import '../widgets/oni_mask_art.dart';
 
-const _bg = Color(0xFF040408);
-const _moon = Color(0xFFFFF4D6);
+const _bg = AppColors.shrineBg;
+const _moon = AppColors.moonlight;
 
 /// Level 100: the Bearer's choice. To be (cross the wall of the logical and
 /// become an ethereal being) or not to be (stay a Bearer for good). Shown
@@ -85,7 +85,7 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
       context: context,
       barrierColor: Colors.black87,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0E0E14),
+        backgroundColor: AppColors.shrineCardDeep,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           side: BorderSide(color: loreNameColor.withValues(alpha: 0.6)),
@@ -202,12 +202,12 @@ class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTi
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(0, -0.55),
+                center: const Alignment(0, -0.55),
                 radius: 0.9,
-                colors: [Color(0x33FFF4D6), Color(0x0AFFF4D6), _bg],
+                colors: [AppColors.moonlight.withValues(alpha: 0.20), AppColors.moonlight.withValues(alpha: 0.04), _bg],
               ),
             ),
           ),
@@ -305,7 +305,7 @@ class _ChoiceButton extends StatelessWidget {
           ? FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: _moon,
-                foregroundColor: const Color(0xFF111217),
+                foregroundColor: AppColors.shrineCard,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,

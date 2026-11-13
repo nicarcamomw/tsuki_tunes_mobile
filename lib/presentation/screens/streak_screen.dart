@@ -15,7 +15,7 @@ import '../widgets/oni_mask_art.dart';
 import '../widgets/permission_primer.dart';
 import '../widgets/streak_card.dart';
 
-const _bg = Color(0xFF0A0B10);
+const _bg = AppColors.shrineBg;
 
 /// The daily streak: days in a row, the best run, moon shields, the last
 /// five weeks, the goals (and the masks they wake) and the reminder.
@@ -97,8 +97,8 @@ class _Hero extends StatelessWidget {
           center: const Alignment(0, -0.7),
           radius: 1.1,
           colors: alive
-              ? const [Color(0xFF3A1A0C), Color(0xFF181010), Color(0xFF0D0D12)]
-              : const [Color(0xFF1E2029), Color(0xFF13141B), Color(0xFF0D0D12)],
+              ? const [AppColors.emberGlow, AppColors.emberInk, AppColors.shrineCardDeep]
+              : const [AppColors.shrineBorder, AppColors.shrineCard, AppColors.shrineCardDeep],
         ),
         border: Border.all(color: (alive ? streakFlame : AppColors.border).withValues(alpha: alive ? 0.4 : 1)),
       ),
@@ -299,7 +299,7 @@ class _DayCell extends StatelessWidget {
                 fontSize: AppFontSize.caption,
                 fontWeight: FontWeight.w800,
                 color: played
-                    ? const Color(0xFF2A1206)
+                    ? AppColors.ember
                     : future
                         ? AppColors.textMuted.withValues(alpha: 0.35)
                         : AppColors.textMuted,
@@ -356,7 +356,7 @@ class _Goals extends StatelessWidget {
                         style: TextStyle(
                             fontSize: g >= 100 ? 13 : 15,
                             fontWeight: FontWeight.w900,
-                            color: reached ? const Color(0xFF2A1206) : AppColors.textMuted)),
+                            color: reached ? AppColors.ember : AppColors.textMuted)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
