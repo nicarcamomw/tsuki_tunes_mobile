@@ -16,6 +16,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/artist_completion.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
@@ -160,19 +161,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   bool _isOwnRelease(Album a) =>
       AlbumCategorizer.isOwnRelease(a, artistId: _artist.id, artistName: _artist.name);
 
-  /// Own releases (albums, EPs, singles) grouped by type + title, so that
-  /// duplicate editions (explicit/clean, re-uploads) count as one release.
-  /// Features and compilations are excluded.
-  List<List<Album>> get _ownReleaseGroups {
-    final groups = <String, List<Album>>{};
-    for (final a in _albums) {
-      if (!_isOwnRelease(a)) continue;
-      final key = '${a.recordType}|${a.title.trim().toLowerCase()}';
-      groups.putIfAbsent(key, () => []).add(a);
-    }
-    return groups.values.toList();
-  }
-
   Map<String, List<Album>> get _categorizedAlbums =>
       AlbumCategorizer.categorize(_albums, artistId: _artist.id, artistName: _artist.name);
 
@@ -185,16 +173,13 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     ref.read(ensureAlbumTrackCountsProvider)(_albums);
 
     // The mask lights up when every own release has all its tracks listened.
-    final releaseGroups = _ownReleaseGroups;
-    final completedReleases = releaseGroups
-        .where((group) => group.any((album) => library.isAlbumCompleted(
-            album.id,
-            albumTracksCount: album.tracksCount)))
-        .length;
-    final bool isArtistComplete = !_isLoading &&
-        !_hasMoreAlbums &&
-        releaseGroups.isNotEmpty &&
-        completedReleases == releaseGroups.length;
+    final completion = ArtistCompletion.of(
+      _albums,
+      isOwnRelease: _isOwnRelease,
+      isAlbumCompleted: (album) =>
+          library.isAlbumCompleted(album.id, albumTracksCount: album.tracksCount),
+      loaded: !_isLoading && !_hasMoreAlbums,
+    );
     final isFollowed = library.isArtistFollowed(_artist.id);
     final isGuest = ref.watch(authProvider.select((a) => a.isGuest));
 
@@ -220,9 +205,9 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             locale: locale,
             showTitle: _showTitleInAppBar,
             reduceMotion: _reduceMotion,
-            isComplete: isArtistComplete,
-            completedReleases: completedReleases,
-            totalReleases: releaseGroups.length,
+            isComplete: completion.isComplete,
+            completedReleases: completion.completed,
+            totalReleases: completion.total,
           ),
 
           SliverToBoxAdapter(

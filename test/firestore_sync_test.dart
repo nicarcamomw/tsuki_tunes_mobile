@@ -249,6 +249,57 @@ void main() {
       flaky.disconnectFirestore();
       expect(flaky.owesFullSyncForTesting, isFalse);
     });
+
+    // T2: the whole rollback, from the tap to the library. A change the
+    // server refuses for good (permission-denied) is undone on the phone
+    // and said, not left showing as if it had been saved.
+    test('a mark the server refuses is undone and reported', () async {
+      final device = newDevice();
+      await device.connectToFirestore(uid);
+      await _settle();
+      device.markAlbumChunkHandlerForTesting =
+          (_, __) async => throw const PermanentSyncError('permission-denied');
+
+      await device.markTrack(_track('refused'));
+      expect(device.isTrackListened('refused'), isTrue); // shown at once
+
+      await device.pendingWritesSentForTesting();
+      await _settle();
+      expect(device.isTrackListened('refused'), isFalse);
+      expect(device.listenedCount, 0);
+      expect(device.lastSyncError, 'mark_failed');
+      final server = await db.collection('users').doc(uid).collection('listenedTracks').get();
+      expect(server.docs, isEmpty);
+
+      // Restarted, the phone doesn't bring it back either.
+      device.disconnectFirestore();
+      device.markAlbumChunkHandlerForTesting = null;
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.isTrackListened('refused'), isFalse);
+      device.disconnectFirestore();
+    });
+
+    test('an unmark the server refuses brings the song back', () async {
+      await _seed(db, 'kept', DateTime(2026, 1, 1));
+      final device = newDevice();
+      await device.connectToFirestore(uid);
+      await _settle();
+      expect(device.isTrackListened('kept'), isTrue);
+      device.unmarkAlbumChunkHandlerForTesting =
+          (_, __) async => throw const PermanentSyncError('permission-denied');
+
+      await device.unmarkTrack('kept');
+      expect(device.isTrackListened('kept'), isFalse); // shown at once
+
+      await device.pendingWritesSentForTesting();
+      await _settle();
+      expect(device.isTrackListened('kept'), isTrue);
+      expect(device.lastSyncError, 'unmark_failed');
+      final doc = await db.collection('users').doc(uid).collection('listenedTracks').doc('kept').get();
+      expect(doc.exists, isTrue);
+      device.disconnectFirestore();
+    });
   });
 
   group('playlists', () {
