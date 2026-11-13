@@ -13,6 +13,7 @@ import '../../domain/entities/radar_release.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/permission_primer.dart';
 
@@ -886,35 +887,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: AppColors.neonCyan.withValues(alpha: 0.6)),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.bodyLg,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textBright,
-              letterSpacing: 1.6,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
-              color: AppColors.textSecondary,
-              height: 1.45,
-            ),
-          ),
-        ],
-      ),
-    );
+    return EmptyState(icon: icon, tone: AppColors.neonCyan, title: title, message: body);
   }
 }

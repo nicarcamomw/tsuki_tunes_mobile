@@ -23,6 +23,7 @@ import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/listened_undo.dart';
@@ -382,68 +383,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: _hasError
                             ? ErrorState(message: strings.loadError, onRetry: _refreshData)
-                            : Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 28),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Opacity(
-                                  opacity: 0.3,
-                                  child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyLibrary),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  strings.emptyLibraryTitle,
-                                  textAlign: TextAlign.center,
-                                  style: locale.getTextStyle(
-                                    fontSize: AppFontSize.bodyLg,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  strings.emptyLibrarySubtitle,
-                                  textAlign: TextAlign.center,
-                                  style: locale.getTextStyle(
-                                      fontSize: AppFontSize.body, color: AppColors.textMuted),
-                                ),
-                                const SizedBox(height: 16),
-                                Semantics(
-                                  button: true,
-                                  label: strings.a11yGoToSearch,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Haptics.selection();
-                                      NavigationEvents.switchTab?.call(1);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 24, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: AppColors.accent.withValues(alpha: 0.6),
-                                        ),
-                                        borderRadius: BorderRadius.circular(AppRadius.card),
-                                      ),
-                                      child: Text(
-                                        strings.homeEmptyAction,
-                                        style: locale.getTextStyle(
-                                          fontSize: AppFontSize.body,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.accent,
-                                          letterSpacing: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            : EmptyState(
+                            image: 'assets/images/tengu.png',
+                            artLabel: strings.a11yEmptyLibrary,
+                            title: strings.emptyLibraryTitle,
+                            message: strings.emptyLibrarySubtitle,
+                            actionLabel: strings.homeEmptyAction,
+                            actionSemanticLabel: strings.a11yGoToSearch,
+                            onAction: () => NavigationEvents.switchTab?.call(1),
                           ),
-                        ),
                       ),
                     ],
                   )
@@ -551,37 +499,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         // Playlist list or empty state
         Expanded(
           child: playlists.isEmpty && !hasShared
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Opacity(
-                          opacity: 0.3,
-                          child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11yEmptyPlaylist),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          strings.noPlaylistsTitle,
-                          textAlign: TextAlign.center,
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.bodyLg,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          strings.noPlaylistsSubtitle,
-                          textAlign: TextAlign.center,
-                          style: locale.getTextStyle(
-                              fontSize: AppFontSize.body, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
+              ? EmptyState(
+                  image: 'assets/images/tengu.png',
+                  artLabel: strings.a11yEmptyPlaylist,
+                  title: strings.noPlaylistsTitle,
+                  message: strings.noPlaylistsSubtitle,
                 )
               : ListView(
                   padding: const EdgeInsets.only(bottom: 120),

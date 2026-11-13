@@ -10,6 +10,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/motion.dart';
 
 class ListeningClockScreen extends ConsumerStatefulWidget {
@@ -105,47 +106,11 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
       children: [
         _buildHeader(locale, strings),
         Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.accent.withValues(alpha: 0.1),
-                      border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Icons.access_time,
-                        color: AppColors.accent, size: 36),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    strings.clockNoData,
-                    textAlign: TextAlign.center,
-                    style: locale.getTextStyle(
-                      fontSize: AppFontSize.titleLg,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textBright,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    strings.clockNoDataSubtitle,
-                    textAlign: TextAlign.center,
-                    style: locale.getTextStyle(
-                      fontSize: AppFontSize.bodyLg,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          child: EmptyState(
+            icon: Icons.access_time,
+            tone: AppColors.neonCyan,
+            title: strings.clockNoData,
+            message: strings.clockNoDataSubtitle,
           ),
         ),
       ],

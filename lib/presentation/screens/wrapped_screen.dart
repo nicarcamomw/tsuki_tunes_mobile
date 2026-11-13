@@ -23,6 +23,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/motion.dart';
 import '../widgets/skeleton_loader.dart';
@@ -1763,33 +1764,14 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(monthly ? '月' : '年',
-                  style: GoogleFonts.notoSansJp(
-                      fontSize: AppFontSize.mega, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
-              const SizedBox(height: 18),
-              Text(strings.wrappedNoDataFor(monthly: monthly),
-                  textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w800, color: AppColors.textBright)),
-              const SizedBox(height: 10),
-              Text(strings.wrappedNoDataSubtitle,
-                  textAlign: TextAlign.center,
-                  style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary)),
-              const SizedBox(height: 28),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.accent)),
-                child: Text(strings.a11yBack,
-                    style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, color: AppColors.accent)),
-              ),
-            ],
-          ),
-        ),
+      child: EmptyState(
+        art: Text(monthly ? '月' : '年',
+            style: GoogleFonts.notoSansJp(
+                fontSize: AppFontSize.mega, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
+        title: strings.wrappedNoDataFor(monthly: monthly),
+        message: strings.wrappedNoDataSubtitle,
+        actionLabel: strings.a11yBack,
+        onAction: () => Navigator.of(context).pop(),
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
-import 'haptics.dart';
+import 'empty_state.dart';
 
 /// A load that failed: an icon, what happened, and a way to try again.
 /// The one look every screen uses for it (album, artist, library, search,
@@ -48,43 +48,7 @@ class ErrorState extends ConsumerWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 8),
-              Semantics(
-                button: true,
-                label: strings.retry,
-                excludeSemantics: true,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    Haptics.tap();
-                    onRetry!();
-                  },
-                  // 48 px to tap, however small the button looks.
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-                    child: Center(
-                      widthFactor: 1,
-                      heightFactor: 1,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                          border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                        ),
-                        child: Text(
-                          strings.retry,
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.accent,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              StateAction(label: strings.retry, onTap: onRetry!),
             ],
           ],
         ),

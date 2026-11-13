@@ -13,6 +13,7 @@ import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import 'eco_widgets.dart';
+import 'empty_state.dart';
 import 'flow_sheet.dart';
 import 'haptics.dart';
 import 'playlist_selector_sheet.dart';
@@ -492,35 +493,12 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   Widget _buildEmpty() {
     final locale = _locale;
     final strings = locale.strings;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Column(
-        children: [
-          Icon(Icons.queue_music_rounded,
-              size: 40,
-              color: AppColors.textMuted.withValues(alpha: 0.4),
-              semanticLabel: strings.a11yEmptyQueue),
-          const SizedBox(height: 8),
-          Text(
-            strings.queueNothingNext,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            strings.queueEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.queue_music_rounded,
+      artLabel: strings.a11yEmptyQueue,
+      title: strings.queueNothingNext,
+      message: strings.queueEmptySubtitle,
+      compact: true,
     );
   }
 

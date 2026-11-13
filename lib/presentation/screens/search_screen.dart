@@ -22,6 +22,7 @@ import '../state/search_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
@@ -465,31 +466,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         // Only closes the keyboard: nothing for screen readers.
         excludeFromSemantics: true,
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Opacity(
-                opacity: 0.3,
-                child: Image.asset('assets/images/tengu.png', width: 54, height: 54, semanticLabel: strings.a11ySearchEmpty),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                strings.emptyStateTitle,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                strings.emptyStateSubtitle,
-                style: locale.getTextStyle(fontSize: AppFontSize.body, color: AppColors.textMuted),
-              ),
-            ],
-          ),
+        child: EmptyState(
+          image: 'assets/images/tengu.png',
+          artLabel: strings.a11ySearchEmpty,
+          title: strings.emptyStateTitle,
+          message: strings.emptyStateSubtitle,
         ),
       );
     }

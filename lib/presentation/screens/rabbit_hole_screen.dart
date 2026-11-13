@@ -16,6 +16,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 
 // Canvas is far larger than the screen so nodes stay hit-testable anywhere.
@@ -1317,47 +1318,13 @@ class _EmptyState extends StatelessWidget {
     return Container(
       color: AppColors.bgDeep.withValues(alpha: 0.6),
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(offline ? Icons.wifi_off : Icons.link_off, size: 36,
-              color: AppColors.neonPurple.withValues(alpha: 0.8)),
-          const SizedBox(height: 14),
-          Text(
-            offline ? strings.rabbitHoleOffline : strings.rabbitHoleEmpty,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.title,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textBright,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            offline
-                ? strings.rabbitHoleOfflineSubtitle
-                : strings.rabbitHoleEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.caption,
-              color: AppColors.textSecondary,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh, size: 16),
-            label: Text(strings.retry),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.neonCyan,
-              side: BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.6)),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.chip)),
-            ),
-          ),
-        ],
+      child: EmptyState(
+        icon: offline ? Icons.wifi_off : Icons.link_off,
+        tone: AppColors.neonPurple,
+        title: offline ? strings.rabbitHoleOffline : strings.rabbitHoleEmpty,
+        message: offline ? strings.rabbitHoleOfflineSubtitle : strings.rabbitHoleEmptySubtitle,
+        actionLabel: strings.retry,
+        onAction: onRetry,
       ),
     );
   }

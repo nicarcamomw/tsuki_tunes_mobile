@@ -14,6 +14,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
+import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
 import '../widgets/skeleton_loader.dart';
@@ -780,34 +781,7 @@ class _Empty extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: AppColors.textMuted),
-          const SizedBox(height: 12),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary, height: 1.45),
-          ),
-          if (action != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentText,
-                side: const BorderSide(color: AppColors.accent),
-              ),
-              onPressed: onAction,
-              child: Text(action!),
-            ),
-          ],
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => EmptyState(icon: icon, message: text, actionLabel: action, onAction: onAction, padding: const EdgeInsets.all(32));
 }
 
 class _Spinner extends StatelessWidget {
