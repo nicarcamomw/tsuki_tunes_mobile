@@ -14,6 +14,7 @@ import '../../domain/repositories/playlist_repository.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 
@@ -91,15 +92,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       body: CustomScrollView(
         slivers: [
           // App bar with cover
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: AppColors.bgDeep,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
-              tooltip: strings.a11yBack,
-              onPressed: () => Navigator.pop(context),
-            ),
+          // T-01: the detail pages' shared header.
+          DetailHeader(
+            title: playlist.name,
+            backLabel: strings.a11yBack,
             actions: [
               if (_editing)
                 TextButton(
@@ -116,8 +112,9 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                 )
               else
               PopupMenuButton<String>(
-                icon:
-                    Icon(Icons.more_vert, color: AppColors.textBright, semanticLabel: strings.a11yMoreOptions),
+                tooltip: strings.a11yMoreOptions,
+                icon: DetailHeaderDisc(
+                    child: Icon(Icons.more_vert, color: AppColors.textBright, size: 20, semanticLabel: strings.a11yMoreOptions)),
                 color: AppColors.bgCard,
                 onSelected: (value) {
                   switch (value) {
@@ -186,9 +183,8 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   ),
                 ],
               ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
+                        ],
+            background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -259,7 +255,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   ),
                 ),
               ),
-            ),
           ),
 
           if (_editing)

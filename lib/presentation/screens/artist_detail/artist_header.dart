@@ -4,7 +4,6 @@ part of '../artist_detail_screen.dart';
 class _ArtistHeroAppBar extends StatelessWidget {
   final Artist artist;
   final LocaleProvider locale;
-  final bool showTitle;
   final bool reduceMotion;
   final bool isComplete;
   final int completedReleases;
@@ -13,7 +12,6 @@ class _ArtistHeroAppBar extends StatelessWidget {
   const _ArtistHeroAppBar({
     required this.artist,
     required this.locale,
-    required this.showTitle,
     required this.reduceMotion,
     required this.isComplete,
     required this.completedReleases,
@@ -23,103 +21,38 @@ class _ArtistHeroAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = locale.strings;
-    return SliverAppBar(
-      expandedHeight: 270,
-      pinned: true,
-      backgroundColor: AppColors.bgDeep,
-      title: AnimatedOpacity(
-        opacity: showTitle ? 1.0 : 0.0,
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 200),
-        child: Text(
-          artist.name,
-          style: locale.getTextStyle(
-            fontSize: AppFontSize.title,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textBright,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-      centerTitle: true,
-      leading: IconButton(
-        tooltip: strings.a11yBack,
-        icon: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.bgDeep.withValues(alpha: 0.7),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.accent.withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Icon(Icons.chevron_left,
-              color: AppColors.accent, size: 24, semanticLabel: strings.a11yBack),
-        ),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
+    // T-01: the detail pages' shared header.
+    return DetailHeader(
+      title: artist.name,
+      backLabel: strings.a11yBack,
       actions: [
-        IconButton(
+        DetailHeaderButton(
+          icon: Icons.share_rounded,
           tooltip: strings.shareAction,
-          icon: Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: AppColors.bgDeep.withValues(alpha: 0.7),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.accent.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: Icon(Icons.share_rounded,
-                color: AppColors.accent, size: 20, semanticLabel: strings.shareAction),
-          ),
           onPressed: () {
             Haptics.tap();
             SharePlus.instance.share(ShareParams(
                 text: strings.artistShareText(artist.name, appLink('artist/${artist.id}'))));
           },
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Tooltip(
-            triggerMode: TooltipTriggerMode.tap,
-            message: isComplete
-                ? strings.artistCompleteTooltip
-                : strings.artistDiscographyProgress(
-                    completedReleases, totalReleases),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.bgDeep.withValues(alpha: 0.7),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isComplete
-                      ? AppColors.accent
-                      : AppColors.accent.withValues(alpha: 0.4),
-                  width: isComplete ? 1.5 : 1,
-                ),
-                boxShadow: isComplete
-                    ? [
-                        const BoxShadow(
-                          color: AppColors.accentGlow,
-                          blurRadius: 8,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: OniMaskIcon(
-                isActive: isComplete,
-                size: 22,
-                showContainer: false,
+        Tooltip(
+          triggerMode: TooltipTriggerMode.tap,
+          message: isComplete
+              ? strings.artistCompleteTooltip
+              : strings.artistDiscographyProgress(completedReleases, totalReleases),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: DetailHeaderDisc(
+                highlighted: isComplete,
+                child: OniMaskIcon(isActive: isComplete, size: 22, showContainer: false),
               ),
             ),
           ),
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
+      background: Stack(
           fit: StackFit.expand,
           children: [
             if (artist.pictureUrl.isNotEmpty)
@@ -164,7 +97,6 @@ class _ArtistHeroAppBar extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

@@ -25,6 +25,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/error_state.dart';
@@ -69,7 +70,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   bool _hasError = false;
   bool _showStats = false;
   bool _showAllTracks = false;
-  bool _showTitleInAppBar = false;
   bool _showStoredContent = false;
   bool _hasMoreAlbums = false;
   bool _reduceMotion = false;
@@ -77,7 +77,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _loadArtistInfo();
     _loadArtistData();
     _trackVisit();
@@ -89,16 +88,8 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
     _reduceMotion = MediaQuery.of(context).disableAnimations;
   }
 
-  void _onScroll() {
-    final show = _scrollController.offset > 200;
-    if (show != _showTitleInAppBar) {
-      setState(() => _showTitleInAppBar = show);
-    }
-  }
-
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -206,7 +197,6 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           _ArtistHeroAppBar(
             artist: _artist,
             locale: locale,
-            showTitle: _showTitleInAppBar,
             reduceMotion: _reduceMotion,
             isComplete: completion.isComplete,
             completedReleases: completion.completed,

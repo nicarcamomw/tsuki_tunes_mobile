@@ -20,9 +20,13 @@ import 'package:tsuki_tunes_mobile/core/theme/cyber_theme.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/profile_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/social_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/artist.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/social.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/album_detail_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/artist_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/bonds_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
@@ -270,6 +274,34 @@ void main() {
           return const SizedBox.expand();
         }),
       ),
+    );
+  });
+
+  testWidgets('album', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'album',
+      overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+      const AlbumDetailScreen(
+        album: Album(
+          id: '302127',
+          title: 'Discovery',
+          artistId: '27',
+          artistName: 'Daft Punk',
+          coverUrl: '',
+          tracks: [_song],
+          tracksCount: 1,
+        ),
+      ),
+    );
+  });
+
+  testWidgets('artist', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'artist',
+      overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+      const ArtistDetailScreen(artist: Artist(id: '27', name: 'Daft Punk', pictureUrl: '')),
     );
   });
 

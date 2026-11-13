@@ -19,6 +19,7 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/detail_header.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -210,29 +211,14 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
         controller: _scroll,
         slivers: [
           // App Bar
-          SliverAppBar(
-            expandedHeight: 0,
-            pinned: true,
-            backgroundColor: AppColors.bgDeep,
-            leading: IconButton(
-              tooltip: strings.a11yBack,
-              icon: Icon(Icons.arrow_back, color: AppColors.textBright, semanticLabel: strings.a11yBack),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              strings.albumDetailsTitle,
-              style: locale.getTextStyle(
-                fontSize: AppFontSize.title,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textBright,
-              ),
-            ),
-            centerTitle: true,
+          // T-01: the detail pages' shared header, the cover in it.
+          DetailHeader(
+            title: albumData.title,
+            backLabel: strings.a11yBack,
             actions: [
-              IconButton(
+              DetailHeaderButton(
+                icon: Icons.share_rounded,
                 tooltip: strings.shareAction,
-                icon: Icon(Icons.share_rounded,
-                    color: AppColors.accent, size: 20, semanticLabel: strings.shareAction),
                 onPressed: () {
                   Haptics.tap();
                   SharePlus.instance.share(ShareParams(
@@ -242,10 +228,9 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
               ),
               if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
-                IconButton(
+                DetailHeaderButton(
+                  icon: Icons.open_in_new,
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
-                  icon: Icon(Icons.open_in_new,
-                      color: AppColors.accent, size: 20, semanticLabel: strings.a11yOpenExternal),
                   onPressed: () async { Haptics.tap();
                     try {
                       if (audio.useSpotify) {
@@ -272,31 +257,25 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     }
                   },
                 ),
-            ],
-          ),
-
-          // Album Hero
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                children: [
-                  // Cover with parallax
-                  AnimatedBuilder(
-                    animation: _scroll,
-                    builder: (context, child) {
-                      final offset = _scroll.hasClients ? _scroll.offset : 0.0;
-                      return Transform.translate(
-                        offset: Offset(0, offset * 0.25),
-                        child: child,
-                      );
-                    },
-                    child: Center(
+                        ],
+            background: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.bgMid, AppColors.bgDeep],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: kToolbarHeight - 8, bottom: 16),
+                  child: Center(
                     child: Hero(
                       tag: 'album-cover-${widget.album.id}',
                       child: Container(
-                        width: 200,
-                        height: 200,
+                        width: 180,
+                        height: 180,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.chip),
                           border: Border.all(
@@ -343,10 +322,17 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                       ),
                     ),
                   ),
-                  ),
+                ),
+              ),
+            ),
+          ),
 
-                  const SizedBox(height: 16),
-
+          // Album Hero
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                children: [
                   // Type badge
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -602,12 +588,12 @@ class _DownloadButton extends ConsumerWidget {
     final progress = downloads.progressOf(album.id);
     if (progress != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Semantics(
           label: strings.downloadAlbumProgress((progress * 100).round()),
           child: SizedBox(
-            width: 20,
-            height: 20,
+            width: 36,
+            height: 36,
             child: CircularProgressIndicator(
               value: progress == 0 ? null : progress,
               strokeWidth: 2.4,
@@ -619,12 +605,11 @@ class _DownloadButton extends ConsumerWidget {
       );
     }
     final saved = downloads.isDownloaded(album.id);
-    return IconButton(
+    return DetailHeaderButton(
+      icon: saved ? Icons.download_done_rounded : Icons.download_rounded,
       tooltip: saved ? strings.downloadAlbumRemove : strings.downloadAlbum,
-      icon: Icon(saved ? Icons.download_done_rounded : Icons.download_rounded,
-          color: saved ? AppColors.accent : AppColors.textBright,
-          size: 22,
-          semanticLabel: saved ? strings.downloadAlbumSaved : strings.downloadAlbum),
+      // Saved is a state that's on: the accent (D-12).
+      color: saved ? AppColors.accent : AppColors.textBright,
       onPressed: onTap,
     );
   }
