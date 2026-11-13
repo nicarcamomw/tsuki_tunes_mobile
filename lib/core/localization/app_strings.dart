@@ -13,6 +13,7 @@ import '../../domain/logic/eco_levels.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/moon_calculator.dart';
 import '../../domain/logic/music_styles.dart';
+import '../../domain/logic/playback_source.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'app_language.dart';
 
@@ -1402,6 +1403,26 @@ class AppStrings {
   String get logoutOption => _l.logoutOption;
 
   String get spotifyConnect => _l.spotifyConnect;
+
+  // --- What the player is playing: the whole song or a 30 s preview ---
+  String get sourceFullSong => _l.sourceFullSong;
+  String get sourcePreview => _l.sourcePreview;
+  String get sourcePreviewShort => _l.sourcePreviewShort;
+  String get sourceFullTitle => _l.sourceFullTitle;
+  String get sourceFullBody => _l.sourceFullBody;
+  String get sourcePreviewTitle => _l.sourcePreviewTitle;
+
+  /// Why a preview plays instead of the whole song.
+  String previewReason(PreviewReason reason) => switch (reason) {
+        PreviewReason.noSpotify => _l.previewReasonNoSpotify,
+        PreviewReason.notPremium => _l.previewReasonNotPremium,
+        PreviewReason.notAllowed => _l.previewReasonNotAllowed,
+        PreviewReason.offline => _l.previewReasonOffline,
+        PreviewReason.trackUnavailable => _l.previewReasonTrackUnavailable,
+        PreviewReason.openApp => _l.previewReasonOpenApp,
+        PreviewReason.disabled => _l.previewReasonDisabled,
+        PreviewReason.other => _l.previewReasonOther,
+      };
 
   String get spotifyDisconnect => _l.spotifyDisconnect;
 

@@ -30,6 +30,7 @@ import '../../data/repositories/playlist_repository_impl.dart';
 import '../../di/injection.dart';
 import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
+import '../../domain/logic/playback_source.dart';
 import '../../domain/repositories/party_repository.dart';
 import '../../domain/repositories/product_events.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -203,6 +204,26 @@ final audioProvider = ChangeNotifierProvider<AudioProvider>(
   disposeNotifier: false,
   (ref) => getIt<AudioProvider>(),
 );
+
+/// What plays now: the whole song (Spotify) or a 30 s preview, and why
+/// (the player's badge).
+final playbackSourceProvider = Provider<PlaybackSource>((ref) {
+  final (full, fallback, connected, premium, restricted) = ref.watch(audioProvider.select((a) => (
+        a.playsFullSong,
+        a.lastSpotifyError,
+        a.spotify.isConnected,
+        a.spotify.isPremium,
+        a.spotify.accessRestricted,
+      )));
+  return PlaybackSource.of(
+    playsFullSong: full,
+    spotifyConnected: connected,
+    premium: premium,
+    notAllowed: restricted,
+    online: ref.watch(connectivityProvider.select((c) => c.isOnline)),
+    fallback: fallback,
+  );
+});
 
 /// Connects the player to the library, masks, ambient sounds and history.
 /// Read once when the app's tree is built.

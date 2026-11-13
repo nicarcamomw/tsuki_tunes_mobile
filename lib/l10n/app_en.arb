@@ -889,5 +889,19 @@
   "wrappedHomeSubtitle": "MONTH & YEAR",
   "shareAction": "Share",
   "albumShareText": "“{title}” by {artist}, on Tsuki Tunes: {link}",
-  "artistShareText": "{name} on Tsuki Tunes: {link}"
+  "artistShareText": "{name} on Tsuki Tunes: {link}",
+  "sourceFullSong": "FULL SONG · SPOTIFY",
+  "sourcePreview": "PREVIEW · 30 S",
+  "sourcePreviewShort": "30 S",
+  "sourceFullTitle": "The whole song is playing",
+  "sourceFullBody": "Your Spotify Premium plays it whole, from start to end.",
+  "sourcePreviewTitle": "A 30-second preview is playing",
+  "previewReasonNoSpotify": "Without Spotify, Tsuki plays the 30-second clip Deezer gives. Connect your Spotify Premium to hear whole songs.",
+  "previewReasonNotPremium": "Your Spotify account isn't Premium: Spotify only lets other apps play whole songs with Premium.",
+  "previewReasonNotAllowed": "Your Spotify account doesn't have access to Tsuki yet. Meanwhile, previews play.",
+  "previewReasonOffline": "Offline, the preview downloaded ahead of time plays. Back online, the whole song returns.",
+  "previewReasonTrackUnavailable": "This song isn't on Spotify (or there's no sure match), so its preview plays.",
+  "previewReasonOpenApp": "Spotify didn't answer on this phone. Open the Spotify app and press play again.",
+  "previewReasonDisabled": "Spotify is paused in Tsuki for a moment, so previews play.",
+  "previewReasonOther": "Spotify couldn't play this song, so its preview plays."
 }

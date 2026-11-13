@@ -149,6 +149,9 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     final locale = ref.read(localeProvider);
     final coverBackground = ref.watch(playerBackgroundColorProvider);
     final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
+    // A 30 s preview is said after the artist; tinted when it's a surprise
+    // (Spotify connected but falling back), quiet when it's the usual.
+    final preview = !ref.watch(playbackSourceProvider.select((s) => s.isFullSong));
 
     return Semantics(
       label: '${track.title}, ${track.fullArtistName}',
@@ -251,8 +254,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                             ),
                                             const SizedBox(height: 2),
                                             _MarqueeText(
-                                              text: spotifyFallbackActive
-                                                  ? '${track.fullArtistName}  ·  Preview'
+                                              text: preview
+                                                  ? '${track.fullArtistName}  ·  ${locale.strings.sourcePreviewShort}'
                                                   : track.fullArtistName,
                                               style: locale.getTextStyle(
                                                 fontSize: 11,

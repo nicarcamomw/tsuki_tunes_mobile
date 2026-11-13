@@ -26,6 +26,7 @@ import '../widgets/lyrics_view.dart';
 import '../widgets/motion.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';
+import '../widgets/playback_source_badge.dart';
 import '../widgets/player_art_hero.dart';
 import '../widgets/player_tint.dart';
 import '../widgets/playlist_selector_sheet.dart';
@@ -349,14 +350,9 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _AmbientButton(locale: locale),
-                      Text(
-                        useSpotify ? 'SPOTIFY CONNECT' : 'DEEZER PREVIEW',
-                        style: locale.getTextStyle(
-                          fontSize: 9,
-                          color: PlayerTint.of(context),
-                          letterSpacing: 2,
-                        ),
-                      ),
+                      // The whole song or a 30 s preview (what really
+                      // plays, not whether Spotify is on); tap for why.
+                      const PlaybackSourceBadge(),
                       _SleepTimerButton(audio: audio, locale: locale),
                     ],
                   ),

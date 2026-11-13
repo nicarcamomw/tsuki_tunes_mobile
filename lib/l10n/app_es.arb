@@ -2123,5 +2123,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "sourceFullSong": "CANCIÓN COMPLETA · SPOTIFY",
+  "sourcePreview": "VISTA PREVIA · 30 S",
+  "sourcePreviewShort": "30 S",
+  "sourceFullTitle": "Suena la canción completa",
+  "sourceFullBody": "Tu Spotify Premium la reproduce entera, de principio a fin.",
+  "sourcePreviewTitle": "Suena una vista previa de 30 segundos",
+  "previewReasonNoSpotify": "Sin Spotify, Tsuki reproduce el fragmento de 30 s que da Deezer. Conecta tu Spotify Premium para escuchar las canciones completas.",
+  "previewReasonNotPremium": "Tu cuenta de Spotify no es Premium: Spotify solo deja que otras apps reproduzcan canciones completas con Premium.",
+  "previewReasonNotAllowed": "Tu cuenta de Spotify todavía no tiene acceso a Tsuki. Mientras tanto suenan las vistas previas.",
+  "previewReasonOffline": "Sin conexión suena la vista previa descargada de antemano. Con internet vuelve la canción completa.",
+  "previewReasonTrackUnavailable": "Esta canción no está en Spotify (o no hay una versión segura), así que suena su vista previa.",
+  "previewReasonOpenApp": "Spotify no respondió en este teléfono. Abre la app de Spotify y vuelve a darle a play.",
+  "previewReasonDisabled": "Spotify está en pausa por un momento en Tsuki, así que suenan las vistas previas.",
+  "previewReasonOther": "Spotify no pudo reproducir esta canción, así que suena su vista previa."
 }
