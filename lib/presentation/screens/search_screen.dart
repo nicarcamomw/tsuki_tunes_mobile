@@ -21,6 +21,7 @@ import '../state/locale_provider.dart';
 import '../state/search_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
@@ -177,7 +178,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final locale = ref.read(localeProvider);
     final audio = ref.read(audioProvider);
     final search = ref.read(searchProvider);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     final strings = locale.strings;
 
     // Music playing next to the mic drowns the voice out: pause it while
@@ -217,14 +218,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (!mounted) return;
     if (search.tracks.isEmpty) {
       if (resumeAfter && !audio.isPlaying) unawaited(audio.togglePlay());
-      messenger.showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        content: Text(
-          '${strings.noResults}: "${command.query}"',
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
-        ),
-      ));
+      messenger.info('${strings.noResults}: "${command.query}"');
       return;
     }
     Haptics.confirm();

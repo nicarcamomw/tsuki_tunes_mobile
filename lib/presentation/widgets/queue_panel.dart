@@ -12,6 +12,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'empty_state.dart';
 import 'flow_sheet.dart';
@@ -62,16 +63,10 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
     final before = _audio.queueSnapshot();
     edit();
     _announce(message);
-    showTrackSnack(
-      context,
-      message,
-      bottom: _snackBottom,
-      action: SnackBarAction(
-        label: _locale.strings.undo,
-        textColor: AppColors.accent,
-        onPressed: () { Haptics.tap(); _audio.restoreQueue(before); },
-      ),
-    );
+    AppSnack.of(context, bottom: _snackBottom).undo(message, onUndo: () {
+      Haptics.tap();
+      _audio.restoreQueue(before);
+    });
   }
 
   void _remove(int queueIndex) {

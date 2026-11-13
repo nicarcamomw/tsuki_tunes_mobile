@@ -11,6 +11,7 @@ import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/auth_guard.dart';
 import '../widgets/battery_guide_sheet.dart';
 import '../widgets/cyber_nav_icon.dart';
@@ -130,6 +131,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     });
   }
 
+  /// The shell's own snack bars (playback, Spotify, sync) clear its dock.
+  double get _snackBottom => (MediaQuery.viewInsetsOf(context).bottom > 0 ? 0 : SnackDock.shellHeight) + 12;
+
   @override
   void dispose() {
     if (NavigationEvents.switchTab == _switchToTab) {
@@ -170,46 +174,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       final offerBatteryGuide = ref.read(batteryGuideProvider).offerFor(spotifyError);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              action: offerBatteryGuide
-                  ? SnackBarAction(
-                      label: strings.batteryGuideAction,
-                      textColor: AppColors.accent,
-                      onPressed: () { Haptics.tap(); BatteryGuideSheet.show(context); },
-                    )
-                  : null,
-              content: Row(
-                children: [
-                  Icon(offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
-                      color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yPlaybackError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      offerBatteryGuide
-                          ? strings.batteryGuideSnack
-                          : spotifyError.message(strings),
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-              duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
-            ),
+          // E-03: the app's snack bar, over the dock.
+          AppSnack.of(context, bottom: _snackBottom).show(
+            offerBatteryGuide ? strings.batteryGuideSnack : spotifyError.message(strings),
+            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
+            actionLabel: offerBatteryGuide ? strings.batteryGuideAction : null,
+            onAction: offerBatteryGuide ? () => BatteryGuideSheet.show(context) : null,
+            duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
           );
         }
       });
@@ -221,49 +192,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownPlaybackError = playbackError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    playbackError == PlaybackError.network
-                        ? Icons.wifi_off_rounded
-                        : (playbackError == PlaybackError.noPreview
-                            ? Icons.music_off_rounded
-                            : Icons.error_outline),
-                    color: AppColors.error,
-                    size: 18,
-                    semanticLabel: strings.a11yPlaybackError,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      playbackError.message(strings, isOnline: isOnline),
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                side: const BorderSide(
-                  color: AppColors.error,
-                  width: 1.2,
-                ),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
+          AppSnack.of(context, bottom: _snackBottom).error(
+            playbackError.message(strings, isOnline: isOnline),
+            icon: playbackError == PlaybackError.network
+                ? Icons.wifi_off_rounded
+                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline),
           );
         }
       });
@@ -276,37 +209,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownSyncError = syncError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.sync_problem, color: AppColors.accent, size: 18, semanticLabel: strings.a11ySyncError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      strings.syncError,
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: bottomBarHeight + 12,
-                left: 16,
-                right: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem);
         }
       });
     }
@@ -346,10 +249,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               right: 0,
               top: 0,
               bottom: isKeyboardOpen ? 0 : bottomBarHeight,
-              child: MainTabsScope(
-                tab: _tabNotifier,
-                loadedTabs: _loadedTabs,
-                child: widget.child,
+              child: SnackDock(
+                child: MainTabsScope(
+                  tab: _tabNotifier,
+                  loadedTabs: _loadedTabs,
+                  child: widget.child,
+                ),
               ),
             ),
             // Mini Player animado + Bottom Nav
@@ -410,7 +315,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     duration: const Duration(milliseconds: 280),
                     curve: Curves.easeInOutCubic,
                     offset: shouldHide ? const Offset(0, 1.2) : Offset.zero,
-                    child: Column(
+                    child: DockSizeReporter(
+                      child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Deslizamiento fluido hacia abajo al pausar/cerrar (AnimatedSlide + AnimatedCrossFade)
@@ -434,6 +340,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         ),
                         _buildCyberBottomNav(),
                       ],
+                    ),
                     ),
                   );
                 },

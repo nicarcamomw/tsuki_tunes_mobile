@@ -22,6 +22,7 @@ import '../state/app_providers.dart';
 import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
@@ -627,23 +628,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       await ref.read(createPlaylistProvider)(name);
       if (context.mounted) {
         unawaited(SemanticsService.sendAnnouncement(View.of(context), strings.playlistCreated, TextDirection.ltr));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              strings.playlistCreated,
-              style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textBright,
-              ),
-            ),
-            backgroundColor: AppColors.bgCard,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        AppSnack.of(context).info(strings.playlistCreated);
       }
     }
   }

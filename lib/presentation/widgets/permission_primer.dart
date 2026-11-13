@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 
 /// Why Tsuki wants a permission, just before Android asks for it: what it
@@ -160,19 +161,9 @@ class PermissionPrimer extends ConsumerWidget {
 void showNotificationsBlocked(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
   final strings = container.read(stringsProvider);
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgCard,
-      content: Text(strings.permNotifBlocked, style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body)),
-      action: SnackBarAction(
-        label: strings.permOpenSettings,
-        textColor: AppColors.accentText,
-        onPressed: () {
-          Haptics.tap();
-          container.read(batteryGuideProvider).openTsukiSettings();
-        },
-      ),
-    ));
+  AppSnack.of(context).info(
+    strings.permNotifBlocked,
+    actionLabel: strings.permOpenSettings,
+    onAction: () => container.read(batteryGuideProvider).openTsukiSettings(),
+  );
 }

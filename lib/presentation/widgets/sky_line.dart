@@ -13,6 +13,7 @@ import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../state/weather_provider.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'moon_glyph.dart';
 import 'weather_sheet.dart';
@@ -408,7 +409,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     final ambient = ref.read(ambientProvider);
     final weather = ref.read(weatherProvider);
     final strings = ref.read(stringsProvider);
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final messenger = AppSnack.maybeOf(context);
 
     final tracks =
         widget.library ?? [...library.favoriteTracks, ...library.recentTracks];
@@ -427,8 +428,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
     }
     unawaited(weather.dismissRainOffer());
     setState(() => _state = _OfferState.asking);
-    messenger?.showSnackBar(
-        SnackBar(content: Text(strings.rainOfferPlaying(list.length))));
+    messenger?.info(strings.rainOfferPlaying(list.length));
   }
 
   @override

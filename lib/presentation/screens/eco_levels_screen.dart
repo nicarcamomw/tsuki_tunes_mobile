@@ -8,6 +8,7 @@ import '../navigation/app_router.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/mask_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import 'ascension_screen.dart';
@@ -227,13 +228,7 @@ class _ColorPicker extends StatelessWidget {
           onTap: () {
             Haptics.tap();
             if (lockedAt != null) {
-              ScaffoldMessenger.of(context)
-                ..clearSnackBars()
-                ..showSnackBar(SnackBar(
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppColors.bgCard,
-                  content: Text('$name · ${strings.ecoOpensAt(lockedAt)}'),
-                ));
+              AppSnack.of(context).info('$name · ${strings.ecoOpensAt(lockedAt)}');
               return;
             }
             masks.setPlayerColor(id);

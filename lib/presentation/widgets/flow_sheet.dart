@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../domain/logic/bpm_flow.dart';
 import '../state/app_providers.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
@@ -71,17 +72,13 @@ class _FlowSheetState extends ConsumerState<FlowSheet> {
     final result = BpmFlow.arrange(audio.upcomingTracks, _bpms, mode);
     Haptics.confirm();
     audio.setUpcomingOrder(result.order);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     Navigator.of(context).pop();
     final from = result.fromBpm?.round() ?? 0;
     final to = result.toBpm?.round() ?? 0;
-    messenger.showSnackBar(SnackBar(
-      content: Text(mode == FlowMode.wave
-          ? strings.flowAppliedWave(from, result.peakBpm?.round() ?? 0, to)
-          : strings.flowApplied(from, to)),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgCard,
-    ));
+    messenger.info(mode == FlowMode.wave
+        ? strings.flowAppliedWave(from, result.peakBpm?.round() ?? 0, to)
+        : strings.flowApplied(from, to));
   }
 
   @override

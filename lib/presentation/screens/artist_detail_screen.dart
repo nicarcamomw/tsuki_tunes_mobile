@@ -24,6 +24,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_custom_icons.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/distorted_artist_name.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/error_state.dart';
@@ -226,7 +227,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                 final followed = await ref.read(toggleFollowArtistProvider)(_artist);
                 if (followed) unawaited(_announceRadar(strings));
               },
-              onStartRadio: () => startArtistRadioWithFeedback(context, _artist, bottomMargin: 90),
+              onStartRadio: () => startArtistRadioWithFeedback(context, _artist),
               reduceMotion: _reduceMotion,
             ),
           ),
@@ -518,26 +519,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       explain: () => mounted ? PermissionPrimer.notifications(context) : Future.value(false),
     );
     if (!mounted || !radar.notifyEnabled.value) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        duration: const Duration(seconds: 3),
-        content: Row(
-          children: [
-            const Icon(Icons.radar, size: 16, color: AppColors.neonCyan),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                strings.radarFollowSnack(_artist.name),
-                style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: AppFontSize.body),
-              ),
-            ),
-          ],
-        ),
-      ));
+    AppSnack.of(context).info(strings.radarFollowSnack(_artist.name), icon: Icons.radar, duration: const Duration(seconds: 3));
   }
 
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {

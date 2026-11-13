@@ -19,6 +19,7 @@ import '../../domain/logic/guess_game.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
@@ -615,13 +616,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
       text: GuessGame.shareText(header: header, outcomes: _outcomes),
     ));
     Haptics.tap();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(strings.guessCopied),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-      ),
-    );
+    AppSnack.of(context).info(strings.guessCopied);
   }
 
   void _listenFull() {

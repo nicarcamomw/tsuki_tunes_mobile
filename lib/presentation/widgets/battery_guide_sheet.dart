@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/battery_family.dart';
 import '../state/app_providers.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
 
@@ -41,11 +42,11 @@ class BatteryGuideSheet extends ConsumerWidget {
 
   Future<void> _openSettings(BuildContext context) async {
     Haptics.tap();
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     final failedText = context.readState(stringsProvider).batteryGuideOpenFailed;
     final opened = await context.readState(batteryGuideProvider).openSpotifySettings();
     if (!opened) {
-      messenger.showSnackBar(SnackBar(content: Text(failedText)));
+      messenger.error(failedText);
     }
   }
 

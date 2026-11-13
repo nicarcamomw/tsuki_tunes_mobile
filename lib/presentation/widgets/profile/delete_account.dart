@@ -70,7 +70,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
   );
   if (confirmed != true || !context.mounted) return;
 
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = AppSnack.of(context);
   final router = GoRouter.of(context);
   final navigator = Navigator.of(context, rootNavigator: true);
   var progressShown = false;
@@ -137,7 +137,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     AccountDeletionResult.deleted || AccountDeletionResult.cancelled => null,
   };
   if (message != null) {
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.info(message);
   }
   if (!auth.isLoggedIn) router.go(AppPaths.login);
 }

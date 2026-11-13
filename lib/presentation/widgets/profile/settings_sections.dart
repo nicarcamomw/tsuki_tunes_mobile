@@ -280,9 +280,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onTap: () {
           Haptics.tap();
           Clipboard.setData(ClipboardData(text: ref.read(playbackLogProvider).dump()));
-          ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-            SnackBar(content: Text(strings.playbackLogCopied)),
-          );
+          AppSnack.of(widget.hostContext).info(strings.playbackLogCopied);
         },
       ),
       _SettingLink(
@@ -296,9 +294,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
         onTap: () {
           Haptics.remove();
           ref.read(audioCacheProvider).clearCache();
-          ScaffoldMessenger.of(widget.hostContext).showSnackBar(
-            SnackBar(content: Text(strings.audioCacheCleared)),
-          );
+          AppSnack.of(widget.hostContext).info(strings.audioCacheCleared);
         },
       ),
     ]);

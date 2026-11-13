@@ -16,6 +16,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 
@@ -331,21 +332,13 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
   Future<void> _listen(_GraphNode node) async {
     if (_startingPlayback) return;
     Haptics.tap();
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context, bottom: _kPanelHeight + 8);
     final strings = ref.read(stringsProvider);
     setState(() => _startingPlayback = true);
     try {
       final tracks = await _api.getArtistTopTracks(node.id);
       if (tracks.isEmpty) {
-        messenger.showSnackBar(SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, _kPanelHeight + 8),
-          backgroundColor: AppColors.bgCard,
-          content: Text(
-            strings.noTracksFound,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
-          ),
-        ));
+        messenger.info(strings.noTracksFound);
         return;
       }
       await ref.read(playTracksProvider)(tracks);
@@ -369,24 +362,11 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     _maxNotified = true;
     final strings = ref.read(stringsProvider);
     final focused = _focusedId == null ? null : _nodes[_focusedId!];
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, _kPanelHeight + 8),
-        backgroundColor: AppColors.bgCard,
-        duration: const Duration(seconds: 6),
-        content: Text(
-          strings.rabbitHoleMaxReached,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body),
-        ),
-        action: focused != null && focused.depth > 0
-            ? SnackBarAction(
-                label: strings.rabbitHoleRestartHere,
-                textColor: AppColors.neonCyan,
-                onPressed: _restartFromFocused,
-              )
-            : null,
-      ),
+    AppSnack.of(context, bottom: _kPanelHeight + 8).info(
+      strings.rabbitHoleMaxReached,
+      duration: const Duration(seconds: 6),
+      actionLabel: focused != null && focused.depth > 0 ? strings.rabbitHoleRestartHere : null,
+      onAction: _restartFromFocused,
     );
   }
 

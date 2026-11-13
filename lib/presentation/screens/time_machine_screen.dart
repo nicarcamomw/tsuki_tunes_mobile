@@ -14,6 +14,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
@@ -122,15 +123,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
   }
 
   void _snack(String text) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-        duration: const Duration(seconds: 2),
-        content: Text(text,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: AppFontSize.body)),
-      ));
+    AppSnack.of(context).info(text);
   }
 
   String _periodLabel(AppStrings s, _Period p) => switch (p) {

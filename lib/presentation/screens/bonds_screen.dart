@@ -13,6 +13,7 @@ import '../../domain/entities/social.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
@@ -793,4 +794,4 @@ class _Spinner extends StatelessWidget {
 }
 
 void _toast(BuildContext context, String text) =>
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(text)));
+    AppSnack.maybeOf(context)?.info(text);

@@ -8,6 +8,7 @@ import '../../core/theme/design_tokens.dart';
 import '../state/ambient_provider.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'haptics.dart';
 import 'swipeable_sheet.dart';
@@ -135,13 +136,7 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                     onTap: () {
                       Haptics.selection();
                       if (!EcoLevels.soundOpen(sound, level)) {
-                        ScaffoldMessenger.of(context)
-                          ..clearSnackBars()
-                          ..showSnackBar(SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: AppColors.bgCard,
-                            content: Text('${strings.ambientName(sound)} · ${strings.ecoOpensAt(EcoLevels.soundLevels[sound]!)}'),
-                          ));
+                        AppSnack.of(context).info('${strings.ambientName(sound)} · ${strings.ecoOpensAt(EcoLevels.soundLevels[sound]!)}');
                         return;
                       }
                       ambient.toggle(sound);

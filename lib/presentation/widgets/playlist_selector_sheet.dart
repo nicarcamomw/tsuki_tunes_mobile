@@ -12,6 +12,7 @@ import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/usecases/playlists/add_track_to_playlist.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 
 Future<void> showPlaylistSelector(BuildContext context, Track track) {
@@ -87,25 +88,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                     final added = created.tracks.any((t) => t.id == track.id);
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            added
-                                ? strings.addedToPlaylist(created.name)
-                                : strings.playlistCreated,
-                            style: locale.getTextStyle(
-                              fontSize: AppFontSize.body,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textBright,
-                            ),
-                          ),
-                          backgroundColor: AppColors.bgCard,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.chip)),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
+                      AppSnack.of(context).info(added ? strings.addedToPlaylist(created.name) : strings.playlistCreated);
                     }
                   }
                 }
@@ -138,10 +121,10 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                         ? null
                         : () async {
                             Haptics.confirm();
-                            final messenger = ScaffoldMessenger.of(context);
+                            final messenger = AppSnack.of(context);
                             Navigator.pop(context);
                             final ok = await sharedState.addTrack(sp.id, track);
-                            messenger.showSnackBar(SnackBar(content: Text(ok ? sp.name : strings.bondsFailed)));
+                            messenger.show(ok ? sp.name : strings.bondsFailed, kind: ok ? SnackKind.info : SnackKind.error);
                           },
                   );
                 }),
@@ -209,23 +192,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                           ? () {
                               Haptics.confirm();
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    strings.trackAlreadyInPlaylist,
-                                    style: locale.getTextStyle(
-                                      fontSize: AppFontSize.body,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textBright,
-                                    ),
-                                  ),
-                                  backgroundColor: AppColors.bgCard,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(AppRadius.chip)),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                              AppSnack.of(context).info(strings.trackAlreadyInPlaylist);
                             }
                           : () {
                               Haptics.confirm();
@@ -237,27 +204,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                               if (!full) unawaited(add(playlist, track));
                               {
                                 Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      full
-                                          ? strings.playlistFull
-                                          : strings
-                                              .addedToPlaylist(playlist.name),
-                                      style: locale.getTextStyle(
-                                        fontSize: AppFontSize.body,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textBright,
-                                      ),
-                                    ),
-                                    backgroundColor: AppColors.bgCard,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.chip)),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
+                                AppSnack.of(context).info(full ? strings.playlistFull : strings.addedToPlaylist(playlist.name));
                               }
                             },
                     ),
@@ -354,22 +301,6 @@ Future<bool> saveTracksAsPlaylist(BuildContext context, List<Track> tracks) asyn
       await context.readState(createPlaylistProvider)(name, tracks: tracks);
   if (created == null || !context.mounted) return created != null;
   final strings = context.readState(stringsProvider);
-  final locale = context.readState(localeProvider);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        strings.playlistCreated,
-        style: locale.getTextStyle(
-          fontSize: AppFontSize.body,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textBright,
-        ),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-      duration: const Duration(seconds: 2),
-    ),
-  );
+  AppSnack.of(context).info(strings.playlistCreated);
   return true;
 }

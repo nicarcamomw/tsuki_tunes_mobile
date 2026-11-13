@@ -12,6 +12,7 @@ import '../../core/theme/design_tokens.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/audio_progress_selector.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
@@ -144,7 +145,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
     if (!ecoAllows(context, EcoFeature.lyricsTranslate)) return;
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     final controller = widget.controller;
     final current = controller.translatedTo;
     final suggested = current ?? await LyricsController.lastTarget() ?? locale.currentLanguage.code;
@@ -208,10 +209,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
       TranslationOutcome.shown || TranslationOutcome.cancelled => null,
     };
     if (message != null) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.bgCard,
-      ));
+      messenger.info(message);
     }
   }
 

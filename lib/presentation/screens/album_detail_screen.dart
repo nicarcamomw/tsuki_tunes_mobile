@@ -18,6 +18,7 @@ import '../state/album_downloads_provider.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -128,13 +129,11 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
   Future<void> _onDownload(Album albumData) async {
     final strings = ref.read(localeProvider).strings;
     final downloads = ref.read(albumDownloadsProvider);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = AppSnack.of(context);
     Haptics.tap();
     if (ref.read(maskProvider).isObserver) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(strings.downloadAlbumObserver),
-        action: SnackBarAction(label: strings.ecoObserverAction, onPressed: () => becomeBearer(context)),
-      ));
+      messenger.info(strings.downloadAlbumObserver,
+          actionLabel: strings.ecoObserverAction, onAction: () => becomeBearer(context));
       return;
     }
     if (downloads.isDownloaded(albumData.id)) {
@@ -157,12 +156,12 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       return;
     }
     if (!albumData.tracks.any((t) => t.previewUrl.isNotEmpty)) {
-      messenger.showSnackBar(SnackBar(content: Text(strings.downloadAlbumNone)));
+      messenger.info(strings.downloadAlbumNone);
       return;
     }
     final all = await downloads.download(albumData);
     if (!mounted) return;
-    messenger.showSnackBar(SnackBar(content: Text(all ? strings.downloadAlbumDone : strings.downloadAlbumPartial)));
+    messenger.info(all ? strings.downloadAlbumDone : strings.downloadAlbumPartial);
   }
 
   void _toggleAll(Album albumData) {

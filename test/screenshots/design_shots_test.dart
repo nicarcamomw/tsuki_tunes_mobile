@@ -38,6 +38,7 @@ import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart
 import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/profile_bottom_sheet.dart';
@@ -254,6 +255,22 @@ void main() {
   testWidgets('shell', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())],
         const MainNavigationScreen(child: SizedBox.expand()));
+  });
+
+  testWidgets('shell_snack', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'shell_snack',
+      overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())],
+      MainNavigationScreen(
+        child: Builder(builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) AppSnack.of(context).undo('Desmarcada: Get Lucky', onUndo: () {});
+          });
+          return const SizedBox.expand();
+        }),
+      ),
+    );
   });
 
   testWidgets('home', skip: skip != null, (tester) async {

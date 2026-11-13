@@ -11,6 +11,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/moon_provider.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'cyber_glitch_text.dart';
 import 'eco_widgets.dart';
 import 'haptics.dart';
@@ -477,13 +478,8 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
     final created = await ref.read(createPlaylistProvider)(name, tracks: mix);
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(created != null ? strings.moonMixSaved : strings.moonMixSaveFailed),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.bgCard,
-      ),
-    );
+    AppSnack.of(context).show(created != null ? strings.moonMixSaved : strings.moonMixSaveFailed,
+        kind: created != null ? SnackKind.info : SnackKind.error);
   }
 
   @override

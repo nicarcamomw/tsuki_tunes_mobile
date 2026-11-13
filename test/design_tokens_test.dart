@@ -37,4 +37,13 @@ void main() {
     expect(_offenders(RegExp(r'Radius\.circular\( *\d')), isEmpty);
     expect(_offenders(RegExp(r'(borderRadius: *|this\.borderRadius = )\d')), isEmpty);
   });
+
+  test('D-08: snack bars go through AppSnack', () {
+    expect(
+      _offenders(RegExp(r'\bSnackBar\(|SnackBarAction\('), allow: (_) => false)
+          .where((hit) => !hit.contains('widgets/app_snack.dart'))
+          .toList(),
+      isEmpty,
+    );
+  });
 }

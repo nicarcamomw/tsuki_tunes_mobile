@@ -13,6 +13,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 
@@ -43,15 +44,10 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final strings = ref.read(stringsProvider);
     Haptics.remove();
     final undo = ref.read(removeTrackFromPlaylistProvider)(playlistId, track, index);
-    showTrackSnack(
-      context,
-      strings.removedFromPlaylist,
-      action: SnackBarAction(
-        label: strings.undo,
-        textColor: AppColors.accent,
-        onPressed: () { Haptics.tap(); undo(); },
-      ),
-    );
+    AppSnack.of(context).undo(strings.removedFromPlaylist, onUndo: () {
+      Haptics.tap();
+      undo();
+    });
   }
 
   @override
@@ -512,23 +508,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
 
     if (name != null && name.trim().isNotEmpty && context.mounted) {
       unawaited(ref.read(renamePlaylistProvider)(playlistId, name));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            strings.playlistRenamed,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textBright,
-            ),
-          ),
-          backgroundColor: AppColors.bgCard,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      AppSnack.of(context).info(strings.playlistRenamed);
     }
   }
 
@@ -588,23 +568,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     if (confirmed == true && context.mounted) {
       unawaited(ref.read(deletePlaylistProvider)(playlistId));
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            strings.playlistDeleted,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.body,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textBright,
-            ),
-          ),
-          backgroundColor: AppColors.bgCard,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      AppSnack.of(context).info(strings.playlistDeleted);
     }
   }
 }

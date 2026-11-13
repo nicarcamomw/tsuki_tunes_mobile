@@ -19,6 +19,7 @@ import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
+import '../../widgets/app_snack.dart';
 import '../../widgets/cyber_glitch_text.dart';
 import '../../widgets/cyber_orb.dart';
 import '../../widgets/haptics.dart';
@@ -150,32 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           final msg = auth.authError == AuthError.throttled
               ? strings.loginThrottled
               : strings.loginGoogleError;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yLoginError),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      msg,
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBright,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.bgCard,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                side: const BorderSide(color: AppColors.error, width: 1.2),
-              ),
-            ),
-          );
+          AppSnack.of(context).error(msg);
         }
       }
     }

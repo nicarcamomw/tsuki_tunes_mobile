@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'skeleton_loader.dart';
 import 'swipeable_sheet.dart';
@@ -54,11 +55,11 @@ class _DevicesSheetState extends ConsumerState<_DevicesSheet> {
     setState(() => _moving = id);
     final audio = ref.read(audioProvider);
     final strings = ref.read(localeProvider).strings;
-    final messenger = ScaffoldMessenger.maybeOf(widget.host);
+    final messenger = AppSnack.maybeOf(widget.host);
     final ok = await audio.spotify.listenOn(id, name: name, isPhone: d['type'] == 'Smartphone');
     if (!mounted) return;
     Navigator.of(context).pop();
-    messenger?.showSnackBar(SnackBar(content: Text(ok ? strings.devicesMoved(name) : strings.devicesFailed)));
+    messenger?.info(ok ? strings.devicesMoved(name) : strings.devicesFailed);
   }
 
   static IconData _icon(String? type) => switch (type) {

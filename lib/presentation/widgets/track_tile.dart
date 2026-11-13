@@ -15,6 +15,7 @@ import '../../domain/entities/track.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/use_cases.dart';
+import 'app_snack.dart';
 import 'haptics.dart';
 import 'listened_undo.dart';
 import 'oni_mask_icon.dart';
@@ -381,25 +382,8 @@ class TrackTile extends ConsumerWidget {
 /// [bottom] from the screen's edge), with an optional undo-like [action].
 void showTrackSnack(BuildContext context, String message,
     {SnackBarAction? action, double? bottom}) {
-  final locale = context.readState(localeProvider);
-  final hasTrack = context.readState(audioProvider).currentTrack != null;
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.clearSnackBars();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        message,
-        style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-      margin: EdgeInsets.only(
-          bottom: bottom ?? (hasTrack ? 152 : 12), left: 16, right: 16),
-      duration: Duration(seconds: action == null ? 2 : 4),
-      action: action,
-    ),
-  );
+  AppSnack.of(context, bottom: bottom)
+      .show(message, kind: action == null ? SnackKind.info : SnackKind.undo, actionLabel: action?.label, onAction: action?.onPressed);
 }
 
 /// An extra entry for [showTrackActions], shown first.
@@ -421,8 +405,6 @@ void showTrackActions(BuildContext context, Track track,
     {List<TrackMenuAction> extra = const []}) {
   final strings = context.readState(stringsProvider);
   final locale = context.readState(localeProvider);
-  final hasTrack = context.readState(audioProvider).currentTrack != null;
-
   void showConfirmation(String message) => showTrackSnack(context, message);
 
   Widget menuItem({
@@ -557,8 +539,7 @@ void showTrackActions(BuildContext context, Track track,
               semanticLabel: strings.radioStart,
               onTap: () {
                 Navigator.pop(ctx);
-                startRadioWithFeedback(context, track,
-                    bottomMargin: hasTrack ? 152 : 12);
+                startRadioWithFeedback(context, track);
               },
             ),
             menuItem(

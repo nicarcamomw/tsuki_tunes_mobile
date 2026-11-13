@@ -17,23 +17,8 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
 
   AudioProvider get _audio => ref.read(audioProvider);
 
-  void _showSnack(SnackBar snackBar) {
-    if (widget.hostContext.mounted) {
-      ScaffoldMessenger.of(widget.hostContext).showSnackBar(snackBar);
-    }
-  }
-
-  SnackBar _plainSnack(String message, Duration duration) {
-    return SnackBar(
-      content: Text(
-        message,
-        style: widget.locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
-      ),
-      backgroundColor: AppColors.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-      duration: duration,
-    );
+  void _showSnack(String message, {SnackKind kind = SnackKind.info, Duration? duration}) {
+    if (widget.hostContext.mounted) AppSnack.of(widget.hostContext).show(message, kind: kind, duration: duration);
   }
 
   Future<void> _disconnect() async {
@@ -52,7 +37,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
         ref.read(analyticsProvider).log('spotify_connected', {'premium': _audio.spotify.isPremium});
         await _audio.updateSpotifyState();
         if (mounted) setState(() {});
-        _showSnack(_plainSnack(strings.spotifySyncSuccess, const Duration(seconds: 2)));
+        _showSnack(strings.spotifySyncSuccess);
       } else if (_audio.spotify.isNotRegistered) {
         if (mounted) setState(() {});
         ref.read(analyticsProvider).log('spotify_connect_failed', {'reason': 'not_registered'});
@@ -64,31 +49,12 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
             : strings.spotifyConnectError;
         ref.read(analyticsProvider).log('spotify_connect_failed',
             {'canceled': msg == strings.spotifyCanceledByUser});
-        _showSnack(_plainSnack(msg, const Duration(seconds: 3)));
+        _showSnack(msg, duration: const Duration(seconds: 3));
       }
     } catch (e) {
       _isConnecting = false;
       if (mounted) setState(() {});
-      _showSnack(SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline, color: AppColors.error, size: 18, semanticLabel: strings.a11yPlaybackError),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                strings.spotifyConnectError,
-                style: widget.locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.bgCard,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          side: const BorderSide(color: AppColors.error, width: 1.2),
-        ),
-      ));
+      _showSnack(strings.spotifyConnectError, kind: SnackKind.error);
     }
   }
 

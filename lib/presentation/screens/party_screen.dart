@@ -12,6 +12,7 @@ import '../../domain/entities/social.dart';
 import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/haptics.dart';
 import 'bonds_screen.dart' show PersonAvatar;
@@ -146,7 +147,7 @@ class PartyScreen extends ConsumerWidget {
               Haptics.confirm();
               final ok = await party.host();
               if (!ok && context.mounted) {
-                ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(strings.bondsFailed)));
+                AppSnack.maybeOf(context)?.info(strings.bondsFailed);
               }
             },
             icon: const Icon(Icons.podcasts_rounded),

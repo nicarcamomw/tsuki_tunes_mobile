@@ -25,6 +25,7 @@ import '../state/audio_provider.dart';
 import '../state/auth_provider.dart';
 import '../state/image_quality_setting.dart';
 import '../state/locale_provider.dart';
+import 'app_snack.dart';
 import 'eco_widgets.dart';
 import 'equalizer_sheet.dart';
 import 'haptics.dart';
