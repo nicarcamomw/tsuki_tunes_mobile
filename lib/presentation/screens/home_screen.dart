@@ -20,6 +20,7 @@ import '../../domain/entities/top_artist.dart';
 import '../../domain/logic/completion_recommendations.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
+import '../state/home_snapshot.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
@@ -73,6 +74,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _completionLoad = 0;
   bool _isLoading = true;
   bool _hasError = false;
+  bool _releasesLoading = true;
+  bool _snapshotTried = false;
   bool _dailyDone = false;
 
   @override
@@ -132,53 +135,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ProfileBottomSheet.show(context, auth);
   }
 
+  /// Loads the catalog's part of the home.
+  ///
+  /// I-01: the first time, the last home saved shows at once (no skeleton
+  /// when there's one); featured artists and the top artists' pictures
+  /// load side by side, the artists show as soon as they're in and the
+  /// releases follow. I-02: a refresh keeps what's on screen until the new
+  /// data replaces it; only an empty home shows the skeleton or the error.
   Future<void> _loadHomeData() async {
+    if (!_snapshotTried && !_hasContent) {
+      _snapshotTried = true;
+      final snapshot = await HomeSnapshot.load();
+      if (!mounted) return;
+      if (snapshot != null && !snapshot.isEmpty && !_hasContent) _applySnapshot(snapshot);
+    }
+    final hadContent = _hasContent;
     setState(() {
-      _isLoading = true;
+      _isLoading = !hadContent;
       _hasError = false;
-      _recommendedArtists = [];
+      _releasesLoading = true;
       _completionSeedKey = null;
     });
     try {
-      final featured = await ref.read(musicCatalogProvider).getFeaturedArtists();
-      if (!mounted) return;
-
       final library = ref.read(libraryProvider);
       final topEntries = library.getTopArtists(limit: 5);
 
-      List<_TopArtistDisplay> topDisplay = [];
-      List<Album> releases = [];
-
-      if (topEntries.isNotEmpty) {
-        topDisplay = await _fetchTopArtistPictures(topEntries);
-        if (!mounted) return;
-        releases = await ref.read(getLatestReleasesProvider)([
-          for (final t in topDisplay)
-            if (t.artist != null) t.artist!,
-        ]);
-      } else if (featured.isNotEmpty) {
-        releases =
-            await ref.read(getLatestReleasesProvider)(featured.take(6).toList());
-      }
+      final (featured, topDisplay) = await (
+        ref.read(musicCatalogProvider).getFeaturedArtists(),
+        topEntries.isEmpty ? Future.value(<_TopArtistDisplay>[]) : _fetchTopArtistPictures(topEntries),
+      ).wait;
       if (!mounted) return;
-
       setState(() {
         _featuredArtists = featured;
         _topArtistsDisplay = topDisplay;
-        _latestReleases = releases;
         _isLoading = false;
       });
       unawaited(_loadPersonalizedRecommendations(topDisplay));
       unawaited(_loadCompletionRecommendations());
+
+      final seeds = topEntries.isNotEmpty
+          ? [for (final t in topDisplay) if (t.artist != null) t.artist!]
+          : featured.take(6).toList();
+      final releases = seeds.isEmpty ? <Album>[] : await ref.read(getLatestReleasesProvider)(seeds);
+      if (!mounted) return;
+      setState(() {
+        _latestReleases = releases;
+        _releasesLoading = false;
+      });
+      unawaited(HomeSnapshot(
+        featured: featured,
+        topArtists: {for (final t in topDisplay) if (t.artist != null) t.entry.name: t.artist!},
+        releases: releases,
+      ).save());
     } catch (e) {
       _log.severe('loadHomeData error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasError = true;
+          _releasesLoading = false;
+          // With something on screen (the snapshot, the last load) it
+          // stays; the offline banner says why it isn't fresh.
+          _hasError = !_hasContent;
         });
       }
     }
+  }
+
+  bool get _hasContent =>
+      _featuredArtists.isNotEmpty || _topArtistsDisplay.isNotEmpty || _latestReleases.isNotEmpty;
+
+  /// The saved home, with the library's current top artists (their
+  /// pictures from the snapshot when it has them).
+  void _applySnapshot(HomeSnapshot snapshot) {
+    final topEntries = ref.read(libraryProvider).getTopArtists(limit: 5);
+    setState(() {
+      _featuredArtists = snapshot.featured;
+      _topArtistsDisplay = [
+        for (final e in topEntries) _TopArtistDisplay(entry: e, artist: snapshot.topArtists[e.name]),
+      ];
+      _latestReleases = snapshot.releases;
+      _isLoading = false;
+    });
   }
 
   /// Each top artist (the library knows names) with their catalog entry,
@@ -605,7 +642,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       SliverToBoxAdapter(
-        child: _latestReleases.isEmpty
+        child: _latestReleases.isEmpty && _releasesLoading
+            ? SizedBox(
+                height: 185,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    for (var i = 0; i < 3; i++)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: SkeletonLoader(width: 140, height: 140, borderRadius: AppRadius.chip),
+                      ),
+                  ],
+                ),
+              )
+            : _latestReleases.isEmpty
             ? Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
