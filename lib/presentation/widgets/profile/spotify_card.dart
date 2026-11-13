@@ -18,7 +18,9 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
   AudioProvider get _audio => ref.read(audioProvider);
 
   void _showSnack(String message, {SnackKind kind = SnackKind.info, Duration? duration}) {
-    if (widget.hostContext.mounted) AppSnack.of(widget.hostContext).show(message, kind: kind, duration: duration);
+    // Its own context: the snack shows over whatever holds the card (the
+    // settings page), not under it.
+    if (mounted) AppSnack.of(context).show(message, kind: kind, duration: duration);
   }
 
   Future<void> _disconnect() async {

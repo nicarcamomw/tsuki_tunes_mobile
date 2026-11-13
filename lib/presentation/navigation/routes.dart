@@ -467,3 +467,22 @@ CustomTransitionPage<void> cyberPage(GoRouterState state, Widget child) => Custo
         );
       },
     );
+
+/// [cyberPage]'s transition for a route pushed with Navigator (E-04): the
+/// screens that aren't go_router routes open like the rest of the app.
+PageRouteBuilder<T> cyberRoute<T>(Widget child, {bool fullscreenDialog = false}) => PageRouteBuilder<T>(
+      fullscreenDialog: fullscreenDialog,
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (_, __, ___) => child,
+      transitionsBuilder: (_, animation, __, child) {
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );

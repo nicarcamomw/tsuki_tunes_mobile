@@ -192,7 +192,7 @@ class _AppVersionLabel extends StatelessWidget {
           onTap: () {
             Haptics.tap();
             Clipboard.setData(ClipboardData(text: text));
-            AppSnack.of(hostContext).info(locale.strings.appVersionCopied);
+            AppSnack.of(context).info(locale.strings.appVersionCopied);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
