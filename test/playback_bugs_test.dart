@@ -51,7 +51,7 @@ void main() {
     messenger.setMockMethodCallHandler(const MethodChannel('com.ryanheise.just_audio.methods'), (call) async {
       if (call.method == 'init') {
         messenger.setMockMethodCallHandler(
-            MethodChannel('com.ryanheise.just_audio.methods.${call.arguments['id']}'), (_) async => {});
+            MethodChannel('com.ryanheise.just_audio.methods.${(call.arguments as Map)['id']}'), (_) async => {});
       }
       return {};
     });
