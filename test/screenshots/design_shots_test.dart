@@ -237,7 +237,10 @@ Future<void> _pumpShot(
   }
   // Leave no timers behind: unmount and let animations settle.
   await tester.pumpWidget(const SizedBox());
-  await tester.pump(const Duration(seconds: 2));
+  // Long enough for any retry or debounce timer a screen left behind.
+  for (var i = 0; i < 4; i++) {
+    await tester.pump(const Duration(seconds: 30));
+  }
   FlutterError.onError = previous;
 }
 
@@ -329,7 +332,7 @@ void main() {
           title: 'Discovery',
           artistId: '27',
           artistName: 'Daft Punk',
-          coverUrl: 'https://example.com/cover.jpg',
+          coverUrl: '',
           tracks: [_song],
           tracksCount: 1,
         ),

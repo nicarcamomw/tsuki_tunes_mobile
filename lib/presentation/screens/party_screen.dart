@@ -44,8 +44,7 @@ class PartyScreen extends ConsumerWidget {
             Text(strings.partyObserver, textAlign: TextAlign.center, style: style(AppFontSize.title)),
             const SizedBox(height: 18),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-              onPressed: () => becomeBearer(context),
+                            onPressed: () => becomeBearer(context),
               child: Text(strings.ecoObserverAction),
             ),
           ],
@@ -196,8 +195,7 @@ class PartyScreen extends ConsumerWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-                            onPressed: () {
+                                                        onPressed: () {
                               Haptics.confirm();
                               unawaited(party.join(inv.host));
                             },

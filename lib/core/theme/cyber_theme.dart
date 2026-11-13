@@ -66,20 +66,34 @@ class CyberTheme {
           letterSpacing: 1.5,
         ),
       ),
-      // Buttons readable at AA: white text on a deeper crimson, and the
-      // accent's readable red for text buttons (the default primary red on
-      // these backgrounds is under 4.5:1).
+      // D-10, three buttons. Primary: white on a deeper crimson (AA, 4.6:1),
+      // for the screen's main action. Secondary: a quiet outline, neutral
+      // (D-12). Text: the accent's readable red. All with the HUD's chip
+      // corner and Android's 48 dp to tap.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accentFill,
           foregroundColor: AppColors.textBright,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textPrimary,
+          side: const BorderSide(color: AppColors.borderGlow),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700),
+          tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.accentText),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(foregroundColor: AppColors.accentText),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accentText,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(foregroundColor: AppColors.accentText),

@@ -725,9 +725,7 @@ extension _GuessSongViews on _GuessSongScreenState {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.border),
-                  backgroundColor: AppColors.bgCard,
+            backgroundColor: AppColors.bgCard,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   minimumSize: const Size(0, 36),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),

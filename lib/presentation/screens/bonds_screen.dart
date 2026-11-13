@@ -142,8 +142,7 @@ class _ObserverPanel extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-            onPressed: () => becomeBearer(context),
+                        onPressed: () => becomeBearer(context),
             icon: const Icon(Icons.login_rounded, size: 18),
             label: Text(strings.ecoObserverAction, style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
@@ -380,9 +379,7 @@ class _RequestButtons extends ConsumerWidget {
         Expanded(
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              side: const BorderSide(color: AppColors.border),
-              minimumSize: const Size(0, 40),
+            minimumSize: const Size(0, 40),
             ),
             onPressed: () async {
               Haptics.remove();
@@ -395,7 +392,7 @@ class _RequestButtons extends ConsumerWidget {
         const SizedBox(width: 10),
         Expanded(
           child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: const Size(0, 40)),
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await social.accept(person.uid);
@@ -559,7 +556,7 @@ class BondButton extends ConsumerWidget {
     switch (state) {
       case BondState.none:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.request(person);
@@ -574,8 +571,6 @@ class BondButton extends ConsumerWidget {
       case BondState.sent:
         return OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            side: const BorderSide(color: AppColors.border),
             minimumSize: size,
             padding: pad,
           ),
@@ -589,7 +584,7 @@ class BondButton extends ConsumerWidget {
         );
       case BondState.received:
         return FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill, minimumSize: size, padding: pad),
+          style: FilledButton.styleFrom(minimumSize: size, padding: pad),
           onPressed: () async {
             Haptics.confirm();
             final ok = await social.accept(person.uid);

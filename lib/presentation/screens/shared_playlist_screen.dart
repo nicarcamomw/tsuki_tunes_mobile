@@ -213,8 +213,7 @@ class _Body extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-                  onPressed: () {
+                                    onPressed: () {
                     Haptics.confirm();
                     c.join(p.id);
                   },
@@ -228,8 +227,7 @@ class _Body extends ConsumerWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: AppColors.accentFill),
-                  onPressed: p.tracks.isEmpty
+                                    onPressed: p.tracks.isEmpty
                       ? null
                       : () { Haptics.tap();
                           final songs = [for (final s in p.tracks) s.track];
