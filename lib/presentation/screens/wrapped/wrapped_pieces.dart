@@ -91,14 +91,18 @@ class _Backdrop extends StatelessWidget {
             ),
           ),
           if (coverUrl != null && coverUrl!.isNotEmpty)
-            Opacity(
-              opacity: 0.35,
+            // P-03: its own layer (the story's text animates over it
+            // without repainting the blur), and the image fades itself
+            // instead of through an Opacity layer.
+            RepaintBoundary(
               child: ImageFiltered(
                 imageFilter: ui.ImageFilter.blur(sigmaX: 40, sigmaY: 40),
                 child: CachedNetworkImage(
                   imageUrl: coverUrl!,
                   fit: BoxFit.cover,
                   memCacheWidth: imageCacheSize(context, 120),
+                  color: Colors.white.withValues(alpha: 0.35),
+                  colorBlendMode: BlendMode.modulate,
                   errorWidget: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),

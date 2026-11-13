@@ -768,7 +768,6 @@ class _AuraSlide extends StatelessWidget {
                 style: c.kanji(AppFontSize.mega, Colors.white).copyWith(
                   shadows: [
                     Shadow(color: AppColors.sakura.withValues(alpha: 0.9), blurRadius: 24),
-                    Shadow(color: AppColors.accent.withValues(alpha: 0.6), blurRadius: 48),
                   ],
                 )),
           )
