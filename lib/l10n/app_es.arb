@@ -76,6 +76,7 @@
   "settingsPlaybackSection": "REPRODUCCIÓN",
   "settingsStorageSection": "ALMACENAMIENTO",
   "settingsGeneralSection": "GENERAL",
+  "settingsAdvancedSection": "AVANZADO",
   "normalizeTitle": "Normalizar volumen",
   "normalizeSubtitle": "Iguala el volumen de las previews de Deezer. Spotify ya lo hace solo.",
   "flowTitle": "FLOW · ORDENAR POR TEMPO",

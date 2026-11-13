@@ -148,6 +148,7 @@ class AppStrings {
   String get settingsStorageSection => _l.settingsStorageSection;
 
   String get settingsGeneralSection => _l.settingsGeneralSection;
+  String get settingsAdvancedSection => _l.settingsAdvancedSection;
 
   String get normalizeTitle => _l.normalizeTitle;
 

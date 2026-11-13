@@ -45,6 +45,7 @@
   "settingsPlaybackSection": "PLAYBACK",
   "settingsStorageSection": "STORAGE",
   "settingsGeneralSection": "GENERAL",
+  "settingsAdvancedSection": "ADVANCED",
   "normalizeTitle": "Normalize volume",
   "normalizeSubtitle": "Evens out Deezer preview volume. Spotify already does this itself.",
   "flowTitle": "FLOW · ORDER BY TEMPO",

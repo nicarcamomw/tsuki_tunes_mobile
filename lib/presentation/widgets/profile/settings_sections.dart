@@ -270,6 +270,21 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
           showSmartShuffleSheet(widget.hostContext);
         },
       ),
+    ]);
+  }
+}
+
+/// S-02: what's for troubleshooting (the playback log, the audio cache),
+/// last and apart from the everyday settings.
+class _AdvancedSettings extends ConsumerWidget {
+  final LocaleProvider locale;
+
+  const _AdvancedSettings({required this.locale});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = locale.strings;
+    return _SettingsCard(rows: [
       _SettingLink(
         locale: locale,
         icon: Icons.receipt_long_rounded,

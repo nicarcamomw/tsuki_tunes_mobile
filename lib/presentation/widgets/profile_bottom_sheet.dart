@@ -154,6 +154,10 @@ class _ProfileSheet extends ConsumerWidget {
               locale: locale,
               closeThen: (then) => _closeThen(context, then),
             ),
+            const SizedBox(height: 20),
+            _SectionHeader(locale: locale, title: strings.settingsAdvancedSection),
+            const SizedBox(height: 8),
+            _AdvancedSettings(locale: locale),
             const SizedBox(height: 24),
             // ── Logout ──
             SizedBox(

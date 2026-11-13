@@ -188,6 +188,7 @@ Future<void> _pumpShot(
   Widget child, {
   List<Override> overrides = const [],
   bool scaffold = false,
+  Future<void> Function()? before,
 }) async {
   tester.view.physicalSize = const Size(400 * 2, 860 * 2);
   tester.view.devicePixelRatio = 2;
@@ -215,6 +216,12 @@ Future<void> _pumpShot(
     ));
     for (var i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 100));
+    }
+    if (before != null) {
+      await before();
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
     }
   }, () => _deezer);
   await _shoot(tester, name);
@@ -367,6 +374,25 @@ void main() {
           });
           return const SizedBox.expand();
         }));
+  });
+
+  testWidgets('profile_end', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'profile_end', scaffold: true,
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+        Consumer(builder: (context, ref, _) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted && ModalRoute.of(context)?.isCurrent == true) {
+              ProfileBottomSheet.show(context, ref.read(authProvider));
+            }
+          });
+          return const SizedBox.expand();
+        }),
+        before: () async {
+          for (var i = 0; i < 6; i++) {
+            await tester.drag(find.byType(SingleChildScrollView).last, const Offset(0, -3000));
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+        });
   });
 
   testWidgets('lore', skip: skip != null, (tester) async {
