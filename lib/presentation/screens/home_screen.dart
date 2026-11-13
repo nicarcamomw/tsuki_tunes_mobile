@@ -125,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (scrollController.hasClients) {
       scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 380),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     }

@@ -221,7 +221,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           // Hour detail badge (selected or peak)
           Center(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.fast,
               child: Container(
                 key: ValueKey(_selectedHour ?? -1),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

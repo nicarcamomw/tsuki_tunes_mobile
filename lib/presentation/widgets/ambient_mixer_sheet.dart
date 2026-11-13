@@ -344,7 +344,7 @@ class _SoundTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.fast,
           decoration: BoxDecoration(
             color: active ? color.withValues(alpha: 0.12) : AppColors.bgMid,
             borderRadius: BorderRadius.circular(AppRadius.card),

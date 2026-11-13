@@ -176,7 +176,7 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
     } else if (widget.isPlaying && !_glow.isAnimating) {
       _glow.repeat(reverse: true);
     } else if (!widget.isPlaying && _glow.isAnimating) {
-      _glow.animateTo(0.0, duration: const Duration(milliseconds: 300));
+      _glow.animateTo(0.0, duration: AppMotion.normal);
     }
   }
 

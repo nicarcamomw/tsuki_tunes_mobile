@@ -5,6 +5,8 @@
 /// `tool/design_tokens/migrate.py` maps loose values onto these.
 library;
 
+import 'package:flutter/animation.dart';
+
 /// The type scale (D-01). Eight steps; [micro] is the floor for anything
 /// that informs (D-02). Only pure ornament (a watermark glyph) goes beyond
 /// the scale, and it's built from [mega].
@@ -55,4 +57,30 @@ abstract final class AppRadius {
 
   /// Stadium shapes: badges, pills, round buttons (any height).
   static const double pill = 999;
+}
+
+/// Motion (D-04): how long a UI change takes, and how it moves. Long
+/// ambient loops (a breathing cover, the sakura) and timers aren't
+/// transitions and keep their own times.
+abstract final class AppMotion {
+  /// A press, a tick, a colour change.
+  static const Duration micro = Duration(milliseconds: 100);
+
+  /// Small things appearing: a chip, an icon swap, a fade.
+  static const Duration fast = Duration(milliseconds: 200);
+
+  /// The default: a panel, a page, a sheet's content.
+  static const Duration normal = Duration(milliseconds: 300);
+
+  /// Big moves: the player opening, a hero flight, a reveal.
+  static const Duration slow = Duration(milliseconds: 450);
+
+  /// Something arriving.
+  static const Curve enter = Curves.easeOutCubic;
+
+  /// Something leaving.
+  static const Curve exit = Curves.easeInCubic;
+
+  /// Something moving from one place to another.
+  static const Curve move = Curves.easeInOutCubic;
 }

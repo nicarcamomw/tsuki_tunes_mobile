@@ -148,7 +148,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     );
     _camera = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: AppMotion.slow,
     )..addListener(() {
         final anim = _cameraAnim;
         if (anim != null) _transform.value = anim.value;
@@ -920,7 +920,7 @@ class _NodeView extends StatelessWidget {
             imageUrl: node.artist.getBestImage(size: 'medium'),
             fit: BoxFit.cover,
             memCacheWidth: _photoWidth(r, dpr),
-            fadeInDuration: const Duration(milliseconds: 200),
+            fadeInDuration: AppMotion.fast,
             placeholder: (_, __) => _placeholder(r),
             errorWidget: (_, __, ___) => _placeholder(r),
           );
@@ -1253,7 +1253,7 @@ class _HintPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 400),
+      duration: AppMotion.slow,
       builder: (_, v, child) => Opacity(
         opacity: v,
         child: Transform.translate(offset: Offset(0, -8 * (1 - v)), child: child),
@@ -1367,7 +1367,7 @@ class _BottomPanel extends StatelessWidget {
           ],
           if (node != null)
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
+              duration: AppMotion.fast,
               child: _FocusCard(
                 key: ValueKey(node.id),
                 node: node,

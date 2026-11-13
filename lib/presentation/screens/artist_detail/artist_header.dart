@@ -241,7 +241,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 const SizedBox(width: 4),
                 AnimatedRotation(
                   turns: showStats ? 0.25 : 0.0,
-                  duration: const Duration(milliseconds: 250),
+                  duration: AppMotion.normal,
                   child: const Icon(
                     Icons.chevron_right,
                     size: 16,
@@ -268,7 +268,7 @@ class _ArtistInfoSection extends StatelessWidget {
       value: isFollowed,
       peak: 1.08,
       child: AnimatedContainer(
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 300),
+        duration: reduceMotion ? Duration.zero : AppMotion.normal,
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
         decoration: BoxDecoration(
@@ -296,7 +296,7 @@ class _ArtistInfoSection extends StatelessWidget {
           children: [
             // The + turns into a check (and back) instead of jumping.
             AnimatedSwitcher(
-              duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+              duration: reduceMotion ? Duration.zero : AppMotion.fast,
               transitionBuilder: (child, anim) => RotationTransition(
                 turns: Tween(begin: 0.25, end: 0.0).animate(anim),
                 child: ScaleTransition(scale: anim, child: child),
@@ -428,7 +428,7 @@ class _ArtistInfoSection extends StatelessWidget {
       crossFadeState: showStats
           ? CrossFadeState.showSecond
           : CrossFadeState.showFirst,
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.normal,
     );
   }
 

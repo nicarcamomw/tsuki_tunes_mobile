@@ -774,7 +774,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                         ),
                         AnimatedRotation(
                           turns: _showStoredContent ? 0.25 : 0.0,
-                          duration: const Duration(milliseconds: 250),
+                          duration: AppMotion.normal,
                           child: Icon(
                             Icons.chevron_right,
                             size: 20,
@@ -791,7 +791,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
 
                 // Expandable content
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 350),
+                  duration: AppMotion.normal,
                   curve: Curves.easeInOut,
                   child: _showStoredContent
                       ? Padding(

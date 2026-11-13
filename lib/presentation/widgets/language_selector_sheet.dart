@@ -120,7 +120,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                   },
                   scaleDown: 0.98,
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppMotion.fast,
                     curve: Curves.easeInOutCubic,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(

@@ -243,7 +243,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             // Navigator with tab screens (reactivo con Lazy Loading)
             // Fix Bug 4: En caso de teclado abierto, el body toma la pantalla completa y SearchScreen gestiona su scroll
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 320),
+              duration: AppMotion.normal,
               curve: Curves.easeInOutCubic,
               left: 0,
               right: 0,
@@ -268,11 +268,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 builder: (context) {
                   final isOnline = ref.watch(isOnlineProvider);
                   return AnimatedSlide(
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppMotion.normal,
                     curve: Curves.easeInOutCubic,
                     offset: isOnline ? const Offset(0, -1) : Offset.zero,
                     child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
+                      duration: AppMotion.normal,
                       opacity: isOnline ? 0.0 : 1.0,
                       child: SafeArea(
                         bottom: false,
@@ -312,7 +312,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 builder: (context, isExpanded, _) {
                   final shouldHide = isKeyboardOpen || isExpanded;
                   return AnimatedSlide(
-                    duration: const Duration(milliseconds: 280),
+                    duration: AppMotion.normal,
                     curve: Curves.easeInOutCubic,
                     offset: shouldHide ? const Offset(0, 1.2) : Offset.zero,
                     // R-04: slid away (keyboard up, player open) the dock's
@@ -326,11 +326,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       children: [
                         // Deslizamiento fluido hacia abajo al pausar/cerrar (AnimatedSlide + AnimatedCrossFade)
                         AnimatedSlide(
-                          duration: const Duration(milliseconds: 320),
+                          duration: AppMotion.normal,
                           curve: Curves.easeInOutCubic,
                           offset: hasTrack ? Offset.zero : const Offset(0, 0.4),
                           child: AnimatedCrossFade(
-                            duration: const Duration(milliseconds: 300),
+                            duration: AppMotion.normal,
                             firstCurve: Curves.easeInOutCubic,
                             secondCurve: Curves.easeInOutCubic,
                             crossFadeState: hasTrack
@@ -602,7 +602,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             ExcludeSemantics(
               child: AnimatedOpacity(
                 opacity: isSelected ? 1 : 0,
-                duration: const Duration(milliseconds: 200),
+                duration: AppMotion.fast,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -666,7 +666,7 @@ class MainTabsView extends StatelessWidget {
         return FocusTraversalGroup(
           child: FadeIndexedStack(
             index: activeIndex,
-            duration: const Duration(milliseconds: 150),
+            duration: AppMotion.fast,
             children: [
               const RepaintBoundary(child: HomeScreen()),
               RepaintBoundary(

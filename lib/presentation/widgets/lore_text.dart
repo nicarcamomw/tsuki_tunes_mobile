@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/design_tokens.dart';
+
 /// The red the beings' names are written in.
 const loreNameColor = Color(0xFFFF3B47);
 
@@ -54,7 +56,7 @@ class GlitchName extends StatefulWidget {
 
 class _GlitchNameState extends State<GlitchName> with SingleTickerProviderStateMixin {
   late final AnimationController _glitch =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 180));
+      AnimationController(vsync: this, duration: AppMotion.fast);
   final _rng = Random();
   Timer? _next;
   bool _still = false;

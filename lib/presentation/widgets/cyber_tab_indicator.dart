@@ -42,7 +42,7 @@ class _CyberTabIndicatorState extends State<CyberTabIndicator>
     super.initState();
     _sparkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: AppMotion.slow,
     );
     _sparkAnimation = CurvedAnimation(
       parent: _sparkController,

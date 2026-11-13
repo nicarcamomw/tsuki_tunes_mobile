@@ -31,7 +31,7 @@ class _OniMaskIconState extends ConsumerState<OniMaskIcon>
   late final Animation<double> _glowAnimation;
 
   static const _plomoColor = Color(0xFF2E2E2E);
-  static const _duration = Duration(milliseconds: 350);
+  static const _duration = AppMotion.normal;
 
   @override
   void initState() {

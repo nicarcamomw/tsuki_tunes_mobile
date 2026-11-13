@@ -144,7 +144,7 @@ class _Curve extends StatelessWidget {
           child: TweenAnimationBuilder<double>(
             key: ValueKey(preset),
             tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 350),
+            duration: AppMotion.normal,
             curve: Curves.easeOutCubic,
             builder: (context, t, _) => CustomPaint(painter: _CurvePainter(preset, t)),
           ),

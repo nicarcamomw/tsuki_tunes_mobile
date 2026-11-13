@@ -32,8 +32,8 @@ class LyricsScreen extends ConsumerStatefulWidget {
     required LyricsController controller,
   }) {
     return PageRouteBuilder<void>(
-      transitionDuration: const Duration(milliseconds: 380),
-      reverseTransitionDuration: const Duration(milliseconds: 280),
+      transitionDuration: AppMotion.slow,
+      reverseTransitionDuration: AppMotion.normal,
       pageBuilder: (_, __, ___) =>
           LyricsScreen(controller: controller),
       transitionsBuilder: (_, animation, __, child) {
@@ -448,7 +448,7 @@ class _Chip extends ConsumerWidget {
             },
       scaleDown: 0.92,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppMotion.fast,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: active

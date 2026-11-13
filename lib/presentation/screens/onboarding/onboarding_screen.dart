@@ -112,7 +112,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (_currentPage < 2) {
       _pageController.animateToPage(
         _currentPage + 1,
-        duration: const Duration(milliseconds: 400),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     } else {
@@ -355,7 +355,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             children: List.generate(3, (index) {
               final isActive = _currentPage == index;
               return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+                duration: AppMotion.normal,
                 curve: Curves.easeOutCubic,
                 margin: const EdgeInsets.only(right: 6),
                 width: isActive ? 24 : 8,
@@ -392,7 +392,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               splashColor: AppColors.accent.withValues(alpha: 0.3),
               highlightColor: AppColors.accent.withValues(alpha: 0.15),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
+                duration: AppMotion.normal,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 12,

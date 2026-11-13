@@ -150,7 +150,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
   void _goTo(int page) {
     if (page < 0 || page >= _slides.length) return;
     _pageController.animateToPage(page,
-        duration: const Duration(milliseconds: 380), curve: Curves.easeInOutCubic);
+        duration: AppMotion.slow, curve: Curves.easeInOutCubic);
     setState(() => _page = page);
     if (page == _slides.length - 1) {
       // The last slide (the recap to share) stays until closed.

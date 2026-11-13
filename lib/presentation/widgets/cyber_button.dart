@@ -40,8 +40,8 @@ class _CyberButtonState extends State<CyberButton>
     super.initState();
     _scaleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 250),
+      duration: AppMotion.micro,
+      reverseDuration: AppMotion.normal,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(
@@ -93,7 +93,7 @@ class _CyberButtonState extends State<CyberButton>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
+        duration: AppMotion.micro,
         width: widget.width,
         height: widget.height,
         padding: const EdgeInsets.symmetric(horizontal: 18),

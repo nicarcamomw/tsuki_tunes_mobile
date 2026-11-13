@@ -315,7 +315,7 @@ class EcoLevelUpBanner extends ConsumerStatefulWidget {
 
 class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with SingleTickerProviderStateMixin {
   late final AnimationController _enter =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+      AnimationController(vsync: this, duration: AppMotion.slow);
   Timer? _autoClose;
   bool _closing = false;
 

@@ -36,7 +36,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
     super.initState();
     _rippleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: AppMotion.slow,
     );
     _loadMaskImages();
   }
@@ -184,7 +184,7 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
               child: SizedBox(
                 height: 54,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
+                  duration: AppMotion.normal,
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
                   child: widget.loginSuccess

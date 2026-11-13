@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// Gives [child] a short pop whenever [value] changes: a song marked as
 /// listened, an artist followed. Not on the first build, so a list scrolled
@@ -12,7 +13,7 @@ class PopOnChange extends StatefulWidget {
 
   const PopOnChange({super.key, required this.value, required this.child, this.peak = 1.22});
 
-  static const duration = Duration(milliseconds: 420);
+  static const duration = AppMotion.slow;
 
   @override
   State<PopOnChange> createState() => _PopOnChangeState();

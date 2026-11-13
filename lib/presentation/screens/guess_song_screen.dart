@@ -1083,7 +1083,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
     if (i == _lastRecordedAttempt && done) {
       return TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.95, end: 1.0),
-        duration: const Duration(milliseconds: 300),
+        duration: AppMotion.normal,
         curve: Curves.elasticOut,
         builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
         child: rowContent,

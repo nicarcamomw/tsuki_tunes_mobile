@@ -259,7 +259,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.fast,
               child: Text(
                 failed && showHint
                     ? _errorDetail

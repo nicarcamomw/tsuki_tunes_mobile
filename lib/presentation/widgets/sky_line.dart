@@ -585,7 +585,7 @@ class _RainOfferCardState extends ConsumerState<RainOfferCard> {
       );
     }
     return AnimatedSize(
-      duration: const Duration(milliseconds: 280),
+      duration: AppMotion.normal,
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
       child: body,

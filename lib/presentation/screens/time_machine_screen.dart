@@ -205,7 +205,7 @@ class _TimeMachineScreenState extends ConsumerState<TimeMachineScreen> {
           ),
           _DateHeader(anchor: _anchor, loading: _loading, locale: locale),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
+            duration: AppMotion.normal,
             child: _loading
                 ? const _MomentSkeleton(key: ValueKey('loading'))
                 : moment == null

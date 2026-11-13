@@ -146,6 +146,14 @@ def migrate(kind):
                                      lambda m: m.group(0) if radius_token(float(m.group(2))) is None
                                      else f'{m.group(1)}AppRadius.{radius_token(float(m.group(2)))}', new)
                         new = re.sub(r'(this\.radius = )(\d+(?:\.\d+)?)', lambda m: f'{m.group(1)}AppRadius.{radius_token(float(m.group(2)))}', new)
+                elif kind == 'durations':
+                    def rep_d(m):
+                        ms = int(m.group(3))
+                        if ms > 650 or ms == 0:
+                            return m.group(0)
+                        tok = 'micro' if ms <= 130 else 'fast' if ms <= 230 else 'normal' if ms <= 360 else 'slow'
+                        return f'{m.group(1)}AppMotion.{tok}'
+                    new = re.sub(r'(\b(?:duration|reverseDuration|transitionDuration|reverseTransitionDuration): *)(const +)?Duration\(milliseconds: *(\d+)\)', rep_d, new)
                 if new != text:
                     open(path, 'w').write(new)
                     changed.add(library_of(path, new))

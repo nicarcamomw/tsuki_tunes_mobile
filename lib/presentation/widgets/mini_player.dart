@@ -106,8 +106,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     Navigator.of(context)
         .push(
           PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 320),
-            reverseTransitionDuration: const Duration(milliseconds: 280),
+            transitionDuration: AppMotion.normal,
+            reverseTransitionDuration: AppMotion.normal,
             pageBuilder: (_, __, ___) => const ExpandedPlayerScreen(),
             transitionsBuilder: (_, anim, __, child) {
               final curved = CurvedAnimation(
@@ -213,7 +213,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                               child: Opacity(
                                 opacity: 1.0 - (1.0 - swipeOpacity) * 0.7,
                                 child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
+                                  duration: AppMotion.normal,
                                   switchInCurve: Curves.easeOutCubic,
                                   switchOutCurve: Curves.easeInCubic,
                                   transitionBuilder: (child, animation) {

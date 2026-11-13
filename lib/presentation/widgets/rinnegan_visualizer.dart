@@ -460,7 +460,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
                 bottom: size * 0.1,
                 child: IgnorePointer(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
+                    duration: AppMotion.fast,
                     child: _chip == null
                         ? const SizedBox.shrink()
                         : _SyncChip(key: ValueKey(_chip), text: _chip!),

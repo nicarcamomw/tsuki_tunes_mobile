@@ -75,7 +75,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     super.initState();
     _snapBack = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.normal,
     );
     _snapAnimation = const AlwaysStoppedAnimation(0.0);
     _snapBack.addListener(() {

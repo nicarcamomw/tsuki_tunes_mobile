@@ -72,7 +72,7 @@ class _LyricsLinesState extends ConsumerState<LyricsLines> {
       } else {
         _scroll.animateTo(
           target,
-          duration: const Duration(milliseconds: 520),
+          duration: AppMotion.slow,
           curve: Curves.easeOutCubic,
         );
       }
@@ -276,14 +276,14 @@ class _LyricLine extends StatelessWidget {
         child: AnimatedScale(
           scale: current ? 1.03 : 1.0,
           alignment: Alignment.centerLeft,
-          duration: const Duration(milliseconds: 300),
+          duration: AppMotion.normal,
           curve: Curves.easeOutCubic,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
+                duration: AppMotion.normal,
                 curve: Curves.easeOut,
                 style: style,
                 child: Text(text),

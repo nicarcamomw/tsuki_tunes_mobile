@@ -83,7 +83,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (scrollController.hasClients) {
       scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 380),
+        duration: AppMotion.slow,
         curve: Curves.easeOutCubic,
       );
     }
@@ -903,7 +903,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
           // Expanded track list
           AnimatedSize(
-            duration: const Duration(milliseconds: 250),
+            duration: AppMotion.normal,
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
             child: isExpanded

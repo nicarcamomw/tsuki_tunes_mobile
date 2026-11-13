@@ -66,7 +66,7 @@ class _UnlockBanner extends ConsumerStatefulWidget {
 
 class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProviderStateMixin {
   late final AnimationController _enter =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
+      AnimationController(vsync: this, duration: AppMotion.slow);
   late final AnimationController _burst =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
   Timer? _autoClose;

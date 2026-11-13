@@ -246,7 +246,7 @@ class _MonthRow extends StatelessWidget {
                   children: [
                     Container(color: Colors.white.withValues(alpha: 0.06)),
                     AnimatedFractionallySizedBox(
-                      duration: const Duration(milliseconds: 600),
+                      duration: AppMotion.slow,
                       curve: Curves.easeOutCubic,
                       widthFactor: fraction.clamp(0.0, 1.0),
                       child: Container(color: AppColors.accent.withValues(alpha: current ? 1 : 0.7)),

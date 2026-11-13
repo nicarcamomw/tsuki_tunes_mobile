@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 class FadeIndexedStack extends StatefulWidget {
   final int index;
@@ -9,7 +10,7 @@ class FadeIndexedStack extends StatefulWidget {
     super.key,
     required this.index,
     required this.children,
-    this.duration = const Duration(milliseconds: 150),
+    this.duration = AppMotion.fast,
   });
 
   @override

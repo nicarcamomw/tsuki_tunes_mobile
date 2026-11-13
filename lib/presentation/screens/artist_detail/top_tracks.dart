@@ -50,7 +50,7 @@ class _TopTracksSliver extends StatelessWidget {
             TrackTile(track: tracks[i], index: i, queue: tracks),
           if (tracks.length > 5) ...[
             AnimatedSize(
-              duration: const Duration(milliseconds: 350),
+              duration: AppMotion.normal,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: Column(
@@ -139,7 +139,7 @@ class _FeaturesSliver extends StatelessWidget {
             TrackTile(track: tracks[i], index: i, queue: tracks),
           if (tracks.length > _collapsed) ...[
             AnimatedSize(
-              duration: const Duration(milliseconds: 350),
+              duration: AppMotion.normal,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: Column(
@@ -196,7 +196,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
             child: AnimatedContainer(
               duration: reduceMotion
                   ? Duration.zero
-                  : const Duration(milliseconds: 300),
+                  : AppMotion.normal,
               curve: Curves.easeOutCubic,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
@@ -220,7 +220,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
                   const SizedBox(width: 4),
                   AnimatedRotation(
                     turns: showAll ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppMotion.normal,
                     curve: Curves.easeOutCubic,
                     child: const Icon(
                       Icons.keyboard_arrow_down,

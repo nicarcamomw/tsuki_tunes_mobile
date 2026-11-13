@@ -219,7 +219,7 @@ class SkeletonSwitcher extends StatelessWidget {
 
   const SkeletonSwitcher({super.key, required this.loading, required this.skeleton, required this.child});
 
-  static const duration = Duration(milliseconds: 280);
+  static const duration = AppMotion.normal;
 
   @override
   Widget build(BuildContext context) => AnimatedSwitcher(

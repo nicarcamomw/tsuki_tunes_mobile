@@ -50,4 +50,12 @@ void main() {
   test('E-04: screens open with the app transition, not MaterialPageRoute', () {
     expect(_offenders(RegExp(r'MaterialPageRoute')), isEmpty);
   });
+
+  test('D-04: transitions take a motion token', () {
+    // duration: Duration(milliseconds: N) for N up to 650 is a transition;
+    // longer ones are ambient loops (breathing, sakura) and stay.
+    final short = RegExp(r'\b(duration|reverseDuration|transitionDuration|reverseTransitionDuration): *(const +)?'
+        r'Duration\(milliseconds: *([1-9]\d?|[1-5]\d\d|6[0-4]\d|650)\)');
+    expect(_offenders(short), isEmpty);
+  });
 }
