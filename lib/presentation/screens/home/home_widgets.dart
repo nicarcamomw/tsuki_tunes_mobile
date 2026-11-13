@@ -389,7 +389,7 @@ class _StatCard extends StatelessWidget {
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.headline,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.accent,
+                          color: AppColors.textBright,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -401,12 +401,12 @@ class _StatCard extends StatelessWidget {
                           ? locale.getTextStyle(
                               fontSize: AppFontSize.titleLg,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
+                              color: AppColors.textBright,
                             )
                           : locale.getTextStyle(
                               fontSize: AppFontSize.headline,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.accent,
+                              color: AppColors.textBright,
                             ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

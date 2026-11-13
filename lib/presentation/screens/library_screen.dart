@@ -177,7 +177,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     style: locale.getTextStyle(
                       fontSize: AppFontSize.body,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.accent,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -345,17 +345,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         ref.read(playTracksProvider)(allTracks, shuffled: true);
                       }
                     },
-                    icon: Icon(Icons.shuffle, color: AppColors.accent, size: 18, semanticLabel: strings.a11yShuffleAll),
+                    icon: Icon(Icons.shuffle, color: AppColors.textPrimary, size: 18, semanticLabel: strings.a11yShuffleAll),
                     label: Text(
                       strings.shuffle,
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
+                        color: AppColors.textPrimary,
                       ),
                     ),
+                    // D-12: the second action is neutral; red is for "play all".
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
+                      side: const BorderSide(color: AppColors.borderGlow),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -478,15 +479,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () { Haptics.tap(); createSharedPlaylist(context, ref); },
-                    icon: const Icon(Icons.group_add_rounded, color: AppColors.accent, size: 18),
+                    icon: const Icon(Icons.group_add_rounded, color: AppColors.social, size: 18),
                     label: Text(
                       strings.sharedNew,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.accent),
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.social),
                     ),
+                    // D-12: shared with Bonds is social, so purple.
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
+                      side: BorderSide(color: AppColors.social.withValues(alpha: 0.7)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -525,7 +527,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               height: 48,
                               child: p.coverUrl.isEmpty
                                   ? const ColoredBox(
-                                      color: AppColors.bgMid, child: Icon(Icons.groups_rounded, color: AppColors.accent))
+                                      color: AppColors.bgMid, child: Icon(Icons.groups_rounded, color: AppColors.social))
                                   : CachedNetworkImage(
                                       imageUrl: p.coverUrl,
                                       memCacheWidth: imageCacheSize(context, 48),
@@ -543,7 +545,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                 : '${strings.sharedMembers(p.members.length)} · ${strings.trackCountLabel(p.tracks.length)}',
                             style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary),
                           ),
-                          trailing: const Icon(Icons.groups_rounded, color: AppColors.accent, size: 18),
+                          trailing: const Icon(Icons.groups_rounded, color: AppColors.social, size: 18),
                           onTap: () { Haptics.tap(); SharedPlaylistRoute(id: p.id).push<void>(context); },
                         ),
                       const Divider(color: AppColors.border, height: 16),
@@ -661,7 +663,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             child: Row(
               children: [
                 Icon(Icons.person_add_alt_1_rounded,
-                    size: 16, color: AppColors.accent, semanticLabel: locale.strings.a11yFollowArtist),
+                    size: 16, color: AppColors.textSecondary, semanticLabel: locale.strings.a11yFollowArtist),
                 const SizedBox(width: 8),
                 Text(
                   locale.strings.followedArtistsTitle,
@@ -678,7 +680,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   style: locale.getTextStyle(
                     fontSize: AppFontSize.body,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -868,7 +870,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         strings.viewAlbum,
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.micro,
-                          color: AppColors.accent,
+                          color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

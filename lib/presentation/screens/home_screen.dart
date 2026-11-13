@@ -294,7 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 locale: locale,
                 icon: Icon(
                   Icons.wifi_off_rounded,
-                  color: AppColors.accent,
+                  color: AppColors.textMuted,
                   size: 28,
                   semanticLabel: strings.a11yOffline,
                 ),

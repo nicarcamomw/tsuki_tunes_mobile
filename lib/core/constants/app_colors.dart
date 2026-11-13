@@ -14,7 +14,29 @@ class AppColors {
   static const Color borderGlow = Color(0xFF3B4255);
 
   // Cyber Crimson Accent
+  //
+  // D-12, red with a meaning. The crimson is for three things only:
+  //   1. what is playing (the current song's row, the play button, the
+  //      progress),
+  //   2. the screen's main action (play all, create, the primary button),
+  //   3. what is active or selected (the tab, a chosen chip, a toggle on),
+  // plus the brand's own marks (the "// 01" of a screen title, the logo).
+  // Everything else that informs (counts, section headers, secondary
+  // actions, links) is neutral: textPrimary / textSecondary / textMuted.
+  // The neons each keep one meaning: cyan = ambient and information
+  // (weather, moon, radar, hints), purple = social and the masks (Bonds,
+  // shared playlists, seres etéreos), green = Spotify and running.
   static const Color accent = Color(0xFFFF1919);
+
+  /// D-12 by name, for new code: what sounds, the main action, what's on.
+  static const Color playing = accent;
+  static const Color primaryAction = accent;
+  static const Color active = accent;
+
+  /// D-12: the neons' fixed meanings.
+  static const Color info = neonCyan;
+  static const Color social = neonPurple;
+  static const Color spotify = neonGreen;
 
   // The accent family made to be read (WCAG AA, 4.5:1 on every background
   // here, bgHover the lightest). The brand colours stay for fills, borders,

@@ -357,7 +357,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           }
                           if (!_voiceSupported) return const SizedBox.shrink();
                           return IconButton(
-                            icon: const Icon(Icons.mic, color: AppColors.accent, size: 20),
+                            icon: const Icon(Icons.mic, color: AppColors.textSecondary, size: 20),
                             tooltip: strings.a11yVoiceSearch,
                             onPressed: _startVoiceSearch,
                           );
@@ -546,7 +546,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
+                        color: AppColors.textSecondary,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -724,7 +724,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           child: Row(
             children: [
-              const Icon(Icons.auto_fix_high, size: 16, color: AppColors.accent),
+              const Icon(Icons.auto_fix_high, size: 16, color: AppColors.info),
               const SizedBox(width: 8),
               Flexible(
                 child: Text.rich(
@@ -738,7 +738,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.bodyLg,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.accent,
+                          color: AppColors.info,
                         ),
                       ),
                       const TextSpan(text: '?'),
@@ -828,7 +828,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               style: locale.getTextStyle(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
-                color: AppColors.accent,
+                color: AppColors.textMuted,
                 letterSpacing: 1.2,
               ),
             ),
@@ -863,11 +863,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
+                color: AppColors.bgMid,
                 borderRadius: BorderRadius.circular(AppRadius.chip),
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.border),
               ),
-              child: const Icon(Icons.lyrics_outlined, color: AppColors.accent, size: 22),
+              child: const Icon(Icons.lyrics_outlined, color: AppColors.textSecondary, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1030,7 +1030,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
+                  color: AppColors.textSecondary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -1059,7 +1059,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
+                  color: AppColors.textSecondary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -1088,7 +1088,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.body,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
+                  color: AppColors.textSecondary,
                   letterSpacing: 1.2,
                 ),
               ),
