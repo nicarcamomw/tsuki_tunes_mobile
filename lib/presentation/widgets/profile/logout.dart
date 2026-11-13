@@ -82,6 +82,8 @@ Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
     // The Spotify link belongs to the person, not the device: the next
     // account on this phone must not control their Spotify.
     await audio.spotify.disconnect();
+    // Nor see which songs they played (the Spotify lookups).
+    await audio.spotify.clearUriCache();
     await audio.updateSpotifyState();
 
     if (context.mounted) {

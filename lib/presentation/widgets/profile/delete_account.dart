@@ -117,6 +117,8 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     await audio.stop();
     // The Spotify link belongs to the person, not to this phone.
     await audio.spotify.disconnect();
+    // Nor which songs it played (the Spotify lookups).
+    await audio.spotify.clearUriCache();
     await audio.updateSpotifyState();
     // Nothing may sync the library back while it's being deleted.
     library.disconnectFirestore();

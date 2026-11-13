@@ -239,10 +239,14 @@ class SpotifyService {
     _uriCacheLoaded = true;
   }
 
-  @visibleForTesting
-  void clearUriCache() {
+  /// Forgets which songs were looked up (they show what was played). Only
+  /// for a change of account (logout, account deletion), not on disconnect:
+  /// playback just looks each song up again, a little slower the first time.
+  Future<void> clearUriCache() async {
+    _saveCacheTimer?.cancel();
     _uriCache.clear();
-    StorageService().saveSpotifyUriCache({});
+    _uriCacheLoaded = true; // nothing older to load back in
+    await StorageService().saveSpotifyUriCache({});
   }
 
   String _generateCodeVerifier() {

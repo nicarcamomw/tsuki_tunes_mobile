@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/datasources/spotify_service.dart';
@@ -65,6 +66,32 @@ void main() {
 
       // Trigger a search or cache lookup that touches entries
       expect(spotify.uriCache.length, greaterThanOrEqualTo(2000));
+    });
+
+    // Logout and account deletion clear it: the next account on the phone
+    // must not see which songs were played.
+    test('clearUriCache forgets the lookups, in memory and on disk', () async {
+      final spotify = SpotifyService();
+      spotify.populateUriCacheForTesting({'10001': 'spotify:track:a'});
+      await StorageService().saveSpotifyUriCache({'10001': 'spotify:track:a'});
+
+      await spotify.clearUriCache();
+
+      expect(spotify.uriCache, isEmpty);
+      expect(await StorageService().getSpotifyUriCache(), isEmpty);
+    });
+
+    // Disconnecting (by hand, or when Spotify revokes the token) keeps the
+    // cache, so playback stays as fast as it was.
+    test('disconnect keeps the cache', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'), (_) async => null);
+      final spotify = SpotifyService();
+      spotify.populateUriCacheForTesting({'10002': 'spotify:track:b'});
+
+      await spotify.disconnect();
+
+      expect(spotify.uriCache['10002'], 'spotify:track:b');
     });
   });
 }
