@@ -286,8 +286,18 @@ class _GenreTile extends StatelessWidget {
 
   const _GenreTile({required this.genre, required this.locale});
 
+  /// B-03: each genre's own deep tone, stable (from its id) and quiet
+  /// enough to leave the neons their meanings (D-12).
+  static Color toneOf(Genre genre) {
+    // The golden angle spreads neighbouring ids far apart on the wheel.
+    final n = int.tryParse(genre.id) ?? genre.id.codeUnits.fold<int>(0, (a, c) => a * 31 + c);
+    final hue = (n * 137.508) % 360;
+    return HSLColor.fromAHSL(1, hue, 0.45, 0.30).toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tone = toneOf(genre);
     return Semantics(
       button: true,
       label: genre.name,
@@ -319,11 +329,11 @@ class _GenreTile extends StatelessWidget {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      AppColors.bgDeep.withValues(alpha: 0.9),
-                      AppColors.bgDeep.withValues(alpha: 0.35),
+                      Color.lerp(AppColors.bgDeep, tone, 0.55)!.withValues(alpha: 0.95),
+                      tone.withValues(alpha: 0.35),
                     ],
                   ),
-                  border: Border.all(color: AppColors.border),
+                  border: Border(left: BorderSide(color: HSLColor.fromColor(tone).withLightness(0.6).toColor(), width: 3)),
                   borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
               ),
