@@ -51,6 +51,15 @@ Trabajo hecho sobre el plan `Ajustes_front.md`, tarea por tarea. Cada tarea es u
 | P-06 | Estados vacíos con personaje: Oni (Biblioteca), Hannya (Playlists) y Tengu (Buscar), con una línea de lore en es, en y ja. |
 | P-10 | Lore como lectura: nombres más integrados en la línea, ancho de lectura en tablet y una jerarquía común en facciones, vínculos y rostros. |
 | P-11 | Cada tomo de Lore muestra su progreso. |
+| D-10 / P-02 | Tres botones definidos en el tema: primario (relleno carmesí), secundario (contorno neutro) y de texto. Todos con 48 dp y la esquina de chip. Los 18 botones de Bonds dejan de repetir estilos. |
+| E-02 | Los gestos ocultos de la barra se enseñan una sola vez (a la tercera vez que cambias de pestaña), y TalkBack anuncia la pulsación larga de cada pestaña. |
+| B-03 | Cada género tiene su propio tono profundo, estable y sin chocar con los neones. |
+| B-04 | Tarjeta de "Mejor resultado" arriba de la búsqueda (el artista si coincide con lo escrito; si no, la primera canción). |
+| L-03 | El vacío de Playlists también tiene acción directa (crear una playlist). |
+| R-05 | La línea de la letra que suena aparece bajo el título del reproductor; al tocarla abre Letras. |
+| R-06 | Deslizar la portada del reproductor cambia de canción. |
+| P-12 | Cubierto por E-04 (transición), D-11 (colores) y P-04 (`select`). |
+| F-01 | Los widgets de inicio usan la paleta de la app (como recursos de color), con el gris AA y sin texto de 9 sp. No lo pude compilar aquí (no hay SDK de Android): son cambios solo de recursos. |
 | E-07 | Ya estaba hecho en el código (deslizar a los lados cambia de canción y hacia arriba abre el reproductor). |
 | T-04 | Cubierto por D-02. |
 
