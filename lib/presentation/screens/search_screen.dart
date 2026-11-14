@@ -27,6 +27,7 @@ import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';

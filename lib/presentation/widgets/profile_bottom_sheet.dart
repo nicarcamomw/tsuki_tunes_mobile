@@ -30,6 +30,7 @@ import 'haptics.dart';
 import 'language_selector_sheet.dart';
 import 'my_avatar.dart';
 import 'oni_mask_art.dart';
+import 'section_title.dart';
 import 'shuffle_mode_icon.dart';
 import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';

@@ -204,18 +204,7 @@ extension _SearchEmptyView on _SearchScreenState {
     );
   }
 
-  Widget _sectionLabel(String text, LocaleProvider locale) => Semantics(
-        header: true,
-        child: Text(
-          text,
-          style: locale.getTextStyle(
-            fontSize: AppFontSize.micro,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textMuted,
-            letterSpacing: 1.2,
-          ),
-        ),
-      );
+  Widget _sectionLabel(String text, LocaleProvider locale) => SectionLabel(locale: locale, text: text);
 
   /// Completions of the text being typed: recent searches, the user's own
   /// artists and songs, then names from the results so far.

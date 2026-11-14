@@ -19,6 +19,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/moon_loader.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 
 /// Bonds (Lazos): what your Bonds' Echo did (Resonances), your Bonds and
@@ -764,15 +765,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8, left: 2),
-    child: Text(
-      '${text.toUpperCase()} · $count',
-      style: locale.getTextStyle(
-        fontSize: AppFontSize.caption,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textMuted,
-        letterSpacing: 2,
-      ),
-    ),
+    child: Align(alignment: Alignment.centerLeft, child: SectionLabel(locale: locale, text: text, count: count)),
   );
 }
 

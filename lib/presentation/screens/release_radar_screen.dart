@@ -16,6 +16,7 @@ import '../state/locale_provider.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/permission_primer.dart';
+import '../widgets/section_title.dart';
 
 class ReleaseRadarScreen extends ConsumerStatefulWidget {
   const ReleaseRadarScreen({super.key});
@@ -239,42 +240,9 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
-        child: Semantics(
-          header: true,
-          child: Row(
-            children: [
-              Container(width: 3, height: 12, color: color),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textBright,
-                  letterSpacing: 1.6,
-                ),
-              ),
-              if (count != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: locale.getTextStyle(
-                      fontSize: AppFontSize.micro,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SectionLabel(locale: locale, text: label, count: count, marker: color),
         ),
       ),
     );

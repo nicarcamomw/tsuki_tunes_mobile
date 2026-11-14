@@ -12,15 +12,7 @@ class _SectionHeader extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          title,
-          style: locale.getTextStyle(
-            fontSize: AppFontSize.micro,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-            color: AppColors.textMuted,
-          ),
-        ),
+        child: SectionLabel(locale: locale, text: title),
       ),
     );
   }
