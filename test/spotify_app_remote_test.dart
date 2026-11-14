@@ -65,6 +65,12 @@ class FakeSpotifyService extends SpotifyService {
     _progressMs = progressMs;
   }
 
+  /// Spotify listed as playing nothing (no active device).
+  void clearPlaybackForTesting() {
+    _playbackUri = null;
+    _isPlaying = false;
+  }
+
   void setPaused(String uri, {int progressMs = 0}) {
     _playbackUri = uri;
     _isPlaying = false;
@@ -746,27 +752,36 @@ void main() {
       expect(provider.currentTrack, isNull);
     });
 
-    test('another track picked in Spotify mid-song: paused, play replays ours',
+    test('another track picked in Spotify again after Tsuki replaced one: paused, play replays ours',
         () async {
-      // Spotify had something else next, and Tsuki isn't on screen: the
-      // song was picked in the Spotify app, not skipped to.
+      // Spotify had something else next, the phone is in use and Tsuki
+      // isn't on screen. The first such jump is taken for a button and
+      // replaced; picked again in the Spotify app, it's left alone.
       fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
       setLifecycle(AppLifecycleState.paused);
-      final provider =
-          await playing([_track('t1'), _track('t2')], atMs: 60000);
+      final provider = await playing([_track('t1'), _track('t2'), _track('t3')], atMs: 60000);
       await Future.delayed(const Duration(milliseconds: 300));
 
       fakeNative.simulateStateChanged(1000, 200000, false,
           uri: 'spotify:track:OTHER');
       await Future.delayed(Duration.zero);
-      expect(provider.currentTrack?.id, 't1');
+      expect(provider.currentTrack?.id, 't2', reason: 'the first unexplained jump is a button');
+      fakeNative.simulateStateChanged(60000, 180000, false, uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      provider.backdateSpotifyJumpForTesting(const Duration(seconds: 10));
+
+      fakeNative.simulateStateChanged(1000, 200000, false,
+          uri: 'spotify:track:OTHER2');
+      await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
       expect(provider.isPlaying, isFalse);
 
       fakeNative.resumeCount = 0;
       await provider.togglePlay();
 
       expect(fakeNative.resumeCount, 0);
-      expect(fakeNative.lastTrackUri, 'spotify:track:t1');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
       expect(fakeNative.lastSeekMs, greaterThanOrEqualTo(60000));
     });
   });
@@ -945,21 +960,101 @@ void main() {
       expect(fakeNative.lastTrackUri, 'spotify:track:t2');
     });
 
-    test('paused, a song Spotify didn\'t have next with Tsuki behind the Spotify app is left alone',
+    test('paused, a song picked again in the Spotify app after Tsuki replaced one is left alone',
         () async {
       fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
       setLifecycle(AppLifecycleState.paused);
       final provider = await playing(tracks);
-      fakeNative.simulateStateChanged(60000, 180000, true,
-          uri: 'spotify:track:t1');
+      fakeNative.simulateStateChanged(1000, 200000, false, uri: 'spotify:track:PICKED');
       await Future.delayed(Duration.zero);
+      expect(provider.currentTrack?.id, 't2');
+      fakeNative.simulateStateChanged(60000, 180000, false, uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      fakeNative.simulateStateChanged(60000, 180000, true, uri: 'spotify:track:t2');
+      await Future.delayed(Duration.zero);
+      provider.backdateSpotifyJumpForTesting(const Duration(seconds: 10));
 
       fakeNative.simulateStateChanged(0, 200000, false,
-          uri: 'spotify:track:PICKED');
+          uri: 'spotify:track:PICKED2');
       await Future.delayed(Duration.zero);
 
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:PICKED2');
+    });
+
+    test('on the lock screen, a jump Spotify didn\'t predict is always a button',
+        () async {
+      // Screen on but locked: the lock screen's (or the car's) buttons.
+      final unlock = StreamController<bool>.broadcast();
+      addTearDown(unlock.close);
+      fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
+      setLifecycle(AppLifecycleState.paused);
+      fakeNative.setConnected(true);
+      final provider = AudioProvider(
+        spotifyService: fakeSpotify,
+        nativePlayer: fakeNative,
+        flags: flags,
+        unlockChanges: unlock.stream,
+      );
+      addTearDown(provider.stop);
+      await provider.playTrack(tracks.first, newQueue: tracks);
+      fakeNative.simulateStateChanged(60000, 180000, false, uri: 'spotify:track:t1');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      unlock.add(false);
+      await Future.delayed(Duration.zero);
+
+      for (final (other, ours) in [('OTHER1', 't2'), ('OTHER2', 't3')]) {
+        fakeNative.simulateStateChanged(0, 200000, false, uri: 'spotify:track:$other');
+        await Future.delayed(Duration.zero);
+        expect(provider.currentTrack?.id, ours);
+        fakeNative.simulateStateChanged(60000, 180000, false, uri: 'spotify:track:$ours');
+        await Future.delayed(const Duration(milliseconds: 300));
+        provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+        provider.backdateSpotifyJumpForTesting(const Duration(seconds: 10));
+      }
+    });
+
+    test('after following Spotify, our next goes to its queue at once', () async {
+      // A second quick "next" must find ours there, not Spotify's autoplay.
+      setLifecycle(AppLifecycleState.paused);
+      fakeNative.setConnected(true);
+      final provider = createProvider();
+      addTearDown(provider.stop);
+      final four = [_track('t1'), _track('t2'), _track('t3'), _track('t4')];
+      await provider.playTrack(four.first, newQueue: four);
+      fakeNative.simulateStateChanged(30000, 180000, false, uri: 'spotify:track:t1');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      await Future.delayed(const Duration(milliseconds: 1100));
+      expect(fakeNative.queued, ['spotify:track:t2']);
+
+      // The car's "next": Spotify plays the queued t2, half a second in.
+      fakeNative.simulateStateChanged(500, 180000, false, uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.queued, ['spotify:track:t2', 'spotify:track:t3']);
+    });
+
+    test('Spotify gone for a while and back playing is followed, not left alone',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      // The link dropped and the Web API briefly lists no Spotify at all.
+      fakeNative.setConnected(false);
+      fakeSpotify.clearPlaybackForTesting();
+      await provider.syncSpotifyStateForTesting();
+      expect(provider.isPlaying, isFalse);
+      expect(provider.spotifyWatchedForTesting, isTrue);
+
+      // Back, still on ours.
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 90000);
+      await provider.syncSpotifyStateForTesting();
+      expect(provider.isPlaying, isTrue);
       expect(provider.currentTrack?.id, 't1');
-      expect(fakeNative.lastTrackUri, 'spotify:track:PICKED');
     });
 
     test('while paused Tsuki keeps watching Spotify, for half an hour', () async {

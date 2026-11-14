@@ -282,9 +282,13 @@ extension _SpotifyPlayback on AudioProvider {
             return;
           }
           if (_isPlaying) {
-            _log.warning('Spotify session gone, marking paused');
+            // Often only for a while (Spotify frozen by the battery saver,
+            // its device briefly unlisted): keep watching, so when it comes
+            // back playing Tsuki follows instead of standing still.
+            _log.warning('Spotify session gone, marking paused and watching');
             _isPlaying = false;
-            _stopPositionTimer();
+            _watchSpotifyWhilePaused();
+            _reconnectAppRemoteSoon();
             notifyListeners();
           }
         }
@@ -473,6 +477,8 @@ extension _SpotifyPlayback on AudioProvider {
     }
     _keepMediaSessionOnTop();
     unawaited(_learnSpotifyNextUp());
+    _spotifyFollowedGen = _playGeneration;
+    unawaited(_maybeQueueNextInSpotify(progress));
   }
 
   /// While a song plays through App Remote with Tsuki away (screen off,
@@ -494,7 +500,10 @@ extension _SpotifyPlayback on AudioProvider {
     if (_spotifyQueueBroken) return;
     if (_spotifyQueuedGen == _playGeneration) return;
     // Once ours is playing, a moment in: a play still landing isn't touched.
-    if (!_isPlaying || _isBuffering || pos < const Duration(seconds: 2)) return;
+    // A song Spotify moved to by itself has no play landing: at once, or a
+    // second "next" pressed quickly went to Spotify's autoplay.
+    final followed = _spotifyFollowedGen == _playGeneration;
+    if (!_isPlaying || _isBuffering || (!followed && pos < const Duration(seconds: 2))) return;
     // With Tsuki in front a song may be tapped any moment, which would leave
     // the queued one behind in Spotify (its queue can't be emptied) to play
     // out of place after the next song: wait for the last seconds then.
@@ -838,12 +847,23 @@ extension _SpotifyPlayback on AudioProvider {
       return true;
     }
     final nextUp = _spotifyNextUp;
-    // A song picked in the Spotify app needs its screen on. With the
-    // screen off (driving, the phone in a pocket) it's a button: the car's,
-    // a speaker's or a headset's. Spotify's guess of its next song (asked
-    // at the start) often isn't the one its autoplay then plays, and taking
-    // that for a pick handed the car to Spotify for good.
-    if (_screenOn && !onScreen && nextUp != null && nextUp != uri) return false;
+    // A song picked in the Spotify app needs the phone in use: screen on
+    // and unlocked (on the lock screen it's the lock screen's buttons).
+    // Otherwise it's a button: the car's, a speaker's or a headset's.
+    // Spotify's guess of its next song (asked at the start) often isn't the
+    // one its autoplay then plays, so even then the first such jump is
+    // taken for a button and replaced; only a second one, 5 to 60 s after
+    // (someone picking again in the Spotify app, not a quick run of
+    // "next"), is left to Spotify. Giving up on the first handed the car
+    // to Spotify for good, with Tsuki standing still.
+    if (_screenOn && _phoneUnlocked && !onScreen && nextUp != null && nextUp != uri) {
+      final replaced = _spotifyJumpReplacedAt;
+      final since = replaced == null ? null : DateTime.now().difference(replaced);
+      if (since != null && since >= const Duration(seconds: 5) && since <= const Duration(seconds: 60)) {
+        return false;
+      }
+      _spotifyJumpReplacedAt = DateTime.now();
+    }
     _log.info('Spotify skipped ahead (its own "next"), doing ours');
     ProductAnalytics.instance.log('spotify_controls_skip');
     _stopPositionTimer();
@@ -887,10 +907,12 @@ extension _SpotifyPlayback on AudioProvider {
   /// it's still needed.
   void _reconnectAppRemoteSoon() {
     if (_appRemoteReconnectTimer?.isActive ?? false) return;
+    // Then every minute for as long as it's needed: over hours Android may
+    // drop the link many times, and four failures in a row (Spotify frozen
+    // for a while) used to end the tries for the whole session.
     const waits = [3, 10, 30, 60];
-    if (_appRemoteReconnects >= waits.length) return;
-    _appRemoteReconnectTimer =
-        Timer(Duration(seconds: waits[_appRemoteReconnects]), () async {
+    final wait = waits[_appRemoteReconnects.clamp(0, waits.length - 1)];
+    _appRemoteReconnectTimer = Timer(Duration(seconds: wait), () async {
       if (!_useSpotify ||
           !_spotifyActive ||
           _spotifyFallbackActive ||

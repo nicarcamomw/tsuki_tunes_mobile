@@ -160,6 +160,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// Whether the screen is on (unknown counts as on). With it off nobody is
   /// picking songs in the Spotify app: a jump is the car's or a headset's.
   bool _screenOn = true;
+  // Screen on and unlocked: someone can be using another app (the Spotify
+  // app among them). False when off or on the lock screen.
+  bool _phoneUnlocked = true;
+  // When Tsuki last replaced a jump in Spotify it couldn't explain (a song
+  // Spotify didn't have next, with the phone in use in another app).
+  DateTime? _spotifyJumpReplacedAt;
+  // The song Spotify moved to by itself along our list (no play of ours to
+  // land), so our next can go to its queue at once.
+  int? _spotifyFollowedGen;
 
   /// A Spotify change ignored for a moment (ours was starting) is looked at
   /// again once that moment passes, instead of at the next poll.
@@ -421,6 +430,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   /// Moves back when Spotify was paused, as if [by] went by since.
   @visibleForTesting
+  void backdateSpotifyJumpForTesting(Duration by) {
+    final at = _spotifyJumpReplacedAt;
+    if (at != null) _spotifyJumpReplacedAt = at.subtract(by);
+  }
+
+  @visibleForTesting
   void backdateSpotifyPauseForTesting(Duration by) {
     final at = _spotifyPausedAt;
     if (at != null) _spotifyPausedAt = at.subtract(by);
@@ -505,6 +520,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     SpotifyNativePlayer? nativePlayer,
     FeatureFlags? flags,
     Stream<bool>? screenChanges,
+    Stream<bool>? unlockChanges,
   })  : _service = service ?? AudioPlayerService(),
         _storage = storage ?? StorageService(),
         _spotify = spotifyService ?? SpotifyService(),
@@ -534,6 +550,8 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _screenOn = on;
       _onScreenChanged();
     });
+    _unlockSub = (unlockChanges ?? ScreenService.unlocked)
+        .listen((unlocked) => _phoneUnlocked = unlocked);
     _initAudioSession();
     _initSubscriptions();
     // Once both are known, a Spotify still playing our queue after Tsuki
@@ -758,6 +776,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
   StreamSubscription<void>? _unplugSub;
   StreamSubscription<bool>? _screenSub;
+  StreamSubscription<bool>? _unlockSub;
 
   /// Headphones out: pause, and stay paused (an interruption ending later
   /// must not resume it out of the speaker).
@@ -946,6 +965,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _retryTimer?.cancel();
     _retryCount = 0;
     _spotifyPausedAt = null;
+    _appRemoteReconnects = 0;
     _currentTrack = track;
     _setPosition(Duration.zero);
     _completionHandled = false;
@@ -1958,6 +1978,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     _appRemoteReconnectTimer?.cancel();
     _unplugSub?.cancel();
     _screenSub?.cancel();
+    _unlockSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _bufSub?.cancel();
