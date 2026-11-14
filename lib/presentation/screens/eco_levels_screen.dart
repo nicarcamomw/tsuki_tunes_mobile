@@ -216,14 +216,15 @@ class _ColorPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final byCover = masks.coverTint;
     final chosen = masks.playerColor?.id;
     final level = masks.unlockLevel; // what's open (all, for an admin)
-    Widget dot(String? id, Color color, String name, int? lockedAt) {
-      final selected = chosen == id;
+    Widget dot(String? id, Color color, String name, int? lockedAt, {String? a11y}) {
+      final selected = !byCover && chosen == id;
       return Semantics(
         button: true,
         selected: selected,
-        label: lockedAt == null ? name : '$name. ${strings.ecoOpensAt(lockedAt)}',
+        label: lockedAt == null ? (a11y ?? name) : '$name. ${strings.ecoOpensAt(lockedAt)}',
         excludeSemantics: true,
         child: GestureDetector(
           onTap: () {
@@ -258,7 +259,7 @@ class _ColorPicker extends StatelessWidget {
                 width: 56,
                 child: Text(name,
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               ),
@@ -268,13 +269,74 @@ class _ColorPicker extends StatelessWidget {
       );
     }
 
-    return Wrap(
+    final coverLevel = EcoFeature.coverColors.level;
+    final coverOpen = level >= coverLevel;
+    final palette = Wrap(
       spacing: 6,
       runSpacing: 10,
       children: [
-        dot(null, AppColors.accent, strings.ecoColorDefault, null),
+        // The red is the base: what the player is with nothing chosen.
+        dot(null, AppColors.accent, strings.ecoColorDefault, null, a11y: strings.ecoColorDefaultA11y),
         for (final c in EcoLevels.colors)
           dot(c.id, Color(c.argb), strings.ecoColorName(c), level >= c.level ? null : c.level),
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Colours from each song: an option the levels open. While on, the
+        // palette rests and the player follows each cover.
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+          decoration: BoxDecoration(
+            color: AppColors.bgCard,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: byCover ? AppColors.accent.withValues(alpha: 0.5) : AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Icon(coverOpen ? Icons.palette_rounded : Icons.lock_outline_rounded,
+                  size: 20, color: coverOpen ? AppColors.accent : AppColors.textMuted),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(strings.ecoCoverColors,
+                        style: locale.getTextStyle(
+                            fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700, color: AppColors.textBright)),
+                    const SizedBox(height: 2),
+                    Text(coverOpen ? strings.ecoCoverColorsBody : strings.ecoOpensAt(coverLevel),
+                        style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Switch(
+                value: byCover,
+                onChanged: coverOpen
+                    ? (on) {
+                        Haptics.selection();
+                        masks.setCoverTint(on);
+                      }
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (byCover) ...[
+          Text(strings.ecoPaletteResting,
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
+          const SizedBox(height: 10),
+        ],
+        IgnorePointer(
+          ignoring: byCover,
+          child: AnimatedOpacity(
+            opacity: byCover ? 0.35 : 1,
+            duration: AppMotion.fast,
+            child: ExcludeSemantics(excluding: byCover, child: palette),
+          ),
+        ),
       ],
     );
   }
@@ -395,6 +457,7 @@ class _LevelRow extends StatelessWidget {
             EcoFeature.hearBeings => Icons.hearing_rounded,
             EcoFeature.seeBeings => Icons.visibility_rounded,
             EcoFeature.ethereal => Icons.auto_awesome_rounded,
+            EcoFeature.coverColors => Icons.palette_rounded,
             _ => Icons.lock_open_rounded,
           },
         EcoRewardKind.sound => Icons.waves_rounded,

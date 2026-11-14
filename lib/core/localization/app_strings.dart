@@ -457,6 +457,7 @@ class AppStrings {
         EcoFeature.running => _es('Modo Running', 'Running mode', 'ランニングモード'),
         EcoFeature.radioFamiliar => _es('Radio en modo Familiar', 'Radio in Familiar mode', 'ラジオ:おなじみモード'),
         EcoFeature.timeMachine => _es('Máquina del Tiempo', 'Time Machine', 'タイムマシン'),
+        EcoFeature.coverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色'),
         EcoFeature.rabbitHole => _es('Madriguera de artistas', 'Artist rabbit hole', 'アーティストの迷宮'),
         EcoFeature.bpmFlow => _es('Cola por ritmo (BPM)', 'Queue by tempo (BPM)', 'テンポ順キュー'),
         EcoFeature.moonMix => _es('Mezcla de luna llena', 'Full moon mix', '満月ミックス'),
@@ -810,7 +811,15 @@ class AppStrings {
   String get ecoLegendNever => _es('Nunca alcanzado', 'Never reached', '未踏');
   String get ecoBalanceBroken => _es('El equilibrio se ha roto.', 'The balance is broken.', '均衡は崩れた。');
   String get ecoPlayerColor => _es('COLOR DEL REPRODUCTOR', 'PLAYER COLOUR', 'プレーヤーの色');
-  String get ecoColorDefault => _es('Rojo Tsuki', 'Tsuki red', 'ツキの赤');
+  String get ecoColorDefault => _es('Color base', 'Base colour', 'ベースカラー');
+  String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
+  String get ecoCoverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色');
+  String get ecoCoverColorsBody => _es(
+      'El reproductor toma el color de la portada de cada canción. Mientras está activo, la paleta queda en pausa.',
+      'The player takes the colour of each song\'s cover. While it\'s on, the palette rests.',
+      '曲ごとにジャケットの色をプレーヤーに使う。オンの間はパレットはお休み。');
+  String get ecoPaletteResting => _es('Paleta en pausa: manda el color de cada canción.',
+      'Palette resting: each song\'s colour leads.', 'パレットはお休み中:曲ごとの色が優先。');
   String get ecoWhisper => _es('SU SUSURRO', 'ITS WHISPER', 'そのささやき');
   String ecoWhisperLocked(int level) =>
       _es('En el nivel $level podrás escuchar su voz.', 'At level $level you will hear its voice.', 'レベル$levelでその声が聴こえる。');

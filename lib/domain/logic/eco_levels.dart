@@ -20,6 +20,8 @@ enum EcoFeature {
   radioFamiliar(12),
   timeMachine(15),
   rabbitHole(15),
+  // The player takes each song's cover colour (an option; red is the base).
+  coverColors(14),
   bpmFlow(16),
   moonMix(19),
   radioAdventurous(20),

@@ -42,6 +42,7 @@ class MaskProvider extends ChangeNotifier {
   static const _unlockedKey = 'masks_unlocked_v1';
   static const _equippedKey = 'masks_equipped_v1';
   static const _profileKey = 'masks_profile_v1';
+  static const _coverTintKey = 'player_cover_tint_v1';
   static const _statsKey = 'masks_stats_v1';
   static const int rainGoalSeconds = 10 * 3600;
 
@@ -62,6 +63,8 @@ class MaskProvider extends ChangeNotifier {
   // The being shown instead of the photo on the profile, to the Bonds
   // (null: the photo).
   String? _profileMask;
+  // Whether the player takes each song's cover colour (once open).
+  bool _coverTint = false;
   final List<String> _celebrations = [];
   _Stats _stats = _Stats();
   bool _loaded = false;
@@ -395,6 +398,18 @@ class MaskProvider extends ChangeNotifier {
     return c != null && unlockLevel >= c.level ? c : null;
   }
 
+  /// The player takes each song's cover colour: an option the levels open
+  /// (EcoFeature.coverColors), off until the user turns it on. While on,
+  /// the palette rests.
+  bool get coverTint => _coverTint && hasFeature(EcoFeature.coverColors);
+
+  void setCoverTint(bool on) {
+    if (on == _coverTint) return;
+    _coverTint = on;
+    notifyListeners();
+    unawaited(_saveLocal());
+  }
+
   void setPlayerColor(String? id) {
     _stats.color = id;
     notifyListeners();
@@ -532,6 +547,7 @@ class MaskProvider extends ChangeNotifier {
       }
       _equipped = prefs.getString(_equippedKey);
       _profileMask = prefs.getString(_profileKey);
+      _coverTint = prefs.getBool(_coverTintKey) ?? false;
       _stats = _Stats.decode(prefs.getString(_statsKey));
     } catch (e) {
       _log.severe('load error: $e');
@@ -557,6 +573,7 @@ class MaskProvider extends ChangeNotifier {
       } else {
         await prefs.remove(_profileKey);
       }
+      await prefs.setBool(_coverTintKey, _coverTint);
       await prefs.setString(_statsKey, _stats.encode());
     } catch (e) {
       _log.severe('save error: $e');

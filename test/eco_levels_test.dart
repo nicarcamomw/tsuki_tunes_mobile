@@ -234,6 +234,39 @@ void main() {
       masks.dispose();
     });
 
+    testWidgets('player colour: red is the base; colours from each song open at 14 and rest the palette', (tester) async {
+      await pump(tester, const EcoLevelsScreen());
+      await tester.scrollUntilVisible(find.text('Colores según la canción'), 300);
+      expect(find.text('Color base'), findsOneWidget);
+      expect(find.text('Se abre en el nivel 14'), findsOneWidget);
+      // Locked: the switch does nothing.
+      final locked = tester.widget<Switch>(find.byType(Switch));
+      expect(locked.onChanged, isNull);
+      expect(locked.value, isFalse);
+
+      // Level 14: it can be turned on, and the palette rests.
+      masks.applyProgress({'plays': EcoLevels.ecoFor(14) ~/ MaskProvider.ecoPerPlay + 1});
+      await tester.pump();
+      expect(masks.hasFeature(EcoFeature.coverColors), isTrue);
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      expect(masks.coverTint, isTrue);
+      expect(find.text('Paleta en pausa: manda el color de cada canción.'), findsOneWidget);
+      // A palette tap while it rests changes nothing.
+      await tester.tap(find.text('Plata'), warnIfMissed: false);
+      await tester.pump();
+      expect(masks.playerColor, isNull);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      expect(masks.coverTint, isFalse);
+      await tester.tap(find.text('Plata'));
+      await tester.pump();
+      expect(masks.playerColor?.id, 'plata');
+      await tester.pumpWidget(const SizedBox());
+      masks.dispose();
+    });
+
     testWidgets('a locked feature shows its level, and explains when tapped', (tester) async {
       await pump(
           tester,
