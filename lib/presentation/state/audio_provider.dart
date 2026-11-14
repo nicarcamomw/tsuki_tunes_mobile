@@ -171,6 +171,11 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// in the background): tries to get it back, a few times, spaced out.
   Timer? _appRemoteReconnectTimer;
   int _appRemoteReconnects = 0;
+  // When Spotify, playing ours, was paused (null: playing or not watched).
+  // Tsuki keeps an eye on it for a while, so a play or "next" from the car
+  // after a pause is seen even when App Remote's link dropped meanwhile.
+  DateTime? _spotifyPausedAt;
+  static const _watchPausedFor = Duration(minutes: 30);
   bool _spotifyQueueBroken = false;
   bool _spotifyListStale = false;
 
@@ -410,6 +415,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   }
 
   /// Pretends the current play started [by] earlier, past the grace periods.
+  /// Whether Tsuki is still watching Spotify (its position timer runs).
+  @visibleForTesting
+  bool get spotifyWatchedForTesting => _spotifyPositionTimer != null;
+
+  /// Moves back when Spotify was paused, as if [by] went by since.
+  @visibleForTesting
+  void backdateSpotifyPauseForTesting(Duration by) {
+    final at = _spotifyPausedAt;
+    if (at != null) _spotifyPausedAt = at.subtract(by);
+  }
+
   @visibleForTesting
   void backdatePlayStartForTesting(Duration by) {
     _lastPlayStart = _lastPlayStart.subtract(by);
@@ -929,6 +945,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
     _retryTimer?.cancel();
     _retryCount = 0;
+    _spotifyPausedAt = null;
     _currentTrack = track;
     _setPosition(Duration.zero);
     _completionHandled = false;
@@ -1167,7 +1184,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       if (_isPlaying) {
         await _spotifyPause();
         _isPlaying = false;
-        _stopPositionTimer();
+        _watchSpotifyWhilePaused();
       } else {
         await _spotifyResume();
         _isPlaying = true;

@@ -927,6 +927,87 @@ void main() {
       expect(provider.currentTrack?.id, 't2');
     });
 
+    test('after a pause, the car\'s "next" plays our next song', () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      // Paused from the car (or a headset)...
+      fakeNative.simulateStateChanged(60000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      expect(provider.isPlaying, isFalse);
+
+      // ...then its "next": Spotify starts its own next song.
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:autoplay');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't2');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t2');
+    });
+
+    test('paused, a song Spotify didn\'t have next with Tsuki behind the Spotify app is left alone',
+        () async {
+      fakeSpotify.nextUp = 'spotify:track:AUTOPLAY';
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      fakeNative.simulateStateChanged(60000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+
+      fakeNative.simulateStateChanged(0, 200000, false,
+          uri: 'spotify:track:PICKED');
+      await Future.delayed(Duration.zero);
+
+      expect(provider.currentTrack?.id, 't1');
+      expect(fakeNative.lastTrackUri, 'spotify:track:PICKED');
+    });
+
+    test('while paused Tsuki keeps watching Spotify, for half an hour', () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      fakeNative.simulateStateChanged(60000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(const Duration(milliseconds: 1100));
+      expect(provider.spotifyWatchedForTesting, isTrue,
+          reason: 'a play from the car with App Remote\'s link down is still seen');
+
+      // Android dropped the link while paused; the car's play shows up in
+      // the Web API.
+      fakeNative.setConnected(false);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 61000);
+      await provider.syncSpotifyStateForTesting();
+      expect(provider.isPlaying, isTrue);
+
+      // Paused again, and left: after half an hour it stops looking.
+      fakeNative.setConnected(true);
+      fakeNative.simulateStateChanged(62000, 180000, true,
+          uri: 'spotify:track:t1');
+      await Future.delayed(Duration.zero);
+      provider.backdateSpotifyPauseForTesting(const Duration(minutes: 31));
+      await Future.delayed(const Duration(milliseconds: 1100));
+      expect(provider.spotifyWatchedForTesting, isFalse);
+    });
+
+    test('a "previous" seen late through the Web API is still a previous',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playing(tracks);
+      await provider.next();
+      await Future.delayed(Duration.zero);
+      fakeNative.simulateStateChanged(1000, 180000, false,
+          uri: 'spotify:track:t2');
+      await Future.delayed(const Duration(milliseconds: 300));
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+
+      // App Remote's link is down: the poll, a few seconds late, finds
+      // Spotify back on t1, already 6 s in.
+      fakeNative.setConnected(false);
+      fakeSpotify.setPlaying('spotify:track:t1', progressMs: 6000);
+      await provider.syncSpotifyStateForTesting();
+
+      expect(provider.currentTrack?.id, 't1');
+    });
+
     test('Spotify going back to the song before plays our previous one',
         () async {
       setLifecycle(AppLifecycleState.paused);
@@ -1261,6 +1342,25 @@ void main() {
       await tick();
 
       expect(fakeNative.queued, ['spotify:track:t2']);
+    });
+
+    test('a song left in Spotify\'s queue never sounds: ours starts just before the end',
+        () async {
+      setLifecycle(AppLifecycleState.paused);
+      final provider = await playingAt(
+          [_track('t1'), _track('t2'), _track('t3'), _track('t4')], 30000);
+      await tick();
+      expect(fakeNative.queued, ['spotify:track:t2']);
+
+      // t3 picked: t2 stays in Spotify's queue, and would play after t3.
+      await provider.playTrack(provider.queue[2]);
+      fakeNative.simulateStateChanged(178800, 180000, false,
+          uri: 'spotify:track:t3');
+      provider.backdatePlayStartForTesting(const Duration(seconds: 15));
+      await tick();
+
+      expect(provider.currentTrack?.id, 't4');
+      expect(fakeNative.lastTrackUri, 'spotify:track:t4');
     });
 
     test('Spotify closed is woken through App Remote before playing',
