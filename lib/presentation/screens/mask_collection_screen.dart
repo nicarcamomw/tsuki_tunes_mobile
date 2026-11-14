@@ -575,7 +575,6 @@ class _MaskDetail extends ConsumerWidget {
                     backgroundColor: isEquipped ? AppColors.bgMid.withValues(alpha: 0.5) : rColor.withValues(alpha: 0.25),
                     side: BorderSide(color: isEquipped ? AppColors.border : rColor, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                   ),
                 ),
               ),
@@ -584,7 +583,7 @@ class _MaskDetail extends ConsumerWidget {
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
-                child: TextButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     if (onProfile) {
                       Haptics.remove();
@@ -600,13 +599,10 @@ class _MaskDetail extends ConsumerWidget {
                     onProfile ? strings.maskClearProfile : strings.maskSetProfile,
                     style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),
                   ),
-                  style: TextButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     foregroundColor: onProfile ? AppColors.textSecondary : AppColors.textBright,
                     minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      side: BorderSide(color: onProfile ? AppColors.border : AppColors.borderGlow),
-                    ),
+                    side: BorderSide(color: onProfile ? AppColors.border : AppColors.borderGlow),
                   ),
                 ),
               ),

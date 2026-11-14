@@ -212,7 +212,6 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: _color.withValues(alpha: 0.6)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -235,7 +234,6 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),

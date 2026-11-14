@@ -577,7 +577,7 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: FilledButton.icon(
                     onPressed: () {
                       Haptics.tap();
                       ref.read(playTracksProvider)(mix);
@@ -588,10 +588,10 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                       strings.moonMixPlay,
                       style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800),
                     ),
-                    style: ElevatedButton.styleFrom(
+                    // The moon's own silver, as everything in its sheet.
+                    style: FilledButton.styleFrom(
                       backgroundColor: _silver,
                       foregroundColor: AppColors.bgDeep,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
@@ -618,7 +618,6 @@ class _FullMoonMixCardState extends ConsumerState<_FullMoonMixCard> {
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: _silver.withValues(alpha: 0.6)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),

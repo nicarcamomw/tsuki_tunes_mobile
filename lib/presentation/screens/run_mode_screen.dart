@@ -84,7 +84,6 @@ class RunModeScreen extends ConsumerWidget {
                     backgroundColor: run.active ? AppColors.bgCard : AppColors.accentFill,
                     foregroundColor: AppColors.textBright,
                     side: run.active ? const BorderSide(color: AppColors.accent) : null,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                   ),
                   onPressed: () {
                     Haptics.confirm();

@@ -141,8 +141,7 @@ class PartyScreen extends ConsumerWidget {
           Text(strings.partyHint, textAlign: TextAlign.center, style: style(AppFontSize.title)),
           const SizedBox(height: 20),
           FilledButton.icon(
-            style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accentFill, minimumSize: const Size(double.infinity, 50)),
+            style: FilledButton.styleFrom( minimumSize: const Size(double.infinity, 50)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await party.host();

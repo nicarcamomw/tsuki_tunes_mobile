@@ -178,9 +178,6 @@ class _ProfileSheet extends ConsumerWidget {
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.accent),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),

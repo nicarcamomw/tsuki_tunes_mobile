@@ -306,7 +306,6 @@ class _ChoiceButton extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: _moon,
                 foregroundColor: AppColors.shrineCard,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),
@@ -315,7 +314,6 @@ class _ChoiceButton extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _moon,
                 side: BorderSide(color: _moon.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),

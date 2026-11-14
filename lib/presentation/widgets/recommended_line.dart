@@ -66,7 +66,7 @@ class RecommendedLine extends ConsumerWidget {
           // Guests have no library to keep it in.
           if (!guest) ...[
             const SizedBox(width: 6),
-            TextButton.icon(
+            OutlinedButton.icon(
               onPressed: () {
                 Haptics.confirm();
                 final audio = ref.read(audioProvider);
@@ -78,15 +78,11 @@ class RecommendedLine extends ConsumerWidget {
               icon: const Icon(Icons.bookmark_add_rounded, size: 16),
               label: Text(strings.recoKeep,
                   style: locale.getTextStyle(fontSize: AppFontSize.micro, fontWeight: FontWeight.w800, letterSpacing: 0.8)),
-              style: TextButton.styleFrom(
+              // Secondary: the theme's outline, compact beside the chip.
+              style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textBright,
                 minimumSize: const Size(48, 36),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                tapTargetSize: MaterialTapTargetSize.padded,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  side: const BorderSide(color: AppColors.borderGlow),
-                ),
               ),
             ),
           ],

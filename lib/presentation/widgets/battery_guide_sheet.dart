@@ -135,7 +135,7 @@ class BatteryGuideSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               onPressed: () => _openSettings(context),
               icon: const Icon(Icons.settings_rounded, size: 18),
               label: Text(
@@ -147,12 +147,7 @@ class BatteryGuideSheet extends ConsumerWidget {
                   color: Colors.white,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentFill,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
-              ),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
             ),
           ),
           const SizedBox(height: 6),

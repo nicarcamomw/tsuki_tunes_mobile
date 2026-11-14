@@ -95,9 +95,6 @@ class CyberTheme {
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(foregroundColor: AppColors.accentText),
-      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.bgDeep,
         elevation: 0,

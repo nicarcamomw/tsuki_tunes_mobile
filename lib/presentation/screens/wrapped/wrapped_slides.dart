@@ -1061,9 +1061,7 @@ class _SummarySlide extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onShare,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accentFill,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                     ),
                     icon: const Icon(Icons.ios_share_rounded, size: 18, color: Colors.white),
                     label: Text(strings.wrappedShareCta,

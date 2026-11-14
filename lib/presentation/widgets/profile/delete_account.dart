@@ -48,13 +48,8 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
             ),
           ),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () => Navigator.of(dialogCtx).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentFill,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
           child: Text(
             strings.deleteAccountConfirm,
             style: locale.getTextStyle(

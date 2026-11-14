@@ -49,13 +49,8 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
             ),
           ),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () => Navigator.of(dialogCtx).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentFill,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
           child: Text(
             strings.logout,
             style: locale.getTextStyle(

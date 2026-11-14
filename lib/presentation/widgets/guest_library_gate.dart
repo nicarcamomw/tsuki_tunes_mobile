@@ -53,18 +53,11 @@ class GuestLibraryGate extends ConsumerWidget {
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: () { Haptics.tap();
                   context.go(AppPaths.login);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentFill,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                ),
+                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 child: Text(
                   strings.guestLoginAction,
                   style: locale.getTextStyle(
