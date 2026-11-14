@@ -1483,6 +1483,10 @@ class AppStrings {
 
   String get affinityVisitsTitle => _l.affinityVisitsTitle;
 
+  String get affinityPlaysTitle => _l.affinityPlaysTitle;
+
+  String get affinityPlaysBody => _l.affinityPlaysBody;
+
   String get affinityVisitsBody => _l.affinityVisitsBody;
 
   String affinityPoints(int points) => _l.affinityPoints(points);

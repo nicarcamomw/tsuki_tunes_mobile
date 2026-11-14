@@ -444,6 +444,18 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
     return all.take(limit).toList();
   }
 
+  // Plays per artist from the phone's play log (set by the app's wiring):
+  // marking songs as listened isn't all listening, and the ranking that
+  // ignored plays showed the most heard artists with an affinity of 5.
+  Map<String, int> _artistPlays = const {};
+
+  /// What really played, per artist, for the ranking.
+  void setArtistPlays(Map<String, int> plays) {
+    if (mapEquals(plays, _artistPlays)) return;
+    _artistPlays = Map.unmodifiable(plays);
+    notifyListeners();
+  }
+
   List<TopArtistEntry> _rankArtists() {
     final Map<String, int> savedCounts = {};
     // Each artist of each song, so a collaboration counts for each of its
@@ -454,22 +466,30 @@ class LibraryRepositoryImpl extends ChangeNotifier implements LibraryRepository 
       }
     }
 
-    final allArtists = <String>{...savedCounts.keys, ..._artistVisits.keys};
+    final allArtists = <String>{...savedCounts.keys, ..._artistPlays.keys, ..._artistVisits.keys};
     final entries = <TopArtistEntry>[];
 
     for (final name in allArtists) {
       final saved = savedCounts[name] ?? 0;
       final visits = _artistVisits[name] ?? 0;
-      final score = (saved * 2) + visits;
+      final plays = _artistPlays[name] ?? 0;
+      final score = (saved * 2) + plays + visits;
       entries.add(TopArtistEntry(
         name: name,
         score: score,
         savedCount: saved,
         visits: visits,
+        plays: plays,
       ));
     }
 
-    entries.sort((a, b) => b.score.compareTo(a.score));
+    // Ties: the one heard more, then by name, so the order doesn't jump.
+    entries.sort((a, b) {
+      final byScore = b.score.compareTo(a.score);
+      if (byScore != 0) return byScore;
+      final byPlays = b.plays.compareTo(a.plays);
+      return byPlays != 0 ? byPlays : a.name.compareTo(b.name);
+    });
     return entries;
   }
 

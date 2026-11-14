@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/play_history.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
+import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart' show artistPlaysOf;
 
 ListenedTrackData _t(String id, String artist) => ListenedTrackData(
       trackId: id,
@@ -31,6 +34,35 @@ void main() {
       await library.trackArtistVisit('B');
     }
     expect(library.getTopArtists(limit: 1).single.name, 'B');
+  });
+
+  test('what really played counts: the most heard artist leads, with its plays in its points', () async {
+    SharedPreferences.setMockInitialValues({});
+    final library = LibraryRepositoryImpl();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    // Two songs of A marked; C never marked but played a lot.
+    await library.setListenedTracksForTesting([_t('1', 'A'), _t('2', 'A')]);
+    Track song(String id, String artist) => Track(
+        id: id, title: 'S$id', artistId: '', artistName: artist, albumId: '', albumTitle: '',
+        coverUrl: '', previewUrl: '', durationSeconds: 180);
+    final history = PlayHistory();
+    for (var i = 0; i < 7; i++) {
+      await history.record(song('c$i', 'C'));
+    }
+    await history.record(song('1', 'A'));
+
+    library.setArtistPlays(artistPlaysOf(history));
+    final top = library.getTopArtists(limit: 2);
+    expect(top.map((e) => e.name), ['C', 'A']);
+    expect(top.first.score, 7, reason: '7 plays');
+    expect(top.first.plays, 7);
+    expect(top.last.score, 5, reason: '2 marked × 2 + 1 play');
+
+    // The same plays again change nothing (no needless rebuilds).
+    var told = 0;
+    library.addListener(() => told++);
+    library.setArtistPlays(artistPlaysOf(history));
+    expect(told, 0);
   });
 
   test('the listened list is the same object until it changes', () async {

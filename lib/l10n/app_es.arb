@@ -385,11 +385,13 @@
     }
   },
   "affinityInfoTitle": "¿Cómo se calcula la afinidad?",
-  "affinitySavedTitle": "Canciones escuchadas",
+  "affinitySavedTitle": "Canciones marcadas",
   "affinitySavedBody": "Cada canción suya que marcas como escuchada.",
   "affinityVisitsTitle": "Visitas al perfil",
+  "affinityPlaysBody": "Cada vez que suena una canción suya (tus últimas 2.000).",
+  "affinityPlaysTitle": "Reproducciones",
   "affinityFormulaLabel": "FÓRMULA",
-  "affinityFormula": "(escuchadas × 2) + visitas",
+  "affinityFormula": "(marcadas × 2) + reproducciones + visitas",
   "affinityInfoClose": "Entendido",
   "featured": "DESTACADO",
   "spotifyActiveDevice": "Dispositivo activo: {device}",
@@ -1285,7 +1287,7 @@
       }
     }
   },
-  "affinityInfoIntro": "La afinidad mide tu conexión con cada artista según dos factores:",
+  "affinityInfoIntro": "La afinidad mide tu conexión con cada artista según tres factores:",
   "affinityVisitsBody": "Cada vez que abres la página del artista.",
   "affinityPoints": "{points, plural, =1{+1 PT} other{+{points} PTS}}",
   "@affinityPoints": {

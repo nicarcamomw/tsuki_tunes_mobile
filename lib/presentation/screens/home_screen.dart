@@ -215,11 +215,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// Each top artist (the library knows names) with their catalog entry,
-  /// for the picture and to open them; null when not found.
+  /// for the picture and to open them; null when not found. Artists already
+  /// on screen keep theirs: only the new ones are looked up.
   Future<List<_TopArtistDisplay>> _fetchTopArtistPictures(List<TopArtistEntry> entries) {
     final find = ref.read(findArtistByNameProvider);
+    final known = {for (final t in _topArtistsDisplay) if (t.artist != null) t.entry.name: t.artist!};
     return Future.wait(entries.map((entry) async =>
-        _TopArtistDisplay(entry: entry, artist: await find(entry.name))));
+        _TopArtistDisplay(entry: entry, artist: known[entry.name] ?? await find(entry.name))));
+  }
+
+  int _topRefresh = 0;
+
+  /// The ranking changed (the library finished loading, a song played or
+  /// was marked, an artist was visited): the top artists and their points
+  /// follow, without reloading the rest of the home. The first load took
+  /// them once, so a library still loading left the list short and the
+  /// points stuck until a refresh.
+  Future<void> _refreshTopArtists() async {
+    final load = ++_topRefresh;
+    final entries = ref.read(libraryProvider).getTopArtists(limit: 5);
+    final display = entries.isEmpty ? <_TopArtistDisplay>[] : await _fetchTopArtistPictures(entries);
+    if (!mounted || load != _topRefresh) return;
+    setState(() => _topArtistsDisplay = display);
   }
 
   Future<void> _loadPersonalizedRecommendations(List<_TopArtistDisplay> tops) async {
@@ -272,6 +289,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // The ranking as the home shows it: who, in what order, with how many
+    // points.
+    ref.listen<String>(
+        libraryProvider.select((l) => [for (final e in l.getTopArtists(limit: 5)) '${e.name}:${e.score}'].join('|')),
+        (_, _) {
+      if (!_isLoading) unawaited(_refreshTopArtists());
+    });
     // Completing (or un-completing) an album changes the seeds: rebuild
     // the "because you completed" rows once the home has loaded.
     ref.listen<String>(

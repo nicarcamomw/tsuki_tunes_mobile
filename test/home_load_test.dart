@@ -44,6 +44,9 @@ class _Catalog implements MusicCatalog {
   }
 
   @override
+  Future<List<Artist>> searchArtists(String query, {int limit = 25}) async => const [];
+
+  @override
   Future<List<Album>> getArtistAlbums(String artistId, {int limit = 250, int index = 0}) async => const [];
 
   @override
@@ -74,15 +77,18 @@ void main() {
     });
   });
 
+  late LibraryRepositoryImpl library;
+
   Future<void> pumpHome(WidgetTester tester) async {
     // Made inside the test's fake time, so its futures complete there.
     catalog = _Catalog();
+    library = LibraryRepositoryImpl();
     tester.view.physicalSize = const Size(420 * 3, 1600 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(TestScope(
       overrides: [
-        libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
+        libraryProvider.overrideWith((ref) => library),
         audioProvider.overrideWith((ref) => AudioProvider()),
         connectivityProvider.overrideWith((ref) => _Online()),
         musicCatalogProvider.overrideWithValue(catalog),
@@ -167,6 +173,40 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
       expect(find.text('Justice'), findsWidgets);
+      await leave(tester);
+    }, () => _noNetwork);
+  });
+
+  testWidgets('the top artists follow the ranking: a library that loads late, and new points', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await http.runWithClient(() async {
+      await pumpHome(tester);
+      catalog.featured.complete([_fresh]);
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Eladio Carrion'), findsNothing, reason: 'the library had not loaded yet');
+
+      // The library finishes loading after the home: the top shows up on its
+      // own, without reloading the rest of the home.
+      ListenedTrackData song(String id) => ListenedTrackData(
+          trackId: id, title: 'S$id', artistName: 'Eladio Carrion', albumTitle: '', albumId: '',
+          coverUrl: '', previewUrl: '', duration: 200);
+      await tester.runAsync(() => library.setListenedTracksForTesting([song('1'), song('2')]));
+      library.notifyListeners(); // as the real load does when it's in
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Eladio Carrion'), findsWidgets);
+      expect(find.text('Afinidad: 4'), findsOneWidget);
+      expect(catalog.featuredCalls, 1);
+
+      // What really played adds to the points, live.
+      library.setArtistPlays({'Eladio Carrion': 30});
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Afinidad: 34'), findsOneWidget);
       await leave(tester);
     }, () => _noNetwork);
   });

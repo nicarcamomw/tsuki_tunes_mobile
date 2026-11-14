@@ -255,6 +255,11 @@ final playbackWiringProvider = Provider<void>((ref) {
       library.isTrackListened(id) ||
       library.isFavoriteTrack(id) ||
       playlists.playlists.any((p) => p.tracks.any((t) => t.id == id));
+  // The artist ranking (home, profile) counts what really played. The
+  // first count waits a moment: no provider may change while one builds.
+  void artistPlays() => library.setArtistPlays(artistPlaysOf(history));
+  _follow(ref, history, artistPlays, now: false);
+  scheduleMicrotask(artistPlays);
   player.onPlayCounted = (track) {
     history.record(track);
     masks.onPlayCounted(track);
@@ -517,6 +522,22 @@ final sessionGateProvider = ChangeNotifierProvider<SessionGate>((ref) {
 
 /// Calls [onChange] whenever [source] notifies (and right away unless [now]
 /// is false), until the provider holding [ref] is disposed.
+/// Plays per artist in [history] (each artist of a collaboration counts,
+/// named as the library names them).
+Map<String, int> artistPlaysOf(PlayHistory history) {
+  final tracks = history.tracks;
+  final artistsOf = <String, List<String>>{};
+  final counts = <String, int>{};
+  for (final e in history.entries) {
+    final track = tracks[e.trackId];
+    if (track == null) continue;
+    for (final a in artistsOf[e.trackId] ??= ListenedTrackData.fromTrack(track).artists) {
+      counts[a] = (counts[a] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
 void _follow(Ref ref, Listenable source, VoidCallback onChange, {bool now = true}) {
   if (now) onChange();
   source.addListener(onChange);
