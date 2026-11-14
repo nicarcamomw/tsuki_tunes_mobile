@@ -13,6 +13,7 @@ import '../state/lyrics_controller.dart';
 import 'audio_progress_selector.dart';
 import 'haptics.dart';
 import 'motion.dart';
+import 'player_tint.dart';
 import 'skeleton_loader.dart';
 
 export '../state/lyrics_controller.dart';
@@ -247,23 +248,26 @@ class _LyricLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = state == _LineState.current;
-    // Neon red: the line being sung glows, the rest stay dimmer.
+    // In the player's colour (neon red at its base): the line being sung
+    // glows, the rest stay dimmer.
+    final tint = PlayerTint.of(context);
+    final bright = lyricsBright(tint);
     final color = switch (state) {
-      _LineState.current => const Color(0xFFFF4D4D),
-      _LineState.sung => AppColors.accent.withValues(alpha: 0.55),
-      _LineState.upcoming => AppColors.accent.withValues(alpha: 0.32),
-      _LineState.plain => const Color(0xFFFF4D4D).withValues(alpha: 0.9),
+      _LineState.current => bright,
+      _LineState.sung => tint.withValues(alpha: 0.55),
+      _LineState.upcoming => tint.withValues(alpha: 0.32),
+      _LineState.plain => bright.withValues(alpha: 0.9),
     };
     final style = base.copyWith(
       color: color,
       shadows: [
         Shadow(
-          color: AppColors.accent.withValues(alpha: current ? 0.9 : 0.35),
+          color: tint.withValues(alpha: current ? 0.9 : 0.35),
           blurRadius: current ? 16 : 8,
         ),
         if (current)
           Shadow(
-            color: AppColors.accent.withValues(alpha: 0.5),
+            color: tint.withValues(alpha: 0.5),
             blurRadius: 32,
           ),
       ],
@@ -317,6 +321,7 @@ class _FollowPill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.read(localeProvider);
+    final tint = PlayerTint.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -324,10 +329,10 @@ class _FollowPill extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(AppRadius.sheet),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.8)),
+          border: Border.all(color: tint.withValues(alpha: 0.8)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.35),
+              color: tint.withValues(alpha: 0.35),
               blurRadius: 10,
             ),
           ],
@@ -335,7 +340,7 @@ class _FollowPill extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.sync, size: 13, color: AppColors.accent),
+            Icon(Icons.sync, size: 13, color: tint),
             const SizedBox(width: 6),
             Text(
               locale.strings.lyricsFollowing,
@@ -497,12 +502,12 @@ class LyricsCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: radius,
                 border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.85),
+                  color: PlayerTint.of(context).withValues(alpha: 0.85),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.28),
+                    color: PlayerTint.of(context).withValues(alpha: 0.28),
                     blurRadius: 22,
                     offset: const Offset(0, 6),
                   ),
@@ -540,7 +545,7 @@ class LyricsCard extends ConsumerWidget {
                                     style: locale.getTextStyle(
                                       fontSize: AppFontSize.micro,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.accent
+                                      color: lyricsText(PlayerTint.of(context))
                                           .withValues(alpha: 0.9),
                                       letterSpacing: 1.4,
                                     ),
@@ -713,8 +718,8 @@ class CurrentLyricLine extends ConsumerWidget {
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.bodyLg,
                         fontWeight: FontWeight.w600,
-                        // D-12: it's what's playing.
-                        color: AppColors.accentText.withValues(alpha: 0.9),
+                        // D-12: it's what's playing, in the player's colour.
+                        color: lyricsText(PlayerTint.of(context)).withValues(alpha: 0.9),
                       ).copyWith(fontStyle: FontStyle.italic),
                     ),
                   ),
@@ -727,3 +732,11 @@ class CurrentLyricLine extends ConsumerWidget {
     );
   }
 }
+
+/// The lyrics' brightest colour for [tint]: the base red keeps its neon
+/// red; a song's or the palette's colour, a touch lighter so it reads.
+Color lyricsBright(Color tint) =>
+    tint == AppColors.accent ? const Color(0xFFFF4D4D) : Color.lerp(tint, Colors.white, 0.2)!;
+
+/// Small text in [tint]: the base red reads at AA as its text version.
+Color lyricsText(Color tint) => tint == AppColors.accent ? AppColors.accentText : tint;

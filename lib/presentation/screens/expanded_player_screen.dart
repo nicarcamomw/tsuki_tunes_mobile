@@ -274,7 +274,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
             body: _CoverBackdrop(child: SafeArea(
               child: _centerPage(track, Column(
                 children: [
-                  _buildTopBar(track, locale, radioActive: radioActive),
+                  _buildTopBar(context, track, locale, radioActive: radioActive),
 
                   // Art or Queue (lyrics live in a card below the player)
                   if (_viewMode == _CenterViewMode.queue)
@@ -379,7 +379,9 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
 }
 
   /// Symmetric: collapse chevron | where it's playing from | song menu.
-  Widget _buildTopBar(Track track, LocaleProvider locale,
+  /// [context] is the tinted one (under [AnimatedPlayerTint]): the
+  /// screen's own sits above it, and its PlayerTint was always the red.
+  Widget _buildTopBar(BuildContext context, Track track, LocaleProvider locale,
       {required bool radioActive}) {
     final strings = locale.strings;
     return Padding(
