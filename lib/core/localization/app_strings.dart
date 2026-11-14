@@ -387,6 +387,14 @@ class AppStrings {
 
   String get maskUnequip => _l.maskUnequip;
 
+  String get maskSetProfile => _l.maskSetProfile;
+
+  String get maskClearProfile => _l.maskClearProfile;
+
+  String get maskProfileSet => _l.maskProfileSet;
+
+  String get profileUsePhoto => _l.profileUsePhoto;
+
   String maskUnlockedOn(String date) => _l.maskUnlockedOn(date);
 
   String get maskUnlockedTitle => _l.maskUnlockedTitle;
@@ -449,6 +457,7 @@ class AppStrings {
         EcoFeature.running => _es('Modo Running', 'Running mode', 'ランニングモード'),
         EcoFeature.radioFamiliar => _es('Radio en modo Familiar', 'Radio in Familiar mode', 'ラジオ:おなじみモード'),
         EcoFeature.timeMachine => _es('Máquina del Tiempo', 'Time Machine', 'タイムマシン'),
+        EcoFeature.coverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色'),
         EcoFeature.rabbitHole => _es('Madriguera de artistas', 'Artist rabbit hole', 'アーティストの迷宮'),
         EcoFeature.bpmFlow => _es('Cola por ritmo (BPM)', 'Queue by tempo (BPM)', 'テンポ順キュー'),
         EcoFeature.moonMix => _es('Mezcla de luna llena', 'Full moon mix', '満月ミックス'),
@@ -468,7 +477,8 @@ class AppStrings {
         EcoRewardKind.feature => ecoFeatureName(r.feature!),
         EcoRewardKind.sound => _es('Sonido de ambiente: ${ambientName(r.sound!)}',
             'Ambient sound: ${ambientName(r.sound!)}', '環境音:${ambientName(r.sound!)}'),
-        EcoRewardKind.chapter => 'Tsuki Lore · ${r.chapter!.title.of(language)}',
+        EcoRewardKind.chapter =>
+          '${_es('Testamento Lunar', 'The Lunar Testament', '月の聖典')} · ${r.chapter!.title.of(language)}',
         EcoRewardKind.color => _es('Color del reproductor: ${ecoColorName(r.color!)}',
             'Player colour: ${ecoColorName(r.color!)}', 'プレーヤーの色:${ecoColorName(r.color!)}'),
         EcoRewardKind.rank => _es('Nuevo rango: ${ecoRankName(r.rank!)}', 'New rank: ${ecoRankName(r.rank!)}',
@@ -774,9 +784,9 @@ class AppStrings {
       'No Eco, no levels: only a Bearer gathers them.',
       'エコーもレベルもない。貯められるのは運び手だけ。');
   String get ecoObserverBody => _es(
-      'Los Observadores miran Tsuki desde afuera. Su música no llega a la luna: no acumulan Eco, no suben de nivel y no abren nada. Inicia sesión para volverte Portador, y cada canción que escuches empezará a sonar allá arriba.',
-      'Observers watch Tsuki from outside. Their music never reaches the moon: they gather no Eco, gain no levels and open nothing. Sign in to become a Bearer, and every song you hear will start to sound up there.',
-      '観測者は外からツキを見るだけ。その音楽は月に届かず、エコーも貯まらず、レベルも上がらず、何も開かない。ログインして運び手になれば、聴く曲のすべてがあの空で響き始める。');
+      'Los Observadores miran Tsuki desde afuera: la ven, pero no le rezan. Su música no llega a la luna: no acumulan Eco, no suben de nivel y no abren nada. Inicia sesión para volverte Portador, y cada canción que escuches será una plegaria que llega allá arriba.',
+      'Observers watch Tsuki from outside: they see it, but do not pray to it. Their music never reaches the moon: they gather no Eco, gain no levels and open nothing. Sign in to become a Bearer, and every song you hear will be a prayer that reaches up there.',
+      '観測者は外からツキを見るだけで、祈りはしない。その音楽は月に届かず、エコーも貯まらず、レベルも上がらず、何も開かない。ログインして運び手になれば、聴く曲のすべてが月に届く祈りになる。');
   String get ecoObserverAction => _es('Volverme Portador', 'Become a Bearer', '運び手になる');
   String ecoObserverLocked(int level) => _es(
       'Se abre para los Portadores en el nivel $level.',
@@ -801,7 +811,15 @@ class AppStrings {
   String get ecoLegendNever => _es('Nunca alcanzado', 'Never reached', '未踏');
   String get ecoBalanceBroken => _es('El equilibrio se ha roto.', 'The balance is broken.', '均衡は崩れた。');
   String get ecoPlayerColor => _es('COLOR DEL REPRODUCTOR', 'PLAYER COLOUR', 'プレーヤーの色');
-  String get ecoColorDefault => _es('Rojo Tsuki', 'Tsuki red', 'ツキの赤');
+  String get ecoColorDefault => _es('Color base', 'Base colour', 'ベースカラー');
+  String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
+  String get ecoCoverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色');
+  String get ecoCoverColorsBody => _es(
+      'El reproductor toma el color de la portada de cada canción. Mientras está activo, la paleta queda en pausa.',
+      'The player takes the colour of each song\'s cover. While it\'s on, the palette rests.',
+      '曲ごとにジャケットの色をプレーヤーに使う。オンの間はパレットはお休み。');
+  String get ecoPaletteResting => _es('Paleta en pausa: manda el color de cada canción.',
+      'Palette resting: each song\'s colour leads.', 'パレットはお休み中:曲ごとの色が優先。');
   String get ecoWhisper => _es('SU SUSURRO', 'ITS WHISPER', 'そのささやき');
   String ecoWhisperLocked(int level) =>
       _es('En el nivel $level podrás escuchar su voz.', 'At level $level you will hear its voice.', 'レベル$levelでその声が聴こえる。');
@@ -812,7 +830,7 @@ class AppStrings {
   List<String> get ascensionCall => language == AppLanguage.es
       ? const [
           'Has llegado a este punto siendo un Portador de niveles incomprendidos.',
-          'La Luna Madre se regocija con tu Eco.',
+          'La Luna Madre recibió cada una de tus plegarias, y se regocija con tu Eco.',
           'Es la señal. Es el momento de tu elección:',
           'seguir siendo un ser acumulador de Eco,',
           'o traspasar la muralla de lo lógico y viajar hasta el centro del universo,',
@@ -820,7 +838,7 @@ class AppStrings {
         ]
       : const [
           'You have come this far as a Bearer of levels beyond understanding.',
-          'The Mother Moon rejoices in your Echo.',
+          'The Mother Moon received every one of your prayers, and rejoices in your Echo.',
           'It is the sign. It is the moment of your choice:',
           'to remain a being who gathers Echo,',
           'or to pass through the wall of the logical and travel to the centre of the universe,',
@@ -849,9 +867,9 @@ class AppStrings {
       'You have passed through the wall of the logical. You no longer hear music: you are part of it. Your ethereal mask is being forged at the centre of the universe, with everything you ever heard. The Mother Moon will give it to you when it is ready.',
       'あなたは論理の壁を越えた。もう音楽を聴くのではない。その一部なのだ。あなたの霊の面は、聴いてきたすべてと共に宇宙の中心で鍛えられている。');
   String get ascensionStayed => _es(
-      'Sigues siendo Portador. Tu Eco seguirá cayendo sobre Tsuki como una estrella, y los seres etéreos sabrán siempre que pudiste cruzar y elegiste quedarte.',
-      'You remain a Bearer. Your Echo will keep falling on Tsuki like a star, and the ethereal beings will always know you could have crossed and chose to stay.',
-      'あなたは運び手のままだ。あなたのエコーは星のようにツキに降り続け、霊なる者たちは、あなたが越えられたのに留まったことを忘れない。');
+      'Sigues siendo Portador: un terrenal que le reza a la Luna Madre. Tus plegarias seguirán cayendo sobre Tsuki como estrellas, y los seres etéreos sabrán siempre que pudiste cruzar y elegiste quedarte.',
+      'You remain a Bearer: an earthly being who prays to the Mother Moon. Your prayers will keep falling on Tsuki like stars, and the ethereal beings will always know you could have crossed and chose to stay.',
+      'あなたは運び手のまま、母なる月に祈る地上の者だ。あなたの祈りは星のようにツキに降り続け、霊なる者たちは、あなたが越えられたのに留まったことを忘れない。');
   String get ascensionDone => _es('Continuar', 'Continue', '続ける');
 
   String get a11yEcoLevels => _es('Abrir los niveles de Eco', 'Open the Eco levels', 'エコーレベルを開く');
@@ -1049,16 +1067,21 @@ class AppStrings {
         AppLanguage.ja => '連続記録を開く',
       };
 
-  String get loreTitle => 'TSUKI LORE';
+  /// The book of the lore: what the Mother Moon left the earthly beings.
+  String get loreTitle => switch (language) {
+        AppLanguage.es => 'TESTAMENTO LUNAR',
+        AppLanguage.en => 'THE LUNAR TESTAMENT',
+        AppLanguage.ja => '月の聖典',
+      };
   String get loreSubtitle => switch (language) {
         AppLanguage.es => 'El Eco es conocimiento: cada nivel revela más de Tsuki',
         AppLanguage.en => 'Echo is knowledge: every level reveals more of Tsuki',
         AppLanguage.ja => 'エコーは知識。レベルが上がるほどツキの真実が明かされる',
       };
   String get loreButton => switch (language) {
-        AppLanguage.es => 'TSUKI LORE · La historia de los seres etéreos',
-        AppLanguage.en => 'TSUKI LORE · The story of the ethereal beings',
-        AppLanguage.ja => 'TSUKI LORE・霊なる者の物語',
+        AppLanguage.es => 'TESTAMENTO LUNAR · La historia de la Luna Madre',
+        AppLanguage.en => 'THE LUNAR TESTAMENT · The story of the Mother Moon',
+        AppLanguage.ja => '月の聖典・母なる月の物語',
       };
   String loreChaptersOpen(int open, int total) => switch (language) {
         AppLanguage.es => '$open de $total capítulos abiertos',
@@ -1477,6 +1500,10 @@ class AppStrings {
 
   String get affinityVisitsTitle => _l.affinityVisitsTitle;
 
+  String get affinityPlaysTitle => _l.affinityPlaysTitle;
+
+  String get affinityPlaysBody => _l.affinityPlaysBody;
+
   String get affinityVisitsBody => _l.affinityVisitsBody;
 
   String affinityPoints(int points) => _l.affinityPoints(points);
@@ -1682,6 +1709,8 @@ class AppStrings {
   String get shuffleRecoNormal => _l.shuffleRecoNormal;
   String get shuffleRecoMany => _l.shuffleRecoMany;
   String get recommendedTag => _l.recommendedTag;
+
+  String get recoKeep => _l.recoKeep;
   String get queueSmartShuffleTag => _l.queueSmartShuffleTag;
   String get shuffleHoldHint => _l.shuffleHoldHint;
   String get a11yShuffleSmart => _l.a11yShuffleSmart;

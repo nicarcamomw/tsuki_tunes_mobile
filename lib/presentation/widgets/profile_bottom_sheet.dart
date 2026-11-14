@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform, exit;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +15,6 @@ import '../../core/constants/legal_links.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/logger.dart';
 import '../../core/theme/design_tokens.dart';
-import '../../core/utils/image_cache_size.dart';
 import '../navigation/app_router.dart';
 import '../navigation/routes.dart';
 import '../screens/mask_collection_screen.dart';
@@ -30,6 +28,7 @@ import 'eco_widgets.dart';
 import 'equalizer_sheet.dart';
 import 'haptics.dart';
 import 'language_selector_sheet.dart';
+import 'my_avatar.dart';
 import 'oni_mask_art.dart';
 import 'shuffle_mode_icon.dart';
 import 'smart_shuffle_sheet.dart';
@@ -229,27 +228,17 @@ class _ProfileSheet extends ConsumerWidget {
       BuildContext context, LocaleProvider locale, AppStrings strings) {
     final masks = context.readState(maskProvider);
     final equipped = masks.equipped;
+    final profileMask = masks.profileMask;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Stack(
           clipBehavior: Clip.none,
           children: [
-            if (auth.user?.photoURL != null)
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: ResizeImage(
-                  CachedNetworkImageProvider(auth.user!.photoURL!),
-                  width: imageCacheSize(hostContext, 60),
-                ),
-              )
-            else
-              const CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.bgMid,
-                child: Icon(Icons.person_rounded, color: AppColors.textMuted),
-              ),
-            if (equipped != null)
+            // The profile mask when one is chosen (what the Bonds see),
+            // else the photo, with the equipped being beside it.
+            const MyAvatar(size: 60),
+            if (profileMask == null && equipped != null)
               Positioned(
                 right: -14,
                 bottom: -10,
@@ -273,6 +262,21 @@ class _ProfileSheet extends ConsumerWidget {
             color: AppColors.textSecondary,
           ),
         ),
+        // With a mask on the profile: a way back to the photo.
+        Consumer(builder: (context, ref, _) {
+          if (ref.watch(maskProvider.select((m) => m.profileMask)) == null) return const SizedBox.shrink();
+          return TextButton(
+            onPressed: () {
+              Haptics.remove();
+              ref.read(maskProvider).setProfileMask(null);
+            },
+            style: TextButton.styleFrom(minimumSize: const Size(48, 40), foregroundColor: AppColors.textSecondary),
+            child: Text(
+              strings.profileUsePhoto,
+              style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+            ),
+          );
+        }),
         const SizedBox(height: 12),
         InkWell(
           borderRadius: BorderRadius.circular(AppRadius.sheet),

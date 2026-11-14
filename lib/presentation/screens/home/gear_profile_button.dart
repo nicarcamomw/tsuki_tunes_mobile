@@ -42,7 +42,6 @@ class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
 
   @override
   Widget build(BuildContext context) {
-    final photoURL = ref.watch(authProvider.select((a) => a.user?.photoURL));
     return Semantics(
       button: true,
       label: widget.label,
@@ -62,20 +61,8 @@ class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
                 child: child,
               );
             },
-            child: Center(
-              child: CircleAvatar(
-                radius: 12,
-                backgroundColor: AppColors.bgCard,
-                backgroundImage: photoURL != null
-                    ? ResizeImage(CachedNetworkImageProvider(photoURL),
-                        width: imageCacheSize(context, 24))
-                    : null,
-                child: photoURL == null
-                    ? Icon(Icons.person,
-                        size: 14, color: AppColors.accent, semanticLabel: widget.label)
-                    : null,
-              ),
-            ),
+            // The profile mask when one is chosen, else the photo.
+            child: const Center(child: MyAvatar(size: 24)),
           ),
         ),
       ),

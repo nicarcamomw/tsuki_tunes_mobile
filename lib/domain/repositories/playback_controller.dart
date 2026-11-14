@@ -9,6 +9,9 @@ abstract interface class PlaybackController {
 
   /// Plays [track], replacing the queue with [newQueue] when given.
   Future<void> playTrack(Track track, {List<Track>? newQueue});
+
+  /// Turns shuffle on and plays [first] with [tracks] as the queue.
+  Future<void> playShuffled(Track first, List<Track> tracks);
   Future<void> togglePlay();
 
   /// Puts [track] right after the current song.

@@ -148,6 +148,114 @@ void main() {
     });
   });
 
+  group('recommendations', () {
+    late Track? seedGiven;
+    // Recommendations by four artists in turns (the radio keeps an artist
+    // three songs apart).
+    void radioOfR() => AudioRadioController.radioFactory = (seed, mode) {
+          seedGiven = seed;
+          return SongRadio(
+            seed: seed,
+            mode: mode,
+            random: Random(3), // the same batches every run
+            similar: (_, __) async => const [],
+            artistRadio: (_) async => [
+              for (var i = 1; i <= 8; i++)
+                for (final a in ['r', 's', 't', 'u']) _t('$a$i', artist: a.toUpperCase(), preview: 'https://x/$a$i.mp3'),
+            ],
+            search: (_) async => const [],
+            useLastFm: false,
+          );
+        };
+
+    setUp(() {
+      seedGiven = null;
+      SharedPreferences.setMockInitialValues({});
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+        (_) async => null,
+      );
+      radioOfR();
+    });
+    tearDown(() => AudioRadioController.radioFactory = (seed, mode) => SongRadio(seed: seed, mode: mode));
+
+    // A list where BIG has most songs; the first song is a lone one.
+    final list = [
+      _t('solo', artist: 'SOLO'),
+      for (var i = 0; i < 6; i++) _t('big$i', artist: 'BIG'),
+      for (var i = 0; i < 3; i++) _t('o$i'),
+    ];
+
+    Future<AudioProvider> smart() async {
+      final audio = AudioProvider(service: _SilentPlayer());
+      await Future.delayed(const Duration(milliseconds: 50)); // settings load
+      await audio.playTrack(list.first, newQueue: list);
+      addTearDown(audio.dispose);
+      audio.setShuffleMode(ShuffleMode.smart);
+      await Future.delayed(const Duration(milliseconds: 100));
+      return audio;
+    }
+
+    test('they grow from the whole list, not just the song playing', () async {
+      final audio = await smart();
+      expect(seedGiven?.artistId, 'BIG', reason: 'the most present artist, not the lone song playing');
+      expect(audio.queue.any((t) => audio.isRecommended(t.id)), isTrue);
+    });
+
+    test('a recommended artist skipped early twice: no more of theirs; one heard through: more', () async {
+      final audio = await smart();
+      final rs = [for (final t in audio.queue) if (audio.isRecommended(t.id) && t.artistId == 'R') t];
+      expect(rs.length, 2, reason: audio.queue.map((t) => t.id).join(' '));
+      // Both of R played and left at once.
+      await audio.playTrack(rs[0]);
+      await audio.playTrack(list[1]);
+      await audio.playTrack(rs[1]);
+      await audio.playTrack(list[2]);
+      // The others heard nearly through, one after another: new ones come.
+      final heard = <String>{};
+      for (var i = 0; i < 10; i++) {
+        final next = audio.queue.where((t) => audio.isRecommended(t.id) && t.artistId != 'R' && !heard.contains(t.id));
+        if (next.isEmpty) break;
+        await audio.playTrack(next.first);
+        heard.add(next.first.id);
+        audio.setPositionForTesting(const Duration(seconds: 175));
+        await Future.delayed(const Duration(milliseconds: 30));
+      }
+      final all = [for (final t in audio.queue) if (audio.isRecommended(t.id)) t];
+      expect(all.any((t) => !['1', '2'].contains(t.id.substring(1))), isTrue, reason: 'new ones came: ${all.map((t) => t.id)}');
+      expect(all.where((t) => t.artistId == 'R' && !rs.contains(t)), isEmpty, reason: 'R skipped twice: none of theirs');
+    });
+
+    test('dropping recommendations by a rule leaves the rest, and what played', () {
+      final q = PlaybackQueue(random: Random(1))..toggleShuffle();
+      q.select(list.first, newQueue: list);
+      q.addRecommendations([_t('r1', artist: 'R'), _t('s1', artist: 'S'), _t('r2', artist: 'R')]);
+      expect(q.dropRecommendations(where: (t) => t.artistId == 'R'), isTrue);
+      expect(q.tracks.map((t) => t.id), isNot(contains('r1')));
+      expect(q.tracks.map((t) => t.id), isNot(contains('r2')));
+      expect(q.isRecommended('s1'), isTrue);
+    });
+
+    test('one played lately stays out for two weeks', () async {
+      SharedPreferences.setMockInitialValues({
+        'smart_shuffle_seen_v1': '{"r1": ${DateTime.now().millisecondsSinceEpoch ~/ 1000}, '
+            '"s1": ${DateTime.now().subtract(const Duration(days: 20)).millisecondsSinceEpoch ~/ 1000}}',
+      });
+      final audio = await smart();
+      final ids = audio.queue.map((t) => t.id).toList();
+      expect(ids, isNot(contains('r1')), reason: 'played today');
+      expect(ids, contains('s1'), reason: 'played 20 days ago: back');
+    });
+
+    test('kept, a recommendation becomes one of the user\'s songs', () async {
+      final audio = await smart();
+      final rec = audio.queue.firstWhere((t) => audio.isRecommended(t.id));
+      audio.keepRecommendation(rec.id);
+      expect(audio.isRecommended(rec.id), isFalse);
+      expect(audio.queue.map((t) => t.id), contains(rec.id));
+    });
+  });
+
   group('artist radio', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});

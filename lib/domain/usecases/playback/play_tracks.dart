@@ -6,8 +6,10 @@ import '../../entities/track.dart';
 import '../../repositories/playback_controller.dart';
 
 /// "Play" and "Shuffle" on a list of songs: it becomes the queue and plays
-/// from the first song (of the shuffled order when [shuffled]). Returns
-/// false for an empty list, which plays nothing.
+/// from its first song, or, when [shuffled], from a random one with the
+/// player's shuffle on (so what follows is shuffle's: every song once,
+/// artists spread out, and the shuffle button shows it). Returns false for
+/// an empty list, which plays nothing.
 @injectable
 class PlayTracks {
   PlayTracks(this._player, {@ignoreParam Random? random}) : _random = random ?? Random();
@@ -17,8 +19,11 @@ class PlayTracks {
 
   Future<bool> call(List<Track> tracks, {bool shuffled = false}) async {
     if (tracks.isEmpty) return false;
-    final queue = shuffled ? (List.of(tracks)..shuffle(_random)) : tracks;
-    await _player.playTrack(queue.first, newQueue: queue);
+    if (shuffled) {
+      await _player.playShuffled(tracks[_random.nextInt(tracks.length)], tracks);
+    } else {
+      await _player.playTrack(tracks.first, newQueue: tracks);
+    }
     return true;
   }
 }

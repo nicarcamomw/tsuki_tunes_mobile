@@ -40,6 +40,14 @@ class _FakePlayer implements PlaybackController {
     isPlaying = true;
   }
 
+  bool shuffle = false;
+
+  @override
+  Future<void> playShuffled(Track first, List<Track> tracks) async {
+    shuffle = true;
+    await playTrack(first, newQueue: tracks);
+  }
+
   @override
   Future<void> togglePlay() async => isPlaying = !isPlaying;
 
@@ -77,11 +85,16 @@ void main() {
     expect(player.queue.map((t) => t.id), ['1', '2', '3', '4', '5']);
   });
 
-  test('shuffling plays every song once, in a new order', () async {
-    await PlayTracks(player, random: Random(7))(songs, shuffled: true);
-    expect(player.queue.map((t) => t.id).toSet(), {'1', '2', '3', '4', '5'});
-    expect(player.queue.map((t) => t.id), isNot(['1', '2', '3', '4', '5']));
-    expect(player.currentTrack, player.queue.first);
+  test('shuffle starts from a random song with the player\'s shuffle on', () async {
+    final firsts = <String>{};
+    for (var seed = 0; seed < 20; seed++) {
+      player = _FakePlayer();
+      await PlayTracks(player, random: Random(seed))(songs, shuffled: true);
+      expect(player.shuffle, isTrue);
+      expect(player.queue.map((t) => t.id), ['1', '2', '3', '4', '5'], reason: 'the whole list is the queue');
+      firsts.add(player.currentTrack!.id);
+    }
+    expect(firsts.length, greaterThan(2), reason: 'not always the same first song');
     expect(songs.map((t) => t.id), ['1', '2', '3', '4', '5'], reason: 'the list is untouched');
   });
 

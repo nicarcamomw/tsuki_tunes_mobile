@@ -593,7 +593,8 @@ class StorageService implements StorageContract {
       [int? currentIndex,
       int? positionMs,
       bool? wasPlaying,
-      Map<String, dynamic>? radio]) async {
+      Map<String, dynamic>? radio,
+      Map<String, dynamic>? modes]) async {
     final prefs = await SharedPreferences.getInstance();
     if (queue == null || queue.isEmpty) {
       await prefs.remove(_playbackStateKey);
@@ -606,6 +607,8 @@ class StorageService implements StorageContract {
         'savedAt': DateTime.now().millisecondsSinceEpoch,
         // Same snapshot as the queue, so the radio always matches it.
         if (radio != null) 'radio': radio,
+        // Shuffle and repeat, so a closed app comes back the same way.
+        if (modes != null) 'modes': modes,
       };
       await prefs.setString(_playbackStateKey, json.encode(state));
     }

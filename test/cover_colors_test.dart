@@ -94,6 +94,7 @@ void main() {
     late ProviderContainer container;
     late StateController<String?> url;
     late List<String> reads;
+    late MaskProvider masks;
     final known = {
       'blue.jpg': CoverColors.fromSeed(const Color(0xFF1565C0)),
       'green.jpg': CoverColors.fromSeed(const Color(0xFF2E7D32)),
@@ -103,8 +104,9 @@ void main() {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
       reads = [];
+      masks = MaskProvider();
       container = ProviderContainer(overrides: [
-        maskProvider.overrideWith((ref) => MaskProvider()),
+        maskProvider.overrideWith((ref) => masks),
         currentCoverUrlProvider.overrideWith((ref) => ref.watch(urlState)),
         coverColorsReaderProvider.overrideWithValue((u) async {
           reads.add(u);
@@ -122,7 +124,38 @@ void main() {
       expect(container.read(playerBackgroundColorProvider), isNull);
     });
 
+    test('colours from each song are an option: off, the base red stays', () async {
+      await masks.ready;
+      container.listen(playerTintColorProvider, (_, _) {});
+      container.listen(playerBackgroundColorProvider, (_, _) {});
+      url.state = 'blue.jpg';
+      await container.read(currentCoverColorsProvider.future);
+      expect(container.read(playerTintColorProvider), AppColors.accent);
+      expect(container.read(playerBackgroundColorProvider), isNull);
+
+      // Turned on before its level opens: still the base.
+      masks.setCoverTint(true);
+      expect(container.read(playerTintColorProvider), AppColors.accent);
+    });
+
+    test('with it on, the palette rests and each cover leads', () async {
+      await masks.ready;
+      masks.isAdmin = true; // every level open
+      masks.setPlayerColor('jade');
+      container.listen(playerTintColorProvider, (_, _) {});
+      url.state = 'blue.jpg';
+      await container.read(currentCoverColorsProvider.future);
+      expect(container.read(playerTintColorProvider), isNot(known['blue.jpg']!.accent),
+          reason: 'off: the palette colour');
+
+      masks.setCoverTint(true);
+      expect(container.read(playerTintColorProvider), known['blue.jpg']!.accent);
+    });
+
     test('the player follows the playing cover', () async {
+      await masks.ready;
+      masks.isAdmin = true;
+      masks.setCoverTint(true);
       container.listen(playerTintColorProvider, (_, _) {});
       container.listen(playerBackgroundColorProvider, (_, _) {});
 

@@ -13,6 +13,7 @@ import '../../core/utils/image_cache_size.dart';
 import '../../domain/logic/beat_clock.dart';
 import '../state/app_providers.dart';
 import 'haptics.dart';
+import 'player_tint.dart';
 
 /// The spinning eye of the player. With the song's tempo (Deezer's BPM, or
 /// tapped in by the listener) it turns once every four bars and pulses on
@@ -378,6 +379,9 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
+    // The player's colour (the song's, the palette's, a mask's aura, or
+    // the base red), so the disc matches the rest of the player.
+    final tint = PlayerTint.of(context);
     final disc = RepaintBoundary(
       child: Container(
         width: size,
@@ -386,7 +390,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
           shape: BoxShape.circle,
           color: AppColors.bgDeep,
           border: Border.all(
-            color: widget.isPlaying ? AppColors.accent : AppColors.border,
+            color: widget.isPlaying ? tint : AppColors.border,
             width: 2,
           ),
         ),
@@ -417,7 +421,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.bgDeep,
-                border: Border.all(color: AppColors.accent, width: 2),
+                border: Border.all(color: tint, width: 2),
               ),
             ),
           ],
@@ -441,7 +445,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
               // circles, so they stay out of the rotation and only repaint
               // themselves; the disc with its cover is recorded once.
               Positioned.fill(
-                child: CustomPaint(painter: _GlowPainter(_frame, widget.isPlaying)),
+                child: CustomPaint(painter: _GlowPainter(_frame, widget.isPlaying, tint)),
               ),
               AnimatedBuilder(
                 animation: _frame,
@@ -453,7 +457,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
               ),
               Positioned.fill(
                 child: IgnorePointer(
-                  child: CustomPaint(painter: _RingsPainter(_frame, widget.isPlaying)),
+                  child: CustomPaint(painter: _RingsPainter(_frame, widget.isPlaying, tint)),
                 ),
               ),
               Positioned(
@@ -482,7 +486,7 @@ class _CoverPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         color: AppColors.bgMid,
-        child: Icon(Icons.music_note, size: iconSize, color: AppColors.accent),
+        child: Icon(Icons.music_note, size: iconSize, color: PlayerTint.of(context)),
       );
 }
 
@@ -498,7 +502,7 @@ class _SyncChip extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.bgDeep.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.7)),
+        border: Border.all(color: PlayerTint.of(context).withValues(alpha: 0.7)),
       ),
       child: Text(
         text,
@@ -516,7 +520,8 @@ class _SyncChip extends ConsumerWidget {
 class _GlowPainter extends CustomPainter {
   final _Frame f;
   final bool playing;
-  _GlowPainter(this.f, this.playing) : super(repaint: f);
+  final Color tint;
+  _GlowPainter(this.f, this.playing, this.tint) : super(repaint: f);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -531,9 +536,9 @@ class _GlowPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            AppColors.accent.withValues(alpha: a),
-            AppColors.accent.withValues(alpha: a * 0.35),
-            AppColors.accent.withValues(alpha: 0),
+            tint.withValues(alpha: a),
+            tint.withValues(alpha: a * 0.35),
+            tint.withValues(alpha: 0),
           ],
           stops: [r * 0.94 / outer, r * 1.04 / outer, 1],
         ).createShader(Rect.fromCircle(center: c, radius: outer)),
@@ -541,13 +546,14 @@ class _GlowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlowPainter old) => old.playing != playing;
+  bool shouldRepaint(_GlowPainter old) => old.playing != playing || old.tint != tint;
 }
 
 class _RingsPainter extends CustomPainter {
   final _Frame f;
   final bool playing;
-  _RingsPainter(this.f, this.playing) : super(repaint: f);
+  final Color tint;
+  _RingsPainter(this.f, this.playing, this.tint) : super(repaint: f);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -566,7 +572,7 @@ class _RingsPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1 + 1.2 * lift
           ..color = playing
-              ? AppColors.accent.withValues(alpha: (0.28 + 0.62 * lift).clamp(0.0, 1.0))
+              ? tint.withValues(alpha: (0.28 + 0.62 * lift).clamp(0.0, 1.0))
               : AppColors.border,
       );
     }
@@ -579,7 +585,7 @@ class _RingsPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
-          ..color = AppColors.accent.withValues(alpha: 0.75 * f.pulse),
+          ..color = tint.withValues(alpha: 0.75 * f.pulse),
       );
     }
 
@@ -595,7 +601,7 @@ class _RingsPainter extends CustomPainter {
           Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 3 - 2.4 * p
-            ..color = AppColors.accent.withValues(alpha: alpha.clamp(0.0, 1.0)),
+            ..color = tint.withValues(alpha: alpha.clamp(0.0, 1.0)),
         );
       }
     }
@@ -615,5 +621,5 @@ class _RingsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RingsPainter old) => old.playing != playing;
+  bool shouldRepaint(_RingsPainter old) => old.playing != playing || old.tint != tint;
 }

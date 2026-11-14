@@ -17,6 +17,7 @@ import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/lyrics_view.dart';
 import '../widgets/moon_loader.dart';
+import '../widgets/player_tint.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/swipeable_sheet.dart';
 import '../widgets/tap_scale.dart';
@@ -227,8 +228,14 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
         text: '$quote— ${track.title} · ${track.fullArtistName}\nTsuki Tunes'));
   }
 
+  /// In the player's colour, like the player it opens from.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AnimatedPlayerTint(
+        color: ref.watch(playerTintColorProvider),
+        child: Builder(builder: _screen),
+      );
+
+  Widget _screen(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
     final track = ref.watch(currentTrackProvider);
@@ -418,7 +425,7 @@ class _Header extends StatelessWidget {
                     style: locale.getTextStyle(
                       fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accent.withValues(alpha: 0.9),
+                      color: lyricsText(PlayerTint.of(context)).withValues(alpha: 0.9),
                       letterSpacing: 1.6,
                     ),
                   ),
@@ -464,12 +471,12 @@ class _Chip extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: active
-              ? AppColors.accent.withValues(alpha: 0.25)
+              ? PlayerTint.of(context).withValues(alpha: 0.25)
               : Colors.black.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(AppRadius.sheet),
           border: Border.all(
             color: active
-                ? AppColors.accent.withValues(alpha: 0.8)
+                ? PlayerTint.of(context).withValues(alpha: 0.8)
                 : Colors.white.withValues(alpha: 0.12),
           ),
         ),
@@ -524,7 +531,7 @@ class _Progress extends ConsumerWidget {
         progressBarColor: Colors.white,
         baseBarColor: Colors.white.withValues(alpha: 0.22),
         thumbColor: Colors.white,
-        thumbGlowColor: AppColors.accent.withValues(alpha: 0.5),
+        thumbGlowColor: PlayerTint.of(context).withValues(alpha: 0.5),
         thumbRadius: 6,
         timeLabelTextStyle: locale.getTextStyle(
           fontSize: AppFontSize.caption,
@@ -566,10 +573,10 @@ class _Controls extends ConsumerWidget {
             height: 66,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.accent,
+              color: PlayerTint.of(context),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.55),
+                  color: PlayerTint.of(context).withValues(alpha: 0.55),
                   blurRadius: 22,
                   spreadRadius: 1,
                 ),

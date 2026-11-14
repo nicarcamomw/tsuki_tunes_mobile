@@ -54,6 +54,15 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           ),
           const SizedBox(height: 10),
           _AffinityFactor(
+            icon: Icons.graphic_eq_rounded,
+            color: AppColors.neonPurple,
+            title: strings.affinityPlaysTitle,
+            body: strings.affinityPlaysBody,
+            points: strings.affinityPoints(1),
+            locale: locale,
+          ),
+          const SizedBox(height: 10),
+          _AffinityFactor(
             icon: Icons.person_search,
             color: AppColors.neonCyan,
             title: strings.affinityVisitsTitle,

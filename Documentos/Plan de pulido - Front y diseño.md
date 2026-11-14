@@ -14,11 +14,30 @@ Documento de trabajo para ir apartado por apartado. Cada tarea tiene un código 
 
 1. **Pulir, no rediseñar.** Se refina lo que hay; la identidad visual no se reemplaza.
 2. **Solo Android.** iOS no es objetivo.
-3. **Trabajar en `main`.** Sin ramas ni worktrees. Commit sí; `push` solo si se pide.
-4. **Una tarea por vez**, con `flutter analyze` y `flutter test` en verde antes de dar algo por hecho.
+3. **Dónde se trabaja.**
+   - **En local:** en `main`, sin ramas ni worktrees. Commit sí; `push` solo si se pide.
+   - **En una sesión en la nube:** en la rama de la sesión, con `push` al terminar cada tarea (el contenedor se borra al cerrar y lo no subido se pierde). A `main` solo se pasa cuando se pide ("pasa a main").
+4. **Una tarea por vez**, y "en verde" quiere decir lo mismo que exige el CI (`.github/workflows/build-apk.yml`), antes de dar algo por hecho:
+   - `flutter analyze` sin avisos.
+   - `flutter test --exclude-tags golden --coverage`, con la cobertura mínima del 60 % en providers, servicios, repositorios y casos de uso.
+   - `flutter test --tags golden`.
 5. **Todo cambio visual se muestra** con captura de antes y después.
+   - Cuenta como visual cualquier cambio de color, espaciado, tamaño, texto visible o ícono.
+   - Se sacan con `TSUKI_SHOTS=<carpeta> TSUKI_SHOT_FONTS=<carpeta con fuentes> flutter test --tags shots test/screenshots` (`test/screenshots/design_shots_test.dart`), una vez antes de tocar nada y otra al terminar.
+   - Si el color depende del contenido (portada, paleta, máscara equipada), la captura muestra el peor caso: por ejemplo, una portada azul o violeta, no solo el rojo base.
 6. **Accesibilidad ya ganada, no se pierde:** contraste AA, objetivos táctiles de 48 dp, etiquetas para TalkBack y respeto a "reducir movimiento" (`lib/presentation/widgets/motion.dart`).
-7. **Texto nuevo siempre en los tres idiomas** (es, en, ja).
+   - Contraste medido: 4.5:1 para texto normal; 3:1 para texto grande y para íconos y bordes que informan.
+   - Un color dinámico (el de la portada, el de la paleta, el aura de una máscara) usado como texto pasa por `readableTint` (`lib/presentation/widgets/player_tint.dart`), que lo aclara hasta cumplir.
+   - Excepción aceptada: las líneas atenuadas de las letras (ya cantadas o por venir) quedan por debajo de AA a propósito, como estado inactivo; la línea actual sí cumple.
+7. **Texto nuevo siempre en los tres idiomas** (es, en, ja), y con el mismo significado en los tres, no solo presente.
+   - Va en los `.arb` (`test/l10n_test.dart` los revisa) o en `lib/core/localization/app_strings.dart` con `_es(es, en, ja)` o un `switch` por idioma, que el compilador obliga a completar.
+8. **Tokens de diseño, nunca valores sueltos:** tamaños, radios, duraciones y márgenes salen de `AppFontSize`, `AppRadius`, `AppMotion` y `AppSpacing` (`lib/core/theme/design_tokens.dart`). `test/design_tokens_test.dart` falla si aparece uno suelto.
+9. **Un solo vocabulario por cosa:** vibración solo por `Haptics` (`haptics.dart`), animaciones respetando `motion.dart`, superficies con `GlassCard` y cargas con los esqueletos de `skeleton_loader.dart`. Un pulido no inventa su propia variante.
+10. **Arreglos de lógica: primero la prueba.** Se escribe una prueba que reproduzca el fallo y se ve fallar; después el arreglo, y la misma prueba pasa.
+11. **Sin sorpresas de alcance.**
+    - Sin dependencias nuevas sin preguntar.
+    - Una tarea visual no cambia comportamiento. Si aparece un bug en el camino, se anota y se hace como tarea aparte.
+12. **Cierre de cada tarea:** un mensaje corto con qué cambió, la captura de antes y después (si es visual), el resultado de las pruebas y lo que quedó pendiente.
 
 ## 3. Mapa completo de apartados
 
@@ -335,7 +354,7 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 
 ## 7. Cómo pedir una tarea
 
-Ejemplo de mensaje: "Haz D-06. Reglas del documento `Documentos/Plan de pulido - Front y diseño.md`. Muéstrame captura de antes y después y no hagas push."
+Ejemplo de mensaje: "Haz D-06. Reglas del documento `Documentos/Plan de pulido - Front y diseño.md`." Las reglas ya incluyen la captura de antes y después y cuándo se hace `push` (regla 3), así que no hace falta repetirlas.
 
 ## 8. De dónde salen los números
 

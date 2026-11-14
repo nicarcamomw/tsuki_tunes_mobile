@@ -15,13 +15,23 @@ class PlaybackRestorePlan {
   /// The radio's saved state, when it was on.
   final Map<String, dynamic>? radio;
 
+  /// Shuffle and repeat as they were (see AudioProvider), when saved.
+  final Map<String, dynamic>? modes;
+
+  /// The song that was playing when saved (the same as [index] unless
+  /// [advanced]): with shuffle the next one is a shuffle pick, not the
+  /// song after it in the list.
+  final int savedIndex;
+
   const PlaybackRestorePlan({
     required this.queue,
     required this.index,
     required this.position,
     this.advanced = false,
     this.radio,
-  });
+    this.modes,
+    int? savedIndex,
+  }) : savedIndex = savedIndex ?? index;
 
   Track get track => queue[index];
 }
@@ -45,6 +55,8 @@ PlaybackRestorePlan? planPlaybackRestore(Map<String, dynamic> state, DateTime no
   final posMs = rawPosMs is num ? rawPosMs.toInt() : 0;
   final wasPlaying = state['wasPlaying'] as bool? ?? false;
   final savedAtMs = state['savedAt'] as int?;
+  final rawModes = state['modes'];
+  final modes = rawModes is Map ? Map<String, dynamic>.from(rawModes) : null;
 
   // Killed while playing: if enough wall-clock time has passed for the song
   // to have ended, come back on the next one instead.
@@ -58,6 +70,8 @@ PlaybackRestorePlan? planPlaybackRestore(Map<String, dynamic> state, DateTime no
         index: (index + 1) % queue.length,
         position: Duration.zero,
         advanced: true,
+        modes: modes,
+        savedIndex: index,
       );
     }
   }
@@ -68,5 +82,6 @@ PlaybackRestorePlan? planPlaybackRestore(Map<String, dynamic> state, DateTime no
     index: index,
     position: Duration(milliseconds: posMs),
     radio: rawRadio is Map ? Map<String, dynamic>.from(rawRadio) : null,
+    modes: modes,
   );
 }

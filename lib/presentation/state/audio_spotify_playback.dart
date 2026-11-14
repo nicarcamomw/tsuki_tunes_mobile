@@ -437,7 +437,7 @@ extension _SpotifyPlayback on AudioProvider {
     final track = _q.current;
     if (track == null) return;
     _log.info('Spotify moved on ${k + 1} along our list to "${track.title}", following');
-    _radioCtrl.registerLeaving(track, finished, _position, _duration,
+    _registerLeaving(track, finished, _position, _duration,
         completed: true);
 
     final now = DateTime.now();

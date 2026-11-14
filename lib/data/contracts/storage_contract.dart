@@ -33,7 +33,8 @@ abstract class StorageContract {
       [int? currentIndex,
       int? positionMs,
       bool? wasPlaying,
-      Map<String, dynamic>? radio]);
+      Map<String, dynamic>? radio,
+      Map<String, dynamic>? modes]);
   Future<List<Map<String, dynamic>>> getCachedPlaylists(String uid);
   Future<void> saveCachedPlaylists(String uid, List<Map<String, dynamic>> playlists);
   Future<List<Map<String, dynamic>>> getCachedFollowedArtists(String uid);

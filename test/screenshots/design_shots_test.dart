@@ -30,6 +30,7 @@ import 'package:tsuki_tunes_mobile/presentation/screens/album_detail_screen.dart
 import 'package:tsuki_tunes_mobile/presentation/screens/artist_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/bonds_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/expanded_player_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/library_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
@@ -41,6 +42,7 @@ import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
+import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
@@ -81,6 +83,15 @@ const _song = Track(
 class _StillAudio extends AudioProvider {
   @override
   Track? get currentTrack => _song;
+}
+
+/// The song playing came from smart shuffle's recommendations.
+class _RecommendedAudio extends _StillAudio {
+  @override
+  bool isRecommended(String trackId) => trackId == _song.id;
+  @override
+  RadioReason? recommendationReasonFor(String trackId) =>
+      const RadioReason(RadioSource.lastfm, 'One More Time', 'Daft Punk');
 }
 
 class _Online extends ChangeNotifier implements ConnectivityProvider {
@@ -465,6 +476,53 @@ void main() {
 
   testWidgets('masks', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'masks', overrides: base, const MaskCollectionScreen());
+  });
+
+  // A mask equipped and chosen for the profile: the avatar shows it.
+  testWidgets('profile_mask', skip: skip != null, (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'masks_unlocked_v1': '{"hajime": 1730000000000}',
+      'masks_equipped_v1': 'hajime',
+      'masks_profile_v1': 'hajime',
+    });
+    await _pumpShot(tester, 'profile_mask', scaffold: true,
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+        Consumer(builder: (context, ref, _) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted && ModalRoute.of(context)?.isCurrent == true) {
+              ProfileBottomSheet.show(context, ref.read(authProvider));
+            }
+          });
+          return const SizedBox.expand();
+        }));
+  });
+
+  // The player colour section, every level open and colours from each
+  // song switched on.
+  testWidgets('eco_colors', skip: skip != null, (tester) async {
+    SharedPreferences.setMockInitialValues({'player_cover_tint_v1': true});
+    // An admin's masks (every level open), away from the account that
+    // would set it back.
+    await _pumpShot(tester, 'eco_colors',
+        overrides: [...base, maskProvider.overrideWith((ref) => MaskProvider()..isAdmin = true)],
+        const EcoLevelsScreen(), before: () async {
+      await tester.scrollUntilVisible(find.text('COLOR DEL REPRODUCTOR'), 300,
+          scrollable: find.byType(Scrollable).first);
+      // The section's heading at the top of the screen.
+      await Scrollable.ensureVisible(tester.element(find.text('COLOR DEL REPRODUCTOR')));
+    });
+  });
+
+  // The expanded player in a chosen colour (violet): disc, album name, controls.
+  testWidgets('player', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'player',
+        overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())], const ExpandedPlayerScreen());
+  });
+
+  // A song smart shuffle recommended: the line under the title says why.
+  testWidgets('player_reco', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'player_reco',
+        overrides: [...base, audioProvider.overrideWith((ref) => _RecommendedAudio())], const ExpandedPlayerScreen());
   });
 
   testWidgets('bonds', skip: skip != null, (tester) async {

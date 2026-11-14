@@ -7,7 +7,7 @@
   "exploreDiscover": "MÚSICA NUEVA",
   "explorePlay": "JUGAR",
   "explorePath": "TU CAMINO",
-  "exploreLoreSubtitle": "La historia de Tsuki",
+  "exploreLoreSubtitle": "El Testamento Lunar",
   "homeToday": "HOY",
   "homeHeader": "INICIO // 01",
   "statsTracks": "CANCIONES",
@@ -199,6 +199,10 @@
   "maskLocked": "Aún bloqueada",
   "maskEquipped": "EQUIPADA",
   "maskUnequip": "DESEQUIPAR",
+  "maskSetProfile": "USAR EN MI PERFIL",
+  "maskClearProfile": "QUITAR DE MI PERFIL",
+  "maskProfileSet": "Tu perfil muestra ahora esta máscara. Tus Lazos la verán en lugar de tu foto.",
+  "profileUsePhoto": "Volver a mi foto",
   "maskUnlockedOn": "Desbloqueada el {date}",
   "@maskUnlockedOn": {
     "placeholders": {
@@ -385,11 +389,13 @@
     }
   },
   "affinityInfoTitle": "¿Cómo se calcula la afinidad?",
-  "affinitySavedTitle": "Canciones escuchadas",
+  "affinitySavedTitle": "Canciones marcadas",
   "affinitySavedBody": "Cada canción suya que marcas como escuchada.",
   "affinityVisitsTitle": "Visitas al perfil",
+  "affinityPlaysBody": "Cada vez que suena una canción suya (tus últimas 2.000).",
+  "affinityPlaysTitle": "Reproducciones",
   "affinityFormulaLabel": "FÓRMULA",
-  "affinityFormula": "(escuchadas × 2) + visitas",
+  "affinityFormula": "(marcadas × 2) + reproducciones + visitas",
   "affinityInfoClose": "Entendido",
   "featured": "DESTACADO",
   "spotifyActiveDevice": "Dispositivo activo: {device}",
@@ -1285,7 +1291,7 @@
       }
     }
   },
-  "affinityInfoIntro": "La afinidad mide tu conexión con cada artista según dos factores:",
+  "affinityInfoIntro": "La afinidad mide tu conexión con cada artista según tres factores:",
   "affinityVisitsBody": "Cada vez que abres la página del artista.",
   "affinityPoints": "{points, plural, =1{+1 PT} other{+{points} PTS}}",
   "@affinityPoints": {
@@ -1828,6 +1834,7 @@
   "shuffleRecoNormal": "Normal",
   "shuffleRecoMany": "Muchas",
   "recommendedTag": "RECOMENDADA",
+  "recoKeep": "GUARDAR",
   "queueSmartShuffleTag": "MEZCLA INTELIGENTE",
   "shuffleHoldHint": "Mantén pulsado el botón aleatorio para configurarlo",
   "a11yShuffleSmart": "Aleatorio con recomendaciones",

@@ -156,24 +156,32 @@ final currentCoverColorsProvider = FutureProvider<CoverColors?>((ref) async {
   return ref.read(coverColorsReaderProvider)(url);
 });
 
-/// The player's accent: a UL or DS mask's aura, else the colour the user
-/// chose in the levels, else the cover's colour, else the app's red.
+/// Whether the player follows each song's cover (an option the levels
+/// open; the red is the base).
+final playerCoverTintProvider = Provider<bool>((ref) => ref.watch(maskProvider.select((m) => m.coverTint)));
+
+/// The player's accent: a UL or DS mask's aura, else (with colours from
+/// each song on) the cover's colour, else the colour picked in the
+/// palette, else the base red.
 final playerTintColorProvider = Provider<Color>((ref) {
+  final byCover = ref.watch(playerCoverTintProvider);
   final chosen = ref.watch(maskProvider.select((m) =>
-      m.equipped?.playerAura ?? (m.playerColor == null ? null : Color(m.playerColor!.argb))));
+      m.equipped?.playerAura ?? (byCover || m.playerColor == null ? null : Color(m.playerColor!.argb))));
   return resolvePlayerTint(
     chosen: chosen,
-    cover: chosen != null ? null : ref.watch(currentCoverColorsProvider.select((c) => c.value?.accent)),
+    cover: chosen != null || !byCover ? null : ref.watch(currentCoverColorsProvider.select((c) => c.value?.accent)),
   );
 });
 
-/// What the user picked (a mask's aura or a level colour) wins over the
-/// cover, and the cover over the app's red.
+/// What the user picked (a mask's aura or a palette colour) wins over the
+/// cover, and the cover over the base red.
 Color resolvePlayerTint({Color? chosen, Color? cover}) => chosen ?? cover ?? AppColors.accent;
 
-/// The player's background tint from the cover, or null for the plain one.
-final playerBackgroundColorProvider = Provider<Color?>(
-    (ref) => ref.watch(currentCoverColorsProvider.select((c) => c.value?.background)));
+/// The player's background tint from the cover (with colours from each
+/// song on), or null for the plain one.
+final playerBackgroundColorProvider = Provider<Color?>((ref) => ref.watch(playerCoverTintProvider)
+    ? ref.watch(currentCoverColorsProvider.select((c) => c.value?.background))
+    : null);
 
 /// The colours of the last [_capacity] covers, least recently used first.
 class _CoverColorsCache {

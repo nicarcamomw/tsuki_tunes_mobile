@@ -16,7 +16,7 @@ import '../widgets/oni_mask_art.dart';
 
 const _gold = AppColors.gold;
 
-/// Tsuki Lore: the world of the masks, by volumes and chapters. Chapters
+/// The Lunar Testament (the lore): the world of the masks, by volumes and chapters. Chapters
 /// open as the masks they speak of awaken.
 class LoreScreen extends ConsumerWidget {
   const LoreScreen({super.key});

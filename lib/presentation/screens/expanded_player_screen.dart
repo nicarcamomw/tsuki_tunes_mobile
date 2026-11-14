@@ -34,6 +34,7 @@ import '../widgets/player_tint.dart';
 import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
+import '../widgets/recommended_line.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/shuffle_mode_icon.dart';
 import '../widgets/smart_shuffle_sheet.dart';
@@ -273,7 +274,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
             body: _CoverBackdrop(child: SafeArea(
               child: _centerPage(track, Column(
                 children: [
-                  _buildTopBar(track, locale, radioActive: radioActive),
+                  _buildTopBar(context, track, locale, radioActive: radioActive),
 
                   // Art or Queue (lyrics live in a card below the player)
                   if (_viewMode == _CenterViewMode.queue)
@@ -378,7 +379,9 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
 }
 
   /// Symmetric: collapse chevron | where it's playing from | song menu.
-  Widget _buildTopBar(Track track, LocaleProvider locale,
+  /// [context] is the tinted one (under [AnimatedPlayerTint]): the
+  /// screen's own sits above it, and its PlayerTint was always the red.
+  Widget _buildTopBar(BuildContext context, Track track, LocaleProvider locale,
       {required bool radioActive}) {
     final strings = locale.strings;
     return Padding(
@@ -424,7 +427,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
-                        color: PlayerTint.of(context),
+                        color: PlayerTint.textOf(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -505,6 +508,8 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     ),
                   ),
                 ),
+                // Smart shuffle's recommendation: why it's here, and keep it.
+                RecommendedLine(track: track),
                 // R-05: the line being sung peeks under the title.
                 CurrentLyricLine(controller: _lyrics, onTap: _openLyrics),
               ],
@@ -514,7 +519,11 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           if (!ref.watch(authProvider.select((a) => a.isGuest)))
             TapScale(
               semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
-              onTap: () => unawaited(toggleListenedWithUndo(context, ref, track)),
+              onTap: () {
+                unawaited(toggleListenedWithUndo(context, ref, track));
+                // Marking a recommended song keeps it: one of the user's now.
+                if (!isListened) ref.read(audioProvider).keepRecommendation(track.id);
+              },
               scaleDown: 0.8,
               child: Padding(
                 padding: const EdgeInsets.all(8),

@@ -102,6 +102,33 @@ void main() {
     expect(batch.where((t) => t.artistId == 'art0'), isEmpty);
   });
 
+  test('skip bans are forgiven when the radio runs dry, less like this is not', () async {
+    // Only two artists besides the seed's: skipping both bans them all.
+    final radio = SongRadio(
+      seed: _seed,
+      artistRadio: (_) async => [
+        for (var s = 0; s < 6; s++) _t('a$s', 'A $s', 'artA', 'Artist A'),
+        for (var s = 0; s < 6; s++) _t('b$s', 'B $s', 'artB', 'Artist B'),
+        for (var s = 0; s < 6; s++) _t('c$s', 'C $s', 'artC', 'Artist C'),
+      ],
+      random: Random(5),
+    );
+    final a = _t('a9', 'A 9', 'artA', 'Artist A');
+    final c = _t('c9', 'C 9', 'artC', 'Artist C');
+    radio.registerPlayed(a, 0.1);
+    radio.registerPlayed(a, 0.1);
+    radio.lessLikeThis(_t('b9', 'B 9', 'artB', 'Artist B'));
+    radio.registerPlayed(c, 0.1);
+    radio.registerPlayed(c, 0.1);
+    expect(radio.isBanned(a), isTrue);
+
+    final batch = await radio.nextBatch(count: 4);
+    expect(batch, isNotEmpty);
+    expect(radio.isBanned(a), isFalse);
+    expect(radio.isBanned(c), isFalse);
+    expect(batch.where((t) => t.artistId == 'artB'), isEmpty);
+  });
+
   test('skipping the seed artist never bans it', () {
     final radio = _radio();
     radio.registerPlayed(_seed, 0.1);
