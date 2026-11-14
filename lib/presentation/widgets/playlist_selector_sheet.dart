@@ -150,7 +150,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                   errorWidget: (_, __, ___) => Container(
                                     color: AppColors.bgMid,
                                     child: const Icon(Icons.queue_music,
-                                        color: AppColors.accent, size: 18),
+                                        color: AppColors.textMuted, size: 18),
                                   ),
                                 )
                               : Container(
@@ -225,7 +225,6 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
       title: Text(
         strings.newPlaylist,

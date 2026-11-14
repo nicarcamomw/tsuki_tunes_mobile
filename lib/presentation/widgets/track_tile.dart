@@ -228,7 +228,7 @@ class TrackTile extends ConsumerWidget {
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
                             child: const Icon(Icons.music_note,
-                                color: AppColors.accent, size: 20),
+                                color: AppColors.textMuted, size: 20),
                           ),
                         )
                       : Container(

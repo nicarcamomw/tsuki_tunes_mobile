@@ -47,6 +47,7 @@ import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/language_selector_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/profile_bottom_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/queue_panel.dart';
@@ -476,6 +477,28 @@ void main() {
 
   testWidgets('masks', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'masks', overrides: base, const MaskCollectionScreen());
+  });
+
+  // The playlists tab with none yet: its main action.
+  testWidgets('library_playlists', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'library_playlists',
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())], const LibraryScreen(),
+        before: () async {
+      await tester.tap(find.byType(Tab).last);
+      await tester.pump(const Duration(milliseconds: 400));
+    });
+  });
+
+  // A bottom sheet over the screen (D-14: it rises a surface).
+  testWidgets('sheet', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'sheet', scaffold: true,
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+        Builder(builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted && ModalRoute.of(context)?.isCurrent == true) LanguageSelectorSheet.show(context);
+          });
+          return const SizedBox.expand();
+        }));
   });
 
   // A mask equipped and chosen for the profile: the avatar shows it.

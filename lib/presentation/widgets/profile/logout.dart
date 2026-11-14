@@ -9,7 +9,6 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
     context: context,
     useRootNavigator: true,
     builder: (dialogCtx) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
         side: const BorderSide(color: AppColors.border, width: 1.0),

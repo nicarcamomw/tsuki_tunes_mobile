@@ -27,6 +27,7 @@ import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/eco_widgets.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/entry_cards.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/haptics.dart';
@@ -349,13 +350,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const HomeSkeletonLoader()
             else if (_hasError)
               _HomeMessage(
-                locale: locale,
-                icon: Icon(
-                  Icons.wifi_off_rounded,
-                  color: AppColors.textMuted,
-                  size: 28,
-                  semanticLabel: strings.a11yOffline,
-                ),
+                icon: Icons.wifi_off_rounded,
                 title: strings.homeLoadError,
                 subtitle: strings.homeLoadErrorSubtitle,
                 actionLabel: strings.retry,
@@ -363,13 +358,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             else if (isLoggedIn && statsLoaded && listenedCount == 0 && !hasArtists)
               _HomeMessage(
-                locale: locale,
-                icon: Image.asset(
-                  'assets/images/tengu.png',
-                  width: 28,
-                  height: 28,
-                  semanticLabel: strings.homeEmptyTitle,
-                ),
+                image: 'assets/images/tengu.png',
                 title: strings.homeEmptyTitle,
                 subtitle: strings.homeEmptySubtitle,
                 actionLabel: strings.homeEmptyAction,

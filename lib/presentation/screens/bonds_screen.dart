@@ -615,7 +615,6 @@ class BondButton extends ConsumerWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         title: Text(strings.bondsUnbond),
         content: Text(strings.bondsUnbondBody(person.name)),
         actions: [

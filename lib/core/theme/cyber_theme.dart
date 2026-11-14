@@ -102,8 +102,11 @@ class CyberTheme {
         centerTitle: false,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
+      // D-14: dialogs and menus rise over the screen.
+      dialogTheme: const DialogThemeData(backgroundColor: AppColors.surfaceRaised),
+      popupMenuTheme: const PopupMenuThemeData(color: AppColors.surfaceRaised),
       cardTheme: CardThemeData(
-        color: AppColors.bgCard,
+        color: AppColors.surfaceCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -141,31 +144,6 @@ class CyberTheme {
         thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
         trackHeight: 3,
       ),
-    );
-  }
-
-  // Cyber Box Glow Effect
-  static BoxDecoration cyberCardBox({
-    Color backgroundColor = AppColors.bgCard,
-    Color borderColor = AppColors.border,
-    bool glow = false,
-  }) {
-    return BoxDecoration(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(AppRadius.chip),
-      border: Border.all(
-        color: glow ? AppColors.accent : borderColor,
-        width: 1,
-      ),
-      boxShadow: glow
-          ? [
-              const BoxShadow(
-                color: AppColors.accentGlow,
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ]
-          : null,
     );
   }
 }

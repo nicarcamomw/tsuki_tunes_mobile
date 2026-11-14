@@ -94,7 +94,6 @@ class SharedPlaylistScreen extends ConsumerWidget {
         final yes = await showDialog<bool>(
           context: context,
           builder: (d) => AlertDialog(
-            backgroundColor: AppColors.bgCard,
             title: Text(strings.sharedDelete),
             content: Text(strings.sharedDeleteBody),
             actions: [
@@ -117,7 +116,6 @@ Future<String?> _askName(BuildContext context, String title, String initial, Str
   return showDialog<String>(
     context: context,
     builder: (d) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       title: Text(title),
       content: TextField(
         controller: field,
@@ -347,7 +345,6 @@ class _Body extends ConsumerWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (d) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         title: Text(p.nameOf(uid)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(d, false), child: Text(strings.cancel)),

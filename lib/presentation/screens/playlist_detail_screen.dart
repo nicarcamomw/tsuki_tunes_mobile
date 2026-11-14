@@ -431,7 +431,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
@@ -506,7 +505,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(

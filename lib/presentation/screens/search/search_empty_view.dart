@@ -53,7 +53,6 @@ extension _SearchEmptyView on _SearchScreenState {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: AppColors.bgCard,
                       title: Text(
                         strings.clearHistory,
                         style: locale.getTextStyle(

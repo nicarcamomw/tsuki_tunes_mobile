@@ -30,7 +30,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             style: locale.getTextStyle(
               fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
-              color: AppColors.accent.withValues(alpha: 0.85),
+              color: AppColors.info,
               letterSpacing: 1.4,
             ),
           ),
@@ -77,18 +77,18 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             decoration: BoxDecoration(
               color: AppColors.bgDeep,
               borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.functions, size: 18, color: AppColors.accent),
+                const Icon(Icons.functions, size: 18, color: AppColors.info),
                 const SizedBox(width: 10),
                 Text(
                   '${strings.affinityFormulaLabel}  ',
                   style: locale.getTextStyle(
                     fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
+                    color: AppColors.info,
                     letterSpacing: 1.4,
                   ),
                 ),

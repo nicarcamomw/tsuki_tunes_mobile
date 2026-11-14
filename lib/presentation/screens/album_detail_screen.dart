@@ -141,7 +141,6 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       final remove = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.bgCard,
           title: Text(strings.downloadAlbumRemove),
           content: Text(strings.downloadAlbumRemoveBody(albumData.title)),
           actions: [
@@ -303,7 +302,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                     errorWidget: (_, __, ___) => Container(
                                       color: AppColors.bgMid,
                                       child: const Icon(Icons.album,
-                                          size: 50, color: AppColors.accent),
+                                          size: 50, color: AppColors.textMuted),
                                     ),
                                   )
                                 : Container(

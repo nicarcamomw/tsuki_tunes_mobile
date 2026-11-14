@@ -31,7 +31,7 @@ class SwipeableSheet extends StatelessWidget {
   static Future<T?> show<T>(
     BuildContext context, {
     required Widget Function(BuildContext, ScrollController) builder,
-    Color backgroundColor = AppColors.bgCard,
+    Color backgroundColor = AppColors.surfaceRaised,
     double initialChildSize = 0.65,
     double maxChildSize = 0.92,
     double minChildSize = 0.25,
@@ -75,7 +75,7 @@ class SwipeableSheet extends StatelessWidget {
 Future<T?> showAppSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
-  Color backgroundColor = AppColors.bgCard,
+  Color backgroundColor = AppColors.surfaceRaised,
   BoxConstraints? constraints,
   bool isScrollControlled = true,
   bool drawHandle = false,

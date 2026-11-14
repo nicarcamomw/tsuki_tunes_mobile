@@ -8,6 +8,16 @@ class AppColors {
   static const Color bgHover = Color(0xFF252A36);
   static const Color bgGlass = Color(0xF514171F);
 
+  // D-14, depth with light: three surface levels, lighter as they come
+  // closer. The screen is [surface]; a card on it is [surfaceCard]; what
+  // rises over the screen (a bottom sheet, a dialog, a menu) is
+  // [surfaceRaised], so a card inside a sheet sits a step below it.
+  // A resting card's edge is [border]; [borderGlow] (or the accent) is for
+  // what is active, focused or chosen.
+  static const Color surface = bgDeep;
+  static const Color surfaceCard = bgCard;
+  static const Color surfaceRaised = bgHover;
+
   // Borders & Dividers
   static const Color border = Color(0xFF2A2F3D);
   static const Color borderSub = Color(0xFF1A1D27);

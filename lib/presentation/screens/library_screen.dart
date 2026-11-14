@@ -691,23 +691,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           child: Row(
             children: [
           Expanded(
-            child: OutlinedButton.icon(
+            // The tab's main action (D-10, D-12): the primary button.
+            child: FilledButton.icon(
               onPressed: () { Haptics.tap(); _showCreatePlaylistDialog(context); },
-              icon: Icon(Icons.add, color: AppColors.accent, size: 18, semanticLabel: strings.a11yCreatePlaylist),
+              icon: Icon(Icons.add, size: 18, semanticLabel: strings.a11yCreatePlaylist),
               label: Text(
                 strings.createPlaylist,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
-                ),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800),
               ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.accent),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.chip)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
               if (shared.available) ...[
@@ -805,7 +797,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.newPlaylist,
