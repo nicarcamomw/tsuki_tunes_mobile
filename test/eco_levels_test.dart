@@ -254,7 +254,7 @@ void main() {
       masks.applyProgress({'plays': EcoLevels.ecoFor(100) ~/ MaskProvider.ecoPerPlay});
       await pump(tester, const AscensionScreen());
       await tester.pumpAndSettle(const Duration(seconds: 10));
-      expect(find.text('La Luna Madre se regocija con tu Eco.'), findsOneWidget);
+      expect(find.text('La Luna Madre recibió cada una de tus plegarias, y se regocija con tu Eco.'), findsOneWidget);
       expect(find.text('UN SER ETÉREO'), findsOneWidget);
 
       await tester.tap(find.text('NO SER'));

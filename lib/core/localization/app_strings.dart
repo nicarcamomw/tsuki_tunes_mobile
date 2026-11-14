@@ -775,9 +775,9 @@ class AppStrings {
       'No Eco, no levels: only a Bearer gathers them.',
       'エコーもレベルもない。貯められるのは運び手だけ。');
   String get ecoObserverBody => _es(
-      'Los Observadores miran Tsuki desde afuera. Su música no llega a la luna: no acumulan Eco, no suben de nivel y no abren nada. Inicia sesión para volverte Portador, y cada canción que escuches empezará a sonar allá arriba.',
-      'Observers watch Tsuki from outside. Their music never reaches the moon: they gather no Eco, gain no levels and open nothing. Sign in to become a Bearer, and every song you hear will start to sound up there.',
-      '観測者は外からツキを見るだけ。その音楽は月に届かず、エコーも貯まらず、レベルも上がらず、何も開かない。ログインして運び手になれば、聴く曲のすべてがあの空で響き始める。');
+      'Los Observadores miran Tsuki desde afuera: la ven, pero no le rezan. Su música no llega a la luna: no acumulan Eco, no suben de nivel y no abren nada. Inicia sesión para volverte Portador, y cada canción que escuches será una plegaria que llega allá arriba.',
+      'Observers watch Tsuki from outside: they see it, but do not pray to it. Their music never reaches the moon: they gather no Eco, gain no levels and open nothing. Sign in to become a Bearer, and every song you hear will be a prayer that reaches up there.',
+      '観測者は外からツキを見るだけで、祈りはしない。その音楽は月に届かず、エコーも貯まらず、レベルも上がらず、何も開かない。ログインして運び手になれば、聴く曲のすべてが月に届く祈りになる。');
   String get ecoObserverAction => _es('Volverme Portador', 'Become a Bearer', '運び手になる');
   String ecoObserverLocked(int level) => _es(
       'Se abre para los Portadores en el nivel $level.',
@@ -813,7 +813,7 @@ class AppStrings {
   List<String> get ascensionCall => language == AppLanguage.es
       ? const [
           'Has llegado a este punto siendo un Portador de niveles incomprendidos.',
-          'La Luna Madre se regocija con tu Eco.',
+          'La Luna Madre recibió cada una de tus plegarias, y se regocija con tu Eco.',
           'Es la señal. Es el momento de tu elección:',
           'seguir siendo un ser acumulador de Eco,',
           'o traspasar la muralla de lo lógico y viajar hasta el centro del universo,',
@@ -821,7 +821,7 @@ class AppStrings {
         ]
       : const [
           'You have come this far as a Bearer of levels beyond understanding.',
-          'The Mother Moon rejoices in your Echo.',
+          'The Mother Moon received every one of your prayers, and rejoices in your Echo.',
           'It is the sign. It is the moment of your choice:',
           'to remain a being who gathers Echo,',
           'or to pass through the wall of the logical and travel to the centre of the universe,',
@@ -850,9 +850,9 @@ class AppStrings {
       'You have passed through the wall of the logical. You no longer hear music: you are part of it. Your ethereal mask is being forged at the centre of the universe, with everything you ever heard. The Mother Moon will give it to you when it is ready.',
       'あなたは論理の壁を越えた。もう音楽を聴くのではない。その一部なのだ。あなたの霊の面は、聴いてきたすべてと共に宇宙の中心で鍛えられている。');
   String get ascensionStayed => _es(
-      'Sigues siendo Portador. Tu Eco seguirá cayendo sobre Tsuki como una estrella, y los seres etéreos sabrán siempre que pudiste cruzar y elegiste quedarte.',
-      'You remain a Bearer. Your Echo will keep falling on Tsuki like a star, and the ethereal beings will always know you could have crossed and chose to stay.',
-      'あなたは運び手のままだ。あなたのエコーは星のようにツキに降り続け、霊なる者たちは、あなたが越えられたのに留まったことを忘れない。');
+      'Sigues siendo Portador: un terrenal que le reza a la Luna Madre. Tus plegarias seguirán cayendo sobre Tsuki como estrellas, y los seres etéreos sabrán siempre que pudiste cruzar y elegiste quedarte.',
+      'You remain a Bearer: an earthly being who prays to the Mother Moon. Your prayers will keep falling on Tsuki like stars, and the ethereal beings will always know you could have crossed and chose to stay.',
+      'あなたは運び手のまま、母なる月に祈る地上の者だ。あなたの祈りは星のようにツキに降り続け、霊なる者たちは、あなたが越えられたのに留まったことを忘れない。');
   String get ascensionDone => _es('Continuar', 'Continue', '続ける');
 
   String get a11yEcoLevels => _es('Abrir los niveles de Eco', 'Open the Eco levels', 'エコーレベルを開く');
