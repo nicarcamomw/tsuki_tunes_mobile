@@ -2084,6 +2084,14 @@ class AppStrings {
 
   String get albumsTab => _l.albumsTab;
 
+  String get libraryNoArtistsSubtitle => _l.libraryNoArtistsSubtitle;
+
+  String get libraryFilterHint => _l.libraryFilterHint;
+
+  String get librarySort => _l.librarySort;
+
+  String libraryArtistCount(int count) => _l.libraryArtistCount(count);
+
   String get createPlaylist => _l.createPlaylist;
 
   String get newPlaylist => _l.newPlaylist;

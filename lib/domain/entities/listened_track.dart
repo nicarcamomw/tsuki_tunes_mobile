@@ -57,6 +57,19 @@ class ListenedTrackData {
             : [if (track.artistName.isNotEmpty) track.artistName],
       );
 
+  /// The song as the player takes it.
+  Track toTrack() => Track(
+        id: trackId,
+        title: title,
+        artistId: '',
+        artistName: artistName,
+        albumId: albumId,
+        albumTitle: albumTitle,
+        coverUrl: coverUrl,
+        previewUrl: previewUrl,
+        durationSeconds: duration,
+      );
+
   ListenedTrackData withArtists(List<String> artists) => ListenedTrackData(
         trackId: trackId,
         title: title,

@@ -667,6 +667,17 @@
   "a11yMusicNote": "Nota musical",
   "playlistsTab": "Playlists",
   "albumsTab": "Álbumes",
+  "libraryNoArtistsSubtitle": "Toca SEGUIR en el perfil de un artista y aparecerá aquí.",
+  "libraryFilterHint": "Filtrar tu biblioteca…",
+  "librarySort": "Ordenar",
+  "libraryArtistCount": "{count, plural, =1{1 artista} other{{count} artistas}}",
+  "@libraryArtistCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "createPlaylist": "CREAR PLAYLIST",
   "newPlaylist": "Nueva Playlist",
   "playlistName": "Nombre de la playlist",

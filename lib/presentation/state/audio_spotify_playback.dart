@@ -54,7 +54,7 @@ extension _SpotifyPlayback on AudioProvider {
       if (!_isOurSpotifyUri(_nativePlayer.lastTrackUri)) {
         _onSpotifyLeftTrack(
             _nativePlayer.lastTrackUri, Duration(milliseconds: pos),
-            live: true, queuedTrackId: queuedTrackId);
+            live: true, queuedTrackId: queuedTrackId, spotifyPlaying: !paused);
         return;
       }
       if (!paused) _spotifyHeardGen = _playGeneration;
@@ -81,7 +81,7 @@ extension _SpotifyPlayback on AudioProvider {
         if (_isPlaying) {
           _startPositionTimer();
         } else {
-          _stopPositionTimer();
+          _watchSpotifyWhilePaused();
         }
       }
       notifyListeners();
@@ -95,7 +95,7 @@ extension _SpotifyPlayback on AudioProvider {
     _nativePlayer.onDisconnected = () {
       // Spotify closed: its queue is gone with it.
       _spotifyQueuedPending.clear();
-      if (!_spotifyActive || !_isPlaying) return;
+      if (!_spotifyActive || (!_isPlaying && !_watchingPausedSpotify)) return;
       _log.warning('App Remote link lost, checking Spotify through the Web API');
       unawaited(_syncSpotifyPlaybackState());
       _reconnectAppRemoteSoon();
@@ -162,9 +162,10 @@ extension _SpotifyPlayback on AudioProvider {
       // Without App Remote nothing tells Tsuki when Spotify changes song
       // (the car's "next"): look every few seconds until it's back.
       final pollInterval = hasRealTimeState ? 30 : 5;
-      final pausePollInterval = hasRealTimeState ? 15 : 5;
+      final pausePollInterval = hasRealTimeState ? 30 : 10;
 
       if (_isPlaying) {
+        _spotifyPausedAt = null;
         final elapsed = DateTime.now().difference(_spotifySyncTime);
         var raw = _spotifySyncPosition + elapsed;
         if (_spotifyLoopsOurTrack &&
@@ -187,6 +188,8 @@ extension _SpotifyPlayback on AudioProvider {
         if (pastEnd && !hasRealTimeState && _spotifyAhead.isEmpty) {
           _stopPositionTimer();
           _handleTrackCompleted();
+        } else if (_avoidSpotifyLeftover(raw)) {
+          return;
         } else {
           _maybePersistPosition();
           _checkListenedThreshold();
@@ -200,11 +203,48 @@ extension _SpotifyPlayback on AudioProvider {
           }
         }
       } else if (_currentTrack != null) {
+        // Paused long enough: whoever paused it isn't coming back soon.
+        final pausedAt = _spotifyPausedAt;
+        if (pausedAt != null && DateTime.now().difference(pausedAt) > AudioProvider._watchPausedFor) {
+          _log.info('Spotify paused for a long while, no longer watching it');
+          _stopPositionTimer();
+          return;
+        }
         if (_spotifyPollTick % pausePollInterval == 0) {
           _syncSpotifyPlaybackState();
         }
       }
     });
+  }
+
+  /// Spotify, playing ours, was paused (in Tsuki, the car, a headset):
+  /// keep an eye on it for a while instead of stopping, so a play or a
+  /// "next" pressed later in the car is followed even when App Remote's
+  /// link dropped meanwhile (Android cuts it in the background), rather
+  /// than Spotify going on alone with Tsuki stuck on pause.
+  void _watchSpotifyWhilePaused() {
+    _spotifyPausedAt ??= DateTime.now();
+    if (_spotifyPositionTimer == null) _startPositionTimer();
+  }
+
+  bool get _watchingPausedSpotify {
+    final at = _spotifyPausedAt;
+    return at != null && DateTime.now().difference(at) <= AudioProvider._watchPausedFor;
+  }
+
+  /// A song we put in Spotify's queue that's no longer our next (another
+  /// song was picked since; Spotify's queue can't be emptied) would play
+  /// when this one ends, and sound for a moment before Tsuki replaced it.
+  /// Start ours just before the end instead, so it never does.
+  bool _avoidSpotifyLeftover(Duration pos) {
+    if (_spotifyQueuedPending.isEmpty || _spotifyAhead.isNotEmpty) return false;
+    if (_completionHandled || _duration < const Duration(seconds: 10)) return false;
+    if (_q.repeatMode == PlaybackRepeatMode.one) return false;
+    if (pos < _duration - const Duration(milliseconds: 1500)) return false;
+    _log.info('A song left in Spotify\'s queue would play next; starting ours before it');
+    _stopPositionTimer();
+    _handleTrackCompleted();
+    return true;
   }
 
   Future<void> _syncSpotifyPlaybackState() async {
@@ -263,7 +303,8 @@ extension _SpotifyPlayback on AudioProvider {
         final linkedUri = (item['linked_from'] as Map?)?['uri'] as String?;
         if (linkedUri == _currentSpotifyUri) _linkedSpotifyUri = playingUri;
         if (playingUri != null && !_isOurSpotifyUri(playingUri)) {
-          _onSpotifyLeftTrack(playingUri, Duration(milliseconds: progressMs));
+          _onSpotifyLeftTrack(playingUri, Duration(milliseconds: progressMs),
+              spotifyPlaying: state['is_playing'] == true);
           return;
         }
       }
@@ -305,6 +346,7 @@ extension _SpotifyPlayback on AudioProvider {
           return;
         }
         _isPlaying = false;
+        _watchSpotifyWhilePaused();
         notifyListeners();
         return;
       }
@@ -702,7 +744,7 @@ extension _SpotifyPlayback on AudioProvider {
   /// pressed (the car's buttons: do ours), or something someone picked in
   /// the Spotify app (stop claiming it). [live]: reported by App Remote.
   void _onSpotifyLeftTrack(String? uri, Duration otherProgress,
-      {bool live = false, String? queuedTrackId}) {
+      {bool live = false, String? queuedTrackId, bool spotifyPlaying = false}) {
     // A song we queued in Spotify is ours even when the list moved on
     // since (a skip, a new play): follow it, or take over if it's stale.
     queuedTrackId ??= uri == null ? null : _spotifyQueuedPending.remove(uri);
@@ -749,7 +791,12 @@ extension _SpotifyPlayback on AudioProvider {
       }
     }
 
-    if (_isPlaying && !_spotifyTookOver && _followSpotifyControls(uri, otherProgress)) {
+    // Also from a pause: the car's "next" (or "previous") with Tsuki paused
+    // starts Spotify on another song; ours should play instead.
+    final fromPause = !_isPlaying && spotifyPlaying && _watchingPausedSpotify;
+    if ((_isPlaying || fromPause) &&
+        !_spotifyTookOver &&
+        _followSpotifyControls(uri, otherProgress, live: live, fromPause: fromPause)) {
       return;
     }
 
@@ -771,9 +818,15 @@ extension _SpotifyPlayback on AudioProvider {
   /// alone when Spotify is known to have had another song next and Tsuki
   /// isn't on screen (the Spotify app may be). Returns whether it handled
   /// the change.
-  bool _followSpotifyControls(String? uri, Duration otherProgress) {
+  bool _followSpotifyControls(String? uri, Duration otherProgress,
+      {bool live = true, bool fromPause = false}) {
     if (uri == null || !uri.startsWith('spotify:track:')) return false;
-    if (uri == _spotifyPrevUri && otherProgress < const Duration(seconds: 3)) {
+    final onScreen =
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    // The Web API is asked every few seconds, so the song it finds Spotify
+    // went back to may be well under way already.
+    final freshStart = live ? const Duration(seconds: 3) : const Duration(seconds: 10);
+    if (uri == _spotifyPrevUri && otherProgress < freshStart) {
       _log.info('Spotify went back a song (its own "previous"), doing ours');
       _stopPositionTimer();
       _setPosition(Duration.zero);
@@ -785,8 +838,6 @@ extension _SpotifyPlayback on AudioProvider {
       return true;
     }
     final nextUp = _spotifyNextUp;
-    final onScreen =
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
     // A song picked in the Spotify app needs its screen on. With the
     // screen off (driving, the phone in a pocket) it's a button: the car's,
     // a speaker's or a headset's. Spotify's guess of its next song (asked
@@ -843,7 +894,7 @@ extension _SpotifyPlayback on AudioProvider {
       if (!_useSpotify ||
           !_spotifyActive ||
           _spotifyFallbackActive ||
-          !_isPlaying ||
+          (!_isPlaying && !_watchingPausedSpotify) ||
           _nativePlayer.isConnected) {
         _appRemoteReconnects = 0;
         return;
