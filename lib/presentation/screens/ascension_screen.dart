@@ -36,7 +36,7 @@ enum _Step { call, name, crossed, stayed }
 
 class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _reveal =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 9000))..forward();
+      AnimationController(vsync: this, duration: AppMotion.ceremony)..forward();
   late final TextEditingController _maskName;
   _Step _step = _Step.call;
   bool _busy = false;

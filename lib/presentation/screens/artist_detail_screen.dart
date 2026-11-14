@@ -484,7 +484,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
             )
           : Container(
               color: AppColors.bgMid,
-              child: Icon(Icons.album, color: AppColors.accent, size: 40, semanticLabel: strings.a11yAlbumCover),
+              child: Icon(Icons.album_rounded, color: AppColors.textMuted, size: 40, semanticLabel: strings.a11yAlbumCover),
             ),
     );
 
@@ -509,7 +509,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
       explain: () => mounted ? PermissionPrimer.notifications(context) : Future.value(false),
     );
     if (!mounted || !radar.notifyEnabled.value) return;
-    AppSnack.of(context).info(strings.radarFollowSnack(_artist.name), icon: Icons.radar, duration: const Duration(seconds: 3));
+    AppSnack.of(context).info(strings.radarFollowSnack(_artist.name), icon: Icons.radar_rounded, duration: const Duration(seconds: 3));
   }
 
   Widget _buildRelatedArtistsSection(LocaleProvider locale, AppStrings strings) {
@@ -557,7 +557,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.hub, size: 14,
+                        Icon(Icons.hub_rounded, size: 14,
                             color: AppColors.neonPurple.withValues(alpha: 0.9)),
                         const SizedBox(width: 6),
                         Text(
@@ -618,7 +618,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                                   )
                                 : Container(
                                     color: AppColors.bgMid,
-                                    child: const Icon(Icons.person,
+                                    child: const Icon(Icons.person_rounded,
                                         color: AppColors.textMuted, size: 36),
                                   ),
                           )),
@@ -641,6 +641,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                                 Formatters.formatNumber(artist.fansCount)),
                             style: locale.getTextStyle(
                               fontSize: AppFontSize.micro,
+                              tabular: true,
                               color: AppColors.textMuted,
                             ),
                             maxLines: 1,
@@ -743,7 +744,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                                     )
                                   : Container(
                                       color: AppColors.bgMid,
-                                      child: Icon(Icons.person,
+                                      child: Icon(Icons.person_rounded,
                                           color: AppColors.textMuted, size: 20, semanticLabel: strings.a11yArtistAvatar),
                                     ),
                             ),
@@ -776,7 +777,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
                           turns: _showStoredContent ? 0.25 : 0.0,
                           duration: AppMotion.normal,
                           child: Icon(
-                            Icons.chevron_right,
+                            Icons.chevron_right_rounded,
                             size: 20,
                             color: songCount > 0
                                 ? AppColors.accent

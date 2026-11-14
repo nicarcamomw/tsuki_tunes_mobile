@@ -52,17 +52,44 @@ void main() {
     expect(_offenders(RegExp(r'MaterialPageRoute')), isEmpty);
   });
 
-  test('D-04: transitions take a motion token', () {
-    // duration: Duration(milliseconds: N) for N up to 650 is a transition;
-    // longer ones are ambient loops (breathing, sakura) and stay.
-    final short = RegExp(r'\b(duration|reverseDuration|transitionDuration|reverseTransitionDuration): *(const +)?'
-        r'Duration\(milliseconds: *([1-9]\d?|[1-5]\d\d|6[0-4]\d|650)\)');
-    expect(_offenders(short), isEmpty);
+  test('D-04: every animation takes a motion token', () {
+    // Transitions and the long loops alike (reveal, cycle, breath,
+    // ceremony): no duration: Duration(milliseconds: …) written by hand.
+    // Seconds are how long something stays to be read (a notice, a story),
+    // not motion.
+    final loose = RegExp(r'\b(duration|reverseDuration|transitionDuration|reverseTransitionDuration): *(const +)?'
+        r'Duration\(milliseconds:');
+    expect(_offenders(loose), isEmpty);
   });
 
   test('D-05: screens use one side margin', () {
     final loose = RegExp(r'EdgeInsets\.symmetric\(horizontal: 20[,)]|EdgeInsets\.fromLTRB\(20, [\w.+ ]+, 20, ');
     expect(_offenders(loose).where((hit) => hit.contains('/screens/')).toList(), isEmpty);
+  });
+
+  test('D-11: screens take their colours from AppColors', () {
+    // Painters (login, onboarding) and the story image draw by hand on a
+    // canvas: their gradients are theirs.
+    final hits = _offenders(RegExp(r'Color\(0x[0-9A-Fa-f]{8}\)'))
+        .where((hit) => hit.contains('/screens/'))
+        .where((hit) => !hit.contains('painters.dart') && !hit.contains('story_image.dart'))
+        .toList();
+    expect(hits, isEmpty);
+  });
+
+  test('D-15: one icon style, the rounded one', () {
+    // Material's plain (filled, square) icons beside the rounded ones read
+    // as two sets; the outlined ones stay where they mean "off".
+    final root = Platform.environment['FLUTTER_ROOT'];
+    final icons = File('$root/packages/flutter/lib/src/material/icons.dart');
+    if (root == null || !icons.existsSync()) return markTestSkipped('no Flutter SDK source here');
+    final names = RegExp(r'static const IconData (\w+) =').allMatches(icons.readAsStringSync()).map((m) => m[1]!).toSet();
+    final plain = RegExp(r'\bIcons\.([a-z0-9_]+)\b');
+    final hits = _offenders(plain, allow: (line) => plain.allMatches(line).every((m) {
+          final n = m[1]!;
+          return n.endsWith('_rounded') || n.endsWith('_outlined') || n.endsWith('_sharp') || !names.contains('${n}_rounded');
+        }));
+    expect(hits, isEmpty);
   });
 
   test('D-09: one back arrow', () {

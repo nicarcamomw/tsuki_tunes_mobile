@@ -142,7 +142,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
-                child: Icon(Icons.music_note,
+                child: Icon(Icons.music_note_rounded,
                     color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
               ),
               const SizedBox(width: 12),

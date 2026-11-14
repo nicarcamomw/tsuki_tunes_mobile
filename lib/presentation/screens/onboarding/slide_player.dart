@@ -131,7 +131,7 @@ Widget _buildPlayerMockupGraphic(Size size, double t) {
                         colors: [
                           AppColors.accent,
                           i % 2 == 0
-                              ? const Color(0xFFFF2B40)
+                              ? AppColors.crimsonNeon
                               : AppColors.neonCyan,
                         ],
                       ),

@@ -45,7 +45,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           ),
           const SizedBox(height: 14),
           _AffinityFactor(
-            icon: Icons.headphones,
+            icon: Icons.headphones_rounded,
             color: AppColors.accent,
             title: strings.affinitySavedTitle,
             body: strings.affinitySavedBody,
@@ -63,7 +63,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           ),
           const SizedBox(height: 10),
           _AffinityFactor(
-            icon: Icons.person_search,
+            icon: Icons.person_search_rounded,
             color: AppColors.neonCyan,
             title: strings.affinityVisitsTitle,
             body: strings.affinityVisitsBody,
@@ -81,7 +81,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
             ),
             child: Row(
               children: [
-                const Icon(Icons.functions, size: 18, color: AppColors.info),
+                const Icon(Icons.functions_rounded, size: 18, color: AppColors.info),
                 const SizedBox(width: 10),
                 Text(
                   '${strings.affinityFormulaLabel}  ',
@@ -109,7 +109,7 @@ void _showAffinityInfo(BuildContext context, LocaleProvider locale) {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.trending_up,
+              Icon(Icons.trending_up_rounded,
                   size: 16, color: AppColors.textMuted.withValues(alpha: 0.9)),
               const SizedBox(width: 8),
               Expanded(

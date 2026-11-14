@@ -123,9 +123,9 @@ class _CyberGoogleButtonState extends State<_CyberGoogleButton>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF2A0A0D),
-                    Color(0xFF1A0608),
-                    Color(0xFF250A0E),
+                    AppColors.crimsonInk,
+                    AppColors.crimsonInkDeep,
+                    AppColors.crimsonInk,
                   ],
                 ),
               ),
@@ -407,7 +407,7 @@ class _ButtonMaskPainter extends CustomPainter {
       final posY = (rawY * (h + mask.size)) - (mask.size * 0.5);
 
       _maskPaint.colorFilter = ColorFilter.mode(
-        const Color(0xFF2B2F38).withValues(alpha: opacity),
+        AppColors.borderGlow.withValues(alpha: opacity),
         BlendMode.srcIn,
       );
 

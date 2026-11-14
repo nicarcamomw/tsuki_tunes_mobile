@@ -243,7 +243,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           appBar: AppBar(
             leading: IconButton(
               tooltip: strings.a11yCollapsePlayer,
-              icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
               onPressed: _collapse,
             ),
           ),
@@ -326,7 +326,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, color: AppColors.error, size: 14, semanticLabel: strings.a11yPlaybackError),
+                        Icon(Icons.error_outline_rounded, color: AppColors.error, size: 14, semanticLabel: strings.a11yPlaybackError),
                         const SizedBox(width: 6),
                         Text(
                           playbackError.message(strings),
@@ -393,7 +393,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
             width: 48,
             child: IconButton(
               tooltip: strings.a11yCollapsePlayer,
-              icon: const Icon(Icons.keyboard_arrow_down,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded,
                   size: 30, color: AppColors.textPrimary),
               onPressed: _collapse,
             ),
@@ -441,7 +441,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
             width: 48,
             child: IconButton(
               tooltip: strings.a11yQueue,
-              icon: const Icon(Icons.more_vert,
+              icon: const Icon(Icons.more_vert_rounded,
                   size: 24, color: AppColors.textPrimary),
               onPressed: () {
                 Haptics.tap();

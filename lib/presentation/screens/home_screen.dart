@@ -752,7 +752,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         NavigationEvents.switchTab?.call(MainTab.explore);
                       },
                       iconAlignment: IconAlignment.end,
-                      icon: const Icon(Icons.chevron_right, size: 18),
+                      icon: const Icon(Icons.chevron_right_rounded, size: 18),
                       label: Text(
                         strings.navExplore,
                         style: locale.getTextStyle(

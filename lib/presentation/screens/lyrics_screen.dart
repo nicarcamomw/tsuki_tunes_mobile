@@ -183,9 +183,9 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                     style: locale.getTextStyle(fontSize: AppFontSize.title, color: Colors.white),
                   ),
                   trailing: (entry.key.isEmpty ? current == null : entry.key == current)
-                      ? const Icon(Icons.check, color: AppColors.accent, size: 18)
+                      ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 18)
                       : entry.key == suggested && current == null
-                          ? const Icon(Icons.history, color: AppColors.textMuted, size: 16)
+                          ? const Icon(Icons.history_rounded, color: AppColors.textMuted, size: 16)
                           : null,
                   onTap: () => Navigator.pop(sheetCtx, entry.key),
                 ),
@@ -306,13 +306,13 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
                         child: Row(
                           children: [
                             _Chip(
-                              icon: Icons.ios_share,
+                              icon: Icons.ios_share_rounded,
                               label: strings.lyricsShare,
                               onTap: () { Haptics.tap(); _share(track); },
                             ),
                             const SizedBox(width: 8),
                             _Chip(
-                              icon: Icons.translate,
+                              icon: Icons.translate_rounded,
                               label: translated
                                   ? LyricsController.translationTargets[translatedTo] ??
                                       strings.lyricsTranslate
@@ -358,7 +358,7 @@ class _LyricsScreenState extends ConsumerState<LyricsScreen> {
       );
     }
     if (!c.hasText) {
-      return _Message(text: strings.instrumentalTrack, icon: Icons.graphic_eq);
+      return _Message(text: strings.instrumentalTrack, icon: Icons.graphic_eq_rounded);
     }
     return LyricsEdgeFade(
       top: 0.06,
@@ -389,7 +389,7 @@ class _Header extends StatelessWidget {
               width: 48,
               child: IconButton(
                 tooltip: locale.strings.a11yCollapsePlayer,
-                icon: const Icon(Icons.keyboard_arrow_down,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded,
                     size: 30, color: Colors.white),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -534,6 +534,7 @@ class _Progress extends ConsumerWidget {
         thumbGlowColor: PlayerTint.of(context).withValues(alpha: 0.5),
         thumbRadius: 6,
         timeLabelTextStyle: locale.getTextStyle(
+          tabular: true,
           fontSize: AppFontSize.caption,
           color: Colors.white70,
         ),
@@ -560,7 +561,7 @@ class _Controls extends ConsumerWidget {
           scaleDown: 0.85,
           child: const Padding(
             padding: EdgeInsets.all(12),
-            child: Icon(Icons.skip_previous, size: 32, color: Colors.white),
+            child: Icon(Icons.skip_previous_rounded, size: 32, color: Colors.white),
           ),
         ),
         const SizedBox(width: 18),
@@ -588,7 +589,7 @@ class _Controls extends ConsumerWidget {
                     child: CircularProgressIndicator(
                         strokeWidth: 2.4, color: Colors.white),
                   )
-                : Icon(isPlaying ? Icons.pause : Icons.play_arrow,
+                : Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     size: 36, color: Colors.white),
           ),
         ),
@@ -599,7 +600,7 @@ class _Controls extends ConsumerWidget {
           scaleDown: 0.85,
           child: const Padding(
             padding: EdgeInsets.all(12),
-            child: Icon(Icons.skip_next, size: 32, color: Colors.white),
+            child: Icon(Icons.skip_next_rounded, size: 32, color: Colors.white),
           ),
         ),
       ],

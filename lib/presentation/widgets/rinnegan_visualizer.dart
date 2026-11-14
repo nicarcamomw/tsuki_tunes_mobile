@@ -486,7 +486,7 @@ class _CoverPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         color: AppColors.bgMid,
-        child: Icon(Icons.music_note, size: iconSize, color: PlayerTint.of(context)),
+        child: Icon(Icons.music_note_rounded, size: iconSize, color: PlayerTint.of(context)),
       );
 }
 

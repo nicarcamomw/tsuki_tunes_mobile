@@ -342,7 +342,7 @@ class _FollowPill extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sync, size: 13, color: tint == AppColors.accent ? tint : readableTint(tint)),
+            Icon(Icons.sync_rounded, size: 13, color: tint == AppColors.accent ? tint : readableTint(tint)),
             const SizedBox(width: 6),
             Text(
               locale.strings.lyricsFollowing,
@@ -483,7 +483,7 @@ class LyricsCard extends ConsumerWidget {
             onAction: () => controller.retry(track),
           );
         } else if (!hasText) {
-          body = _CardMessage(text: strings.instrumentalTrack, icon: Icons.graphic_eq);
+          body = _CardMessage(text: strings.instrumentalTrack, icon: Icons.graphic_eq_rounded);
         } else {
           body = LyricsEdgeFade(
             top: 0.04,
@@ -557,7 +557,7 @@ class LyricsCard extends ConsumerWidget {
                             ),
                             if (hasText)
                               _RoundIcon(
-                                icon: Icons.open_in_full,
+                                icon: Icons.open_in_full_rounded,
                                 tooltip: strings.a11yLyrics,
                                 onTap: () { Haptics.tap(); onOpen(); },
                               ),

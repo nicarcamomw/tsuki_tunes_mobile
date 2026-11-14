@@ -27,7 +27,7 @@ IconData skyIcon(Sky? sky, {required bool isDay, required DayPart part}) {
         _ => Icons.bedtime_rounded,
       },
     Sky.clear =>
-      isDay && !dark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+      isDay && !dark ? Icons.wb_sunny_rounded : Icons.nightlight_round_rounded,
     Sky.fewClouds =>
       isDay && !dark ? Icons.wb_cloudy_rounded : Icons.nights_stay_rounded,
     Sky.cloudy || Sky.overcast => Icons.cloud_rounded,

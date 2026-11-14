@@ -69,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     _shockwaveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 950),
+      duration: AppMotion.reveal,
     );
     _shockwaveController.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
@@ -429,8 +429,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               end: Alignment(1.1 + shift, 0.0),
               colors: const [
                 AppColors.neonCyan,
-                Color(0xFF0099FF),
-                Color(0xFFFF2B40),
+                AppColors.skyBlue,
+                AppColors.crimsonNeon,
                 AppColors.accent,
               ],
               stops: const [0.0, 0.35, 0.70, 1.0],

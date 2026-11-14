@@ -565,7 +565,7 @@ class _MaskDetail extends ConsumerWidget {
                       masks.equip(mask.id);
                     }
                   },
-                  icon: Icon(isEquipped ? Icons.close_rounded : Icons.face_retouching_natural, size: 18),
+                  icon: Icon(isEquipped ? Icons.close_rounded : Icons.face_retouching_natural_rounded, size: 18),
                   label: Text(
                     isEquipped ? strings.maskUnequip : strings.maskEquip,
                     style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),

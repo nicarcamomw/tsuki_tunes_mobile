@@ -68,7 +68,7 @@ class _UnlockBannerState extends ConsumerState<_UnlockBanner> with TickerProvide
   late final AnimationController _enter =
       AnimationController(vsync: this, duration: AppMotion.slow);
   late final AnimationController _burst =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+      AnimationController(vsync: this, duration: AppMotion.revealLong);
   Timer? _autoClose;
   bool _closing = false;
 

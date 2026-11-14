@@ -161,7 +161,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: _EmptyState(
-                      icon: Icons.person_add_alt_1,
+                      icon: Icons.person_add_alt_1_rounded,
                       title: strings.radarEmptyNoArtistsTitle,
                       body: strings.radarEmptyNoArtists,
                       locale: locale,
@@ -176,7 +176,7 @@ class _ReleaseRadarScreenState extends ConsumerState<ReleaseRadarScreen>
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: _EmptyState(
-                      icon: Icons.radar,
+                      icon: Icons.radar_rounded,
                       title: strings.radarEmptyNoReleasesTitle,
                       body: strings.radarEmptyNoReleases,
                       locale: locale,
@@ -284,7 +284,7 @@ class _RadarHeader extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0A1418), Color(0xFF0A0A14)],
+          colors: [AppColors.tealNight, AppColors.indigoNight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -344,7 +344,7 @@ class _RadarHeader extends StatelessWidget {
                               color: AppColors.neonCyan,
                             ),
                           )
-                        : const Icon(Icons.refresh, size: 15),
+                        : const Icon(Icons.refresh_rounded, size: 15),
                     label: Text(
                       strings.radarCheckNow,
                       style: locale.getTextStyle(
@@ -386,7 +386,7 @@ class _RadarSweepState extends State<_RadarSweep>
     with SingleTickerProviderStateMixin {
   late final AnimationController _spin = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1600),
+    duration: AppMotion.cycle,
   );
 
   @override
@@ -556,7 +556,7 @@ class _NotifyRow extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 14),
               secondary: Icon(
                 enabled
-                    ? Icons.notifications_active
+                    ? Icons.notifications_active_rounded
                     : Icons.notifications_off_outlined,
                 color: enabled ? AppColors.accent : AppColors.textMuted,
                 size: 20,
@@ -760,7 +760,7 @@ class _ReleaseTile extends StatelessWidget {
                   ),
                 )
               else
-                const Icon(Icons.chevron_right,
+                const Icon(Icons.chevron_right_rounded,
                     size: 18, color: AppColors.textMuted),
             ],
           ),
@@ -773,7 +773,7 @@ class _ReleaseTile extends StatelessWidget {
         width: 60,
         height: 60,
         color: AppColors.bgCard,
-        child: const Icon(Icons.album, color: AppColors.textMuted, size: 24),
+        child: const Icon(Icons.album_rounded, color: AppColors.textMuted, size: 24),
       );
 }
 

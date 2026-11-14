@@ -31,7 +31,7 @@ class AmbientMixerSheet extends ConsumerStatefulWidget {
         AmbientSound.waves => Icons.waves_rounded,
         AmbientSound.fire => Icons.local_fire_department_rounded,
         AmbientSound.wind => Icons.air_rounded,
-        AmbientSound.night => Icons.nightlight_round,
+        AmbientSound.night => Icons.nightlight_round_rounded,
         AmbientSound.brownNoise => Icons.graphic_eq_rounded,
       };
 

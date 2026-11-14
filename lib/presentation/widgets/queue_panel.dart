@@ -108,7 +108,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           onTap: () => _playNext(queueIndex),
         ),
       TrackMenuAction(
-        icon: Icons.remove_circle_outline,
+        icon: Icons.remove_circle_outline_rounded,
         label: strings.queueRemoveLabel,
         onTap: () => _remove(queueIndex),
       ),
@@ -217,7 +217,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: _row(
                         current,
                         isCurrent: true,
-                        leading: Icon(Icons.equalizer,
+                        leading: Icon(Icons.equalizer_rounded,
                             color: AppColors.accent,
                             size: 16,
                             semanticLabel: strings.a11yNowPlaying),
@@ -293,7 +293,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       child: Row(
         children: [
-          Icon(Icons.queue_music,
+          Icon(Icons.queue_music_rounded,
               color: AppColors.accent, size: 16, semanticLabel: strings.a11yQueue),
           const SizedBox(width: 6),
           Expanded(
@@ -516,7 +516,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       queuedByUser: queuedByUser,
       recommended: recommended,
       leading: queuedByUser
-          ? Icon(Icons.queue_music,
+          ? Icon(Icons.queue_music_rounded,
               color: AppColors.neonCyan, size: 16, semanticLabel: strings.queuedByYou)
           : recommended
               ? SparkleIcon(
@@ -580,7 +580,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             alignment: Alignment.centerLeft,
           ),
           secondaryBackground: _swipeBackground(
-            icon: Icons.delete_outline,
+            icon: Icons.delete_outline_rounded,
             label: strings.queueRemoveLabel,
             color: AppColors.accent,
             alignment: Alignment.centerRight,
@@ -809,6 +809,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       Formatters.formatSeconds(t.durationSeconds),
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
+                        tabular: true,
                         color: AppColors.textMuted,
                       ),
                     ),

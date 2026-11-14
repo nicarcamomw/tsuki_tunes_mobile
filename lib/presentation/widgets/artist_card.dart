@@ -61,12 +61,12 @@ class ArtistCard extends ConsumerWidget {
                           placeholder: (_, __) => Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: Icon(Icons.person, color: AppColors.textMuted, semanticLabel: locale.strings.a11yArtistAvatar),
+                            child: Icon(Icons.person_rounded, color: AppColors.textMuted, semanticLabel: locale.strings.a11yArtistAvatar),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: Icon(Icons.person, color: AppColors.textMuted, semanticLabel: locale.strings.a11yArtistAvatar),
+                          child: Icon(Icons.person_rounded, color: AppColors.textMuted, semanticLabel: locale.strings.a11yArtistAvatar),
                         ),
                 ),
               ),
@@ -88,6 +88,7 @@ class ArtistCard extends ConsumerWidget {
                 locale.strings.artistFansCompact(Formatters.formatNumber(artist.fansCount)),
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.micro,
+                  tabular: true,
                   color: AppColors.accent,
                   fontWeight: FontWeight.w600,
                 ),

@@ -191,7 +191,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       }
                     },
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: _flying || _drag == 0 ? 220 : 0),
+                      duration: _flying || _drag == 0 ? AppMotion.fast : Duration.zero,
                       curve: Curves.easeOut,
                       transform: Matrix4.identity()
                         ..translateByDouble(_drag, 0, 0, 1)
@@ -297,7 +297,7 @@ class _SongCard extends ConsumerWidget {
             borderRadius: BorderRadius.circular(AppRadius.sheet),
             color: AppColors.bgCard,
             border: Border.all(color: AppColors.border),
-            boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.6), blurRadius: 24, offset: const Offset(0, 10))],
           ),
           clipBehavior: Clip.antiAlias,
           child: Stack(
@@ -312,13 +312,13 @@ class _SongCard extends ConsumerWidget {
                 )
               else
                 const Icon(Icons.music_note_rounded, size: 80, color: AppColors.textMuted),
-              const DecoratedBox(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    stops: [0.45, 1],
-                    colors: [Colors.transparent, Color(0xEE07080C)],
+                    stops: const [0.45, 1],
+                    colors: [Colors.transparent, AppColors.ink.withValues(alpha: 0.93)],
                   ),
                 ),
               ),

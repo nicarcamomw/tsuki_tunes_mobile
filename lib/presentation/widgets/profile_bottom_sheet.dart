@@ -167,7 +167,7 @@ class _ProfileSheet extends ConsumerWidget {
                   Navigator.pop(context);
                   await _confirmLogout(hostContext, auth);
                 },
-                icon: Icon(Icons.logout, color: AppColors.accent, size: 18, semanticLabel: strings.a11yLogout),
+                icon: Icon(Icons.logout_rounded, color: AppColors.accent, size: 18, semanticLabel: strings.a11yLogout),
                 label: Text(
                   strings.logoutOption,
                   style: locale.getTextStyle(

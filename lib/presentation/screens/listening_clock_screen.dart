@@ -107,7 +107,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
         _buildHeader(locale, strings),
         Expanded(
           child: EmptyState(
-            icon: Icons.access_time,
+            icon: Icons.access_time_rounded,
             tone: AppColors.neonCyan,
             title: strings.clockNoData,
             message: strings.clockNoDataSubtitle,
@@ -474,7 +474,7 @@ class _SharinganRadarPainter extends CustomPainter {
     canvas.drawCircle(
       center,
       pupilR,
-      Paint()..color = const Color(0xFF080808),
+      Paint()..color = AppColors.ink,
     );
 
     // Pupil ring

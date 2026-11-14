@@ -228,7 +228,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
               if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
                 DetailHeaderButton(
-                  icon: Icons.open_in_new,
+                  icon: Icons.open_in_new_rounded,
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
                   onPressed: () async { Haptics.tap();
                     try {
@@ -301,13 +301,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                         Container(color: AppColors.bgMid),
                                     errorWidget: (_, __, ___) => Container(
                                       color: AppColors.bgMid,
-                                      child: const Icon(Icons.album,
+                                      child: const Icon(Icons.album_rounded,
                                           size: 50, color: AppColors.textMuted),
                                     ),
                                   )
                                 : Container(
                                     color: AppColors.bgMid,
-                                    child: const Icon(Icons.album,
+                                    child: const Icon(Icons.album_rounded,
                                         size: 50, color: AppColors.accent),
                                   ),
                           ),
@@ -399,6 +399,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     ),
                     style: locale.getTextStyle(
                       fontSize: AppFontSize.micro,
+                      tabular: true,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
                     ),
@@ -493,7 +494,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           onPressed: () { Haptics.tap();
                             ref.read(playTracksProvider)(tracks);
                           },
-                          icon: Icon(Icons.play_arrow,
+                          icon: Icon(Icons.play_arrow_rounded,
                               color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
                           label: Text(
                             strings.play,

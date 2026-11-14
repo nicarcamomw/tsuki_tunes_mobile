@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// A rendered Moon: real terminator shape for the given illumination, lunar
 /// maria, earthshine on the dark side and a halo that grows with the light.
@@ -173,7 +174,7 @@ class MoonBreathing extends StatefulWidget {
 
 class _MoonBreathingState extends State<MoonBreathing> with SingleTickerProviderStateMixin {
   late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+      AnimationController(vsync: this, duration: AppMotion.breath);
 
   @override
   void dispose() {

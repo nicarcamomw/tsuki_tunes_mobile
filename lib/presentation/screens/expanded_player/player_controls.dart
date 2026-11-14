@@ -72,7 +72,7 @@ class _PlayerControls extends StatelessWidget {
             scaleDown: 0.85,
             child: const Padding(
               padding: EdgeInsets.all(8),
-              child: Icon(Icons.skip_previous,
+              child: Icon(Icons.skip_previous_rounded,
                   size: 34, color: AppColors.textPrimary),
             ),
           ),
@@ -95,7 +95,7 @@ class _PlayerControls extends StatelessWidget {
             scaleDown: 0.85,
             child: const Padding(
               padding: EdgeInsets.all(8),
-              child: Icon(Icons.skip_next,
+              child: Icon(Icons.skip_next_rounded,
                   size: 34, color: AppColors.textPrimary),
             ),
           ),
@@ -113,8 +113,8 @@ class _PlayerControls extends StatelessWidget {
             child: _ModeIcon(
               icon: Icon(
                 repeatMode == PlaybackRepeatMode.one
-                    ? Icons.repeat_one
-                    : Icons.repeat,
+                    ? Icons.repeat_one_rounded
+                    : Icons.repeat_rounded,
                 size: 22,
                 color: repeatMode != PlaybackRepeatMode.off
                     ? PlayerTint.of(context)

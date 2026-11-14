@@ -306,7 +306,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.refresh,
+                                Icon(Icons.refresh_rounded,
                                     size: 14, color: AppColors.accent, semanticLabel: strings.a11yRetry),
                                 const SizedBox(width: 8),
                                 Text(
@@ -525,7 +525,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           )
         : Container(
             color: AppColors.bgMid,
-            child: Icon(Icons.album, color: AppColors.accent, size: 40, semanticLabel: strings.a11yAlbumCover),
+            child: Icon(Icons.album_rounded, color: AppColors.textMuted, size: 40, semanticLabel: strings.a11yAlbumCover),
           );
 
     if (isCompleted) return ExcludeSemantics(child: image);

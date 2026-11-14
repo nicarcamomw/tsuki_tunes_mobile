@@ -127,7 +127,7 @@ class SpotifyImportScreen extends ConsumerWidget {
                         height: 44,
                         child: p.liked
                             ? const ColoredBox(
-                                color: Color(0xFF3B2A7A), child: Icon(Icons.favorite_rounded, color: Colors.white))
+                                color: AppColors.likedViolet, child: Icon(Icons.favorite_rounded, color: Colors.white))
                             : p.imageUrl == null
                                 ? const ColoredBox(
                                     color: AppColors.bgCard,

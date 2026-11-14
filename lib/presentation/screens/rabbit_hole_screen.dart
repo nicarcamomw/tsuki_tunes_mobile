@@ -146,7 +146,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
     _physics = createTicker(_onTick);
     _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: AppMotion.breath,
     );
     _camera = AnimationController(
       vsync: this,
@@ -686,13 +686,13 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.zoom_out_map, size: 20),
+            icon: const Icon(Icons.zoom_out_map_rounded, size: 20),
             color: AppColors.neonCyan,
             tooltip: strings.rabbitHoleFitAll,
             onPressed: () { Haptics.tap(); _fitAll(); },
           ),
           IconButton(
-            icon: const Icon(Icons.center_focus_strong, size: 20),
+            icon: const Icon(Icons.center_focus_strong_rounded, size: 20),
             color: AppColors.neonPurple,
             tooltip: strings.rabbitHoleRecenter,
             onPressed: () { Haptics.tap(); _recenter(); },

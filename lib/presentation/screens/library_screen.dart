@@ -307,7 +307,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                           color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
                       suffixIcon: _filterController.text.isNotEmpty
                           ? IconButton(
-                              icon: Icon(Icons.clear,
+                              icon: Icon(Icons.clear_rounded,
                                   color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
                               tooltip: strings.a11yClearFilter,
                               onPressed: () {
@@ -694,7 +694,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             // The tab's main action (D-10, D-12): the primary button.
             child: FilledButton.icon(
               onPressed: () { Haptics.tap(); _showCreatePlaylistDialog(context); },
-              icon: Icon(Icons.add, size: 18, semanticLabel: strings.a11yCreatePlaylist),
+              icon: Icon(Icons.add_rounded, size: 18, semanticLabel: strings.a11yCreatePlaylist),
               label: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800),
@@ -991,7 +991,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
                   ExcludeSemantics(
                     child: Icon(
-                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -1077,6 +1077,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         Formatters.formatSeconds(trackData.duration),
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.micro,
+                          tabular: true,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -1086,7 +1087,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                         tooltip: strings.a11yRemoveFromPlaylist,
-                        icon: Icon(Icons.remove_circle_outline,
+                        icon: Icon(Icons.remove_circle_outline_rounded,
                             color: AppColors.textMuted, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
                         onPressed: () { Haptics.selection(); unawaited(unmarkWithUndo(context, ref, [trackData.trackId])); },
                       ),
@@ -1219,13 +1220,14 @@ class _PlaylistListTile extends ConsumerWidget {
                       ),
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
+                        tabular: true,
                         color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right,
+              Icon(Icons.chevron_right_rounded,
                   color: AppColors.textSecondary, size: 20, semanticLabel: strings.a11yOpenPlaylist),
             ],
           ),

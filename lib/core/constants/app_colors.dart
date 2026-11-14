@@ -89,6 +89,28 @@ class AppColors {
   static const Color warning = Color(0xFFFFD600);
   static const Color error = Color(0xFFFF1744);
 
+  // Illustrations (D-11): the login, the onboarding, Wrapped and the
+  // night skies behind some screens. Not for interface (text, buttons):
+  // shades of the crimson and of the night, named once.
+  static const Color crimsonNeon = Color(0xFFFF2B40);
+  static const Color crimsonShade = Color(0xFFCC1414);
+  static const Color crimsonDeep = Color(0xFF8B0000);
+  static const Color crimsonBlood = Color(0xFF7A000D);
+  static const Color crimsonInk = Color(0xFF2A0A0F);
+  static const Color crimsonInkDeep = Color(0xFF1A0608);
+  static const Color cyanDeep = Color(0xFF0055AA);
+  static const Color skyBlue = Color(0xFF0099FF);
+  static const Color likedViolet = Color(0xFF3B2A7A);
+  static const Color violetNight = Color(0xFF1A1030);
+  static const Color tealNight = Color(0xFF0A1418);
+  static const Color indigoNight = Color(0xFF0A0A14);
+  /// The darkest night: behind a story, a card's fade, the clock's face.
+  static const Color ink = Color(0xFF07080C);
+  static const Color inkNight = Color(0xFF0B0D13);
+  static const Color inkSoft = Color(0xFF0F0F14);
+  static const Color inkPanel = Color(0xFF12141C);
+  static const Color steel = Color(0xFF2E2E3E);
+
   // The shrine (D-11, P-05): the palette of the progression screens (Eco
   // levels, streak, masks, Lore, ascension), one ink-and-moonlight world
   // instead of each screen's own near-identical darks.

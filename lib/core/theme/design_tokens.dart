@@ -59,9 +59,9 @@ abstract final class AppRadius {
   static const double pill = 999;
 }
 
-/// Motion (D-04): how long a UI change takes, and how it moves. Long
-/// ambient loops (a breathing cover, the sakura) and timers aren't
-/// transitions and keep their own times.
+/// Motion (D-04): how long a UI change takes, and how it moves, from a
+/// press to the long loops of the ambience. Timers and delays (a retry,
+/// a debounce) aren't motion and keep their own times.
 abstract final class AppMotion {
   /// A press, a tick, a colour change.
   static const Duration micro = Duration(milliseconds: 100);
@@ -74,6 +74,24 @@ abstract final class AppMotion {
 
   /// Big moves: the player opening, a hero flight, a reveal.
   static const Duration slow = Duration(milliseconds: 450);
+
+  /// A value or a scene unfolding: a number counting up, a bar filling,
+  /// a shockwave, a long scroll back to the top.
+  static const Duration reveal = Duration(milliseconds: 900);
+
+  /// A slower unfolding, for a big moment: Wrapped's numbers, a being
+  /// awakening.
+  static const Duration revealLong = Duration(milliseconds: 1600);
+
+  /// One turn of a repeating motion: the radar's sweep, the loading moon,
+  /// a glow that comes and goes.
+  static const Duration cycle = Duration(milliseconds: 1600);
+
+  /// A slow breath: the cover, the moon, a pulse waiting for a voice.
+  static const Duration breath = Duration(milliseconds: 2800);
+
+  /// The Ascension's revelation, the app's one long ceremony.
+  static const Duration ceremony = Duration(seconds: 9);
 
   /// Something arriving.
   static const Curve enter = Curves.easeOutCubic;

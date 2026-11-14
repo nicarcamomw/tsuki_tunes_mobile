@@ -320,8 +320,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                   )
                                 : Icon(
                                     isPlaying
-                                        ? Icons.pause_circle_filled
-                                        : Icons.play_circle_filled,
+                                        ? Icons.pause_circle_filled_rounded
+                                        : Icons.play_circle_filled_rounded,
                                     size: 32,
                                     color: PlayerTint.of(context),
                                   ),
@@ -332,7 +332,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                             onTap: () => audio.stop(),
                             scaleDown: 0.85,
                             child: const Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               size: 20,
                               color: AppColors.textMuted,
                             ),
@@ -380,7 +380,7 @@ class _BreathingCoverState extends State<_BreathingCover>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: AppMotion.breath,
     );
     if (widget.isPlaying) _controller.repeat(reverse: true);
   }
@@ -456,7 +456,7 @@ class _BreathingCoverState extends State<_BreathingCover>
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.bgMid,
                         child: Icon(
-                          Icons.music_note,
+                          Icons.music_note_rounded,
                           color: PlayerTint.of(context),
                         ),
                       ),
@@ -464,7 +464,7 @@ class _BreathingCoverState extends State<_BreathingCover>
                   : Container(
                       color: AppColors.bgMid,
                       child: Icon(
-                        Icons.music_note,
+                        Icons.music_note_rounded,
                         color: PlayerTint.of(context),
                       ),
                     ),

@@ -198,7 +198,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           // E-03: the app's snack bar, over the dock.
           AppSnack.of(context, bottom: _snackBottom).show(
             offerBatteryGuide ? strings.batteryGuideSnack : spotifyError.message(strings),
-            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
+            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
             actionLabel: offerBatteryGuide ? strings.batteryGuideAction : null,
             onAction: offerBatteryGuide ? () => BatteryGuideSheet.show(context) : null,
             duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
@@ -217,7 +217,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             playbackError.message(strings, isOnline: isOnline),
             icon: playbackError == PlaybackError.network
                 ? Icons.wifi_off_rounded
-                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline),
+                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline_rounded),
           );
         }
       });
@@ -230,7 +230,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       _lastShownSyncError = syncError;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem);
+          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem_rounded);
         }
       });
     }
@@ -304,7 +304,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.wifi_off, size: 14, color: Colors.white, semanticLabel: strings.a11yOffline),
+                              Icon(Icons.wifi_off_rounded, size: 14, color: Colors.white, semanticLabel: strings.a11yOffline),
                               const SizedBox(width: 6),
                               Text(
                                 strings.offline,

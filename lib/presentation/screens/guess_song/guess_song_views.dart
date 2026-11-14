@@ -522,7 +522,7 @@ extension _GuessSongViews on _GuessSongScreenState {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.accent, Color(0xFFCC1414)],
+              colors: [AppColors.accent, AppColors.crimsonShade],
             ),
             boxShadow: [
               BoxShadow(

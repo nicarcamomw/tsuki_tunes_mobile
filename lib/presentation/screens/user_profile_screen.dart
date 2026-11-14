@@ -149,7 +149,7 @@ class _ProfileBody extends ConsumerWidget {
                     backgroundImage: a.pictureUrl == null
                         ? null
                         : ResizeImage(NetworkImage(a.pictureUrl!), width: imageCacheSize(context, 40)),
-                    child: a.pictureUrl == null ? const Icon(Icons.person, color: AppColors.textMuted) : null,
+                    child: a.pictureUrl == null ? const Icon(Icons.person_rounded, color: AppColors.textMuted) : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Text(a.name, style: style(AppFontSize.title), overflow: TextOverflow.ellipsis)),
@@ -227,7 +227,7 @@ class _SintoniaCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AppRadius.chip),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: s.percent / 100),
-                duration: const Duration(milliseconds: 900),
+                duration: AppMotion.reveal,
                 curve: Curves.easeOutCubic,
                 builder: (_, v, __) => LinearProgressIndicator(
                   value: v,

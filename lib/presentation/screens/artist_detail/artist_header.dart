@@ -67,15 +67,15 @@ class _ArtistHeroAppBar extends StatelessWidget {
                 ),
               ),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  stops: [0.0, 0.45, 0.80, 1.0],
+                  stops: const [0.0, 0.45, 0.80, 1.0],
                   colors: [
                     Colors.transparent,
                     Colors.transparent,
-                    Color(0x990B0D13),
+                    AppColors.inkNight.withValues(alpha: 0.6),
                     AppColors.bgDeep,
                   ],
                 ),
@@ -199,6 +199,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 strings.artistFans(Formatters.formatNumber(artist.fansCount)),
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.bodyLg,
+                  tabular: true,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -243,7 +244,7 @@ class _ArtistInfoSection extends StatelessWidget {
                   turns: showStats ? 0.25 : 0.0,
                   duration: AppMotion.normal,
                   child: const Icon(
-                    Icons.chevron_right,
+                    Icons.chevron_right_rounded,
                     size: 16,
                     color: AppColors.accent,
                   ),
@@ -302,7 +303,7 @@ class _ArtistInfoSection extends StatelessWidget {
                 child: ScaleTransition(scale: anim, child: child),
               ),
               child: Icon(
-                isFollowed ? Icons.check : Icons.add,
+                isFollowed ? Icons.check_rounded : Icons.add_rounded,
                 key: ValueKey(isFollowed),
                 size: 14,
                 color: AppColors.accent,
@@ -349,7 +350,7 @@ class _ArtistInfoSection extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.sensors, size: 15, color: Colors.white),
+              const Icon(Icons.sensors_rounded, size: 15, color: Colors.white),
               const SizedBox(width: 6),
               Text(
                 strings.artistRadioButton,
@@ -378,7 +379,7 @@ class _ArtistInfoSection extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0x730C0C12),
+          color: AppColors.inkNight.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.16),

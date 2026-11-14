@@ -31,9 +31,9 @@ extension _SearchHints on _SearchScreenState {
                 child: _QueryChip(
                   label: sug.text,
                   icon: switch (sug.source) {
-                    SuggestionSource.history => Icons.history,
+                    SuggestionSource.history => Icons.history_rounded,
                     SuggestionSource.library => Icons.library_music_outlined,
-                    SuggestionSource.catalog => Icons.search,
+                    SuggestionSource.catalog => Icons.search_rounded,
                   },
                   semanticLabel: strings.a11ySearchSuggestion(sug.text),
                   locale: locale,
@@ -61,7 +61,7 @@ extension _SearchHints on _SearchScreenState {
           padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 6),
           child: Row(
             children: [
-              const Icon(Icons.auto_fix_high, size: 16, color: AppColors.info),
+              const Icon(Icons.auto_fix_high_rounded, size: 16, color: AppColors.info),
               const SizedBox(width: 8),
               Flexible(
                 child: Text.rich(

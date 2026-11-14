@@ -91,14 +91,14 @@ class _AlmostCompleteCard extends StatelessWidget {
                               Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.album,
+                            child: const Icon(Icons.album_rounded,
                                 color: AppColors.textMuted),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
                           child:
-                              const Icon(Icons.album, color: AppColors.textMuted),
+                              const Icon(Icons.album_rounded, color: AppColors.textMuted),
                         ),
                 ),
               ),

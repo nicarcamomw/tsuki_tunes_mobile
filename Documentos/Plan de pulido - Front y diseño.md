@@ -49,14 +49,14 @@ Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentatio
 
 - **Tema y colores:** `core/theme/cyber_theme.dart`, `core/constants/app_colors.dart`.
 - **Tipografía:** Plus Jakarta Sans y Noto Sans JP (google_fonts); tipografías propias por artista (`core/utils/artist_fonts.dart`, 26 fuentes en `assets/fonts/`).
-- **Superficies:** `GlassCard` (tarjeta de tinta), `cyberCardBox`.
-- **Botones y toques:** `CyberButton`, `TapScale`, `MoonButton`, vibración (`haptics.dart`).
+- **Superficies:** tres niveles (`AppColors.surface`, `surfaceCard`, `surfaceRaised`) y `GlassCard` (tarjeta de tinta).
+- **Botones y toques:** tres tipos (`FilledButton` primario, `OutlinedButton` secundario, `TextButton` de texto, desde el tema), `TapScale`, `MoonButton`, vibración (`haptics.dart`).
 - **Texto con efecto:** `GlitchText`, `CyberGlitchText`, `DistortedArtistName`, `LoreText`.
-- **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (7 versiones sueltas), sin conexión (franja superior).
+- **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (`EmptyState`, uno solo), sin conexión (franja superior).
 - **Hojas inferiores:** `SwipeableSheet` y unas 25 hojas (listadas en su apartado).
-- **Títulos de sección:** `SectionTitle` y 5 versiones sueltas.
-- **Movimiento:** `motion.dart` (reducir movimiento), transiciones `cyberPage` y `fadePage`.
-- **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material.
+- **Títulos de sección:** `SectionTitle` (secciones de contenido) y `SectionLabel` (etiquetas de grupo), ambos anunciados como título.
+- **Movimiento:** `motion.dart` (reducir movimiento), tokens `AppMotion` (de `micro` a `ceremony`), transiciones `cyberPage` y `fadePage`.
+- **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material en su variante redondeada.
 
 ### 1. Acceso
 
@@ -209,19 +209,19 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 |---|---|---|---|
 | D-01 | ~~Escala tipográfica: 33 tamaños, con medios puntos. Definir 7 u 8 tokens y migrar.~~ **Hecho** en `design_tokens.dart`: 10, 11, 12, 13, 14, 16, 22 y 28, más 40 y 64 para cifras y adornos. Detalle en `Documentos/Informe de la noche - pulido front.md`. | No queda ningún `fontSize:` suelto fuera de los tokens en `presentation/`. | A |
 | D-02 | ~~Texto diminuto: mínimo 10 en todo lo que informe.~~ **Hecho:** el paso más bajo de la escala (`AppFontSize.micro`) ya es 10. | Ningún texto informativo bajo el mínimo; solo adornos pueden ir por debajo. | A |
-| D-03 | Radios: 21 valores distintos. Dejar 4 tokens (chip, tarjeta, sheet, píldora). | Todos los `BorderRadius.circular` usan un token. | A |
-| D-04 | Animaciones: unas 25 duraciones sueltas. Tokens rápido / normal / lento y curvas comunes. | Las duraciones salen de los tokens. | B |
-| D-05 | Margen lateral: alterna 16 y 20 según pantalla. Unificar. | Un solo valor de margen de página. | B |
-| D-06 | Un `EmptyState` compartido (hoy hay 7 distintos), como ya existe `ErrorState`. | Las 7 pantallas usan el mismo widget. | A |
-| D-07 | Usar `SectionTitle` en todas partes (hay 5 versiones más en Buscar, Bonds, Radar, ajustes y cola). | Solo existe un título de sección. | B |
-| D-08 | Un helper de snackbar con variantes info / error / deshacer (hoy unos 60 armados a mano en 28 archivos). | Ningún `SnackBar(` construido a mano. | A |
-| D-09 | Una sola flecha de volver (hoy 4 íconos distintos). | Un único ícono en toda la app. | C |
-| D-10 | Botones: definir primario, secundario y de texto; hoy conviven `CyberButton`, `FilledButton`, `TextButton` y contenedores a mano. | Cada botón es uno de los tres tipos. | B |
-| D-11 | Colores fuera de paleta (Eco, racha, Lore, Ascensión) a `AppColors`. | Ningún `Color(0x…)` en pantallas. | C |
-| D-12 | **Rojo con significado:** el acento aparece más de 600 veces. Reservarlo para lo que suena, la acción principal y lo activo; el resto, neutros. Neones con sentido fijo: cian = ambiente/información, púrpura = social/máscaras, verde = Spotify/correr. | Guía escrita y aplicada en las pestañas principales. | A |
-| D-13 | **Tipografía de titulares:** sumar una display técnica y condensada para títulos (`INICIO // 01`) y cifras monoespaciadas para stats y tiempos. El cuerpo sigue en Plus Jakarta. | Títulos y números usan las nuevas familias. | B |
-| D-14 | **Profundidad con luz:** tres niveles de superficie (fondo, tarjeta, elevado); el borde brillante solo para lo activo. | Tokens de superficie aplicados a las tarjetas. | B |
-| D-15 | Un solo juego de íconos: igualar grosor y estilo de los 20 o 30 más usados con los de la barra. | Íconos principales redibujados o sustituidos. | C |
+| D-03 | ~~Radios: 21 valores distintos. Dejar 4 tokens (chip, tarjeta, sheet, píldora).~~ **Hecho:** `AppRadius` (chip, card, sheet, pill). Quedan 4 radios calculados en el momento (el disco que se transforma, la máscara a escala), que es lo correcto. | Todos los `BorderRadius.circular` usan un token. | A |
+| D-04 | ~~Animaciones: unas 25 duraciones sueltas.~~ **Hecho:** `AppMotion` de `micro` a `slow` para transiciones, más `reveal`, `revealLong`, `cycle`, `breath` y `ceremony` para los bucles y revelaciones largas. `design_tokens_test` no deja ninguna duración escrita a mano. | Las duraciones salen de los tokens. | B |
+| D-05 | ~~Margen lateral: alterna 16 y 20 según pantalla.~~ **Hecho:** `AppSpacing.page` (16). | Un solo valor de margen de página. | B |
+| D-06 | ~~Un `EmptyState` compartido.~~ **Hecho:** todos los vacíos lo usan, también los avisos de error y de biblioteca vacía del inicio. | Las 7 pantallas usan el mismo widget. | A |
+| D-07 | ~~Un solo título de sección.~~ **Hecho:** `SectionTitle` para secciones de contenido y `SectionLabel` para etiquetas de grupo (ajustes, historial de búsqueda, Lazos, radar, cola, resultados), las dos anunciadas como título. | Solo existe un título de sección. | B |
+| D-08 | ~~Un helper de snackbar.~~ **Hecho:** `AppSnack`; ningún `SnackBar(` a mano. | Ningún `SnackBar(` construido a mano. | A |
+| D-09 | ~~Una sola flecha de volver.~~ **Hecho:** `arrow_back_rounded`. | Un único ícono en toda la app. | C |
+| D-10 | ~~Botones: primario, secundario y de texto.~~ **Hecho:** desde el tema, con esquina de chip y 48 dp; sin `ElevatedButton` ni `CyberButton` (`test/button_types_test.dart`). | Cada botón es uno de los tres tipos. | B |
+| D-11 | ~~Colores fuera de paleta a `AppColors`.~~ **Hecho:** el santuario (Eco, racha, Lore, Ascensión) y las ilustraciones (login, onboarding, Wrapped, cielos) tienen nombre. Solo los dibujos sobre lienzo (`painters.dart`, `story_image.dart`) conservan sus degradados. | Ningún `Color(0x…)` en pantallas. | C |
+| D-12 | ~~**Rojo con significado.**~~ **Hecho:** la guía está en `app_colors.dart` (rojo para lo que suena, la acción principal y lo activo; cian información, púrpura social, verde Spotify) y aplicada en las cuatro pestañas: insignia de fuente verde o neutra, portadas faltantes en gris, primario para "Crear playlist". | Guía escrita y aplicada en las pestañas principales. | A |
+| D-13 | **Tipografía de titulares:** sumar una display técnica y condensada para títulos (`INICIO // 01`) y cifras monoespaciadas para stats y tiempos. El cuerpo sigue en Plus Jakarta. **Hecha la mitad sin fuente nueva:** cifras de ancho fijo (`getTextStyle(tabular: true)`) en tiempos, duraciones y contadores. **Pendiente de decisión:** la fuente display cambia la identidad (regla 1). | Títulos y números usan las nuevas familias. | B |
+| D-14 | ~~**Profundidad con luz.**~~ **Hecho:** `surface`, `surfaceCard` y `surfaceRaised` (hojas, diálogos y menús); `borderGlow` solo para lo activo (`test/surfaces_test.dart`). | Tokens de superficie aplicados a las tarjetas. | B |
+| D-15 | ~~Un solo juego de íconos.~~ **Hecho:** todos los íconos Material en su variante redondeada (los delineados quedan donde significan "apagado"); `design_tokens_test` lo vigila. Redibujar a mano los más usados al estilo de la barra queda como idea, no como deuda. | Íconos principales redibujados o sustituidos. | C |
 
 ### 1. Acceso
 

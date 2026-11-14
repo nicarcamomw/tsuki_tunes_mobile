@@ -216,10 +216,10 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
-                          colors: [AppColors.accent, Color(0xFF8B0000)],
+                          colors: [AppColors.accent, AppColors.crimsonDeep],
                         ),
                       ),
-                      child: const Icon(Icons.music_note,
+                      child: const Icon(Icons.music_note_rounded,
                           color: Colors.white, size: 18),
                     ),
                     const SizedBox(width: 10),
@@ -291,7 +291,7 @@ Widget _buildSearchCatalogGraphic(Size size, double t) {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                         gradient: const LinearGradient(
-                          colors: [AppColors.neonCyan, Color(0xFF0055AA)],
+                          colors: [AppColors.neonCyan, AppColors.cyanDeep],
                         ),
                       ),
                       child: const Icon(Icons.graphic_eq_rounded,

@@ -84,7 +84,7 @@ class _NodeView extends StatelessWidget {
   Widget _placeholder(double r) => Container(
         color: AppColors.bgCard,
         alignment: Alignment.center,
-        child: Icon(Icons.person, size: r * 0.8, color: AppColors.textMuted),
+        child: Icon(Icons.person_rounded, size: r * 0.8, color: AppColors.textMuted),
       );
 
   @override
@@ -174,7 +174,7 @@ class _NodeView extends StatelessWidget {
                           color: AppColors.bgDeep,
                           border: Border.all(color: ring, width: 1),
                         ),
-                        child: Icon(Icons.add, size: 11, color: ring),
+                        child: Icon(Icons.add_rounded, size: 11, color: ring),
                       ),
                     ),
                   if (node.state == _NodeState.error)
@@ -182,7 +182,7 @@ class _NodeView extends StatelessWidget {
                       right: -2,
                       bottom: -2,
                       child: _Badge(
-                        icon: Icons.wifi_off,
+                        icon: Icons.wifi_off_rounded,
                         color: AppColors.warning,
                       ),
                     ),
@@ -191,7 +191,7 @@ class _NodeView extends StatelessWidget {
                       left: -2,
                       top: -2,
                       child: _Badge(
-                        icon: Icons.headphones,
+                        icon: Icons.headphones_rounded,
                         color: AppColors.neonGreen,
                       ),
                     ),
@@ -398,7 +398,7 @@ class _GridPainter extends CustomPainter {
         ..shader = ui.Gradient.radial(
           origin,
           max(size.width, size.height) * 0.9,
-          [const Color(0xFF1A1030), AppColors.bgDeep],
+          [AppColors.violetNight, AppColors.bgDeep],
         ),
     );
 
@@ -488,7 +488,7 @@ class _EmptyState extends StatelessWidget {
       color: AppColors.bgDeep.withValues(alpha: 0.6),
       alignment: Alignment.center,
       child: EmptyState(
-        icon: offline ? Icons.wifi_off : Icons.link_off,
+        icon: offline ? Icons.wifi_off_rounded : Icons.link_off_rounded,
         tone: AppColors.neonPurple,
         title: offline ? strings.rabbitHoleOffline : strings.rabbitHoleEmpty,
         message: offline ? strings.rabbitHoleOfflineSubtitle : strings.rabbitHoleEmptySubtitle,
@@ -572,14 +572,14 @@ class _BottomPanel extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _Stat(
-                icon: Icons.hub,
+                icon: Icons.hub_rounded,
                 label: strings.rabbitHoleNodes(nodeCount),
                 color: AppColors.neonCyan,
                 locale: locale,
               ),
               const SizedBox(width: 18),
               _Stat(
-                icon: Icons.south,
+                icon: Icons.south_rounded,
                 label: strings.rabbitHoleDepth(node?.depth ?? 0),
                 color: AppColors.accent,
                 locale: locale,
@@ -616,7 +616,7 @@ class _Breadcrumbs extends StatelessWidget {
               if (i > 0)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 2),
-                  child: Icon(Icons.chevron_right,
+                  child: Icon(Icons.chevron_right_rounded,
                       size: 14, color: AppColors.textMuted),
                 ),
               Semantics(
@@ -709,7 +709,7 @@ class _FocusCard extends StatelessWidget {
                         width: 52,
                         height: 52,
                         color: AppColors.bgMid,
-                        child: const Icon(Icons.person, color: AppColors.textMuted),
+                        child: const Icon(Icons.person_rounded, color: AppColors.textMuted),
                       )
                     : CachedNetworkImage(
                         memCacheWidth: imageCacheSize(context, 52),
@@ -758,7 +758,7 @@ class _FocusCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _FocusAction(
-                  icon: Icons.play_circle_outline,
+                  icon: Icons.play_circle_outline_rounded,
                   label: strings.rabbitHoleListenShort,
                   tooltip: strings.rabbitHoleListen,
                   color: AppColors.neonGreen,
@@ -770,7 +770,7 @@ class _FocusCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _FocusAction(
-                    icon: Icons.filter_center_focus,
+                    icon: Icons.filter_center_focus_rounded,
                     label: strings.rabbitHoleRestartHere,
                     color: AppColors.neonCyan,
                     locale: locale,
@@ -781,7 +781,7 @@ class _FocusCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _FocusAction(
-                  icon: Icons.arrow_forward,
+                  icon: Icons.arrow_forward_rounded,
                   label: strings.rabbitHoleOpenArtist,
                   color: AppColors.neonPurple,
                   locale: locale,

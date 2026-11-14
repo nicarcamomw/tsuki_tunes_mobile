@@ -169,7 +169,7 @@ class MoonSheet extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.brightness_1, size: 11, color: accent),
+                    Icon(Icons.brightness_1_rounded, size: 11, color: accent),
                     const SizedBox(width: 7),
                     Text(
                       countdown(strings, s),
@@ -245,7 +245,7 @@ class MoonSheet extends ConsumerWidget {
               dense: true,
               contentPadding: EdgeInsets.zero,
               activeThumbColor: AppColors.accent,
-              secondary: Icon(Icons.nightlight_round,
+              secondary: Icon(Icons.nightlight_round_rounded,
                   size: 18, color: moon.atmosphereEnabled ? _silver : AppColors.textMuted),
               title: Text(
                 strings.moonAtmosphereTitle,
@@ -665,7 +665,7 @@ class _TappableMoonState extends State<_TappableMoon>
     super.initState();
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: AppMotion.breath,
     );
     _fade = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: 12),

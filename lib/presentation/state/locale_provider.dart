@@ -66,9 +66,13 @@ class LocaleProvider extends ChangeNotifier {
     Color? decorationColor,
     double? decorationThickness,
     List<Shadow>? shadows,
+    bool tabular = false,
   }) {
     // Brand colours as text get their readable (AA) versions.
     if (color != null) color = AppColors.forText(color);
+    // D-13: figures of one width for times and counts, so a ticking clock
+    // or a growing number doesn't shift what's around it.
+    final features = tabular ? const [FontFeature.tabularFigures()] : null;
     if (_currentLanguage == AppLanguage.ja) {
       return GoogleFonts.notoSansJp(
         fontSize: fontSize,
@@ -80,6 +84,7 @@ class LocaleProvider extends ChangeNotifier {
         decorationColor: decorationColor,
         decorationThickness: decorationThickness,
         shadows: shadows,
+        fontFeatures: features,
       );
     }
     return GoogleFonts.plusJakartaSans(
@@ -92,6 +97,7 @@ class LocaleProvider extends ChangeNotifier {
       decorationColor: decorationColor,
       decorationThickness: decorationThickness,
       shadows: shadows,
+      fontFeatures: features,
     );
   }
 }

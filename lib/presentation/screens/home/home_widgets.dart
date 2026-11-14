@@ -284,12 +284,13 @@ class _StatCard extends StatelessWidget {
               child: numValue != null
                   ? TweenAnimationBuilder<int>(
                       tween: IntTween(begin: 0, end: numValue),
-                      duration: const Duration(milliseconds: 800),
+                      duration: AppMotion.reveal,
                       curve: Curves.easeOutCubic,
                       builder: (context, val, _) => Text(
                         '$val',
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.headline,
+                          tabular: true,
                           fontWeight: FontWeight.w900,
                           color: AppColors.textBright,
                         ),
@@ -398,7 +399,7 @@ class _ArtistRow extends StatelessWidget {
                     : Container(
                         color: AppColors.bgCard,
                         child: placeholderIcon
-                            ? Icon(Icons.person,
+                            ? Icon(Icons.person_rounded,
                                 color: AppColors.textMuted, size: 20, semanticLabel: locale.strings.a11yArtistAvatar)
                             : null,
                       ),
@@ -429,7 +430,7 @@ class _ArtistRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
+            Icon(Icons.arrow_forward_ios_rounded,
                 size: 14, color: AppColors.textMuted, semanticLabel: locale.strings.a11ySeeAll),
           ],
         ),

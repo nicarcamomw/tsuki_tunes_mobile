@@ -42,9 +42,10 @@ void main() {
       if (f is! File || !f.path.endsWith('.dart')) continue;
       final lines = f.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
-        if (!lines[i].contains('errorWidget:') && !lines[i].contains('placeholder:')) continue;
-        final window = lines.skip(i).take(5).join('\n');
-        if (RegExp(r'Icons\.(person|album|music_note)\b[^;]*AppColors\.accent\b').hasMatch(window)) {
+        // A cover that failed or is loading, or a song with none.
+        if (!RegExp(r'errorWidget:|placeholder:|color: AppColors\.(bgMid|bgCard),').hasMatch(lines[i])) continue;
+        final window = lines.skip(i).take(4).join('\n');
+        if (RegExp(r'Icon\(Icons\.(person|album|music_note)(_rounded)?,\s*color: AppColors\.accent\b').hasMatch(window)) {
           found.add('${f.path}:${i + 1}');
         }
       }

@@ -60,7 +60,7 @@ class _QueueView extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.all_inclusive, size: 16, color: AppColors.accent),
+              const Icon(Icons.all_inclusive_rounded, size: 16, color: AppColors.accent),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -132,7 +132,7 @@ class _QueueView extends StatelessWidget {
                     strokeWidth: 1.5, color: AppColors.accent),
               )
             else
-              Icon(warn ? Icons.info_outline : Icons.all_inclusive,
+              Icon(warn ? Icons.info_outline_rounded : Icons.all_inclusive_rounded,
                   size: 14, color: color),
             const SizedBox(width: 8),
             Flexible(

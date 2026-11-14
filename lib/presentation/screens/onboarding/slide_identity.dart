@@ -200,7 +200,7 @@ class _IdentitySlide extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.chip),
                   gradient: const LinearGradient(
-                    colors: [AppColors.accent, Color(0xFF8B0000)],
+                    colors: [AppColors.accent, AppColors.crimsonDeep],
                   ),
                   border: Border.all(
                     color: AppColors.accent.withValues(alpha: 0.5),
@@ -463,9 +463,9 @@ class _MusicVaultGraphic extends StatelessWidget {
       height: 145,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF0F0F14),
+        color: AppColors.inkSoft,
         border: Border.all(
-          color: const Color(0xFF2E2E3E),
+          color: AppColors.steel,
           width: 2,
         ),
         boxShadow: [
@@ -508,8 +508,8 @@ class _MusicVaultGraphic extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: const RadialGradient(
                 colors: [
-                  Color(0xFFFF2B40),
-                  Color(0xFF7A000D),
+                  AppColors.crimsonNeon,
+                  AppColors.crimsonBlood,
                 ],
               ),
               border: Border.all(

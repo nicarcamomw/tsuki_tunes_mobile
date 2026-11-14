@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import 'motion.dart';
 
@@ -41,7 +42,7 @@ class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay>
     super.initState();
     _anim = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: AppMotion.breath,
     );
     _opacity = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: 8),
