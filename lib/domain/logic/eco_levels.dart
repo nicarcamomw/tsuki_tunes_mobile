@@ -297,8 +297,6 @@ class EcoLevels {
         'The clans do not know what to do with an ethereal Bearer. It belongs to no clan, and all of them want it on their side.'),
     Txt('El camino del noventa al cien es el más largo que existe. Cada paso pesa como todos los anteriores juntos.',
         'The path from ninety to a hundred is the longest there is. Each step weighs as much as all the ones before it.'),
-    Txt('Los Portadores que llegaron hasta aquí dicen que la música suena distinta: como si la luna entera la escuchara con ellos.',
-        'Bearers who made it this far say music sounds different: as if the whole moon were listening with them.'),
     Txt('Más allá del cien no hay más niveles. Solo una leyenda, y un trono que nunca está ocupado del todo.',
         'Past a hundred there are no more levels. Only a legend, and a throne that is never quite occupied.'),
     Txt('Tsuki no juzga a nadie. Solo escucha. Y recuerda todo lo que alguna vez sonó.',

@@ -468,7 +468,8 @@ class AppStrings {
         EcoRewardKind.feature => ecoFeatureName(r.feature!),
         EcoRewardKind.sound => _es('Sonido de ambiente: ${ambientName(r.sound!)}',
             'Ambient sound: ${ambientName(r.sound!)}', '環境音:${ambientName(r.sound!)}'),
-        EcoRewardKind.chapter => 'Tsuki Lore · ${r.chapter!.title.of(language)}',
+        EcoRewardKind.chapter =>
+          '${_es('Testamento Lunar', 'The Lunar Testament', '月の聖典')} · ${r.chapter!.title.of(language)}',
         EcoRewardKind.color => _es('Color del reproductor: ${ecoColorName(r.color!)}',
             'Player colour: ${ecoColorName(r.color!)}', 'プレーヤーの色:${ecoColorName(r.color!)}'),
         EcoRewardKind.rank => _es('Nuevo rango: ${ecoRankName(r.rank!)}', 'New rank: ${ecoRankName(r.rank!)}',
@@ -1049,16 +1050,21 @@ class AppStrings {
         AppLanguage.ja => '連続記録を開く',
       };
 
-  String get loreTitle => 'TSUKI LORE';
+  /// The book of the lore: what the Mother Moon left the earthly beings.
+  String get loreTitle => switch (language) {
+        AppLanguage.es => 'TESTAMENTO LUNAR',
+        AppLanguage.en => 'THE LUNAR TESTAMENT',
+        AppLanguage.ja => '月の聖典',
+      };
   String get loreSubtitle => switch (language) {
         AppLanguage.es => 'El Eco es conocimiento: cada nivel revela más de Tsuki',
         AppLanguage.en => 'Echo is knowledge: every level reveals more of Tsuki',
         AppLanguage.ja => 'エコーは知識。レベルが上がるほどツキの真実が明かされる',
       };
   String get loreButton => switch (language) {
-        AppLanguage.es => 'TSUKI LORE · La historia de los seres etéreos',
-        AppLanguage.en => 'TSUKI LORE · The story of the ethereal beings',
-        AppLanguage.ja => 'TSUKI LORE・霊なる者の物語',
+        AppLanguage.es => 'TESTAMENTO LUNAR · La historia de la Luna Madre',
+        AppLanguage.en => 'THE LUNAR TESTAMENT · The story of the Mother Moon',
+        AppLanguage.ja => '月の聖典・母なる月の物語',
       };
   String loreChaptersOpen(int open, int total) => switch (language) {
         AppLanguage.es => '$open de $total capítulos abiertos',

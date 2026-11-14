@@ -180,7 +180,7 @@ void main() {
       child: const MaterialApp(home: LoreScreen()),
     ));
     await tester.pump();
-    expect(find.text('TSUKI LORE'), findsOneWidget);
+    expect(find.text('TESTAMENTO LUNAR'), findsOneWidget);
     expect(find.text('La Luna Madre'), findsOneWidget);
     expect(find.text('4 de ${TsukiLore.chapters.length} capítulos abiertos'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Se abre en el nivel 10'), 300);

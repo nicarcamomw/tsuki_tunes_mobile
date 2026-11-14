@@ -164,7 +164,7 @@ class MaskCollectionScreen extends ConsumerWidget {
   }
 }
 
-/// Opens Tsuki Lore: a moon, gold and night, unlike the rest of the screen.
+/// Opens the Lunar Testament (the lore): a moon, gold and night, unlike the rest of the screen.
 class _LoreButton extends ConsumerWidget {
   final String label;
   final VoidCallback onTap;
