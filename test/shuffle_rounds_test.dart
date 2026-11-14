@@ -103,6 +103,88 @@ void main() {
     });
   });
 
+  group('Spread by share', () {
+    Track song(int i, String artist, String album) => Track(
+        id: 'k$i', title: 'S$i', artistId: artist, artistName: artist, albumId: album,
+        albumTitle: album, coverUrl: '', previewUrl: '', durationSeconds: 180);
+    // Half the songs by one artist (in 6 albums), the rest by 30 others.
+    final skewed = [
+      for (var i = 0; i < 60; i++) song(i, 'BIG', 'big${i % 6}'),
+      for (var i = 60; i < 120; i++) song(i, 'a${i % 30}', 'al${i % 30}'),
+    ];
+
+    List<Track> round(List<Track> list, int seed) {
+      final q = PlaybackQueue(random: Random(seed))..toggleShuffle();
+      q.select(list[seed % list.length], newQueue: list);
+      final order = [q.current!];
+      for (var k = 1; k < list.length; k++) {
+        q.next(online: true, canPlay: _all);
+        order.add(q.current!);
+      }
+      return order;
+    }
+
+    test('a big artist is spread all round long, not piled up at the end', () {
+      var pairs = 0, longest = 0, bigEarly = 0;
+      for (var seed = 0; seed < 30; seed++) {
+        final order = round(skewed, seed);
+        var run = 1;
+        for (var k = 1; k < order.length; k++) {
+          if (order[k].artistId == order[k - 1].artistId) {
+            pairs++;
+            run++;
+          } else {
+            run = 1;
+          }
+          longest = max(longest, run);
+        }
+        bigEarly += order.take(60).where((t) => t.artistId == 'BIG').length;
+      }
+      // Before: about 47 same-artist pairs a round, runs of up to 49, and
+      // only 9 of the big artist's 60 songs in the first half.
+      expect(pairs / 30, lessThan(3));
+      expect(longest, lessThanOrEqualTo(2));
+      expect(bigEarly / 30, inInclusiveRange(26, 34));
+    });
+
+    test('a two-song artist\'s songs are spaced, not one after the other', () {
+      final gaps = <int>[];
+      for (var seed = 0; seed < 30; seed++) {
+        final order = round(skewed, seed);
+        for (var a = 0; a < 30; a++) {
+          final at = [for (var k = 0; k < order.length; k++) if (order[k].artistId == 'a$a') k];
+          expect(at.length, 2);
+          gaps.add(at[1] - at[0]);
+        }
+      }
+      // Before: as close as 2 songs apart at the end of a round.
+      expect(gaps.reduce(min), greaterThanOrEqualTo(15));
+      expect(gaps.reduce((a, b) => a + b) / gaps.length, greaterThan(35));
+    });
+
+    test('still chance: any song can open or close a round', () {
+      final even = [for (var i = 0; i < 40; i++) song(i, 'x${i % 10}', 'y${i % 20}')];
+      final firsts = <String>{}, lasts = <String>{};
+      var sum = 0;
+      for (var seed = 0; seed < 200; seed++) {
+        final q = PlaybackQueue(random: Random(seed))..toggleShuffle();
+        q.select(even.first, newQueue: even);
+        final order = [q.current!];
+        for (var k = 1; k < even.length; k++) {
+          q.next(online: true, canPlay: _all);
+          order.add(q.current!);
+        }
+        firsts.add(order[1].id);
+        lasts.add(order.last.id);
+        sum += order.indexWhere((t) => t.id == 'k7');
+      }
+      expect(firsts.length, greaterThan(25));
+      expect(lasts.length, greaterThan(25));
+      // On average a given song lands mid-round.
+      expect(sum / 200, inInclusiveRange(14, 26));
+    });
+  });
+
   group('AudioProvider', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});

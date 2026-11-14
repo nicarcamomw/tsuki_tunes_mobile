@@ -144,10 +144,6 @@ class PlaybackQueue {
     if (_isShuffle && playing != null) _heard.add(playing.id);
   }
 
-  // Recently played artists/albums, to avoid repeats when shuffling.
-  final List<String> _artistHistory = [];
-  final List<String> _albumHistory = [];
-  static const int _shuffleHistorySize = 5;
 
   // --- Smart shuffle ---
 
@@ -371,17 +367,11 @@ class PlaybackQueue {
   }
 
   /// The next [count] shuffle picks, making (and memoizing) the missing
-  /// ones. Each pick avoids the artists and albums of the ones before it,
-  /// as if they had already played.
+  /// ones. Each pick counts the ones before it as already played.
   List<int> _shufflePicks(int count) {
     final first = peekNext();
     if (first == null || first == _currentIndex) return const [];
     final picks = [first, ..._shuffleLookahead];
-    final artists = [..._artistHistory, for (final i in picks) _artistKey(_tracks[i])];
-    final albums = [..._albumHistory, for (final i in picks) _tracks[i].albumId];
-    List<String> recent(List<String> l) => l.length > _shuffleHistorySize
-        ? l.sublist(l.length - _shuffleHistorySize)
-        : l;
     while (picks.length < count && picks.length < _tracks.length - 1) {
       final taken = {_currentIndex, ...picks};
       int? pick;
@@ -392,13 +382,10 @@ class PlaybackQueue {
           break;
         }
       }
-      pick ??= _pickNext(taken, [..._history, _currentIndex, ...picks],
-          artists: recent(artists), albums: recent(albums));
+      pick ??= _pickNext(taken, [..._history, _currentIndex, ...picks]);
       if (taken.contains(pick)) break;
       picks.add(pick);
       _shuffleLookahead.add(pick);
-      artists.add(_artistKey(_tracks[pick]));
-      albums.add(_tracks[pick].albumId);
     }
     return picks.take(count).toList();
   }
@@ -493,7 +480,6 @@ class PlaybackQueue {
       _currentIndex = (_currentIndex + 1) % _tracks.length;
     }
 
-    if (_isShuffle) _recordShuffle(_tracks[_currentIndex]);
     _markHeard();
     _consumeCurrent();
     return QueueStep.play(_currentIndex);
@@ -592,7 +578,6 @@ class PlaybackQueue {
     _currentIndex = target;
     if (_isShuffle) {
       preset ? _advanceShufflePick() : _forgetShufflePicks();
-      _recordShuffle(_tracks[target]);
     }
     _markHeard();
     _consumeCurrent();
@@ -625,8 +610,7 @@ class PlaybackQueue {
   /// The shuffle pick after [sequence] (what played and what's picked so
   /// far, in order): a recommended song when its turn has come, otherwise
   /// one of the user's via [pickSmartNext].
-  int _pickNext(Set<int> taken, List<int> sequence,
-      {List<String>? artists, List<String>? albums}) {
+  int _pickNext(Set<int> taken, List<int> sequence) {
     if (recommendEvery > 0 && _recommended.isNotEmpty) {
       var sinceLast = 0;
       for (final i in sequence.reversed) {
@@ -646,29 +630,22 @@ class PlaybackQueue {
       }
     }
     final last = sequence.lastWhere(_isValid, orElse: () => _currentIndex);
-    return pickSmartNext(
-      exclude: taken,
-      artists: artists,
-      albums: albums,
-      after: _isValid(last) ? _tracks[last] : null,
-    );
+    return pickSmartNext(exclude: taken, after: _isValid(last) ? _tracks[last] : null);
   }
 
-  /// Weighted random pick that avoids artists/albums heard most recently,
-  /// and the indices in [exclude] (besides the current one).
-  /// Tracks already heard this time round (the history) are left for last,
-  /// so shuffle goes through the whole list before repeating. Following
-  /// [after], it skips that artist ([avoidSameArtist]) and favours the
-  /// songs that flow from it ([flowScore]). Recommended songs only come
-  /// through their turn in [_pickNext].
-  int pickSmartNext({
-    Set<int> exclude = const {},
-    List<String>? artists,
-    List<String>? albums,
-    Track? after,
-  }) {
-    final artistHistory = artists ?? _artistHistory;
-    final albumHistory = albums ?? _albumHistory;
+  /// Weighted random pick, besides the current track and [exclude] (the
+  /// picks made ahead, counted as played). Songs heard this round are left
+  /// out, so shuffle goes through the whole list before repeating.
+  /// Following [after], it skips that artist ([avoidSameArtist]) and
+  /// favours the songs that flow from it ([flowScore]). Recommended songs
+  /// only come through their turn in [_pickNext].
+  ///
+  /// Artists and albums are spread by their share of the round: one with
+  /// half the songs plays about every other song all round long, one with
+  /// two songs about twice, spaced. (A fixed "not within the last 5 songs"
+  /// kept a big artist away at the start of a round and then played it back
+  /// to back, dozens in a row, at its end.)
+  int pickSmartNext({Set<int> exclude = const {}, Track? after}) {
     final all = [
       for (var i = 0; i < _tracks.length; i++)
         if (i != _currentIndex && !exclude.contains(i)) i
@@ -705,6 +682,54 @@ class PlaybackQueue {
     if (candidates.isEmpty) return _currentIndex;
     if (candidates.length == 1) return candidates.first;
 
+    // Spread by share: each artist (and album) should come up as often as
+    // its part of the round, so after `pos` songs an artist with `n` of the
+    // round's `size` songs is due about pos·n/size plays. The further one
+    // is behind that, the likelier it plays next; one ahead of it waits.
+    final round = [
+      for (final t in _tracks)
+        if (!_recommended.contains(t.id)) t
+    ];
+    final size = round.isEmpty ? 1 : round.length;
+    final artistTotal = <String, int>{};
+    final albumTotal = <String, int>{};
+    final artistPlayed = <String, int>{};
+    final albumPlayed = <String, int>{};
+    final planned = {..._heard, for (final i in exclude) if (_isValid(i)) _tracks[i].id};
+    var pos = 0;
+    for (final t in round) {
+      final a = _artistKey(t);
+      artistTotal.update(a, (n) => n + 1, ifAbsent: () => 1);
+      albumTotal.update(t.albumId, (n) => n + 1, ifAbsent: () => 1);
+      if (planned.contains(t.id) || t.id == current?.id) {
+        pos++;
+        artistPlayed.update(a, (n) => n + 1, ifAbsent: () => 1);
+        albumPlayed.update(t.albumId, (n) => n + 1, ifAbsent: () => 1);
+      }
+    }
+    // Plays behind (positive) or ahead (negative) of its share, after the
+    // song about to be picked.
+    double behind(Map<String, int> total, Map<String, int> played, String key) =>
+        ((pos + 1) * (total[key] ?? 1) / size - (played[key] ?? 0)).clamp(-1.5, 1.5);
+    // And never too soon after it was last heard, even when it's behind
+    // (late in a round): within half its spacing, the closer the costlier.
+    final sequence = [
+      ..._history,
+      _currentIndex,
+      if (_nextShuffleIndex != null) _nextShuffleIndex!,
+      ..._shuffleLookahead,
+    ];
+    final artistGap = <String, int>{};
+    for (var k = sequence.length - 1, gap = 1; k >= 0; k--, gap++) {
+      if (_isValid(sequence[k])) artistGap.putIfAbsent(_artistKey(_tracks[sequence[k]]), () => gap);
+    }
+    double tooSoon(String artist) {
+      final gap = artistGap[artist];
+      if (gap == null) return 0;
+      final half = size / (artistTotal[artist] ?? 1) / 2;
+      return gap >= half ? 0 : 1 - gap / half;
+    }
+
     var best = double.negativeInfinity;
     final scores = <double>[];
     final flow = after == null ? null : flowScore;
@@ -712,16 +737,10 @@ class PlaybackQueue {
       final track = _tracks[idx];
       var score = _rng.nextDouble();
       if (flow != null) score += flow(after!, track);
-
-      final artistPos = artistHistory.lastIndexOf(_artistKey(track));
-      if (artistPos != -1) {
-        score -= 3.0 / (artistHistory.length - artistPos);
-      }
-      final albumPos = albumHistory.lastIndexOf(track.albumId);
-      if (albumPos != -1) {
-        score -= 1.5 / (albumHistory.length - albumPos);
-      }
-
+      final artist = _artistKey(track);
+      score += 2.5 * behind(artistTotal, artistPlayed, artist);
+      score -= 3.0 * tooSoon(artist);
+      score += 1.0 * behind(albumTotal, albumPlayed, track.albumId);
       scores.add(score);
       if (score > best) best = score;
     }
@@ -731,13 +750,6 @@ class PlaybackQueue {
         if (scores[i] >= best - 0.3) candidates[i]
     ];
     return topTier[_rng.nextInt(topTier.length)];
-  }
-
-  void _recordShuffle(Track track) {
-    _artistHistory.add(_artistKey(track));
-    if (_artistHistory.length > _shuffleHistorySize) _artistHistory.removeAt(0);
-    _albumHistory.add(track.albumId);
-    if (_albumHistory.length > _shuffleHistorySize) _albumHistory.removeAt(0);
   }
 
   // --- Recommendations ---
