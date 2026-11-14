@@ -1709,6 +1709,8 @@ class AppStrings {
   String get shuffleRecoNormal => _l.shuffleRecoNormal;
   String get shuffleRecoMany => _l.shuffleRecoMany;
   String get recommendedTag => _l.recommendedTag;
+
+  String get recoKeep => _l.recoKeep;
   String get queueSmartShuffleTag => _l.queueSmartShuffleTag;
   String get shuffleHoldHint => _l.shuffleHoldHint;
   String get a11yShuffleSmart => _l.a11yShuffleSmart;

@@ -297,6 +297,18 @@ class SongRadio {
 
   void lessLikeThis(Track t) => _ban(t);
 
+  /// Adds [tracks] to the songs refills grow from, without forcing the next
+  /// one or dropping what's lined up (unlike [moreLikeThis]): a list's
+  /// representative songs, or the one playing now. The newest weigh more.
+  void addSeeds(Iterable<Track> tracks) {
+    for (final t in tracks) {
+      if (t.id == seed.id || _banned.contains(artistKeyOf(t))) continue;
+      _liked.removeWhere((l) => l.id == t.id);
+      _liked.add(t);
+      if (_liked.length > _maxLiked) _liked.removeAt(0);
+    }
+  }
+
   void _ban(Track t) {
     final a = artistKeyOf(t);
     _banned.add(a);

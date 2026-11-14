@@ -34,6 +34,7 @@ import '../widgets/player_tint.dart';
 import '../widgets/playlist_selector_sheet.dart';
 import '../widgets/queue_panel.dart';
 import '../widgets/radio_control_sheet.dart';
+import '../widgets/recommended_line.dart';
 import '../widgets/rinnegan_visualizer.dart';
 import '../widgets/shuffle_mode_icon.dart';
 import '../widgets/smart_shuffle_sheet.dart';
@@ -505,6 +506,8 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                     ),
                   ),
                 ),
+                // Smart shuffle's recommendation: why it's here, and keep it.
+                RecommendedLine(track: track),
                 // R-05: the line being sung peeks under the title.
                 CurrentLyricLine(controller: _lyrics, onTap: _openLyrics),
               ],
@@ -514,7 +517,11 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
           if (!ref.watch(authProvider.select((a) => a.isGuest)))
             TapScale(
               semanticLabel: isListened ? strings.a11yUnmarkListened : strings.a11yMarkListened,
-              onTap: () => unawaited(toggleListenedWithUndo(context, ref, track)),
+              onTap: () {
+                unawaited(toggleListenedWithUndo(context, ref, track));
+                // Marking a recommended song keeps it: one of the user's now.
+                if (!isListened) ref.read(audioProvider).keepRecommendation(track.id);
+              },
               scaleDown: 0.8,
               child: Padding(
                 padding: const EdgeInsets.all(8),

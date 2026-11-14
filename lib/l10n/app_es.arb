@@ -1834,6 +1834,7 @@
   "shuffleRecoNormal": "Normal",
   "shuffleRecoMany": "Muchas",
   "recommendedTag": "RECOMENDADA",
+  "recoKeep": "GUARDAR",
   "queueSmartShuffleTag": "MEZCLA INTELIGENTE",
   "shuffleHoldHint": "Mantén pulsado el botón aleatorio para configurarlo",
   "a11yShuffleSmart": "Aleatorio con recomendaciones",

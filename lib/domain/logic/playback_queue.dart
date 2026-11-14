@@ -783,19 +783,24 @@ class PlaybackQueue {
   }
 
   /// Takes out the recommended songs that haven't played (the one playing
-  /// stays). Returns whether any went.
-  bool dropRecommendations() {
+  /// stays), or only those [where] picks. Returns whether any went.
+  bool dropRecommendations({bool Function(Track track)? where}) {
     var dropped = false;
     for (var i = _tracks.length - 1; i >= 0; i--) {
       final id = _tracks[i].id;
       if (!_recommended.contains(id) || i == _currentIndex) continue;
-      if (_history.contains(i)) continue;
+      if (_history.contains(i) || _heard.contains(id)) continue;
+      if (where != null && !where(_tracks[i])) continue;
       removeAt(i);
+      _recommended.remove(id);
       dropped = true;
     }
-    _recommended.removeWhere((id) => id != current?.id);
+    if (where == null) _recommended.removeWhere((id) => id != current?.id);
     return dropped;
   }
+
+  /// A recommended song the user kept: from now on it's one of theirs.
+  bool adopt(String trackId) => _recommended.remove(trackId);
 
   /// Makes the shuffle picks after the first [keep] again (new settings,
   /// or tempos just learned). The next one stays: it may be loading.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
@@ -35,6 +36,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/logic/equalizer_presets.dart';
 import '../../domain/logic/playback_queue.dart';
 import '../../domain/logic/playback_restore.dart';
+import '../../domain/logic/smart_shuffle_seeds.dart';
 import '../../domain/logic/song_radio.dart' show SongRadio;
 import '../../domain/repositories/playback_controller.dart';
 import 'audio_radio_controller.dart';
@@ -341,6 +343,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   /// The song started sounding: the time since it was picked goes to
   /// Firebase Performance, with how it plays. Once per song.
   void _audioHeard() {
+    // A recommended song that played stays out for a while.
+    final playing = _currentTrack;
+    if (playing != null && _q.isRecommended(playing.id)) {
+      _recoSeen.record(playing.id, DateTime.now());
+      unawaited(_saveRecoSeen());
+    }
     final span = _timeToAudio;
     if (span != null) {
       _timeToAudio = null;
@@ -764,9 +772,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       await BpmService.shared.gainFor(track.id);
       if (_currentTrack?.id == track.id) _service.refreshLoudness(track);
     }
-    // The next ones in play order (shuffle's picks too), not the list's.
-    for (final i in _q.peekUpcoming(3)) {
-      await BpmService.shared.gainFor(_q.tracks[i].id);
+    // The next ones in play order (shuffle's picks too), not the list's,
+    // taken as songs now: the queue can change (shrink) while each is
+    // looked up, and a position read then pointed past its end.
+    final next = [for (final i in _q.peekUpcoming(3)) _q.tracks[i].id];
+    for (final id in next) {
+      await BpmService.shared.gainFor(id);
     }
   }
 
@@ -951,7 +962,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     // Playing an album/playlist replaces the radio; picking within the
     // queue keeps it and teaches it whether the last song was skipped.
     if (newQueue != null) _radioCtrl.radio = null;
-    _radioCtrl.registerLeaving(track, _currentTrack, _position, _duration);
+    _registerLeaving(track, _currentTrack, _position, _duration);
     _q.select(track, newQueue: newQueue);
     if (newQueue != null) {
       _recoRadio = null;
@@ -1346,6 +1357,9 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   SongRadio? _recoRadio;
   String? _recoSteeredBy;
   bool _recoLoading = false;
+  // Recommended songs played lately: they stay out for two weeks.
+  RecentRecommendations _recoSeen = RecentRecommendations();
+  static const _recoSeenKey = 'smart_shuffle_seen_v1';
 
   /// Whether a song is the user's (listened, favourite, in a playlist):
   /// those are never recommended.
@@ -1420,9 +1434,47 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     } catch (_) {}
   }
 
+  Future<void> _saveRecoSeen() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(AudioProvider._recoSeenKey, jsonEncode(_recoSeen.toJson()));
+    } catch (_) {}
+  }
+
+  /// A recommended song the user kept (saved, marked): one of theirs now,
+  /// no longer shown as a recommendation.
+  void keepRecommendation(String trackId) {
+    if (!_q.adopt(trackId)) return;
+    _recoRadio?.addSeeds([for (final t in _q.tracks) if (t.id == trackId) t]);
+    _persistPlaybackState();
+    notifyListeners();
+  }
+
+  /// The song being left, told to the radio and, when it was a recommended
+  /// one, to the recommendations: skipped early, fewer like it (twice from
+  /// an artist, none of theirs, and theirs waiting in the queue go); heard
+  /// most of the way, more like it.
+  void _registerLeaving(Track incoming, Track? current, Duration position, Duration duration,
+      {bool completed = false}) {
+    _radioCtrl.registerLeaving(incoming, current, position, duration, completed: completed);
+    final reco = _recoRadio;
+    if (reco == null || current == null || current.id == incoming.id || !_q.isRecommended(current.id)) return;
+    final total = duration.inMilliseconds;
+    final fraction = completed ? 1.0 : (total > 0 ? (position.inMilliseconds / total).clamp(0.0, 1.0) : 0.0);
+    reco.registerPlayed(current, fraction);
+    if (reco.isBanned(current) &&
+        _q.dropRecommendations(where: (t) => t.id != incoming.id && reco.isBanned(t))) {
+      _log.info('Recommendations from "${current.fullArtistName}" skipped twice: the rest of theirs go');
+    }
+  }
+
   Future<void> _loadShuffleSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final seen = prefs.getString(AudioProvider._recoSeenKey);
+      if (seen != null) {
+        _recoSeen = RecentRecommendations.fromJson(jsonDecode(seen))..prune(DateTime.now());
+      }
       _q.avoidSameArtist = prefs.getBool(_avoidArtistKey) ?? true;
       final e = prefs.getInt(_energyKey);
       if (e != null && e >= 0 && e < ShuffleEnergy.values.length) {
@@ -1504,18 +1556,27 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     if (_recoLoading || _q.recommendationsLeft >= 3) return;
     _recoLoading = true;
     try {
-      final radio = _recoRadio ??=
-          AudioRadioController.radioFactory(seed, RadioMode.balanced)
-            ..markQueued(_q.tracks);
+      // Grown from the whole list (one song of each of its main artists),
+      // with the songs that play added as they come: seeded by the playing
+      // song alone, a mixed list got recommendations jumping between styles.
+      var radio = _recoRadio;
+      if (radio == null) {
+        final own = [for (final t in _q.tracks) if (!_q.isRecommended(t.id)) t];
+        final seeds = listSeeds(own);
+        radio = _recoRadio = AudioRadioController.radioFactory(seeds.isEmpty ? seed : seeds.first, RadioMode.balanced)
+          ..markQueued(_q.tracks)
+          ..addSeeds(seeds.skip(1));
+      }
       if (_recoSteeredBy != seed.id) {
         _recoSteeredBy = seed.id;
-        if (seed.id != radio.seed.id) radio.moreLikeThis(seed);
+        if (seed.id != radio.seed.id && !_q.isRecommended(seed.id)) radio.addSeeds([seed]);
       }
       final batch = await radio.nextBatch(count: 6);
       if (!identical(radio, _recoRadio) || !_smartShuffle) return;
+      final now = DateTime.now();
       final fresh = [
         for (final t in batch)
-          if (!(isInLibrary?.call(t.id) ?? false)) t
+          if (!(isInLibrary?.call(t.id) ?? false) && !_recoSeen.isRecent(t.id, now)) t
       ];
       if (_q.addRecommendations(fresh) == 0) return;
       _log.info('${fresh.length} recommended songs ready');
@@ -1887,7 +1948,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         return;
       }
     }
-    _radioCtrl.registerLeaving(next, outgoing, _duration, _duration, completed: true);
+    _registerLeaving(next, outgoing, _duration, _duration, completed: true);
     if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = next;
     _setPosition(Duration.zero);
@@ -1931,7 +1992,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
 
     _crossfadeTriggered = true;
     final nextTrack = _q.tracks[nextIdx];
-    _radioCtrl.registerLeaving(nextTrack, _currentTrack, _position, _duration, completed: true);
+    _registerLeaving(nextTrack, _currentTrack, _position, _duration, completed: true);
     final outgoing = _currentTrack;
     if (outgoing != null) onTrackCompleted?.call(outgoing);
     _currentTrack = nextTrack;

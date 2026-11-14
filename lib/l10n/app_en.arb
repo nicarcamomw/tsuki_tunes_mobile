@@ -809,6 +809,7 @@
   "shuffleRecoNormal": "Normal",
   "shuffleRecoMany": "Many",
   "recommendedTag": "RECOMMENDED",
+  "recoKeep": "KEEP",
   "queueSmartShuffleTag": "SMART SHUFFLE",
   "shuffleHoldHint": "Hold the shuffle button to set it up",
   "a11yShuffleSmart": "Shuffle with recommendations",

@@ -809,6 +809,7 @@
   "shuffleRecoNormal": "普通",
   "shuffleRecoMany": "多め",
   "recommendedTag": "おすすめ",
+  "recoKeep": "保存",
   "queueSmartShuffleTag": "スマートシャッフル",
   "shuffleHoldHint": "シャッフルボタン長押しで設定",
   "a11yShuffleSmart": "おすすめ入りシャッフル",
