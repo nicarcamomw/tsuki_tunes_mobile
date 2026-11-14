@@ -137,7 +137,11 @@ void main() {
     expect(lyricsBright(AppColors.accent), const Color(0xFFFF4D4D));
     expect(lyricsText(AppColors.accent), AppColors.accentText);
     const purple = Color(0xFF8B44C9);
-    expect(lyricsText(purple), purple);
+    // This purple is too dark to read as text: it's lifted to AA, same hue.
+    expect(contrastRatio(purple, AppColors.bgDeep), lessThan(4.5));
+    expect(lyricsText(purple), readableTint(purple));
+    expect(contrastRatio(lyricsText(purple), AppColors.bgDeep), greaterThanOrEqualTo(4.5));
+    expect(HSLColor.fromColor(lyricsText(purple)).hue, closeTo(HSLColor.fromColor(purple).hue, 2));
     final bright = lyricsBright(purple);
     expect(HSLColor.fromColor(bright).hue, closeTo(HSLColor.fromColor(purple).hue, 2));
     expect(bright.computeLuminance(), greaterThan(purple.computeLuminance()), reason: 'a touch lighter, to read');

@@ -254,8 +254,10 @@ class _LyricLine extends StatelessWidget {
     final bright = lyricsBright(tint);
     final color = switch (state) {
       _LineState.current => bright,
-      _LineState.sung => tint.withValues(alpha: 0.55),
-      _LineState.upcoming => tint.withValues(alpha: 0.32),
+      // A dark cover colour is lifted first, so a dim line is no dimmer
+      // than the base red's.
+      _LineState.sung => (tint == AppColors.accent ? tint : readableTint(tint)).withValues(alpha: 0.55),
+      _LineState.upcoming => (tint == AppColors.accent ? tint : readableTint(tint)).withValues(alpha: 0.32),
       _LineState.plain => bright.withValues(alpha: 0.9),
     };
     final style = base.copyWith(
@@ -340,7 +342,7 @@ class _FollowPill extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sync, size: 13, color: tint),
+            Icon(Icons.sync, size: 13, color: tint == AppColors.accent ? tint : readableTint(tint)),
             const SizedBox(width: 6),
             Text(
               locale.strings.lyricsFollowing,
@@ -736,7 +738,7 @@ class CurrentLyricLine extends ConsumerWidget {
 /// The lyrics' brightest colour for [tint]: the base red keeps its neon
 /// red; a song's or the palette's colour, a touch lighter so it reads.
 Color lyricsBright(Color tint) =>
-    tint == AppColors.accent ? const Color(0xFFFF4D4D) : Color.lerp(tint, Colors.white, 0.2)!;
+    tint == AppColors.accent ? const Color(0xFFFF4D4D) : Color.lerp(readableTint(tint), Colors.white, 0.2)!;
 
 /// Small text in [tint]: the base red reads at AA as its text version.
-Color lyricsText(Color tint) => tint == AppColors.accent ? AppColors.accentText : tint;
+Color lyricsText(Color tint) => readableTint(tint);

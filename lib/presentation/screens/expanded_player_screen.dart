@@ -427,7 +427,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
                         fontWeight: FontWeight.w700,
-                        color: PlayerTint.of(context),
+                        color: PlayerTint.textOf(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
