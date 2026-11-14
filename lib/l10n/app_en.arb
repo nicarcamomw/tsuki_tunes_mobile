@@ -450,6 +450,7 @@
   "a11yMusicNote": "Music note",
   "playlistsTab": "Playlists",
   "albumsTab": "Albums",
+  "libraryNoArtistsSubtitle": "Tap FOLLOW on an artist's page and they'll show up here.",
   "createPlaylist": "CREATE PLAYLIST",
   "newPlaylist": "New Playlist",
   "playlistName": "Playlist name",

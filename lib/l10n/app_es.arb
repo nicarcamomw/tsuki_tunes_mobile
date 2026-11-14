@@ -667,6 +667,7 @@
   "a11yMusicNote": "Nota musical",
   "playlistsTab": "Playlists",
   "albumsTab": "Álbumes",
+  "libraryNoArtistsSubtitle": "Toca SEGUIR en el perfil de un artista y aparecerá aquí.",
   "createPlaylist": "CREAR PLAYLIST",
   "newPlaylist": "Nueva Playlist",
   "playlistName": "Nombre de la playlist",

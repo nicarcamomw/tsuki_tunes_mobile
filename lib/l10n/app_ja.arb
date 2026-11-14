@@ -450,6 +450,7 @@
   "a11yMusicNote": "音符",
   "playlistsTab": "プレイリスト",
   "albumsTab": "アルバム",
+  "libraryNoArtistsSubtitle": "アーティストのページで「フォロー」をタップすると、ここに表示されます。",
   "createPlaylist": "プレイリスト作成",
   "newPlaylist": "新規プレイリスト",
   "playlistName": "プレイリスト名",

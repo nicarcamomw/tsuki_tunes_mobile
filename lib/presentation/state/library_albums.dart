@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart' show mergeSort;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/listened_track.dart';
@@ -112,6 +113,80 @@ class LibraryAlbumList {
     return true;
   }
 }
+
+/// What plays when a song is picked in the library's album list: its whole
+/// album in the album's order (so "previous" goes back through it), from
+/// that song; then the albums after it in the list, so the music goes on.
+/// [ordered] puts an album's songs in order. Stops adding albums once
+/// [ahead] songs follow the picked one.
+({List<ListenedTrackData> queue, int start}) libraryAlbumQueue(
+  List<LibraryAlbumGroup> albums,
+  int albumIndex,
+  String trackId, {
+  required List<ListenedTrackData> Function(LibraryAlbumGroup album) ordered,
+  int ahead = 200,
+}) {
+  final first = ordered(albums[albumIndex]);
+  final start = first.indexWhere((t) => t.trackId == trackId).clamp(0, first.length - 1);
+  final queue = [...first];
+  for (var i = albumIndex + 1; i < albums.length && queue.length - start - 1 < ahead; i++) {
+    queue.addAll(ordered(albums[i]));
+  }
+  return (queue: queue, start: start);
+}
+
+/// The library as one list of songs, filtered and ordered like the album
+/// list (and, like it, only redone when the songs, filter or order change).
+class LibrarySongList {
+  List<ListenedTrackData>? _source;
+  String? _filter;
+  String? _sortBy;
+  List<ListenedTrackData> _view = const [];
+
+  /// The songs matching [filter] (title, artist or album), ordered by
+  /// [sortBy]: 'recent' (latest marked first), 'alpha' (title) or 'artist'
+  /// (then album, then the order they were marked, oldest first).
+  List<ListenedTrackData> view(
+    List<ListenedTrackData> source, {
+    required String filter,
+    required String sortBy,
+  }) {
+    final f = filter.toLowerCase();
+    if (identical(source, _source) && f == _filter && sortBy == _sortBy) return _view;
+    final songs = f.isEmpty
+        ? List<ListenedTrackData>.of(source)
+        : source
+            .where((t) =>
+                t.title.toLowerCase().contains(f) ||
+                t.artistName.toLowerCase().contains(f) ||
+                t.albumTitle.toLowerCase().contains(f))
+            .toList();
+    switch (sortBy) {
+      case 'alpha':
+        mergeSort(songs, compare: (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      case 'artist':
+        // Oldest marked first within an album, as the album list plays it.
+        final reversed = songs.reversed.toList();
+        mergeSort(reversed, compare: (a, b) {
+          final byArtist = a.artistName.toLowerCase().compareTo(b.artistName.toLowerCase());
+          return byArtist != 0 ? byArtist : a.albumTitle.toLowerCase().compareTo(b.albumTitle.toLowerCase());
+        });
+        songs
+          ..clear()
+          ..addAll(reversed);
+      case 'recent':
+      default:
+        break; // the library lists the latest marked first already
+    }
+    _source = source;
+    _filter = f;
+    _sortBy = sortBy;
+    return _view = List.unmodifiable(songs);
+  }
+}
+
+/// Kept for the app's life, so returning to the library reuses the list.
+final librarySongsProvider = Provider((ref) => LibrarySongList());
 
 /// Kept for the app's life, so returning to the library reuses the list.
 final libraryAlbumsProvider = Provider((ref) => LibraryAlbumList());

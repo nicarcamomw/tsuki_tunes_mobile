@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -12,13 +13,13 @@ import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
-import '../../domain/entities/artist.dart';
 import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../navigation/main_tab.dart';
 import '../navigation/routes.dart';
+import '../state/album_track_order.dart';
 import '../state/app_providers.dart';
 import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
@@ -45,9 +46,18 @@ class LibraryScreen extends ConsumerStatefulWidget {
 class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with TickerProviderStateMixin {
   final ScrollController scrollController = ScrollController();
+  final ScrollController _songsScroll = ScrollController();
   final TextEditingController _filterController = TextEditingController();
   late final TabController _tabController;
   String _sortBy = 'recent';
+
+  // The tabs, in order.
+  static const _albums = 0, _songs = 1, _artists = 2, _playlists = 3;
+  int _tab = _albums;
+
+  // The song list as players take it, made again when its view changes.
+  List<ListenedTrackData>? _songTracksOf;
+  List<Track> _songTracks = const [];
   int _visibleCount = 50;
   final Set<String> _expandedAlbums = {};
   bool _hasError = false;
@@ -55,9 +65,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this)
+      ..addListener(() {
+        if (_tabController.index != _tab) setState(() => _tab = _tabController.index);
+      });
     NavigationEvents.onLibraryScrollToTop = scrollToTop;
     scrollController.addListener(_onScroll);
+    // Reads the albums' saved song order now, so it's ready when one opens.
+    ref.read(albumTrackOrderProvider);
   }
 
   void _onScroll() {
@@ -76,18 +91,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
     _tabController.dispose();
     scrollController.dispose();
+    _songsScroll.dispose();
     _filterController.dispose();
     super.dispose();
   }
 
   /// Scroll to top suave para respuesta a Double-Tap o tap activo en Library
   void scrollToTop() {
-    if (scrollController.hasClients) {
-      scrollController.animateTo(
-        0,
-        duration: AppMotion.slow,
-        curve: Curves.easeOutCubic,
-      );
+    for (final c in [scrollController, _songsScroll]) {
+      if (c.hasClients) {
+        c.animateTo(0, duration: AppMotion.slow, curve: Curves.easeOutCubic);
+      }
     }
   }
 
@@ -220,19 +234,26 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 dividerHeight: 0,
                 tabs: [
                   Tab(text: strings.albumsTab),
+                  Tab(text: strings.tabTracks),
+                  Tab(text: strings.tabArtists),
                   Tab(text: strings.playlistsTab),
                 ],
               ),
             ),
+
+            // One filter for albums, songs and artists; order and play for
+            // albums and songs. Playlists have their own buttons.
+            if (_tab != _playlists && (totalTracks > 0 || _tab == _artists))
+              _buildControls(locale, strings, albumGroups, listenedTracks),
 
             // Tab Content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Albums tab
-                  _buildAlbumsTab(context, locale, strings, listenedTracks, albumGroups, visible, totalTracks),
-                  // Playlists tab
+                  _buildAlbumsTab(context, locale, strings, albumGroups, visible, totalTracks),
+                  _buildSongsTab(context, locale, strings, listenedTracks),
+                  _buildArtistsTab(context, locale, strings),
                   _buildPlaylistsTab(context, locale, strings),
                 ],
               ),
@@ -245,91 +266,69 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
-  Widget _buildAlbumsTab(
-    BuildContext context,
+  /// The filter, then (albums and songs) the order and play buttons.
+  Widget _buildControls(
     LocaleProvider locale,
     AppStrings strings,
-    List<ListenedTrackData> listenedTracks,
     List<LibraryAlbumGroup> albumGroups,
-    List<LibraryAlbumGroup> visible,
-    int totalTracks,
+    List<ListenedTrackData> listenedTracks,
   ) {
-    final filterText = _filterController.text.toLowerCase();
-    final allFollowed = ref.read(libraryProvider).followedArtists;
-    final followedArtists = filterText.isEmpty
-        ? allFollowed
-        : allFollowed
-            .where((a) => a.name.toLowerCase().contains(filterText))
-            .toList();
-    final showFollowed = followedArtists.isNotEmpty;
-
-    return Column(
-      children: [
-        // Filter + Sort
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
-          child: Column(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.bgMid,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: TextField(
-                  controller: _filterController,
-                  style: locale.getTextStyle(
-                      color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
-                  decoration: InputDecoration(
-                    hintText: strings.filterHint,
-                    hintStyle: locale.getTextStyle(
-                        color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
-                    prefixIcon: Icon(Icons.filter_list,
-                        color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
-                    suffixIcon: _filterController.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.clear,
-                                color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
-                            tooltip: strings.a11yClearFilter,
-                            onPressed: () { Haptics.selection();
-                              setState(() => _filterController.clear());
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
+    final withSongs = _tab == _albums || _tab == _songs;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 4),
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.bgMid,
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: TextField(
+              controller: _filterController,
+              style: locale.getTextStyle(color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
+              decoration: InputDecoration(
+                hintText: strings.filterHint,
+                hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
+                prefixIcon: Icon(Icons.filter_list,
+                    color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
+                suffixIcon: _filterController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear,
+                            color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
+                        tooltip: strings.a11yClearFilter,
+                        onPressed: () {
+                          Haptics.selection();
+                          setState(() => _filterController.clear());
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildSortBtn('recent', strings.sortRecent, locale),
-                  const SizedBox(width: 8),
-                  _buildSortBtn('alpha', strings.sortAz, locale),
-                  const SizedBox(width: 8),
-                  _buildSortBtn('artist', strings.sortArtist, locale),
-                ],
-              ),
-            ],
+              onChanged: (_) => setState(() {}),
+            ),
           ),
-        ),
-
-        // Play controls
-        if (totalTracks > 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
-            child: Row(
+          if (withSongs) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _buildSortBtn('recent', strings.sortRecent, locale),
+                const SizedBox(width: 8),
+                _buildSortBtn('alpha', strings.sortAz, locale),
+                const SizedBox(width: 8),
+                _buildSortBtn('artist', strings.sortArtist, locale),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () { Haptics.tap();
-                      final allTracks = _buildAllTracks(listenedTracks);
-                      if (allTracks.isNotEmpty) {
-                        ref.read(playTracksProvider)(allTracks);
-                      }
+                    onPressed: () {
+                      Haptics.tap();
+                      final all = _playAllQueue(albumGroups, listenedTracks);
+                      if (all.isNotEmpty) ref.read(playTracksProvider)(all);
                     },
                     icon: Icon(Icons.play_arrow, color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
                     label: Text(
@@ -350,11 +349,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () { Haptics.tap();
-                      final allTracks = _buildAllTracks(listenedTracks);
-                      if (allTracks.isNotEmpty) {
-                        ref.read(playTracksProvider)(allTracks, shuffled: true);
-                      }
+                    onPressed: () {
+                      Haptics.tap();
+                      final all = _playAllQueue(albumGroups, listenedTracks);
+                      if (all.isNotEmpty) ref.read(playTracksProvider)(all, shuffled: true);
                     },
                     icon: Icon(Icons.shuffle, color: AppColors.textPrimary, size: 18, semanticLabel: strings.a11yShuffleAll),
                     label: Text(
@@ -375,8 +373,58 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 ),
               ],
             ),
-          ),
+          ],
+        ],
+      ),
+    );
+  }
 
+  /// "Play all" plays what the tab shows, in its order: each album in the
+  /// album's own order on the albums tab, the list as it is on the songs one.
+  List<Track> _playAllQueue(List<LibraryAlbumGroup> albumGroups, List<ListenedTrackData> listenedTracks) {
+    if (_tab == _songs) return _songTracksFor(listenedTracks);
+    final order = ref.read(albumTrackOrderProvider);
+    return [
+      for (final g in albumGroups)
+        for (final t in order.sort(g.albumId, g.tracks)) t.toTrack(),
+    ];
+  }
+
+  /// A song picked in an album: its album in order from it, then the next
+  /// albums of the list. The album's order is usually known by then (it's
+  /// asked for when the album opens); if not, it's waited for a moment.
+  Future<void> _playFromAlbum(List<LibraryAlbumGroup> albums, int index, String trackId) async {
+    final order = ref.read(albumTrackOrderProvider);
+    final group = albums[index];
+    if (group.albumId.isNotEmpty && order.orderOf(group.albumId) == null) {
+      await order.ensure(group.albumId).timeout(const Duration(milliseconds: 1500), onTimeout: () => null);
+      if (!mounted) return;
+    }
+    final (:queue, :start) = libraryAlbumQueue(albums, index, trackId,
+        ordered: (g) => order.sort(g.albumId, g.tracks));
+    final tracks = [for (final t in queue) t.toTrack()];
+    await ref.read(playTrackProvider)(tracks[start], queue: tracks);
+  }
+
+  /// Opening an album asks for its order, and the next few albums' too, so
+  /// a song played from it continues into them in order.
+  void _learnOrderFrom(List<LibraryAlbumGroup> albums, int index) {
+    final order = ref.read(albumTrackOrderProvider);
+    for (var i = index; i < min(index + 4, albums.length); i++) {
+      unawaited(order.ensure(albums[i].albumId));
+    }
+  }
+
+  Widget _buildAlbumsTab(
+    BuildContext context,
+    LocaleProvider locale,
+    AppStrings strings,
+    List<LibraryAlbumGroup> albumGroups,
+    List<LibraryAlbumGroup> visible,
+    int totalTracks,
+  ) {
+    return Column(
+      children: [
         // Content
         Expanded(
           child: RefreshIndicator(
@@ -390,8 +438,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      if (showFollowed)
-                        _buildFollowedArtistsSection(followedArtists, locale),
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: _hasError
@@ -409,21 +455,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       ),
                     ],
                   )
-                : ListView.builder(
+                : albumGroups.isEmpty
+                    ? _noResults(locale, strings)
+                    : ListView.builder(
                     controller: scrollController,
                     padding: const EdgeInsets.only(bottom: 120),
-                    itemCount: (showFollowed ? 1 : 0) +
-                        (visible.length < albumGroups.length
-                            ? visible.length + 1
-                            : visible.length),
+                    itemCount: visible.length < albumGroups.length
+                        ? visible.length + 1
+                        : visible.length,
                     itemBuilder: (context, index) {
-                      if (showFollowed) {
-                        if (index == 0) {
-                          return _buildFollowedArtistsSection(
-                              followedArtists, locale);
-                        }
-                        index--;
-                      }
                       if (index == visible.length) {
                         return const SkeletonTrackList(count: 2, padding: EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8));
                       }
@@ -438,15 +478,120 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               _expandedAlbums.remove(key);
                             } else {
                               _expandedAlbums.add(key);
+                              _learnOrderFrom(albumGroups, index);
                             }
                           });
                         },
+                        onPlay: (trackId) => unawaited(_playFromAlbum(albumGroups, index, trackId)),
                       );
                     },
                   ),
           ),
         ),
       ],
+    );
+  }
+
+  /// Nothing matches the filter.
+  Widget _noResults(LocaleProvider locale, AppStrings strings) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 48, AppSpacing.page, 120),
+        children: [
+          Text(
+            strings.noResults,
+            textAlign: TextAlign.center,
+            style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, color: AppColors.textSecondary),
+          ),
+        ],
+      );
+
+  List<Track> _songTracksFor(List<ListenedTrackData> listenedTracks) {
+    final songs = ref.read(librarySongsProvider).view(listenedTracks, filter: _filterController.text, sortBy: _sortBy);
+    if (!identical(songs, _songTracksOf)) {
+      _songTracksOf = songs;
+      _songTracks = List.unmodifiable([for (final t in songs) t.toTrack()]);
+    }
+    return _songTracks;
+  }
+
+  /// Every song, one under the other. A song plays with the ones under it
+  /// after it, in the list's order.
+  Widget _buildSongsTab(
+    BuildContext context,
+    LocaleProvider locale,
+    AppStrings strings,
+    List<ListenedTrackData> listenedTracks,
+  ) {
+    if (listenedTracks.isEmpty) {
+      return EmptyState(
+        image: 'assets/images/oni.png',
+        artLabel: strings.a11yEmptyLibrary,
+        lore: strings.emptyLoreOni,
+        title: strings.emptyLibraryTitle,
+        message: strings.emptyLibrarySubtitle,
+        actionLabel: strings.homeEmptyAction,
+        actionSemanticLabel: strings.a11yGoToSearch,
+        onAction: () => NavigationEvents.switchTab?.call(MainTab.search),
+      );
+    }
+    final tracks = _songTracksFor(listenedTracks);
+    return RefreshIndicator(
+      color: AppColors.accent,
+      backgroundColor: AppColors.bgCard,
+      onRefresh: () {
+        Haptics.threshold();
+        return _refreshData();
+      },
+      child: tracks.isEmpty
+          ? _noResults(locale, strings)
+          : ListView.builder(
+              controller: _songsScroll,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 4, bottom: 120),
+              itemCount: tracks.length,
+              itemBuilder: (context, i) => TrackTile(
+                key: ValueKey('library_song_${tracks[i].id}'),
+                track: tracks[i],
+                queue: tracks.sublist(i, min(i + 201, tracks.length)),
+              ),
+            ),
+    );
+  }
+
+  /// The followed artists, in a grid.
+  Widget _buildArtistsTab(BuildContext context, LocaleProvider locale, AppStrings strings) {
+    final filterText = _filterController.text.toLowerCase();
+    final all = ref.read(libraryProvider).followedArtists;
+    final artists = filterText.isEmpty
+        ? all
+        : all.where((a) => a.name.toLowerCase().contains(filterText)).toList();
+    if (all.isEmpty) {
+      return EmptyState(
+        image: 'assets/images/tengu.png',
+        artLabel: strings.a11yFollowArtist,
+        title: strings.radarEmptyNoArtistsTitle,
+        message: strings.libraryNoArtistsSubtitle,
+        actionLabel: strings.homeEmptyAction,
+        actionSemanticLabel: strings.a11yGoToSearch,
+        onAction: () => NavigationEvents.switchTab?.call(MainTab.search),
+      );
+    }
+    if (artists.isEmpty) return _noResults(locale, strings);
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 120),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 120,
+        mainAxisExtent: 140,
+        crossAxisSpacing: 4,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: artists.length,
+      itemBuilder: (context, i) => FittedBox(
+        // Shrinks rather than overflow with large text.
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topCenter,
+        child: ArtistCard(key: ValueKey(artists[i].id), artist: artists[i], size: 84),
+      ),
     );
   }
 
@@ -650,76 +795,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
   }
 
-  List<Track> _buildAllTracks(List<ListenedTrackData> listened) {
-    return listened
-        .map((td) => Track(
-              id: td.trackId,
-              title: td.title,
-              artistId: '',
-              artistName: td.artistName,
-              albumId: td.albumId,
-              albumTitle: td.albumTitle,
-              coverUrl: td.coverUrl,
-              previewUrl: td.previewUrl,
-              durationSeconds: td.duration,
-            ))
-        .toList();
-  }
-
-  Widget _buildFollowedArtistsSection(
-      List<Artist> artists, LocaleProvider locale) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
-            child: Row(
-              children: [
-                Icon(Icons.person_add_alt_1_rounded,
-                    size: 16, color: AppColors.textSecondary, semanticLabel: locale.strings.a11yFollowArtist),
-                const SizedBox(width: 8),
-                Text(
-                  locale.strings.followedArtistsTitle,
-                  style: locale.getTextStyle(
-                    fontSize: AppFontSize.bodyLg,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textBright,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${artists.length}',
-                  style: locale.getTextStyle(
-                    fontSize: AppFontSize.body,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 130,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
-              itemCount: artists.length,
-              itemBuilder: (context, index) => ArtistCard(
-                key: ValueKey(artists[index].id),
-                artist: artists[index],
-                size: 84,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
     return Expanded(
       child: AppChip(
@@ -737,10 +812,14 @@ class _AlbumGroupTile extends ConsumerStatefulWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
 
+  /// Plays a song of the album (with the album, and the next ones, after it).
+  final void Function(String trackId) onPlay;
+
   const _AlbumGroupTile({
     required this.group,
     required this.isExpanded,
     required this.onToggle,
+    required this.onPlay,
   });
 
   @override
@@ -763,6 +842,12 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     }));
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
+    // The album's songs in its own order once known (asked for on opening).
+    final order = isExpanded
+        ? ref.watch(albumTrackOrderProvider.select((o) => o.orderOf(group.albumId)))
+        : null;
+    final songs = isExpanded ? sortByAlbum(group.tracks, order) : const <ListenedTrackData>[];
+    final numbers = order == null ? null : {for (var i = 0; i < order.length; i++) order[i]: i + 1};
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -822,27 +907,24 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                group.artistName,
-                                style: locale.getTextStyle(
-                                  fontSize: AppFontSize.body,
-                                  color: AppColors.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              ' · ${strings.trackCountLabel(group.tracks.length)}',
+                        // One line that ends in "…" on a narrow phone.
+                        Text.rich(
+                          TextSpan(children: [
+                            TextSpan(text: group.artistName),
+                            TextSpan(
+                              text: ' · ${strings.trackCountLabel(group.tracks.length)}',
                               style: locale.getTextStyle(
                                 fontSize: AppFontSize.micro,
                                 color: AppColors.textMuted,
                               ),
                             ),
-                          ],
+                          ]),
+                          style: locale.getTextStyle(
+                            fontSize: AppFontSize.body,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -894,43 +976,18 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.5),
                       ),
-                      ...group.tracks.map((trackData) {
+                      ...songs.map((trackData) {
               final isCurrentTrack = currentTrackId == trackData.trackId;
+              final number = numbers?[trackData.trackId];
               return InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.chip),
-                onTap: () { Haptics.tap();
-                  final queue = group.tracks
-                      .map((td) => Track(
-                            id: td.trackId,
-                            title: td.title,
-                            artistId: '',
-                            artistName: td.artistName,
-                            albumId: td.albumId,
-                            albumTitle: td.albumTitle,
-                            coverUrl: td.coverUrl,
-                            previewUrl: td.previewUrl,
-                            durationSeconds: td.duration,
-                          ))
-                      .toList();
-                  final track = queue.firstWhere(
-                      (t) => t.id == trackData.trackId,
-                      orElse: () => queue.first);
-                  ref.read(playTrackProvider)(track, queue: queue);
+                onTap: () {
+                  Haptics.tap();
+                  widget.onPlay(trackData.trackId);
                 },
                 onLongPress: () {
                   Haptics.longPress();
-                  final track = Track(
-                    id: trackData.trackId,
-                    title: trackData.title,
-                    artistId: '',
-                    artistName: trackData.artistName,
-                    albumId: trackData.albumId,
-                    albumTitle: trackData.albumTitle,
-                    coverUrl: trackData.coverUrl,
-                    previewUrl: trackData.previewUrl,
-                    durationSeconds: trackData.duration,
-                  );
-                  showTrackActions(context, track);
+                  showTrackActions(context, trackData.toTrack());
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -938,6 +995,18 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   color: isCurrentTrack ? AppColors.accentDim : null,
                   child: Row(
                     children: [
+                      // Its number on the album, once the album's order is known.
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          number?.toString() ?? '',
+                          style: locale.getTextStyle(
+                            fontSize: AppFontSize.caption,
+                            fontWeight: FontWeight.w600,
+                            color: isCurrentTrack ? AppColors.accentText : AppColors.textMuted,
+                          ),
+                        ),
+                      ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
