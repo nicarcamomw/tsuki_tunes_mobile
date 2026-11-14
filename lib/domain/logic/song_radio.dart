@@ -105,6 +105,13 @@ class SongRadio {
   final Map<String, int> _skips = {};
   final Set<String> _banned = {};
   final Set<String> _bannedNames = {};
+  // Artists banned only for being skipped (artist key -> name), not with
+  // "less like this": forgiven when the radio would otherwise run dry.
+  final Map<String, String> _skipBanned = {};
+
+  /// Whether skip bans are lifted when the radio runs dry (see [nextBatch]).
+  /// Off for smart shuffle's recommendations, which never leave silence.
+  bool forgivesSkips = true;
   final List<Track> _liked = [];
   final Map<String, int> _seedUses = {};
   final List<String> _recentArtists = [];
@@ -156,6 +163,7 @@ class SongRadio {
       'skips': _skips,
       'banned': _banned.toList(),
       'bannedNames': _bannedNames.toList(),
+      'skipBanned': _skipBanned,
       'liked': [for (final t in _liked) t.toJson()],
       'seedUses': _seedUses,
       'recent': _recentArtists,
@@ -229,6 +237,11 @@ class SongRadio {
       radio._seedUses.addAll(_intMap(json['seedUses']));
       radio._banned.addAll(_strings(json['banned']));
       radio._bannedNames.addAll(_strings(json['bannedNames']));
+      if (json['skipBanned'] case final Map m) {
+        for (final MapEntry(:key, :value) in m.entries) {
+          radio._skipBanned[key.toString()] = value.toString();
+        }
+      }
       radio._recentArtists.addAll(_strings(json['recent']));
       radio._heardArtists.addAll(_strings(json['heard']));
       radio._usedIds.addAll(_strings(json['usedIds']));
@@ -273,7 +286,10 @@ class SongRadio {
       _affinity[a] = (_affinity[a] ?? 0) - 1;
       final skips = (_skips[a] ?? 0) + 1;
       _skips[a] = skips;
-      if (skips >= 2 && a != _seedArtistKey) _ban(t);
+      if (skips >= 2 && a != _seedArtistKey && !_banned.contains(a)) {
+        _ban(t);
+        _skipBanned[a] = norm(primaryArtist(t));
+      }
     } else if (fraction >= 0.7) {
       _affinity[a] = (_affinity[a] ?? 0) + 1;
       _skips[a] = 0;
@@ -295,7 +311,10 @@ class SongRadio {
     _buffer.clear();
   }
 
-  void lessLikeThis(Track t) => _ban(t);
+  void lessLikeThis(Track t) {
+    _ban(t);
+    _skipBanned.remove(artistKeyOf(t));
+  }
 
   /// Adds [tracks] to the songs refills grow from, without forcing the next
   /// one or dropping what's lined up (unlike [moreLikeThis]): a list's
@@ -330,7 +349,26 @@ class SongRadio {
       await _refill();
       if (_buffer.length == before && ++dry >= 2) break;
     }
-    return _take(count);
+    final out = _take(count);
+    // Down to a song or two: the radio is running dry.
+    if (out.length >= min(count, 3) || !_forgiveSkips()) return out;
+    // Skipping fast through a radio bans artist after artist until nothing
+    // is left: rather than going quiet (or round in circles), the radio
+    // gives the skipped artists another chance.
+    await _refill();
+    return [...out, ..._take(count - out.length)];
+  }
+
+  /// Lifts the bans that came only from skips. False when there were none.
+  bool _forgiveSkips() {
+    if (!forgivesSkips || _skipBanned.isEmpty) return false;
+    for (final MapEntry(:key, :value) in _skipBanned.entries) {
+      _banned.remove(key);
+      _bannedNames.remove(value);
+      _skips.remove(key);
+    }
+    _skipBanned.clear();
+    return true;
   }
 
   Future<void> _refill() =>

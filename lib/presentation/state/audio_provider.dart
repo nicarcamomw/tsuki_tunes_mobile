@@ -1263,8 +1263,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     }
   }
 
-  Future<void> next() =>
-      _applyStep(_q.next(online: _online, canPlay: _canPlayOffline));
+  Future<void> next() async {
+    // A radio never starts over: at the end of what it has lined up it
+    // brings more first, and with nothing more yet stays on this song.
+    // Pressed before a slow top-up landed, "next" wrapped to the radio's
+    // first song, and it looped its first ten again and again.
+    if (_radioCtrl.isActive && _q.repeatMode != PlaybackRepeatMode.all && _q.shouldStopAtEnd()) {
+      final added = await _radioCtrl.topUp(force: true);
+      if (!added || _q.shouldStopAtEnd()) return;
+    }
+    await _applyStep(_q.next(online: _online, canPlay: _canPlayOffline));
+  }
   Future<void> previous() => _applyStep(_q.previous(
         position: _position,
         online: _online,
@@ -1565,7 +1574,10 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
         final seeds = listSeeds(own);
         radio = _recoRadio = AudioRadioController.radioFactory(seeds.isEmpty ? seed : seeds.first, RadioMode.balanced)
           ..markQueued(_q.tracks)
-          ..addSeeds(seeds.skip(1));
+          ..addSeeds(seeds.skip(1))
+          // The list's own songs play on without it: an artist skipped
+          // twice stays out of the recommendations.
+          ..forgivesSkips = false;
       }
       if (_recoSteeredBy != seed.id) {
         _recoSteeredBy = seed.id;
