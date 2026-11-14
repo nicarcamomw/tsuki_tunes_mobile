@@ -13,6 +13,7 @@ import '../../core/theme/design_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/image_cache_size.dart';
 import '../../domain/entities/album.dart';
+import '../../domain/entities/artist.dart';
 import '../../domain/entities/listened_track.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/entities/track.dart';
@@ -24,7 +25,6 @@ import '../state/app_providers.dart';
 import '../state/library_albums.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
-import '../widgets/app_chip.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
 import '../widgets/empty_state.dart';
@@ -129,7 +129,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     // order change (LibraryAlbumList); loading the next page reuses it.
     final albumList = ref.read(libraryAlbumsProvider);
     final totalTracks = listenedTracks.length;
-    final totalAlbums = albumList.groups(listenedTracks).length;
     final albumGroups = albumList.view(
       listenedTracks,
       filter: _filterController.text,
@@ -196,15 +195,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       letterSpacing: 1.2,
                     ),
                   )),
-                  const SizedBox(height: 4),
-                  Text(
-                    strings.libraryStats(totalTracks, totalAlbums),
-                    style: locale.getTextStyle(
-                      fontSize: AppFontSize.body,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -266,7 +256,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
-  /// The filter, then (albums and songs) the order and play buttons.
+  /// The filter with the order beside it, then a line saying how much the
+  /// tab holds, with shuffle and play at its end (albums and songs).
   Widget _buildControls(
     LocaleProvider locale,
     AppStrings strings,
@@ -274,109 +265,196 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     List<ListenedTrackData> listenedTracks,
   ) {
     final withSongs = _tab == _albums || _tab == _songs;
+    final String summary;
+    if (_tab == _albums) {
+      final songs = albumGroups.fold<int>(0, (n, g) => n + g.tracks.length);
+      summary = '${strings.albumCountLabel(albumGroups.length)} · ${strings.trackCountLabel(songs)}';
+    } else if (_tab == _songs) {
+      summary = strings.trackCountLabel(_songTracksFor(listenedTracks).length);
+    } else {
+      summary = strings.libraryArtistCount(_filteredArtists().length);
+    }
+
+    void play({required bool shuffled}) {
+      Haptics.tap();
+      final all = _playAllQueue(albumGroups, listenedTracks);
+      if (all.isNotEmpty) ref.read(playTracksProvider)(all, shuffled: shuffled);
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 2),
       child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.bgMid,
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: TextField(
-              controller: _filterController,
-              style: locale.getTextStyle(color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
-              decoration: InputDecoration(
-                hintText: strings.filterHint,
-                hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
-                prefixIcon: Icon(Icons.filter_list,
-                    color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
-                suffixIcon: _filterController.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear,
-                            color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
-                        tooltip: strings.a11yClearFilter,
-                        onPressed: () {
-                          Haptics.selection();
-                          setState(() => _filterController.clear());
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.bgMid,
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: TextField(
+                    controller: _filterController,
+                    style: locale.getTextStyle(color: AppColors.textBright, fontSize: AppFontSize.bodyLg),
+                    textAlignVertical: TextAlignVertical.center,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: strings.libraryFilterHint,
+                      hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: AppFontSize.bodyLg),
+                      prefixIcon: Icon(Icons.search_rounded,
+                          color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
+                      suffixIcon: _filterController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear,
+                                  color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
+                              tooltip: strings.a11yClearFilter,
+                              onPressed: () {
+                                Haptics.selection();
+                                setState(() => _filterController.clear());
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
               ),
-              onChanged: (_) => setState(() {}),
+              if (withSongs) ...[
+                const SizedBox(width: 8),
+                _buildSortMenu(locale, strings),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 48,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: locale.getTextStyle(
+                      fontSize: AppFontSize.body,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (withSongs) ...[
+                  IconButton(
+                    tooltip: strings.a11yShuffleAll,
+                    onPressed: () => play(shuffled: true),
+                    icon: Icon(Icons.shuffle_rounded,
+                        color: AppColors.textPrimary, size: 22, semanticLabel: strings.a11yShuffleAll),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: strings.a11yPlayAll,
+                    child: Semantics(
+                      button: true,
+                      label: strings.a11yPlayAll,
+                      child: Material(
+                        color: AppColors.accentFill,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => play(shuffled: false),
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(Icons.play_arrow_rounded, color: AppColors.textBright, size: 28),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (withSongs) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildSortBtn('recent', strings.sortRecent, locale),
-                const SizedBox(width: 8),
-                _buildSortBtn('alpha', strings.sortAz, locale),
-                const SizedBox(width: 8),
-                _buildSortBtn('artist', strings.sortArtist, locale),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Haptics.tap();
-                      final all = _playAllQueue(albumGroups, listenedTracks);
-                      if (all.isNotEmpty) ref.read(playTracksProvider)(all);
-                    },
-                    icon: Icon(Icons.play_arrow, color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
-                    label: Text(
-                      strings.playAll,
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.accent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Haptics.tap();
-                      final all = _playAllQueue(albumGroups, listenedTracks);
-                      if (all.isNotEmpty) ref.read(playTracksProvider)(all, shuffled: true);
-                    },
-                    icon: Icon(Icons.shuffle, color: AppColors.textPrimary, size: 18, semanticLabel: strings.a11yShuffleAll),
-                    label: Text(
-                      strings.shuffle,
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.micro,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    // D-12: the second action is neutral; red is for "play all".
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.borderGlow),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
+  }
+
+  /// The order, as one button beside the filter: a menu with the three
+  /// orders, the chosen one ticked.
+  Widget _buildSortMenu(LocaleProvider locale, AppStrings strings) {
+    final options = {
+      'recent': strings.sortRecent,
+      'alpha': strings.sortAz,
+      'artist': strings.sortArtist,
+    };
+    return PopupMenuButton<String>(
+      tooltip: '${strings.librarySort}: ${options[_sortBy]}',
+      initialValue: _sortBy,
+      color: AppColors.bgCard,
+      position: PopupMenuPosition.under,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+      onSelected: (value) {
+        Haptics.selection();
+        setState(() => _sortBy = value);
+      },
+      itemBuilder: (_) => [
+        for (final MapEntry(key: value, value: label) in options.entries)
+          PopupMenuItem(
+            value: value,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: value == _sortBy
+                      ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 18)
+                      : null,
+                ),
+                Text(label,
+                    style: locale.getTextStyle(
+                      fontSize: AppFontSize.bodyLg,
+                      fontWeight: value == _sortBy ? FontWeight.w700 : FontWeight.w500,
+                      color: value == _sortBy ? AppColors.textBright : AppColors.textPrimary,
+                    )),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.bgMid,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.swap_vert_rounded, color: AppColors.textSecondary, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              options[_sortBy]!,
+              style: locale.getTextStyle(
+                fontSize: AppFontSize.body,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The followed artists the filter lets through.
+  List<Artist> _filteredArtists() {
+    final filterText = _filterController.text.toLowerCase();
+    final all = ref.read(libraryProvider).followedArtists;
+    return filterText.isEmpty ? all : all.where((a) => a.name.toLowerCase().contains(filterText)).toList();
   }
 
   /// "Play all" plays what the tab shows, in its order: each album in the
@@ -560,11 +638,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   /// The followed artists, in a grid.
   Widget _buildArtistsTab(BuildContext context, LocaleProvider locale, AppStrings strings) {
-    final filterText = _filterController.text.toLowerCase();
     final all = ref.read(libraryProvider).followedArtists;
-    final artists = filterText.isEmpty
-        ? all
-        : all.where((a) => a.name.toLowerCase().contains(filterText)).toList();
+    final artists = _filteredArtists();
     if (all.isEmpty) {
       return EmptyState(
         image: 'assets/images/tengu.png',
@@ -604,9 +679,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final shared = ref.watch(sharedPlaylistsProvider);
     final hasShared = shared.mine.isNotEmpty || shared.invitations.isNotEmpty;
 
+    // With nothing yet, the empty page's own button is enough, unless a
+    // shared one can be made too.
+    final showButtons = playlists.isNotEmpty || hasShared || shared.available;
     return Column(
       children: [
         // Create playlist buttons: mine, and one with my Bonds.
+        if (showButtons)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 8),
           child: Row(
@@ -794,17 +873,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       }
     }
   }
-
-  Widget _buildSortBtn(String value, String label, LocaleProvider locale) {
-    return Expanded(
-      child: AppChip(
-        label: label,
-        selected: _sortBy == value,
-        expand: true,
-        onTap: () => setState(() => _sortBy = value),
-      ),
-    );
-  }
 }
 
 class _AlbumGroupTile extends ConsumerStatefulWidget {
@@ -850,7 +918,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
     final numbers = order == null ? null : {for (var i = 0; i < order.length; i++) order[i]: i + 1};
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -873,11 +941,11 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   ExcludeSemantics(child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.chip),
                     child: SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: 52,
+                      height: 52,
                       child: group.coverUrl.isNotEmpty
                           ? CachedNetworkImage(
-                            memCacheWidth: imageCacheSize(context, (44).toDouble()),
+                            memCacheWidth: imageCacheSize(context, 52),
                               imageUrl: group.coverUrl,
                               fit: BoxFit.cover,
                               placeholder: (_, __) =>
@@ -930,28 +998,6 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                     ),
                   ),
 
-                  // View album link
-                  if (group.albumId.isNotEmpty)
-                    TextButton(
-                      onPressed: () { Haptics.tap();
-                        final album = _buildAlbumFromGroup(group);
-                        AlbumRoute(id: album.id, $extra: album).push(context);
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        // 48 dp to touch, whatever the text's size.
-                        minimumSize: const Size(48, 48),
-                      ),
-                      child: Text(
-                        strings.viewAlbum,
-                        style: locale.getTextStyle(
-                          fontSize: AppFontSize.micro,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-
                   ExcludeSemantics(
                     child: Icon(
                       isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -990,8 +1036,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                   showTrackActions(context, trackData.toTrack());
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.only(left: 16, right: 4),
                   color: isCurrentTrack ? AppColors.accentDim : null,
                   child: Row(
                     children: [
@@ -1023,15 +1068,17 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              trackData.artistName,
-                              style: locale.getTextStyle(
-                                fontSize: AppFontSize.caption,
-                                color: AppColors.textSecondary,
+                            // Only when it isn't the album's artist (a guest).
+                            if (trackData.artistName != group.artistName)
+                              Text(
+                                trackData.artistName,
+                                style: locale.getTextStyle(
+                                  fontSize: AppFontSize.caption,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
                           ],
                         ),
                       ),
@@ -1049,7 +1096,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                         tooltip: strings.a11yRemoveFromPlaylist,
                         icon: Icon(Icons.remove_circle_outline,
-                            color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
+                            color: AppColors.textMuted, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
                         onPressed: () { Haptics.selection(); unawaited(unmarkWithUndo(context, ref, [trackData.trackId])); },
                       ),
                     ],
@@ -1057,6 +1104,39 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                 ),
               );
             }),
+                      // The whole album, with the songs not in the library.
+                      if (group.albumId.isNotEmpty)
+                        InkWell(
+                          onTap: () {
+                            Haptics.tap();
+                            final album = _buildAlbumFromGroup(group);
+                            AlbumRoute(id: album.id, $extra: album).push(context);
+                          },
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.album_outlined, color: AppColors.textSecondary, size: 18),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    strings.viewAlbum,
+                                    style: locale.getTextStyle(
+                                      fontSize: AppFontSize.body,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   )
                 : const SizedBox.shrink(),
@@ -1089,7 +1169,7 @@ class _PlaylistListTile extends ConsumerWidget {
     final strings = locale.strings;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bgCard,
         borderRadius: BorderRadius.circular(AppRadius.chip),

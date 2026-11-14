@@ -133,6 +133,15 @@ void main() {
       expect(audio.currentTrack?.id, 'b3');
       expect(audio.queue.map((t) => t.id), ['b3', 'b2', 'a2', 'a1']);
 
+      // The order is a menu beside the filter; the count says how many.
+      expect(find.text('5 canciones'), findsOneWidget);
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A - Z').last);
+      await tester.pumpAndSettle();
+      final titles = tester.widgetList<Text>(find.textContaining('Song ')).map((t) => t.data).toList();
+      expect(titles.first, 'Song a1');
+
       // The filter narrows the list.
       await tester.enterText(find.byType(TextField), 'a1');
       await tester.pumpAndSettle();
