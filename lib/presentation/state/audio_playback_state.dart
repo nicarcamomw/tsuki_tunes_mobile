@@ -34,7 +34,38 @@ extension _PlaybackState on AudioProvider {
       _position.inMilliseconds,
       _isPlaying,
       _radioSnapshot(),
+      _modesSnapshot(),
     );
+  }
+
+  /// Shuffle (its state too: the songs heard this round, the recommended
+  /// ones, the picks ahead) and repeat. Without it a closed app came back
+  /// with shuffle off, playing the rest of the list in order.
+  Map<String, dynamic> _modesSnapshot() => {
+        'shuffle': shuffleMode.name,
+        'repeat': _q.repeatMode.name,
+        if (_q.isShuffle) ...{
+          'heard': _q.heardIds.toList(),
+          'recommended': _q.recommendedIds,
+          'picks': [for (final i in _q.peekUpcoming(AudioProvider._spotifyAheadMax)) _q.tracks[i].id],
+        },
+      };
+
+  /// Puts back the shuffle and repeat saved with the queue.
+  void _applySavedModes(Map<String, dynamic>? modes) {
+    if (modes == null) return;
+    final shuffle = ShuffleMode.values.asNameMap()[modes['shuffle']] ?? ShuffleMode.off;
+    final repeat = PlaybackRepeatMode.values.asNameMap()[modes['repeat']];
+    if (repeat != null) _q.setRepeatMode(repeat);
+    List<String> ids(Object? raw) => raw is List ? [for (final e in raw) e.toString()] : const [];
+    _q.restoreShuffle(
+      on: shuffle != ShuffleMode.off,
+      heard: ids(modes['heard']),
+      recommended: ids(modes['recommended']),
+      picks: ids(modes['picks']),
+    );
+    _smartShuffle = shuffle == ShuffleMode.smart;
+    _applyShuffleSettings();
   }
 
   Map<String, dynamic>? _radioSnapshot() =>
@@ -51,9 +82,16 @@ extension _PlaybackState on AudioProvider {
       // here it's only applied.
       final plan = planPlaybackRestore(state, DateTime.now());
       if (plan == null) return;
-      final track = plan.track;
 
-      _q.restore(plan.queue, plan.index);
+      _q.restore(plan.queue, plan.savedIndex);
+      _applySavedModes(plan.modes);
+      var track = plan.track;
+      if (plan.advanced && plan.savedIndex != plan.index) {
+        // The saved song ended while the app was closed: on to the next
+        // one as the queue plays it (a shuffle pick, with shuffle).
+        final step = _q.next(online: _online, canPlay: _canPlayOffline);
+        if (step.kind == QueueStepKind.play) track = _q.tracks[step.index];
+      }
       _currentTrack = track;
       _setPosition(plan.position);
       _duration = Duration(seconds: track.durationSeconds > 0 ? track.durationSeconds : 30);

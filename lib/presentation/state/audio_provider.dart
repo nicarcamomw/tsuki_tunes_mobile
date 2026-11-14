@@ -630,6 +630,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
       _position.inMilliseconds,
       _isPlaying,
       _radioSnapshot(),
+      _modesSnapshot(),
     );
   }
 
@@ -1303,6 +1304,14 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     }
   }
 
+  @override
+  Future<void> playShuffled(Track first, List<Track> tracks) async {
+    // On before the queue is set, so the first pick after [first] is
+    // already shuffle's (and nothing is fetched for the list's order).
+    if (!_q.isShuffle) _q.toggleShuffle();
+    await playTrack(first, newQueue: tracks);
+  }
+
   void toggleShuffle() {
     _q.toggleShuffle();
     _prefetchedTargetTrackId = null;
@@ -1440,7 +1449,12 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
   double _flowScore(Track prev, Track next) {
     final a = BpmService.shared.cached(prev.id);
     final b = BpmService.shared.cached(next.id);
-    if (a == null || b == null || a <= 0 || b <= 0) return 0;
+    // A tempo not known yet (only the first 300 songs are looked up) gets
+    // the score a known one gets on average, so on a long list those songs
+    // aren't left for the end.
+    if (a == null || b == null || a <= 0 || b <= 0) {
+      return _energy == ShuffleEnergy.smooth ? 0.4 : 0.25;
+    }
     final from = BpmFlow.feel(a);
     final to = BpmFlow.feel(b);
     switch (_energy) {

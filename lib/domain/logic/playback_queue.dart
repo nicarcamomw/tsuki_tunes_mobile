@@ -127,6 +127,23 @@ class PlaybackQueue {
   final List<int> _history = [];
   static const int _maxHistory = 50;
 
+  // Songs heard this round of shuffle, by id: every song plays once before
+  // any plays again, however long the list (the history above keeps only
+  // the last 50, for "previous", so on a bigger list shuffle used to repeat
+  // songs while others never came up).
+  final Set<String> _heard = {};
+
+  /// The songs heard this round of shuffle (ids), to save and restore.
+  Set<String> get heardIds => Set.unmodifiable(_heard);
+
+  /// The recommended songs (ids), to save and restore.
+  List<String> get recommendedIds => List.unmodifiable(_recommended);
+
+  void _markHeard() {
+    final playing = current;
+    if (_isShuffle && playing != null) _heard.add(playing.id);
+  }
+
   // Recently played artists/albums, to avoid repeats when shuffling.
   final List<String> _artistHistory = [];
   final List<String> _albumHistory = [];
@@ -183,6 +200,30 @@ class PlaybackQueue {
     _userQueue.clear();
   }
 
+  /// Brings back the shuffle saved with the queue: on or off, the songs
+  /// already heard this round, which songs are recommended ones, and the
+  /// picks made ahead (Spotify may already have them).
+  void restoreShuffle({
+    required bool on,
+    Iterable<String> heard = const [],
+    Iterable<String> recommended = const [],
+    List<String> picks = const [],
+  }) {
+    _isShuffle = on;
+    _forgetShufflePicks();
+    _heard
+      ..clear()
+      ..addAll(heard);
+    final ids = {for (final t in _tracks) t.id};
+    _recommended
+      ..clear()
+      ..addAll(recommended.where(ids.contains));
+    if (on) {
+      _markHeard();
+      _setPicks(picks);
+    }
+  }
+
   /// Makes [track] current, replacing the queue with [newQueue] if given,
   /// otherwise selecting it in (or appending it to) the current queue.
   /// Tracks still waiting in the user's queue stay up next either way.
@@ -203,6 +244,7 @@ class PlaybackQueue {
         _currentIndex = 0;
       }
       _history.clear();
+      _heard.clear();
     } else {
       final idx = _tracks.indexWhere((t) => t.id == track.id);
       if (idx == -1) {
@@ -219,6 +261,7 @@ class PlaybackQueue {
     }
     _requeue(pending);
     _queueFirstInPicks();
+    _markHeard();
   }
 
   List<Track> _pendingUserQueue({String? except}) => [
@@ -263,6 +306,8 @@ class PlaybackQueue {
   void toggleShuffle() {
     _isShuffle = !_isShuffle;
     _forgetShufflePicks();
+    _heard.clear();
+    _markHeard();
   }
 
   void setRepeatMode(PlaybackRepeatMode mode) {
@@ -449,6 +494,7 @@ class PlaybackQueue {
     }
 
     if (_isShuffle) _recordShuffle(_tracks[_currentIndex]);
+    _markHeard();
     _consumeCurrent();
     return QueueStep.play(_currentIndex);
   }
@@ -518,8 +564,7 @@ class PlaybackQueue {
   /// off (end of the queue, or every track already heard in shuffle).
   bool shouldStopAtEnd() {
     if (_isShuffle) {
-      return _history.toSet().length >= _tracks.length - 1 &&
-          !_history.contains(_currentIndex);
+      return _tracks.every((t) => _recommended.contains(t.id) || _heard.contains(t.id));
     }
     return _currentIndex + 1 >= _tracks.length;
   }
@@ -549,6 +594,7 @@ class PlaybackQueue {
       preset ? _advanceShufflePick() : _forgetShufflePicks();
       _recordShuffle(_tracks[target]);
     }
+    _markHeard();
     _consumeCurrent();
     return target;
   }
@@ -589,12 +635,11 @@ class PlaybackQueue {
         sinceLast++;
       }
       if (sinceLast >= recommendEvery) {
-        final heard = _history.toSet();
         for (var i = 0; i < _tracks.length; i++) {
           if (_recommended.contains(_tracks[i].id) &&
               i != _currentIndex &&
               !taken.contains(i) &&
-              !heard.contains(i)) {
+              !_heard.contains(_tracks[i].id)) {
             return i;
           }
         }
@@ -633,11 +678,21 @@ class PlaybackQueue {
         if (!_recommended.contains(_tracks[i].id)) i
     ];
     final open = own.isNotEmpty ? own : all;
-    final heard = _history.toSet();
-    final fresh = [
+    var fresh = [
       for (final i in open)
-        if (!heard.contains(i)) i
+        if (!_heard.contains(_tracks[i].id)) i
     ];
+    if (fresh.isEmpty && open.length > 1) {
+      // Every song heard: a new round, which doesn't open with the songs
+      // that just played (up to the last 20, or half the list). The one
+      // playing now belongs to the round ending, so it isn't counted.
+      _heard.clear();
+      final recent = _history.reversed.take(min(20, open.length ~/ 2)).toSet();
+      fresh = [
+        for (final i in open)
+          if (!recent.contains(i)) i
+      ];
+    }
     var candidates = fresh.isNotEmpty ? fresh : open;
     if (avoidSameArtist && after != null) {
       final artist = _artistKey(after);
@@ -703,10 +758,14 @@ class PlaybackQueue {
 
   /// Recommended songs still waiting for their turn.
   int get recommendationsLeft {
-    final heard = {..._history, _currentIndex};
     var n = 0;
     for (var i = 0; i < _tracks.length; i++) {
-      if (_recommended.contains(_tracks[i].id) && !heard.contains(i)) n++;
+      if (i != _currentIndex &&
+          _recommended.contains(_tracks[i].id) &&
+          !_heard.contains(_tracks[i].id) &&
+          !_history.contains(i)) {
+        n++;
+      }
     }
     return n;
   }
@@ -967,6 +1026,7 @@ class PlaybackQueue {
   void clear({Track? keep}) {
     _forgetShufflePicks();
     _history.clear();
+    _heard.clear();
     _userQueue.clear();
     if (keep != null) {
       _tracks = [keep];
