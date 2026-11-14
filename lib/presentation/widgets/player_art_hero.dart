@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/image_cache_size.dart';
+import 'player_tint.dart';
 import 'rinnegan_visualizer.dart';
 
 /// The cover that flies between the mini player (a 44 px rounded square)
@@ -127,7 +128,7 @@ class PlayerArtFlight extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.bgDeep,
-                        border: Border.all(color: isPlaying ? AppColors.accent : AppColors.border, width: 2),
+                        border: Border.all(color: isPlaying ? PlayerTint.of(context) : AppColors.border, width: 2),
                       ),
                       child: const SizedBox.expand(),
                     ),
