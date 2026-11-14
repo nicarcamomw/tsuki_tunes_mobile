@@ -240,6 +240,42 @@ void main() {
     expect(masks.unlockedCount, MaskCatalog.all.length);
   });
 
+  group('profile mask', () {
+    test('none by default, even with a mask equipped: the photo shows', () {
+      masks.onPlayCounted(_t('1'));
+      expect(masks.equipped?.id, 'hajime', reason: 'the first one equips itself');
+      expect(masks.profileMask, isNull);
+    });
+
+    test('an awakened one goes on the profile, kept on the phone, and comes off', () async {
+      masks.onPlayCounted(_t('1'));
+      masks.setProfileMask('hajime');
+      expect(masks.profileMask?.id, 'hajime');
+      await pumpEventQueue();
+
+      final again = MaskProvider(clock: () => now, albumLookup: (_) async => null);
+      await again.ready;
+      expect(again.profileMask?.id, 'hajime');
+      again.setProfileMask(null);
+      expect(again.profileMask, isNull);
+      await pumpEventQueue();
+      again.dispose();
+
+      final third = MaskProvider(clock: () => now, albumLookup: (_) async => null);
+      await third.ready;
+      expect(third.profileMask, isNull);
+      third.dispose();
+    });
+
+    test('a being still asleep can\'t go on the profile', () {
+      var told = 0;
+      masks.addListener(() => told++);
+      masks.setProfileMask('sen');
+      expect(masks.profileMask, isNull);
+      expect(told, 0);
+    });
+  });
+
   test('only unlocked masks can be equipped, and everything persists', () async {
     masks.equip('sen');
     expect(masks.equipped, isNull);

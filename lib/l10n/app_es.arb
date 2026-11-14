@@ -199,6 +199,10 @@
   "maskLocked": "Aún bloqueada",
   "maskEquipped": "EQUIPADA",
   "maskUnequip": "DESEQUIPAR",
+  "maskSetProfile": "USAR EN MI PERFIL",
+  "maskClearProfile": "QUITAR DE MI PERFIL",
+  "maskProfileSet": "Tu perfil muestra ahora esta máscara. Tus Lazos la verán en lugar de tu foto.",
+  "profileUsePhoto": "Volver a mi foto",
   "maskUnlockedOn": "Desbloqueada el {date}",
   "@maskUnlockedOn": {
     "placeholders": {

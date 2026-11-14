@@ -400,7 +400,8 @@ final profileControllerProvider = ChangeNotifierProvider<ProfileController>((ref
     uid: () => auth.isAuthenticated ? auth.uid : null,
     displayName: () => auth.user?.displayName ?? '',
     photoUrl: () => auth.user?.photoURL,
-    maskId: () => masks.equipped?.id,
+    // The profile mask, not the equipped one: no mask chosen, the photo.
+    maskId: () => masks.profileMask?.id,
     libraryLoaded: () => library.listenedTracksLoaded,
     listenedTrackArtists: () => library.listenedTracks.map((t) => t.artists),
     albumsCompleted: () => library.completedAlbumsCount,
@@ -434,7 +435,7 @@ final socialProvider = ChangeNotifierProvider<SocialController>((ref) {
         uid: uid,
         name: name == null || name.isEmpty ? 'Tsuki' : name,
         photoUrl: auth.user?.photoURL,
-        maskId: masks.equipped?.id,
+        maskId: masks.profileMask?.id,
       );
     },
     myTops: () => profile.current?.tops ?? const [],

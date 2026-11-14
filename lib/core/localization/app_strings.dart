@@ -387,6 +387,14 @@ class AppStrings {
 
   String get maskUnequip => _l.maskUnequip;
 
+  String get maskSetProfile => _l.maskSetProfile;
+
+  String get maskClearProfile => _l.maskClearProfile;
+
+  String get maskProfileSet => _l.maskProfileSet;
+
+  String get profileUsePhoto => _l.profileUsePhoto;
+
   String maskUnlockedOn(String date) => _l.maskUnlockedOn(date);
 
   String get maskUnlockedTitle => _l.maskUnlockedTitle;

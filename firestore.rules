@@ -125,6 +125,10 @@ service cloud.firestore {
           && (!isWritten('masks') || !('equipped' in d.masks)
               || d.masks.equipped == null
               || (d.masks.equipped is string && d.masks.equipped.size() <= 40))
+          // The being shown on the profile instead of the photo.
+          && (!isWritten('masks') || !('profile' in d.masks)
+              || d.masks.profile == null
+              || (d.masks.profile is string && d.masks.profile.size() <= 40))
           // The level 100 choice: to become an ethereal being or not.
           && (!isWritten('masks') || !('choice' in d.masks) || d.masks.choice in ['ser', 'no'])
           // Progress backup: a few counters, the top artists' plays, plays

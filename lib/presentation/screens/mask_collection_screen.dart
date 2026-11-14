@@ -8,6 +8,7 @@ import '../../domain/lore/tsuki_lore.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import '../widgets/app_snack.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
@@ -361,6 +362,7 @@ class _MaskDetail extends ConsumerWidget {
     final seen = !unlocked && masks.hasFeature(EcoFeature.seeBeings);
     final hidden = mask.secret && !unlocked && !seen;
     final isEquipped = masks.equipped?.id == mask.id;
+    final onProfile = masks.profileMask?.id == mask.id;
     final progress = unlocked ? null : masks.progress(mask.id);
     final at = masks.unlockedAt(mask.id);
     final whisper = _whisperOf(mask, lang);
@@ -577,6 +579,38 @@ class _MaskDetail extends ConsumerWidget {
                   ),
                 ),
               ),
+            // Shown on the profile instead of the photo (the Bonds see it).
+            if (unlocked) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    if (onProfile) {
+                      Haptics.remove();
+                      masks.setProfileMask(null);
+                    } else {
+                      Haptics.confirm();
+                      masks.setProfileMask(mask.id);
+                      AppSnack.of(context).info(strings.maskProfileSet, icon: Icons.account_circle_rounded);
+                    }
+                  },
+                  icon: Icon(onProfile ? Icons.no_accounts_rounded : Icons.account_circle_rounded, size: 18),
+                  label: Text(
+                    onProfile ? strings.maskClearProfile : strings.maskSetProfile,
+                    style: locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 1),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: onProfile ? AppColors.textSecondary : AppColors.textBright,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      side: BorderSide(color: onProfile ? AppColors.border : AppColors.borderGlow),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

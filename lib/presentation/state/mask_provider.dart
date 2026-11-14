@@ -41,6 +41,7 @@ final _log = Log.named('Masks');
 class MaskProvider extends ChangeNotifier {
   static const _unlockedKey = 'masks_unlocked_v1';
   static const _equippedKey = 'masks_equipped_v1';
+  static const _profileKey = 'masks_profile_v1';
   static const _statsKey = 'masks_stats_v1';
   static const int rainGoalSeconds = 10 * 3600;
 
@@ -58,6 +59,9 @@ class MaskProvider extends ChangeNotifier {
 
   final Map<String, DateTime> _unlocked = {};
   String? _equipped;
+  // The being shown instead of the photo on the profile, to the Bonds
+  // (null: the photo).
+  String? _profileMask;
   final List<String> _celebrations = [];
   _Stats _stats = _Stats();
   bool _loaded = false;
@@ -127,6 +131,11 @@ class MaskProvider extends ChangeNotifier {
   Set<String> get unlockedIds => _unlocked.keys.toSet();
   int get totalCount => MaskCatalog.all.length;
   OniMask? get equipped => MaskCatalog.byId(_equipped);
+
+  /// The being on the profile in place of the photo, chosen on purpose
+  /// (the equipped one dresses the player, and the first awakened is
+  /// equipped by itself): null shows the photo.
+  OniMask? get profileMask => _profileMask != null && isUnlocked(_profileMask!) ? MaskCatalog.byId(_profileMask) : null;
   String? get pendingCelebration => _celebrations.isEmpty ? null : _celebrations.first;
 
   /// Whether locked secret masks show their riddle.
@@ -522,6 +531,7 @@ class MaskProvider extends ChangeNotifier {
         });
       }
       _equipped = prefs.getString(_equippedKey);
+      _profileMask = prefs.getString(_profileKey);
       _stats = _Stats.decode(prefs.getString(_statsKey));
     } catch (e) {
       _log.severe('load error: $e');
@@ -541,6 +551,11 @@ class MaskProvider extends ChangeNotifier {
         await prefs.setString(_equippedKey, _equipped!);
       } else {
         await prefs.remove(_equippedKey);
+      }
+      if (_profileMask != null) {
+        await prefs.setString(_profileKey, _profileMask!);
+      } else {
+        await prefs.remove(_profileKey);
       }
       await prefs.setString(_statsKey, _stats.encode());
     } catch (e) {
@@ -608,6 +623,15 @@ class MaskProvider extends ChangeNotifier {
         if (eq is String && MaskCatalog.byId(eq) != null && eq != _equipped) {
           _equipped = eq;
           changed = true;
+        }
+        // Chosen on another phone (null there: back to the photo).
+        if (masks.containsKey('profile')) {
+          final p = masks['profile'];
+          final cloud = p is String && MaskCatalog.byId(p) != null ? p : null;
+          if (cloud != _profileMask) {
+            _profileMask = cloud;
+            changed = true;
+          }
         }
         final choice = masks['choice'];
         if ((choice == 'ser' || choice == 'no') && _stats.choice == null) {
@@ -864,6 +888,17 @@ class MaskProvider extends ChangeNotifier {
     notifyListeners();
     unawaited(_saveLocal());
     unawaited(_writeCloud({'equipped': id}));
+  }
+
+  /// Shows [id] on the profile instead of the photo, to the Bonds too;
+  /// null goes back to the photo.
+  void setProfileMask(String? id) {
+    if (id != null && (!isUnlocked(id) || MaskCatalog.byId(id) == null)) return;
+    if (_profileMask == id) return;
+    _profileMask = id;
+    notifyListeners();
+    unawaited(_saveLocal());
+    unawaited(_writeCloud({'profile': id}));
   }
 
   void unequip() {

@@ -31,6 +31,7 @@ import '../widgets/entry_cards.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/haptics.dart';
 import '../widgets/moon_button.dart';
+import '../widgets/my_avatar.dart';
 import '../widgets/profile_bottom_sheet.dart';
 import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
