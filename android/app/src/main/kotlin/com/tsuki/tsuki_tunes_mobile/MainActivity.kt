@@ -1,5 +1,6 @@
 package com.tsuki.tsuki_tunes_mobile
 
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -26,12 +27,14 @@ class MainActivity : AudioServiceActivity() {
         // while music plays in the background.
         private var noisyReceiver: BroadcastReceiver? = null
         private var screenReceiver: BroadcastReceiver? = null
+        private var unlockReceiver: BroadcastReceiver? = null
     }
 
     private val tileChannel = "com.tsuki.tsuki_tunes_mobile/tile"
     private val deviceChannel = "com.tsuki.tsuki_tunes_mobile/device"
     private val noisyChannel = "com.tsuki.tsuki_tunes_mobile/noisy"
     private val screenChannel = "com.tsuki.tsuki_tunes_mobile/screen"
+    private val unlockChannel = "com.tsuki.tsuki_tunes_mobile/unlock"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -149,6 +152,52 @@ class MainActivity : AudioServiceActivity() {
                     unregisterScreen()
                 }
             })
+
+        // Whether someone can use the phone (screen on and unlocked: true)
+        // or not (off, or on the lock screen: false). With the phone locked
+        // nobody is choosing songs in the Spotify app, so a jump there is a
+        // button (the car's, a speaker's, the lock screen's).
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, unlockChannel)
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                    unregisterUnlock()
+                    val keyguard = applicationContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+                    val receiver = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context, intent: Intent) {
+                            when (intent.action) {
+                                Intent.ACTION_SCREEN_OFF -> events.success(false)
+                                Intent.ACTION_SCREEN_ON -> events.success(!keyguard.isKeyguardLocked)
+                                Intent.ACTION_USER_PRESENT -> events.success(true)
+                            }
+                        }
+                    }
+                    val filter = IntentFilter().apply {
+                        addAction(Intent.ACTION_SCREEN_ON)
+                        addAction(Intent.ACTION_SCREEN_OFF)
+                        addAction(Intent.ACTION_USER_PRESENT)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        applicationContext.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                    } else {
+                        applicationContext.registerReceiver(receiver, filter)
+                    }
+                    unlockReceiver = receiver
+                    events.success(!keyguard.isKeyguardLocked)
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    unregisterUnlock()
+                }
+            })
+    }
+
+    private fun unregisterUnlock() {
+        val receiver = unlockReceiver ?: return
+        unlockReceiver = null
+        try {
+            applicationContext.unregisterReceiver(receiver)
+        } catch (_: IllegalArgumentException) {
+        }
     }
 
     private fun unregisterScreen() {
