@@ -368,6 +368,36 @@ void main() {
     );
   });
 
+  // The album scrolled: the header's frosted bar over the songs.
+  testWidgets('album_scrolled', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'album_scrolled',
+      overrides: [
+        ...base,
+        audioProvider.overrideWith((ref) => AudioProvider()),
+        // A blue cover, for the header's tint (T-02).
+        coverColorsForProvider.overrideWith((ref, url) async => CoverColors.fromSeed(const Color(0xFF2E6BFF))),
+      ],
+      const AlbumDetailScreen(
+        album: Album(
+          id: '302127',
+          title: 'Discovery',
+          artistId: '27',
+          artistName: 'Daft Punk',
+          coverUrl: '',
+          tracks: [_song],
+          tracksCount: 1,
+        ),
+      ),
+      before: () async {
+        // The header collapsed to its glass bar, songs passing under it.
+        await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -520));
+        await tester.pump(const Duration(milliseconds: 300));
+      },
+    );
+  });
+
   testWidgets('artist', skip: skip != null, (tester) async {
     await _pumpShot(
       tester,

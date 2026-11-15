@@ -109,3 +109,37 @@ abstract final class AppSpacing {
   /// and lists line up from one screen to the next.
   static const double page = 16;
 }
+
+/// Glass: a surface that lets what's behind it show through, blurred,
+/// like frosted glass. Only for what floats over moving content (a
+/// header's bar and buttons, a notice), never over plain background,
+/// where it would look like nothing. Over glass only white text and
+/// icons keep AA whatever passes behind: greys and reds need a solid
+/// surface (the sheets stay solid for that).
+abstract final class AppGlass {
+  /// How far what's behind is blurred.
+  static const double blur = 22;
+
+  /// How much of the surface's own colour covers it on a notice: enough
+  /// that white text keeps AA (4.5:1) whatever passes behind.
+  static const double fill = 0.86;
+
+  /// Liquid glass, for what floats over a page's own fade (a header's
+  /// title and buttons): clearer, the page shows through.
+  static const double clearFill = 0.55;
+
+  /// A round glass button over a picture: clear enough to see it, dark
+  /// enough that its white icon keeps 3:1 over a white cover.
+  static const double buttonFill = 0.72;
+
+  /// The light caught on the rim: brightest at the top-left, a softer
+  /// glint at the bottom-right.
+  static const double rimLight = 0.55;
+  static const double rimGlint = 0.22;
+
+  /// The sheen that fades down from the top, inside.
+  static const double sheen = 0.12;
+
+  /// The soft shadow that lifts it off the page.
+  static const double shadow = 0.35;
+}
