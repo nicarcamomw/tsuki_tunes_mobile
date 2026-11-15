@@ -15,6 +15,7 @@ import '../state/cover_colors.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/auth_guard.dart';
 import '../widgets/battery_guide_sheet.dart';
+import '../widgets/connection_notice.dart';
 import '../widgets/fade_indexed_stack.dart';
 import '../widgets/frosted_glass.dart';
 import '../widgets/haptics.dart';
@@ -86,9 +87,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   final ValueNotifier<MainTab> _tabNotifier = ValueNotifier<MainTab>(MainTab.home);
-  SpotifyFallbackReason? _lastShownError;
-  PlaybackError? _lastShownPlaybackError;
-  String? _lastShownSyncError;
 
   // The last tap on the tab that was already active, for the double tap.
   DateTime? _lastTapTime;
@@ -170,70 +168,63 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     super.dispose();
   }
 
+  /// E-03: the shell's three notices (Spotify, playback, sync), each once
+  /// when it appears, as the app's snack bar over the dock. Listened to,
+  /// not read in build: nothing is shown from a rebuild.
+  void _listenForNotices() {
+    ref.listen(audioProvider.select((a) => a.lastSpotifyError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      // On phones known to freeze Spotify, a failed start comes with a
+      // guide to let it run in the background.
+      final guide = ref.read(batteryGuideProvider).offerFor(error);
+      _notice((snack) => snack.show(
+            guide ? strings.batteryGuideSnack : error.message(strings),
+            icon: guide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
+            actionLabel: guide ? strings.batteryGuideAction : null,
+            onAction: guide ? () => BatteryGuideSheet.show(context) : null,
+            duration: Duration(seconds: guide ? 8 : 4),
+          ));
+    });
+    ref.listen(audioProvider.select((a) => a.lastPlaybackError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      _notice((snack) => snack.error(
+            error.message(strings, isOnline: ref.read(isOnlineProvider)),
+            icon: switch (error) {
+              PlaybackError.network => Icons.wifi_off_rounded,
+              PlaybackError.noPreview => Icons.music_off_rounded,
+              _ => Icons.error_outline_rounded,
+            },
+          ));
+    });
+    // A mark or unmark that didn't reach the cloud.
+    ref.listen(libraryProvider.select((l) => l.lastSyncError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      _notice((snack) => snack.error(strings.syncError, icon: Icons.sync_problem_rounded));
+    });
+  }
+
+  /// Shows a notice after this frame, over the dock.
+  void _notice(void Function(AppSnack snack) show) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) show(AppSnack.of(context, bottom: _snackBottom));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(audioProvider.select((a) => a.isPlaying), (_, playing) => _onPlayingChanged(playing));
-    final (hasTrack, spotifyError, playbackError) =
-        ref.watch(audioProvider.select(
-            (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError)));
-    final syncError =
-        ref.watch(libraryProvider.select((l) => l.lastSyncError));
+    final hasTrack = ref.watch(audioProvider.select((a) => a.currentTrack != null));
     final isOnline = ref.watch(isOnlineProvider);
     final locale = ref.watch(localeProvider);
-    final strings = locale.strings;
+    _listenForNotices();
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardOpen = keyboardHeight > 0;
     final bottomBarHeight = (hasTrack ? 146.0 : 76.0) + bottomPadding;
-    if (spotifyError == null) {
-      _lastShownError = null;
-    } else if (spotifyError != _lastShownError) {
-      _lastShownError = spotifyError;
-      // On phones known to freeze Spotify, a failed start comes with a guide
-      // to let it run in the background.
-      final offerBatteryGuide = ref.read(batteryGuideProvider).offerFor(spotifyError);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          // E-03: the app's snack bar, over the dock.
-          AppSnack.of(context, bottom: _snackBottom).show(
-            offerBatteryGuide ? strings.batteryGuideSnack : spotifyError.message(strings),
-            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
-            actionLabel: offerBatteryGuide ? strings.batteryGuideAction : null,
-            onAction: offerBatteryGuide ? () => BatteryGuideSheet.show(context) : null,
-            duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
-          );
-        }
-      });
-    }
-
-    if (playbackError == null) {
-      _lastShownPlaybackError = null;
-    } else if (playbackError != _lastShownPlaybackError) {
-      _lastShownPlaybackError = playbackError;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AppSnack.of(context, bottom: _snackBottom).error(
-            playbackError.message(strings, isOnline: isOnline),
-            icon: playbackError == PlaybackError.network
-                ? Icons.wifi_off_rounded
-                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline_rounded),
-          );
-        }
-      });
-    }
-
-    // Sync error feedback — the user sees a toast when a mark/unmark failed.
-    if (syncError == null) {
-      _lastShownSyncError = null;
-    } else if (syncError != _lastShownSyncError) {
-      _lastShownSyncError = syncError;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem_rounded);
-        }
-      });
-    }
 
     return ValueListenableBuilder<bool>(
       valueListenable: _canPopNotifier,
@@ -279,48 +270,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 ),
               ),
             ),
-            // Offline: a strip at the top.
+            // The connection: a pill at the top when it's lost, and for a
+            // moment when it's back.
             Positioned(
               left: 0,
               right: 0,
               top: 0,
-              child: Builder(
-                builder: (context) {
-                  final isOnline = ref.watch(isOnlineProvider);
-                  return AnimatedSlide(
-                    duration: AppMotion.normal,
-                    curve: Curves.easeInOutCubic,
-                    offset: isOnline ? const Offset(0, -1) : Offset.zero,
-                    child: AnimatedOpacity(
-                      duration: AppMotion.normal,
-                      opacity: isOnline ? 0.0 : 1.0,
-                      child: SafeArea(
-                        bottom: false,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          color: AppColors.error.withValues(alpha: 0.9),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.wifi_off_rounded, size: 14, color: Colors.white, semanticLabel: strings.a11yOffline),
-                              const SizedBox(width: 6),
-                              Text(
-                                strings.offline,
-                                style: locale.getTextStyle(
-                                  fontSize: AppFontSize.caption,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+              child: ConnectionNotice(online: isOnline, locale: locale),
             ),
 
             Positioned(

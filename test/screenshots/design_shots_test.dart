@@ -92,6 +92,14 @@ class _StillAudio extends AudioProvider {
   Track? get currentTrack => _song;
 }
 
+/// Halfway through the song: the dock's top edge lit to there.
+class _MidSongAudio extends _StillAudio {
+  @override
+  Duration get position => const Duration(seconds: 100);
+  @override
+  Duration get duration => const Duration(seconds: 248);
+}
+
 /// The session still waking: the loading screen stays.
 class _Waking extends ChangeNotifier implements SessionGate {
   @override
@@ -348,7 +356,14 @@ void main() {
   });
 
   testWidgets('shell', skip: skip != null, (tester) async {
-    await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())],
+    await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        const MainNavigationScreen(child: SizedBox.expand()));
+  });
+
+  // No connection: how the shell says so.
+  testWidgets('shell_offline', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'shell_offline',
+        overrides: [...base, isOnlineProvider.overrideWithValue(false), audioProvider.overrideWith((ref) => _MidSongAudio())],
         const MainNavigationScreen(child: SizedBox.expand()));
   });
 

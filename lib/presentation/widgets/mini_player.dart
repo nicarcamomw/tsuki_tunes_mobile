@@ -333,31 +333,46 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                             ),
                           ],
                           // --- Play / Pause ---
+                          // The icon turns between play and pause; loading,
+                          // a ring runs around it instead of hiding it.
                           TapScale(
                             semanticLabel: isPlaying
                                 ? locale.strings.a11yPause
                                 : locale.strings.a11yPlay,
                             onTap: isBuffering ? null : audio.togglePlay,
                             scaleDown: 0.85,
-                            child: isBuffering
-                                ? SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.8,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                        PlayerTint.of(context),
+                            child: SizedBox(
+                              width: 38,
+                              height: 38,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  if (isBuffering)
+                                    SizedBox.expand(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.8,
+                                        valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
                                       ),
                                     ),
-                                  )
-                                : Icon(
-                                    isPlaying
-                                        ? Icons.pause_circle_filled_rounded
-                                        : Icons.play_circle_filled_rounded,
-                                    size: 32,
-                                    color: PlayerTint.of(context),
+                                  AnimatedSwitcher(
+                                    duration: AppMotion.fast,
+                                    switchInCurve: Curves.easeOutBack,
+                                    transitionBuilder: (child, a) => RotationTransition(
+                                      turns: Tween(begin: -0.12, end: 0.0).animate(a),
+                                      child: ScaleTransition(scale: a, child: child),
+                                    ),
+                                    child: Icon(
+                                      isPlaying
+                                          ? Icons.pause_circle_filled_rounded
+                                          : Icons.play_circle_filled_rounded,
+                                      key: ValueKey(isPlaying),
+                                      size: isBuffering ? 26 : 32,
+                                      color: PlayerTint.of(context).withValues(alpha: isBuffering ? 0.5 : 1),
+                                    ),
                                   ),
+                                ],
+                              ),
+                            ),
                           ),
                           // --- Close / Stop ---
                           TapScale(
@@ -625,22 +640,64 @@ class _MarqueeTextState extends State<_MarqueeText>
 // Progress bar
 // ---------------------------------------------------------------------------
 
+/// The song's progress as the dock's lit top edge: the played part glows
+/// in the player's colour, with a brighter point at its head.
 class _MiniProgressBar extends StatelessWidget {
   const _MiniProgressBar();
 
   @override
   Widget build(BuildContext context) {
+    final tint = PlayerTint.of(context);
     return AudioProgressSelector<double>(
       selector: (a) {
         final total = a.duration.inMilliseconds;
         if (total <= 0) return 0.0;
         return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
       },
-      builder: (context, progress) => LinearProgressIndicator(
-        value: progress,
-        minHeight: 2.5,
-        backgroundColor: AppColors.border,
-        valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
+      builder: (context, progress) => Semantics(
+        // The player's own bar is the one to read and move.
+        excludeSemantics: true,
+        child: SizedBox(
+          height: 2.5,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: tint,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.55), blurRadius: 6)],
+                  ),
+                  child: progress <= 0
+                      ? null
+                      : Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [BoxShadow(color: tint, blurRadius: 6)],
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -912,6 +912,8 @@ class AppStrings {
   String get navMenuRefresh => _es('Actualizar', 'Refresh', '更新');
   String get navMenuNewSearch => _es('Nueva búsqueda', 'New search', '新しい検索');
   String get navMenuTypeSearch => _es('Escribir en el buscador', 'Type a search', '検索を入力');
+  /// The connection came back (the pill at the top, for a moment).
+  String get backOnline => _es('De nuevo en línea', 'Back online', 'オンラインに戻りました');
   /// TalkBack's actions on the mini player.
   String get a11yOpenPlayer => _es('Abrir el reproductor', 'Open the player', 'プレーヤーを開く');
 
