@@ -120,6 +120,10 @@ flutter:
   # Compiles lib/l10n/*.arb (see l10n.yaml) on pub get and build.
   generate: true
 
+  # GPU effects (fragment shaders), compiled with the app.
+  shaders:
+    - shaders/tsuki_nebula.frag
+
   assets:
     - assets/images/
     - assets/images/masks/

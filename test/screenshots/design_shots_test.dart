@@ -26,6 +26,7 @@ import 'package:tsuki_tunes_mobile/domain/entities/social.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
 import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
+import 'package:tsuki_tunes_mobile/presentation/navigation/session_gate.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/album_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/artist_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/bonds_screen.dart';
@@ -86,6 +87,14 @@ const _song = Track(
 class _StillAudio extends AudioProvider {
   @override
   Track? get currentTrack => _song;
+}
+
+/// The session still waking: the loading screen stays.
+class _Waking extends ChangeNotifier implements SessionGate {
+  @override
+  SessionStatus get status => SessionStatus.loading;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// The song playing came from smart shuffle's recommendations.
@@ -519,7 +528,8 @@ void main() {
 
   // The first frame while the session wakes up.
   testWidgets('loading', skip: skip != null, (tester) async {
-    await _pumpShot(tester, 'loading', overrides: base, const LoadingScreen(),
+    await _pumpShot(tester, 'loading', overrides: [...base, sessionGateProvider.overrideWith((ref) => _Waking())],
+        const LoadingScreen(),
         before: () => tester.pump(LoadingScreen.patience));
   });
 

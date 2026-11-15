@@ -36,6 +36,7 @@ import 'di/injection.dart';
 import 'domain/usecases/playback/play_track.dart';
 import 'presentation/navigation/app_router.dart';
 import 'presentation/screens/ascension_screen.dart';
+import 'presentation/screens/loading_screen.dart';
 import 'presentation/screens/mask_collection_screen.dart';
 import 'presentation/state/app_providers.dart';
 import 'presentation/state/audio_provider.dart';
@@ -71,6 +72,10 @@ void main() async {
       systemNavigationBarDividerColor: AppColors.border,
     ),
   );
+
+  // The entrance's mask and nebula shader load while Firebase starts, so
+  // the first frame already has them.
+  LoadingScreen.warmUp();
 
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.

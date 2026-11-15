@@ -53,6 +53,20 @@ class _Playlists implements PlaylistRepositoryImpl {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// A session the test moves on by hand.
+class _Gate extends ChangeNotifier implements SessionGate {
+  SessionStatus _status = SessionStatus.loading;
+  @override
+  SessionStatus get status => _status;
+  void ready() {
+    _status = SessionStatus.ready;
+    notifyListeners();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -76,7 +90,8 @@ void main() {
     // At the screen's centre, where the splash left it.
     final screen = tester.getSize(find.byType(Scaffold));
     final centre = tester.getCenter(find.byType(Image));
-    expect(centre.dx, closeTo(screen.width / 2, 1));
+    // The image is nudged so its mask (6% right of the image's middle) is centred.
+    expect(centre.dx, closeTo(screen.width / 2 + LoadingScreen.maskNudge, 1));
     expect(centre.dy, closeTo(screen.height / 2, 1));
     // The line stays clear below it.
     expect(tester.getTopLeft(find.text('Despertando la luna…')).dy, greaterThan(tester.getBottomLeft(find.byType(Image)).dy));
@@ -90,6 +105,29 @@ void main() {
     await tester.pump(LoadingScreen.patience + const Duration(milliseconds: 50));
     expect(lineOpacity(), 1);
     handle.dispose();
+  });
+
+  testWidgets('ready, the mask blooms into the next screen', (tester) async {
+    final gate = _Gate();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localeProvider.overrideWith((ref) => LocaleProvider()),
+          sessionGateProvider.overrideWith((ref) => gate),
+        ],
+        child: const MaterialApp(home: LoadingScreen()),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    double maskOpacity() =>
+        tester.widget<Opacity>(find.ancestor(of: find.byType(Image).last, matching: find.byType(Opacity)).first).opacity;
+    expect(maskOpacity(), 1);
+    gate.ready();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(maskOpacity(), lessThan(1));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(maskOpacity(), 0);
   });
 
   testWidgets('with less motion asked for, the mask holds still', (tester) async {
@@ -107,8 +145,20 @@ void main() {
     for (final dir in ['drawable', 'drawable-v21']) {
       final launch = File('android/app/src/main/res/$dir/launch_background.xml').readAsStringSync();
       // A 1024 px logo drawn at its own size was a giant crop of the mask.
-      expect(launch, contains('android:width="240dp"'), reason: dir);
-      expect(launch, contains('android:height="240dp"'), reason: dir);
+      expect(launch, contains('android:width="288dp"'), reason: dir);
+      expect(launch, contains('android:height="288dp"'), reason: dir);
+      // With the glow lit, as Android 12's animated splash ends.
+      expect(launch, contains('@drawable/splash_glow_09'), reason: dir);
+    }
+    // Android 12+: the glow lights up, frame by frame, and every frame exists.
+    for (final dir in ['values-v31', 'values-night-v31']) {
+      final styles = File('android/app/src/main/res/$dir/styles.xml').readAsStringSync();
+      expect(styles, contains('@drawable/splash_anim'), reason: dir);
+      expect(styles, contains('windowSplashScreenAnimationDuration'), reason: dir);
+    }
+    final anim = File('android/app/src/main/res/drawable/splash_anim.xml').readAsStringSync();
+    for (final m in RegExp(r'@drawable/(splash_glow_\d+)').allMatches(anim)) {
+      expect(File('android/app/src/main/res/drawable/${m[1]}.webp').existsSync(), isTrue, reason: m[1]);
     }
   });
 
