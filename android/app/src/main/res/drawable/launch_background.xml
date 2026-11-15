@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Android 7 to 11's launch screen (12+ uses windowSplashScreen*, in
+     values-v31). The logo is a 1024 px image: drawn at its own size it was
+     1024 dp, cropped to a corner of the mask. Sized here, like Android
+     12's splash icon (240 dp, the mask about 100 dp of it), so the first
+     Flutter frame (LoadingScreen) picks it up in the same place. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
 
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/splash_logo" />
-    </item>
+    <item
+        android:width="240dp"
+        android:height="240dp"
+        android:gravity="center"
+        android:drawable="@drawable/splash_logo" />
 </layer-list>
-

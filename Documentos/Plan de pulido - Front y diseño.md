@@ -230,7 +230,7 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 |---|---|---|
 | A-01 | Login tiene 7 `CustomPaint` animados: medir en gama baja y pausar los que no se ven. | B |
 | A-02 | Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar. | B |
-| A-03 | Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono. | C |
+| A-03 | ~~Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono.~~ **Hecho:** `LoadingScreen` sigue al splash de Android sin costura (misma noche `AppColors.splash`, la misma máscara en el mismo lugar), respira con un brillo rojo y, si tarda, dice "Despertando la luna…". El splash de Android 7 a 11 ya no dibuja el logo gigante y recortado. Nunca queda trabada: almacenamiento que falla o Firebase que no responde (8 s) siguen de largo (`test/startup_test.dart`). | C |
 
 ### 2. Estructura
 

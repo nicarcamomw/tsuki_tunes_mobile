@@ -117,7 +117,20 @@ class AuthProvider extends ChangeNotifier {
     _init();
   }
 
+  /// How long the app waits for the account before it stops waiting: a
+  /// stuck start (Firebase not answering) shows the login instead of the
+  /// loading screen for good. If the account turns up later, the session
+  /// moves on to the app by itself.
+  static const startPatience = Duration(seconds: 8);
+  Timer? _startTimer;
+
   Future<void> _init() async {
+    _startTimer = Timer(startPatience, () {
+      if (!_loading) return;
+      _log.warning('Auth took over ${startPatience.inSeconds}s to answer; going on without it');
+      _loading = false;
+      notifyListeners();
+    });
     // Restore guest mode so guests don't land on the login screen each launch.
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -135,6 +148,7 @@ class AuthProvider extends ChangeNotifier {
         // A signed-in account always wins over a leftover guest session.
         if (user != null && _isGuest) await _leaveGuestMode();
         _loading = false;
+        _startTimer?.cancel();
         notifyListeners();
       });
     } catch (e) {
@@ -252,6 +266,7 @@ class AuthProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _startTimer?.cancel();
     _authSub?.cancel();
     super.dispose();
   }

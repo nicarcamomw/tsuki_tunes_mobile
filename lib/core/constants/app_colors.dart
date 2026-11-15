@@ -8,6 +8,11 @@ class AppColors {
   static const Color bgHover = Color(0xFF252A36);
   static const Color bgGlass = Color(0xF514171F);
 
+  /// The launch screen's night: Android's splash (res/values/colors.xml,
+  /// splash_background, and the logo's own background) and the first
+  /// Flutter frame share it, so the app opens without a seam.
+  static const Color splash = Color(0xFF181B22);
+
   // D-14, depth with light: three surface levels, lighter as they come
   // closer. The screen is [surface]; a card on it is [surfaceCard]; what
   // rises over the screen (a bottom sheet, a dialog, a menu) is

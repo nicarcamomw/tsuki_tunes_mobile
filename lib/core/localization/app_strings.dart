@@ -812,6 +812,9 @@ class AppStrings {
   String get ecoBalanceBroken => _es('El equilibrio se ha roto.', 'The balance is broken.', '均衡は崩れた。');
   String get ecoPlayerColor => _es('COLOR DEL REPRODUCTOR', 'PLAYER COLOUR', 'プレーヤーの色');
   String get ecoColorDefault => _es('Color base', 'Base colour', 'ベースカラー');
+
+  /// Under the mask while the session wakes up, if it takes a moment.
+  String get loadingWaking => _es('Despertando la luna…', 'Waking the moon…', '月を起こしています…');
   String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
   String get ecoCoverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色');
   String get ecoCoverColorsBody => _es(

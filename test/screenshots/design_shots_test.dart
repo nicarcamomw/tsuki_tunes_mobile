@@ -33,6 +33,7 @@ import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/expanded_player_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/library_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/loading_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
@@ -507,6 +508,12 @@ void main() {
 
   testWidgets('masks', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'masks', overrides: base, const MaskCollectionScreen());
+  });
+
+  // The first frame while the session wakes up.
+  testWidgets('loading', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'loading', overrides: base, const LoadingScreen(),
+        before: () => tester.pump(LoadingScreen.patience));
   });
 
   // The playlists tab with none yet: its main action.
