@@ -372,13 +372,14 @@ class LoreChapterScreen extends ConsumerWidget {
             const SizedBox(height: 16),
           ],
           // P-10: where the story ends and the beings' records begin.
-          if (faction != null || const {'guerras', 'cinco', 'ultras', 'caras'}.contains(chapter.id))
+          if (faction != null || const {'guerras', 'cinco', 'ultras', 'caras', 'ikai'}.contains(chapter.id))
             Divider(color: accent.withValues(alpha: 0.25), height: 28, thickness: 1),
           if (faction != null) _FactionSection(faction: faction, owned: owned),
           if (chapter.id == 'guerras') _BondsSection(bonds: TsukiLore.bonds, owned: owned),
           if (chapter.id == 'cinco') _MaskRow(ids: TsukiLore.crossed, owned: owned),
           if (chapter.id == 'ultras')
             _MaskRow(ids: TsukiLore.ultras, owned: owned),
+          if (chapter.id == 'ikai') _MaskRow(ids: TsukiLore.strangers, owned: owned),
           if (chapter.id == 'caras')
             for (final f in TsukiLore.faces) _FaceCard(face: f, owned: owned.contains(f.mask)),
         ],

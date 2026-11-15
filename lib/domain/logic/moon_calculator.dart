@@ -110,6 +110,22 @@ class MoonSnapshot {
     return a < b ? a : b;
   }
 
+  /// The new-moon window: the nights around the exact new moon, when no
+  /// moon shows (as wide as the full-moon one).
+  bool get isNewMoonWindow => newMoonDistance <= MoonCalculator.fullMoonWindow;
+
+  Duration get newMoonDistance {
+    final a = at.difference(previousNew.time).abs();
+    final b = nextNew.time.difference(at).abs();
+    return a < b ? a : b;
+  }
+
+  /// The new moon this window belongs to (nearest one).
+  DateTime get nearestNew =>
+      at.difference(previousNew.time).abs() < nextNew.time.difference(at).abs()
+          ? previousNew.time
+          : nextNew.time;
+
   /// The full moon this window belongs to (nearest one).
   DateTime get nearestFull =>
       at.difference(previousFull.time).abs() < nextFull.time.difference(at).abs()

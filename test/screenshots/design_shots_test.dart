@@ -495,7 +495,7 @@ void main() {
     await _pumpShot(tester, 'lore', overrides: base, const LoreScreen());
   });
 
-  for (final id in ['elementos', 'caras']) {
+  for (final id in ['elementos', 'caras', 'ikai']) {
     testWidgets('lore_$id', skip: skip != null, (tester) async {
       final chapter = TsukiLore.chapters.firstWhere((c) => c.id == id);
       await _pumpShot(tester, 'lore_$id', overrides: base, LoreChapterScreen(chapter: chapter),

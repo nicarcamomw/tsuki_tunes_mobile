@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/album.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
+import 'package:tsuki_tunes_mobile/domain/logic/moon_calculator.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/music_styles.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 
@@ -33,6 +34,58 @@ void main() {
   });
 
   tearDown(() => masks.dispose());
+
+  group('Ikai, from another universe', () {
+    /// 3:30 AM on the night of the [n]th new moon after the test's day.
+    DateTime deadHourOfNewMoon(int n) {
+      var t = now;
+      for (var i = 0; i <= n; i++) {
+        t = MoonCalculator.snapshot(t).nextNew.time.add(const Duration(hours: 1));
+      }
+      final local = t.subtract(const Duration(hours: 1)).toLocal();
+      return DateTime(local.year, local.month, local.day, 3, 30);
+    }
+
+    test('a secret UL, awakened in the dead hour of three new moons', () {
+      final ikai = MaskCatalog.byId('ikai')!;
+      expect(ikai.rarity, MaskRarity.ul);
+      expect(ikai.secret, isTrue);
+      expect(ikai.asset(), 'assets/images/masks/ul/ikai.webp');
+
+      for (var n = 0; n < 2; n++) {
+        now = deadHourOfNewMoon(n);
+        expect(MoonCalculator.snapshot(now).isNewMoonWindow, isTrue);
+        masks.onPlayCounted(_t('a$n'));
+        // The same new moon counts once, however much is heard.
+        masks.onPlayCounted(_t('b$n'));
+      }
+      expect(masks.counterValue('ikai'), 2);
+      expect(masks.isUnlocked('ikai'), isFalse);
+
+      now = deadHourOfNewMoon(2);
+      masks.onPlayCounted(_t('c'));
+      expect(masks.isUnlocked('ikai'), isTrue);
+    });
+
+    test('not at another hour, nor in the dead hour with a moon in the sky', () {
+      now = deadHourOfNewMoon(0).add(const Duration(hours: 2)); // 5:30 AM
+      masks.onPlayCounted(_t('1'));
+      final fullMoon = MoonCalculator.snapshot(DateTime(2026, 11, 12)).nextFull.time.toLocal();
+      now = DateTime(fullMoon.year, fullMoon.month, fullMoon.day, 3, 30);
+      expect(MoonCalculator.snapshot(now).isNewMoonWindow, isFalse);
+      masks.onPlayCounted(_t('2'));
+      expect(masks.counterValue('ikai'), 0);
+    });
+
+    test('it is no Ultra: the Ultras\' collectors don\'t count it', () {
+      for (var n = 0; n < 3; n++) {
+        now = deadHourOfNewMoon(n);
+        masks.onPlayCounted(_t('x$n'));
+      }
+      expect(masks.isUnlocked('ikai'), isTrue);
+      expect(masks.counterValue('ultra'), 0);
+    });
+  });
 
   test('first play unlocks and equips the first mask, with a celebration', () {
     masks.onPlayCounted(_t('1'));

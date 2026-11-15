@@ -362,7 +362,8 @@ void main() {
 
       final ultra = [
         for (final m in MaskCatalog.all)
-          if (m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal') m.id,
+          if (m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal' && !TsukiLore.strangers.contains(m.id))
+            m.id,
       ];
       for (final id in ultra.take(ultra.length - 1)) {
         masks.unlock(id);
