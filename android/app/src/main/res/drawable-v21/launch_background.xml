@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Android 7 to 11's launch screen (12+ uses windowSplashScreen*, in
-     values-v31). The logo is a 1024 px image: drawn at its own size it was
-     1024 dp, cropped to a corner of the mask. Sized here, like Android
+     values-v31). The logo is a 1024 px image: drawn at its own size it
+     would be 1024 dp, a giant crop of the mask. Sized here, like Android
      12's splash icon (288 dp, the mask about 120 dp of it), and with the
      glow Android 12's animated splash ends with, so the first Flutter
      frame (LoadingScreen) picks it up in the same place, unchanged. -->

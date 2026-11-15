@@ -32,13 +32,10 @@ import '../widgets/motion.dart';
 class LoadingScreen extends ConsumerStatefulWidget {
   const LoadingScreen({super.key});
 
-  /// The mask's width: as large as in Android 12's splash (the 288 dp
-  /// icon, the mask about 120 dp of it, plus the image's own margin).
-  static const double maskWidth = 145;
-
-  /// The image's mask sits 6% right of its middle; nudged back, it lands
-  /// exactly where the splash centres it.
-  static const double maskNudge = -0.0608 * maskWidth;
+  /// The mask's width: as large as in Android 12's splash (on its 288 dp
+  /// icon, the mask is 552 of the logo's 1024 px tall; see
+  /// tool/splash/make_glow_frames.py), so the hand-over is exact.
+  static const double maskWidth = 109.12;
 
   /// The glow the animated splash ends with: the first frame picks it up.
   static const double splashGlowRadius = 93;
@@ -50,11 +47,13 @@ class LoadingScreen extends ConsumerStatefulWidget {
   /// The intro's length (everything but the slow loop).
   static const Duration intro = Duration(milliseconds: 1600);
 
-  static const String maskAsset = 'assets/images/cyber_oni_mask.png';
+  /// The entrance's mask (by the app's author), cut out of its background
+  /// by tool/mask_art/cut_out.py.
+  static const String maskAsset = 'assets/images/tsuki_mask.webp';
 
   /// Where the mask's eyes are on its image (fractions of its width and
   /// height), to light them.
-  static const List<Offset> eyes = [Offset(0.375, 0.49), Offset(0.731, 0.49)];
+  static const List<Offset> eyes = [Offset(0.31, 0.49), Offset(0.69, 0.49)];
   static const String nebulaAsset = 'shaders/tsuki_nebula.frag';
 
   /// The nebula's program, loaded once (null where shaders can't load: the
@@ -215,10 +214,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                     if (glitch != null) out = _Glitch(seed: glitch, child: out);
                     return Opacity(
                       opacity: 1 - exit.value,
-                      child: Transform.translate(
-                        offset: const Offset(LoadingScreen.maskNudge, 0),
-                        child: Transform.scale(scale: scale, child: out),
-                      ),
+                      child: Transform.scale(scale: scale, child: out),
                     );
                   },
                 ),
@@ -312,7 +308,7 @@ class _EyesPainter extends CustomPainter {
     final flare = math.sin(math.pi * e) * 0.5;
     final breath = still ? 0.5 : _breathAt(time.value);
     final light = ((0.55 * e + flare) * (0.75 + 0.25 * breath)).clamp(0.0, 1.0);
-    final radius = size.width * 0.12;
+    final radius = size.width * 0.14;
     for (final eye in LoadingScreen.eyes) {
       final c = Offset(eye.dx * size.width, eye.dy * size.height);
       canvas
@@ -526,7 +522,7 @@ class _GlowPainter extends CustomPainter {
     if (shadow > 0) {
       canvas
         ..save()
-        ..translate(centre.dx, centre.dy + 86)
+        ..translate(centre.dx, centre.dy + 74)
         ..scale(1, 0.22)
         ..drawCircle(
           Offset.zero,

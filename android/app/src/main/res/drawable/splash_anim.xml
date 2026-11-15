@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Android 12+'s animated splash: the mask's red glow lights up over
-     700 ms (frames made from splash_logo by tool, webp). The first Flutter
+     700 ms (webp frames made by tool/splash/make_glow_frames.py). The first Flutter
      frame (LoadingScreen) starts with the glow the last frame ends with. -->
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android" android:oneshot="true">
     <item android:drawable="@drawable/splash_glow_00" android:duration="70" />

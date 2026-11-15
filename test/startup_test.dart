@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,13 +86,12 @@ void main() {
     await pumpLoading(tester);
     expect(tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, AppColors.splash);
     final mask = tester.widget<Image>(find.byType(Image));
-    expect((mask.image as AssetImage).assetName, 'assets/images/cyber_oni_mask.png');
+    expect((mask.image as AssetImage).assetName, 'assets/images/tsuki_mask.webp');
     expect(mask.width, LoadingScreen.maskWidth);
     // At the screen's centre, where the splash left it.
     final screen = tester.getSize(find.byType(Scaffold));
     final centre = tester.getCenter(find.byType(Image));
-    // The image is nudged so its mask (6% right of the image's middle) is centred.
-    expect(centre.dx, closeTo(screen.width / 2 + LoadingScreen.maskNudge, 1));
+    expect(centre.dx, closeTo(screen.width / 2, 1));
     expect(centre.dy, closeTo(screen.height / 2, 1));
     // The line stays clear below it.
     expect(tester.getTopLeft(find.text('Despertando la luna…')).dy, greaterThan(tester.getBottomLeft(find.byType(Image)).dy));
@@ -142,6 +142,7 @@ void main() {
     final colors = File('android/app/src/main/res/values/colors.xml').readAsStringSync();
     final hex = RegExp(r'name="splash_background">#([0-9A-Fa-f]{6})<').firstMatch(colors)![1]!;
     expect(Color(int.parse('FF$hex', radix: 16)), AppColors.splash);
+    expect(File('android/app/src/main/res/drawable/splash_glow_09.webp').existsSync(), isTrue);
     for (final dir in ['drawable', 'drawable-v21']) {
       final launch = File('android/app/src/main/res/$dir/launch_background.xml').readAsStringSync();
       // A 1024 px logo drawn at its own size was a giant crop of the mask.
@@ -160,6 +161,17 @@ void main() {
     for (final m in RegExp(r'@drawable/(splash_glow_\d+)').allMatches(anim)) {
       expect(File('android/app/src/main/res/drawable/${m[1]}.webp').existsSync(), isTrue, reason: m[1]);
     }
+  });
+
+  testWidgets('the mask is as large as on the splash, to the pixel', (tester) async {
+    // tool/splash/make_glow_frames.py draws it MASK_HEIGHT_PX tall on the
+    // 1024 px logo of Android 12's 288 dp icon.
+    final tool = File('tool/splash/make_glow_frames.py').readAsStringSync();
+    final heightPx = int.parse(RegExp(r'MASK_HEIGHT_PX = (\d+)').firstMatch(tool)![1]!);
+    final bytes = File(LoadingScreen.maskAsset).readAsBytesSync();
+    final image = (await tester.runAsync(() async => (await (await ui.instantiateImageCodec(bytes)).getNextFrame()).image))!;
+    final widthDp = image.width * heightPx / image.height * 288 / 1024;
+    expect(LoadingScreen.maskWidth, closeTo(widthDp, 0.05));
   });
 
   test('a storage that fails to answer never leaves the app on the loading screen', () async {
