@@ -828,6 +828,81 @@ class AppStrings {
   String get loginAnd => _es('y la', 'and the', 'と');
   String get loginPrivacy => _es('Privacidad', 'Privacy Policy', 'プライバシー');
 
+  // ── The first-run guide (and the tutorial): four steps ──
+  String get onbSkip => _es('Saltar', 'Skip', 'スキップ');
+  String get onbClose => _es('Cerrar', 'Close', '閉じる');
+  String get onbNext => _es('Siguiente', 'Next', '次へ');
+  String get onbStart => _es('Empezar a escuchar', 'Start listening', '聴きはじめる');
+  String get onbDone => _es('Listo', 'Done', '完了');
+  String onbStepOf(int step, int total) => _es('Paso $step de $total', 'Step $step of $total', 'ステップ $step / $total');
+
+  String get onb1Over => _es('BIBLIOTECA', 'LIBRARY', 'ライブラリ');
+  String get onb1Title => _es('Marca lo que escuchas', 'Mark what you hear', '聴いた曲に印を');
+  String get onb1Body => _es(
+    'Toca la máscara de una canción para marcarla como escuchada. Cada álbum gana color a medida que lo completas.',
+    'Tap a song\'s mask to mark it as heard. Each album gains colour as you complete it.',
+    '曲の面をタップすると「聴いた」になります。アルバムは聴き進めるほど色づいていきます。',
+  );
+  String get onb1ChipA => _es('Álbumes que se completan', 'Albums you complete', 'アルバムを完成');
+  String get onb1ChipB => _es('Guardado en tu cuenta', 'Kept in your account', 'アカウントに保存');
+  String get onb1ChipC => _es('Tus playlists', 'Your playlists', 'プレイリスト');
+
+  String get onb2Over => _es('DESCUBRE', 'DISCOVER', '発見');
+  String get onb2Title => _es('Encuentra cualquier canción', 'Find any song', 'どんな曲でも見つかる');
+  String get onb2Body => _es(
+    'Busca artistas, álbumes y hasta letras. Las radios y el aleatorio inteligente te traen música parecida a la que te gusta.',
+    'Search artists, albums and even lyrics. Radios and smart shuffle bring you music like the music you love.',
+    'アーティスト、アルバム、歌詞まで検索。ラジオとスマートシャッフルが好みに近い音楽を届けます。',
+  );
+  String get onb2ChipA => _es('Búsqueda por letras', 'Search by lyrics', '歌詞で検索');
+  String get onb2ChipB => _es('Radios', 'Radios', 'ラジオ');
+  String get onb2ChipC => _es('Aleatorio inteligente', 'Smart shuffle', 'スマートシャッフル');
+  String get onb2Typed => _es('daft punk', 'daft punk', 'daft punk');
+  String get onb2Radio => _es('Radio del artista', 'Artist radio', 'アーティストラジオ');
+
+  String get onb3Over => _es('ESCUCHA', 'LISTEN', '聴く');
+  String get onb3Title => _es('Escúchala a tu manera', 'Hear it your way', '自分らしく聴く');
+  String get onb3Body => _es(
+    'Vistas previas de 30 segundos, o canciones completas si conectas Spotify. Letras sincronizadas y un reproductor que toma el color de cada portada.',
+    '30-second previews, or full songs if you connect Spotify. Synced lyrics, and a player that takes each cover\'s colour.',
+    '30秒のプレビュー、Spotify を連携すればフル再生。同期歌詞と、ジャケットの色に染まるプレーヤー。',
+  );
+  String get onb3ChipA => _es('Spotify', 'Spotify', 'Spotify');
+  String get onb3ChipB => _es('Letras sincronizadas', 'Synced lyrics', '同期歌詞');
+  String get onb3ChipC => _es('Ecualizador', 'Equalizer', 'イコライザー');
+  String get onb3Preview => _es('VISTA PREVIA · 30 s', 'PREVIEW · 30 s', 'プレビュー · 30秒');
+  String get onb3LyricA => _es('Bajo la luna', 'Under the moon', '月の下で');
+  String get onb3LyricB => _es('todo suena distinto', 'everything sounds new', 'すべてが違って響く');
+
+  String get onb4Over => _es('TU CAMINO', 'YOUR PATH', 'あなたの道');
+  String get onb4Title => _es('Despierta a los seres', 'Wake the beings', '面を目覚めさせる');
+  String get onb4Body => _es(
+    'Cada canción que escuchas es Eco: subes de nivel, despiertas máscaras y se abre el Testamento Lunar, la historia de Tsuki.',
+    'Every song you hear is Echo: you level up, wake masks and open the Lunar Testament, the story of Tsuki.',
+    '聴く一曲一曲がエコー。レベルが上がり、面が目覚め、ツキの物語「月の聖典」が開きます。',
+  );
+  String get onb4ChipA => _es('Niveles Eco', 'Echo levels', 'エコーレベル');
+  String get onb4ChipB => _es('Máscaras', 'Masks', '面');
+  String get onb4ChipC => _es('Testamento Lunar', 'Lunar Testament', '月の聖典');
+  String onb4Level(int n) => _es('NIVEL $n', 'LEVEL $n', 'レベル $n');
+  String get onb4Woke => _es('DESPERTÓ', 'AWAKENED', '目覚めた');
+
+  // ── Why a permission (the primer): what it gives, in three lines ──
+  String get permNotifPoint1 =>
+      _es('Solo música nueva de los artistas que sigues', 'Only new music from the artists you follow', 'フォロー中のアーティストの新曲だけ');
+  String get permNotifPoint2 => _es('Nada de publicidad', 'No ads, ever', '広告は一切なし');
+  String get permNotifPoint3 => _es('Lo apagas cuando quieras en el Radar', 'Turn it off any time in the Radar', 'レーダーでいつでもオフにできます');
+  String get permBgPoint1 => _es(
+    'Android puede cerrar Tsuki al bloquear el teléfono',
+    'Android may close Tsuki when you lock your phone',
+    'ロックすると Android が Tsuki を閉じることがあります',
+  );
+  String get permBgPoint2 =>
+      _es('Así la música sigue con la pantalla apagada', 'This keeps the music going with the screen off', '画面を消しても音楽が続きます');
+  String get permBgPoint3 => _es('Te lo preguntamos una sola vez', 'We only ask once', '確認は一度だけです');
+  String get permNow => _es('ahora', 'now', '今');
+  String get permPreviewRelease => 'Random Access Memories';
+
   /// Under the mask while the session wakes up, if it takes a moment.
   String get loadingWaking => _es('Despertando la luna…', 'Waking the moon…', '月を起こしています…');
   String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
@@ -1774,7 +1849,6 @@ class AppStrings {
   // Gesture hints
   String get swipeToRemoveHint => _l.swipeToRemoveHint;
 
-
   // Listened toggle tooltip
   String get markAsListened => _l.markAsListened;
 
@@ -1788,62 +1862,6 @@ class AppStrings {
 
   String get onboardingHeaderGlitch => _l.onboardingHeaderGlitch;
 
-  String get onboardingHeader => '$onboardingHeaderPrefix$onboardingHeaderGlitch';
-
-  String get onboardingSkip => _l.onboardingSkip;
-
-  String get onboardingNext => _l.onboardingNext;
-
-  String get onboardingStart => _l.onboardingStart;
-
-  String get onboardingSlide1Badge => _l.onboardingSlide1Badge;
-
-  String get onboardingSlide1Title => _l.onboardingSlide1Title;
-
-  String get onboardingSlide1Desc => _l.onboardingSlide1Desc;
-
-  String get onboardingPillFavorites => _l.onboardingPillFavorites;
-
-  String get onboardingPillStorage => _l.onboardingPillStorage;
-
-  String get onboardingPillAlbums => _l.onboardingPillAlbums;
-
-  String get onboardingOniMaskHint => _l.onboardingOniMaskHint;
-
-  String get onboardingOniMaskNotListened => _l.onboardingOniMaskNotListened;
-
-  String get onboardingOniMaskListened => _l.onboardingOniMaskListened;
-
-  String get onboardingAlbumProgressHint => _l.onboardingAlbumProgressHint;
-
-  String get onboardingAlbumProgress0 => _l.onboardingAlbumProgress0;
-
-  String get onboardingAlbumProgress100 => _l.onboardingAlbumProgress100;
-
-  String get onboardingSlide2Badge => _l.onboardingSlide2Badge;
-
-  String get onboardingSlide2Title => _l.onboardingSlide2Title;
-
-  String get onboardingSlide2Desc => _l.onboardingSlide2Desc;
-
-  String get onboardingPillSearch => _l.onboardingPillSearch;
-
-  String get onboardingPillTracks => _l.onboardingPillTracks;
-
-  String get onboardingPillPreview => _l.onboardingPillPreview;
-
-  String get onboardingSlide3Badge => _l.onboardingSlide3Badge;
-
-  String get onboardingSlide3Title => _l.onboardingSlide3Title;
-
-  String get onboardingSlide3Desc => _l.onboardingSlide3Desc;
-
-  String get onboardingPillEqualizer => _l.onboardingPillEqualizer;
-
-  String get onboardingPillFullscreen => _l.onboardingPillFullscreen;
-
-  String get onboardingPillCyberHUD => _l.onboardingPillCyberHUD;
-
   // --- Login Screen ---
 
   String get guestLibraryTitle => _l.guestLibraryTitle;
@@ -1856,11 +1874,7 @@ class AppStrings {
 
   String get loginSubtitleGlitch => _l.loginSubtitleGlitch;
 
-
-
-
   String get loginGoogleError => _l.loginGoogleError;
-
 
   // --- Loading / Startup Screen ---
   String get loadingStatus => _l.loadingStatus;
@@ -1894,7 +1908,6 @@ class AppStrings {
       _l.albumShareText(title, artist, link);
   String artistShareText(String name, String link) => _l.artistShareText(name, link);
   String get profileMakePublicFirst => _l.profileMakePublicFirst;
-
 
   /// A link (or a page opened by id) whose album or artist doesn't exist.
   String get linkNotFound => _l.linkNotFound;
@@ -1978,7 +1991,6 @@ class AppStrings {
   String get a11yCollapseStoredContent => _l.a11yCollapseStoredContent;
 
   String get a11yLoginWithGoogle => _l.a11yLoginWithGoogle;
-
 
   String get a11ySelectLanguage => _l.a11ySelectLanguage;
 
@@ -2645,10 +2657,8 @@ class AppStrings {
   String get permNotNow => _l.permNotNow;
   String get permOpenSettings => _l.permOpenSettings;
   String get permNotifTitle => _l.permNotifTitle;
-  String get permNotifBody => _l.permNotifBody;
   String get permNotifBlocked => _l.permNotifBlocked;
   String get permBackgroundTitle => _l.permBackgroundTitle;
-  String get permBackgroundBody => _l.permBackgroundBody;
 
   String get radarCheckNow => _l.radarCheckNow;
 

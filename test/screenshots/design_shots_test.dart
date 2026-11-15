@@ -17,6 +17,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/constants/app_colors.dart';
 import 'package:tsuki_tunes_mobile/core/theme/cyber_theme.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/battery_guide.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/profile_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/social_repository_impl.dart';
@@ -39,6 +40,7 @@ import 'package:tsuki_tunes_mobile/presentation/screens/login/login_screen.dart'
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/search_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/streak_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
@@ -52,6 +54,7 @@ import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/language_selector_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/permission_primer.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/profile_bottom_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/queue_panel.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/track_tile.dart';
@@ -93,6 +96,16 @@ class _StillAudio extends AudioProvider {
 class _Waking extends ChangeNotifier implements SessionGate {
   @override
   SessionStatus get status => SessionStatus.loading;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Android limits Tsuki's battery: the background primer shows.
+class _LimitedGuide implements BatteryGuide {
+  @override
+  Future<bool> shouldOfferBackground() async => true;
+  @override
+  Future<void> declineBackground() async {}
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -524,6 +537,44 @@ void main() {
   testWidgets('login', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'login', overrides: base, const LoginScreen(),
         before: () => tester.pump(const Duration(seconds: 2)));
+  });
+
+  // The first-run guide, each of its steps.
+  for (var step = 0; step < 4; step++) {
+    testWidgets('onboarding_${step + 1}', skip: skip != null, (tester) async {
+      await _pumpShot(tester, 'onboarding_${step + 1}', overrides: base, const OnboardingScreen(), before: () async {
+        for (var i = 0; i < step; i++) {
+          final pages = find.byType(PageView);
+          if (pages.evaluate().isEmpty) break;
+          await tester.drag(pages.first, const Offset(-250, 0));
+          await tester.pump(const Duration(milliseconds: 700));
+          await tester.pump(const Duration(milliseconds: 700));
+        }
+        // Each demo well into its loop.
+        await tester.pump(const Duration(milliseconds: 3500));
+      });
+    });
+  }
+
+  // Why a permission, before Android asks.
+  testWidgets('permission', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'permission', scaffold: true, overrides: base, Builder(builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && ModalRoute.of(context)?.isCurrent == true) unawaited(PermissionPrimer.notifications(context));
+      });
+      return const SizedBox.expand();
+    }));
+  });
+
+  // Why running in the background, before Android asks.
+  testWidgets('permission_background', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'permission_background',
+        scaffold: true, overrides: [...base, batteryGuideProvider.overrideWithValue(_LimitedGuide())], Builder(builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && ModalRoute.of(context)?.isCurrent == true) unawaited(PermissionPrimer.offerBackgroundIfNeeded(context));
+      });
+      return const SizedBox.expand();
+    }));
   });
 
   // The first frame while the session wakes up.

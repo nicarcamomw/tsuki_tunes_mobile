@@ -131,4 +131,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(await answer, isFalse);
   });
+
+  testWidgets('notifications: the Radar\'s own notice acted out, the question as a header, three short lines', (tester) async {
+    final handle = tester.ensureSemantics();
+    final ctx = await app(tester);
+    unawaited(PermissionPrimer.notifications(ctx));
+    await tester.pumpAndSettle();
+
+    // What a notice from the Radar looks like, word for word.
+    expect(find.text('Daft Punk sacó un álbum nuevo'), findsOneWidget);
+    expect(find.text('Random Access Memories'), findsOneWidget);
+    expect(tester.getSemantics(find.text('¿Te avisamos cuando salga algo nuevo?')),
+        matchesSemantics(isHeader: true, label: '¿Te avisamos cuando salga algo nuevo?'));
+    expect(find.text('Solo música nueva de los artistas que sigues'), findsOneWidget);
+    expect(find.text('Nada de publicidad'), findsOneWidget);
+    expect(find.text('Lo apagas cuando quieras en el Radar'), findsOneWidget);
+    // The scene is decoration: TalkBack reads the question and the lines.
+    expect(find.bySemanticsLabel('Daft Punk sacó un álbum nuevo'), findsNothing);
+    handle.dispose();
+  });
+
+  testWidgets('background: the phone locks and the song plays on; three lines', (tester) async {
+    final ctx = await app(tester);
+    unawaited(PermissionPrimer.offerBackgroundIfNeeded(ctx));
+    await tester.pumpAndSettle();
+    expect(find.text('23:41'), findsOneWidget);
+    expect(find.text('Android puede cerrar Tsuki al bloquear el teléfono'), findsOneWidget);
+    expect(find.text('Así la música sigue con la pantalla apagada'), findsOneWidget);
+    expect(find.text('Te lo preguntamos una sola vez'), findsOneWidget);
+  });
+
+  testWidgets('the scene plays once and settles; with less motion it starts at its end', (tester) async {
+    final ctx = await app(tester);
+    unawaited(PermissionPrimer.notifications(ctx));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    // Early on, the lines haven't risen yet.
+    final early = tester.widget<FadeTransition>(
+        find.ancestor(of: find.text('Nada de publicidad'), matching: find.byType(FadeTransition)).first);
+    expect(early.opacity.value, lessThan(0.1));
+    await tester.pumpAndSettle();
+    expect(tester.hasRunningAnimations, isFalse);
+
+    Navigator.of(ctx, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    unawaited(PermissionPrimer.notifications(ctx));
+    await tester.pump();
+    await tester.pump();
+    final still = tester.widget<FadeTransition>(
+        find.ancestor(of: find.text('Nada de publicidad'), matching: find.byType(FadeTransition)).first);
+    expect(still.opacity.value, 1);
+  });
 }

@@ -62,10 +62,10 @@ Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentatio
 ### 1. Acceso
 
 - **Carga inicial** (`LoadingRoute`) y control de sesión (`navigation/session_gate.dart`).
-- **Login** (`login/login_screen.dart`): fondo animado (`login/painters.dart`), botón de Google (`login/google_button.dart`), entrar como observador (invitado), avisos de error.
-- **Onboarding** (`onboarding/`): tres slides (identidad, reproductor, búsqueda), sus fondos animados, indicador de paso y botones.
-- **Tutorial** (`TutorialRoute`): el mismo onboarding abierto desde ajustes.
-- **Permisos explicados** (`permission_primer.dart`): notificaciones y segundo plano.
+- **Login** (`login/login_screen.dart`): el cielo de la entrada (`widgets/tsuki_sky.dart`), botón de Google (`login/google_button.dart`), entrar como observador (invitado), avisos de error.
+- **Onboarding** (`onboarding/`): cuatro pasos (biblioteca, descubrir, escuchar, tu camino), cada uno con una demo en vivo sobre vidrio (`onboarding_steps.dart`), bajo el cielo de la entrada; indicador de paso en fases lunares y un botón que cambia en el último paso.
+- **Tutorial** (`TutorialRoute`): el mismo onboarding abierto desde ajustes, con fundido, botón de cerrar y "Listo" al final.
+- **Permisos explicados** (`permission_primer.dart`): notificaciones y segundo plano, cada uno con su escena animada y tres líneas.
 
 ### 2. Estructura
 
@@ -218,7 +218,7 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 | D-08 | ~~Un helper de snackbar.~~ **Hecho:** `AppSnack`; ningún `SnackBar(` a mano. | Ningún `SnackBar(` construido a mano. | A |
 | D-09 | ~~Una sola flecha de volver.~~ **Hecho:** `arrow_back_rounded`. | Un único ícono en toda la app. | C |
 | D-10 | ~~Botones: primario, secundario y de texto.~~ **Hecho:** desde el tema, con esquina de chip y 48 dp; sin `ElevatedButton` ni `CyberButton` (`test/button_types_test.dart`). | Cada botón es uno de los tres tipos. | B |
-| D-11 | ~~Colores fuera de paleta a `AppColors`.~~ **Hecho:** el santuario (Eco, racha, Lore, Ascensión) y las ilustraciones (login, onboarding, Wrapped, cielos) tienen nombre. Solo los dibujos sobre lienzo (`painters.dart`, `story_image.dart`) conservan sus degradados. | Ningún `Color(0x…)` en pantallas. | C |
+| D-11 | ~~Colores fuera de paleta a `AppColors`.~~ **Hecho:** el santuario (Eco, racha, Lore, Ascensión) y las ilustraciones (login, onboarding, Wrapped, cielos) tienen nombre. Solo el dibujo sobre lienzo de `story_image.dart` conserva sus degradados. | Ningún `Color(0x…)` en pantallas. | C |
 | D-12 | ~~**Rojo con significado.**~~ **Hecho:** la guía está en `app_colors.dart` (rojo para lo que suena, la acción principal y lo activo; cian información, púrpura social, verde Spotify) y aplicada en las cuatro pestañas: insignia de fuente verde o neutra, portadas faltantes en gris, primario para "Crear playlist". | Guía escrita y aplicada en las pestañas principales. | A |
 | D-13 | **Tipografía de titulares:** sumar una display técnica y condensada para títulos (`INICIO // 01`) y cifras monoespaciadas para stats y tiempos. El cuerpo sigue en Plus Jakarta. **Hecha la mitad sin fuente nueva:** cifras de ancho fijo (`getTextStyle(tabular: true)`) en tiempos, duraciones y contadores. **Pendiente de decisión:** la fuente display cambia la identidad (regla 1). | Títulos y números usan las nuevas familias. | B |
 | D-14 | ~~**Profundidad con luz.**~~ **Hecho:** `surface`, `surfaceCard` y `surfaceRaised` (hojas, diálogos y menús); `borderGlow` solo para lo activo (`test/surfaces_test.dart`). | Tokens de superficie aplicados a las tarjetas. | B |
@@ -229,7 +229,9 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 | Código | Tarea | Prio |
 |---|---|---|
 | A-01 | ~~Login tiene 7 `CustomPaint` animados.~~ **Hecho:** el login comparte el cielo de la entrada (`widgets/tsuki_sky.dart`: la nebulosa en un shader y las brasas), con un solo ticker y pintores que se redibujan sin reconstruir; la máscara de la entrada sube a su lugar con su anillo (que es el indicador de carga), el nombre aparece con un glitch, y las entradas van en un panel de *liquid glass*: el botón oficial de Google, el observador, una línea que dice qué pasa (sin conexión, cuenta regresiva por intentos, error con "Reintentar") y los Términos (`test/login_screen_test.dart`). | B |
-| A-02 | Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar. | B |
+| A-02 | ~~Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar.~~ **Hecho:** rehecho sobre el cielo de la entrada (nebulosa y brasas, un solo ticker). Son cuatro pasos y cada uno muestra la app de verdad en una demo en vivo sobre *liquid glass*: canciones que se marcan con la máscara mientras el álbum gana color (y se pueden tocar), una búsqueda que se escribe sola con sus resultados y la radio del artista, el disco girando con la vista previa y la letra karaoke, y el nivel Eco llenándose mientras despiertan tres máscaras del catálogo (R, SR, SSR). Tiene parallax al deslizar, indicador en fases lunares, títulos anunciados como encabezado y "Paso n de 4" para TalkBack. Solo anima el paso visible (`TickerMode`) y, con menos movimiento, cada demo muestra su estado final quieta. Los textos van con tokens en es/en/ja y se borraron 27 claves viejas (`test/onboarding_screen_test.dart`). | B |
+| A-04 | ~~Tutorial desde ajustes.~~ **Hecho:** abre el mismo recorrido con fundido, tiene botón de cerrar en vez de "Saltar" y termina en "Listo". El botón atrás de Android retrocede un paso antes de salir (también en el primer arranque). | B |
+| A-05 | ~~Permisos explicados.~~ **Hecho:** la hoja actúa una vez lo que da el permiso. En notificaciones, la campana suena y cae el aviso del Radar tal como lo mostraría Android ("Daft Punk sacó un álbum nuevo"). En segundo plano, el teléfono se bloquea y la canción sigue sonando. Debajo van la pregunta como encabezado, tres líneas cortas que suben una tras otra y los botones en píldora. Se acomoda sin bucles y queda quieta con menos movimiento; el diálogo de Android sigue llegando solo después de un sí (`test/permission_primer_test.dart`). | B |
 | A-03 | ~~Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono.~~ **Hecho:** `LoadingScreen` sigue al splash de Android sin costura (misma noche `AppColors.splash`, la misma máscara en el mismo lugar), respira con un brillo rojo y, si tarda, dice "Despertando la luna…". El splash de Android 7 a 11 ya no dibuja el logo gigante y recortado. Nunca queda trabada: almacenamiento que falla o Firebase que no responde (8 s) siguen de largo (`test/startup_test.dart`). | C |
 
 ### 2. Estructura

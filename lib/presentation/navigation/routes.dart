@@ -398,14 +398,15 @@ class MaskCollectionRoute extends GoRouteData with $MaskCollectionRoute {
       cyberPage(state, const MaskCollectionScreen());
 }
 
-/// The tutorial again, from the settings; it closes when done.
+/// The tutorial again, from the settings: the same night fades in over
+/// them, and closes when done.
 class TutorialRoute extends GoRouteData with $TutorialRoute {
   const TutorialRoute();
 
   static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
 
   @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+  Page<void> buildPage(BuildContext context, GoRouterState state) => fadePage(
         state,
         Builder(
           builder: (context) => OnboardingScreen(

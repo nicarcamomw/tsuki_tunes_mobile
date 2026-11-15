@@ -68,11 +68,10 @@ void main() {
   });
 
   test('D-11: screens take their colours from AppColors', () {
-    // Painters (login, onboarding) and the story image draw by hand on a
-    // canvas: their gradients are theirs.
+    // The story image draws by hand on a canvas: its gradients are its own.
     final hits = _offenders(RegExp(r'Color\(0x[0-9A-Fa-f]{8}\)'))
         .where((hit) => hit.contains('/screens/'))
-        .where((hit) => !hit.contains('painters.dart') && !hit.contains('story_image.dart'))
+        .where((hit) => !hit.contains('story_image.dart'))
         .toList();
     expect(hits, isEmpty);
   });
