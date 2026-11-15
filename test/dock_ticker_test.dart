@@ -120,7 +120,7 @@ void main() {
         child: const MaterialApp(home: MainNavigationScreen(child: SizedBox.expand())),
       ));
       await tester.pump(const Duration(milliseconds: 100));
-      final hint = find.textContaining('toca dos veces');
+      final hint = find.textContaining('mantenla presionada');
       // Two changes: nothing yet.
       for (final tab in ['BUSCAR', 'BIBLIOTECA']) {
         await tester.tap(find.text(tab));

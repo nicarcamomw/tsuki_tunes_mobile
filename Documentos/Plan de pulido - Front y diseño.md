@@ -69,7 +69,7 @@ Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentatio
 
 ### 2. Estructura
 
-- **Barra inferior** (`main_navigation_screen.dart`): 4 pestañas, ícono animado, subtítulo japonés, indicador, punto de novedades en Biblioteca, gestos (doble toque, mantener).
+- **Barra inferior** (`widgets/tsuki_nav_bar.dart`, en `main_navigation_screen.dart`): 4 pestañas, ícono animado, subtítulo japonés, lente de vidrio que se desliza, contador de novedades en Biblioteca, gestos (tocar de nuevo, doble toque, mantener para ver atajos). Comparte un solo muelle de vidrio con el mini player.
 - **Mini player** (`mini_player.dart`): portada que respira, título en marquesina, barra de progreso, marcar escuchada, tinte por portada.
 - **Avisos globales:** error de Spotify (con guía de batería), error de reproducción, error de sincronización, franja sin conexión.
 - **Capas sobre toda la app:** aviso de máscara desbloqueada (`mask_unlock_banner.dart`), aviso de subida de nivel (`EcoLevelUpBanner`), hora bruja (`witching_hour_overlay.dart`), sakura (`sakura_overlay.dart`), atmósfera lunar (`moon_atmosphere.dart`).
@@ -238,13 +238,13 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 
 | Código | Tarea | Prio |
 |---|---|---|
-| E-01 | Subtítulo japonés de la barra (8.5 px): subirlo o dejarlo solo en la pestaña activa. | A |
-| E-02 | Gestos ocultos de la barra (doble toque, mantener): enseñarlos una vez o darles alternativa visible. | B |
+| E-01 | ~~Subtítulo japonés de la barra (8.5 px): subirlo o dejarlo solo en la pestaña activa.~~ **Hecho:** va en el piso de la escala y solo en la pestaña activa, como adorno (TalkBack no lo lee). Todas las pestañas miden lo mismo: antes el indicador hacía más alta la activa y las etiquetas saltaban 14 px al cambiar. La etiqueta activa usa `accentText`, el rojo para texto (`test/bottom_bar_test.dart`). | A |
+| E-02 | ~~Gestos ocultos de la barra (doble toque, mantener): enseñarlos una vez o darles alternativa visible.~~ **Hecho:** mantener una pestaña abre, sobre ella, un menú con sus atajos (Inicio: perfil, arriba, actualizar; Buscar: búsqueda nueva, escribir; Explorar y Biblioteca: arriba); elegir abre la pestaña y lo ejecuta. El doble toque cuenta solo en la pestaña ya abierta (antes, tocar dos veces una pestaña nueva la abría y además disparaba el atajo). El consejo se muestra una vez, al tercer cambio. TalkBack oye una barra de pestañas ("Inicio, pestaña 1 de 4, seleccionada") y "mantén para ver atajos". | B |
 | E-03 | Los tres avisos globales (Spotify, reproducción, sincronización) son código repetido dentro de `build`: pasarlos al helper de D-08. | A |
 | E-04 | Seis pantallas (Eco, Lore, Racha, Ascensión, playlist compartida, Letras) abren con `MaterialPageRoute`; usar la transición propia (`cyberPage`). | B |
-| E-05 | Fundir barra y mini player en un solo muelle: la línea de progreso es el borde superior de la barra. | B |
-| E-06 | Indicador de pestaña activa que se desliza de una a otra. | C |
-| E-07 | Mini player: deslizar a los lados cambia de canción; hacia arriba lo abre. | B |
+| E-05 | ~~Fundir barra y mini player en un solo muelle: la línea de progreso es el borde superior de la barra.~~ **Hecho:** un solo vidrio con esquinas superiores redondeadas; el progreso de la canción es su borde superior iluminado (sin tocar las esquinas), el color del reproductor es su resplandor, y una línea fina separa la canción de las pestañas. Sin canción, el muelle es solo la barra. | B |
+| E-06 | ~~Indicador de pestaña activa que se desliza de una a otra.~~ **Hecho:** un lente de vidrio más claro, con una luz roja al pie, viaja de pestaña en pestaña estirándose como una gota (el borde que avanza va delante y el otro lo alcanza), desde donde esté aunque vaya a medio camino; con menos movimiento salta. Reemplaza a `CyberTabIndicator`. Biblioteca muestra un contador ("+3", "9+") que aparece con un pop y que TalkBack lee. | C |
+| E-07 | ~~Mini player: deslizar a los lados cambia de canción; hacia arriba lo abre.~~ **Hecho:** ya existía; ahora la fila sube con el dedo y abre el reproductor al pasar el umbral (o con un gesto rápido), y vuelve si se suelta antes. Al deslizar a los lados aparece, del lado del que viene, el ícono de la canción a la que va, que se enciende al llegar al umbral. TalkBack tiene "Abrir el reproductor", "Siguiente pista" y "Pista anterior" como acciones. | B |
 
 ### 3. Inicio
 

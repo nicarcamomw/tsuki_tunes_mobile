@@ -158,15 +158,8 @@ class AppStrings {
   String get emptyLoreOni => _l.emptyLoreOni;
   String get emptyLoreHannya => _l.emptyLoreHannya;
   String get emptyLoreTengu => _l.emptyLoreTengu;
-  String get navGesturesHint => _l.navGesturesHint;
   String get searchTopResult => _l.searchTopResult;
   String get searchTopArtistKind => _l.searchTopArtistKind;
-  /// [tab] is a MainTab name. Explore and Library both go back to the top.
-  String navLongPressHint(String tab) => switch (tab) {
-        'home' => _l.navLongPressHome,
-        'search' => _l.navLongPressSearch,
-        _ => _l.navLongPressLibrary,
-      };
 
   String get normalizeTitle => _l.normalizeTitle;
 
@@ -902,6 +895,25 @@ class AppStrings {
   String get permBgPoint3 => _es('Te lo preguntamos una sola vez', 'We only ask once', '確認は一度だけです');
   String get permNow => _es('ahora', 'now', '今');
   String get permPreviewRelease => 'Random Access Memories';
+
+  // ── The bottom bar: tabs, their shortcuts, what's new ──
+  /// TalkBack, after a tab's name.
+  String navTabOf(int index, int count) =>
+      _es('pestaña $index de $count', 'tab $index of $count', 'タブ $index / $count');
+  /// TalkBack, after Library's name, when songs were marked elsewhere.
+  String navNewTracks(int n) => _es(n == 1 ? '1 canción nueva' : '$n canciones nuevas', n == 1 ? '1 new song' : '$n new songs', '新しい曲 $n 件');
+  String get navHoldHint => _es('ver atajos', 'show shortcuts', 'ショートカットを表示');
+  String get navGesturesHint => _es(
+      'Consejo: toca otra vez una pestaña para volver arriba, y mantenla presionada para ver sus atajos.',
+      'Tip: tap a tab again to go back to the top, and hold it to see its shortcuts.',
+      'ヒント：タブをもう一度タップすると先頭に戻り、長押しでショートカットが表示されます。');
+  String get navMenuProfile => _es('Ver perfil y ajustes', 'Profile and settings', 'プロフィールと設定');
+  String get navMenuTop => _es('Volver arriba', 'Back to the top', '先頭に戻る');
+  String get navMenuRefresh => _es('Actualizar', 'Refresh', '更新');
+  String get navMenuNewSearch => _es('Nueva búsqueda', 'New search', '新しい検索');
+  String get navMenuTypeSearch => _es('Escribir en el buscador', 'Type a search', '検索を入力');
+  /// TalkBack's actions on the mini player.
+  String get a11yOpenPlayer => _es('Abrir el reproductor', 'Open the player', 'プレーヤーを開く');
 
   /// Under the mask while the session wakes up, if it takes a moment.
   String get loadingWaking => _es('Despertando la luna…', 'Waking the moon…', '月を起こしています…');

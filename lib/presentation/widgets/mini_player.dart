@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -14,7 +15,6 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/cover_colors.dart';
 import 'audio_progress_selector.dart';
-import 'frosted_glass.dart';
 import 'haptics.dart';
 import 'listened_undo.dart';
 import 'oni_mask_icon.dart';
@@ -22,6 +22,12 @@ import 'player_art_hero.dart';
 import 'player_tint.dart';
 import 'tap_scale.dart';
 
+/// The song playing, at the top of the dock (E-05: it shares the tabs'
+/// glass; its progress is the dock's lit top edge).
+///
+/// Tap or swipe up to open the player: the row lifts with the finger.
+/// Swipe sideways to change songs: the next or previous one shows its icon
+/// on the side it comes from. TalkBack has both as actions.
 class MiniPlayer extends ConsumerStatefulWidget {
   const MiniPlayer({super.key});
 
@@ -32,6 +38,8 @@ class MiniPlayer extends ConsumerStatefulWidget {
 class _MiniPlayerState extends ConsumerState<MiniPlayer>
     with SingleTickerProviderStateMixin {
   double _swipeDx = 0;
+  // How far up the row has been lifted (negative), towards the player.
+  double _liftDy = 0;
   bool _swipeLocked = false;
   bool _hapticFired = false;
   int _skipDirection = 1;
@@ -102,6 +110,22 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
         .whenComplete(() => _swipeLocked = false);
   }
 
+  /// The lift that opens the player, as a swipe up.
+  static const double _openLift = 36;
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() => _liftDy = (_liftDy + details.delta.dy * 0.5).clamp(-_openLift * 1.4, 0.0));
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    final opens = _liftDy <= -_openLift || (details.primaryVelocity ?? 0) < -300;
+    if (opens) {
+      Haptics.tap();
+      _openExpandedPlayer(context);
+    }
+    setState(() => _liftDy = 0);
+  }
+
   void _openExpandedPlayer(BuildContext context) {
     NavigationEvents.isPlayerExpanded.value = true;
     Navigator.of(context)
@@ -157,30 +181,29 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     // (Spotify connected but falling back), quiet when it's the usual.
     final preview = !ref.watch(playbackSourceProvider.select((s) => s.isFullSong));
 
+    final hasQueue = audio.queue.length > 1;
+    final threshold = _swipeThreshold;
+    final strings = locale.strings;
     return Semantics(
       label: '${track.title}, ${track.fullArtistName}',
+      onTapHint: strings.a11yOpenPlayer,
+      customSemanticsActions: {
+        CustomSemanticsAction(label: strings.a11yOpenPlayer): () => _openExpandedPlayer(context),
+        if (hasQueue) CustomSemanticsAction(label: strings.a11yNext): audio.next,
+        if (hasQueue) CustomSemanticsAction(label: strings.a11yPrevious): audio.previous,
+      },
       child: RepaintBoundary(
         child: GestureDetector(
           onTap: () { Haptics.tap(); _openExpandedPlayer(context); },
-          onVerticalDragEnd: (details) {
-            if ((details.primaryVelocity ?? 0) < -300) {
-              _openExpandedPlayer(context);
-            }
-          },
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
           onHorizontalDragUpdate: _onHorizontalDragUpdate,
           onHorizontalDragEnd: (d) => _onHorizontalDragEnd(d, audio),
-          // Liquid glass in the player's colour: the page shows through,
-          // blurred; the tint draws its rim and its glow, and the cover's
-          // colour seeps in from the artwork's side.
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: FrostedGlass(
-              color: AppColors.surfaceCard,
-              fill: AppGlass.barFill,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: PlayerTint.of(context), width: 1.2),
-              shadowColor: PlayerTint.glowOf(context),
-              child: AnimatedContainer(
+          // On the dock's glass: the cover's colour seeps in from the
+          // artwork's side.
+          child: Transform.translate(
+            offset: Offset(0, _liftDy),
+            child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
                 decoration: BoxDecoration(
@@ -192,7 +215,11 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const _MiniProgressBar(),
+                    // The dock's lit top edge, clear of its round corners.
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppRadius.sheet),
+                      child: _MiniProgressBar(),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -202,7 +229,15 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                         children: [
                           // --- Track info (swipeable) ---
                           Expanded(
-                            child: Transform.translate(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // The song a swipe goes to, on its side.
+                                if (hasQueue && _swipeDx != 0)
+                                  Positioned.fill(
+                                    child: _SwipeHint(dx: _swipeDx, threshold: threshold),
+                                  ),
+                                Transform.translate(
                               offset: Offset(_swipeDx * 0.3, 0),
                               // Opacity at 1.0 adds no layer; the old color
                               // filter forced an offscreen pass every frame.
@@ -272,6 +307,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                 ),
                               ),
                             ),
+                              ],
+                            ),
                           ),
                           const SizedBox(width: 10),
                           // --- Oni mask (listened toggle) ---
@@ -339,7 +376,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                   ],
                 ),
               ),
-            ),
           ),
         ),
       ),
@@ -605,6 +641,43 @@ class _MiniProgressBar extends StatelessWidget {
         minHeight: 2.5,
         backgroundColor: AppColors.border,
         valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Swipe hint
+// ---------------------------------------------------------------------------
+
+/// While the row is dragged sideways: the song it goes to, as an icon on
+/// the side it comes from, brighter as the swipe nears its threshold.
+class _SwipeHint extends StatelessWidget {
+  const _SwipeHint({required this.dx, required this.threshold});
+
+  final double dx;
+  final double threshold;
+
+  @override
+  Widget build(BuildContext context) {
+    final reach = (dx.abs() / threshold).clamp(0.0, 1.0);
+    final next = dx < 0;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: next ? Alignment.centerRight : Alignment.centerLeft,
+          child: Opacity(
+            opacity: reach,
+            child: Transform.scale(
+              scale: 0.7 + 0.3 * reach,
+              child: Icon(
+                next ? Icons.skip_next_rounded : Icons.skip_previous_rounded,
+                size: 26,
+                color: reach >= 1 ? PlayerTint.of(context) : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

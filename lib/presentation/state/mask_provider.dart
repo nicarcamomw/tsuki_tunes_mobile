@@ -391,8 +391,13 @@ class MaskProvider extends ChangeNotifier {
     if (now >= EcoLevels.maxLevel) unawaited(_reportAscension(name: userName?.call()));
   }
 
+  // Loads and cloud reads can land after the provider is gone (a screen
+  // closed, a test over): they're dropped then.
+  bool _disposed = false;
+
   @override
   void notifyListeners() {
+    if (_disposed) return;
     _checkLevel();
     super.notifyListeners();
   }
@@ -1297,6 +1302,7 @@ class MaskProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     super.dispose();
   }
