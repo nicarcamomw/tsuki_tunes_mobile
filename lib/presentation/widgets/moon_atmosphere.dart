@@ -41,8 +41,10 @@ class MoonAtmosphere extends ConsumerWidget {
           ),
           if (!reduceMotion) const IgnorePointer(child: _GlitchBursts()),
         ],
-        if (!reduceMotion) const IgnorePointer(child: SakuraOverlay()),
-        if (!reduceMotion) const IgnorePointer(child: WitchingHourOverlay()),
+        // Each decides what less motion asks of it (the greeting alone, a
+        // still whisper).
+        const SakuraOverlay(),
+        const WitchingHourOverlay(),
       ],
     );
   }
@@ -126,10 +128,25 @@ void paintScreenVignette(Canvas canvas, Size size, Color color, {double start = 
 }
 
 /// Continuous with illumination, so every night looks slightly different.
+///
+/// Kept light enough that the app's text still reads (AA) under it: the
+/// limits below are what `moon_features_test` checks the palette against.
 class MoonlightPainter extends CustomPainter {
   final double illumination;
 
   MoonlightPainter({required this.illumination});
+
+  /// At new moon: the whole screen, a shade darker.
+  static const double maxDim = 0.03;
+
+  /// The edges' darkening: always this, and up to [vignetteDark] more at
+  /// new moon.
+  static const double vignetteBase = 0.04;
+  static const double vignetteDark = 0.06;
+
+  /// The full moon's silver light, at its brightest (off the top-right
+  /// corner, where nothing sits).
+  static const double maxSilver = 0.08;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -140,11 +157,11 @@ class MoonlightPainter extends CustomPainter {
     // New moon: the room goes darker.
     canvas.drawRect(
       rect,
-      Paint()..color = const Color(0xFF000000).withValues(alpha: 0.10 * pow(dark, 1.5)),
+      Paint()..color = const Color(0xFF000000).withValues(alpha: maxDim * pow(dark, 1.5)),
     );
 
     paintScreenVignette(
-        canvas, size, const Color(0xFF000000).withValues(alpha: 0.08 + 0.22 * dark));
+        canvas, size, const Color(0xFF000000).withValues(alpha: vignetteBase + vignetteDark * dark));
 
     // Full moon: silver light falling from the top corner where the moon sits.
     if (k > 0.02) {
@@ -152,11 +169,13 @@ class MoonlightPainter extends CustomPainter {
         rect,
         Paint()
           ..shader = RadialGradient(
-            center: const Alignment(0.8, -1.1),
+            // Beyond the corner: the light falls in, it doesn't sit on the
+            // header.
+            center: const Alignment(1.2, -1.35),
             radius: 1.2,
             colors: [
-              const Color(0xFFD6E0F5).withValues(alpha: 0.14 * k * k),
-              const Color(0xFFD6E0F5).withValues(alpha: 0.04 * k * k),
+              const Color(0xFFD6E0F5).withValues(alpha: maxSilver * k * k),
+              const Color(0xFFD6E0F5).withValues(alpha: 0.025 * k * k),
               const Color(0x00D6E0F5),
             ],
             stops: const [0.0, 0.45, 1.0],
@@ -169,7 +188,7 @@ class MoonlightPainter extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFFE6EEFF).withValues(alpha: 0.035 * k),
+              const Color(0xFFE6EEFF).withValues(alpha: 0.02 * k),
               const Color(0x00E6EEFF),
             ],
             stops: const [0.0, 0.4],
@@ -228,8 +247,9 @@ class BloodMoonLightPainter extends CustomPainter {
   bool shouldRepaint(BloodMoonLightPainter old) => false;
 }
 
-/// Short, thin glitch bands every few seconds. Kept small and dim so they
-/// never become a large-area flash.
+/// Short, thin glitch bands now and then (every 15 to 30 s: an eclipse
+/// lasts hours). Kept small and dim so they never become a large-area
+/// flash.
 class _GlitchBursts extends StatefulWidget {
   const _GlitchBursts();
 
@@ -251,7 +271,7 @@ class _GlitchBurstsState extends State<_GlitchBursts> {
   }
 
   void _schedule() {
-    _next = Timer(Duration(milliseconds: 4500 + _rng.nextInt(5500)), _burst);
+    _next = Timer(Duration(milliseconds: 15000 + _rng.nextInt(15000)), _burst);
   }
 
   void _burst() {

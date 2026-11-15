@@ -51,13 +51,17 @@ import 'package:tsuki_tunes_mobile/presentation/state/mask_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/eco_widgets.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/language_selector_sheet.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/mask_unlock_banner.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/permission_primer.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/profile_bottom_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/queue_panel.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/sakura_overlay.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/track_tile.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/witching_hour_overlay.dart';
 
 import '../helpers/fake_firebase_service.dart';
 import '../helpers/test_scope.dart';
@@ -102,6 +106,12 @@ class _MidSongAudio extends _StillAudio {
   List<Track> get queue => [_song, ..._upNext];
   @override
   Track? get nextPreview => _upNext.first;
+}
+
+/// Halfway through the song, playing (the witching hour wants music).
+class _PlayingMidSong extends _MidSongAudio {
+  @override
+  bool get isPlaying => true;
 }
 
 /// Halfway through the song when something goes wrong with it.
@@ -409,6 +419,77 @@ void main() {
       });
     });
   }
+
+  // A mask woken, by rarity: glass for R..SSR, the whole screen for UL
+  // and the one from another universe.
+  for (final (name, pick) in [
+    ('layer_mask_sr', (OniMask m) => m.rarity == MaskRarity.sr && !m.secret),
+    ('layer_mask_ul', (OniMask m) => m.rarity == MaskRarity.ul && !m.divine && !m.chosen),
+    ('layer_mask_ikai', (OniMask m) => m.id == 'ikai'),
+  ]) {
+    testWidgets(name, skip: skip != null, (tester) async {
+      final masks = MaskProvider(clock: () => DateTime(2026, 11, 12, 15));
+      await tester.runAsync(() => masks.ready);
+      await _pumpShot(
+        tester,
+        name,
+        overrides: [
+          ...base,
+          audioProvider.overrideWith((ref) => _MidSongAudio()),
+          maskProvider.overrideWith((ref) => masks, disposeNotifier: false),
+        ],
+        const MaskUnlockLayer(child: MainNavigationScreen(child: SizedBox.expand())),
+        before: () async {
+          masks.unlock(MaskCatalog.all.firstWhere(pick).id);
+          await tester.pump();
+          await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
+          for (var i = 0; i < 16; i++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+        },
+      );
+      // Its own timer to leave: let it run out.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 12));
+      masks.dispose();
+    });
+  }
+
+  // The birthday: a rain of sakura under the greeting.
+  testWidgets('layer_birthday', skip: skip != null, (tester) async {
+    SharedPreferences.setMockInitialValues({SakuraOverlay.birthdayKey: '04-07'});
+    await _pumpShot(tester, 'layer_birthday', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        Stack(children: [
+          const MainNavigationScreen(child: SizedBox.expand()),
+          SakuraOverlay(today: DateTime(2026, 4, 7)),
+        ]), before: () async {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 3500));
+    });
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 20));
+  });
+
+  // The witching hour: 3:33 with music, the whisper.
+  testWidgets('layer_witching', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'layer_witching', overrides: [...base, audioProvider.overrideWith((ref) => _PlayingMidSong())],
+        Stack(children: [
+          const MainNavigationScreen(child: SizedBox.expand()),
+          WitchingHourOverlay(clock: () => DateTime(2026, 11, 15, 3, 33)),
+        ]), before: () => tester.pump(const Duration(milliseconds: 1500)));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 6));
+  });
+
+  // A level reached, over the shell.
+  testWidgets('layer_level_up', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'layer_level_up', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        const Stack(children: [
+          MainNavigationScreen(child: SizedBox.expand()),
+          Positioned(left: 0, right: 0, top: 0, child: EcoLevelUpBanner(from: 9, to: 10)),
+        ]));
+  });
 
   // No connection: how the shell says so.
   testWidgets('shell_offline', skip: skip != null, (tester) async {

@@ -924,6 +924,13 @@ class AppStrings {
   String get syncUnmarkFailed =>
       _es('No se pudo desmarcar: sigue como escuchada', "Couldn't unmark it: it's still heard", '印を外せず、聴いたままです');
 
+  // ── App-wide moments: a rare mask, a birthday, the witching hour ──
+  String get maskStrangerTier => _es('DE OTRO UNIVERSO', 'FROM ANOTHER UNIVERSE', '異界より');
+  String get maskGrandHint => _es('Toca para verla en tu colección', 'Tap to see it in your collection', 'タップしてコレクションで見る');
+  String get birthdayGreeting => _es('Feliz cumpleaños', 'Happy birthday', 'お誕生日おめでとう');
+  String get witchingWhisper =>
+      _es('La hora en que el velo se adelgaza…', 'The hour the veil wears thin…', '帳が薄くなる刻…');
+
   // ── The mini player ──
   String get miniStopped => _es('Reproducción detenida', 'Playback stopped', '再生を停止しました');
   String get miniFromStart => _es('Desde el inicio', 'From the start', '最初から');

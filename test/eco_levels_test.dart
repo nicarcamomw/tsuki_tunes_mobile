@@ -339,11 +339,13 @@ void main() {
       masks.onPlayCounted(_t('x'));
       // First the being awakened, then the level.
       await tester.pump();
-      expect(find.text('SER ETÉREO DESPIERTO'), findsOneWidget);
+      expect(find.textContaining('SER ETÉREO DESPIERTO'), findsOneWidget);
       masks.dismissCelebration();
       await tester.pump();
       expect(find.text('SUBISTE DE NIVEL'), findsOneWidget);
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+      // It stays to be read (its own reading time), then goes.
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
       expect(masks.pendingLevelUp, isNull);
       await tester.pumpWidget(const SizedBox());
       masks.dispose();

@@ -10,8 +10,9 @@ import '../navigation/app_router.dart';
 import '../screens/eco_levels_screen.dart';
 import '../state/app_providers.dart';
 import '../state/mask_provider.dart';
+import 'celebration.dart';
 import 'haptics.dart';
-import 'motion.dart';
+import 'player_tint.dart';
 import 'swipeable_sheet.dart';
 
 export '../../domain/logic/eco_levels.dart' show EcoFeature, EcoLevels, EcoRank;
@@ -302,8 +303,9 @@ class EcoLocked extends ConsumerWidget {
   }
 }
 
-/// The banner for a level reached: the new level, its rank, and what it
-/// opened.
+/// The banner for a level reached: the new level in its rank's colour, the
+/// rank, and what it opened; a capsule of glass like a mask's. A new rank
+/// gets a sheen of light across the number.
 class EcoLevelUpBanner extends ConsumerStatefulWidget {
   final int from;
   final int to;
@@ -313,45 +315,11 @@ class EcoLevelUpBanner extends ConsumerStatefulWidget {
   ConsumerState<EcoLevelUpBanner> createState() => _EcoLevelUpBannerState();
 }
 
-class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with SingleTickerProviderStateMixin {
-  late final AnimationController _enter =
-      AnimationController(vsync: this, duration: AppMotion.slow);
-  Timer? _autoClose;
-  bool _closing = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // In at once with less motion asked for; sliding in otherwise.
-    if (_enter.isDismissed) {
-      if (reduceMotion(context)) {
-        _enter.value = 1;
-      } else {
-        _enter.forward();
-      }
-    }
-  }
-
+class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> {
   @override
   void initState() {
     super.initState();
     Haptics.success();
-    _autoClose = Timer(const Duration(milliseconds: 6500), _close);
-  }
-
-  Future<void> _close() async {
-    if (_closing || !mounted) return;
-    _closing = true;
-    _autoClose?.cancel();
-    await _enter.reverse();
-    if (mounted) ref.read(maskProvider).levelUpShown();
-  }
-
-  @override
-  void dispose() {
-    _autoClose?.cancel();
-    _enter.dispose();
-    super.dispose();
   }
 
   @override
@@ -361,106 +329,57 @@ class _EcoLevelUpBannerState extends ConsumerState<EcoLevelUpBanner> with Single
     final rank = EcoLevels.rankOf(widget.to);
     final color = ecoRankColor(rank);
     final opened = EcoLevels.rewardsBetween(widget.from, widget.to).where((r) => r.kind != EcoRewardKind.fragment).toList();
-    final slide = CurvedAnimation(parent: _enter, curve: Curves.easeOutBack, reverseCurve: Curves.easeIn);
-    return SafeArea(
-      bottom: false,
-      child: AnimatedBuilder(
-        animation: _enter,
-        builder: (context, child) => Transform.translate(
-          offset: Offset(0, (1 - slide.value) * -160),
-          child: Opacity(opacity: _enter.value.clamp(0.0, 1.0), child: child),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-          child: Semantics(
-            liveRegion: true,
-            button: true,
-            label: '${strings.ecoLevelUp}: ${strings.ecoLevel(widget.to)}',
-            child: GestureDetector(
-              onTap: () { Haptics.tap();
-                _close();
-                EcoLevelsScreen.open(context);
-              },
-              onVerticalDragEnd: (d) {
-                if ((d.primaryVelocity ?? 0) < 0) _close();
-              },
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.sheet),
-                    gradient: LinearGradient(colors: [color.withValues(alpha: 0.25), AppColors.bgCard]),
-                    border: Border.all(color: color.withValues(alpha: 0.75)),
-                    boxShadow: [
-                      BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 24),
-                      const BoxShadow(color: Color(0x88000000), blurRadius: 16, offset: Offset(0, 6)),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF14151D),
-                          border: Border.all(color: color, width: 2),
-                          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 16)],
-                        ),
-                        child: Text('${widget.to}',
-                            style: TextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: color)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(strings.ecoLevelUp,
-                                style: locale.getTextStyle(
-                                    fontSize: AppFontSize.micro, fontWeight: FontWeight.w900, color: color, letterSpacing: 1.6)),
-                            const SizedBox(height: 2),
-                            Text('${strings.ecoLevel(widget.to)} · ${strings.ecoRankName(rank)}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: locale.getTextStyle(
-                                    fontSize: AppFontSize.titleLg, fontWeight: FontWeight.w900, color: AppColors.textBright)),
-                            for (final r in opened.take(3))
-                              Padding(
-                                padding: const EdgeInsets.only(top: 3),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.lock_open_rounded, size: 11, color: color),
-                                    const SizedBox(width: 5),
-                                    Expanded(
-                                      child: Text(strings.ecoRewardLabel(r),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            if (opened.length > 3)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 3),
-                                child: Text(strings.ecoMore(opened.length - 3),
-                                    style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+    final lines = [for (final r in opened.take(3)) strings.ecoRewardLabel(r)];
+    return CelebrationBanner(
+      color: color,
+      locale: locale,
+      overline: strings.ecoLevelUp,
+      title: '${strings.ecoLevel(widget.to)} · ${strings.ecoRankName(rank)}',
+      readText: lines.join('. '),
+      shimmer: EcoLevels.rankOf(widget.from) != rank,
+      onOpen: () => EcoLevelsScreen.open(context),
+      onDone: () => ref.read(maskProvider).levelUpShown(),
+      leading: Center(
+        child: Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.inkPanel,
+            border: Border.all(color: color, width: 2),
+            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16)],
+          ),
+          child: Text(
+            '${widget.to}',
+            style: locale.getTextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: readableTint(color), tabular: true),
           ),
         ),
       ),
+      details: [
+        for (final line in lines)
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Row(
+              children: [
+                Icon(Icons.lock_open_rounded, size: 12, color: readableTint(color)),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(line,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
+                ),
+              ],
+            ),
+          ),
+        if (opened.length > 3)
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Text(strings.ecoMore(opened.length - 3),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted)),
+          ),
+      ],
     );
   }
 }

@@ -89,6 +89,20 @@ abstract final class Haptics {
     _later(const Duration(milliseconds: 90), HapticFeedback.lightImpact);
   }
 
+  /// A rare goal: a UL or divine mask, the one from another universe. Three
+  /// beats, the last the strongest.
+  static void grand() {
+    _play(HapticFeedback.heavyImpact);
+    _later(const Duration(milliseconds: 140), HapticFeedback.mediumImpact);
+    _later(const Duration(milliseconds: 320), HapticFeedback.heavyImpact);
+  }
+
+  /// A heartbeat (the witching hour): two soft beats.
+  static void heartbeat() {
+    _play(HapticFeedback.mediumImpact);
+    _later(const Duration(milliseconds: 160), HapticFeedback.lightImpact);
+  }
+
   /// Something that didn't work: a wrong answer, a failed voice search.
   static void error() {
     _play(HapticFeedback.lightImpact);
