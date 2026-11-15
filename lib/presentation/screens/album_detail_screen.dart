@@ -20,6 +20,7 @@ import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/detail_header.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -559,7 +560,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
               ),
             ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
         ],
       ),
       ),

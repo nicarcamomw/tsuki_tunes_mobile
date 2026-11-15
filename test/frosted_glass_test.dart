@@ -58,6 +58,23 @@ void main() {
     expect(1.05 / (worst.computeLuminance() + 0.05), greaterThanOrEqualTo(3));
   });
 
+  test('the dock keeps its labels at AA over the blurred page', () {
+    // A dark app's page, blurred under the dock, averages to 10% luminance
+    // at most: grey that light.
+    final page = const HSLColor.fromAHSL(1, 0, 0, 0.37).toColor();
+    expect(page.computeLuminance(), closeTo(0.1, 0.02));
+    for (final surface in [AppColors.surface, AppColors.surfaceCard]) {
+      final behind = Color.alphaBlend(surface.withValues(alpha: AppGlass.barFill), page);
+      double ratio(Color text) => (text.computeLuminance() + 0.05) / (behind.computeLuminance() + 0.05);
+      expect(ratio(AppColors.textBright), greaterThanOrEqualTo(4.5));
+      expect(ratio(AppColors.textMuted), greaterThanOrEqualTo(4.5));
+      // The chosen tab's red label lives on the bar (surface) only.
+      if (surface == AppColors.surface) {
+        expect(ratio(AppColors.accentText), greaterThanOrEqualTo(4.5), reason: 'the chosen tab');
+      }
+    }
+  });
+
   testWidgets('faded out, it draws no blur at all', (tester) async {
     await _pump(tester, const FrostedGlass(opacity: 0));
     expect(find.byType(BackdropFilter), findsNothing);

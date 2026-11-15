@@ -27,6 +27,7 @@ import '../widgets/app_custom_icons.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/detail_header.dart';
 import '../widgets/distorted_artist_name.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -260,7 +261,7 @@ class _ArtistDetailScreenState extends ConsumerState<ArtistDetailScreen> {
           if (!_isLoading && _albums.isNotEmpty)
             ..._buildDiscographySlivers(cats, library, locale, strings),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
         ],
       ),
       ),

@@ -51,7 +51,7 @@ extension _SearchLyricsView on _SearchScreenState {
 
     return ListView.builder(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.only(bottom: 120),
+      padding: EdgeInsets.only(bottom: dockBottom(context)),
       itemCount: search.lyricsResults.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {

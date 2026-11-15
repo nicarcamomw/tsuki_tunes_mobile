@@ -57,7 +57,7 @@ extension _SearchResultsView on _SearchScreenState {
 
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.only(bottom: 120),
+      padding: EdgeInsets.only(bottom: dockBottom(context)),
       children: [
         _buildDidYouMean(search, locale),
 

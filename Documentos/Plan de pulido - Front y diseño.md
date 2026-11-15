@@ -49,12 +49,13 @@ Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentatio
 
 - **Tema y colores:** `core/theme/cyber_theme.dart`, `core/constants/app_colors.dart`.
 - **Tipografía:** Plus Jakarta Sans y Noto Sans JP (google_fonts); tipografías propias por artista (`core/utils/artist_fonts.dart`, 26 fuentes en `assets/fonts/`).
-- **Superficies:** tres niveles (`AppColors.surface`, `surfaceCard`, `surfaceRaised`), `GlassCard` (tarjeta de tinta) y `FrostedGlass` (liquid glass al estilo de Apple, `AppGlass`: desenfoque, borde de luz, brillo interior, sombra solo por fuera). Solo sobre contenido que se mueve (los botones y el título flotante de las páginas de detalle, los avisos) y solo con texto o íconos blancos encima; con alto contraste es sólido. Las hojas siguen sólidas: su texto gris no aguantaría AA sobre vidrio.
+- **Superficies:** tres niveles (`AppColors.surface`, `surfaceCard`, `surfaceRaised`), `GlassCard` (tarjeta de tinta) y `FrostedGlass` (liquid glass al estilo de Apple, `AppGlass`: desenfoque, borde de luz, brillo interior, sombra solo por fuera). Solo sobre contenido que se mueve (la barra inferior y el mini reproductor, que flotan sobre las páginas con un solo desenfoque compartido; los botones y el título flotante de las páginas de detalle; los avisos) y solo con texto o íconos blancos encima; con alto contraste es sólido. Las hojas siguen sólidas: su texto gris no aguantaría AA sobre vidrio.
 - **Botones y toques:** tres tipos (`FilledButton` primario, `OutlinedButton` secundario, `TextButton` de texto, desde el tema), `TapScale`, `MoonButton`, vibración (`haptics.dart`).
 - **Texto con efecto:** `GlitchText`, `CyberGlitchText`, `DistortedArtistName`, `LoreText`.
 - **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (`EmptyState`, uno solo), sin conexión (franja superior).
 - **Hojas inferiores:** `SwipeableSheet` y unas 25 hojas (listadas en su apartado).
 - **Títulos de sección:** `SectionTitle` (secciones de contenido) y `SectionLabel` (etiquetas de grupo), ambos anunciados como título.
+- **Fin de página:** las páginas del shell pasan bajo la barra de vidrio y terminan con `dockBottom(context)` (el alto de la barra llega como padding inferior).
 - **Movimiento:** `motion.dart` (reducir movimiento), tokens `AppMotion` (de `micro` a `ceremony`), transiciones `cyberPage` y `fadePage`.
 - **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material en su variante redondeada.
 

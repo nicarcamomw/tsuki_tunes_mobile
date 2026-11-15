@@ -27,6 +27,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -537,7 +538,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ? _noResults(locale, strings)
                     : ListView.builder(
                     controller: scrollController,
-                    padding: const EdgeInsets.only(bottom: 120),
+                    padding: EdgeInsets.only(bottom: dockBottom(context)),
                     itemCount: visible.length < albumGroups.length
                         ? visible.length + 1
                         : visible.length,
@@ -625,7 +626,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           : ListView.builder(
               controller: _songsScroll,
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 4, bottom: 120),
+              padding: EdgeInsets.only(top: 4, bottom: dockBottom(context)),
               itemCount: tracks.length,
               itemBuilder: (context, i) => TrackTile(
                 key: ValueKey('library_song_${tracks[i].id}'),
@@ -740,7 +741,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   message: strings.noPlaylistsSubtitle,
                 )
               : ListView(
-                  padding: const EdgeInsets.only(bottom: 120),
+                  padding: EdgeInsets.only(bottom: dockBottom(context)),
                   children: [
                     if (hasShared) ...[
                       Padding(

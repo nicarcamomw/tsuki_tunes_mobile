@@ -24,6 +24,7 @@ import '../widgets/album_card.dart';
 import '../widgets/app_chip.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';

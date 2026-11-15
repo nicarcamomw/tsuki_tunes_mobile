@@ -128,6 +128,12 @@ abstract final class AppGlass {
   /// title and buttons): clearer, the page shows through.
   static const double clearFill = 0.55;
 
+  /// The dock (bottom bar, mini player) over the pages: clear enough that
+  /// the page shows through, with its labels in white and the lighter
+  /// grey (textMuted), which keep AA over the blurred page of a dark app
+  /// (its rows and covers averaged by the blur, up to 10% luminance).
+  static const double barFill = 0.8;
+
   /// A round glass button over a picture: clear enough to see it, dark
   /// enough that its white icon keeps 3:1 over a white cover.
   static const double buttonFill = 0.72;

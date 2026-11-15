@@ -11,6 +11,7 @@ import '../../domain/entities/public_profile.dart';
 import '../../domain/entities/social.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../state/app_providers.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show EcoRank;
 import '../widgets/haptics.dart';
 import '../widgets/oni_mask_art.dart';
@@ -107,7 +108,7 @@ class _ProfileBody extends ConsumerWidget {
         locale.getTextStyle(fontSize: size, fontWeight: weight, color: color);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, dockBottom(context)),
       children: [
         Center(child: _Avatar(photoUrl: profile.photoUrl, mask: mask, name: profile.displayName)),
         const SizedBox(height: 12),

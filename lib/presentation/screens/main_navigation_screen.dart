@@ -19,6 +19,7 @@ import '../widgets/battery_guide_sheet.dart';
 import '../widgets/cyber_nav_icon.dart';
 import '../widgets/cyber_tab_indicator.dart';
 import '../widgets/fade_indexed_stack.dart';
+import '../widgets/frosted_glass.dart';
 import '../widgets/haptics.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/permission_primer.dart';
@@ -263,18 +264,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           children: [
             // Navigator with tab screens (reactivo con Lazy Loading)
             // Fix Bug 4: En caso de teclado abierto, el body toma la pantalla completa y SearchScreen gestiona su scroll
-            AnimatedPositioned(
-              duration: AppMotion.normal,
-              curve: Curves.easeInOutCubic,
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: isKeyboardOpen ? 0 : bottomBarHeight,
-              child: SnackDock(
-                child: MainTabsScope(
-                  tab: _tabNotifier,
-                  loadedTabs: _loadedTabs,
-                  child: widget.child,
+            // The pages run under the glass dock, which floats over them;
+            // they get its height as their bottom padding, so their last
+            // rows clear it (dockBottom).
+            Positioned.fill(
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: MediaQuery.paddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
+                  viewPadding: MediaQuery.viewPaddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
+                ),
+                child: SnackDock(
+                  child: MainTabsScope(
+                    tab: _tabNotifier,
+                    loadedTabs: _loadedTabs,
+                    child: widget.child,
+                  ),
                 ),
               ),
             ),
@@ -342,6 +346,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: TickerMode(
                       enabled: !shouldHide,
                       child: DockSizeReporter(
+                      // One read of the page behind for both glasses
+                      // (mini player, bottom bar): smooth while it scrolls.
+                      child: BackdropGroup(
+                      child: RepaintBoundary(
                       child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -366,6 +374,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         ),
                         _buildCyberBottomNav(),
                       ],
+                    ),
+                    ),
                     ),
                     ),
                     ),
@@ -398,20 +408,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         final hasNewLibraryTracks =
             selected != MainTab.library && currentLibraryCount > _lastSeenLibraryCount!;
 
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.bgDeep,
-            border: Border(
-              top: BorderSide(color: AppColors.border, width: 1.2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black54,
-                blurRadius: 10,
-                offset: Offset(0, -3),
-              ),
-            ],
-          ),
+        // Liquid glass: the page runs under it, blurred; a hairline of light
+        // on its top edge.
+        return FrostedGlass(
+          color: AppColors.surface,
+          fill: AppGlass.barFill,
+          shadow: false,
+          sheen: false,
+          border: FrostedGlass.showsThrough(context)
+              ? Border(top: BorderSide(color: Colors.white.withValues(alpha: AppGlass.rimGlint * 0.6), width: 0.8))
+              : const Border(top: BorderSide(color: AppColors.border, width: 1.2)),
           child: SafeArea(
             top: false,
             child: Padding(
@@ -597,7 +603,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.micro,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                  color: isSelected ? AppColors.accent : AppColors.textMuted,
                   letterSpacing: 1,
                 ),
               ),

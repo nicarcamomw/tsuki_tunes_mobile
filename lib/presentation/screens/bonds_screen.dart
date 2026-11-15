@@ -14,6 +14,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
@@ -218,7 +219,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
+            padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, dockBottom(context)),
             itemCount: feed.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) => ResonanceTile(resonance: feed[i]),
@@ -332,7 +333,7 @@ class _BondsTab extends ConsumerWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, dockBottom(context)),
       children: [
         if (social.received.isNotEmpty) ...[
           _SectionLabel(text: strings.bondsRequests, count: social.received.length, locale: locale),
@@ -475,7 +476,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
     final strings = locale.strings;
     final results = _results;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 120),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, dockBottom(context)),
       children: [
         TextField(
           controller: _field,

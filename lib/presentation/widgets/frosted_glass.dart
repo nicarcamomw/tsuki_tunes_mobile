@@ -22,6 +22,8 @@ class FrostedGlass extends StatelessWidget {
     this.shape = BoxShape.rectangle,
     this.border,
     this.shadow = true,
+    this.shadowColor,
+    this.sheen = true,
     this.opacity = 1,
     this.child,
   });
@@ -38,6 +40,12 @@ class FrostedGlass extends StatelessWidget {
 
   /// The soft shadow under it.
   final bool shadow;
+
+  /// A glow in place of the black shadow (the mini player's colour).
+  final Color? shadowColor;
+
+  /// The sheen inside. Off for a wide bar, where it reads as a grey band.
+  final bool sheen;
   final double opacity;
   final Widget? child;
 
@@ -67,7 +75,7 @@ class FrostedGlass extends StatelessWidget {
         decoration: BoxDecoration(
           shape: shape,
           borderRadius: radius,
-          gradient: clear
+          gradient: clear && sheen
               ? LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -96,7 +104,9 @@ class FrostedGlass extends StatelessWidget {
 
     glass = !clear || t == 0
         ? clip(glass)
-        : clip(BackdropFilter(
+        // Grouped: glasses under one BackdropGroup (the dock) read what's
+        // behind them once, for all of them.
+        : clip(BackdropFilter.grouped(
             filter: ImageFilter.blur(sigmaX: AppGlass.blur * t, sigmaY: AppGlass.blur * t),
             child: glass,
           ));
@@ -104,7 +114,13 @@ class FrostedGlass extends StatelessWidget {
     // The shadow only outside the glass: under it, it would show through
     // as a dark stain.
     return CustomPaint(
-      painter: _OuterShadowPainter(circle: circle, radius: borderRadius, t: t),
+      painter: _OuterShadowPainter(
+        circle: circle,
+        radius: borderRadius,
+        t: t,
+        color: shadowColor ?? Colors.black.withValues(alpha: AppGlass.shadow),
+        offset: shadowColor == null ? const Offset(0, 4) : const Offset(0, 2),
+      ),
       child: glass,
     );
   }
@@ -112,11 +128,19 @@ class FrostedGlass extends StatelessWidget {
 
 /// A soft shadow under the glass, drawn only around it.
 class _OuterShadowPainter extends CustomPainter {
-  _OuterShadowPainter({required this.circle, required this.radius, required this.t});
+  _OuterShadowPainter({
+    required this.circle,
+    required this.radius,
+    required this.t,
+    required this.color,
+    required this.offset,
+  });
 
   final bool circle;
   final BorderRadius radius;
   final double t;
+  final Color color;
+  final Offset offset;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -133,16 +157,17 @@ class _OuterShadowPainter extends CustomPainter {
       ..save()
       ..clipPath(outside)
       ..drawRRect(
-        shape.shift(const Offset(0, 4)),
+        shape.shift(offset),
         Paint()
-          ..color = Colors.black.withValues(alpha: AppGlass.shadow * t)
+          ..color = color.withValues(alpha: color.a * t)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       )
       ..restore();
   }
 
   @override
-  bool shouldRepaint(_OuterShadowPainter old) => old.circle != circle || old.radius != radius || old.t != t;
+  bool shouldRepaint(_OuterShadowPainter old) =>
+      old.circle != circle || old.radius != radius || old.t != t || old.color != color || old.offset != offset;
 }
 
 /// The light caught on the glass's rim.

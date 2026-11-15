@@ -10,6 +10,7 @@ import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/error_state.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/track_tile.dart';
@@ -115,7 +116,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                     )
                   : ListView(
                       padding: EdgeInsets.only(
-                          bottom: 120 + MediaQuery.paddingOf(context).bottom),
+                          bottom: dockBottom(context)),
                       children: [
                         if (_artists.isNotEmpty) ...[
                           _header(locale, strings.genreArtists),

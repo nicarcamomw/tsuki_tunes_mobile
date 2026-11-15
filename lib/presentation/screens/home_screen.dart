@@ -26,6 +26,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/entry_cards.dart';
@@ -388,7 +389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ..._buildCompletionSlivers(locale),
               ..._buildRecommendedSlivers(locale),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
             ],
           ],
         ),

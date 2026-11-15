@@ -15,6 +15,7 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/detail_header.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 
@@ -409,7 +410,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               },
             ),
 
-          const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
+          SliverPadding(padding: EdgeInsets.only(bottom: dockBottom(context))),
         ],
       ),
       ),

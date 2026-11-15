@@ -12,6 +12,7 @@ import '../../domain/entities/social.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/swipeable_sheet.dart';
@@ -159,7 +160,7 @@ class _Body extends ConsumerWidget {
     final owner = p.owner == me;
     final invitedMe = p.isInvited(me) && !p.isMember(me);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, dockBottom(context)),
       children: [
         Row(
           children: [

@@ -197,7 +197,7 @@ extension _SearchEmptyView on _SearchScreenState {
               ],
             ),
           ],
-          const SizedBox(height: 120),
+          SizedBox(height: dockBottom(context)),
         ],
       ),
     );

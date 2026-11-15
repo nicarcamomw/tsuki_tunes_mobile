@@ -14,6 +14,7 @@ import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
 import '../state/cover_colors.dart';
 import 'audio_progress_selector.dart';
+import 'frosted_glass.dart';
 import 'haptics.dart';
 import 'listened_undo.dart';
 import 'oni_mask_icon.dart';
@@ -168,28 +169,23 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
           },
           onHorizontalDragUpdate: _onHorizontalDragUpdate,
           onHorizontalDragEnd: (d) => _onHorizontalDragEnd(d, audio),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            decoration: BoxDecoration(
+          // Liquid glass in the player's colour: the page shows through,
+          // blurred; the tint draws its rim and its glow, and the cover's
+          // colour seeps in from the artwork's side.
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: FrostedGlass(
+              color: AppColors.surfaceCard,
+              fill: AppGlass.barFill,
               borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: PlayerTint.of(context), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: PlayerTint.glowOf(context),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.card),
+              shadowColor: PlayerTint.glowOf(context),
               child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
-                // The cover's colour seeps in from the artwork's side.
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [coverBackground ?? AppColors.bgCard, AppColors.bgCard],
+                    colors: [(coverBackground ?? AppColors.surfaceCard).withValues(alpha: 0.7), Colors.transparent],
                     stops: const [0.0, 0.7],
                   ),
                 ),

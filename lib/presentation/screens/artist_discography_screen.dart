@@ -14,6 +14,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -342,7 +343,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                       ),
                     ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
               ],
             ),
           ),
