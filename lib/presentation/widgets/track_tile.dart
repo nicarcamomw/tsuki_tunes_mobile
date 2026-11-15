@@ -36,17 +36,26 @@ class _PlayingIndicator extends StatefulWidget {
 
 class _PlayingIndicatorState extends State<_PlayingIndicator>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  // 120 fps: bars bouncing forever would redraw the screen every frame while
+  // the list shows the song. They dance for a few seconds when it starts (or
+  // comes into view), then rest in a pose.
+  late final AnimationController _controller = AnimationController(vsync: this, duration: AppMotion.slow);
   bool _reduceMotion = false;
+
+  /// About seven seconds of dancing (each count is one way).
+  static const _beats = 16;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.slow,
-    );
-    if (widget.isPlaying) _controller.repeat(reverse: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.isPlaying) _dance();
+    });
+  }
+
+  void _dance() {
+    if (_reduceMotion) return;
+    unawaited(_controller.repeat(reverse: true, count: _beats));
   }
 
   @override
@@ -59,8 +68,8 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
   @override
   void didUpdateWidget(_PlayingIndicator old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
-      _controller.repeat(reverse: true);
+    if (widget.isPlaying && !old.isPlaying) {
+      _dance();
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();
     }
@@ -74,7 +83,8 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return RepaintBoundary(
+      child: SizedBox(
       width: 24,
       height: 24,
       child: Center(
@@ -97,6 +107,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
           },
         ),
       ),
+    ),
     );
   }
 

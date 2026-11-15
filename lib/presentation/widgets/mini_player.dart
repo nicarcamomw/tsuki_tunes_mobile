@@ -499,17 +499,25 @@ class _BreathingCover extends StatefulWidget {
 
 class _BreathingCoverState extends State<_BreathingCover>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  // 120 fps: a breath forever would redraw the dock (and its blur) every
+  // frame while music plays. It breathes twice when a song starts playing,
+  // then rests lit.
+  late final AnimationController _controller = AnimationController(vsync: this, duration: AppMotion.breath);
   bool _reduceMotion = false;
+
+  /// Two breaths: in and out, twice (each count is one way).
+  static const _breaths = 4;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.breath,
-    );
-    if (widget.isPlaying) _controller.repeat(reverse: true);
+    if (widget.isPlaying) _breathe();
+  }
+
+  void _breathe() {
+    if (_reduceMotion) return;
+    _controller.value = 0;
+    unawaited(_controller.repeat(reverse: true, count: _breaths));
   }
 
   @override
@@ -522,8 +530,9 @@ class _BreathingCoverState extends State<_BreathingCover>
   @override
   void didUpdateWidget(_BreathingCover old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
-      _controller.repeat(reverse: true);
+    final started = widget.isPlaying && (!old.isPlaying || widget.trackId != old.trackId);
+    if (started) {
+      _breathe();
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();
     }
@@ -540,7 +549,8 @@ class _BreathingCoverState extends State<_BreathingCover>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final t = widget.isPlaying ? _controller.value : 0.0;
+        // At rest (playing, breaths done) it stays half lit.
+        final t = widget.isPlaying ? (_controller.isAnimating ? _controller.value : 0.5) : 0.0;
         final glowAlpha = 0.15 + 0.35 * t;
         final borderAlpha = 0.3 + 0.7 * t;
 
@@ -553,9 +563,10 @@ class _BreathingCoverState extends State<_BreathingCover>
             ),
             boxShadow: widget.isPlaying
                 ? [
+                    // One blur size: only its light changes as it breathes.
                     BoxShadow(
                       color: PlayerTint.of(context).withValues(alpha: glowAlpha),
-                      blurRadius: 8 + 4 * t,
+                      blurRadius: 10,
                     ),
                   ]
                 : null,
@@ -617,25 +628,27 @@ class _MarqueeText extends StatefulWidget {
   State<_MarqueeText> createState() => _MarqueeTextState();
 }
 
-class _MarqueeTextState extends State<_MarqueeText>
-    with SingleTickerProviderStateMixin {
-  late final ScrollController _scroll;
-  late final AnimationController _anim;
-  double _maxScroll = 0;
+/// A title too long for its room glides across once, rests, and comes back
+/// (120 fps: frames only while it moves, none during the rests). Its edges
+/// fade while it doesn't fit.
+class _MarqueeTextState extends State<_MarqueeText> {
+  final ScrollController _scroll = ScrollController();
+  // The scroller keeps its element when the fade comes and goes (one
+  // scroll position, never two).
+  final GlobalKey _scrollerKey = GlobalKey();
+  Timer? _next;
+  bool _overflows = false;
   bool _reduceMotion = false;
 
-  static const int _pauseMs = 1800;
-  static const int _returnMs = 700;
+  /// Before the first glide, and between glides.
+  static const Duration _firstRest = Duration(milliseconds: 1800);
+  static const Duration _rest = Duration(seconds: 10);
+  static const Duration _atEnd = Duration(milliseconds: 1600);
+  static const Duration _back = Duration(milliseconds: 700);
 
   @override
   void initState() {
     super.initState();
-    _scroll = ScrollController();
-    _anim = AnimationController(vsync: this)
-      ..addListener(_onTick)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) _restart();
-      });
     WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
   }
 
@@ -643,14 +656,14 @@ class _MarqueeTextState extends State<_MarqueeText>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (_reduceMotion && _anim.isAnimating) _anim.stop();
+    if (_reduceMotion) _next?.cancel();
   }
 
   @override
   void didUpdateWidget(_MarqueeText old) {
     super.didUpdateWidget(old);
-    if (widget.text != old.text) {
-      _anim.stop();
+    if (widget.text != old.text || widget.style != old.style) {
+      _next?.cancel();
       if (_scroll.hasClients) _scroll.jumpTo(0);
       WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
     }
@@ -658,80 +671,51 @@ class _MarqueeTextState extends State<_MarqueeText>
 
   @override
   void dispose() {
-    _anim.dispose();
+    _next?.cancel();
     _scroll.dispose();
     super.dispose();
   }
 
   void _measure() {
     if (!mounted || !_scroll.hasClients) return;
-    _maxScroll = _scroll.position.maxScrollExtent;
-    final overflows = _maxScroll > 0;
+    final overflows = _scroll.position.maxScrollExtent > 0;
     if (overflows != _overflows) setState(() => _overflows = overflows);
-    if (_reduceMotion) return;
-    if (_maxScroll <= 0) return;
-    _start();
+    _next?.cancel();
+    if (overflows && !_reduceMotion) _next = Timer(_firstRest, _glide);
   }
 
-  void _start() {
-    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0).toInt();
-    _anim.duration =
-        Duration(milliseconds: _pauseMs + scrollMs + _pauseMs + _returnMs);
-    _anim.forward(from: 0);
+  Future<void> _glide() async {
+    if (!mounted || !_scroll.hasClients || _reduceMotion) return;
+    final max = _scroll.position.maxScrollExtent;
+    if (max <= 0) return;
+    // About 25 px a second: read as it goes.
+    // As long as reading it takes (a reading time, not a motion token).
+    final across = Duration(milliseconds: (max * 40).clamp(1200.0, 6000.0).round());
+    await _scroll.animateTo(max, duration: across, curve: Curves.linear);
+    if (!mounted) return;
+    _next = Timer(_atEnd, () async {
+      if (!mounted || !_scroll.hasClients) return;
+      await _scroll.animateTo(0, duration: _back, curve: Curves.easeOutCubic);
+      if (mounted) _next = Timer(_rest, _glide);
+    });
   }
-
-  void _restart() {
-    if (!mounted || _reduceMotion) return;
-    _measure();
-  }
-
-  void _onTick() {
-    if (!_scroll.hasClients || _maxScroll <= 0) return;
-
-    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0);
-    final totalMs = _pauseMs + scrollMs + _pauseMs + _returnMs;
-    final elapsed = _anim.value * totalMs;
-
-    double pos;
-    if (elapsed < _pauseMs) {
-      pos = 0;
-    } else if (elapsed < _pauseMs + scrollMs) {
-      pos = _maxScroll * ((elapsed - _pauseMs) / scrollMs);
-    } else if (elapsed < _pauseMs + scrollMs + _pauseMs) {
-      pos = _maxScroll;
-    } else {
-      final t =
-          ((elapsed - _pauseMs - scrollMs - _pauseMs) / _returnMs).clamp(0, 1);
-      pos = _maxScroll * (1 - Curves.easeOutCubic.transform(t.toDouble()));
-    }
-
-    _scroll.jumpTo(pos.clamp(0, _maxScroll));
-  }
-
-  /// Whether the text runs past its room (it scrolls, and its edges fade).
-  bool _overflows = false;
 
   @override
   Widget build(BuildContext context) {
     final scroller = SingleChildScrollView(
+      key: _scrollerKey,
       controller: _scroll,
       scrollDirection: Axis.horizontal,
       physics: const NeverScrollableScrollPhysics(),
       child: Text(widget.text, style: widget.style, maxLines: 1),
     );
-    // Fades in from the edges instead of being cut off (the start one only
-    // once the text has moved off it). Always in the tree, so the scroller
-    // keeps its place (and its one position) when the text starts to fit.
+    // A fitting title needs no fade, and no layer for one.
+    if (!_overflows) return scroller;
     bool scrolled() => _scroll.hasClients && _scroll.positions.length == 1 && _scroll.offset > 0;
     return ShaderMask(
       blendMode: BlendMode.dstIn,
       shaderCallback: (bounds) => LinearGradient(
-        colors: [
-          _overflows && scrolled() ? Colors.transparent : Colors.white,
-          Colors.white,
-          Colors.white,
-          _overflows ? Colors.transparent : Colors.white,
-        ],
+        colors: [scrolled() ? Colors.transparent : Colors.white, Colors.white, Colors.white, Colors.transparent],
         stops: const [0, 0.08, 0.88, 1],
       ).createShader(bounds),
       child: scroller,
