@@ -50,10 +50,6 @@ class LoadingScreen extends ConsumerStatefulWidget {
   /// The entrance's mask (by the app's author), cut out of its background
   /// by tool/mask_art/cut_out.py.
   static const String maskAsset = 'assets/images/tsuki_mask.webp';
-
-  /// Where the mask's eyes are on its image (fractions of its width and
-  /// height), to light them.
-  static const List<Offset> eyes = [Offset(0.31, 0.49), Offset(0.69, 0.49)];
   static const String nebulaAsset = 'shaders/tsuki_nebula.frag';
 
   /// The nebula's program, loaded once (null where shaders can't load: the
@@ -147,16 +143,12 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     final sky = _part(0, 0.4, Curves.easeOut);
     final glowIn = _part(0, 0.3, AppMotion.enter);
     final scan = _part(0.15, 0.65, Curves.easeInOutCubic);
-    final eyes = _part(0.42, 0.62);
     final ring = _part(0.2, 0.85, Curves.easeInOutCubic);
     final pulse = _part(0.82, 1, Curves.easeOutCubic);
     final ticks = _part(0.7, 1, AppMotion.enter);
     final type = _part(0.35, 0.85);
     final exit = CurvedAnimation(parent: _exit, curve: AppMotion.exit);
-    final mask = CustomPaint(
-      foregroundPainter: _EyesPainter(ignite: eyes, time: _time, still: still),
-      child: const _Mask(),
-    );
+    const mask = _Mask();
 
     return Scaffold(
       backgroundColor: AppColors.splash,
@@ -199,7 +191,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                   painter: _RingPainter(sweep: ring, pulse: pulse, ticks: ticks, time: _time, exit: exit, still: still),
                 ),
               ),
-              // The mask: breath, scan, glitch, the eyes lit.
+              // The mask: breath, scan and glitch.
               RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: Listenable.merge([_intro, _time, _exit]),
@@ -288,55 +280,6 @@ class _Mask extends StatelessWidget {
       gaplessPlayback: true,
     ),
   );
-}
-
-/// The eyes: dark until the scan passes them, then they flare and settle
-/// into a red light that breathes. Added light (plus): the black sockets
-/// glow, the white around stays white.
-class _EyesPainter extends CustomPainter {
-  _EyesPainter({required this.ignite, required this.time, required this.still})
-    : super(repaint: still ? ignite : Listenable.merge([ignite, time]));
-
-  final Animation<double> ignite;
-  final ValueListenable<double> time;
-  final bool still;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final e = ignite.value;
-    if (e <= 0) return;
-    final flare = math.sin(math.pi * e) * 0.5;
-    final breath = still ? 0.5 : _breathAt(time.value);
-    final light = ((0.55 * e + flare) * (0.75 + 0.25 * breath)).clamp(0.0, 1.0);
-    final radius = size.width * 0.14;
-    for (final eye in LoadingScreen.eyes) {
-      final c = Offset(eye.dx * size.width, eye.dy * size.height);
-      canvas
-        ..save()
-        ..translate(c.dx, c.dy)
-        ..scale(1, 0.55) // the sockets are wide and low
-        ..drawCircle(
-          Offset.zero,
-          radius,
-          Paint()
-            ..blendMode = BlendMode.plus
-            ..shader = ui.Gradient.radial(
-              Offset.zero,
-              radius,
-              [
-                AppColors.accent.withValues(alpha: light),
-                AppColors.accent.withValues(alpha: light * 0.35),
-                AppColors.accent.withValues(alpha: 0),
-              ],
-              const [0, 0.45, 1],
-            ),
-        )
-        ..restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(_EyesPainter old) => old.still != still;
 }
 
 /// A band of crimson light crossing the mask, only on its own pixels, with
