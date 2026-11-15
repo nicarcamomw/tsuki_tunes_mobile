@@ -36,6 +36,7 @@ void main() {
             m.rarity == MaskRarity.dios ||
             m.counter == 'ethereal' ||
             TsukiLore.crossed.contains(m.id) ||
+            TsukiLore.strangers.contains(m.id) ||
             (m.counter?.startsWith('clan:') ?? false);
         expect(clans, outside ? 0 : 1, reason: m.id);
       }
@@ -48,7 +49,8 @@ void main() {
       }
       expect(TsukiLore.ultras.toSet(), {
         for (final m in MaskCatalog.all)
-          if (m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal') m.id,
+          if (m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal' && !TsukiLore.strangers.contains(m.id))
+            m.id,
       });
     });
 

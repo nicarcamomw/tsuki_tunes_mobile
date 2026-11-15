@@ -10,7 +10,6 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
     context: context,
     useRootNavigator: true,
     builder: (dialogCtx) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
         side: const BorderSide(color: AppColors.border, width: 1.0),
@@ -48,13 +47,8 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
             ),
           ),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () => Navigator.of(dialogCtx).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentFill,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          ),
           child: Text(
             strings.deleteAccountConfirm,
             style: locale.getTextStyle(
@@ -84,7 +78,6 @@ Future<void> _confirmDeleteAccount(BuildContext context, AuthProvider auth) asyn
       builder: (_) => PopScope(
         canPop: false,
         child: AlertDialog(
-          backgroundColor: AppColors.bgCard,
           content: Row(
             children: [
               const SizedBox(
@@ -154,7 +147,6 @@ Future<void> _closeAfterDeletion(NavigatorState navigator, LocaleProvider locale
     builder: (dialogCtx) => PopScope(
       canPop: false,
       child: AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),

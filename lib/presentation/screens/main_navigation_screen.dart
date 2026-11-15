@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -12,18 +11,19 @@ import '../navigation/app_router.dart';
 import '../navigation/main_tab.dart';
 import '../state/app_providers.dart';
 import '../state/audio_provider.dart';
-import '../state/locale_provider.dart';
+import '../state/cover_colors.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/auth_guard.dart';
 import '../widgets/battery_guide_sheet.dart';
-import '../widgets/cyber_nav_icon.dart';
-import '../widgets/cyber_tab_indicator.dart';
+import '../widgets/connection_notice.dart';
 import '../widgets/fade_indexed_stack.dart';
+import '../widgets/frosted_glass.dart';
 import '../widgets/haptics.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/permission_primer.dart';
 import '../widgets/playback_error_text.dart';
-import '../widgets/tap_scale.dart';
+import '../widgets/player_tint.dart';
+import '../widgets/tsuki_nav_bar.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'library_screen.dart';
@@ -31,7 +31,9 @@ import 'search_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Canales de eventos para atajos táctiles de la barra de navegación (Double-Tap / Long-Press)
+/// What the bar's shortcuts reach in each tab (tapping the active tab
+/// again, double-tapping it, the menu on a long press); each tab sets its
+/// own while it's built.
 class NavigationEvents {
   static VoidCallback? onHomeScrollToTop;
   static VoidCallback? onHomeOpenProfile;
@@ -51,6 +53,9 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key, required this.child});
 
   final Widget child;
+
+  /// The dock's glass (the song playing and the tabs).
+  static const Key dockKey = ValueKey('dock');
 
   @override
   ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -82,24 +87,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   final ValueNotifier<MainTab> _tabNotifier = ValueNotifier<MainTab>(MainTab.home);
-  SpotifyFallbackReason? _lastShownError;
-  PlaybackError? _lastShownPlaybackError;
-  String? _lastShownSyncError;
 
-  // Timestamps para detección de Double-Tap a 0 ms de latencia
+  // The last tap on the tab that was already active, for the double tap.
   DateTime? _lastTapTime;
   MainTab? _lastTapTab;
 
-  // Carga Perezosa (Lazy Loading): Tab 0 (Home) inicia montado; Search y Library se montan al visitarse
+  // Home is built at once; the other tabs the first time they're shown.
   final Set<MainTab> _loadedTabs = {MainTab.home};
   int? _lastSeenLibraryCount;
 
-  // Manejo reactivo de Predictive Back para Android 13+ (inicializados inline para sobrevivir a hot-reloads)
+  // Back leaves the app only from Home with nothing pushed (predictive back).
   final ValueNotifier<bool> _canPopNotifier = ValueNotifier<bool>(true);
-
-  // Compatibility getter to prevent hot-reload lookup failure from previous state
-  // ignore: unused_element
-  List<Widget> get _screens => const [];
 
   @override
   void initState() {
@@ -170,70 +168,63 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     super.dispose();
   }
 
+  /// E-03: the shell's three notices (Spotify, playback, sync), each once
+  /// when it appears, as the app's snack bar over the dock. Listened to,
+  /// not read in build: nothing is shown from a rebuild.
+  void _listenForNotices() {
+    ref.listen(audioProvider.select((a) => a.lastSpotifyError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      // On phones known to freeze Spotify, a failed start comes with a
+      // guide to let it run in the background.
+      final guide = ref.read(batteryGuideProvider).offerFor(error);
+      _notice((snack) => snack.show(
+            guide ? strings.batteryGuideSnack : error.message(strings),
+            icon: guide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
+            actionLabel: guide ? strings.batteryGuideAction : null,
+            onAction: guide ? () => BatteryGuideSheet.show(context) : null,
+            duration: Duration(seconds: guide ? 8 : 4),
+          ));
+    });
+    ref.listen(audioProvider.select((a) => a.lastPlaybackError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      _notice((snack) => snack.error(
+            error.message(strings, isOnline: ref.read(isOnlineProvider)),
+            icon: switch (error) {
+              PlaybackError.network => Icons.wifi_off_rounded,
+              PlaybackError.noPreview => Icons.music_off_rounded,
+              _ => Icons.error_outline_rounded,
+            },
+          ));
+    });
+    // A mark or unmark that didn't reach the cloud.
+    ref.listen(libraryProvider.select((l) => l.lastSyncError), (_, error) {
+      if (error == null) return;
+      final strings = ref.read(localeProvider).strings;
+      _notice((snack) => snack.error(strings.syncError, icon: Icons.sync_problem_rounded));
+    });
+  }
+
+  /// Shows a notice after this frame, over the dock.
+  void _notice(void Function(AppSnack snack) show) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) show(AppSnack.of(context, bottom: _snackBottom));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(audioProvider.select((a) => a.isPlaying), (_, playing) => _onPlayingChanged(playing));
-    final (hasTrack, spotifyError, playbackError) =
-        ref.watch(audioProvider.select(
-            (a) => (a.currentTrack != null, a.lastSpotifyError, a.lastPlaybackError)));
-    final syncError =
-        ref.watch(libraryProvider.select((l) => l.lastSyncError));
+    final hasTrack = ref.watch(audioProvider.select((a) => a.currentTrack != null));
     final isOnline = ref.watch(isOnlineProvider);
     final locale = ref.watch(localeProvider);
-    final strings = locale.strings;
+    _listenForNotices();
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardOpen = keyboardHeight > 0;
-    final bottomBarHeight = (hasTrack ? 140.0 : 70.0) + bottomPadding;
-    if (spotifyError == null) {
-      _lastShownError = null;
-    } else if (spotifyError != _lastShownError) {
-      _lastShownError = spotifyError;
-      // On phones known to freeze Spotify, a failed start comes with a guide
-      // to let it run in the background.
-      final offerBatteryGuide = ref.read(batteryGuideProvider).offerFor(spotifyError);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          // E-03: the app's snack bar, over the dock.
-          AppSnack.of(context, bottom: _snackBottom).show(
-            offerBatteryGuide ? strings.batteryGuideSnack : spotifyError.message(strings),
-            icon: offerBatteryGuide ? Icons.battery_alert_rounded : Icons.info_outline,
-            actionLabel: offerBatteryGuide ? strings.batteryGuideAction : null,
-            onAction: offerBatteryGuide ? () => BatteryGuideSheet.show(context) : null,
-            duration: Duration(seconds: offerBatteryGuide ? 8 : 4),
-          );
-        }
-      });
-    }
-
-    if (playbackError == null) {
-      _lastShownPlaybackError = null;
-    } else if (playbackError != _lastShownPlaybackError) {
-      _lastShownPlaybackError = playbackError;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AppSnack.of(context, bottom: _snackBottom).error(
-            playbackError.message(strings, isOnline: isOnline),
-            icon: playbackError == PlaybackError.network
-                ? Icons.wifi_off_rounded
-                : (playbackError == PlaybackError.noPreview ? Icons.music_off_rounded : Icons.error_outline),
-          );
-        }
-      });
-    }
-
-    // Sync error feedback — the user sees a toast when a mark/unmark failed.
-    if (syncError == null) {
-      _lastShownSyncError = null;
-    } else if (syncError != _lastShownSyncError) {
-      _lastShownSyncError = syncError;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          AppSnack.of(context, bottom: _snackBottom).error(strings.syncError, icon: Icons.sync_problem);
-        }
-      });
-    }
+    final bottomBarHeight = (hasTrack ? 146.0 : 76.0) + bottomPadding;
 
     return ValueListenableBuilder<bool>(
       valueListenable: _canPopNotifier,
@@ -261,67 +252,31 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         backgroundColor: AppColors.bgDeep,
         body: Stack(
           children: [
-            // Navigator with tab screens (reactivo con Lazy Loading)
-            // Fix Bug 4: En caso de teclado abierto, el body toma la pantalla completa y SearchScreen gestiona su scroll
-            AnimatedPositioned(
-              duration: AppMotion.normal,
-              curve: Curves.easeInOutCubic,
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: isKeyboardOpen ? 0 : bottomBarHeight,
-              child: SnackDock(
-                child: MainTabsScope(
-                  tab: _tabNotifier,
-                  loadedTabs: _loadedTabs,
-                  child: widget.child,
+            // The pages run under the glass dock, which floats over them;
+            // they get its height as their bottom padding, so their last
+            // rows clear it (dockBottom).
+            Positioned.fill(
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  padding: MediaQuery.paddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
+                  viewPadding: MediaQuery.viewPaddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
+                ),
+                child: SnackDock(
+                  child: MainTabsScope(
+                    tab: _tabNotifier,
+                    loadedTabs: _loadedTabs,
+                    child: widget.child,
+                  ),
                 ),
               ),
             ),
-            // Mini Player animado + Bottom Nav
-            // Ocultar limpiamente hacia abajo cuando el teclado está activo o el reproductor está expandido
-            // Offline banner
+            // The connection: a pill at the top when it's lost, and for a
+            // moment when it's back.
             Positioned(
               left: 0,
               right: 0,
               top: 0,
-              child: Builder(
-                builder: (context) {
-                  final isOnline = ref.watch(isOnlineProvider);
-                  return AnimatedSlide(
-                    duration: AppMotion.normal,
-                    curve: Curves.easeInOutCubic,
-                    offset: isOnline ? const Offset(0, -1) : Offset.zero,
-                    child: AnimatedOpacity(
-                      duration: AppMotion.normal,
-                      opacity: isOnline ? 0.0 : 1.0,
-                      child: SafeArea(
-                        bottom: false,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          color: AppColors.error.withValues(alpha: 0.9),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.wifi_off, size: 14, color: Colors.white, semanticLabel: strings.a11yOffline),
-                              const SizedBox(width: 6),
-                              Text(
-                                strings.offline,
-                                style: locale.getTextStyle(
-                                  fontSize: AppFontSize.caption,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+              child: ConnectionNotice(online: isOnline, locale: locale),
             ),
 
             Positioned(
@@ -342,32 +297,50 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     child: TickerMode(
                       enabled: !shouldHide,
                       child: DockSizeReporter(
-                      child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Deslizamiento fluido hacia abajo al pausar/cerrar (AnimatedSlide + AnimatedCrossFade)
-                        AnimatedSlide(
-                          duration: AppMotion.normal,
-                          curve: Curves.easeInOutCubic,
-                          offset: hasTrack ? Offset.zero : const Offset(0, 0.4),
-                          child: AnimatedCrossFade(
-                            duration: AppMotion.normal,
-                            firstCurve: Curves.easeInOutCubic,
-                            secondCurve: Curves.easeInOutCubic,
-                            crossFadeState: hasTrack
-                                ? CrossFadeState.showFirst
-                                : CrossFadeState.showSecond,
-                            firstChild: const MiniPlayer(),
-                            secondChild: const SizedBox(
-                              width: double.infinity,
-                              height: 0,
+                        // E-05: one dock. The song playing and the tabs
+                        // share a single glass; the song's progress is the
+                        // dock's lit top edge, its colour the dock's glow.
+                        child: AnimatedPlayerTint(
+                          color: ref.watch(playerTintColorProvider),
+                          child: Builder(
+                            builder: (context) => FrostedGlass(
+                              key: MainNavigationScreen.dockKey,
+                              color: AppColors.surface,
+                              fill: AppGlass.barFill,
+                              sheen: false,
+                              shadow: hasTrack,
+                              shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+                              border: FrostedGlass.showsThrough(context) ? null : Border.all(color: AppColors.border),
+                              child: RepaintBoundary(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AnimatedSize(
+                                      duration: AppMotion.normal,
+                                      curve: AppMotion.move,
+                                      alignment: Alignment.bottomCenter,
+                                      child: AnimatedSwitcher(
+                                        duration: AppMotion.normal,
+                                        child: hasTrack
+                                            ? const MiniPlayer(key: ValueKey('mini'))
+                                            : const SizedBox(key: ValueKey('none'), width: double.infinity),
+                                      ),
+                                    ),
+                                    if (hasTrack)
+                                      Container(
+                                        height: 0.8,
+                                        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+                                        color: Colors.white.withValues(alpha: 0.06),
+                                      ),
+                                    _buildBottomNav(),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        _buildCyberBottomNav(),
-                      ],
-                    ),
-                    ),
+                      ),
                     ),
                   );
                 },
@@ -379,54 +352,26 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     );
   }
 
-  // Desacoplado con ValueListenableBuilder para evitar rebuilds globales de Scaffold
-  Widget _buildCyberBottomNav() {
+  // Only the bar rebuilds on a tab change, not the whole shell.
+  Widget _buildBottomNav() {
     return ValueListenableBuilder<MainTab>(
       valueListenable: _tabNotifier,
       builder: (context, selected, _) {
-        final currentLibraryCount =
-            ref.watch(libraryProvider.select((l) => l.listenedCount));
-        final locale = ref.read(localeProvider);
-        _lastSeenLibraryCount ??= currentLibraryCount;
-
-        // Si el usuario entra o está en la biblioteca, sincronizamos inmediatamente
-        if (selected == MainTab.library) {
-          _lastSeenLibraryCount = currentLibraryCount;
-        }
-
-        // El badge SOLO se muestra si el usuario NO está en la biblioteca y hay temas nuevos
-        final hasNewLibraryTracks =
-            selected != MainTab.library && currentLibraryCount > _lastSeenLibraryCount!;
-
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.bgDeep,
-            border: Border(
-              top: BorderSide(color: AppColors.border, width: 1.2),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black54,
-                blurRadius: 10,
-                offset: Offset(0, -3),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  for (final tab in MainTab.values)
-                    _buildNavItem(
-                      tab: tab,
-                      selected: selected,
-                      showBadge: tab == MainTab.library && hasNewLibraryTracks,
-                      locale: locale,
-                    ),
-                ],
-              ),
+        final listened = ref.watch(libraryProvider.select((l) => l.listenedCount));
+        _lastSeenLibraryCount ??= listened;
+        // Library open: everything in it is seen.
+        if (selected == MainTab.library) _lastSeenLibraryCount = listened;
+        final fresh = selected == MainTab.library ? 0 : (listened - _lastSeenLibraryCount!).clamp(0, 999);
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
+            child: TsukiNavBar(
+              selected: selected,
+              locale: ref.watch(localeProvider),
+              newInLibrary: fresh,
+              onTap: _onNavItemTap,
+              onLongPress: _onNavItemLongPress,
             ),
           ),
         );
@@ -434,62 +379,48 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     );
   }
 
-  String _navLabel(MainTab tab, LocaleProvider locale) {
-    final strings = locale.strings;
-    return switch (tab) {
-      MainTab.home => strings.navHome,
-      MainTab.search => strings.navSearch,
-      MainTab.explore => strings.navExplore,
-      MainTab.library => strings.navLibrary,
-    };
-  }
+  void _markLibrarySeen() => _lastSeenLibraryCount = ref.read(libraryProvider).listenedCount;
 
-  void _markLibrarySeen() =>
-      _lastSeenLibraryCount = ref.read(libraryProvider).listenedCount;
-
-  /// The shortcut a tab runs when it's tapped again or long-pressed.
-  VoidCallback? _shortcutOf(MainTab tab, {required bool longPress}) => switch (tab) {
-        MainTab.home =>
-          longPress ? NavigationEvents.onHomeOpenProfile : NavigationEvents.onHomeScrollToTop,
-        MainTab.search => longPress ? NavigationEvents.onSearchClear : NavigationEvents.onSearchFocus,
+  /// The shortcut a tab runs when it's tapped again while active.
+  VoidCallback? _tapAgainShortcut(MainTab tab) => switch (tab) {
+        MainTab.home => NavigationEvents.onHomeScrollToTop,
+        MainTab.search => NavigationEvents.onSearchFocus,
         MainTab.explore => NavigationEvents.onExploreScrollToTop,
         MainTab.library => NavigationEvents.onLibraryScrollToTop,
       };
 
   void _onNavItemTap(MainTab tab) {
-    // Cerrar teclado virtual si el usuario estaba escribiendo
     FocusScope.of(context).unfocus();
-
+    final wasActive = _tabNotifier.value == tab;
     final now = DateTime.now();
-    final isDoubleTap = _lastTapTab == tab &&
+    // A double tap only on the tab already open: tapping a new tab twice
+    // quickly opens it, then runs its tap-again shortcut, nothing more.
+    final isDoubleTap = wasActive &&
+        _lastTapTab == tab &&
         _lastTapTime != null &&
         now.difference(_lastTapTime!) < const Duration(milliseconds: 320);
-
-    _lastTapTime = now;
-    _lastTapTab = tab;
+    _lastTapTime = wasActive ? now : null;
+    _lastTapTab = wasActive ? tab : null;
 
     if (isDoubleTap) {
+      _lastTapTime = null;
       _onNavItemDoubleTap(tab);
       return;
     }
 
     Haptics.selection();
     appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
-
-    if (_tabNotifier.value != tab) {
+    if (tab == MainTab.library) _markLibrarySeen();
+    if (!wasActive) {
       _loadedTabs.add(tab);
       _tabNotifier.value = tab;
       unawaited(_maybeTeachGestures());
-      if (tab == MainTab.library) _markLibrarySeen();
     } else {
-      // Tap adicional en la pestaña ya activa: Acción inteligente instantánea
-      if (tab == MainTab.library) _markLibrarySeen();
-      _shortcutOf(tab, longPress: false)?.call();
+      _tapAgainShortcut(tab)?.call();
     }
   }
 
   void _onNavItemDoubleTap(MainTab tab) {
-    FocusScope.of(context).unfocus();
     Haptics.tap();
     switch (tab) {
       case MainTab.home:
@@ -504,134 +435,76 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     }
   }
 
-  /// Long-press: opens the tab and runs its shortcut (Home: the profile;
-  /// Search: a clean, focused field; Explore and Library: back to the top).
-  void _onNavItemLongPress(MainTab tab) {
+  /// A tab's shortcuts, for the menu a long press opens. Each is read when
+  /// chosen: the tab may only be built once it's opened.
+  List<(IconData, String, VoidCallback? Function())> _shortcuts(MainTab tab) {
+    final s = ref.read(localeProvider).strings;
+    return switch (tab) {
+      MainTab.home => [
+          (Icons.person_rounded, s.navMenuProfile, () => NavigationEvents.onHomeOpenProfile),
+          (Icons.vertical_align_top_rounded, s.navMenuTop, () => NavigationEvents.onHomeScrollToTop),
+          (Icons.refresh_rounded, s.navMenuRefresh, () => NavigationEvents.onHomeRefresh),
+        ],
+      MainTab.search => [
+          (Icons.add_rounded, s.navMenuNewSearch, () => NavigationEvents.onSearchClear),
+          (Icons.keyboard_rounded, s.navMenuTypeSearch, () => NavigationEvents.onSearchFocus),
+        ],
+      MainTab.explore => [(Icons.vertical_align_top_rounded, s.navMenuTop, () => NavigationEvents.onExploreScrollToTop)],
+      MainTab.library => [(Icons.vertical_align_top_rounded, s.navMenuTop, () => NavigationEvents.onLibraryScrollToTop)],
+    };
+  }
+
+  /// E-02: holding a tab shows what it can do, above it; choosing opens the
+  /// tab and runs the shortcut.
+  Future<void> _onNavItemLongPress(MainTab tab, Rect anchor) async {
     FocusScope.of(context).unfocus();
     Haptics.longPress();
+    final locale = ref.read(localeProvider);
+    final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final size = overlay.size;
+    final chosen = await showMenu<VoidCallback? Function()>(
+      context: context,
+      useRootNavigator: true,
+      color: AppColors.surfaceRaised,
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      position: RelativeRect.fromLTRB(anchor.left, anchor.top - 8, size.width - anchor.right, size.height - anchor.top + 8),
+      items: [
+        for (final (icon, label, action) in _shortcuts(tab))
+          PopupMenuItem(
+            value: action,
+            height: 48,
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AppColors.accentText),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: locale.getTextStyle(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+    if (chosen == null || !mounted) return;
+    Haptics.selection();
+    appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (tab == MainTab.library) _markLibrarySeen();
     if (_tabNotifier.value == tab) {
-      _shortcutOf(tab, longPress: true)?.call();
+      chosen()?.call();
       return;
     }
     _loadedTabs.add(tab);
     _tabNotifier.value = tab;
-    if (tab == MainTab.library) _markLibrarySeen();
     // The tab may be built for the first time now: its shortcut is read
     // after the frame, once the tab has registered it.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _shortcutOf(tab, longPress: true)?.call();
-    });
-  }
-
-  Widget _buildNavItem({
-    required MainTab tab,
-    required MainTab selected,
-    required LocaleProvider locale,
-    bool showBadge = false,
-  }) {
-    final isSelected = selected == tab;
-    final label = _navLabel(tab, locale);
-
-    // Equal widths: the labels fit at the type scale's floor on any phone.
-    return Expanded(
-      child: Semantics(
-      selected: isSelected,
-      // E-02: TalkBack says what holding the tab does.
-      onLongPressHint: locale.strings.navLongPressHint(tab.name),
-      child: TapScale(
-      semanticLabel: label,
-      onTap: () => _onNavItemTap(tab),
-      onLongPress: () => _onNavItemLongPress(tab),
-      scaleDown: 0.85,
-      child: Container(
-        // Four tabs share the width: each fills its quarter, so the whole
-        // column is the touch target, and a long name shrinks to fit.
-        color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Ícono temático Cyberpunk con micro-shake, glow y morfología vectorial
-                CyberNavIcon(
-                  tab: tab,
-                  isSelected: isSelected,
-                  size: 24,
-                ),
-
-                // Micro-punto rojo neón para canciones nuevas en la sesión
-                if (showBadge)
-                  Positioned(
-                    top: -2,
-                    right: -4,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.bgDeep,
-                          width: 1.4,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.95),
-                            blurRadius: 6,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                maxLines: 1,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.micro,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  color: isSelected ? AppColors.accent : AppColors.textSecondary,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-            const SizedBox(height: 1),
-            // E-01: the Japanese HUD line is ornament: at the scale's floor
-            // and only on the active tab. It keeps its room so the bar
-            // doesn't jump; TalkBack reads the label only.
-            ExcludeSemantics(
-              child: AnimatedOpacity(
-                opacity: isSelected ? 1 : 0,
-                duration: AppMotion.fast,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    locale.strings.navHudSubtitle(tab.name),
-                    maxLines: 1,
-                    style: GoogleFonts.notoSansJp(
-                      fontSize: AppFontSize.micro,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent.withValues(alpha: 0.9),
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            CyberTabIndicator(isSelected: isSelected),
-          ],
-        ),
-      ),
-    ),
-    ),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => chosen()?.call());
   }
 }
 

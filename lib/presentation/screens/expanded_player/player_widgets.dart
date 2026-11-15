@@ -73,7 +73,7 @@ class _TitleMarqueeState extends State<_TitleMarquee> {
 
       await _scrollController.animateTo(
         0,
-        duration: const Duration(milliseconds: 700),
+        duration: AppMotion.reveal,
         curve: Curves.easeOutCubic,
       );
     }
@@ -151,6 +151,7 @@ class _ScrubBarState extends State<_ScrubBar> {
             barHeight: dragging ? 9 : 5,
             thumbRadius: dragging ? 10 : 7,
             timeLabelTextStyle: locale.getTextStyle(
+              tabular: true,
               fontSize: AppFontSize.caption,
               color: AppColors.textSecondary,
             ),
@@ -173,6 +174,7 @@ class _ScrubBarState extends State<_ScrubBar> {
                     Formatters.formatDuration(drag.timeStamp),
                     style: locale.getTextStyle(
                       fontSize: AppFontSize.caption,
+                      tabular: true,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textBright,
                     ),
@@ -204,7 +206,7 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
     super.initState();
     _glow = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: AppMotion.cycle,
     );
   }
 
@@ -274,7 +276,7 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
                 ),
               )
             : Icon(
-                widget.isPlaying ? Icons.pause : Icons.play_arrow,
+                widget.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                 size: 36,
                 color: AppColors.textBright,
               ),

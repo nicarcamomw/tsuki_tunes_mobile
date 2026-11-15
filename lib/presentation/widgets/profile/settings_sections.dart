@@ -82,7 +82,7 @@ class _PlaybackSettingsState extends ConsumerState<_PlaybackSettings> {
           strings.eqPresetName(audio.eqPreset),
           style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
+        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 18),
         onTap: () async {
           Haptics.tap();
           await showEqualizerSheet(widget.hostContext);
@@ -221,7 +221,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
       ),
       _SettingSwitch(
         locale: locale,
-        icon: Icons.all_inclusive,
+        icon: Icons.all_inclusive_rounded,
         title: strings.autoplaySimilarTitle,
         subtitle: strings.autoplaySimilarSubtitle,
         value: audio.autoplaySimilar,
@@ -256,7 +256,7 @@ class _StorageSettingsState extends ConsumerState<_StorageSettings> {
           style: locale.getTextStyle(
               fontSize: AppFontSize.micro, color: AppColors.textMuted),
         ),
-        trailing: const Icon(Icons.chevron_right,
+        trailing: const Icon(Icons.chevron_right_rounded,
             color: AppColors.textMuted, size: 18),
         onTap: () {
           if (!ecoAllows(context, EcoFeature.smartShuffle)) return;
@@ -344,7 +344,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
       ),
       _SettingSwitch(
         locale: locale,
-        icon: Icons.nightlight_round,
+        icon: Icons.nightlight_round_rounded,
         title: strings.moonAtmosphereTitle,
         subtitle: strings.moonAtmosphereSubtitle,
         value: moon.atmosphereEnabled,
@@ -607,7 +607,7 @@ class _ImageQualityRow extends ConsumerWidget {
         '${strings.imageQualityName(quality)} · ${strings.imageQualityDescription(quality)}',
         style: locale.getTextStyle(fontSize: AppFontSize.micro, color: AppColors.textMuted),
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 18),
       onTap: () {
         Haptics.tap();
         unawaited(SwipeableSheet.show(

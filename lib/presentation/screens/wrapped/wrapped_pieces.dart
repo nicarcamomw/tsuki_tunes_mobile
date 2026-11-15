@@ -85,7 +85,7 @@ class _Backdrop extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color.lerp(tint, Colors.black, 0.55)!, const Color(0xFF0B0D13), Colors.black],
+                colors: [Color.lerp(tint, Colors.black, 0.55)!, AppColors.inkNight, Colors.black],
                 stops: const [0, 0.55, 1],
               ),
             ),
@@ -184,7 +184,7 @@ class _CountUp extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: value.toDouble()),
-      duration: const Duration(milliseconds: 1600),
+      duration: AppMotion.revealLong,
       curve: Curves.easeOutCubic,
       builder: (_, v, __) => Text(_thousands(v.round()), style: style),
     );

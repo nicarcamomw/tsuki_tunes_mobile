@@ -26,11 +26,13 @@ import 'package:tsuki_tunes_mobile/di/injection.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/app_router.dart';
 import 'package:tsuki_tunes_mobile/presentation/navigation/main_tab.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/explore_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/auth_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/locale_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/cyber_nav_icon.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/frosted_glass.dart';
 
 import 'helpers/fake_firebase_service.dart';
 
@@ -197,6 +199,13 @@ void main() {
       for (final label in ['INICIO', 'BUSCAR', 'EXPLORAR', 'BIBLIOTECA']) {
         expect(find.text(label), findsWidgets);
       }
+
+      // The pages run under the glass dock (bar and mini player), and get
+      // its height as their bottom padding so their last rows clear it.
+      final home = find.byType(HomeScreen);
+      expect(tester.getBottomLeft(home).dy, 844, reason: 'the page reaches the bottom, under the dock');
+      expect(MediaQuery.paddingOf(tester.element(home)).bottom, greaterThanOrEqualTo(70));
+      expect(find.ancestor(of: find.byType(CyberNavIcon).first, matching: find.byType(FrostedGlass)), findsOneWidget);
 
       // Home: one card for today, and the way to Explore.
       expect(find.text('HOY'), findsOneWidget);

@@ -223,7 +223,7 @@ class _ShowMoreTracksButton extends StatelessWidget {
                     duration: AppMotion.normal,
                     curve: Curves.easeOutCubic,
                     child: const Icon(
-                      Icons.keyboard_arrow_down,
+                      Icons.keyboard_arrow_down_rounded,
                       size: 16,
                       color: AppColors.textSecondary,
                     ),

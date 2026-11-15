@@ -17,6 +17,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/core/constants/app_colors.dart';
 import 'package:tsuki_tunes_mobile/core/theme/cyber_theme.dart';
+import 'package:tsuki_tunes_mobile/data/datasources/battery_guide.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/profile_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/social_repository_impl.dart';
@@ -26,6 +27,7 @@ import 'package:tsuki_tunes_mobile/domain/entities/social.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
 import 'package:tsuki_tunes_mobile/domain/lore/tsuki_lore.dart';
+import 'package:tsuki_tunes_mobile/presentation/navigation/session_gate.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/album_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/artist_detail_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/bonds_screen.dart';
@@ -33,9 +35,12 @@ import 'package:tsuki_tunes_mobile/presentation/screens/eco_levels_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/expanded_player_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/library_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/loading_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/login/login_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/search_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/streak_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
@@ -47,7 +52,9 @@ import 'package:tsuki_tunes_mobile/presentation/state/search_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/social_controller.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/app_snack.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/error_state.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/language_selector_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/permission_primer.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/profile_bottom_sheet.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/queue_panel.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/track_tile.dart';
@@ -83,6 +90,32 @@ const _song = Track(
 class _StillAudio extends AudioProvider {
   @override
   Track? get currentTrack => _song;
+}
+
+/// Halfway through the song: the dock's top edge lit to there.
+class _MidSongAudio extends _StillAudio {
+  @override
+  Duration get position => const Duration(seconds: 100);
+  @override
+  Duration get duration => const Duration(seconds: 248);
+}
+
+/// The session still waking: the loading screen stays.
+class _Waking extends ChangeNotifier implements SessionGate {
+  @override
+  SessionStatus get status => SessionStatus.loading;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Android limits Tsuki's battery: the background primer shows.
+class _LimitedGuide implements BatteryGuide {
+  @override
+  Future<bool> shouldOfferBackground() async => true;
+  @override
+  Future<void> declineBackground() async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// The song playing came from smart shuffle's recommendations.
@@ -323,7 +356,14 @@ void main() {
   });
 
   testWidgets('shell', skip: skip != null, (tester) async {
-    await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _StillAudio())],
+    await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        const MainNavigationScreen(child: SizedBox.expand()));
+  });
+
+  // No connection: how the shell says so.
+  testWidgets('shell_offline', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'shell_offline',
+        overrides: [...base, isOnlineProvider.overrideWithValue(false), audioProvider.overrideWith((ref) => _MidSongAudio())],
         const MainNavigationScreen(child: SizedBox.expand()));
   });
 
@@ -364,6 +404,36 @@ void main() {
           tracksCount: 1,
         ),
       ),
+    );
+  });
+
+  // The album scrolled: the header's frosted bar over the songs.
+  testWidgets('album_scrolled', skip: skip != null, (tester) async {
+    await _pumpShot(
+      tester,
+      'album_scrolled',
+      overrides: [
+        ...base,
+        audioProvider.overrideWith((ref) => AudioProvider()),
+        // A blue cover, for the header's tint (T-02).
+        coverColorsForProvider.overrideWith((ref, url) async => CoverColors.fromSeed(const Color(0xFF2E6BFF))),
+      ],
+      const AlbumDetailScreen(
+        album: Album(
+          id: '302127',
+          title: 'Discovery',
+          artistId: '27',
+          artistName: 'Daft Punk',
+          coverUrl: '',
+          tracks: [_song],
+          tracksCount: 1,
+        ),
+      ),
+      before: () async {
+        // The header collapsed to its glass bar, songs passing under it.
+        await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -520));
+        await tester.pump(const Duration(milliseconds: 300));
+      },
     );
   });
 
@@ -453,7 +523,7 @@ void main() {
     await _pumpShot(tester, 'lore', overrides: base, const LoreScreen());
   });
 
-  for (final id in ['elementos', 'caras']) {
+  for (final id in ['elementos', 'caras', 'ikai']) {
     testWidgets('lore_$id', skip: skip != null, (tester) async {
       final chapter = TsukiLore.chapters.firstWhere((c) => c.id == id);
       await _pumpShot(tester, 'lore_$id', overrides: base, LoreChapterScreen(chapter: chapter),
@@ -476,6 +546,79 @@ void main() {
 
   testWidgets('masks', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'masks', overrides: base, const MaskCollectionScreen());
+  });
+
+  // The login, its animated night.
+  testWidgets('login', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'login', overrides: base, const LoginScreen(),
+        before: () => tester.pump(const Duration(seconds: 2)));
+  });
+
+  // The first-run guide, each of its steps.
+  for (var step = 0; step < 4; step++) {
+    testWidgets('onboarding_${step + 1}', skip: skip != null, (tester) async {
+      await _pumpShot(tester, 'onboarding_${step + 1}', overrides: base, const OnboardingScreen(), before: () async {
+        for (var i = 0; i < step; i++) {
+          final pages = find.byType(PageView);
+          if (pages.evaluate().isEmpty) break;
+          await tester.drag(pages.first, const Offset(-250, 0));
+          await tester.pump(const Duration(milliseconds: 700));
+          await tester.pump(const Duration(milliseconds: 700));
+        }
+        // Each demo well into its loop.
+        await tester.pump(const Duration(milliseconds: 3500));
+      });
+    });
+  }
+
+  // Why a permission, before Android asks.
+  testWidgets('permission', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'permission', scaffold: true, overrides: base, Builder(builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && ModalRoute.of(context)?.isCurrent == true) unawaited(PermissionPrimer.notifications(context));
+      });
+      return const SizedBox.expand();
+    }));
+  });
+
+  // Why running in the background, before Android asks.
+  testWidgets('permission_background', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'permission_background',
+        scaffold: true, overrides: [...base, batteryGuideProvider.overrideWithValue(_LimitedGuide())], Builder(builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && ModalRoute.of(context)?.isCurrent == true) unawaited(PermissionPrimer.offerBackgroundIfNeeded(context));
+      });
+      return const SizedBox.expand();
+    }));
+  });
+
+  // The first frame while the session wakes up.
+  testWidgets('loading', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'loading', overrides: [...base, sessionGateProvider.overrideWith((ref) => _Waking())],
+        const LoadingScreen(),
+        before: () => tester.pump(LoadingScreen.patience));
+  });
+
+  // The playlists tab with none yet: its main action.
+  testWidgets('library_playlists', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'library_playlists',
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())], const LibraryScreen(),
+        before: () async {
+      await tester.tap(find.byType(Tab).last);
+      await tester.pump(const Duration(milliseconds: 400));
+    });
+  });
+
+  // A bottom sheet over the screen (D-14: it rises a surface).
+  testWidgets('sheet', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'sheet', scaffold: true,
+        overrides: [...base, audioProvider.overrideWith((ref) => AudioProvider())],
+        Builder(builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted && ModalRoute.of(context)?.isCurrent == true) LanguageSelectorSheet.show(context);
+          });
+          return const SizedBox.expand();
+        }));
   });
 
   // A mask equipped and chosen for the profile: the avatar shows it.

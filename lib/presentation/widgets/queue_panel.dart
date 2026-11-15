@@ -19,6 +19,7 @@ import 'flow_sheet.dart';
 import 'haptics.dart';
 import 'playlist_selector_sheet.dart';
 import 'radio_control_sheet.dart';
+import 'section_title.dart';
 import 'shuffle_mode_icon.dart';
 import 'track_tile.dart';
 
@@ -107,7 +108,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
           onTap: () => _playNext(queueIndex),
         ),
       TrackMenuAction(
-        icon: Icons.remove_circle_outline,
+        icon: Icons.remove_circle_outline_rounded,
         label: strings.queueRemoveLabel,
         onTap: () => _remove(queueIndex),
       ),
@@ -216,7 +217,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       child: _row(
                         current,
                         isCurrent: true,
-                        leading: Icon(Icons.equalizer,
+                        leading: Icon(Icons.equalizer_rounded,
                             color: AppColors.accent,
                             size: 16,
                             semanticLabel: strings.a11yNowPlaying),
@@ -292,7 +293,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       child: Row(
         children: [
-          Icon(Icons.queue_music,
+          Icon(Icons.queue_music_rounded,
               color: AppColors.accent, size: 16, semanticLabel: strings.a11yQueue),
           const SizedBox(width: 6),
           Expanded(
@@ -455,33 +456,31 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   Widget _sectionLabel(String text, {String? tag}) {
     final locale = _locale;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-      child: Row(
-        children: [
-          Text(
-            text,
-            style: locale.getTextStyle(
-              fontSize: AppFontSize.micro,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textSecondary,
-              letterSpacing: 1,
-            ),
-          ),
-          if (tag != null) ...[
-            const SizedBox(width: 6),
-            const Icon(Icons.shuffle_rounded, size: 11, color: AppColors.neonCyan),
-            const SizedBox(width: 3),
-            Text(
-              tag,
-              style: locale.getTextStyle(
-                fontSize: AppFontSize.micro,
-                fontWeight: FontWeight.w700,
-                color: AppColors.neonCyan,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ],
+      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 10, AppSpacing.page, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SectionLabel(
+          locale: locale,
+          text: text,
+          trailing: tag == null
+              ? null
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shuffle_rounded, size: 11, color: AppColors.neonCyan),
+                    const SizedBox(width: 3),
+                    Text(
+                      tag,
+                      style: locale.getTextStyle(
+                        fontSize: AppFontSize.micro,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neonCyan,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -517,7 +516,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
       queuedByUser: queuedByUser,
       recommended: recommended,
       leading: queuedByUser
-          ? Icon(Icons.queue_music,
+          ? Icon(Icons.queue_music_rounded,
               color: AppColors.neonCyan, size: 16, semanticLabel: strings.queuedByYou)
           : recommended
               ? SparkleIcon(
@@ -581,7 +580,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
             alignment: Alignment.centerLeft,
           ),
           secondaryBackground: _swipeBackground(
-            icon: Icons.delete_outline,
+            icon: Icons.delete_outline_rounded,
             label: strings.queueRemoveLabel,
             color: AppColors.accent,
             alignment: Alignment.centerRight,
@@ -810,6 +809,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
                       Formatters.formatSeconds(t.durationSeconds),
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
+                        tabular: true,
                         color: AppColors.textMuted,
                       ),
                     ),

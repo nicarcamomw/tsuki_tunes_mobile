@@ -71,7 +71,6 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
       context: host,
       useRootNavigator: true,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.border, width: 1.0),
@@ -143,7 +142,7 @@ class _SpotifyCardState extends ConsumerState<_SpotifyCard> {
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
-                child: Icon(Icons.music_note,
+                child: Icon(Icons.music_note_rounded,
                     color: Colors.white, size: 20, semanticLabel: strings.a11yMusicNote),
               ),
               const SizedBox(width: 12),

@@ -168,7 +168,7 @@ void main() {
       SharedPreferences.setMockInitialValues({'tsuki_has_completed_onboarding': true});
       final app = await launch(tester);
 
-      await tester.tap(find.text('ENTRAR COMO OBSERVADOR'));
+      await tester.tap(find.text('Entrar como observador'));
       await settle(tester);
       expect(app.read(authProvider).isGuest, isTrue);
 

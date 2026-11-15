@@ -27,6 +27,7 @@ import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -307,7 +308,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                           color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yFilter),
                       suffixIcon: _filterController.text.isNotEmpty
                           ? IconButton(
-                              icon: Icon(Icons.clear,
+                              icon: Icon(Icons.clear_rounded,
                                   color: AppColors.textSecondary, size: 16, semanticLabel: strings.a11yClearFilter),
                               tooltip: strings.a11yClearFilter,
                               onPressed: () {
@@ -537,7 +538,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     ? _noResults(locale, strings)
                     : ListView.builder(
                     controller: scrollController,
-                    padding: const EdgeInsets.only(bottom: 120),
+                    padding: EdgeInsets.only(bottom: dockBottom(context)),
                     itemCount: visible.length < albumGroups.length
                         ? visible.length + 1
                         : visible.length,
@@ -625,7 +626,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           : ListView.builder(
               controller: _songsScroll,
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 4, bottom: 120),
+              padding: EdgeInsets.only(top: 4, bottom: dockBottom(context)),
               itemCount: tracks.length,
               itemBuilder: (context, i) => TrackTile(
                 key: ValueKey('library_song_${tracks[i].id}'),
@@ -691,23 +692,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           child: Row(
             children: [
           Expanded(
-            child: OutlinedButton.icon(
+            // The tab's main action (D-10, D-12): the primary button.
+            child: FilledButton.icon(
               onPressed: () { Haptics.tap(); _showCreatePlaylistDialog(context); },
-              icon: Icon(Icons.add, color: AppColors.accent, size: 18, semanticLabel: strings.a11yCreatePlaylist),
+              icon: Icon(Icons.add_rounded, size: 18, semanticLabel: strings.a11yCreatePlaylist),
               label: Text(
                 strings.createPlaylist,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.caption,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
-                ),
+                style: locale.getTextStyle(fontSize: AppFontSize.caption, fontWeight: FontWeight.w800),
               ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.accent),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.chip)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
               if (shared.available) ...[
@@ -748,7 +741,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   message: strings.noPlaylistsSubtitle,
                 )
               : ListView(
-                  padding: const EdgeInsets.only(bottom: 120),
+                  padding: EdgeInsets.only(bottom: dockBottom(context)),
                   children: [
                     if (hasShared) ...[
                       Padding(
@@ -805,7 +798,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
           strings.newPlaylist,
@@ -1000,7 +992,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
 
                   ExcludeSemantics(
                     child: Icon(
-                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -1086,6 +1078,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         Formatters.formatSeconds(trackData.duration),
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.micro,
+                          tabular: true,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -1095,7 +1088,7 @@ class _AlbumGroupTileState extends ConsumerState<_AlbumGroupTile>
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                         tooltip: strings.a11yRemoveFromPlaylist,
-                        icon: Icon(Icons.remove_circle_outline,
+                        icon: Icon(Icons.remove_circle_outline_rounded,
                             color: AppColors.textMuted, size: 18, semanticLabel: strings.a11yRemoveFromPlaylist),
                         onPressed: () { Haptics.selection(); unawaited(unmarkWithUndo(context, ref, [trackData.trackId])); },
                       ),
@@ -1228,13 +1221,14 @@ class _PlaylistListTile extends ConsumerWidget {
                       ),
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.caption,
+                        tabular: true,
                         color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right,
+              Icon(Icons.chevron_right_rounded,
                   color: AppColors.textSecondary, size: 20, semanticLabel: strings.a11yOpenPlaylist),
             ],
           ),

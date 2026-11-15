@@ -24,9 +24,11 @@ import '../widgets/album_card.dart';
 import '../widgets/app_chip.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/artist_card.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/track_tile.dart';
@@ -360,13 +362,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       counterText: '',
                       hintText: strings.searchHint,
                       hintStyle: locale.getTextStyle(color: AppColors.textMuted, fontSize: AppFontSize.title),
-                      prefixIcon: const ExcludeSemantics(child: Icon(Icons.search, color: AppColors.textSecondary, size: 20)),
+                      prefixIcon: const ExcludeSemantics(child: Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20)),
                       suffixIcon: ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _controller,
                         builder: (context, value, _) {
                           if (value.text.isNotEmpty) {
                             return IconButton(
-                              icon: Icon(Icons.clear, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
+                              icon: Icon(Icons.clear_rounded, color: AppColors.textSecondary, size: 18, semanticLabel: strings.a11yClearSearch),
                               tooltip: strings.a11yClearSearch,
                               onPressed: () { Haptics.selection();
                                 _controller.clear();
@@ -376,7 +378,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           }
                           if (!_voiceSupported) return const SizedBox.shrink();
                           return IconButton(
-                            icon: const Icon(Icons.mic, color: AppColors.textSecondary, size: 20),
+                            icon: const Icon(Icons.mic_rounded, color: AppColors.textSecondary, size: 20),
                             tooltip: strings.a11yVoiceSearch,
                             onPressed: _startVoiceSearch,
                           );

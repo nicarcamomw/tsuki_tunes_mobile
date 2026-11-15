@@ -193,7 +193,6 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                         : AppColors.borderGlow,
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                 ),
                 onPressed: weather.loading
                     ? null

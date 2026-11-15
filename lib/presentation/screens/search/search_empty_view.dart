@@ -53,7 +53,6 @@ extension _SearchEmptyView on _SearchScreenState {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: AppColors.bgCard,
                       title: Text(
                         strings.clearHistory,
                         style: locale.getTextStyle(
@@ -118,7 +117,7 @@ extension _SearchEmptyView on _SearchScreenState {
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
-                  child: Icon(Icons.delete_outline,
+                  child: Icon(Icons.delete_outline_rounded,
                       color: AppColors.accent, size: 18, semanticLabel: strings.a11yClearHistory),
                 ),
                 onDismissed: (_) {
@@ -135,7 +134,7 @@ extension _SearchEmptyView on _SearchScreenState {
                         const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                     child: Row(
                       children: [
-                        Icon(Icons.history,
+                        Icon(Icons.history_rounded,
                             size: 18, color: AppColors.textMuted, semanticLabel: strings.a11ySearchHistory),
                         const SizedBox(width: 12),
                         Expanded(
@@ -153,7 +152,7 @@ extension _SearchEmptyView on _SearchScreenState {
                           width: 48,
                           height: 48,
                           child: Center(
-                            child: Icon(Icons.north_west,
+                            child: Icon(Icons.north_west_rounded,
                                 size: 14, color: AppColors.textMuted, semanticLabel: strings.a11yFillSearch),
                           ),
                         ),
@@ -174,7 +173,7 @@ extension _SearchEmptyView on _SearchScreenState {
                 for (final name in topArtists)
                   _QueryChip(
                     label: name,
-                    icon: Icons.person_outline,
+                    icon: Icons.person_outline_rounded,
                     semanticLabel: strings.a11ySearchSuggestion(name),
                     locale: locale,
                     onTap: () => _runQuery(name),
@@ -198,24 +197,13 @@ extension _SearchEmptyView on _SearchScreenState {
               ],
             ),
           ],
-          const SizedBox(height: 120),
+          SizedBox(height: dockBottom(context)),
         ],
       ),
     );
   }
 
-  Widget _sectionLabel(String text, LocaleProvider locale) => Semantics(
-        header: true,
-        child: Text(
-          text,
-          style: locale.getTextStyle(
-            fontSize: AppFontSize.micro,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textMuted,
-            letterSpacing: 1.2,
-          ),
-        ),
-      );
+  Widget _sectionLabel(String text, LocaleProvider locale) => SectionLabel(locale: locale, text: text);
 
   /// Completions of the text being typed: recent searches, the user's own
   /// artists and songs, then names from the results so far.

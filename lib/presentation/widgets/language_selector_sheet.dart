@@ -17,7 +17,6 @@ class LanguageSelectorSheet extends ConsumerWidget {
     FocusManager.instance.primaryFocus?.unfocus();
     SwipeableSheet.show(
       context,
-      backgroundColor: AppColors.bgDeep,
       initialChildSize: 0.50,
       maxChildSize: 0.80,
       builder: (_, controller) => const LanguageSelectorSheet(),

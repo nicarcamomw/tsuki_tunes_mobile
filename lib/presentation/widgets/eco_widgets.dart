@@ -501,7 +501,7 @@ class EcoLevelCard extends ConsumerWidget {
                 const ExcludeSemantics(child: EcoBadge(size: 44)),
                 const SizedBox(width: 12),
                 Expanded(child: EcoProgressBar(masks: masks)),
-                const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 20),
               ],
             ),
           ),

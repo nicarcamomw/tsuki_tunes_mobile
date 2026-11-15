@@ -36,7 +36,7 @@ enum _Step { call, name, crossed, stayed }
 
 class _AscensionScreenState extends ConsumerState<AscensionScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _reveal =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 9000))..forward();
+      AnimationController(vsync: this, duration: AppMotion.ceremony)..forward();
   late final TextEditingController _maskName;
   _Step _step = _Step.call;
   bool _busy = false;
@@ -306,7 +306,6 @@ class _ChoiceButton extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: _moon,
                 foregroundColor: AppColors.shrineCard,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),
@@ -315,7 +314,6 @@ class _ChoiceButton extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _moon,
                 side: BorderSide(color: _moon.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
               ),
               onPressed: onTap,
               child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 3)),

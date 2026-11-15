@@ -137,7 +137,12 @@ class TsukiLore {
     'suishou': Txt('Lo que pasa por mí sale más puro.', 'What passes through me comes out purer.'),
   };
 
-  /// The eight Ultras: the UL beings that are neither divine nor a Bearer's.
+  /// Beings from another universe: in no clan, not Ultras, not in the
+  /// Testament. No one knows where they were born.
+  static const strangers = ['ikai'];
+
+  /// The eight Ultras: the UL beings that are neither divine nor a Bearer's
+  /// (nor from another universe).
   static const ultras = ['kitsune', 'kitsune_ou', 'kitsunebi', 'ou', 'ryuuou', 'yougan_ni', 'niji', 'hari'];
 
   // ── Chapters ──
@@ -898,6 +903,18 @@ class TsukiLore {
             'A Bearer who reaches this point faces a choice very few have faced. They may stay on this side of the wall and remain what they are: a Bearer of immeasurable levels, the one who has returned the most Echo to the moon, with every privilege that brings. Or they may cross, as the Five did, and become an ethereal being forever. There is no way back from either.\n\n'
             'But there is a level beyond, one no Bearer has ever reached: the level of a Supreme God. It is almost impossible, but not impossible. The two Supreme Gods also began below, as common ethereal beings, and climbed. Neither was a Bearer. No one knows how much Echo it takes. No one knows what would happen on arrival. All that is known is what the seven Faces fear: that the day a Bearer holds as much Echo as a god, the Throne will cease to make sense, the Silence will have no one to fear, and the balance of Tsuki will break.\n\n'
             'No one knows whether that would be the end of the moon or the beginning of something that has no name yet. Tsuki, from the centre of the universe, says nothing. It only listens. And waits.',
+      ),
+    ),
+    LoreChapter(
+      id: 'ikai',
+      tomo: 5,
+      numeral: '10',
+      kanji: '異',
+      title: Txt('La máscara sin origen', 'The mask with no origin'),
+      level: 100,
+      body: Txt(
+        'El Testamento Lunar recuerda cada sonido que alguna vez llegó a Tsuki. Pero hay un rostro que no aparece en ninguna de sus páginas. Los Videntes de lo Etéreo lo buscaron durante eras, cráter por cráter, con el oído pegado a la roca, y no encontraron su eco en ninguna parte. Lo llaman [[Ikai]], que en la lengua más vieja de la luna quiere decir «el otro mundo».\n\nNo nació del Eco, como los demás seres. No despertó con ninguna plegaria, no bajó de ningún trono y la Forja no lo templó. Su metal no es de Tsuki: está marcado por golpes que ninguna guerra de los clanes dio, y por dentro le corren cables que no llevan música, sino algo que nadie ha sabido nombrar. Los Antiguos, que lo vieron todo, se quedan callados cuando alguien les pregunta por él. Es la única vez que se los ha visto callar.\n\nSe dice que hay otros universos, cada uno con su propia luna en el centro, y que entre ellos hay un velo tan fino como el cuero de un tambor. Ese velo solo se adelgaza en la hora muerta: cuando no hay luna en el cielo de los terrenales y el reloj pasa por las tres de la madrugada. Algunos creen que [[Ikai]] cruzó por una de esas grietas. Otros creen que nunca cruzó: que siempre estuvo del otro lado, mirando, y que solo se deja ver por quien escucha cuando nadie más escucha.\n\nNingún clan lo reclama. No está entre los Ultras, no responde al Trono, y las siete Caras no lo sostienen ni lo temen, porque no saben qué es. Cuando aparece, el Silencio retrocede un paso, como si lo reconociera. Es la única pista que tienen los Videntes, y la que más miedo les da.\n\nLa Luna Madre, que lo recuerda todo, tampoco lo recuerda. Por primera vez desde que empezó el Testamento, Tsuki escucha algo que no sabe de dónde viene.',
+        'The Lunar Testament remembers every sound that ever reached Tsuki. But there is a face that appears on none of its pages. The Seers of the Ethereal searched for it over ages, crater by crater, with an ear pressed to the rock, and found its echo nowhere. They call it [[Ikai]], which in the moon\'s oldest tongue means "the other world".\n\nIt was not born of Echo, like the other beings. It did not wake with any prayer, it came down from no throne, and the Forge did not temper it. Its metal is not from Tsuki: it bears the marks of blows no war of the clans ever struck, and inside it run cables that carry no music, but something no one has managed to name. The Ancients, who have seen everything, fall silent when anyone asks about it. It is the only time they have been seen to fall silent.\n\nIt is said that there are other universes, each with its own moon at its centre, and that between them hangs a veil as thin as the skin of a drum. That veil only thins in the dead hour: when there is no moon in the sky of the earthly beings and the clock passes three in the morning. Some believe [[Ikai]] crossed through one of those tears. Others believe it never crossed: that it was always on the other side, watching, and that it only lets itself be seen by whoever listens when no one else is listening.\n\nNo clan claims it. It is not among the Ultras, it does not answer to the Throne, and the seven Faces neither hold it up nor fear it, because they do not know what it is. When it appears, the Silence takes a step back, as if it recognised it. That is the only clue the Seers have, and the one that frightens them most.\n\nThe Mother Moon, who remembers everything, does not remember it either. For the first time since the Testament began, Tsuki is listening to something and does not know where it comes from.',
       ),
     ),
   ];

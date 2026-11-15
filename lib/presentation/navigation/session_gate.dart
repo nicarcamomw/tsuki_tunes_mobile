@@ -88,6 +88,11 @@ class SessionGate extends ChangeNotifier {
       unawaited(_storage.hasCompletedOnboarding().then((done) {
         _onboardingDone = done;
         _sync();
+      }, onError: (Object _) {
+        // The phone's storage failed to answer: better the app than the
+        // tutorial again, and never the loading screen for good.
+        _onboardingDone = true;
+        _sync();
       }));
     }
     final done = _onboardingDone;

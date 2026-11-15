@@ -14,11 +14,13 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/empty_state.dart';
 import '../widgets/haptics.dart';
 import '../widgets/moon_loader.dart';
 import '../widgets/oni_mask_art.dart';
+import '../widgets/section_title.dart';
 import '../widgets/skeleton_loader.dart';
 
 /// Bonds (Lazos): what your Bonds' Echo did (Resonances), your Bonds and
@@ -217,7 +219,7 @@ class _ResonancesTabState extends ConsumerState<_ResonancesTab> with AutomaticKe
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
+            padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, dockBottom(context)),
             itemCount: feed.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) => ResonanceTile(resonance: feed[i]),
@@ -331,7 +333,7 @@ class _BondsTab extends ConsumerWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 120),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, dockBottom(context)),
       children: [
         if (social.received.isNotEmpty) ...[
           _SectionLabel(text: strings.bondsRequests, count: social.received.length, locale: locale),
@@ -474,7 +476,7 @@ class _SearchTabState extends ConsumerState<_SearchTab> with AutomaticKeepAliveC
     final strings = locale.strings;
     final results = _results;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, 120),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 14, AppSpacing.page, dockBottom(context)),
       children: [
         TextField(
           controller: _field,
@@ -614,7 +616,6 @@ class BondButton extends ConsumerWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         title: Text(strings.bondsUnbond),
         content: Text(strings.bondsUnbondBody(person.name)),
         actions: [
@@ -764,15 +765,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8, left: 2),
-    child: Text(
-      '${text.toUpperCase()} · $count',
-      style: locale.getTextStyle(
-        fontSize: AppFontSize.caption,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textMuted,
-        letterSpacing: 2,
-      ),
-    ),
+    child: Align(alignment: Alignment.centerLeft, child: SectionLabel(locale: locale, text: text, count: count)),
   );
 }
 

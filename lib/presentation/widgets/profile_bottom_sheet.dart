@@ -30,6 +30,7 @@ import 'haptics.dart';
 import 'language_selector_sheet.dart';
 import 'my_avatar.dart';
 import 'oni_mask_art.dart';
+import 'section_title.dart';
 import 'shuffle_mode_icon.dart';
 import 'smart_shuffle_sheet.dart';
 import 'swipeable_sheet.dart';
@@ -166,7 +167,7 @@ class _ProfileSheet extends ConsumerWidget {
                   Navigator.pop(context);
                   await _confirmLogout(hostContext, auth);
                 },
-                icon: Icon(Icons.logout, color: AppColors.accent, size: 18, semanticLabel: strings.a11yLogout),
+                icon: Icon(Icons.logout_rounded, color: AppColors.accent, size: 18, semanticLabel: strings.a11yLogout),
                 label: Text(
                   strings.logoutOption,
                   style: locale.getTextStyle(
@@ -177,9 +178,6 @@ class _ProfileSheet extends ConsumerWidget {
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.accent),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),

@@ -55,7 +55,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: AppMotion.breath,
     );
     _start();
   }
@@ -337,7 +337,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             border: Border.all(color: AppColors.accent.withValues(alpha: 0.4), width: 2),
           ),
           child: Icon(
-            _canRetry ? Icons.refresh : Icons.mic_off,
+            _canRetry ? Icons.refresh_rounded : Icons.mic_off_rounded,
             color: AppColors.accent,
             size: 36,
           ),
@@ -355,7 +355,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
             color: AppColors.accent.withValues(alpha: 0.2),
             border: Border.all(color: AppColors.accent, width: 2),
           ),
-          child: const Icon(Icons.check, color: AppColors.accent, size: 36),
+          child: const Icon(Icons.check_rounded, color: AppColors.accent, size: 36),
         ),
       );
     }
@@ -385,7 +385,7 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
                 color: AppColors.accent.withValues(alpha: 0.15),
                 border: Border.all(color: AppColors.accent, width: 2),
               ),
-              child: const Icon(Icons.mic, color: AppColors.accent, size: 36),
+              child: const Icon(Icons.mic_rounded, color: AppColors.accent, size: 36),
             ),
           ],
         );

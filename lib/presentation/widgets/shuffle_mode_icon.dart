@@ -19,7 +19,7 @@ class ShuffleModeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode != ShuffleMode.smart) {
-      return Icon(Icons.shuffle, size: size, color: color);
+      return Icon(Icons.shuffle_rounded, size: size, color: color);
     }
     return SizedBox(
       width: size * 1.2,
@@ -30,7 +30,7 @@ class ShuffleModeIcon extends StatelessWidget {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Icon(Icons.shuffle, size: size * 0.8, color: color),
+            child: Icon(Icons.shuffle_rounded, size: size * 0.8, color: color),
           ),
           Positioned(
             left: 0,

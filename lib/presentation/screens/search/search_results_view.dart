@@ -57,7 +57,7 @@ extension _SearchResultsView on _SearchScreenState {
 
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.only(bottom: 120),
+      padding: EdgeInsets.only(bottom: dockBottom(context)),
       children: [
         _buildDidYouMean(search, locale),
 
@@ -68,18 +68,7 @@ extension _SearchResultsView on _SearchScreenState {
         if (showArtists && hasArtists) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 8),
-            child: Semantics(
-              header: true,
-              child: Text(
-                strings.tabArtists.toUpperCase(),
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
+            child: SectionLabel(locale: locale, text: strings.tabArtists),
           ),
           SizedBox(
             height: 155,
@@ -97,18 +86,7 @@ extension _SearchResultsView on _SearchScreenState {
         if (showAlbums && hasAlbums) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
-            child: Semantics(
-              header: true,
-              child: Text(
-                strings.tabAlbums.toUpperCase(),
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
+            child: SectionLabel(locale: locale, text: strings.tabAlbums),
           ),
           SizedBox(
             height: 185,
@@ -126,18 +104,7 @@ extension _SearchResultsView on _SearchScreenState {
         if (showTracks && hasTracks) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
-            child: Semantics(
-              header: true,
-              child: Text(
-                strings.tabTracks.toUpperCase(),
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
+            child: SectionLabel(locale: locale, text: strings.tabTracks),
           ),
           ...search.tracks.asMap().entries.map(
                 (entry) => TrackTile(
@@ -225,18 +192,7 @@ extension _SearchResultsView on _SearchScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              strings.searchTopResult,
-              style: locale.getTextStyle(
-                fontSize: AppFontSize.body,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
+          SectionLabel(locale: locale, text: strings.searchTopResult),
           const SizedBox(height: 8),
           Material(
             color: AppColors.bgCard,

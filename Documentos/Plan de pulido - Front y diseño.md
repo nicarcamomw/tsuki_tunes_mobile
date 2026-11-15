@@ -49,28 +49,29 @@ Rutas base: pantallas en `lib/presentation/screens/`, piezas en `lib/presentatio
 
 - **Tema y colores:** `core/theme/cyber_theme.dart`, `core/constants/app_colors.dart`.
 - **Tipografía:** Plus Jakarta Sans y Noto Sans JP (google_fonts); tipografías propias por artista (`core/utils/artist_fonts.dart`, 26 fuentes en `assets/fonts/`).
-- **Superficies:** `GlassCard` (tarjeta de tinta), `cyberCardBox`.
-- **Botones y toques:** `CyberButton`, `TapScale`, `MoonButton`, vibración (`haptics.dart`).
+- **Superficies:** tres niveles (`AppColors.surface`, `surfaceCard`, `surfaceRaised`), `GlassCard` (tarjeta de tinta) y `FrostedGlass` (liquid glass al estilo de Apple, `AppGlass`: desenfoque, borde de luz, brillo interior, sombra solo por fuera). Solo sobre contenido que se mueve (la barra inferior y el mini reproductor, que flotan sobre las páginas con un solo desenfoque compartido; los botones y el título flotante de las páginas de detalle; los avisos) y solo con texto o íconos blancos encima; con alto contraste es sólido. Las hojas siguen sólidas: su texto gris no aguantaría AA sobre vidrio.
+- **Botones y toques:** tres tipos (`FilledButton` primario, `OutlinedButton` secundario, `TextButton` de texto, desde el tema), `TapScale`, `MoonButton`, vibración (`haptics.dart`).
 - **Texto con efecto:** `GlitchText`, `CyberGlitchText`, `DistortedArtistName`, `LoreText`.
-- **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (7 versiones sueltas), sin conexión (franja superior).
+- **Estados:** carga (`skeleton_loader.dart`, 20 esqueletos), error (`ErrorState`), vacío (`EmptyState`, uno solo), sin conexión (franja superior).
 - **Hojas inferiores:** `SwipeableSheet` y unas 25 hojas (listadas en su apartado).
-- **Títulos de sección:** `SectionTitle` y 5 versiones sueltas.
-- **Movimiento:** `motion.dart` (reducir movimiento), transiciones `cyberPage` y `fadePage`.
-- **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material.
+- **Títulos de sección:** `SectionTitle` (secciones de contenido) y `SectionLabel` (etiquetas de grupo), ambos anunciados como título.
+- **Fin de página:** las páginas del shell pasan bajo la barra de vidrio y terminan con `dockBottom(context)` (el alto de la barra llega como padding inferior).
+- **Movimiento:** `motion.dart` (reducir movimiento), tokens `AppMotion` (de `micro` a `ceremony`), transiciones `cyberPage` y `fadePage`.
+- **Íconos:** `CyberNavIcon` (barra), `AppCustomIcons`, `ShuffleModeIcon`, `OniMaskIcon`; el resto, Material en su variante redondeada.
 
 ### 1. Acceso
 
 - **Carga inicial** (`LoadingRoute`) y control de sesión (`navigation/session_gate.dart`).
-- **Login** (`login/login_screen.dart`): fondo animado (`login/painters.dart`), botón de Google (`login/google_button.dart`), entrar como observador (invitado), avisos de error.
-- **Onboarding** (`onboarding/`): tres slides (identidad, reproductor, búsqueda), sus fondos animados, indicador de paso y botones.
-- **Tutorial** (`TutorialRoute`): el mismo onboarding abierto desde ajustes.
-- **Permisos explicados** (`permission_primer.dart`): notificaciones y segundo plano.
+- **Login** (`login/login_screen.dart`): el cielo de la entrada (`widgets/tsuki_sky.dart`), botón de Google (`login/google_button.dart`), entrar como observador (invitado), avisos de error.
+- **Onboarding** (`onboarding/`): cuatro pasos (biblioteca, descubrir, escuchar, tu camino), cada uno con una demo en vivo sobre vidrio (`onboarding_steps.dart`), bajo el cielo de la entrada; indicador de paso en fases lunares y un botón que cambia en el último paso.
+- **Tutorial** (`TutorialRoute`): el mismo onboarding abierto desde ajustes, con fundido, botón de cerrar y "Listo" al final.
+- **Permisos explicados** (`permission_primer.dart`): notificaciones y segundo plano, cada uno con su escena animada y tres líneas.
 
 ### 2. Estructura
 
-- **Barra inferior** (`main_navigation_screen.dart`): 4 pestañas, ícono animado, subtítulo japonés, indicador, punto de novedades en Biblioteca, gestos (doble toque, mantener).
-- **Mini player** (`mini_player.dart`): portada que respira, título en marquesina, barra de progreso, marcar escuchada, tinte por portada.
-- **Avisos globales:** error de Spotify (con guía de batería), error de reproducción, error de sincronización, franja sin conexión.
+- **Barra inferior** (`widgets/tsuki_nav_bar.dart`, en `main_navigation_screen.dart`): 4 pestañas, ícono animado, subtítulo japonés, lente de vidrio que se desliza, contador de novedades en Biblioteca, gestos (tocar de nuevo, doble toque, mantener para ver atajos). Comparte un solo muelle de vidrio con el mini player.
+- **Mini player** (`mini_player.dart`): portada que respira, título en marquesina, progreso como borde iluminado del muelle, marcar escuchada, play/pausa que gira, anillo de carga, tinte por portada, gestos (deslizar a los lados, subir para abrir).
+- **Avisos globales:** error de Spotify (con guía de batería), error de reproducción y error de sincronización (snacks sobre el muelle), y el aviso de conexión (`connection_notice.dart`), una píldora arriba.
 - **Capas sobre toda la app:** aviso de máscara desbloqueada (`mask_unlock_banner.dart`), aviso de subida de nivel (`EcoLevelUpBanner`), hora bruja (`witching_hour_overlay.dart`), sakura (`sakura_overlay.dart`), atmósfera lunar (`moon_atmosphere.dart`).
 - **Transiciones y retroceso:** `navigation/routes.dart`, gesto predictivo de Android.
 - **Enlaces profundos:** abrir álbum, artista, playlist, canción o perfil por enlace (`load_by_id.dart`, `TrackRoute`).
@@ -209,39 +210,41 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 |---|---|---|---|
 | D-01 | ~~Escala tipográfica: 33 tamaños, con medios puntos. Definir 7 u 8 tokens y migrar.~~ **Hecho** en `design_tokens.dart`: 10, 11, 12, 13, 14, 16, 22 y 28, más 40 y 64 para cifras y adornos. Detalle en `Documentos/Informe de la noche - pulido front.md`. | No queda ningún `fontSize:` suelto fuera de los tokens en `presentation/`. | A |
 | D-02 | ~~Texto diminuto: mínimo 10 en todo lo que informe.~~ **Hecho:** el paso más bajo de la escala (`AppFontSize.micro`) ya es 10. | Ningún texto informativo bajo el mínimo; solo adornos pueden ir por debajo. | A |
-| D-03 | Radios: 21 valores distintos. Dejar 4 tokens (chip, tarjeta, sheet, píldora). | Todos los `BorderRadius.circular` usan un token. | A |
-| D-04 | Animaciones: unas 25 duraciones sueltas. Tokens rápido / normal / lento y curvas comunes. | Las duraciones salen de los tokens. | B |
-| D-05 | Margen lateral: alterna 16 y 20 según pantalla. Unificar. | Un solo valor de margen de página. | B |
-| D-06 | Un `EmptyState` compartido (hoy hay 7 distintos), como ya existe `ErrorState`. | Las 7 pantallas usan el mismo widget. | A |
-| D-07 | Usar `SectionTitle` en todas partes (hay 5 versiones más en Buscar, Bonds, Radar, ajustes y cola). | Solo existe un título de sección. | B |
-| D-08 | Un helper de snackbar con variantes info / error / deshacer (hoy unos 60 armados a mano en 28 archivos). | Ningún `SnackBar(` construido a mano. | A |
-| D-09 | Una sola flecha de volver (hoy 4 íconos distintos). | Un único ícono en toda la app. | C |
-| D-10 | Botones: definir primario, secundario y de texto; hoy conviven `CyberButton`, `FilledButton`, `TextButton` y contenedores a mano. | Cada botón es uno de los tres tipos. | B |
-| D-11 | Colores fuera de paleta (Eco, racha, Lore, Ascensión) a `AppColors`. | Ningún `Color(0x…)` en pantallas. | C |
-| D-12 | **Rojo con significado:** el acento aparece más de 600 veces. Reservarlo para lo que suena, la acción principal y lo activo; el resto, neutros. Neones con sentido fijo: cian = ambiente/información, púrpura = social/máscaras, verde = Spotify/correr. | Guía escrita y aplicada en las pestañas principales. | A |
-| D-13 | **Tipografía de titulares:** sumar una display técnica y condensada para títulos (`INICIO // 01`) y cifras monoespaciadas para stats y tiempos. El cuerpo sigue en Plus Jakarta. | Títulos y números usan las nuevas familias. | B |
-| D-14 | **Profundidad con luz:** tres niveles de superficie (fondo, tarjeta, elevado); el borde brillante solo para lo activo. | Tokens de superficie aplicados a las tarjetas. | B |
-| D-15 | Un solo juego de íconos: igualar grosor y estilo de los 20 o 30 más usados con los de la barra. | Íconos principales redibujados o sustituidos. | C |
+| D-03 | ~~Radios: 21 valores distintos. Dejar 4 tokens (chip, tarjeta, sheet, píldora).~~ **Hecho:** `AppRadius` (chip, card, sheet, pill). Quedan 4 radios calculados en el momento (el disco que se transforma, la máscara a escala), que es lo correcto. | Todos los `BorderRadius.circular` usan un token. | A |
+| D-04 | ~~Animaciones: unas 25 duraciones sueltas.~~ **Hecho:** `AppMotion` de `micro` a `slow` para transiciones, más `reveal`, `revealLong`, `cycle`, `breath` y `ceremony` para los bucles y revelaciones largas. `design_tokens_test` no deja ninguna duración escrita a mano. | Las duraciones salen de los tokens. | B |
+| D-05 | ~~Margen lateral: alterna 16 y 20 según pantalla.~~ **Hecho:** `AppSpacing.page` (16). | Un solo valor de margen de página. | B |
+| D-06 | ~~Un `EmptyState` compartido.~~ **Hecho:** todos los vacíos lo usan, también los avisos de error y de biblioteca vacía del inicio. | Las 7 pantallas usan el mismo widget. | A |
+| D-07 | ~~Un solo título de sección.~~ **Hecho:** `SectionTitle` para secciones de contenido y `SectionLabel` para etiquetas de grupo (ajustes, historial de búsqueda, Lazos, radar, cola, resultados), las dos anunciadas como título. | Solo existe un título de sección. | B |
+| D-08 | ~~Un helper de snackbar.~~ **Hecho:** `AppSnack`; ningún `SnackBar(` a mano. | Ningún `SnackBar(` construido a mano. | A |
+| D-09 | ~~Una sola flecha de volver.~~ **Hecho:** `arrow_back_rounded`. | Un único ícono en toda la app. | C |
+| D-10 | ~~Botones: primario, secundario y de texto.~~ **Hecho:** desde el tema, con esquina de chip y 48 dp; sin `ElevatedButton` ni `CyberButton` (`test/button_types_test.dart`). | Cada botón es uno de los tres tipos. | B |
+| D-11 | ~~Colores fuera de paleta a `AppColors`.~~ **Hecho:** el santuario (Eco, racha, Lore, Ascensión) y las ilustraciones (login, onboarding, Wrapped, cielos) tienen nombre. Solo el dibujo sobre lienzo de `story_image.dart` conserva sus degradados. | Ningún `Color(0x…)` en pantallas. | C |
+| D-12 | ~~**Rojo con significado.**~~ **Hecho:** la guía está en `app_colors.dart` (rojo para lo que suena, la acción principal y lo activo; cian información, púrpura social, verde Spotify) y aplicada en las cuatro pestañas: insignia de fuente verde o neutra, portadas faltantes en gris, primario para "Crear playlist". | Guía escrita y aplicada en las pestañas principales. | A |
+| D-13 | **Tipografía de titulares:** sumar una display técnica y condensada para títulos (`INICIO // 01`) y cifras monoespaciadas para stats y tiempos. El cuerpo sigue en Plus Jakarta. **Hecha la mitad sin fuente nueva:** cifras de ancho fijo (`getTextStyle(tabular: true)`) en tiempos, duraciones y contadores. **Pendiente de decisión:** la fuente display cambia la identidad (regla 1). | Títulos y números usan las nuevas familias. | B |
+| D-14 | ~~**Profundidad con luz.**~~ **Hecho:** `surface`, `surfaceCard` y `surfaceRaised` (hojas, diálogos y menús); `borderGlow` solo para lo activo (`test/surfaces_test.dart`). | Tokens de superficie aplicados a las tarjetas. | B |
+| D-15 | ~~Un solo juego de íconos.~~ **Hecho:** todos los íconos Material en su variante redondeada (los delineados quedan donde significan "apagado"); `design_tokens_test` lo vigila. Redibujar a mano los más usados al estilo de la barra queda como idea, no como deuda. | Íconos principales redibujados o sustituidos. | C |
 
 ### 1. Acceso
 
 | Código | Tarea | Prio |
 |---|---|---|
-| A-01 | Login tiene 7 `CustomPaint` animados: medir en gama baja y pausar los que no se ven. | B |
-| A-02 | Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar. | B |
-| A-03 | Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono. | C |
+| A-01 | ~~Login tiene 7 `CustomPaint` animados.~~ **Hecho:** el login comparte el cielo de la entrada (`widgets/tsuki_sky.dart`: la nebulosa en un shader y las brasas), con un solo ticker y pintores que se redibujan sin reconstruir; la máscara de la entrada sube a su lugar con su anillo (que es el indicador de carga), el nombre aparece con un glitch, y las entradas van en un panel de *liquid glass*: el botón oficial de Google, el observador, una línea que dice qué pasa (sin conexión, cuenta regresiva por intentos, error con "Reintentar") y los Términos (`test/login_screen_test.dart`). | B |
+| A-02 | ~~Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar.~~ **Hecho:** rehecho sobre el cielo de la entrada (nebulosa y brasas, un solo ticker). Son cuatro pasos y cada uno muestra la app de verdad en una demo en vivo sobre *liquid glass*: canciones que se marcan con la máscara mientras el álbum gana color (y se pueden tocar), una búsqueda que se escribe sola con sus resultados y la radio del artista, el disco girando con la vista previa y la letra karaoke, y el nivel Eco llenándose mientras despiertan tres máscaras del catálogo (R, SR, SSR). Tiene parallax al deslizar, indicador en fases lunares, títulos anunciados como encabezado y "Paso n de 4" para TalkBack. Solo anima el paso visible (`TickerMode`) y, con menos movimiento, cada demo muestra su estado final quieta. Los textos van con tokens en es/en/ja y se borraron 27 claves viejas (`test/onboarding_screen_test.dart`). | B |
+| A-04 | ~~Tutorial desde ajustes.~~ **Hecho:** abre el mismo recorrido con fundido, tiene botón de cerrar en vez de "Saltar" y termina en "Listo". El botón atrás de Android retrocede un paso antes de salir (también en el primer arranque). | B |
+| A-05 | ~~Permisos explicados.~~ **Hecho:** la hoja actúa una vez lo que da el permiso. En notificaciones, la campana suena y cae el aviso del Radar tal como lo mostraría Android ("Daft Punk sacó un álbum nuevo"). En segundo plano, el teléfono se bloquea y la canción sigue sonando. Debajo van la pregunta como encabezado, tres líneas cortas que suben una tras otra y los botones en píldora. Se acomoda sin bucles y queda quieta con menos movimiento; el diálogo de Android sigue llegando solo después de un sí (`test/permission_primer_test.dart`). | B |
+| A-03 | ~~Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono.~~ **Hecho:** `LoadingScreen` sigue al splash de Android sin costura (misma noche `AppColors.splash`, la misma máscara en el mismo lugar), respira con un brillo rojo y, si tarda, dice "Despertando la luna…". El splash de Android 7 a 11 ya no dibuja el logo gigante y recortado. Nunca queda trabada: almacenamiento que falla o Firebase que no responde (8 s) siguen de largo (`test/startup_test.dart`). | C |
 
 ### 2. Estructura
 
 | Código | Tarea | Prio |
 |---|---|---|
-| E-01 | Subtítulo japonés de la barra (8.5 px): subirlo o dejarlo solo en la pestaña activa. | A |
-| E-02 | Gestos ocultos de la barra (doble toque, mantener): enseñarlos una vez o darles alternativa visible. | B |
-| E-03 | Los tres avisos globales (Spotify, reproducción, sincronización) son código repetido dentro de `build`: pasarlos al helper de D-08. | A |
-| E-04 | Seis pantallas (Eco, Lore, Racha, Ascensión, playlist compartida, Letras) abren con `MaterialPageRoute`; usar la transición propia (`cyberPage`). | B |
-| E-05 | Fundir barra y mini player en un solo muelle: la línea de progreso es el borde superior de la barra. | B |
-| E-06 | Indicador de pestaña activa que se desliza de una a otra. | C |
-| E-07 | Mini player: deslizar a los lados cambia de canción; hacia arriba lo abre. | B |
+| E-01 | ~~Subtítulo japonés de la barra (8.5 px): subirlo o dejarlo solo en la pestaña activa.~~ **Hecho:** va en el piso de la escala y solo en la pestaña activa, como adorno (TalkBack no lo lee). Todas las pestañas miden lo mismo: antes el indicador hacía más alta la activa y las etiquetas saltaban 14 px al cambiar. La etiqueta activa usa `accentText`, el rojo para texto (`test/bottom_bar_test.dart`). | A |
+| E-02 | ~~Gestos ocultos de la barra (doble toque, mantener): enseñarlos una vez o darles alternativa visible.~~ **Hecho:** mantener una pestaña abre, sobre ella, un menú con sus atajos (Inicio: perfil, arriba, actualizar; Buscar: búsqueda nueva, escribir; Explorar y Biblioteca: arriba); elegir abre la pestaña y lo ejecuta. El doble toque cuenta solo en la pestaña ya abierta (antes, tocar dos veces una pestaña nueva la abría y además disparaba el atajo). El consejo se muestra una vez, al tercer cambio. TalkBack oye una barra de pestañas ("Inicio, pestaña 1 de 4, seleccionada") y "mantén para ver atajos". | B |
+| E-03 | ~~Los tres avisos globales (Spotify, reproducción, sincronización) son código repetido dentro de `build`: pasarlos al helper de D-08.~~ **Hecho:** se escuchan con `ref.listen` (nada se muestra desde una reconstrucción) y pasan por un solo `_notice` con `AppSnack` sobre el muelle; se fueron los tres campos que recordaban el último aviso. La franja roja de "Sin conexión" (blanco sobre rojo, unos 3.9:1, bajo AA) es ahora una píldora de vidrio oscuro arriba, con borde y resplandor rojos; al volver la conexión dice "De nuevo en línea" en verde un momento y se va, y TalkBack anuncia los dos cambios (`test/shell_notices_test.dart`). En el mini player, play y pausa cambian girando, al cargar corre un anillo alrededor del botón (que sigue a la vista) y el progreso brilla en el color del reproductor con un punto de luz en la punta. | A |
+| E-04 | ~~Seis pantallas (Eco, Lore, Racha, Ascensión, playlist compartida, Letras) abren con `MaterialPageRoute`; usar la transición propia (`cyberPage`).~~ **Hecho:** ninguna pantalla usa `MaterialPageRoute`; `design_tokens_test` lo vigila. | B |
+| E-05 | ~~Fundir barra y mini player en un solo muelle: la línea de progreso es el borde superior de la barra.~~ **Hecho:** un solo vidrio con esquinas superiores redondeadas; el progreso de la canción es su borde superior iluminado (sin tocar las esquinas), el color del reproductor es su resplandor, y una línea fina separa la canción de las pestañas. Sin canción, el muelle es solo la barra. | B |
+| E-06 | ~~Indicador de pestaña activa que se desliza de una a otra.~~ **Hecho:** un lente de vidrio más claro, con una luz roja al pie, viaja de pestaña en pestaña estirándose como una gota (el borde que avanza va delante y el otro lo alcanza), desde donde esté aunque vaya a medio camino; con menos movimiento salta. Reemplaza a `CyberTabIndicator`. Biblioteca muestra un contador ("+3", "9+") que aparece con un pop y que TalkBack lee. | C |
+| E-07 | ~~Mini player: deslizar a los lados cambia de canción; hacia arriba lo abre.~~ **Hecho:** ya existía; ahora la fila sube con el dedo y abre el reproductor al pasar el umbral (o con un gesto rápido), y vuelve si se suelta antes. Al deslizar a los lados aparece, del lado del que viene, el ícono de la canción a la que va, que se enciende al llegar al umbral. TalkBack tiene "Abrir el reproductor", "Siguiente pista" y "Pista anterior" como acciones. | B |
 
 ### 3. Inicio
 

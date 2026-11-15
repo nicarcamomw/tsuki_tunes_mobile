@@ -13,6 +13,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/spotify_import_controller.dart';
 import '../state/use_cases.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -55,7 +56,7 @@ class SpotifyImportScreen extends ConsumerWidget {
       body = const SkeletonRowList(count: 8, leading: 52, trailing: true, padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 0));
     } else if (c.running || c.results.isNotEmpty) {
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, 120),
+        padding: EdgeInsets.fromLTRB(AppSpacing.page, 20, AppSpacing.page, dockBottom(context)),
         children: [
           if (c.running) ...[
             Text(c.current ?? '', style: style(AppFontSize.titleLg, w: FontWeight.w900)),
@@ -127,7 +128,7 @@ class SpotifyImportScreen extends ConsumerWidget {
                         height: 44,
                         child: p.liked
                             ? const ColoredBox(
-                                color: Color(0xFF3B2A7A), child: Icon(Icons.favorite_rounded, color: Colors.white))
+                                color: AppColors.likedViolet, child: Icon(Icons.favorite_rounded, color: Colors.white))
                             : p.imageUrl == null
                                 ? const ColoredBox(
                                     color: AppColors.bgCard,

@@ -522,7 +522,7 @@ extension _GuessSongViews on _GuessSongScreenState {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.accent, Color(0xFFCC1414)],
+              colors: [AppColors.accent, AppColors.crimsonShade],
             ),
             boxShadow: [
               BoxShadow(
@@ -728,7 +728,6 @@ extension _GuessSongViews on _GuessSongScreenState {
             backgroundColor: AppColors.bgCard,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   minimumSize: const Size(0, 36),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
                 ),
               ),
             ],
@@ -933,7 +932,6 @@ extension _GuessSongViews on _GuessSongScreenState {
       style: OutlinedButton.styleFrom(
         backgroundColor: filled ? AppColors.accent : Colors.transparent,
         side: const BorderSide(color: AppColors.accent),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );

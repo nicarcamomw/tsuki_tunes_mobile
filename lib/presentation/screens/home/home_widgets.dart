@@ -139,8 +139,9 @@ class _SourceBadge extends StatelessWidget {
       builder: (context, ref, _) {
         final isSpotify = ref.watch(
             audioProvider.select((a) => a.useSpotify || a.spotify.isConnected));
-        final badgeColor = AppColors.accent;
-        final badgeBg = AppColors.accentDim;
+        // D-12: green is Spotify; Deezer's previews, neutral.
+        final badgeColor = isSpotify ? AppColors.spotify : AppColors.textSecondary;
+        final badgeBg = badgeColor.withValues(alpha: 0.12);
         final badgeText = isSpotify ? 'SPOTIFY' : 'DEEZER';
 
         return Container(
@@ -196,18 +197,19 @@ class _SourceBadge extends StatelessWidget {
   }
 }
 
-/// Full-page notice (load error, empty library) with one action button.
+/// Full-page notice (load error, empty library) with one action: the
+/// shared [EmptyState], filling what's left of the home.
 class _HomeMessage extends StatelessWidget {
-  final LocaleProvider locale;
-  final Widget icon;
+  final IconData? icon;
+  final String? image;
   final String title;
   final String subtitle;
   final String actionLabel;
   final VoidCallback onAction;
 
   const _HomeMessage({
-    required this.locale,
-    required this.icon,
+    this.icon,
+    this.image,
     required this.title,
     required this.subtitle,
     required this.actionLabel,
@@ -215,79 +217,19 @@ class _HomeMessage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return SliverFillRemaining(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accent.withValues(alpha: 0.1),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: icon,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.bodyLg,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.accent,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: locale.getTextStyle(
-                  fontSize: AppFontSize.body,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () {
-                  Haptics.tap();
-                  onAction();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 10),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.6),
-                    ),
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    color: AppColors.accent.withValues(alpha: 0.08),
-                  ),
-                  child: Text(
-                    actionLabel,
-                    style: locale.getTextStyle(
-                      fontSize: AppFontSize.body,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.accent,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  Widget build(BuildContext context) => SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: EmptyState(
+            icon: icon,
+            image: image,
+            title: title,
+            message: subtitle,
+            actionLabel: actionLabel,
+            onAction: onAction,
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _StatCard extends StatelessWidget {
@@ -342,12 +284,13 @@ class _StatCard extends StatelessWidget {
               child: numValue != null
                   ? TweenAnimationBuilder<int>(
                       tween: IntTween(begin: 0, end: numValue),
-                      duration: const Duration(milliseconds: 800),
+                      duration: AppMotion.reveal,
                       curve: Curves.easeOutCubic,
                       builder: (context, val, _) => Text(
                         '$val',
                         style: locale.getTextStyle(
                           fontSize: AppFontSize.headline,
+                          tabular: true,
                           fontWeight: FontWeight.w900,
                           color: AppColors.textBright,
                         ),
@@ -438,7 +381,7 @@ class _ArtistRow extends StatelessWidget {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.title,
                   fontWeight: FontWeight.w800,
-                  color: rank == 1 ? AppColors.accent : AppColors.textSecondary,
+                  color: rank == 1 ? AppColors.textBright : AppColors.textSecondary,
                 ),
               ),
             ),
@@ -456,8 +399,8 @@ class _ArtistRow extends StatelessWidget {
                     : Container(
                         color: AppColors.bgCard,
                         child: placeholderIcon
-                            ? Icon(Icons.person,
-                                color: AppColors.accent, size: 20, semanticLabel: locale.strings.a11yArtistAvatar)
+                            ? Icon(Icons.person_rounded,
+                                color: AppColors.textMuted, size: 20, semanticLabel: locale.strings.a11yArtistAvatar)
                             : null,
                       ),
               ),
@@ -487,7 +430,7 @@ class _ArtistRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
+            Icon(Icons.arrow_forward_ios_rounded,
                 size: 14, color: AppColors.textMuted, semanticLabel: locale.strings.a11ySeeAll),
           ],
         ),

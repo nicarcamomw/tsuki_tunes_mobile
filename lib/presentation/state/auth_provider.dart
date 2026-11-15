@@ -62,12 +62,17 @@ class AuthProvider extends ChangeNotifier {
   /// An admin account (see [adminEmails]): everything unlockable shows unlocked.
   bool get isAdmin => isAuthenticated && isAdminEmail(_user!.email);
 
-  bool get isLoginThrottled {
-    if (_loginAttempts < _maxLoginAttempts) return false;
-    if (_lastLoginAttemptTime == null) return false;
+  bool get isLoginThrottled => loginThrottleRemaining > Duration.zero;
+
+  /// How long until another sign-in may be tried (zero when it may now),
+  /// for the login's countdown.
+  Duration get loginThrottleRemaining {
+    if (_loginAttempts < _maxLoginAttempts) return Duration.zero;
+    if (_lastLoginAttemptTime == null) return Duration.zero;
     final multiplier = (_loginAttempts - _maxLoginAttempts).clamp(0, 4);
     final cooldown = _loginCooldownBase * (1 << multiplier);
-    return DateTime.now().difference(_lastLoginAttemptTime!) < cooldown;
+    final left = cooldown - DateTime.now().difference(_lastLoginAttemptTime!);
+    return left.isNegative ? Duration.zero : left;
   }
 
   Future<void> loginAsGuest() async {
@@ -117,7 +122,20 @@ class AuthProvider extends ChangeNotifier {
     _init();
   }
 
+  /// How long the app waits for the account before it stops waiting: a
+  /// stuck start (Firebase not answering) shows the login instead of the
+  /// loading screen for good. If the account turns up later, the session
+  /// moves on to the app by itself.
+  static const startPatience = Duration(seconds: 8);
+  Timer? _startTimer;
+
   Future<void> _init() async {
+    _startTimer = Timer(startPatience, () {
+      if (!_loading) return;
+      _log.warning('Auth took over ${startPatience.inSeconds}s to answer; going on without it');
+      _loading = false;
+      notifyListeners();
+    });
     // Restore guest mode so guests don't land on the login screen each launch.
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -135,6 +153,7 @@ class AuthProvider extends ChangeNotifier {
         // A signed-in account always wins over a leftover guest session.
         if (user != null && _isGuest) await _leaveGuestMode();
         _loading = false;
+        _startTimer?.cancel();
         notifyListeners();
       });
     } catch (e) {
@@ -252,6 +271,7 @@ class AuthProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _startTimer?.cancel();
     _authSub?.cancel();
     super.dispose();
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -21,6 +22,12 @@ import 'player_art_hero.dart';
 import 'player_tint.dart';
 import 'tap_scale.dart';
 
+/// The song playing, at the top of the dock (E-05: it shares the tabs'
+/// glass; its progress is the dock's lit top edge).
+///
+/// Tap or swipe up to open the player: the row lifts with the finger.
+/// Swipe sideways to change songs: the next or previous one shows its icon
+/// on the side it comes from. TalkBack has both as actions.
 class MiniPlayer extends ConsumerStatefulWidget {
   const MiniPlayer({super.key});
 
@@ -31,6 +38,8 @@ class MiniPlayer extends ConsumerStatefulWidget {
 class _MiniPlayerState extends ConsumerState<MiniPlayer>
     with SingleTickerProviderStateMixin {
   double _swipeDx = 0;
+  // How far up the row has been lifted (negative), towards the player.
+  double _liftDy = 0;
   bool _swipeLocked = false;
   bool _hapticFired = false;
   int _skipDirection = 1;
@@ -101,6 +110,22 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
         .whenComplete(() => _swipeLocked = false);
   }
 
+  /// The lift that opens the player, as a swipe up.
+  static const double _openLift = 36;
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() => _liftDy = (_liftDy + details.delta.dy * 0.5).clamp(-_openLift * 1.4, 0.0));
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    final opens = _liftDy <= -_openLift || (details.primaryVelocity ?? 0) < -300;
+    if (opens) {
+      Haptics.tap();
+      _openExpandedPlayer(context);
+    }
+    setState(() => _liftDy = 0);
+  }
+
   void _openExpandedPlayer(BuildContext context) {
     NavigationEvents.isPlayerExpanded.value = true;
     Navigator.of(context)
@@ -156,47 +181,45 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
     // (Spotify connected but falling back), quiet when it's the usual.
     final preview = !ref.watch(playbackSourceProvider.select((s) => s.isFullSong));
 
+    final hasQueue = audio.queue.length > 1;
+    final threshold = _swipeThreshold;
+    final strings = locale.strings;
     return Semantics(
       label: '${track.title}, ${track.fullArtistName}',
+      onTapHint: strings.a11yOpenPlayer,
+      customSemanticsActions: {
+        CustomSemanticsAction(label: strings.a11yOpenPlayer): () => _openExpandedPlayer(context),
+        if (hasQueue) CustomSemanticsAction(label: strings.a11yNext): audio.next,
+        if (hasQueue) CustomSemanticsAction(label: strings.a11yPrevious): audio.previous,
+      },
       child: RepaintBoundary(
         child: GestureDetector(
           onTap: () { Haptics.tap(); _openExpandedPlayer(context); },
-          onVerticalDragEnd: (details) {
-            if ((details.primaryVelocity ?? 0) < -300) {
-              _openExpandedPlayer(context);
-            }
-          },
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
           onHorizontalDragUpdate: _onHorizontalDragUpdate,
           onHorizontalDragEnd: (d) => _onHorizontalDragEnd(d, audio),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: PlayerTint.of(context), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: PlayerTint.glowOf(context),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              child: AnimatedContainer(
+          // On the dock's glass: the cover's colour seeps in from the
+          // artwork's side.
+          child: Transform.translate(
+            offset: Offset(0, _liftDy),
+            child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
-                // The cover's colour seeps in from the artwork's side.
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [coverBackground ?? AppColors.bgCard, AppColors.bgCard],
+                    colors: [(coverBackground ?? AppColors.surfaceCard).withValues(alpha: 0.7), Colors.transparent],
                     stops: const [0.0, 0.7],
                   ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const _MiniProgressBar(),
+                    // The dock's lit top edge, clear of its round corners.
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppRadius.sheet),
+                      child: _MiniProgressBar(),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -206,7 +229,15 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                         children: [
                           // --- Track info (swipeable) ---
                           Expanded(
-                            child: Transform.translate(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // The song a swipe goes to, on its side.
+                                if (hasQueue && _swipeDx != 0)
+                                  Positioned.fill(
+                                    child: _SwipeHint(dx: _swipeDx, threshold: threshold),
+                                  ),
+                                Transform.translate(
                               offset: Offset(_swipeDx * 0.3, 0),
                               // Opacity at 1.0 adds no layer; the old color
                               // filter forced an offscreen pass every frame.
@@ -276,6 +307,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                                 ),
                               ),
                             ),
+                              ],
+                            ),
                           ),
                           const SizedBox(width: 10),
                           // --- Oni mask (listened toggle) ---
@@ -300,31 +333,46 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                             ),
                           ],
                           // --- Play / Pause ---
+                          // The icon turns between play and pause; loading,
+                          // a ring runs around it instead of hiding it.
                           TapScale(
                             semanticLabel: isPlaying
                                 ? locale.strings.a11yPause
                                 : locale.strings.a11yPlay,
                             onTap: isBuffering ? null : audio.togglePlay,
                             scaleDown: 0.85,
-                            child: isBuffering
-                                ? SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.8,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                        PlayerTint.of(context),
+                            child: SizedBox(
+                              width: 38,
+                              height: 38,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  if (isBuffering)
+                                    SizedBox.expand(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.8,
+                                        valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
                                       ),
                                     ),
-                                  )
-                                : Icon(
-                                    isPlaying
-                                        ? Icons.pause_circle_filled
-                                        : Icons.play_circle_filled,
-                                    size: 32,
-                                    color: PlayerTint.of(context),
+                                  AnimatedSwitcher(
+                                    duration: AppMotion.fast,
+                                    switchInCurve: Curves.easeOutBack,
+                                    transitionBuilder: (child, a) => RotationTransition(
+                                      turns: Tween(begin: -0.12, end: 0.0).animate(a),
+                                      child: ScaleTransition(scale: a, child: child),
+                                    ),
+                                    child: Icon(
+                                      isPlaying
+                                          ? Icons.pause_circle_filled_rounded
+                                          : Icons.play_circle_filled_rounded,
+                                      key: ValueKey(isPlaying),
+                                      size: isBuffering ? 26 : 32,
+                                      color: PlayerTint.of(context).withValues(alpha: isBuffering ? 0.5 : 1),
+                                    ),
                                   ),
+                                ],
+                              ),
+                            ),
                           ),
                           // --- Close / Stop ---
                           TapScale(
@@ -332,7 +380,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                             onTap: () => audio.stop(),
                             scaleDown: 0.85,
                             child: const Icon(
-                              Icons.close,
+                              Icons.close_rounded,
                               size: 20,
                               color: AppColors.textMuted,
                             ),
@@ -343,7 +391,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
                   ],
                 ),
               ),
-            ),
           ),
         ),
       ),
@@ -380,7 +427,7 @@ class _BreathingCoverState extends State<_BreathingCover>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: AppMotion.breath,
     );
     if (widget.isPlaying) _controller.repeat(reverse: true);
   }
@@ -456,7 +503,7 @@ class _BreathingCoverState extends State<_BreathingCover>
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.bgMid,
                         child: Icon(
-                          Icons.music_note,
+                          Icons.music_note_rounded,
                           color: PlayerTint.of(context),
                         ),
                       ),
@@ -464,7 +511,7 @@ class _BreathingCoverState extends State<_BreathingCover>
                   : Container(
                       color: AppColors.bgMid,
                       child: Icon(
-                        Icons.music_note,
+                        Icons.music_note_rounded,
                         color: PlayerTint.of(context),
                       ),
                     ),
@@ -593,22 +640,101 @@ class _MarqueeTextState extends State<_MarqueeText>
 // Progress bar
 // ---------------------------------------------------------------------------
 
+/// The song's progress as the dock's lit top edge: the played part glows
+/// in the player's colour, with a brighter point at its head.
 class _MiniProgressBar extends StatelessWidget {
   const _MiniProgressBar();
 
   @override
   Widget build(BuildContext context) {
+    final tint = PlayerTint.of(context);
     return AudioProgressSelector<double>(
       selector: (a) {
         final total = a.duration.inMilliseconds;
         if (total <= 0) return 0.0;
         return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
       },
-      builder: (context, progress) => LinearProgressIndicator(
-        value: progress,
-        minHeight: 2.5,
-        backgroundColor: AppColors.border,
-        valueColor: AlwaysStoppedAnimation<Color>(PlayerTint.of(context)),
+      builder: (context, progress) => Semantics(
+        // The player's own bar is the one to read and move.
+        excludeSemantics: true,
+        child: SizedBox(
+          height: 2.5,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: tint,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.55), blurRadius: 6)],
+                  ),
+                  child: progress <= 0
+                      ? null
+                      : Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [BoxShadow(color: tint, blurRadius: 6)],
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Swipe hint
+// ---------------------------------------------------------------------------
+
+/// While the row is dragged sideways: the song it goes to, as an icon on
+/// the side it comes from, brighter as the swipe nears its threshold.
+class _SwipeHint extends StatelessWidget {
+  const _SwipeHint({required this.dx, required this.threshold});
+
+  final double dx;
+  final double threshold;
+
+  @override
+  Widget build(BuildContext context) {
+    final reach = (dx.abs() / threshold).clamp(0.0, 1.0);
+    final next = dx < 0;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: Align(
+          alignment: next ? Alignment.centerRight : Alignment.centerLeft,
+          child: Opacity(
+            opacity: reach,
+            child: Transform.scale(
+              scale: 0.7 + 0.3 * reach,
+              child: Icon(
+                next ? Icons.skip_next_rounded : Icons.skip_previous_rounded,
+                size: 26,
+                color: reach >= 1 ? PlayerTint.of(context) : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2371,6 +2371,32 @@ class MaskCatalog {
         AppLanguage.ja: '元素の一族をすべて目覚めさせる。',
       },
     ),
+    // From another universe: no clan, no Ultra, not in the Testament. Its
+    // face is the app's entrance (the author's own mask).
+    const OniMask(
+      id: 'ikai',
+      kanji: '異',
+      image: 'assets/images/masks/ul/ikai.webp',
+      rarity: MaskRarity.ul,
+      secret: true,
+      counter: 'ikai',
+      goal: 3,
+      names: {
+        AppLanguage.es: 'Ikai',
+        AppLanguage.en: 'Ikai',
+        AppLanguage.ja: '異界',
+      },
+      descriptions: {
+        AppLanguage.es: 'Escuchaste música en la hora muerta (de 3 a 4 de la madrugada) de 3 lunas nuevas. Algo cruzó desde otro universo, y nadie sabe de dónde nació.',
+        AppLanguage.en: 'You listened to music in the dead hour (3 to 4 AM) of 3 new moons. Something crossed over from another universe, and no one knows where it was born.',
+        AppLanguage.ja: '3回の新月の丑三つ時（午前3時台）に音楽を聴いた。別の宇宙から何かが渡ってきた。どこで生まれたのか、誰も知らない。',
+      },
+      hints: {
+        AppLanguage.es: 'Cuando no hay luna y el reloj pasa por la hora muerta, el velo se rompe. Tres veces.',
+        AppLanguage.en: 'When there is no moon and the clock passes through the dead hour, the veil tears. Three times.',
+        AppLanguage.ja: '月のない夜、時計が丑三つ時を過ぎるとき、帳が裂ける。三度。',
+      },
+    ),
     // The two supreme gods: the most powerful masks of all.
     const OniMask(
       id: 'uchuu_shin',

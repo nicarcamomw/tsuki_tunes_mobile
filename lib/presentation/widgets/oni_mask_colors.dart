@@ -36,6 +36,8 @@ const _aura = <String, Color>{
   'chirune': Color(0xFFFF2E4A),
   'uchuu_shin': Color(0xFFFFC94A),
   'ochigami': Color(0xFFFF8A3D),
+  // From another universe: the cold metal of its horns, like no one else's.
+  'ikai': Color(0xFFC9D1DB),
   // The Bearer's own mask: moonlight.
   'portador': Color(0xFFE8F0FF),
 };

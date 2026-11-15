@@ -32,7 +32,7 @@ Future<void> startRadioWithFeedback(
   final ok = await context.readState(startRadioProvider)(track);
   snack.info(
     ok ? locale.strings.radioStarted(track.title) : locale.strings.radioNoResults,
-    icon: ok ? Icons.sensors : Icons.sensors_off,
+    icon: ok ? Icons.sensors_rounded : Icons.sensors_off_rounded,
     duration: const Duration(seconds: 3),
   );
 }
@@ -50,7 +50,7 @@ Future<void> startArtistRadioWithFeedback(
   final ok = await context.readState(startArtistRadioProvider)(artist);
   snack.info(
     ok ? locale.strings.artistRadioStarted(artist.name) : locale.strings.radioNoResults,
-    icon: ok ? Icons.sensors : Icons.sensors_off,
+    icon: ok ? Icons.sensors_rounded : Icons.sensors_off_rounded,
     duration: const Duration(seconds: 3),
   );
 }
@@ -143,7 +143,7 @@ class _RadioControlSheet extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.all_inclusive,
+                          const Icon(Icons.all_inclusive_rounded,
                               size: 14, color: AppColors.accent),
                           const SizedBox(width: 6),
                           Text(
@@ -210,12 +210,12 @@ class _RadioControlSheet extends ConsumerWidget {
               segments: [
                 ButtonSegment(
                   value: RadioMode.familiar,
-                  icon: const Icon(Icons.adjust, size: 16),
+                  icon: const Icon(Icons.adjust_rounded, size: 16),
                   label: Text(strings.radioModeFamiliar),
                 ),
                 ButtonSegment(
                   value: RadioMode.balanced,
-                  icon: const Icon(Icons.tune, size: 16),
+                  icon: const Icon(Icons.tune_rounded, size: 16),
                   label: Text(strings.radioModeBalanced),
                 ),
                 ButtonSegment(
@@ -310,7 +310,7 @@ class _RadioControlSheet extends ConsumerWidget {
                   Haptics.remove();
                   Navigator.of(context).pop();
                   audio.stopRadio();
-                  messenger.info(strings.radioStopped, icon: Icons.sensors_off, duration: const Duration(seconds: 3));
+                  messenger.info(strings.radioStopped, icon: Icons.sensors_off_rounded, duration: const Duration(seconds: 3));
                 },
                 icon: const Icon(Icons.stop_circle_outlined, size: 18),
                 label: Text(strings.radioStop),
@@ -348,8 +348,8 @@ class _StatusLine extends StatelessWidget {
           else
             Icon(
               status == RadioStatus.ready
-                  ? Icons.all_inclusive
-                  : Icons.info_outline,
+                  ? Icons.all_inclusive_rounded
+                  : Icons.info_outline_rounded,
               size: 14,
               color: color,
             ),

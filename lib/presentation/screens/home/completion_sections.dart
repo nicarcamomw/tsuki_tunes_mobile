@@ -91,14 +91,14 @@ class _AlmostCompleteCard extends StatelessWidget {
                               Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.album,
-                                color: AppColors.accent),
+                            child: const Icon(Icons.album_rounded,
+                                color: AppColors.textMuted),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
                           child:
-                              const Icon(Icons.album, color: AppColors.accent),
+                              const Icon(Icons.album_rounded, color: AppColors.textMuted),
                         ),
                 ),
               ),
@@ -130,7 +130,7 @@ class _AlmostCompleteCard extends StatelessWidget {
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.caption,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import 'frosted_glass.dart';
 
 /// The kinds of message a snack bar carries (D-08).
 enum SnackKind {
@@ -123,41 +124,58 @@ class AppSnack {
   }) {
     final hasAction = actionLabel != null && onAction != null;
     final shownIcon = icon ?? (kind == SnackKind.error ? Icons.error_outline_rounded : null);
-    _messenger
+    final messenger = _messenger;
+    messenger
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
-        content: Row(
-          children: [
-            if (shownIcon != null) ...[
-              Icon(shownIcon,
-                  size: 18,
-                  color: kind == SnackKind.error ? AppColors.errorText : AppColors.textSecondary,
-                  // Decoration: the message says it.
-                  semanticLabel: null),
-              const SizedBox(width: 8),
-            ],
-            Expanded(
-              child: Text(
-                message,
-                style: _locale.getTextStyle(
-                    fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
-              ),
-            ),
-          ],
-        ),
-        action: hasAction
-            ? SnackBarAction(label: actionLabel, textColor: AppColors.accentText, onPressed: onAction)
-            : null,
-        backgroundColor: AppColors.bgCard,
-        // The border sets it apart; a Material shadow is a black band here.
+        // Frosted glass (the list behind shows through, blurred), drawn by
+        // the content: the bar itself is see-through.
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        padding: EdgeInsets.zero,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.only(bottom: _bottom, left: 16, right: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          side: kind == SnackKind.error
-              ? const BorderSide(color: AppColors.error, width: 1.2)
-              : const BorderSide(color: AppColors.border),
+        shape: const RoundedRectangleBorder(),
+        content: FrostedGlass(
+          // A floating capsule of liquid glass.
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
+          border: kind == SnackKind.error ? Border.all(color: AppColors.error, width: 1.2) : null,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, hasAction ? 4 : 14, hasAction ? 4 : 16, hasAction ? 4 : 14),
+            child: Row(
+              children: [
+                if (shownIcon != null) ...[
+                  Icon(shownIcon,
+                      size: 18,
+                      color: kind == SnackKind.error ? AppColors.errorText : AppColors.textSecondary,
+                      // Decoration: the message says it.
+                      semanticLabel: null),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    message,
+                    style: _locale.getTextStyle(
+                        fontSize: AppFontSize.body, fontWeight: FontWeight.w600, color: AppColors.textBright),
+                  ),
+                ),
+                // White, not the red: over glass only white text keeps AA
+                // whatever passes behind.
+                if (hasAction)
+                  TextButton(
+                    onPressed: () {
+                      messenger.hideCurrentSnackBar(reason: SnackBarClosedReason.action);
+                      onAction();
+                    },
+                    style: TextButton.styleFrom(foregroundColor: AppColors.textBright),
+                    child: Text(
+                      actionLabel,
+                      style: _locale.getTextStyle(fontSize: AppFontSize.body, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
         duration: duration ?? Duration(seconds: hasAction || kind != SnackKind.info ? 4 : 2),
       ));

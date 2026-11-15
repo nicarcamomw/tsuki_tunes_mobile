@@ -14,6 +14,7 @@ import '../screens/discovery_screen.dart';
 import '../screens/genre_screen.dart';
 import '../screens/guess_song_screen.dart';
 import '../screens/listening_clock_screen.dart';
+import '../screens/loading_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/main_navigation_screen.dart';
 import '../screens/mask_collection_screen.dart';
@@ -47,7 +48,7 @@ class LoadingRoute extends GoRouteData with $LoadingRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
-      fadePage(state, const Scaffold(backgroundColor: Color(0xFF181B22)));
+      fadePage(state, const LoadingScreen());
 }
 
 @TypedGoRoute<LoginRoute>(path: AppPaths.login)
@@ -397,14 +398,15 @@ class MaskCollectionRoute extends GoRouteData with $MaskCollectionRoute {
       cyberPage(state, const MaskCollectionScreen());
 }
 
-/// The tutorial again, from the settings; it closes when done.
+/// The tutorial again, from the settings: the same night fades in over
+/// them, and closes when done.
 class TutorialRoute extends GoRouteData with $TutorialRoute {
   const TutorialRoute();
 
   static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
 
   @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
+  Page<void> buildPage(BuildContext context, GoRouterState state) => fadePage(
         state,
         Builder(
           builder: (context) => OnboardingScreen(

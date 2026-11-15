@@ -64,12 +64,12 @@ class AlbumCard extends ConsumerWidget {
                             placeholder: (_, __) => Container(color: AppColors.bgMid),
                             errorWidget: (_, __, ___) => Container(
                               color: AppColors.bgMid,
-                              child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
+                              child: Icon(Icons.album_rounded, color: AppColors.textMuted, semanticLabel: locale.strings.a11yAlbumCover),
                             ),
                           )
                         : Container(
                             color: AppColors.bgMid,
-                            child: Icon(Icons.album, color: AppColors.accent, semanticLabel: locale.strings.a11yAlbumCover),
+                            child: Icon(Icons.album_rounded, color: AppColors.textMuted, semanticLabel: locale.strings.a11yAlbumCover),
                           ),
                   ),
                 ),

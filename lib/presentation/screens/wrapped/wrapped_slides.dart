@@ -797,7 +797,7 @@ class _FactsSlide extends StatelessWidget {
   const _FactsSlide({required this.c, required this.shareKey});
 
   static const _icons = {
-    'late_night_song': Icons.nightlight_round,
+    'late_night_song': Icons.nightlight_round_rounded,
     'marathon_day': Icons.local_fire_department_rounded,
     'loyal_artist': Icons.favorite_rounded,
     'dawn_listener': Icons.wb_twilight_rounded,
@@ -839,7 +839,7 @@ class _FactsSlide extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: colors[i % colors.length].withValues(alpha: 0.15),
                     ),
-                    child: Icon(_icons[facts[i].key] ?? Icons.auto_awesome,
+                    child: Icon(_icons[facts[i].key] ?? Icons.auto_awesome_rounded,
                         color: colors[i % colors.length], size: 20),
                   ),
                   const SizedBox(width: 14),
@@ -916,7 +916,7 @@ class _SummarySlide extends StatelessWidget {
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF2A0A0F), Color(0xFF12141C), Color(0xFF0A0B10)],
+                          colors: [AppColors.crimsonInk, AppColors.inkPanel, AppColors.ink],
                         ),
                         boxShadow: [BoxShadow(color: AppColors.accent.withValues(alpha: 0.25), blurRadius: 30)],
                       ),
@@ -1061,9 +1061,7 @@ class _SummarySlide extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onShare,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accentFill,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                     ),
                     icon: const Icon(Icons.ios_share_rounded, size: 18, color: Colors.white),
                     label: Text(strings.wrappedShareCta,

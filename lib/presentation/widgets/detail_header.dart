@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/cover_colors.dart';
+import 'frosted_glass.dart';
 import 'motion.dart';
 
 /// The header of every detail page (artist, album, playlist), T-01: the
@@ -43,8 +44,11 @@ class DetailHeader extends StatelessWidget {
     return SliverAppBar(
       expandedHeight: expandedHeight,
       pinned: true,
-      backgroundColor: AppColors.bgDeep,
+      // The bar is glass (drawn by _CollapsingSpace): the list scrolls
+      // under it, blurred.
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
       leading: DetailHeaderButton(
         icon: Icons.arrow_back_rounded,
@@ -80,33 +84,65 @@ class _CollapsingSpace extends StatelessWidget {
           collapseMode: reduceMotion(context) ? CollapseMode.pin : CollapseMode.parallax,
           background: background,
         ),
-        Positioned(
-          top: topInset,
-          left: 64,
-          right: 64,
-          height: kToolbarHeight,
-          child: IgnorePointer(
-            child: ExcludeSemantics(
-              // The page says its name in the header already.
-              excluding: titleOpacity < 1,
-              child: Opacity(
-                opacity: titleOpacity,
-                child: Center(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: AppFontSize.title,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textBright,
-                        ),
+        // Collapsed, no band across the top: the page fades into the
+        // night under the status bar, and the name floats in a glass
+        // capsule between the glass buttons (liquid glass).
+        if (titleOpacity > 0)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0, 0.7, 1],
+                    colors: [
+                      AppColors.surface.withValues(alpha: 0.96 * titleOpacity),
+                      AppColors.surface.withValues(alpha: 0.85 * titleOpacity),
+                      AppColors.surface.withValues(alpha: 0),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        if (titleOpacity > 0)
+          Positioned(
+            top: topInset,
+            left: 64,
+            right: 64,
+            height: kToolbarHeight,
+            child: IgnorePointer(
+              child: ExcludeSemantics(
+                // The page says its name in the header already.
+                excluding: titleOpacity < 1,
+                child: Center(
+                  child: FrostedGlass(
+                    color: AppColors.surface,
+                    fill: AppGlass.clearFill,
+                    opacity: titleOpacity,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Opacity(
+                        opacity: titleOpacity,
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontSize: AppFontSize.title,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textBright,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -154,19 +190,17 @@ class DetailHeaderDisc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // A small glass disc: the picture shows through it, blurred.
+    return SizedBox(
       width: 36,
       height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.bgDeep.withValues(alpha: 0.7),
+      child: FrostedGlass(
+        color: AppColors.surface,
+        fill: AppGlass.buttonFill,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: highlighted ? AppColors.accent : AppColors.textMuted.withValues(alpha: 0.35),
-          width: highlighted ? 1.5 : 1,
-        ),
+        border: highlighted ? Border.all(color: AppColors.accent, width: 1.5) : null,
+        child: Center(child: child),
       ),
-      child: child,
     );
   }
 }

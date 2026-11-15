@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import 'motion.dart';
 
 /// P-08: the app's "loading", the moon going through its phases (new,
@@ -25,7 +26,7 @@ class MoonLoader extends StatefulWidget {
 
 class _MoonLoaderState extends State<MoonLoader> with SingleTickerProviderStateMixin {
   late final AnimationController _cycle =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+      AnimationController(vsync: this, duration: AppMotion.cycle);
 
   @override
   void didChangeDependencies() {

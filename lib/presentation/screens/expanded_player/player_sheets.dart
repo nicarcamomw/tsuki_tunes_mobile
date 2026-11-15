@@ -99,6 +99,7 @@ class _SleepTimerButton extends ConsumerWidget {
                 label.isNotEmpty ? label : strings.sleepTimerEndOfTrackShort,
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.micro,
+                  tabular: true,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                   letterSpacing: 0.5,
@@ -200,7 +201,7 @@ class _SleepTimerButton extends ConsumerWidget {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: AppColors.accent, size: 18, semanticLabel: locale.strings.a11ySelected),
+              Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 18, semanticLabel: locale.strings.a11ySelected),
           ],
         ),
       ),
@@ -272,7 +273,7 @@ void _showSongOptionsSheet(
                 ),
               ),
             if (onTap != null && trailing == null)
-              const Icon(Icons.chevron_right,
+              const Icon(Icons.chevron_right_rounded,
                   size: 18, color: AppColors.textMuted),
           ],
         ),
@@ -351,7 +352,7 @@ void _showSongOptionsSheet(
                   final bpm = bpmService.cached(track.id);
                   if (bpm == null) return const SizedBox.shrink();
                   return optionTile(
-                    icon: Icons.speed,
+                    icon: Icons.speed_rounded,
                     label: 'BPM',
                     trailing: '${bpm.round()}',
                   );
@@ -359,7 +360,7 @@ void _showSongOptionsSheet(
               ),
               // Save the song to a playlist
               optionTile(
-                icon: Icons.playlist_add,
+                icon: Icons.playlist_add_rounded,
                 label: strings.addToPlaylist,
                 onTap: () {
                   Navigator.pop(context);
@@ -369,7 +370,7 @@ void _showSongOptionsSheet(
               ),
               // Queue
               optionTile(
-                icon: Icons.queue_music,
+                icon: Icons.queue_music_rounded,
                 label: strings.a11yQueue,
                 onTap: () {
                   Navigator.pop(context);
@@ -379,7 +380,7 @@ void _showSongOptionsSheet(
               ),
               // Radio
               optionTile(
-                icon: Icons.sensors,
+                icon: Icons.sensors_rounded,
                 label: radioActive ? strings.radioTune : strings.radioStart,
                 accentIcon: radioActive,
                 onTap: () {
@@ -419,7 +420,7 @@ void _showSongOptionsSheet(
               // Go to album
               if (track.albumId.isNotEmpty)
                 optionTile(
-                  icon: Icons.album,
+                  icon: Icons.album_rounded,
                   label: track.albumTitle.isNotEmpty
                       ? track.albumTitle
                       : strings.unknownAlbum,
@@ -431,7 +432,7 @@ void _showSongOptionsSheet(
               // Go to artist
               if (track.artistId.isNotEmpty)
                 optionTile(
-                  icon: Icons.person,
+                  icon: Icons.person_rounded,
                   label: track.artistName,
                   onTap: () {
                     Navigator.pop(context);

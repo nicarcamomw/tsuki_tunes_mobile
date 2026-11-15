@@ -310,7 +310,7 @@ class _DateHeader extends StatelessWidget {
             child: TweenAnimationBuilder<double>(
               key: ValueKey('$anchor-$loading'),
               tween: Tween(begin: 0, end: loading && !reduce ? -2.0 : 0.0),
-              duration: const Duration(milliseconds: 900),
+              duration: AppMotion.reveal,
               curve: Curves.easeOutCubic,
               builder: (_, turns, child) =>
                   Transform.rotate(angle: turns * 2 * pi, child: child),
@@ -328,7 +328,7 @@ class _DateHeader extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.history,
+                child: const Icon(Icons.history_rounded,
                     color: AppColors.neonPurple, size: 28),
               ),
             ),
@@ -607,7 +607,7 @@ class _Cover extends StatelessWidget {
       width: size,
       height: size,
       color: AppColors.bgMid,
-      child: Icon(Icons.music_note, color: AppColors.textMuted, size: size * 0.35),
+      child: Icon(Icons.music_note_rounded, color: AppColors.textMuted, size: size * 0.35),
     );
     if (url.isEmpty) return placeholder;
     return CachedNetworkImage(
@@ -661,7 +661,7 @@ class _Nothing extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(32, 30, 32, 10),
       child: Column(
         children: [
-          Icon(Icons.hourglass_empty,
+          Icon(Icons.hourglass_empty_rounded,
               size: 40, color: AppColors.neonPurple.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           Text(
@@ -779,7 +779,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                   border: Border.all(
                       color: AppColors.neonPurple.withValues(alpha: 0.5)),
                 ),
-                child: const Icon(Icons.history,
+                child: const Icon(Icons.history_rounded,
                     color: AppColors.neonPurple, size: 20),
               ),
               const SizedBox(width: 14),
@@ -817,7 +817,7 @@ class _TimeMachineEntryCardState extends ConsumerState<TimeMachineEntryCard> {
                 ),
                 const SizedBox(width: 8),
               ],
-              Icon(Icons.chevron_right,
+              Icon(Icons.chevron_right_rounded,
                   color: AppColors.neonPurple.withValues(alpha: 0.7), size: 20),
             ],
           ),

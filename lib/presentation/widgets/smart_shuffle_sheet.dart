@@ -100,7 +100,7 @@ class _SmartShuffleSheet extends ConsumerWidget {
               ),
               ButtonSegment(
                 value: ShuffleMode.on,
-                icon: const Icon(Icons.shuffle, size: 16),
+                icon: const Icon(Icons.shuffle_rounded, size: 16),
                 label: Text(strings.shuffle),
               ),
               ButtonSegment(
@@ -150,12 +150,12 @@ class _SmartShuffleSheet extends ConsumerWidget {
               ),
               ButtonSegment(
                 value: ShuffleEnergy.alternate,
-                icon: const Icon(Icons.swap_vert, size: 16),
+                icon: const Icon(Icons.swap_vert_rounded, size: 16),
                 label: Text(strings.shuffleEnergyAlternate),
               ),
               ButtonSegment(
                 value: ShuffleEnergy.smooth,
-                icon: const Icon(Icons.trending_flat, size: 16),
+                icon: const Icon(Icons.trending_flat_rounded, size: 16),
                 label: Text(strings.shuffleEnergySmooth),
               ),
             ],

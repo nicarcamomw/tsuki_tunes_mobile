@@ -31,7 +31,7 @@ class AmbientMixerSheet extends ConsumerStatefulWidget {
         AmbientSound.waves => Icons.waves_rounded,
         AmbientSound.fire => Icons.local_fire_department_rounded,
         AmbientSound.wind => Icons.air_rounded,
-        AmbientSound.night => Icons.nightlight_round,
+        AmbientSound.night => Icons.nightlight_round_rounded,
         AmbientSound.brownNoise => Icons.graphic_eq_rounded,
       };
 
@@ -212,7 +212,6 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: _color.withValues(alpha: 0.6)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
@@ -235,7 +234,6 @@ class _AmbientMixerSheetState extends ConsumerState<AmbientMixerSheet> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),

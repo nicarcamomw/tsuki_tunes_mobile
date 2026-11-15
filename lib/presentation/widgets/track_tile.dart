@@ -227,14 +227,14 @@ class TrackTile extends ConsumerWidget {
                               Container(color: AppColors.bgMid),
                           errorWidget: (_, __, ___) => Container(
                             color: AppColors.bgMid,
-                            child: const Icon(Icons.music_note,
-                                color: AppColors.accent, size: 20),
+                            child: const Icon(Icons.music_note_rounded,
+                                color: AppColors.textMuted, size: 20),
                           ),
                         )
                       : Container(
                           color: AppColors.bgMid,
-                          child: const Icon(Icons.music_note,
-                              color: AppColors.accent, size: 20),
+                          child: const Icon(Icons.music_note_rounded,
+                              color: AppColors.textMuted, size: 20),
                         ),
                 ),
               ),
@@ -303,6 +303,7 @@ class TrackTile extends ConsumerWidget {
                 Formatters.formatSeconds(track.durationSeconds),
                 style: locale.getTextStyle(
                   fontSize: AppFontSize.caption,
+                  tabular: true,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -357,7 +358,7 @@ class TrackTile extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.queue_music, color: AppColors.neonCyan, size: 20),
+            const Icon(Icons.queue_music_rounded, color: AppColors.neonCyan, size: 20),
             const SizedBox(width: 8),
             Text(
               strings.addToQueue,
@@ -529,7 +530,7 @@ void showTrackActions(BuildContext context, Track track,
                 },
               ),
             menuItem(
-              icon: Icons.sensors,
+              icon: Icons.sensors_rounded,
               label: strings.radioStart,
               semanticLabel: strings.radioStart,
               onTap: () {
@@ -538,7 +539,7 @@ void showTrackActions(BuildContext context, Track track,
               },
             ),
             menuItem(
-              icon: Icons.playlist_play,
+              icon: Icons.playlist_play_rounded,
               label: strings.playNext,
               semanticLabel: strings.a11yPlayNext,
               onTap: () {
@@ -548,7 +549,7 @@ void showTrackActions(BuildContext context, Track track,
               },
             ),
             menuItem(
-              icon: Icons.queue_music,
+              icon: Icons.queue_music_rounded,
               label: strings.addToQueue,
               semanticLabel: strings.a11yAddToQueue,
               onTap: () {
@@ -558,7 +559,7 @@ void showTrackActions(BuildContext context, Track track,
               },
             ),
             menuItem(
-              icon: Icons.playlist_add,
+              icon: Icons.playlist_add_rounded,
               label: strings.addToPlaylist,
               semanticLabel: strings.a11yAddToPlaylist,
               onTap: () {
@@ -573,7 +574,7 @@ void showTrackActions(BuildContext context, Track track,
               ),
             if (track.artistId.isNotEmpty)
               menuItem(
-                icon: Icons.person_outline,
+                icon: Icons.person_outline_rounded,
                 label: strings.goToArtist,
                 semanticLabel: strings.a11yGoToArtist,
                 onTap: () {

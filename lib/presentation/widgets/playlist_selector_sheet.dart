@@ -48,7 +48,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  Icon(Icons.playlist_add, color: AppColors.accent, size: 20, semanticLabel: strings.a11yAddToPlaylist),
+                  Icon(Icons.playlist_add_rounded, color: AppColors.accent, size: 20, semanticLabel: strings.a11yAddToPlaylist),
                   const SizedBox(width: 10),
                   Text(
                     strings.selectPlaylist,
@@ -64,7 +64,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
             const Divider(color: AppColors.border, height: 1),
             ListTile(
               leading:
-                  Icon(Icons.add_circle_outline, color: AppColors.accent, semanticLabel: strings.a11yCreatePlaylist),
+                  Icon(Icons.add_circle_outline_rounded, color: AppColors.accent, semanticLabel: strings.a11yCreatePlaylist),
               title: Text(
                 strings.createPlaylist,
                 style: locale.getTextStyle(
@@ -111,7 +111,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                             color: added ? AppColors.textMuted : AppColors.textBright)),
                     subtitle: Text('${strings.sharedTitle} · ${strings.sharedMembers(sp.members.length)}',
                         style: locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textSecondary)),
-                    trailing: added ? const Icon(Icons.check, color: AppColors.accent, size: 18) : null,
+                    trailing: added ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 18) : null,
                     onTap: added
                         ? null
                         : () async {
@@ -149,14 +149,14 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                                   fit: BoxFit.cover,
                                   errorWidget: (_, __, ___) => Container(
                                     color: AppColors.bgMid,
-                                    child: const Icon(Icons.queue_music,
-                                        color: AppColors.accent, size: 18),
+                                    child: const Icon(Icons.queue_music_rounded,
+                                        color: AppColors.textMuted, size: 18),
                                   ),
                                 )
                               : Container(
                                   color: AppColors.bgMid,
-                                  child: const Icon(Icons.queue_music,
-                                      color: AppColors.accent, size: 18),
+                                  child: const Icon(Icons.queue_music_rounded,
+                                      color: AppColors.textMuted, size: 18),
                                 ),
                         ),
                       )),
@@ -180,7 +180,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
                         ),
                       ),
                       trailing: alreadyAdded
-                          ? Icon(Icons.check,
+                          ? Icon(Icons.check_rounded,
                               color: AppColors.accent, size: 18, semanticLabel: strings.a11ySelected)
                           : null,
                       onTap: alreadyAdded
@@ -225,7 +225,6 @@ Future<String?> showPlaylistNameDialog(BuildContext context) {
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
       title: Text(
         strings.newPlaylist,

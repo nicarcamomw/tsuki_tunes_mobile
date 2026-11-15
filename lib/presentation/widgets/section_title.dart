@@ -44,3 +44,60 @@ class SectionTitle extends StatelessWidget {
     );
   }
 }
+
+/// A group's label: small, muted and in capitals, over a list's groups
+/// (settings, search history, Bonds, the queue, search results). Lighter
+/// than [SectionTitle], which heads a screen's content sections.
+///
+/// Read out as a heading. [count] follows it (" · 3"), [marker] puts a
+/// short bar of that colour before it, and [trailing] goes after it.
+class SectionLabel extends StatelessWidget {
+  final LocaleProvider locale;
+  final String text;
+  final int? count;
+  final Color? marker;
+  final Widget? trailing;
+
+  const SectionLabel({
+    super.key,
+    required this.locale,
+    required this.text,
+    this.count,
+    this.marker,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final label = count == null ? text.toUpperCase() : '${text.toUpperCase()} · $count';
+    return Semantics(
+      header: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (marker != null) ...[
+            Container(width: 3, height: 12, color: marker),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: locale.getTextStyle(
+                fontSize: AppFontSize.caption,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textMuted,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 6),
+            trailing!,
+          ],
+        ],
+      ),
+    );
+  }
+}

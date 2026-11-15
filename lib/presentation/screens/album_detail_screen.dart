@@ -20,6 +20,7 @@ import '../state/use_cases.dart';
 import '../widgets/album_progress_bar.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/detail_header.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/error_state.dart';
 import '../widgets/haptics.dart';
@@ -141,7 +142,6 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
       final remove = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.bgCard,
           title: Text(strings.downloadAlbumRemove),
           content: Text(strings.downloadAlbumRemoveBody(albumData.title)),
           actions: [
@@ -229,7 +229,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
               if (tracks.isNotEmpty) _DownloadButton(album: albumData, onTap: () => _onDownload(albumData)),
               if (albumData.link != null || useSpotify)
                 DetailHeaderButton(
-                  icon: Icons.open_in_new,
+                  icon: Icons.open_in_new_rounded,
                   tooltip: useSpotify ? 'Spotify' : 'Deezer',
                   onPressed: () async { Haptics.tap();
                     try {
@@ -302,13 +302,13 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                                         Container(color: AppColors.bgMid),
                                     errorWidget: (_, __, ___) => Container(
                                       color: AppColors.bgMid,
-                                      child: const Icon(Icons.album,
-                                          size: 50, color: AppColors.accent),
+                                      child: const Icon(Icons.album_rounded,
+                                          size: 50, color: AppColors.textMuted),
                                     ),
                                   )
                                 : Container(
                                     color: AppColors.bgMid,
-                                    child: const Icon(Icons.album,
+                                    child: const Icon(Icons.album_rounded,
                                         size: 50, color: AppColors.accent),
                                   ),
                           ),
@@ -400,6 +400,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                     ),
                     style: locale.getTextStyle(
                       fontSize: AppFontSize.micro,
+                      tabular: true,
                       color: AppColors.textMuted,
                       letterSpacing: 1,
                     ),
@@ -494,7 +495,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
                           onPressed: () { Haptics.tap();
                             ref.read(playTracksProvider)(tracks);
                           },
-                          icon: Icon(Icons.play_arrow,
+                          icon: Icon(Icons.play_arrow_rounded,
                               color: AppColors.accent, size: 18, semanticLabel: strings.a11yPlayAll),
                           label: Text(
                             strings.play,
@@ -559,7 +560,7 @@ class _AlbumDetailScreenState extends ConsumerState<AlbumDetailScreen> {
               ),
             ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
         ],
       ),
       ),

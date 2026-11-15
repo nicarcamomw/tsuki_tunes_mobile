@@ -8,6 +8,21 @@ class AppColors {
   static const Color bgHover = Color(0xFF252A36);
   static const Color bgGlass = Color(0xF514171F);
 
+  /// The launch screen's night: Android's splash (res/values/colors.xml,
+  /// splash_background, and the logo's own background) and the first
+  /// Flutter frame share it, so the app opens without a seam.
+  static const Color splash = Color(0xFF181B22);
+
+  // D-14, depth with light: three surface levels, lighter as they come
+  // closer. The screen is [surface]; a card on it is [surfaceCard]; what
+  // rises over the screen (a bottom sheet, a dialog, a menu) is
+  // [surfaceRaised], so a card inside a sheet sits a step below it.
+  // A resting card's edge is [border]; [borderGlow] (or the accent) is for
+  // what is active, focused or chosen.
+  static const Color surface = bgDeep;
+  static const Color surfaceCard = bgCard;
+  static const Color surfaceRaised = bgHover;
+
   // Borders & Dividers
   static const Color border = Color(0xFF2A2F3D);
   static const Color borderSub = Color(0xFF1A1D27);
@@ -78,6 +93,37 @@ class AppColors {
   static const Color success = Color(0xFF00E676);
   static const Color warning = Color(0xFFFFD600);
   static const Color error = Color(0xFFFF1744);
+
+  // Illustrations (D-11): the login, the onboarding, Wrapped and the
+  // night skies behind some screens. Not for interface (text, buttons):
+  // shades of the crimson and of the night, named once.
+  static const Color crimsonNeon = Color(0xFFFF2B40);
+  static const Color crimsonShade = Color(0xFFCC1414);
+  static const Color crimsonDeep = Color(0xFF8B0000);
+  static const Color crimsonBlood = Color(0xFF7A000D);
+  static const Color crimsonInk = Color(0xFF2A0A0F);
+  static const Color crimsonInkDeep = Color(0xFF1A0608);
+  static const Color cyanDeep = Color(0xFF0055AA);
+  static const Color skyBlue = Color(0xFF0099FF);
+  static const Color likedViolet = Color(0xFF3B2A7A);
+  static const Color violetNight = Color(0xFF1A1030);
+  static const Color tealNight = Color(0xFF0A1418);
+  static const Color indigoNight = Color(0xFF0A0A14);
+  /// The darkest night: behind a story, a card's fade, the clock's face.
+  static const Color ink = Color(0xFF07080C);
+  static const Color inkNight = Color(0xFF0B0D13);
+  static const Color inkSoft = Color(0xFF0F0F14);
+  static const Color inkPanel = Color(0xFF12141C);
+  static const Color steel = Color(0xFF2E2E3E);
+
+  // Google's sign-in button, in its brand guide's colours: the light pill's
+  // stroke and text, and the four colours of the G.
+  static const Color googleStroke = Color(0xFF747775);
+  static const Color googleText = Color(0xFF1F1F1F);
+  static const Color googleBlue = Color(0xFF4285F4);
+  static const Color googleRed = Color(0xFFEA4335);
+  static const Color googleYellow = Color(0xFFFBBC05);
+  static const Color googleGreen = Color(0xFF34A853);
 
   // The shrine (D-11, P-05): the palette of the progression screens (Eco
   // levels, streak, masks, Lore, ascension), one ink-and-moonlight world

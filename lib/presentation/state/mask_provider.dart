@@ -182,7 +182,12 @@ class MaskProvider extends ChangeNotifier {
       // The gods: the divine masks, and the ultra ones that are not.
       'divine' => MaskCatalog.all.where((m) => m.divine && _unlocked.containsKey(m.id)).length,
       'ultra' => MaskCatalog.all
-          .where((m) => m.rarity == MaskRarity.ul && !m.divine && m.counter != 'ethereal' && _unlocked.containsKey(m.id))
+          .where((m) =>
+              m.rarity == MaskRarity.ul &&
+              !m.divine &&
+              m.counter != 'ethereal' &&
+              !TsukiLore.strangers.contains(m.id) &&
+              _unlocked.containsKey(m.id))
           .length,
       'night' => _stats.nightPlays,
       'level' => level,
@@ -386,8 +391,13 @@ class MaskProvider extends ChangeNotifier {
     if (now >= EcoLevels.maxLevel) unawaited(_reportAscension(name: userName?.call()));
   }
 
+  // Loads and cloud reads can land after the provider is gone (a screen
+  // closed, a test over): they're dropped then.
+  bool _disposed = false;
+
   @override
   void notifyListeners() {
+    if (_disposed) return;
     _checkLevel();
     super.notifyListeners();
   }
@@ -968,7 +978,12 @@ class MaskProvider extends ChangeNotifier {
     if ((_stats.artistPlays[artist] ?? 0) >= 100) unlock('oshi');
     if (_stats.newArtistsSince(now.subtract(const Duration(days: 7))) >= 20) unlock('tabibito');
     if (todayCount >= 15) unlock('shuchaku');
-    if (MoonCalculator.snapshot(now).isFullMoonWindow) {
+    final moon = MoonCalculator.snapshot(now);
+    // Ikai: the dead hour (3 to 4 AM) of a moonless night, once per new moon.
+    if (now.hour == 3 && moon.isNewMoonWindow) {
+      _bumpDistinct('ikai', '${moon.nearestNew.toUtc().millisecondsSinceEpoch ~/ Duration.millisecondsPerDay}');
+    }
+    if (moon.isFullMoonWindow) {
       unlock('mangetsu');
       _bumpDistinct('moons', '${lunationOf(now)}');
       // Kitsunebi: late night under the full moon.
@@ -1287,6 +1302,7 @@ class MaskProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     super.dispose();
   }

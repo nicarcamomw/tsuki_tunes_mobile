@@ -15,6 +15,7 @@ import '../state/daily_guess.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
 import '../widgets/ambient_mixer_sheet.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart';
 import '../widgets/entry_cards.dart';
 import '../widgets/feature_card.dart';
@@ -122,7 +123,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             bottom: false,
             child: ListView(
               controller: _scroll,
-              padding: const EdgeInsets.only(bottom: 32),
+              padding: EdgeInsets.only(bottom: dockBottom(context, extra: 32)),
               children: [
                 _Header(locale: locale),
 

@@ -15,6 +15,7 @@ import '../state/app_providers.dart';
 import '../state/use_cases.dart';
 import '../widgets/app_snack.dart';
 import '../widgets/detail_header.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/track_tile.dart';
 
@@ -114,7 +115,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               PopupMenuButton<String>(
                 tooltip: strings.a11yMoreOptions,
                 icon: DetailHeaderDisc(
-                    child: Icon(Icons.more_vert, color: AppColors.textBright, size: 20, semanticLabel: strings.a11yMoreOptions)),
+                    child: Icon(Icons.more_vert_rounded, color: AppColors.textBright, size: 20, semanticLabel: strings.a11yMoreOptions)),
                 color: AppColors.bgCard,
                 onSelected: (value) {
                   switch (value) {
@@ -152,7 +153,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     value: 'rename',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, color: AppColors.accent, size: 18, semanticLabel: strings.a11yEditPlaylist),
+                        Icon(Icons.edit_rounded, color: AppColors.accent, size: 18, semanticLabel: strings.a11yEditPlaylist),
                         const SizedBox(width: 10),
                         Text(
                           strings.renamePlaylist,
@@ -168,7 +169,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline,
+                        Icon(Icons.delete_outline_rounded,
                             color: Colors.redAccent, size: 18, semanticLabel: strings.a11yDeletePlaylist),
                         const SizedBox(width: 10),
                         Text(
@@ -238,6 +239,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                           ),
                           style: locale.getTextStyle(
                             fontSize: AppFontSize.body,
+                            tabular: true,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -276,7 +278,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         onPressed: () { Haptics.tap();
                           ref.read(playTracksProvider)(playlist.tracks);
                         },
-                        icon: const Icon(Icons.play_arrow,
+                        icon: const Icon(Icons.play_arrow_rounded,
                             color: AppColors.accent, size: 18),
                         label: Text(
                           strings.playAll,
@@ -301,7 +303,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                         onPressed: () { Haptics.tap();
                           ref.read(playTracksProvider)(playlist.tracks, shuffled: true);
                         },
-                        icon: const Icon(Icons.shuffle,
+                        icon: const Icon(Icons.shuffle_rounded,
                             color: AppColors.accent, size: 18),
                         label: Text(
                           strings.shuffle,
@@ -335,7 +337,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.queue_music,
+                      Icon(Icons.queue_music_rounded,
                           size: 54, color: AppColors.borderGlow, semanticLabel: strings.a11yEmptyPlaylist),
                       const SizedBox(height: 12),
                       Text(
@@ -375,7 +377,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                   showListenedCheckbox: false,
                   menuActions: [
                     TrackMenuAction(
-                      icon: Icons.remove_circle_outline,
+                      icon: Icons.remove_circle_outline_rounded,
                       label: strings.playlistRemoveFromThis,
                       onTap: () => _remove(track, index),
                     ),
@@ -408,7 +410,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
               },
             ),
 
-          const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
+          SliverPadding(padding: EdgeInsets.only(bottom: dockBottom(context))),
         ],
       ),
       ),
@@ -418,7 +420,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
   Widget _buildPlaceholderCover() {
     return Container(
       color: AppColors.bgMid,
-      child: const Icon(Icons.queue_music, color: AppColors.accent, size: 48),
+      child: const Icon(Icons.queue_music_rounded, color: AppColors.textMuted, size: 48),
     );
   }
 
@@ -431,7 +433,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
@@ -506,7 +507,6 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
         title: Text(
@@ -592,7 +592,7 @@ class _EditRow extends ConsumerWidget {
           IconButton(
             onPressed: onRemove,
             tooltip: strings.a11yRemoveFromPlaylist,
-            icon: Icon(Icons.remove_circle_outline,
+            icon: Icon(Icons.remove_circle_outline_rounded,
                 color: Colors.redAccent,
                 size: 22,
                 semanticLabel: strings.a11yRemoveFromPlaylist),

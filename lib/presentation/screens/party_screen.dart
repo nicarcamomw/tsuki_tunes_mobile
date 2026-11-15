@@ -13,6 +13,7 @@ import '../../domain/entities/track.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/app_snack.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/eco_widgets.dart' show becomeBearer;
 import '../widgets/haptics.dart';
 import '../widgets/swipeable_sheet.dart';
@@ -55,7 +56,7 @@ class PartyScreen extends ConsumerWidget {
       final hosting = party.hosting;
       final Track? track = hosting ? playing : p.track;
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 140),
+        padding: EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, dockBottom(context)),
         children: [
           Text((hosting ? strings.partyYouHost : strings.partyHostedBy(p.hostName)).toUpperCase(),
               style: style(AppFontSize.caption, color: AppColors.accent, w: FontWeight.w900).copyWith(letterSpacing: 2)),
@@ -130,7 +131,7 @@ class PartyScreen extends ConsumerWidget {
       );
     } else {
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 140),
+        padding: EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, dockBottom(context)),
         children: [
           if (party.ended) ...[
             Text(strings.partyEnded, style: style(AppFontSize.bodyLg, color: AppColors.textMuted)),
@@ -141,8 +142,7 @@ class PartyScreen extends ConsumerWidget {
           Text(strings.partyHint, textAlign: TextAlign.center, style: style(AppFontSize.title)),
           const SizedBox(height: 20),
           FilledButton.icon(
-            style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accentFill, minimumSize: const Size(double.infinity, 50)),
+            style: FilledButton.styleFrom( minimumSize: const Size(double.infinity, 50)),
             onPressed: () async {
               Haptics.confirm();
               final ok = await party.host();

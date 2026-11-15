@@ -12,6 +12,7 @@ import '../../domain/entities/social.dart';
 import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/swipeable_sheet.dart';
@@ -94,7 +95,6 @@ class SharedPlaylistScreen extends ConsumerWidget {
         final yes = await showDialog<bool>(
           context: context,
           builder: (d) => AlertDialog(
-            backgroundColor: AppColors.bgCard,
             title: Text(strings.sharedDelete),
             content: Text(strings.sharedDeleteBody),
             actions: [
@@ -117,7 +117,6 @@ Future<String?> _askName(BuildContext context, String title, String initial, Str
   return showDialog<String>(
     context: context,
     builder: (d) => AlertDialog(
-      backgroundColor: AppColors.bgCard,
       title: Text(title),
       content: TextField(
         controller: field,
@@ -161,7 +160,7 @@ class _Body extends ConsumerWidget {
     final owner = p.owner == me;
     final invitedMe = p.isInvited(me) && !p.isMember(me);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 140),
+      padding: EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, dockBottom(context)),
       children: [
         Row(
           children: [
@@ -347,7 +346,6 @@ class _Body extends ConsumerWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (d) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
         title: Text(p.nameOf(uid)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(d, false), child: Text(strings.cancel)),

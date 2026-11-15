@@ -14,6 +14,7 @@ import '../navigation/routes.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../state/use_cases.dart';
+import '../widgets/dock_inset.dart';
 import '../widgets/haptics.dart';
 import '../widgets/skeleton_loader.dart';
 
@@ -306,7 +307,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.refresh,
+                                Icon(Icons.refresh_rounded,
                                     size: 14, color: AppColors.accent, semanticLabel: strings.a11yRetry),
                                 const SizedBox(width: 8),
                                 Text(
@@ -342,7 +343,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
                       ),
                     ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
               ],
             ),
           ),
@@ -525,7 +526,7 @@ class _ArtistDiscographyScreenState extends ConsumerState<ArtistDiscographyScree
           )
         : Container(
             color: AppColors.bgMid,
-            child: Icon(Icons.album, color: AppColors.accent, size: 40, semanticLabel: strings.a11yAlbumCover),
+            child: Icon(Icons.album_rounded, color: AppColors.textMuted, size: 40, semanticLabel: strings.a11yAlbumCover),
           );
 
     if (isCompleted) return ExcludeSemantics(child: image);
