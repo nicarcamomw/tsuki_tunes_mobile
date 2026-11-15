@@ -331,4 +331,39 @@ void main() {
     expect(q.advanceForCrossfade(), 0);
     expect(q.history, [4]);
   });
+
+  group('peekPrevious (what the mini player shows on a swipe back)', () {
+    QueueStep back(PlaybackQueue q, Duration at) => q.previous(position: at, online: true, canPlay: _all);
+
+    test('agrees with previous, and moves nothing', () {
+      q.select(tracks[3]);
+      expect(q.peekPrevious(position: Duration.zero), 2);
+      expect(q.currentIndex, 3, reason: 'only a look');
+      final step = back(q, Duration.zero);
+      expect((step.kind, step.index), (QueueStepKind.play, 2));
+    });
+
+    test('past the first 3 s it would start over: null', () {
+      q.select(tracks[3]);
+      expect(q.peekPrevious(position: const Duration(seconds: 4)), isNull);
+      expect(back(q, const Duration(seconds: 4)), QueueStep.seekToStart);
+    });
+
+    test('at the first song: over with repeat off, the last with repeat all', () {
+      expect(q.peekPrevious(position: Duration.zero), isNull);
+      q.setRepeatMode(PlaybackRepeatMode.all);
+      expect(q.peekPrevious(position: Duration.zero), 4);
+    });
+
+    test('shuffling: the song heard before, from the history', () {
+      final sq = PlaybackQueue(random: Random(3));
+      sq.select(tracks[0], newQueue: tracks);
+      sq.toggleShuffle();
+      sq.next(online: true, canPlay: _all);
+      final heard = sq.history.last;
+      expect(sq.peekPrevious(position: Duration.zero), heard);
+      final step = back(sq, Duration.zero);
+      expect((step.kind, step.index), (QueueStepKind.play, heard));
+    });
+  });
 }

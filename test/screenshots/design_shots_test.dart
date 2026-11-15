@@ -98,6 +98,10 @@ class _MidSongAudio extends _StillAudio {
   Duration get position => const Duration(seconds: 100);
   @override
   Duration get duration => const Duration(seconds: 248);
+  @override
+  List<Track> get queue => [_song, ..._upNext];
+  @override
+  Track? get nextPreview => _upNext.first;
 }
 
 /// The session still waking: the loading screen stays.
@@ -358,6 +362,27 @@ void main() {
   testWidgets('shell', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'shell', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
         const MainNavigationScreen(child: SizedBox.expand()));
+  });
+
+  // The mini player mid-swipe: the next song, by name, on its side.
+  testWidgets('shell_swipe', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'shell_swipe', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        const MainNavigationScreen(child: SizedBox.expand()), before: () async {
+      final gesture = await tester.startGesture(tester.getCenter(find.text('Get Lucky')));
+      await gesture.moveBy(const Offset(-30, 0));
+      await gesture.moveBy(const Offset(-80, 0));
+      await tester.pump();
+    });
+  });
+
+  // Holding the mini player: the album, the artist, the queue.
+  testWidgets('shell_mini_menu', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'shell_mini_menu', overrides: [...base, audioProvider.overrideWith((ref) => _MidSongAudio())],
+        const MainNavigationScreen(child: SizedBox.expand()), before: () async {
+      await tester.longPress(find.text('Get Lucky'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+    });
   });
 
   // No connection: how the shell says so.

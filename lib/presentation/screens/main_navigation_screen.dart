@@ -462,18 +462,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final locale = ref.read(localeProvider);
     final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
     final size = overlay.size;
+    final shortcuts = _shortcuts(tab);
+    // Above the tab: a menu goes down from its top unless it doesn't fit.
+    final top = anchor.top - 8 - (shortcuts.length * 48 + 16);
     final chosen = await showMenu<VoidCallback? Function()>(
       context: context,
       useRootNavigator: true,
       color: AppColors.surfaceRaised,
-      elevation: 8,
+      // Lifted by its rim, not a heavy shadow.
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.borderGlow),
       ),
-      position: RelativeRect.fromLTRB(anchor.left, anchor.top - 8, size.width - anchor.right, size.height - anchor.top + 8),
+      position: RelativeRect.fromLTRB(anchor.left, top, size.width - anchor.right, size.height - top),
       items: [
-        for (final (icon, label, action) in _shortcuts(tab))
+        for (final (icon, label, action) in shortcuts)
           PopupMenuItem(
             value: action,
             height: 48,

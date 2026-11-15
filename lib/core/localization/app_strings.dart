@@ -914,6 +914,13 @@ class AppStrings {
   String get navMenuTypeSearch => _es('Escribir en el buscador', 'Type a search', '検索を入力');
   /// The connection came back (the pill at the top, for a moment).
   String get backOnline => _es('De nuevo en línea', 'Back online', 'オンラインに戻りました');
+  // ── The mini player ──
+  String get miniStopped => _es('Reproducción detenida', 'Playback stopped', '再生を停止しました');
+  String get miniFromStart => _es('Desde el inicio', 'From the start', '最初から');
+  String get miniGoAlbum => _es('Ir al álbum', 'Go to album', 'アルバムへ');
+  String get miniGoArtist => _es('Ir al artista', 'Go to artist', 'アーティストへ');
+  String get miniQueue => _es('Ver la cola', 'See the queue', 'キューを見る');
+  String get miniHoldHint => _es('ver opciones', 'show options', 'オプションを表示');
   /// TalkBack's actions on the mini player.
   String get a11yOpenPlayer => _es('Abrir el reproductor', 'Open the player', 'プレーヤーを開く');
 

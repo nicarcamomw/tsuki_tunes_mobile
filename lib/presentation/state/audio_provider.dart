@@ -1689,6 +1689,19 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver implement
     if (track != null) _service.refreshSpeed(track);
   }
 
+  /// The song "next" would play, without moving (shuffle's pick included).
+  Track? get nextPreview {
+    final i = _q.peekNext();
+    return i == null ? null : _q.tracks[i];
+  }
+
+  /// The song "previous" would play, or null when it would start the one
+  /// playing over.
+  Track? get previousPreview {
+    final i = _q.peekPrevious(position: _position);
+    return i == null ? null : _q.tracks[i];
+  }
+
   /// The tracks after the current one, in play order.
   List<Track> get upcomingTracks =>
       _q.isEmpty ? const [] : _q.tracks.sublist(_q.currentIndex + 1);
