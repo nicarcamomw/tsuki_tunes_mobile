@@ -168,41 +168,86 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     super.dispose();
   }
 
+  /// Spotify paused remotely is told once a session: it's the same news
+  /// for every song.
+  bool _spotifyPausedTold = false;
+
   /// E-03: the shell's three notices (Spotify, playback, sync), each once
-  /// when it appears, as the app's snack bar over the dock. Listened to,
-  /// not read in build: nothing is shown from a rebuild.
+  /// when it appears, as the app's snack bar over the dock, each with what
+  /// can be done about it: the next song, a retry, opening Spotify.
+  /// Listened to, not read in build: nothing is shown from a rebuild.
   void _listenForNotices() {
     ref.listen(audioProvider.select((a) => a.lastSpotifyError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
+      final audio = ref.read(audioProvider);
       // On phones known to freeze Spotify, a failed start comes with a
       // guide to let it run in the background.
-      final guide = ref.read(batteryGuideProvider).offerFor(error);
-      _notice((snack) => snack.show(
-            guide ? strings.batteryGuideSnack : error.message(strings),
-            icon: guide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
-            actionLabel: guide ? strings.batteryGuideAction : null,
-            onAction: guide ? () => BatteryGuideSheet.show(context) : null,
-            duration: Duration(seconds: guide ? 8 : 4),
-          ));
+      if (ref.read(batteryGuideProvider).offerFor(error)) {
+        _notice((snack) => snack.show(
+              strings.batteryGuideSnack,
+              icon: Icons.battery_alert_rounded,
+              actionLabel: strings.batteryGuideAction,
+              onAction: () => BatteryGuideSheet.show(context),
+              duration: const Duration(seconds: 8),
+            ));
+        return;
+      }
+      switch (error) {
+        case SpotifyFallbackReason.openApp:
+          _notice((snack) => snack.show(
+                error.message(strings),
+                icon: Icons.open_in_new_rounded,
+                actionLabel: strings.noticeOpenSpotify,
+                onAction: () => unawaited(audio.spotify.openSpotifyApp()),
+                duration: const Duration(seconds: 6),
+              ));
+        case SpotifyFallbackReason.disabled:
+          if (_spotifyPausedTold) return;
+          _spotifyPausedTold = true;
+          _notice((snack) => snack.info(error.message(strings), icon: Icons.info_outline_rounded));
+        case SpotifyFallbackReason.trackUnavailable:
+          _notice((snack) => snack.info(error.message(strings), icon: Icons.info_outline_rounded));
+      }
     });
     ref.listen(audioProvider.select((a) => a.lastPlaybackError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
+      final audio = ref.read(audioProvider);
+      final online = ref.read(isOnlineProvider);
+      final song = audio.currentTrack;
+      final hasNext = audio.nextPreview != null;
+      // A network hiccup online is worth another go at the same song; the
+      // rest won't change on a retry: the next song, when there is one.
+      final retry = error == PlaybackError.network && online && song != null;
+      final (label, action) = retry
+          ? (strings.noticeRetry, () => unawaited(audio.playTrack(song)))
+          : hasNext
+              ? (strings.noticeNext, () => unawaited(audio.next()))
+              : (null, null);
       _notice((snack) => snack.error(
-            error.message(strings, isOnline: ref.read(isOnlineProvider)),
+            error.message(strings, isOnline: online),
             icon: switch (error) {
               PlaybackError.network => Icons.wifi_off_rounded,
               PlaybackError.noPreview => Icons.music_off_rounded,
               _ => Icons.error_outline_rounded,
             },
+            actionLabel: label,
+            onAction: action,
+            duration: label == null ? null : const Duration(seconds: 6),
           ));
     });
-    // A mark or unmark that didn't reach the cloud.
+    // A mark or unmark the server refused for good (and that was undone
+    // here): said as what happened, no "try again" that wouldn't help.
     ref.listen(libraryProvider.select((l) => l.lastSyncError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
-      _notice((snack) => snack.error(strings.syncError, icon: Icons.sync_problem_rounded));
+      final text = switch (error) {
+        'mark_failed' => strings.syncMarkFailed,
+        'unmark_failed' => strings.syncUnmarkFailed,
+        _ => strings.syncError,
+      };
+      _notice((snack) => snack.error(text, icon: Icons.sync_problem_rounded));
     });
   }
 

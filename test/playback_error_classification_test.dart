@@ -162,9 +162,27 @@ void main() {
       expect(es.playbackFormatUnsupported, contains('no compatible'));
     });
 
+    test('one word for a song: "canción", never "pista" or "track"', () {
+      final es = AppStrings.of(AppLanguage.es);
+      for (final text in [
+        es.playbackError,
+        es.playbackNoPreview,
+        es.playbackNetworkError,
+        es.offlineNoCache,
+        es.spotifyTrackUnavailablePreview,
+        es.spotifyOpenAppPrompt,
+      ]) {
+        expect(text.toLowerCase(), isNot(anyOf(contains('pista'), contains('track'), contains('caché'))), reason: text);
+      }
+      final en = AppStrings.of(AppLanguage.en);
+      for (final text in [en.playbackError, en.playbackNoPreview, en.offlineNoCache, en.spotifyTrackUnavailablePreview]) {
+        expect(text.toLowerCase(), isNot(anyOf(contains('track'), contains('cached'))), reason: text);
+      }
+    });
+
     test('validates English strings', () {
       final en = AppStrings.of(AppLanguage.en);
-      expect(en.playbackNoPreview, contains('preview is unavailable'));
+      expect(en.playbackNoPreview, contains('no preview'));
       expect(en.playbackNetworkError, contains('Network error'));
       expect(en.playbackFormatUnsupported, contains('not supported'));
     });

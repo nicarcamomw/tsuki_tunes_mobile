@@ -104,6 +104,17 @@ class _MidSongAudio extends _StillAudio {
   Track? get nextPreview => _upNext.first;
 }
 
+/// Halfway through the song when something goes wrong with it.
+class _FailingAudio extends _MidSongAudio {
+  PlaybackError? failure;
+  @override
+  PlaybackError? get lastPlaybackError => failure;
+  void fail(PlaybackError e) {
+    failure = e;
+    notifyListeners();
+  }
+}
+
 /// The session still waking: the loading screen stays.
 class _Waking extends ChangeNotifier implements SessionGate {
   @override
@@ -384,6 +395,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
     });
   });
+
+  // A song that can't play: the notice over the dock, and what to do.
+  for (final (name, failure) in [('notice_no_preview', PlaybackError.noPreview), ('notice_network', PlaybackError.network)]) {
+    testWidgets(name, skip: skip != null, (tester) async {
+      final audio = _FailingAudio();
+      await _pumpShot(tester, name, overrides: [...base, audioProvider.overrideWith((ref) => audio)],
+          const MainNavigationScreen(child: SizedBox.expand()), before: () async {
+        audio.fail(failure);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 500));
+      });
+    });
+  }
 
   // No connection: how the shell says so.
   testWidgets('shell_offline', skip: skip != null, (tester) async {
