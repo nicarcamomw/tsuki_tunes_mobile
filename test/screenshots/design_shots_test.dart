@@ -34,6 +34,7 @@ import 'package:tsuki_tunes_mobile/presentation/screens/expanded_player_screen.d
 import 'package:tsuki_tunes_mobile/presentation/screens/home_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/library_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/loading_screen.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/login/login_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/lore_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/mask_collection_screen.dart';
@@ -508,6 +509,12 @@ void main() {
 
   testWidgets('masks', skip: skip != null, (tester) async {
     await _pumpShot(tester, 'masks', overrides: base, const MaskCollectionScreen());
+  });
+
+  // The login, its animated night.
+  testWidgets('login', skip: skip != null, (tester) async {
+    await _pumpShot(tester, 'login', overrides: base, const LoginScreen(),
+        before: () => tester.pump(const Duration(seconds: 2)));
   });
 
   // The first frame while the session wakes up.
