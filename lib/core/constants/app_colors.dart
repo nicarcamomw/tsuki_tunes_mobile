@@ -116,6 +116,15 @@ class AppColors {
   static const Color inkPanel = Color(0xFF12141C);
   static const Color steel = Color(0xFF2E2E3E);
 
+  // Google's sign-in button, in its brand guide's colours: the light pill's
+  // stroke and text, and the four colours of the G.
+  static const Color googleStroke = Color(0xFF747775);
+  static const Color googleText = Color(0xFF1F1F1F);
+  static const Color googleBlue = Color(0xFF4285F4);
+  static const Color googleRed = Color(0xFFEA4335);
+  static const Color googleYellow = Color(0xFFFBBC05);
+  static const Color googleGreen = Color(0xFF34A853);
+
   // The shrine (D-11, P-05): the palette of the progression screens (Eco
   // levels, streak, masks, Lore, ascension), one ink-and-moonlight world
   // instead of each screen's own near-identical darks.

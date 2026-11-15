@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../../core/theme/design_tokens.dart';
 import '../navigation/session_gate.dart';
 import '../state/app_providers.dart';
 import '../widgets/motion.dart';
+import '../widgets/tsuki_sky.dart';
 
 /// The entrance, while the session wakes up (auth, the tutorial flag).
 ///
@@ -37,10 +37,6 @@ class LoadingScreen extends ConsumerStatefulWidget {
   /// tool/splash/make_glow_frames.py), so the hand-over is exact.
   static const double maskWidth = 109.12;
 
-  /// The glow the animated splash ends with: the first frame picks it up.
-  static const double splashGlowRadius = 93;
-  static const double splashGlowAlpha = 0.20;
-
   /// How long before the line at the bottom says waking takes a moment.
   static const Duration patience = Duration(milliseconds: 1600);
 
@@ -54,9 +50,7 @@ class LoadingScreen extends ConsumerStatefulWidget {
 
   /// The nebula's program, loaded once (null where shaders can't load: the
   /// screen then keeps its plain night).
-  static final Future<ui.FragmentProgram?> nebula = ui.FragmentProgram.fromAsset(
-    nebulaAsset,
-  ).then<ui.FragmentProgram?>((p) => p).catchError((Object _) => null);
+  static Future<ui.FragmentProgram?> get nebula => tsukiNebulaProgram;
 
   /// Starts decoding the mask and compiling the nebula before the first
   /// frame (called from main, while Firebase starts), so the mask is there
@@ -70,16 +64,18 @@ class LoadingScreen extends ConsumerStatefulWidget {
   ConsumerState<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-/// A slow breath (0..1) every 2.8 s, from the continuous time.
-double _breathAt(double t) => 0.5 - 0.5 * math.cos(2 * math.pi * t / 2.8);
-
 class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProviderStateMixin {
   late final AnimationController _intro = AnimationController(vsync: this, duration: LoadingScreen.intro);
   late final AnimationController _exit = AnimationController(vsync: this, duration: AppMotion.normal);
   // Seconds since the screen opened: the nebula, the breath, the ring's turn
   // and the embers all read it. It never wraps, so nothing ever jumps.
   final ValueNotifier<double> _time = ValueNotifier(0);
-  late final Ticker _ticker = createTicker((elapsed) => _time.value = elapsed.inMicroseconds / 1e6);
+  // The ring's turn: one every 16 s.
+  final ValueNotifier<double> _rotation = ValueNotifier(0);
+  late final Ticker _ticker = createTicker((elapsed) {
+    _time.value = elapsed.inMicroseconds / 1e6;
+    _rotation.value = _time.value / 16 * 2 * math.pi;
+  });
   ui.FragmentShader? _shader;
   Timer? _patience;
   bool _slow = false;
@@ -119,6 +115,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     _patience?.cancel();
     _ticker.dispose();
     _time.dispose();
+    _rotation.dispose();
     _intro.dispose();
     _exit.dispose();
     _shader?.dispose();
@@ -164,7 +161,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                 Positioned.fill(
                   child: RepaintBoundary(
                     child: CustomPaint(
-                      painter: _NebulaPainter(_shader!, time: _time, intensity: sky, still: still),
+                      painter: NebulaPainter(_shader!, time: _time, intensity: sky, still: still),
                     ),
                   ),
                 ),
@@ -173,7 +170,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                 Positioned.fill(
                   child: RepaintBoundary(
                     child: CustomPaint(
-                      painter: _EmbersPainter(time: _time, intensity: sky, exit: exit),
+                      painter: EmbersPainter(time: _time, intensity: sky, exit: exit),
                     ),
                   ),
                 ),
@@ -181,14 +178,21 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
               RepaintBoundary(
                 child: CustomPaint(
                   size: const Size.square(300),
-                  painter: _GlowPainter(grow: glowIn, time: _time, exit: exit, still: still),
+                  painter: MoonGlowPainter(grow: glowIn, time: _time, exit: exit, still: still),
                 ),
               ),
               // The moon ring, drawing itself, then turning slowly.
               RepaintBoundary(
                 child: CustomPaint(
                   size: const Size.square(320),
-                  painter: _RingPainter(sweep: ring, pulse: pulse, ticks: ticks, time: _time, exit: exit, still: still),
+                  painter: MoonRingPainter(
+                    sweep: ring,
+                    pulse: pulse,
+                    ticks: ticks,
+                    rotation: _rotation,
+                    exit: exit,
+                    still: still,
+                  ),
                 ),
               ),
               // The mask: breath, scan and glitch.
@@ -197,7 +201,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                   animation: Listenable.merge([_intro, _time, _exit]),
                   child: mask,
                   builder: (context, mask) {
-                    final breath = still ? 0.0 : _breathAt(_time.value);
+                    final breath = still ? 0.0 : breathAt(_time.value);
                     final scale = (1 + 0.025 * breath) * (1 + 0.12 * exit.value);
                     final scanning = !still && _intro.value > 0.15 && _intro.value < 0.65;
                     final glitch = !still && _intro.value > 0.55 && _intro.value < 0.72 ? _intro.value : null;
@@ -366,230 +370,4 @@ class _Slice extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(_Slice old) => old.top != top || old.bottom != bottom;
-}
-
-class _NebulaPainter extends CustomPainter {
-  _NebulaPainter(this.shader, {required this.time, required this.intensity, required this.still})
-    : super(repaint: still ? intensity : Listenable.merge([time, intensity]));
-
-  final ui.FragmentShader shader;
-  final ValueListenable<double> time;
-  final Animation<double> intensity;
-  final bool still;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    shader
-      ..setFloat(0, size.width)
-      ..setFloat(1, size.height)
-      ..setFloat(2, still ? 0 : time.value)
-      ..setFloat(3, intensity.value);
-    canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
-  }
-
-  @override
-  bool shouldRepaint(_NebulaPainter old) => old.shader != shader || old.still != still;
-}
-
-/// Sixteen embers rising slowly and twinkling out, each on its own path.
-class _EmbersPainter extends CustomPainter {
-  _EmbersPainter({required this.time, required this.intensity, required this.exit})
-    : super(repaint: Listenable.merge([time, intensity, exit]));
-
-  final ValueListenable<double> time;
-  final Animation<double> intensity;
-  final Animation<double> exit;
-
-  static final List<(double, double, double, double)> _embers = () {
-    final rng = math.Random(7);
-    return List.generate(
-      16,
-      (_) => (
-        0.18 + rng.nextDouble() * 0.64,
-        0.05 + rng.nextDouble() * 0.06,
-        rng.nextDouble(),
-        0.8 + rng.nextDouble() * 1.4,
-      ),
-    );
-  }();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = intensity.value * (1 - exit.value);
-    if (k <= 0) return;
-    final paint = Paint();
-    for (final (x, speed, phase, radius) in _embers) {
-      final life = (time.value * speed + phase) % 1;
-      final alpha = math.sin(math.pi * life) * 0.55 * k;
-      final drift = math.sin((time.value + phase * 10) * 0.7) * 10;
-      final pos = Offset(x * size.width + drift, size.height * (0.82 - 0.62 * life));
-      paint.color = AppColors.accent.withValues(alpha: alpha);
-      canvas.drawCircle(pos, radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_EmbersPainter old) => false;
-}
-
-class _GlowPainter extends CustomPainter {
-  _GlowPainter({required this.grow, required this.time, required this.exit, required this.still})
-    : super(repaint: Listenable.merge([grow, time, exit]));
-
-  final Animation<double> grow;
-  final ValueListenable<double> time;
-  final Animation<double> exit;
-  final bool still;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centre = size.center(Offset.zero);
-    final breath = still ? 0.0 : _breathAt(time.value);
-    // From the splash's glow to the breathing one, then a flash on leaving.
-    final radius = ui.lerpDouble(LoadingScreen.splashGlowRadius, 130, grow.value)! * (1 + 0.6 * exit.value);
-    final alpha =
-        ui.lerpDouble(LoadingScreen.splashGlowAlpha, 0.14 + 0.08 * breath, grow.value)! *
-        (1 + exit.value) *
-        (1 - exit.value);
-    canvas.drawCircle(
-      centre,
-      radius,
-      Paint()
-        ..shader = ui.Gradient.radial(centre, radius, [
-          AppColors.accent.withValues(alpha: alpha.clamp(0, 1)),
-          AppColors.accent.withValues(alpha: 0),
-        ]),
-    );
-    // The mask's soft shadow, lifting it off the glow (comes in with it).
-    final shadow = 0.45 * grow.value * (1 - exit.value);
-    if (shadow > 0) {
-      canvas
-        ..save()
-        ..translate(centre.dx, centre.dy + 74)
-        ..scale(1, 0.22)
-        ..drawCircle(
-          Offset.zero,
-          62,
-          Paint()
-            ..shader = ui.Gradient.radial(Offset.zero, 62, [
-              Colors.black.withValues(alpha: shadow),
-              Colors.black.withValues(alpha: 0),
-            ]),
-        )
-        ..restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GlowPainter old) => old.still != still;
-}
-
-class _RingPainter extends CustomPainter {
-  _RingPainter({
-    required this.sweep,
-    required this.pulse,
-    required this.ticks,
-    required this.time,
-    required this.exit,
-    required this.still,
-  }) : super(repaint: Listenable.merge([sweep, pulse, ticks, time, exit]));
-
-  final Animation<double> sweep;
-  final Animation<double> pulse;
-  final Animation<double> ticks;
-  final ValueListenable<double> time;
-  final Animation<double> exit;
-  final bool still;
-
-  static const double radius = 112;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centre = size.center(Offset.zero);
-    final fade = 1 - exit.value;
-    final s = sweep.value;
-    if (fade <= 0 || s <= 0) return;
-    final r = radius * (1 + 0.5 * exit.value);
-    final turn = still ? 0.0 : time.value / 16 * 2 * math.pi; // one turn per 16 s
-    final start = -math.pi / 2 + turn;
-
-    // The faint track, coming in with the ring (the splash has none).
-    canvas.drawCircle(
-      centre,
-      r,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = AppColors.textMuted.withValues(alpha: 0.10 * fade * math.min(1, s * 3)),
-    );
-    // The drawn arc.
-    final angle = 2 * math.pi * s;
-    canvas.drawArc(
-      Rect.fromCircle(center: centre, radius: r),
-      start,
-      angle,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.accent.withValues(alpha: 0.5 * fade),
-    );
-    // The comet at its head, in its own turn of the canvas so its gradient
-    // runs over 0..comet (a sweep gradient wants angles in 0..2π).
-    const comet = 1.2; // radians
-    canvas
-      ..save()
-      ..translate(centre.dx, centre.dy)
-      ..rotate(start + angle - comet)
-      ..drawArc(
-        Rect.fromCircle(center: Offset.zero, radius: r),
-        0,
-        comet,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..strokeCap = StrokeCap.round
-          ..shader = ui.Gradient.sweep(
-            Offset.zero,
-            [AppColors.accent.withValues(alpha: 0), AppColors.accent.withValues(alpha: fade)],
-            const [0, 1],
-            TileMode.clamp,
-            0,
-            comet,
-          ),
-      )
-      ..restore();
-
-    // Closed: a ripple runs out from the ring, once.
-    final p = pulse.value;
-    if (p > 0 && p < 1) {
-      canvas.drawCircle(
-        centre,
-        r * (1 + 0.35 * p),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.5 + 2 * (1 - p)
-          ..color = AppColors.accent.withValues(alpha: 0.6 * (1 - p) * fade),
-      );
-    }
-
-    // HUD ticks around it, every 30°.
-    final t = ticks.value * fade;
-    if (t > 0) {
-      final tick = Paint()
-        ..strokeWidth = 1.2
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.accent.withValues(alpha: 0.5 * t);
-      for (var i = 0; i < 12; i++) {
-        final a = start + i * math.pi / 6;
-        final dir = Offset(math.cos(a), math.sin(a));
-        canvas.drawLine(centre + dir * (r + 6), centre + dir * (r + (i % 3 == 0 ? 14 : 10)), tick);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) => old.still != still;
 }

@@ -62,12 +62,17 @@ class AuthProvider extends ChangeNotifier {
   /// An admin account (see [adminEmails]): everything unlockable shows unlocked.
   bool get isAdmin => isAuthenticated && isAdminEmail(_user!.email);
 
-  bool get isLoginThrottled {
-    if (_loginAttempts < _maxLoginAttempts) return false;
-    if (_lastLoginAttemptTime == null) return false;
+  bool get isLoginThrottled => loginThrottleRemaining > Duration.zero;
+
+  /// How long until another sign-in may be tried (zero when it may now),
+  /// for the login's countdown.
+  Duration get loginThrottleRemaining {
+    if (_loginAttempts < _maxLoginAttempts) return Duration.zero;
+    if (_lastLoginAttemptTime == null) return Duration.zero;
     final multiplier = (_loginAttempts - _maxLoginAttempts).clamp(0, 4);
     final cooldown = _loginCooldownBase * (1 << multiplier);
-    return DateTime.now().difference(_lastLoginAttemptTime!) < cooldown;
+    final left = cooldown - DateTime.now().difference(_lastLoginAttemptTime!);
+    return left.isNegative ? Duration.zero : left;
   }
 
   Future<void> loginAsGuest() async {

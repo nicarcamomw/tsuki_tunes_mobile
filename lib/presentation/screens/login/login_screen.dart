@@ -1,567 +1,585 @@
 library;
 
 import 'dart:async';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/localization/app_strings.dart';
+import '../../../core/constants/legal_links.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
-import '../../widgets/app_snack.dart';
-import '../../widgets/cyber_glitch_text.dart';
-import '../../widgets/cyber_orb.dart';
+import '../../widgets/frosted_glass.dart';
 import '../../widgets/haptics.dart';
 import '../../widgets/motion.dart';
-import '../../widgets/spectrum_wave_visualizer.dart';
+import '../../widgets/tsuki_sky.dart';
+import '../loading_screen.dart';
 
 part 'google_button.dart';
-part 'painters.dart';
 
+/// Where the sign-in stands, for the panel's line and the ring's pace.
+enum _Status { idle, signingIn, granted, failed }
+
+/// The login: the same night as the entrance, so the app opens as one
+/// scene. The mask the loading screen left at the centre rises to the top
+/// with its moon ring; the name appears with a flicker of signal; the ways
+/// in arrive on a panel of liquid glass: Google's own button, the
+/// observer's way, a line that says what's happening (offline, too many
+/// tries with a countdown, an error with a way to try again) and the terms.
+///
+/// Signing in, the ring turns fast (it is the loader); signed in, the mask
+/// blooms into the app; failed, the panel glitches once. With less motion
+/// asked for, it all holds still. Light: one ticker, painters that repaint
+/// without rebuilding, the shader warmed at startup.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
+  /// How long the entrance takes (the mask rising, then the rest).
+  static const Duration intro = Duration(milliseconds: 1100);
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
-    with TickerProviderStateMixin {
-  late final Ticker _ticker;
-  late final AnimationController _shockwaveController;
-  final GlobalKey _orbKey = GlobalKey();
-  Offset? _cachedOrbCenter;
-  final ValueNotifier<double> _timeNotifier = ValueNotifier<double>(0.0);
-  bool _isLoading = false;
-  bool _loginSuccess = false;
+class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderStateMixin {
+  late final AnimationController _intro = AnimationController(vsync: this, duration: LoginScreen.intro);
+  late final AnimationController _shake = AnimationController(vsync: this, duration: AppMotion.slow);
+  late final AnimationController _bloom = AnimationController(vsync: this, duration: AppMotion.slow);
+  final ValueNotifier<double> _time = ValueNotifier(0);
+  final ValueNotifier<double> _rotation = ValueNotifier(0);
+  late final Ticker _ticker = createTicker(_tick);
+  Duration _lastTick = Duration.zero;
+  double _speed = _calm;
+  ui.FragmentShader? _shader;
+  Timer? _countdown;
+  _Status _status = _Status.idle;
+  String? _error;
 
-  final List<_CyberParticle> _particles = _generateParticles();
+  /// The ring's pace in radians a second: one turn in 16 s, or a loader's.
+  static const double _calm = 2 * math.pi / 16;
 
-  static List<_CyberParticle> _generateParticles() {
-    final rng = Random(77);
-    return List.generate(28, (i) {
-      return _CyberParticle(
-        baseX: rng.nextDouble(),
-        baseY: rng.nextDouble(),
-        size: 1.2 + rng.nextDouble() * 2.2,
-        speed: 0.08 + rng.nextDouble() * 0.14,
-        maxOpacity: 0.35 + rng.nextDouble() * 0.5,
-        phase: rng.nextDouble() * 2 * pi,
-        isCrimson: rng.nextBool(),
-      );
-    });
-  }
+  /// About how tall the glass panel and the footer under it stand.
+  static const double _panelHeight = 245;
+  static const double _busy = 2 * math.pi / 1.1;
 
   @override
   void initState() {
     super.initState();
-
-    _shockwaveController = AnimationController(
-      vsync: this,
-      duration: AppMotion.reveal,
-    );
-    _shockwaveController.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        final auth = ref.read(authProvider);
-        if (auth.uid != null && !auth.isGuest) {
-          final uid = auth.uid!;
-          ref.read(libraryProvider).connectToFirestore(uid);
-          final playlists = ref.read(playlistProvider);
-          final guestUid = auth.takeGuestUidToMigrate();
-          playlists.connectToFirestore(uid).then((_) {
-            if (guestUid != null) playlists.importGuestPlaylists(guestUid);
-          });
-        }
-        _navigateAfterLogin();
-      }
-    });
-
-    _ticker = createTicker((elapsed) {
-      if (mounted) {
-        _timeNotifier.value = elapsed.inMicroseconds / 1000000.0;
-      }
+    unawaited(tsukiNebulaProgram.then((program) {
+      if (!mounted || program == null) return;
+      setState(() => _shader = program.fragmentShader());
+    }));
+    _bloom.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _enter();
     });
   }
-
-  bool _reduceMotion = false;
-  bool _tickerConfigured = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_tickerConfigured) {
-      _reduceMotion = MediaQuery.of(context).disableAnimations;
-      if (!_reduceMotion) {
-        _ticker.start();
-      }
-      _tickerConfigured = true;
+    if (reduceMotion(context)) {
+      _intro.value = 1;
+      if (_ticker.isActive) _ticker.stop();
+    } else {
+      if (_intro.isDismissed) unawaited(_intro.forward());
+      if (!_ticker.isActive) unawaited(_ticker.start());
     }
   }
 
-  /// The router takes it from here: the tutorial for a new account, the
-  /// main screen otherwise (or the page a link pointed to).
-  void _navigateAfterLogin() {
-    if (mounted) context.go(AppPaths.home);
+  void _tick(Duration elapsed) {
+    final dt = (elapsed - _lastTick).inMicroseconds / 1e6;
+    _lastTick = elapsed;
+    _time.value = elapsed.inMicroseconds / 1e6;
+    // The ring eases into its new pace instead of jumping to it.
+    final target = _status == _Status.signingIn ? _busy : _calm;
+    _speed += (target - _speed) * math.min(1, dt * 3);
+    _rotation.value += _speed * dt;
   }
-
-  Future<void> _handleGuestExplore() async {
-    final auth = ref.read(authProvider);
-    await auth.loginAsGuest();
-    if (!mounted) return;
-    context.go(AppPaths.home);
-  }
-
 
   @override
   void dispose() {
+    _countdown?.cancel();
     _ticker.dispose();
-    _timeNotifier.dispose();
-    _shockwaveController.dispose();
+    _time.dispose();
+    _rotation.dispose();
+    _intro.dispose();
+    _shake.dispose();
+    _bloom.dispose();
+    _shader?.dispose();
     super.dispose();
   }
 
-  Future<void> _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
+  Animation<double> _part(double begin, double end, [Curve curve = AppMotion.enter]) =>
+      CurvedAnimation(parent: _intro, curve: Interval(begin, end, curve: curve));
+
+  // ── Signing in ──
+
+  Future<void> _signInWithGoogle() async {
+    if (_status == _Status.signingIn || _status == _Status.granted) return;
     final auth = ref.read(authProvider);
-    final success = await auth.loginWithGoogle();
-    if (mounted) {
-      if (success) {
-        _cachedOrbCenter = _getOrbCenter(MediaQuery.sizeOf(context));
-        setState(() {
-          _isLoading = false;
-          _loginSuccess = true;
-        });
-        _shockwaveController.forward();
+    if (auth.isLoginThrottled) {
+      _startCountdown();
+      return;
+    }
+    Haptics.tap();
+    setState(() {
+      _status = _Status.signingIn;
+      _error = null;
+    });
+    final ok = await auth.loginWithGoogle();
+    if (!mounted) return;
+    if (ok) {
+      Haptics.success();
+      setState(() => _status = _Status.granted);
+      if (reduceMotion(context)) {
+        _enter();
       } else {
-        setState(() => _isLoading = false);
-        if (!auth.wasCancelled) {
-          final locale = ref.read(localeProvider);
-          final strings = locale.strings;
-          final msg = auth.authError == AuthError.throttled
-              ? strings.loginThrottled
-              : strings.loginGoogleError;
-          AppSnack.of(context).error(msg);
-        }
+        unawaited(_bloom.forward());
       }
+      return;
     }
+    final strings = ref.read(localeProvider).strings;
+    setState(() {
+      _status = auth.wasCancelled ? _Status.idle : _Status.failed;
+      _error = auth.wasCancelled
+          ? null
+          : auth.authError == AuthError.throttled
+              ? null
+              : strings.loginGoogleError;
+    });
+    if (auth.wasCancelled) return;
+    Haptics.error();
+    if (auth.authError == AuthError.throttled) _startCountdown();
+    if (!reduceMotion(context)) unawaited(_shake.forward(from: 0));
   }
 
-  static const _countryKanjiMap = <String, String>{
-    'CL': '智利', 'US': '米国', 'JP': '日本', 'MX': '墨西哥',
-    'AR': '亜国', 'BR': '伯国', 'ES': '西班牙', 'CO': '哥倫比亜',
-    'PE': '秘露', 'VE': '委内瑞拉', 'EC': '厄瓜多爾', 'BO': '玻利維亜',
-    'PY': '巴拉圭', 'UY': '烏拉圭', 'CR': '哥斯大黎加',
-    'GB': '英国', 'FR': '仏国', 'DE': '独国', 'IT': '伊国',
-    'CA': '加国', 'AU': '豪州', 'KR': '韓国', 'CN': '中国',
-    'IN': '印度', 'RU': '露国', 'PT': '葡国',
-  };
-
-  String _getCountryKanji(BuildContext context) {
-    final locale = WidgetsBinding.instance.platformDispatcher.locale;
-    final code = locale.countryCode ?? '';
-    return _countryKanjiMap[code] ?? '世界';
+  /// Too many tries: a countdown on the panel until another is allowed.
+  void _startCountdown() {
+    _countdown?.cancel();
+    setState(() {});
+    _countdown = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return t.cancel();
+      if (!ref.read(authProvider).isLoginThrottled) {
+        t.cancel();
+        _countdown = null;
+      }
+      setState(() {});
+    });
   }
 
-  Offset _getOrbCenter(Size fallbackSize) {
-    final renderBox = _orbKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null && renderBox.hasSize) {
-      return renderBox.localToGlobal(
-        Offset(renderBox.size.width / 2, renderBox.size.height / 2),
-      );
+  /// Signed in: the account's library and playlists connect, and the router
+  /// takes it from here (the tutorial for a new account, the main screen
+  /// otherwise, or the page a link pointed to).
+  void _enter() {
+    if (!mounted) return;
+    final auth = ref.read(authProvider);
+    if (auth.uid != null && !auth.isGuest) {
+      final uid = auth.uid!;
+      unawaited(ref.read(libraryProvider).connectToFirestore(uid));
+      final playlists = ref.read(playlistProvider);
+      final guestUid = auth.takeGuestUidToMigrate();
+      unawaited(playlists.connectToFirestore(uid).then((_) {
+        if (guestUid != null) playlists.importGuestPlaylists(guestUid);
+      }));
     }
-    return Offset(fallbackSize.width * 0.5, fallbackSize.height * 0.32);
+    context.go(AppPaths.home);
   }
+
+  Future<void> _enterAsObserver() async {
+    Haptics.tap();
+    await ref.read(authProvider).loginAsGuest();
+    if (mounted) context.go(AppPaths.home);
+  }
+
+  Future<void> _open(String url) async {
+    Haptics.tap();
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  // ── The screen ──
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
+    final online = ref.watch(isOnlineProvider);
+    final auth = ref.watch(authProvider);
+    final still = reduceMotion(context);
+    final throttle = auth.loginThrottleRemaining;
+    final waiting = throttle > Duration.zero ? (throttle.inMilliseconds / 1000).ceil() : 0;
+
+    final rise = _part(0, 0.55, Curves.easeOutCubic);
+    final title = _part(0.32, 0.72);
+    final tagline = _part(0.42, 0.82);
+    final panel = _part(0.5, 1);
+    final bloom = CurvedAnimation(parent: _bloom, curve: AppMotion.exit);
+    const still1 = AlwaysStoppedAnimation<double>(1);
+    const zero = AlwaysStoppedAnimation<double>(0);
+
+    // What the panel's line says, if anything.
+    final (String? line, bool alarm) = !online
+        ? (strings.loginOffline, false)
+        : waiting > 0
+            ? (strings.loginThrottledIn(waiting), true)
+            : (_error, true);
 
     return Scaffold(
-      backgroundColor: AppColors.bgDeep,
-      body: Stack(
-        children: [
-          const Positioned.fill(
-            child: CustomPaint(painter: _CyberGridPainter()),
-          ),
-
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: ValueListenableBuilder<double>(
-                valueListenable: _timeNotifier,
-                builder: (context, t, _) {
-                  return CustomPaint(
-                    painter: _CyberParticlesPainter(
-                      particles: _particles,
-                      time: t,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          Positioned(
-            top: size.height * 0.18,
-            left: size.width * 0.12,
-            width: size.width * 0.76,
-            height: size.width * 0.76,
-            child: IgnorePointer(
-              child: RepaintBoundary(
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _timeNotifier,
-                  builder: (context, t, _) {
-                    return CustomPaint(
-                      painter: _PlasmaGlowPainter(time: t),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: size.height * 0.10,
-            height: size.height * 0.22,
-            child: IgnorePointer(
-              child: RepaintBoundary(
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _timeNotifier,
-                  builder: (context, t, _) {
-                    return CustomPaint(
-                      painter: SpectrumWavePainter(time: t, intensity: 0.5),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
-              child: Column(
-                children: [
-                  const SizedBox(height: 6),
-
-                  _buildHudTopBar(locale, strings),
-
-                  const Spacer(flex: 3),
-
-                  _buildHeroEmblem(),
-
-                  const SizedBox(height: 16),
-
-                  _buildBrandingHeader(locale, strings),
-
-                  const Spacer(flex: 3),
-
-                  _CyberGoogleButton(
-                    onPressed: _handleGoogleLogin,
-                    isLoading: _isLoading,
-                    loginSuccess: _loginSuccess,
-                    timeListenable: _timeNotifier,
-                    locale: locale,
-                    strings: strings,
+      backgroundColor: AppColors.splash,
+      body: LayoutBuilder(
+        builder: (context, box) {
+          final h = box.maxHeight;
+          final top = MediaQuery.paddingOf(context).top;
+          // The mask: from the centre (where the entrance left it) to the
+          // middle of the room above the panel, with the name under it (the
+          // ring's top 126 above the mask's centre, the line's end 198 below).
+          final from = h / 2;
+          final panelTop = h - MediaQuery.paddingOf(context).bottom - _panelHeight;
+          final to = math.max(top + 140, top + (panelTop - top - 324) / 2 + 126);
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              // The night: nebula and embers, as in the entrance.
+              if (_shader != null)
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: NebulaPainter(_shader!, time: _time, intensity: still1, still: still)),
                   ),
+                ),
+              if (!still)
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: EmbersPainter(time: _time, intensity: still1, exit: bloom)),
+                  ),
+                ),
 
-                  const SizedBox(height: 14),
+              // The mask with its glow and ring, rising into place.
+              AnimatedBuilder(
+                animation: rise,
+                child: _MaskAndRing(time: _time, rotation: _rotation, bloom: bloom, still: still),
+                builder: (context, child) => Positioned(
+                  top: ui.lerpDouble(from, to, rise.value)! - 160,
+                  left: 0,
+                  right: 0,
+                  height: 320,
+                  child: child!,
+                ),
+              ),
 
-                  Semantics(
-                    button: true,
-                    label: strings.a11yContinueAsGuest,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () { Haptics.tap(); _handleGuestExplore(); },
-                      borderRadius: BorderRadius.circular(AppRadius.sheet),
-                      splashColor: AppColors.accent.withValues(alpha: 0.2),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.sheet),
-                          border: Border.all(
-                            color: AppColors.accent.withValues(alpha: 0.35),
-                            width: 0.8,
+              // The name and the line under it.
+              Positioned(
+                top: to + 128,
+                left: AppSpacing.page,
+                right: AppSpacing.page,
+                child: FadeTransition(
+                  opacity: ReverseAnimation(bloom),
+                  child: Column(
+                    children: [
+                      _Title(appear: still ? still1 : title, locale: locale),
+                      const SizedBox(height: 10),
+                      FadeTransition(
+                        opacity: still ? still1 : tagline,
+                        child: ExcludeSemantics(
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(text: strings.loginSubtitlePrefix),
+                              TextSpan(text: strings.loginSubtitleGlitch, style: const TextStyle(color: AppColors.accentText)),
+                            ]),
+                            textAlign: TextAlign.center,
+                            style: locale.getTextStyle(
+                              fontSize: AppFontSize.caption,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textMuted,
+                              letterSpacing: 4,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          strings.loginGuestExplore,
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1.0,
-                          ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // The ways in, on liquid glass.
+              Positioned(
+                left: AppSpacing.page,
+                right: AppSpacing.page,
+                bottom: MediaQuery.paddingOf(context).bottom + 12,
+                child: FadeTransition(
+                  opacity: still ? still1 : panel,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.18), end: Offset.zero).animate(still ? zero : panel),
+                    child: FadeTransition(
+                      opacity: ReverseAnimation(bloom),
+                      child: AnimatedBuilder(
+                        animation: _shake,
+                        builder: (context, child) {
+                          // A short glitch: three jumps, fading out.
+                          final t = _shake.value;
+                          final dx = t == 0 || t == 1 ? 0.0 : math.sin(t * math.pi * 6) * 10 * (1 - t);
+                          return Transform.translate(offset: Offset(dx, 0), child: child);
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FrostedGlass(
+                              borderRadius: BorderRadius.circular(AppRadius.sheet),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _GoogleButton(
+                                      label: _status == _Status.signingIn || _status == _Status.granted
+                                          ? strings.loginSigningIn
+                                          : _status == _Status.failed
+                                              ? strings.loginRetry
+                                              : strings.loginContinueGoogle,
+                                      busy: _status == _Status.signingIn || _status == _Status.granted,
+                                      onPressed: online && waiting == 0 ? _signInWithGoogle : null,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: _status == _Status.signingIn || _status == _Status.granted
+                                            ? null
+                                            : _enterAsObserver,
+                                        icon: const Icon(Icons.visibility_outlined, size: 18),
+                                        label: Text(strings.loginObserver),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size.fromHeight(50),
+                                          foregroundColor: AppColors.textPrimary,
+                                          shape: const StadiumBorder(),
+                                          side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+                                        ),
+                                      ),
+                                    ),
+                                    // What's happening, said in place.
+                                    AnimatedSize(
+                                      duration: AppMotion.normal,
+                                      curve: AppMotion.move,
+                                      child: line == null
+                                          ? const SizedBox(width: double.infinity, height: 8)
+                                          : Padding(
+                                              padding: const EdgeInsets.only(top: 12),
+                                              child: Semantics(
+                                                liveRegion: true,
+                                                child: Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      alarm ? Icons.error_outline_rounded : Icons.wifi_off_rounded,
+                                                      size: 16,
+                                                      color: AppColors.textBright,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        line,
+                                                        style: locale.getTextStyle(
+                                                          fontSize: AppFontSize.body,
+                                                          color: AppColors.textBright,
+                                                          height: 1.4,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    _Terms(locale: locale, onOpen: _open),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ExcludeSemantics(
+                              child: Text(
+                                'METAWORKS COMPANY',
+                                style: locale.getTextStyle(
+                                  fontSize: AppFontSize.micro,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 3,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  ),
-
-                  const Spacer(flex: 2),
-
-                  RepaintBoundary(
-                    child: ValueListenableBuilder<double>(
-                      valueListenable: _timeNotifier,
-                      builder: (context, t, _) => _buildCompanyFooter(t),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-          ),
-
-          if (_loginSuccess)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: RepaintBoundary(
-                  child: AnimatedBuilder(
-                    animation: _shockwaveController,
-                    builder: (context, child) {
-                      final center = _cachedOrbCenter ?? _getOrbCenter(size);
-                      return CustomPaint(
-                        painter: _ShockwavePainter(
-                          progress: _shockwaveController.value,
-                          epicenter: center,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHudTopBar(LocaleProvider locale, AppStrings strings) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RepaintBoundary(
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _timeNotifier,
-                  builder: (context, t, _) {
-                    return CustomPaint(
-                      size: const Size(12, 12),
-                      painter: _PulseDotPainter(time: t),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'TSUKI TUNES',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: AppFontSize.caption,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textBright,
-                  letterSpacing: 2.0,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                    width: 0.7,
-                  ),
-                ),
-                child: Text(
-                  _getCountryKanji(context),
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: AppFontSize.micro,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accent,
-                    letterSpacing: 0.5,
-                  ),
                 ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _buildCompanyFooter(double t) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const _FooterDot(color: AppColors.neonCyan),
-        const SizedBox(width: 8),
+/// The entrance's mask, its glow and its moon ring (complete, turning at
+/// the pace the screen sets), blooming on the way in.
+class _MaskAndRing extends StatelessWidget {
+  const _MaskAndRing({required this.time, required this.rotation, required this.bloom, required this.still});
 
-        ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (bounds) {
-            final shift = sin(t * 0.6) * 0.35;
-            return LinearGradient(
-              begin: Alignment(-1.1 + shift, 0.0),
-              end: Alignment(1.1 + shift, 0.0),
-              colors: const [
-                AppColors.neonCyan,
-                AppColors.skyBlue,
-                AppColors.crimsonNeon,
-                AppColors.accent,
-              ],
-              stops: const [0.0, 0.35, 0.70, 1.0],
-            ).createShader(bounds);
-          },
-          child: Text(
-            'METAWORKS COMPANY',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: AppFontSize.micro,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 2.2,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
+  final ValueNotifier<double> time;
+  final ValueNotifier<double> rotation;
+  final Animation<double> bloom;
+  final bool still;
 
-        const _FooterDot(color: AppColors.accent),
-      ],
-    );
-  }
+  static const _full = AlwaysStoppedAnimation<double>(1);
+  static const _none = AlwaysStoppedAnimation<double>(0);
 
-  Widget _buildHeroEmblem() {
-    return SizedBox(
-      key: _orbKey,
-      width: 230,
-      height: 230,
-      child: Stack(
+  @override
+  Widget build(BuildContext context) => Stack(
         alignment: Alignment.center,
         children: [
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: ValueListenableBuilder<double>(
-                valueListenable: _timeNotifier,
-                builder: (context, t, _) {
-                  return CustomPaint(
-                    painter: _RadialSoundWavePainter(time: t),
-                  );
-                },
+          RepaintBoundary(
+            child: CustomPaint(
+              size: const Size.square(300),
+              painter: MoonGlowPainter(grow: _full, time: time, exit: bloom, still: still),
+            ),
+          ),
+          RepaintBoundary(
+            child: CustomPaint(
+              size: const Size.square(320),
+              painter: MoonRingPainter(
+                sweep: _full,
+                pulse: _none,
+                ticks: _full,
+                rotation: rotation,
+                exit: bloom,
+                still: still,
               ),
             ),
           ),
-
-          CyberOrb(
-            size: 138,
-            showOuterRings: false,
-            centerChild: Image.asset(
-              'assets/images/tengu.png',
-              width: 44,
-              height: 44,
-              fit: BoxFit.contain,
-              color: Colors.white.withValues(alpha: 0.95),
-              colorBlendMode: BlendMode.srcIn,
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: Listenable.merge([time, bloom]),
+              child: const ExcludeSemantics(
+                child: Image(
+                  image: AssetImage(LoadingScreen.maskAsset),
+                  width: LoadingScreen.maskWidth,
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
+                ),
+              ),
+              builder: (context, mask) {
+                final breath = still ? 0.0 : breathAt(time.value);
+                return Opacity(
+                  opacity: 1 - bloom.value,
+                  child: Transform.scale(scale: (1 + 0.025 * breath) * (1 + 0.12 * bloom.value), child: mask),
+                );
+              },
             ),
           ),
         ],
+      );
+}
+
+/// TSUKI TUNES, appearing with one flicker of signal: red and cyan ghosts
+/// that settle into the name.
+class _Title extends StatelessWidget {
+  const _Title({required this.appear, required this.locale});
+
+  final Animation<double> appear;
+  final LocaleProvider locale;
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle style(Color tunes, [Color? all]) => locale.getTextStyle(
+          fontSize: AppFontSize.display,
+          fontWeight: FontWeight.w900,
+          color: all ?? AppColors.textBright,
+          letterSpacing: 6,
+        );
+    Widget name({Color? all}) => Text.rich(
+          TextSpan(children: [
+            const TextSpan(text: 'TSUKI '),
+            TextSpan(text: 'TUNES', style: TextStyle(color: all ?? AppColors.accentText)),
+          ]),
+          style: style(AppColors.accentText, all),
+        );
+    return Semantics(
+      header: true,
+      label: 'Tsuki Tunes',
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: appear,
+          builder: (context, _) {
+            final t = appear.value;
+            // The ghosts flicker over the first half of the appearance.
+            final glitch = t > 0 && t < 0.5 ? (1 - t / 0.5) : 0.0;
+            final dx = glitch * (t * 40 % 2 < 1 ? 4.0 : -3.0);
+            return Opacity(
+              opacity: t,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (glitch > 0) ...[
+                    Transform.translate(offset: Offset(dx, 0), child: name(all: AppColors.accent.withValues(alpha: 0.6 * glitch))),
+                    Transform.translate(offset: Offset(-dx, 0), child: name(all: AppColors.neonCyan.withValues(alpha: 0.45 * glitch))),
+                  ],
+                  name(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
+}
 
-  Widget _buildBrandingHeader(LocaleProvider locale, AppStrings strings) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+/// "By continuing you accept the Terms and the Privacy Policy", the two
+/// opening their pages.
+class _Terms extends StatelessWidget {
+  const _Terms({required this.locale, required this.onOpen});
+
+  final LocaleProvider locale;
+  final Future<void> Function(String url) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = locale.strings;
+    final small = locale.getTextStyle(fontSize: AppFontSize.caption, color: AppColors.textMuted);
+    final link = locale.getTextStyle(
+      fontSize: AppFontSize.caption,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textBright,
+      decoration: TextDecoration.underline,
+      decorationColor: AppColors.textMuted,
+    );
+    Widget button(String text, String url) => TextButton(
+          onPressed: () => onOpen(url),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: const Size(48, 48),
+            foregroundColor: AppColors.textBright,
+          ),
+          child: Text(text, style: link),
+        );
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              'TSUKI',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: AppFontSize.display,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4.5,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'TUNES',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: AppFontSize.display,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4.5,
-                color: AppColors.accent,
-                shadows: [
-                  Shadow(
-                    color: AppColors.accent.withValues(alpha: 0.65),
-                    blurRadius: 16,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 7),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 18,
-              height: 1.5,
-              color: AppColors.accent.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              strings.loginSubtitlePrefix,
-              style: locale.getTextStyle(
-                fontSize: AppFontSize.caption,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 2.2,
-              ),
-            ),
-            CyberGlitchText(text: strings.loginSubtitleGlitch),
-            const SizedBox(width: 8),
-            Container(
-              width: 18,
-              height: 1.5,
-              color: AppColors.accent.withValues(alpha: 0.7),
-            ),
-          ],
-        ),
+        Text(strings.loginTermsLead, style: small),
+        button(strings.loginTerms, termsOfServiceUrl),
+        Text(strings.loginAnd, style: small),
+        button(strings.loginPrivacy, privacyPolicyUrl),
       ],
     );
   }

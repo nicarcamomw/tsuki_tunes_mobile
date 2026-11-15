@@ -228,7 +228,7 @@ Prioridad: **A** = primero, **B** = después, **C** = cuando haya tiempo.
 
 | Código | Tarea | Prio |
 |---|---|---|
-| A-01 | Login tiene 7 `CustomPaint` animados: medir en gama baja y pausar los que no se ven. | B |
+| A-01 | ~~Login tiene 7 `CustomPaint` animados.~~ **Hecho:** el login comparte el cielo de la entrada (`widgets/tsuki_sky.dart`: la nebulosa en un shader y las brasas), con un solo ticker y pintores que se redibujan sin reconstruir; la máscara de la entrada sube a su lugar con su anillo (que es el indicador de carga), el nombre aparece con un glitch, y las entradas van en un panel de *liquid glass*: el botón oficial de Google, el observador, una línea que dice qué pasa (sin conexión, cuenta regresiva por intentos, error con "Reintentar") y los Términos (`test/login_screen_test.dart`). | B |
 | A-02 | Onboarding: es donde más texto diminuto y sombras hay. Subir tamaños y aligerar. | B |
 | A-03 | ~~Que la pantalla de carga enlace con el login sin salto visual; entrada animada desde el ícono.~~ **Hecho:** `LoadingScreen` sigue al splash de Android sin costura (misma noche `AppColors.splash`, la misma máscara en el mismo lugar), respira con un brillo rojo y, si tarda, dice "Despertando la luna…". El splash de Android 7 a 11 ya no dibuja el logo gigante y recortado. Nunca queda trabada: almacenamiento que falla o Firebase que no responde (8 s) siguen de largo (`test/startup_test.dart`). | C |
 

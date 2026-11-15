@@ -813,6 +813,21 @@ class AppStrings {
   String get ecoPlayerColor => _es('COLOR DEL REPRODUCTOR', 'PLAYER COLOUR', 'プレーヤーの色');
   String get ecoColorDefault => _es('Color base', 'Base colour', 'ベースカラー');
 
+  /// The login's Google button, in Google's own words (its brand guide).
+  String get loginContinueGoogle => _es('Continuar con Google', 'Continue with Google', 'Google で続ける');
+  String get loginObserver => _es('Entrar como observador', 'Enter as an observer', 'オブザーバーとして入る');
+  String get loginSigningIn => _es('Ingresando…', 'Signing in…', 'ログイン中…');
+  String get loginRetry => _es('Reintentar', 'Try again', 'もう一度');
+  String get loginOffline => _es('Sin conexión: el ingreso con Google necesita internet. Puedes entrar como observador.',
+      'Offline: signing in with Google needs the internet. You can enter as an observer.',
+      'オフライン：Google でのログインにはインターネットが必要です。オブザーバーとして入れます。');
+  String loginThrottledIn(int seconds) => _es('Demasiados intentos. Vuelve a intentar en $seconds s.',
+      'Too many tries. Try again in $seconds s.', '試行回数が多すぎます。$seconds 秒後にもう一度。');
+  String get loginTermsLead => _es('Al continuar aceptas los', 'By continuing you accept the', '続けると次に同意したことになります：');
+  String get loginTerms => _es('Términos', 'Terms', '利用規約');
+  String get loginAnd => _es('y la', 'and the', 'と');
+  String get loginPrivacy => _es('Privacidad', 'Privacy Policy', 'プライバシー');
+
   /// Under the mask while the session wakes up, if it takes a moment.
   String get loadingWaking => _es('Despertando la luna…', 'Waking the moon…', '月を起こしています…');
   String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
@@ -1830,7 +1845,6 @@ class AppStrings {
   String get onboardingPillCyberHUD => _l.onboardingPillCyberHUD;
 
   // --- Login Screen ---
-  String get loginGuestExplore => _l.loginGuestExplore;
 
   String get guestLibraryTitle => _l.guestLibraryTitle;
 
@@ -1842,15 +1856,11 @@ class AppStrings {
 
   String get loginSubtitleGlitch => _l.loginSubtitleGlitch;
 
-  String get loginGoogle => _l.loginGoogle;
 
-  String get loginLoading => _l.loginLoading;
 
-  String get loginGranted => _l.loginGranted;
 
   String get loginGoogleError => _l.loginGoogleError;
 
-  String get loginThrottled => _l.loginThrottled;
 
   // --- Loading / Startup Screen ---
   String get loadingStatus => _l.loadingStatus;
@@ -1969,7 +1979,6 @@ class AppStrings {
 
   String get a11yLoginWithGoogle => _l.a11yLoginWithGoogle;
 
-  String get a11yContinueAsGuest => _l.a11yContinueAsGuest;
 
   String get a11ySelectLanguage => _l.a11ySelectLanguage;
 
