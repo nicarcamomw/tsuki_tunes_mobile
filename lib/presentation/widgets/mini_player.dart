@@ -523,7 +523,7 @@ class _BreathingCoverState extends State<_BreathingCover>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion && _controller.isAnimating) _controller.stop();
   }
 
@@ -655,7 +655,7 @@ class _MarqueeTextState extends State<_MarqueeText> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion) _next?.cancel();
   }
 

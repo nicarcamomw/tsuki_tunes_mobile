@@ -88,7 +88,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
   }
 
   @override
@@ -299,7 +299,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       child: RinneganVisualizer(
                         isPlaying: isPlaying,
                         imageUrl: track.coverUrl,
-                        size: MediaQuery.of(context).size.width * 0.72,
+                        size: MediaQuery.sizeOf(context).width * 0.72,
                         trackId: track.id,
                         fullSong: !ref.watch(audioProvider.select((a) => a.canChangeTempo)),
                         position: () => audio.position,

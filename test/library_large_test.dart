@@ -82,4 +82,52 @@ void main() {
       expect(find.byWidgetPredicate(_isAlbumRow).evaluate().length, lessThan(30));
     }, () => _noNetwork);
   });
+
+  testWidgets('at the end of the list with every album shown, scrolling doesn\'t rebuild the screen each frame', (tester) async {
+    final start = DateTime(2026);
+    final tracks = [
+      for (var a = 0; a < 12; a++)
+        for (var t = 0; t < 3; t++)
+          ListenedTrackData(
+            trackId: 'a$a-t$t',
+            title: 'Canción $t',
+            artistName: 'Artista $a',
+            albumTitle: 'Álbum $a',
+            albumId: 'album$a',
+            coverUrl: '',
+            previewUrl: '',
+            duration: 200,
+            listenedAt: start.add(Duration(minutes: a * 10 + t)),
+          ),
+    ];
+    tester.view.physicalSize = const Size(400 * 3, 860 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => _BigLibrary(tracks)),
+          audioProvider.overrideWith((ref) => AudioProvider()),
+        ],
+        child: const MaterialApp(home: LibraryScreen()),
+      ));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      var screenBuilds = 0;
+      final previous = debugOnRebuildDirtyWidget;
+      debugOnRebuildDirtyWidget = (element, _) {
+        if (element.widget is LibraryScreen) screenBuilds++;
+      };
+      try {
+        // Against the end, frame after frame.
+        for (var i = 0; i < 20; i++) {
+          await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      } finally {
+        debugOnRebuildDirtyWidget = previous;
+      }
+      expect(screenBuilds, 0, reason: 'nothing more to page in');
+    }, () => _noNetwork);
+  });
 }

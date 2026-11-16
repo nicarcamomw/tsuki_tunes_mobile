@@ -38,7 +38,7 @@ class _SkeletonScopeState extends ConsumerState<SkeletonScope> with SingleTicker
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       _controller
         ..stop()
         ..value = 0.5;

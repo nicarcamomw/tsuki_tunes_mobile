@@ -33,7 +33,7 @@ class _FadeIndexedStackState extends State<FadeIndexedStack> with SingleTickerPr
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.of(context).disableAnimations) _fade.duration = Duration.zero;
+    if (MediaQuery.disableAnimationsOf(context)) _fade.duration = Duration.zero;
   }
 
   @override
@@ -56,17 +56,18 @@ class _FadeIndexedStackState extends State<FadeIndexedStack> with SingleTickerPr
         for (var i = 0; i < widget.children.length; i++)
           Offstage(
             offstage: i != widget.index,
+            // No ExcludeFocus: flipping it on a change rebuilt every button
+            // and ink well of both pages in that frame. Offstage already
+            // keeps a hidden tab from TalkBack, and the shell unfocuses on a
+            // change.
             child: TickerMode(
               enabled: i == widget.index,
-              child: ExcludeFocus(
-                excluding: i != widget.index,
-                // Always the same wrapper (the tab keeps its state); fully
-                // opaque, it adds no layer, so at rest it costs nothing.
-                child: FadeTransition(
-                  opacity: i == widget.index ? _opacity : kAlwaysCompleteAnimation,
-                  alwaysIncludeSemantics: true,
-                  child: widget.children[i],
-                ),
+              // Always the same wrapper (the tab keeps its state); fully
+              // opaque, it adds no layer, so at rest it costs nothing.
+              child: FadeTransition(
+                opacity: i == widget.index ? _opacity : kAlwaysCompleteAnimation,
+                alwaysIncludeSemantics: true,
+                child: widget.children[i],
               ),
             ),
           ),

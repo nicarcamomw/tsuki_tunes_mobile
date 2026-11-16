@@ -25,7 +25,7 @@ class _GearProfileButtonState extends ConsumerState<_GearProfileButton>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion) _controller.stop();
   }
 

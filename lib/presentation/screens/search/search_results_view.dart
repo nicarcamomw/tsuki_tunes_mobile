@@ -17,7 +17,7 @@ extension _SearchResultsView on _SearchScreenState {
         behavior: HitTestBehavior.translucent,
         // Only closes the keyboard: nothing for screen readers.
         excludeFromSemantics: true,
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -147,7 +147,7 @@ extension _SearchResultsView on _SearchScreenState {
           borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () {
             Haptics.tap();
-            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
             ArtistRoute(id: artist.id, $extra: artist).push<void>(context);
           },
           child: Padding(

@@ -61,7 +61,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion && _controller.isAnimating) _controller.stop();
   }
 
@@ -181,7 +181,7 @@ class TrackTile extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
           ref.read(playTrackProvider)(track, queue: queue);
         },
         onLongPress: () {
@@ -460,7 +460,7 @@ void showTrackActions(BuildContext context, Track track,
     drawHandle: true,
     constraints: BoxConstraints(
       maxWidth: 600,
-      maxHeight: MediaQuery.of(context).size.height * 0.85,
+      maxHeight: MediaQuery.sizeOf(context).height * 0.85,
     ),
     builder: (ctx) => SafeArea(
       child: SingleChildScrollView(

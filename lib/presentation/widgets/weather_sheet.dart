@@ -98,7 +98,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           child: Column(
@@ -290,7 +290,7 @@ class _WeatherSheetState extends ConsumerState<WeatherSheet> {
                           : null,
                       onTap: () {
                         Haptics.selection();
-                        FocusScope.of(context).unfocus();
+                        FocusManager.instance.primaryFocus?.unfocus();
                         weather.usePlace(p);
                         setState(() => _results = null);
                         _query.clear();

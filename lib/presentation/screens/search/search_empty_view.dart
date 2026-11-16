@@ -12,7 +12,7 @@ extension _SearchEmptyView on _SearchScreenState {
         behavior: HitTestBehavior.translucent,
         // Only closes the keyboard: nothing for screen readers.
         excludeFromSemantics: true,
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
         child: EmptyState(
           image: 'assets/images/tengu.png',
           artLabel: strings.a11ySearchEmpty,
@@ -27,7 +27,7 @@ extension _SearchEmptyView on _SearchScreenState {
       behavior: HitTestBehavior.translucent,
       // Only closes the keyboard: nothing for screen readers.
         excludeFromSemantics: true,
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
         children: [
@@ -293,7 +293,7 @@ class _GenreTile extends StatelessWidget {
       child: TapScale(
         scaleDown: 0.93,
         onTap: () {
-          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
           GenreRoute(id: genre.id, name: genre.name).push(context);
         },
         child: ClipRRect(

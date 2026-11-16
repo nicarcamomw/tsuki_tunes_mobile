@@ -62,7 +62,24 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
   ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> with WidgetsBindingObserver {
+  // Whether the keyboard is up. Kept here, flipped only when it opens or
+  // closes: reading its height in build rebuilt the whole shell (dock,
+  // mini player, page) on every frame of the keyboard sliding.
+  bool _keyboardOpen = false;
+
+  bool _readKeyboard() {
+    final view = View.maybeOf(context);
+    return view != null && view.viewInsets.bottom > 0;
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final open = _readKeyboard();
+    if (open != _keyboardOpen) setState(() => _keyboardOpen = open);
+  }
+
   // Running in the background is offered once 20 s of music have played,
   // with Tsuki on screen: by then the user cares about the music going on,
   // and a song isn't interrupted as it starts. Once a session at most.
@@ -103,6 +120,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => didChangeMetrics());
     _tabNotifier.addListener(_updateCanPop);
     shellNavigatorObserver.onNavigationChanged = _updateCanPop;
     NavigationEvents.switchTab = _switchToTab;
@@ -152,10 +171,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   /// The shell's own snack bars (playback, Spotify, sync) clear its dock.
-  double get _snackBottom => (MediaQuery.viewInsetsOf(context).bottom > 0 ? 0 : SnackDock.shellHeight) + 12;
+  double get _snackBottom => (_keyboardOpen ? 0 : SnackDock.shellHeight) + 12;
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (NavigationEvents.switchTab == _switchToTab) {
       NavigationEvents.switchTab = null;
     }
@@ -268,8 +288,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     _listenForNotices();
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
-    final isKeyboardOpen = keyboardHeight > 0;
+    final isKeyboardOpen = _keyboardOpen;
     final bottomBarHeight = (hasTrack ? 146.0 : 76.0) + bottomPadding;
 
     return ValueListenableBuilder<bool>(
@@ -302,11 +321,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             // they get its height as their bottom padding, so their last
             // rows clear it (dockBottom).
             Positioned.fill(
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  padding: MediaQuery.paddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
-                  viewPadding: MediaQuery.viewPaddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
-                ),
+              child: _PageInsets(
+                bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight,
                 child: SnackDock(
                   child: MainTabsScope(
                     tab: _tabNotifier,
@@ -436,7 +452,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       };
 
   void _onNavItemTap(MainTab tab) {
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     final wasActive = _tabNotifier.value == tab;
     final now = DateTime.now();
     // A double tap only on the tab already open: tapping a new tab twice
@@ -503,7 +519,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   /// E-02: holding a tab shows what it can do, above it; choosing opens the
   /// tab and runs the shortcut.
   Future<void> _onNavItemLongPress(MainTab tab, Rect anchor) async {
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     Haptics.longPress();
     final locale = ref.read(localeProvider);
     final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
@@ -658,6 +674,29 @@ class _MainTabsViewState extends State<MainTabsView> {
           ),
         );
       },
+    );
+  }
+}
+
+/// The page's MediaQuery under the dock: its bottom padding is the dock's
+/// height. Its own small widget, the only one here that follows the
+/// keyboard frame by frame (the pages below need its height; the shell
+/// around doesn't).
+class _PageInsets extends StatelessWidget {
+  const _PageInsets({required this.bottom, required this.child});
+
+  final double bottom;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(
+        padding: media.padding.copyWith(bottom: bottom),
+        viewPadding: media.viewPadding.copyWith(bottom: bottom),
+      ),
+      child: child,
     );
   }
 }

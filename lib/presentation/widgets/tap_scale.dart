@@ -63,7 +63,7 @@ class _TapScaleState extends State<TapScale>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
   }
 
   @override

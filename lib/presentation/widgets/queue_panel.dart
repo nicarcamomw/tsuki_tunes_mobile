@@ -52,7 +52,7 @@ class _QueuePanelState extends ConsumerState<QueuePanel> {
   AudioProvider get _audio => ref.read(audioProvider);
   LocaleProvider get _locale => ref.read(localeProvider);
 
-  double get _snackBottom => MediaQuery.of(context).padding.bottom + 12;
+  double get _snackBottom => MediaQuery.paddingOf(context).bottom + 12;
 
   void _announce(String message) {
     SemanticsService.sendAnnouncement(

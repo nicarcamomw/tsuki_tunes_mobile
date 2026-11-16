@@ -220,8 +220,8 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         ),
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom +
+        bottom: MediaQuery.viewInsetsOf(context).bottom +
+            MediaQuery.paddingOf(context).bottom +
             16,
       ),
       child: Column(
