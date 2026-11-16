@@ -4,112 +4,114 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
+import 'haptics.dart';
 import 'motion.dart';
 
-const _kWitchingHour = 3;
-const _kWitchingMinute = 33;
-
-const _kKanji = ['鬼', '魂', '闇', '呪', '死', '影', '夢', '幽'];
-
+/// 3:33 at night, with music playing: the witching hour. For a few seconds
+/// the screen glitches, a kanji of the other side (鬼, 魂, 闇…) surfaces, a
+/// line in the Lore's voice is whispered ("The hour the veil wears thin…")
+/// and the phone beats like a heart.
+///
+/// With less motion asked for there's no glitch and no shaking kanji: it
+/// fades in still and goes. The whisper is announced to TalkBack.
 class WitchingHourOverlay extends ConsumerStatefulWidget {
-  const WitchingHourOverlay({super.key});
+  const WitchingHourOverlay({super.key, this.clock = DateTime.now});
+
+  /// Stands in for the time (tests).
+  final DateTime Function() clock;
+
+  static const hour = 3;
+  static const minute = 33;
+
+  /// How long the moment lasts.
+  static const Duration length = Duration(milliseconds: 4200);
+
+  static const kanji = ['鬼', '魂', '闇', '呪', '死', '影', '夢', '幽'];
 
   @override
   ConsumerState<WitchingHourOverlay> createState() => _WitchingHourOverlayState();
 }
 
-class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay>
-    with SingleTickerProviderStateMixin {
+class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay> with SingleTickerProviderStateMixin {
   final _rng = Random();
   Timer? _pollTimer;
   bool _active = false;
+  bool _still = false;
   bool _triggered = false;
 
-  late final AnimationController _anim;
-  late Animation<double> _opacity;
+  late final AnimationController _anim = AnimationController(vsync: this, duration: WitchingHourOverlay.length);
+  late final Animation<double> _opacity = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: 12),
+    TweenSequenceItem(tween: ConstantTween(1), weight: 63),
+    TweenSequenceItem(tween: Tween(begin: 1, end: 0), weight: 25),
+  ]).animate(_anim);
 
   List<_GlitchLine> _lines = const [];
   String _kanji = '';
   double _kanjiX = 0;
   double _kanjiY = 0;
   Timer? _glitchTimer;
-  int _glitchFrame = 0;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: AppMotion.breath,
-    );
-    _opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: 1), weight: 8),
-      TweenSequenceItem(tween: Tween(begin: 1, end: 1), weight: 72),
-      TweenSequenceItem(tween: Tween(begin: 1, end: 0), weight: 20),
-    ]).animate(_anim);
     _anim.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
+      if (s == AnimationStatus.completed && mounted) {
+        _glitchTimer?.cancel();
         setState(() {
           _active = false;
           _lines = const [];
         });
       }
     });
-    _checkTime();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkTime());
     _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkTime());
   }
 
   void _checkTime() {
     if (!mounted) return;
-    final now = DateTime.now();
-    final isWitchingMinute =
-        now.hour == _kWitchingHour && now.minute == _kWitchingMinute;
-
-    if (isWitchingMinute && !_triggered) {
-      final audio = ref.read(audioProvider);
-      if (audio.isPlaying) {
-        _triggered = true;
-        _startEffect();
-      }
+    final now = widget.clock();
+    final isWitchingMinute = now.hour == WitchingHourOverlay.hour && now.minute == WitchingHourOverlay.minute;
+    if (isWitchingMinute && !_triggered && ref.read(audioProvider).isPlaying) {
+      _triggered = true;
+      _start();
     }
-
-    if (!isWitchingMinute) {
-      _triggered = false;
-    }
+    if (!isWitchingMinute) _triggered = false;
   }
 
-  void _startEffect() {
-    // A glitch with flashing kanji: exactly what less motion asks to spare.
-    if (reduceMotion(context)) return;
-    _kanji = _kKanji[_rng.nextInt(_kKanji.length)];
-    _kanjiX = 0.15 + _rng.nextDouble() * 0.7;
-    _kanjiY = 0.2 + _rng.nextDouble() * 0.5;
-    _glitchFrame = 0;
+  void _start() {
+    _still = reduceMotion(context);
+    _kanji = WitchingHourOverlay.kanji[_rng.nextInt(WitchingHourOverlay.kanji.length)];
+    _kanjiX = _still ? 0.5 : 0.2 + _rng.nextDouble() * 0.6;
+    _kanjiY = _still ? 0.38 : 0.25 + _rng.nextDouble() * 0.3;
+    Haptics.heartbeat();
+    // A second beat as the whisper settles.
+    Timer(const Duration(milliseconds: 1400), () {
+      if (mounted && _active) Haptics.heartbeat();
+    });
     setState(() => _active = true);
     _anim.forward(from: 0);
-    _tickGlitch();
+    if (!_still) _tickGlitch();
   }
 
   void _tickGlitch() {
     if (!mounted || !_active) return;
-    _glitchFrame++;
     setState(() {
-      _lines = List.generate(2 + _rng.nextInt(4), (_) {
-        return _GlitchLine(
+      _lines = List.generate(
+        2 + _rng.nextInt(4),
+        (_) => _GlitchLine(
           y: _rng.nextDouble(),
           height: 1.0 + _rng.nextDouble() * 3.0,
           shift: (_rng.nextDouble() - 0.5) * 12,
-          isCyan: _rng.nextBool(),
+          cyan: _rng.nextBool(),
           alpha: 0.04 + _rng.nextDouble() * 0.08,
-        );
-      });
+        ),
+      );
     });
-    _glitchTimer = Timer(
-      Duration(milliseconds: 80 + _rng.nextInt(60)),
-      _tickGlitch,
-    );
+    _glitchTimer = Timer(Duration(milliseconds: 80 + _rng.nextInt(60)), _tickGlitch);
   }
 
   @override
@@ -123,24 +125,58 @@ class _WitchingHourOverlayState extends ConsumerState<WitchingHourOverlay>
   @override
   Widget build(BuildContext context) {
     if (!_active) return const SizedBox.shrink();
+    final locale = ref.watch(localeProvider);
+    final whisper = locale.strings.witchingWhisper;
     return AnimatedBuilder(
       animation: _opacity,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _opacity.value,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _WitchingPainter(
-              lines: _lines,
-              kanji: _kanji,
-              kanjiX: _kanjiX,
-              kanjiY: _kanjiY,
-              frame: _glitchFrame,
-              rng: _rng,
+      builder: (context, child) => Opacity(opacity: _opacity.value, child: child),
+      // Over the whole app, above its pages: its own (clear) material.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            IgnorePointer(
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _WitchingPainter(
+                  lines: _lines,
+                  kanji: _kanji,
+                  kanjiX: _kanjiX,
+                  kanjiY: _kanjiY,
+                  jitter: _still ? Offset.zero : Offset((_rng.nextDouble() - 0.5) * 4, (_rng.nextDouble() - 0.5) * 4),
+                ),
+              ),
             ),
-          ),
-        );
-      },
+            // The whisper, low on the screen, in the Lore's voice.
+            Align(
+              alignment: const Alignment(0, 0.42),
+              child: IgnorePointer(
+                child: Semantics(
+                  liveRegion: true,
+                  label: whisper,
+                  child: ExcludeSemantics(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        whisper,
+                        textAlign: TextAlign.center,
+                        style: locale.getTextStyle(
+                          fontSize: AppFontSize.title,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.loreBody,
+                          letterSpacing: 1.2,
+                          shadows: const [Shadow(color: AppColors.ink, blurRadius: 12)],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -149,16 +185,10 @@ class _GlitchLine {
   final double y;
   final double height;
   final double shift;
-  final bool isCyan;
+  final bool cyan;
   final double alpha;
 
-  const _GlitchLine({
-    required this.y,
-    required this.height,
-    required this.shift,
-    required this.isCyan,
-    required this.alpha,
-  });
+  const _GlitchLine({required this.y, required this.height, required this.shift, required this.cyan, required this.alpha});
 }
 
 class _WitchingPainter extends CustomPainter {
@@ -166,65 +196,35 @@ class _WitchingPainter extends CustomPainter {
   final String kanji;
   final double kanjiX;
   final double kanjiY;
-  final int frame;
-  final Random rng;
+  final Offset jitter;
 
-  _WitchingPainter({
-    required this.lines,
-    required this.kanji,
-    required this.kanjiX,
-    required this.kanjiY,
-    required this.frame,
-    required this.rng,
-  });
+  _WitchingPainter({required this.lines, required this.kanji, required this.kanjiX, required this.kanjiY, required this.jitter});
 
   @override
   void paint(Canvas canvas, Size size) {
     for (final l in lines) {
-      final color = l.isCyan
-          ? const Color(0xFF00E5FF)
-          : const Color(0xFFFF1919);
-      final top = l.y * size.height;
-      canvas.drawRect(
-        Rect.fromLTWH(l.shift, top, size.width, l.height),
-        Paint()..color = color.withValues(alpha: l.alpha),
-      );
+      final color = l.cyan ? AppColors.neonCyan : AppColors.accent;
+      canvas.drawRect(Rect.fromLTWH(l.shift, l.y * size.height, size.width, l.height), Paint()..color = color.withValues(alpha: l.alpha));
     }
-
     final fontSize = size.width * 0.22;
-    final cx = kanjiX * size.width;
-    final cy = kanjiY * size.height;
-
-    final jitterX = (rng.nextDouble() - 0.5) * 4;
-    final jitterY = (rng.nextDouble() - 0.5) * 4;
-
-    // Cyan shadow offset left
-    _drawKanji(canvas, kanji, fontSize, cx - 2.5 + jitterX, cy + jitterY,
-        const Color(0xFF00E5FF).withValues(alpha: 0.06));
-
-    // Magenta shadow offset right
-    _drawKanji(canvas, kanji, fontSize, cx + 2.5 + jitterX, cy + jitterY,
-        const Color(0xFFB026FF).withValues(alpha: 0.05));
-
-    // Main red glow
-    _drawKanji(canvas, kanji, fontSize, cx + jitterX, cy + jitterY,
-        const Color(0xFFFF1919).withValues(alpha: 0.09));
+    final c = Offset(kanjiX * size.width, kanjiY * size.height) + jitter;
+    if (jitter != Offset.zero) {
+      // Split colour, only while it shakes.
+      _drawKanji(canvas, fontSize, c + const Offset(-2.5, 0), AppColors.neonCyan.withValues(alpha: 0.06));
+      _drawKanji(canvas, fontSize, c + const Offset(2.5, 0), AppColors.neonPurple.withValues(alpha: 0.05));
+    }
+    _drawKanji(canvas, fontSize, c, AppColors.accent.withValues(alpha: 0.10));
   }
 
-  void _drawKanji(
-      Canvas canvas, String text, double fontSize, double x, double y, Color color) {
+  void _drawKanji(Canvas canvas, double fontSize, Offset center, Color color) {
     final tp = TextPainter(
       text: TextSpan(
-        text: text,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-          color: color,
-        ),
+        text: kanji,
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900, color: color),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(x - tp.width / 2, y - tp.height / 2));
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   @override

@@ -1,9 +1,11 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../data/datasources/storage_service.dart';
 
 class LocaleProvider extends ChangeNotifier {
@@ -74,7 +76,7 @@ class LocaleProvider extends ChangeNotifier {
     // or a growing number doesn't shift what's around it.
     final features = tabular ? const [FontFeature.tabularFigures()] : null;
     if (_currentLanguage == AppLanguage.ja) {
-      return GoogleFonts.notoSansJp(
+      return TextStyle(
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,
@@ -87,7 +89,7 @@ class LocaleProvider extends ChangeNotifier {
         fontFeatures: features,
       );
     }
-    return GoogleFonts.plusJakartaSans(
+    return TextStyle(fontFamily: AppFonts.jakarta, 
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
@@ -221,8 +220,8 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
         ),
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom +
+        bottom: MediaQuery.viewInsetsOf(context).bottom +
+            MediaQuery.paddingOf(context).bottom +
             16,
       ),
       child: Column(
@@ -234,9 +233,9 @@ class _VoiceSearchSheetState extends State<VoiceSearchSheet>
           const SizedBox(height: 16),
           // Telemetry header
           // Flavour, not information: screen readers skip it.
-          ExcludeSemantics(child: Text(
+          const ExcludeSemantics(child: Text(
             '◈ VOICE.SCAN // ACTIVE',
-            style: GoogleFonts.notoSansJp(
+            style: TextStyle(
               fontSize: AppFontSize.micro,
               fontWeight: FontWeight.w700,
               color: AppColors.accentText,

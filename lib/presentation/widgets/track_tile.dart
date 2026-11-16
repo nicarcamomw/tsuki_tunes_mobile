@@ -36,31 +36,40 @@ class _PlayingIndicator extends StatefulWidget {
 
 class _PlayingIndicatorState extends State<_PlayingIndicator>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  // 120 fps: bars bouncing forever would redraw the screen every frame while
+  // the list shows the song. They dance for a few seconds when it starts (or
+  // comes into view), then rest in a pose.
+  late final AnimationController _controller = AnimationController(vsync: this, duration: AppMotion.slow);
   bool _reduceMotion = false;
+
+  /// About seven seconds of dancing (each count is one way).
+  static const _beats = 16;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.slow,
-    );
-    if (widget.isPlaying) _controller.repeat(reverse: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.isPlaying) _dance();
+    });
+  }
+
+  void _dance() {
+    if (_reduceMotion) return;
+    unawaited(_controller.repeat(reverse: true, count: _beats));
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion && _controller.isAnimating) _controller.stop();
   }
 
   @override
   void didUpdateWidget(_PlayingIndicator old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
-      _controller.repeat(reverse: true);
+    if (widget.isPlaying && !old.isPlaying) {
+      _dance();
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();
     }
@@ -74,7 +83,8 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return RepaintBoundary(
+      child: SizedBox(
       width: 24,
       height: 24,
       child: Center(
@@ -97,6 +107,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator>
           },
         ),
       ),
+    ),
     );
   }
 
@@ -148,16 +159,19 @@ class TrackTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (currentTrackId, isAudioPlaying) = ref.watch(audioProvider.select(
-        (a) => (a.currentTrack?.id, a.isPlaying)));
+    // Only whether *this* song is the one playing: a pause, a play or the
+    // next song then rebuilds the rows that change, not every row on
+    // screen.
+    final (isCurrent, isPlaying) = ref.watch(audioProvider.select((a) {
+      final current = a.currentTrack?.id == track.id;
+      return (current, current && a.isPlaying);
+    }));
     final isListened = ref.watch(isTrackListenedProvider(track.id));
     final locale = ref.read(localeProvider);
     // Its Spotify link is looked up while it's on screen, so a tap plays it
-    // at once (once per song; nothing without Spotify).
+    // at once (once per song, inside; nothing without Spotify).
     final audio = ref.read(audioProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) => audio.warmSpotifyUri(track));
-    final isCurrent = currentTrackId == track.id;
-    final isPlaying = isCurrent && isAudioPlaying;
     final strings = locale.strings;
 
     final tile = Semantics(
@@ -170,7 +184,7 @@ class TrackTile extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
           ref.read(playTrackProvider)(track, queue: queue);
         },
         onLongPress: () {
@@ -449,7 +463,7 @@ void showTrackActions(BuildContext context, Track track,
     drawHandle: true,
     constraints: BoxConstraints(
       maxWidth: 600,
-      maxHeight: MediaQuery.of(context).size.height * 0.85,
+      maxHeight: MediaQuery.sizeOf(context).height * 0.85,
     ),
     builder: (ctx) => SafeArea(
       child: SingleChildScrollView(

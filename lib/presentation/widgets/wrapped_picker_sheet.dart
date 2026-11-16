@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
@@ -87,7 +86,7 @@ class _WrappedPickerState extends ConsumerState<_WrappedPicker> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.accent)),
+              const Text('月', style: TextStyle(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.accent)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

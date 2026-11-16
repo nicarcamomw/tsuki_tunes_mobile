@@ -24,6 +24,15 @@ final Future<ui.FragmentProgram?> tsukiNebulaProgram = ui.FragmentProgram.fromAs
 /// A slow breath (0..1) every 2.8 s, from the continuous time.
 double breathAt(double t) => 0.5 - 0.5 * math.cos(2 * math.pi * t / 2.8);
 
+/// The sky's pace. It drifts slowly (nebula, embers, the ring's turn, the
+/// mask's breath), so moving it 60 times a second looks the same as 120 on a
+/// 120 Hz screen, and costs half: each move redraws the whole scene. What
+/// answers a finger still runs at the screen's full rate.
+const Duration ambientStep = Duration(microseconds: 16000);
+
+/// Whether the sky moves on this tick ([last]: when it last did).
+bool ambientDue(Duration elapsed, Duration last) => elapsed - last >= ambientStep || elapsed < last;
+
 class NebulaPainter extends CustomPainter {
   NebulaPainter(this.shader, {required this.time, required this.intensity, required this.still})
     : super(repaint: still ? intensity : Listenable.merge([time, intensity]));
@@ -171,55 +180,55 @@ class MoonRingPainter extends CustomPainter {
     final turn = still ? 0.0 : rotation.value;
     final start = -math.pi / 2 + turn;
 
-    // The faint track, coming in with the ring (the splash has none).
+    // One clean ring: an even track, a single trail of light running into
+    // a bright head. (Two strokes of different weights on top of each other
+    // and a crown of ticks turning with them read as messy.)
     canvas.drawCircle(
       centre,
       r,
       Paint()
+        ..isAntiAlias = true
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = AppColors.textMuted.withValues(alpha: 0.10 * fade * math.min(1, s * 3)),
+        ..strokeWidth = 1.5
+        ..color = AppColors.accent.withValues(alpha: 0.16 * fade * math.min(1, s * 3)),
     );
-    // The drawn arc.
+    // The trail: what's been drawn of the ring, fading in from its tail
+    // (a full turn's worth at most), in its own turn of the canvas so its
+    // gradient runs over 0..trail.
     final angle = 2 * math.pi * s;
-    canvas.drawArc(
-      Rect.fromCircle(center: centre, radius: r),
-      start,
-      angle,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.accent.withValues(alpha: 0.5 * fade),
-    );
-    // The comet at its head, in its own turn of the canvas so its gradient
-    // runs over 0..comet (a sweep gradient wants angles in 0..2π).
-    const comet = 1.2; // radians
+    final trail = math.min(angle, math.pi * 0.9);
     canvas
       ..save()
       ..translate(centre.dx, centre.dy)
-      ..rotate(start + angle - comet)
+      ..rotate(start + angle - trail)
       ..drawArc(
         Rect.fromCircle(center: Offset.zero, radius: r),
         0,
-        comet,
+        trail,
         false,
         Paint()
+          ..isAntiAlias = true
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
-          ..strokeCap = StrokeCap.round
+          // Flat ends: a round cap would leave a dot at the faded tail (the
+          // head has its own light).
+          ..strokeCap = StrokeCap.butt
           ..shader = ui.Gradient.sweep(
             Offset.zero,
-            [AppColors.accent.withValues(alpha: 0), AppColors.accent.withValues(alpha: fade)],
+            [AppColors.accent.withValues(alpha: 0), AppColors.accent.withValues(alpha: 0.9 * fade)],
             const [0, 1],
             TileMode.clamp,
             0,
-            comet,
+            trail,
           ),
       )
       ..restore();
-
+    // Its head: a point of light with a soft halo.
+    final head = start + angle;
+    final at = centre + Offset(math.cos(head), math.sin(head)) * r;
+    canvas
+      ..drawCircle(at, 5, Paint()..color = AppColors.accent.withValues(alpha: 0.25 * fade))
+      ..drawCircle(at, 2.2, Paint()..color = Color.lerp(AppColors.accent, Colors.white, 0.5)!.withValues(alpha: fade));
     // Closed: a ripple runs out from the ring, once.
     final p = pulse.value;
     if (p > 0 && p < 1) {
@@ -231,20 +240,6 @@ class MoonRingPainter extends CustomPainter {
           ..strokeWidth = 0.5 + 2 * (1 - p)
           ..color = AppColors.accent.withValues(alpha: 0.6 * (1 - p) * fade),
       );
-    }
-
-    // HUD ticks around it, every 30°.
-    final t = ticks.value * fade;
-    if (t > 0) {
-      final tick = Paint()
-        ..strokeWidth = 1.2
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.accent.withValues(alpha: 0.5 * t);
-      for (var i = 0; i < 12; i++) {
-        final a = start + i * math.pi / 6;
-        final dir = Offset(math.cos(a), math.sin(a));
-        canvas.drawLine(centre + dir * (r + 6), centre + dir * (r + (i % 3 == 0 ? 14 : 10)), tick);
-      }
     }
   }
 

@@ -208,7 +208,7 @@ class SkyBackdrop extends ConsumerWidget {
       Sky.snow => _Fall.snow,
       _ => _Fall.none,
     };
-    if (fall == _Fall.none || MediaQuery.of(context).disableAnimations) {
+    if (fall == _Fall.none || MediaQuery.disableAnimationsOf(context)) {
       return child;
     }
     return Stack(

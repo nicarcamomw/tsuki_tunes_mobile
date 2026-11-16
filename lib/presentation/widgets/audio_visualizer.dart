@@ -45,7 +45,7 @@ class _AudioVisualizerState extends State<AudioVisualizer>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion && _controller.isAnimating) {
       _controller.stop();
       setState(() {

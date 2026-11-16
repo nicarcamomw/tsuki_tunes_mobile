@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -24,16 +24,14 @@ class OniMaskArt extends StatelessWidget {
     this.frame = true,
   });
 
-  static const List<double> _silhouette = [
-    0, 0, 0, 0, 52,
-    0, 0, 0, 0, 56,
-    0, 0, 0, 0, 70,
-    0, 0, 0, 0.9, 0,
-  ];
+
+  /// A locked mask's silhouette: its shape in the night's slate, applied
+  /// as the image is drawn (no layer of its own, unlike a colour matrix).
+  static const Color silhouette = Color(0xE6343846);
 
   /// Just the illustration, dyed. Used anywhere a bare mask is needed.
   static Widget image(OniMask mask, double size,
-      {List<double>? overrideFilter, int? cacheWidth}) {
+      {List<double>? overrideFilter, int? cacheWidth, bool asSilhouette = false}) {
     Widget img = Image.asset(
       mask.asset(),
       width: size,
@@ -41,7 +39,10 @@ class OniMaskArt extends StatelessWidget {
       cacheWidth: cacheWidth,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.medium,
+      color: asSilhouette ? silhouette : null,
+      colorBlendMode: asSilhouette ? BlendMode.srcIn : null,
     );
+    if (asSilhouette) return img;
     final filter = overrideFilter ?? mask.dye;
     if (filter != null) {
       img = ColorFiltered(colorFilter: ColorFilter.matrix(filter), child: img);
@@ -60,14 +61,12 @@ class OniMaskArt extends StatelessWidget {
     if (unlocked) {
       art = image(mask, artSize, cacheWidth: imageCacheSize(context, artSize));
     } else {
+      // A secret one's shape stays blurred: a tiny copy of it, scaled up,
+      // is soft by itself, where a blur filter would be worked out again on
+      // every frame of a scroll.
       art = image(mask, artSize,
-          overrideFilter: _silhouette, cacheWidth: imageCacheSize(context, artSize));
-      if (mask.secret) {
-        art = ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: size * 0.05, sigmaY: size * 0.05),
-          child: art,
-        );
-      }
+          asSilhouette: true,
+          cacheWidth: mask.secret ? max(6, imageCacheSize(context, artSize) ~/ 12) : imageCacheSize(context, artSize));
     }
 
     if (!frame) return SizedBox.square(dimension: size, child: Center(child: art));
@@ -182,22 +181,43 @@ class _LegendaryShimmer extends StatefulWidget {
 
 class _LegendaryShimmerState extends State<_LegendaryShimmer>
     with SingleTickerProviderStateMixin {
+  // 120 fps: a light circling forever on every UL mask of a grid would
+  // redraw it every frame. It goes round once, rests, and goes again (one
+  // turn ends where it began: no jump).
   late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(seconds: 4));
+      AnimationController(vsync: this, duration: const Duration(seconds: 4))..addStatusListener(_turned);
+  Timer? _rest;
+  static const _restFor = Duration(seconds: 8);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _turn());
+  }
+
+  void _turn() {
+    if (!mounted || (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) return;
+    unawaited(_c.forward(from: 0));
+  }
+
+  void _turned(AnimationStatus s) {
+    if (s != AnimationStatus.completed || !mounted) return;
+    _c.value = 0;
+    _rest = Timer(_restFor, _turn);
+  }
 
   @override
   void dispose() {
+    _rest?.cancel();
     _c.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    if (reduce) {
-      _c.stop();
-    } else if (!_c.isAnimating) {
-      _c.repeat();
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _rest?.cancel();
+      if (_c.isAnimating) _c.stop();
     }
     return AnimatedBuilder(
       animation: _c,

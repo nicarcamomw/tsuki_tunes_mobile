@@ -71,6 +71,33 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('on a narrow phone it fits between the two buttons beside it (no overflow)', (tester) async {
+    await tester.pumpWidget(TestScope(
+      overrides: [
+        playbackSourceProvider.overrideWithValue(_source(full: true)),
+        playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
+      ],
+      // The player's row: a button, the badge, a button, in little room.
+      child: const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 220,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [SizedBox(width: 48), Flexible(child: PlaybackSourceBadge()), SizedBox(width: 48)],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    expect(tester.takeException(), isNull);
+    expect(tester.getSize(find.byType(PlaybackSourceBadge)).width, lessThanOrEqualTo(220 - 96));
+    // Still all of it to TalkBack.
+    expect(find.bySemanticsLabel('CANCIÓN COMPLETA · SPOTIFY'), findsOneWidget);
+  });
+
   testWidgets('the whole song from Spotify', (tester) async {
     await tester.pumpWidget(badge(_source(full: true)));
     expect(find.text('CANCIÓN COMPLETA · SPOTIFY'), findsOneWidget);

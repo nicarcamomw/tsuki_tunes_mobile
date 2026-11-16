@@ -284,7 +284,7 @@ void _showSongOptionsSheet(
   showAppSheet(
     context: context,
     constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * 0.85,
+      maxHeight: MediaQuery.sizeOf(context).height * 0.85,
     ),
     builder: (_) {
       return SafeArea(

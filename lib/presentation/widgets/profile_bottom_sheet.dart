@@ -49,7 +49,7 @@ final _log = Log.named('Profile');
 /// change.
 class ProfileBottomSheet {
   static Future<void> show(BuildContext context, AuthProvider auth) {
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     FocusManager.instance.primaryFocus?.unfocus();
     return Navigator.of(context, rootNavigator: true).push(cyberRoute<void>(_ProfileScreen(hostContext: context, auth: auth)));
   }
@@ -126,7 +126,7 @@ class _ProfileSheet extends ConsumerWidget {
           20,
           12,
           20,
-          MediaQuery.of(context).viewInsets.bottom + 20,
+          MediaQuery.viewInsetsOf(context).bottom + 20,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

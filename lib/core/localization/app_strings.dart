@@ -914,6 +914,30 @@ class AppStrings {
   String get navMenuTypeSearch => _es('Escribir en el buscador', 'Type a search', '検索を入力');
   /// The connection came back (the pill at the top, for a moment).
   String get backOnline => _es('De nuevo en línea', 'Back online', 'オンラインに戻りました');
+  // ── The shell's notices: what can be done about each ──
+  String get noticeNext => _es('SIGUIENTE', 'NEXT', '次へ');
+  String get noticeRetry => _es('REINTENTAR', 'RETRY', '再試行');
+  String get noticeOpenSpotify => _es('ABRIR SPOTIFY', 'OPEN SPOTIFY', 'SPOTIFYを開く');
+  /// The server refused a mark (or an unmark) for good, and it was undone.
+  String get syncMarkFailed =>
+      _es('No se pudo marcar como escuchada: quedó como estaba', "Couldn't mark it as heard: it's as it was", '聴いた印を付けられず、元のままです');
+  String get syncUnmarkFailed =>
+      _es('No se pudo desmarcar: sigue como escuchada', "Couldn't unmark it: it's still heard", '印を外せず、聴いたままです');
+
+  // ── App-wide moments: a rare mask, a birthday, the witching hour ──
+  String get maskStrangerTier => _es('DE OTRO UNIVERSO', 'FROM ANOTHER UNIVERSE', '異界より');
+  String get maskGrandHint => _es('Toca para verla en tu colección', 'Tap to see it in your collection', 'タップしてコレクションで見る');
+  String get birthdayGreeting => _es('Feliz cumpleaños', 'Happy birthday', 'お誕生日おめでとう');
+  String get witchingWhisper =>
+      _es('La hora en que el velo se adelgaza…', 'The hour the veil wears thin…', '帳が薄くなる刻…');
+
+  // ── The mini player ──
+  String get miniStopped => _es('Reproducción detenida', 'Playback stopped', '再生を停止しました');
+  String get miniFromStart => _es('Desde el inicio', 'From the start', '最初から');
+  String get miniGoAlbum => _es('Ir al álbum', 'Go to album', 'アルバムへ');
+  String get miniGoArtist => _es('Ir al artista', 'Go to artist', 'アーティストへ');
+  String get miniQueue => _es('Ver la cola', 'See the queue', 'キューを見る');
+  String get miniHoldHint => _es('ver opciones', 'show options', 'オプションを表示');
   /// TalkBack's actions on the mini player.
   String get a11yOpenPlayer => _es('Abrir el reproductor', 'Open the player', 'プレーヤーを開く');
 

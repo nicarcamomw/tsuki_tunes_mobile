@@ -355,7 +355,7 @@ class _GuessSongScreenState extends ConsumerState<GuessSongScreen> {
 
   Future<void> _pickArtist(Artist artist) async {
     Haptics.selection();
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _artist = artist;
       _artistPool = [];

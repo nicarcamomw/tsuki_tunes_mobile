@@ -53,7 +53,7 @@ class _CyberNavIconState extends State<CyberNavIcon>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       _controller.duration = Duration.zero;
       _controller.reverseDuration = Duration.zero;
     }
@@ -84,28 +84,19 @@ class _CyberNavIconState extends State<CyberNavIcon>
       builder: (context, child) {
         final progress = _curveAnimation.value;
 
-        // Micro-shake electromagnético senoidal (~180ms) en la fase inicial de activación
-        final double shakeOffset = widget.isSelected && progress < 0.85
-            ? math.sin(progress * math.pi * 4.0) * (1.0 - progress) * 1.8
-            : 0.0;
+        // A small, smooth pop as it lights up (no shake: a sideways jitter
+        // read as the icon trembling).
+        final double scale = widget.isSelected ? 1.0 + (math.sin(progress * math.pi) * 0.08) : 1.0;
 
-        // Micro-escala elástica sutil al activarse (1.14 -> 1.0)
-        final double scale = widget.isSelected
-            ? 1.0 + (math.sin(progress * math.pi) * 0.12)
-            : 1.0;
-
-        return Transform.translate(
-          offset: Offset(shakeOffset, 0),
-          child: Transform.scale(
-            scale: scale,
-            child: SizedBox(
-              width: widget.size,
-              height: widget.size,
-              child: CustomPaint(
-                painter: _CyberNavIconPainter(
-                  tab: widget.tab,
-                  progress: progress,
-                ),
+        return Transform.scale(
+          scale: scale,
+          child: SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: CustomPaint(
+              painter: _CyberNavIconPainter(
+                tab: widget.tab,
+                progress: progress,
               ),
             ),
           ),

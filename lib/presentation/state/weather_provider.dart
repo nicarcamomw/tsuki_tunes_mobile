@@ -26,6 +26,15 @@ class WeatherProvider extends ChangeNotifier with WidgetsBindingObserver {
   static const _rainEpisodeKey = 'weather_rain_episode_offered';
 
   static const Duration maxAge = Duration(minutes: 30);
+
+  // A fetch or a location can land after the provider is gone (a screen
+  // closed, a test over): dropped then.
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
   /// Showers come and go; a new offer needs at least this long since the last.
   static const Duration offerGap = Duration(hours: 3);
 
@@ -255,6 +264,7 @@ class WeatherProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     if (_observing) WidgetsBinding.instance.removeObserver(this);
     super.dispose();

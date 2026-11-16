@@ -138,7 +138,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     _syncTicker();
   }
 

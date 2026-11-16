@@ -45,7 +45,12 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with SingleTickerProviderStateMixin {
   final PageController _pages = PageController();
   final ValueNotifier<double> _time = ValueNotifier(0);
-  late final Ticker _ticker = createTicker((e) => _time.value = e.inMicroseconds / 1e6);
+  Duration _lastSky = Duration.zero;
+  late final Ticker _ticker = createTicker((e) {
+    if (!ambientDue(e, _lastSky)) return;
+    _lastSky = e;
+    _time.value = e.inMicroseconds / 1e6;
+  });
   ui.FragmentShader? _shader;
   int _page = 0;
   bool _completing = false;
@@ -388,6 +393,8 @@ class _StepPage extends StatelessWidget {
                             color: AppColors.surface,
                             fill: AppGlass.clearFill + 0.15,
                             borderRadius: BorderRadius.circular(AppRadius.sheet),
+                            // Over the soft nebula: no blur to redo each frame.
+                            blur: false,
                             child: SizedBox(
                               width: double.infinity,
                               child: Center(heightFactor: 1, child: demo),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 
 class GlitchText extends StatelessWidget {
   final String text;
@@ -24,7 +25,7 @@ class GlitchText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.plusJakartaSans(
+      style: TextStyle(fontFamily: AppFonts.jakarta, 
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color,

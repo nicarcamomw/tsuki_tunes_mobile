@@ -467,6 +467,7 @@ class LyricsCard extends ConsumerWidget {
         final lyrics = controller.lyrics;
         final hasText = controller.hasText;
         final radius = BorderRadius.circular(AppRadius.sheet);
+        final live = lyrics?.isSynced == true && ref.watch(audioProvider.select((a) => a.playsFullSong));
 
         Widget body;
         if (controller.loading) {
@@ -499,22 +500,12 @@ class LyricsCard extends ConsumerWidget {
           label: strings.a11yLyrics,
           child: GestureDetector(
             onTap: hasText ? () { Haptics.tap(); onOpen(); } : null,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                border: Border.all(
-                  color: PlayerTint.of(context).withValues(alpha: 0.85),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: PlayerTint.of(context).withValues(alpha: 0.28),
-                    blurRadius: 22,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              // Only the frame (and the line under the title) follow the
+              // colour's fade between songs, not the lyrics inside.
+              child: _TintedFrame(
+              radius: radius,
               child: LyricsBackdrop(
                 borderRadius: radius,
                 child: SizedBox(
@@ -538,18 +529,15 @@ class LyricsCard extends ConsumerWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    lyrics?.isSynced == true &&
-                                            ref.watch(audioProvider
-                                                .select((a) => a.playsFullSong))
-                                        ? '歌詞 // LIVE.SYNC'
-                                        : '歌詞 // LYRICS',
-                                    style: locale.getTextStyle(
-                                      fontSize: AppFontSize.micro,
-                                      fontWeight: FontWeight.w700,
-                                      color: lyricsText(PlayerTint.of(context))
-                                          .withValues(alpha: 0.9),
-                                      letterSpacing: 1.4,
+                                  Builder(
+                                    builder: (context) => Text(
+                                      live ? '歌詞 // LIVE.SYNC' : '歌詞 // LYRICS',
+                                      style: locale.getTextStyle(
+                                        fontSize: AppFontSize.micro,
+                                        fontWeight: FontWeight.w700,
+                                        color: lyricsText(PlayerTint.of(context)).withValues(alpha: 0.9),
+                                        letterSpacing: 1.4,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -570,9 +558,31 @@ class LyricsCard extends ConsumerWidget {
                 ),
               ),
             ),
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+/// The lyrics card's border and glow, in the player's colour.
+class _TintedFrame extends StatelessWidget {
+  final BorderRadius radius;
+  final Widget child;
+
+  const _TintedFrame({required this.radius, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = PlayerTint.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        border: Border.all(color: tint.withValues(alpha: 0.85), width: 1.2),
+        boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 22, offset: const Offset(0, 6))],
+      ),
+      child: child,
     );
   }
 }

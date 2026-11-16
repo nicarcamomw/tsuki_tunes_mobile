@@ -32,24 +32,54 @@ const _song = Track(
   durationSeconds: 248,
 );
 
-/// A song playing; the test sets its playback error and its loading.
+/// A song playing; the test sets its errors, its loading and whether a
+/// next song waits, and counts what the notices ask of it.
 class _Audio extends AudioProvider {
   PlaybackError? error;
+  SpotifyFallbackReason? spotifyError;
   bool loading = false;
+  bool nextWaits = true;
+  int nexts = 0;
+  Track? replayed;
 
   @override
   Track? get currentTrack => _song;
   @override
   PlaybackError? get lastPlaybackError => error;
   @override
+  SpotifyFallbackReason? get lastSpotifyError => spotifyError;
+  @override
   bool get isBuffering => loading;
+  @override
+  Track? get nextPreview => nextWaits ? _song : null;
+  @override
+  Future<void> next() async => nexts++;
+  @override
+  Future<void> playTrack(Track track, {List<Track>? newQueue}) async => replayed = track;
+
   void set({PlaybackError? error, bool? loading}) {
     this.error = error;
     if (loading != null) this.loading = loading;
     notifyListeners();
   }
 
+  void spotifyFails(SpotifyFallbackReason? reason) {
+    spotifyError = reason;
+    notifyListeners();
+  }
+
   void poke() => notifyListeners();
+}
+
+/// A library whose last refused change the test sets.
+class _Library extends LibraryRepositoryImpl {
+  String? refused;
+  @override
+  String? get lastSyncError => refused;
+  void refuse(String? what) {
+    refused = what;
+    notifyListeners();
+  }
 }
 
 class _Connection extends ChangeNotifier implements ConnectivityProvider {
@@ -70,11 +100,13 @@ final _noNetwork = MockClient((_) => Completer<http.Response>().future);
 void main() {
   late _Audio audio;
   late _Connection connection;
+  late _Library library;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({'nav_gestures_hint_shown': true});
     audio = _Audio();
     connection = _Connection();
+    library = _Library();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(
         const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'), (_) async => null);
@@ -94,7 +126,7 @@ void main() {
     await http.runWithClient(() async {
       await tester.pumpWidget(TestScope(
         overrides: [
-          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
+          libraryProvider.overrideWith((ref) => library),
           connectivityProvider.overrideWith((ref) => connection),
           audioProvider.overrideWith((ref) => audio),
           playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
@@ -183,4 +215,88 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
   });
+
+  /// Lets a notice go: its way in, its time, its way out.
+  Future<void> letGo(WidgetTester tester) async {
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+  }
+
+  /// Causes a notice and lets it come in (the frame it's shown, then its
+  /// entrance).
+  Future<void> show(WidgetTester tester, void Function() cause) async {
+    cause();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  testWidgets('no preview: "Next" plays the next song; with none waiting, no button', (tester) async {
+    await run(tester, () async {
+      await show(tester, () => audio.set(error: PlaybackError.noPreview));
+      expect(find.text('Esta canción no tiene vista previa'), findsOneWidget);
+      await tester.tap(find.text('SIGUIENTE'));
+      await tester.pump();
+      expect(audio.nexts, 1);
+      await letGo(tester);
+
+      audio.nextWaits = false;
+      await show(tester, () => audio.set(error: null));
+      await show(tester, () => audio.set(error: PlaybackError.noPreview));
+      expect(find.text('Esta canción no tiene vista previa'), findsOneWidget);
+      expect(find.text('SIGUIENTE'), findsNothing);
+      await letGo(tester);
+    });
+  });
+
+  testWidgets('a network error online: "Retry" tries the same song again; offline: "Next"', (tester) async {
+    await run(tester, () async {
+      await show(tester, () => audio.set(error: PlaybackError.network));
+      expect(find.text('Falló la conexión al cargar la canción'), findsOneWidget);
+      await tester.tap(find.text('REINTENTAR'));
+      await tester.pump();
+      expect(audio.replayed?.id, _song.id);
+      await letGo(tester);
+
+      connection.set(false);
+      await show(tester, () => audio.set(error: null));
+      await show(tester, () => audio.set(error: PlaybackError.network));
+      expect(find.text('Sin conexión: esta canción no está guardada'), findsOneWidget);
+      expect(find.text('REINTENTAR'), findsNothing);
+      expect(find.text('SIGUIENTE'), findsOneWidget);
+      await letGo(tester);
+    });
+  });
+
+  testWidgets('Spotify closed: "Open Spotify"; Spotify paused is told once a session', (tester) async {
+    await run(tester, () async {
+      await show(tester, () => audio.spotifyFails(SpotifyFallbackReason.openApp));
+      expect(find.text('Abre Spotify para escuchar la canción completa'), findsOneWidget);
+      expect(find.text('ABRIR SPOTIFY'), findsOneWidget);
+      await letGo(tester);
+
+      const paused = 'Spotify está en pausa un momento: suenan vistas previas';
+      await show(tester, () => audio.spotifyFails(SpotifyFallbackReason.disabled));
+      expect(find.text(paused), findsOneWidget);
+      await letGo(tester);
+      await show(tester, () => audio.spotifyFails(null));
+      await show(tester, () => audio.spotifyFails(SpotifyFallbackReason.disabled));
+      expect(find.text(paused), findsNothing, reason: 'the same news, already told');
+    });
+  });
+
+  testWidgets('a change the server refused is said as what happened, not "try again"', (tester) async {
+    await run(tester, () async {
+      await show(tester, () => library.refuse('mark_failed'));
+      expect(find.text('No se pudo marcar como escuchada: quedó como estaba'), findsOneWidget);
+      await letGo(tester);
+      await show(tester, () => library.refuse(null));
+      await show(tester, () => library.refuse('unmark_failed'));
+      expect(find.text('No se pudo desmarcar: sigue como escuchada'), findsOneWidget);
+      expect(find.textContaining('Intenta de nuevo'), findsNothing);
+      await letGo(tester);
+    });
+  });
 }
+

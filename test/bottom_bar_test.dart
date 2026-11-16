@@ -278,7 +278,7 @@ void main() {
       expect(audio.nexts, 1);
       expect(find.byIcon(Icons.skip_next_rounded), findsNothing);
 
-      final node = tester.getSemantics(find.bySemanticsLabel('Get Lucky, Daft Punk'));
+      final node = tester.getSemantics(find.bySemanticsLabel(RegExp('^Get Lucky, Daft Punk')));
       final actions = node.getSemanticsData().customSemanticsActionIds!
           .map((id) => CustomSemanticsAction.getAction(id)!.label)
           .whereType<String>()

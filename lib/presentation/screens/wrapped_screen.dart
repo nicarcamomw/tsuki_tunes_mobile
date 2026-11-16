@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -69,7 +68,9 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
   List<_SlideBuilder> _slides = const [];
   int _page = 0;
   bool _sharing = false;
-  double _dragDown = 0;
+  // Pulled down to close: only the transform listens, so following the
+  // finger doesn't rebuild the slide every frame.
+  final ValueNotifier<double> _dragDown = ValueNotifier(0);
   final Map<int, GlobalKey> _shareKeys = {};
 
   bool get _monthly => widget.month != null;
@@ -204,6 +205,7 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
   void dispose() {
     _pageController.dispose();
     _progress.dispose();
+    _dragDown.dispose();
     super.dispose();
   }
 
@@ -281,32 +283,33 @@ class _WrappedScreenState extends ConsumerState<WrappedScreen>
       onLongPressEnd: (_) {
         if (_page < _slides.length - 1) _progress.forward();
       },
-      onVerticalDragUpdate: (d) => setState(() => _dragDown = math.max(0, _dragDown + d.delta.dy)),
+      onVerticalDragUpdate: (d) => _dragDown.value = math.max(0, _dragDown.value + d.delta.dy),
       onVerticalDragEnd: (d) {
-        if (_dragDown > 120 || (d.primaryVelocity ?? 0) > 900) {
+        if (_dragDown.value > 120 || (d.primaryVelocity ?? 0) > 900) {
           Navigator.of(context).pop();
         } else {
-          setState(() => _dragDown = 0);
+          _dragDown.value = 0;
         }
       },
-      child: Transform.translate(
-        offset: Offset(0, _dragDown),
-        child: Transform.scale(
-          scale: 1 - math.min(_dragDown / size.height, 0.1),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(_dragDown > 0 ? AppRadius.sheet : 0),
-            child: Stack(
-              children: [
-                PageView.builder(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _slides.length,
-                  itemBuilder: (_, i) => _slides[i](_shareKeys[i]!),
-                ),
-                _buildTopBar(strings),
-              ],
-            ),
+      child: ValueListenableBuilder<double>(
+        valueListenable: _dragDown,
+        builder: (context, dy, child) => Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(
+            scale: 1 - math.min(dy / size.height, 0.1),
+            child: ClipRRect(borderRadius: BorderRadius.circular(dy > 0 ? AppRadius.sheet : 0), child: child),
           ),
+        ),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _slides.length,
+              itemBuilder: (_, i) => _slides[i](_shareKeys[i]!),
+            ),
+            _buildTopBar(strings),
+          ],
         ),
       ),
       ),

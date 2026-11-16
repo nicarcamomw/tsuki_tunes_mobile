@@ -546,6 +546,23 @@ class PlaybackQueue {
     return QueueStep.play(_currentIndex);
   }
 
+  /// Where [previous] would go online, without moving: an index, or null
+  /// when it would start the song playing over (past its first 3 s, or
+  /// nothing before it). For showing it ahead (the mini player's swipe).
+  int? peekPrevious({required Duration position}) {
+    if (_tracks.isEmpty || position.inSeconds > 3) return null;
+    if (_isShuffle) {
+      for (var i = _history.length - 1; i >= 0; i--) {
+        if (_isValid(_history[i])) return _history[i];
+      }
+      return null;
+    }
+    if (_currentIndex <= 0) {
+      return _repeatMode == PlaybackRepeatMode.off ? null : _tracks.length - 1;
+    }
+    return _currentIndex - 1;
+  }
+
   /// Whether playback should stop when the current track ends with repeat
   /// off (end of the queue, or every track already heard in shuffle).
   bool shouldStopAtEnd() {

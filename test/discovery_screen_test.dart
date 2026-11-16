@@ -67,4 +67,43 @@ void main() {
     expect(deck.skipped, 1);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('dragging a card: it follows the finger without rebuilding the cards or the screen', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(360 * 3, 720 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final deck = DiscoveryController(
+      catalog: _Catalog(),
+      knownArtists: () => const [],
+      topArtistNames: () => const [],
+      isListened: (_) => false,
+      random: Random(2),
+    );
+    await deck.start();
+    await tester.pumpWidget(TestScope(
+      overrides: [discoveryProvider.overrideWith((ref) => deck)],
+      child: const MaterialApp(home: DiscoveryScreen()),
+    ));
+    await tester.pump();
+    final gesture = await tester.startGesture(tester.getCenter(find.text(deck.cards.first.track.title)));
+    await gesture.moveBy(const Offset(30, 0));
+    await tester.pump();
+    final counts = <String, int>{};
+    debugOnRebuildDirtyWidget = (element, _) {
+      final name = element.widget.runtimeType.toString();
+      counts[name] = (counts[name] ?? 0) + 1;
+    };
+    for (var i = 0; i < 6; i++) {
+      await gesture.moveBy(const Offset(8, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    debugOnRebuildDirtyWidget = null;
+    await gesture.moveBy(const Offset(-78, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(counts['DiscoveryScreen'] ?? 0, 0, reason: '$counts');
+    expect(counts['_SongCard'] ?? 0, 0, reason: '$counts');
+    expect(deck.skipped, 0);
+  });
 }

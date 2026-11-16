@@ -21,6 +21,21 @@ class SearchProvider extends ChangeNotifier {
   static const _historyKey = 'search_history';
   static const _maxHistory = 10;
 
+  // The history, a search or a suggestion can land after the provider is
+  // gone (the screen closed): dropped then.
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   String _query = '';
   bool _isLoading = false;
   bool _hasError = false;

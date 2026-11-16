@@ -62,7 +62,7 @@ class _GoogleButtonState extends State<_GoogleButton> {
                         widget.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(
+                        style: const TextStyle(fontFamily: AppFonts.roboto, 
                           fontSize: AppFontSize.titleLg,
                           fontWeight: FontWeight.w500,
                           color: AppColors.googleText,

@@ -27,7 +27,7 @@ class AlbumCard extends ConsumerWidget {
     return TapScale(
       semanticLabel: '${album.title}, ${album.artistName}',
       onTap: () {
-        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
         AlbumRoute(id: album.id, $extra: album).push(context);
       },
       scaleDown: 0.95,

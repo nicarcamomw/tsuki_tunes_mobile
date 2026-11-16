@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,7 +62,24 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
   ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> with WidgetsBindingObserver {
+  // Whether the keyboard is up. Kept here, flipped only when it opens or
+  // closes: reading its height in build rebuilt the whole shell (dock,
+  // mini player, page) on every frame of the keyboard sliding.
+  bool _keyboardOpen = false;
+
+  bool _readKeyboard() {
+    final view = View.maybeOf(context);
+    return view != null && view.viewInsets.bottom > 0;
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final open = _readKeyboard();
+    if (open != _keyboardOpen) setState(() => _keyboardOpen = open);
+  }
+
   // Running in the background is offered once 20 s of music have played,
   // with Tsuki on screen: by then the user cares about the music going on,
   // and a song isn't interrupted as it starts. Once a session at most.
@@ -102,6 +120,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => didChangeMetrics());
     _tabNotifier.addListener(_updateCanPop);
     shellNavigatorObserver.onNavigationChanged = _updateCanPop;
     NavigationEvents.switchTab = _switchToTab;
@@ -151,10 +171,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   }
 
   /// The shell's own snack bars (playback, Spotify, sync) clear its dock.
-  double get _snackBottom => (MediaQuery.viewInsetsOf(context).bottom > 0 ? 0 : SnackDock.shellHeight) + 12;
+  double get _snackBottom => (_keyboardOpen ? 0 : SnackDock.shellHeight) + 12;
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (NavigationEvents.switchTab == _switchToTab) {
       NavigationEvents.switchTab = null;
     }
@@ -168,41 +189,86 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     super.dispose();
   }
 
+  /// Spotify paused remotely is told once a session: it's the same news
+  /// for every song.
+  bool _spotifyPausedTold = false;
+
   /// E-03: the shell's three notices (Spotify, playback, sync), each once
-  /// when it appears, as the app's snack bar over the dock. Listened to,
-  /// not read in build: nothing is shown from a rebuild.
+  /// when it appears, as the app's snack bar over the dock, each with what
+  /// can be done about it: the next song, a retry, opening Spotify.
+  /// Listened to, not read in build: nothing is shown from a rebuild.
   void _listenForNotices() {
     ref.listen(audioProvider.select((a) => a.lastSpotifyError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
+      final audio = ref.read(audioProvider);
       // On phones known to freeze Spotify, a failed start comes with a
       // guide to let it run in the background.
-      final guide = ref.read(batteryGuideProvider).offerFor(error);
-      _notice((snack) => snack.show(
-            guide ? strings.batteryGuideSnack : error.message(strings),
-            icon: guide ? Icons.battery_alert_rounded : Icons.info_outline_rounded,
-            actionLabel: guide ? strings.batteryGuideAction : null,
-            onAction: guide ? () => BatteryGuideSheet.show(context) : null,
-            duration: Duration(seconds: guide ? 8 : 4),
-          ));
+      if (ref.read(batteryGuideProvider).offerFor(error)) {
+        _notice((snack) => snack.show(
+              strings.batteryGuideSnack,
+              icon: Icons.battery_alert_rounded,
+              actionLabel: strings.batteryGuideAction,
+              onAction: () => BatteryGuideSheet.show(context),
+              duration: const Duration(seconds: 8),
+            ));
+        return;
+      }
+      switch (error) {
+        case SpotifyFallbackReason.openApp:
+          _notice((snack) => snack.show(
+                error.message(strings),
+                icon: Icons.open_in_new_rounded,
+                actionLabel: strings.noticeOpenSpotify,
+                onAction: () => unawaited(audio.spotify.openSpotifyApp()),
+                duration: const Duration(seconds: 6),
+              ));
+        case SpotifyFallbackReason.disabled:
+          if (_spotifyPausedTold) return;
+          _spotifyPausedTold = true;
+          _notice((snack) => snack.info(error.message(strings), icon: Icons.info_outline_rounded));
+        case SpotifyFallbackReason.trackUnavailable:
+          _notice((snack) => snack.info(error.message(strings), icon: Icons.info_outline_rounded));
+      }
     });
     ref.listen(audioProvider.select((a) => a.lastPlaybackError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
+      final audio = ref.read(audioProvider);
+      final online = ref.read(isOnlineProvider);
+      final song = audio.currentTrack;
+      final hasNext = audio.nextPreview != null;
+      // A network hiccup online is worth another go at the same song; the
+      // rest won't change on a retry: the next song, when there is one.
+      final retry = error == PlaybackError.network && online && song != null;
+      final (label, action) = retry
+          ? (strings.noticeRetry, () => unawaited(audio.playTrack(song)))
+          : hasNext
+              ? (strings.noticeNext, () => unawaited(audio.next()))
+              : (null, null);
       _notice((snack) => snack.error(
-            error.message(strings, isOnline: ref.read(isOnlineProvider)),
+            error.message(strings, isOnline: online),
             icon: switch (error) {
               PlaybackError.network => Icons.wifi_off_rounded,
               PlaybackError.noPreview => Icons.music_off_rounded,
               _ => Icons.error_outline_rounded,
             },
+            actionLabel: label,
+            onAction: action,
+            duration: label == null ? null : const Duration(seconds: 6),
           ));
     });
-    // A mark or unmark that didn't reach the cloud.
+    // A mark or unmark the server refused for good (and that was undone
+    // here): said as what happened, no "try again" that wouldn't help.
     ref.listen(libraryProvider.select((l) => l.lastSyncError), (_, error) {
       if (error == null) return;
       final strings = ref.read(localeProvider).strings;
-      _notice((snack) => snack.error(strings.syncError, icon: Icons.sync_problem_rounded));
+      final text = switch (error) {
+        'mark_failed' => strings.syncMarkFailed,
+        'unmark_failed' => strings.syncUnmarkFailed,
+        _ => strings.syncError,
+      };
+      _notice((snack) => snack.error(text, icon: Icons.sync_problem_rounded));
     });
   }
 
@@ -222,8 +288,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     _listenForNotices();
 
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
-    final isKeyboardOpen = keyboardHeight > 0;
+    final isKeyboardOpen = _keyboardOpen;
     final bottomBarHeight = (hasTrack ? 146.0 : 76.0) + bottomPadding;
 
     return ValueListenableBuilder<bool>(
@@ -256,11 +321,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             // they get its height as their bottom padding, so their last
             // rows clear it (dockBottom).
             Positioned.fill(
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  padding: MediaQuery.paddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
-                  viewPadding: MediaQuery.viewPaddingOf(context).copyWith(bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight),
-                ),
+              child: _PageInsets(
+                bottom: isKeyboardOpen ? bottomPadding : bottomBarHeight,
                 child: SnackDock(
                   child: MainTabsScope(
                     tab: _tabNotifier,
@@ -302,16 +364,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         // dock's lit top edge, its colour the dock's glow.
                         child: AnimatedPlayerTint(
                           color: ref.watch(playerTintColorProvider),
-                          child: Builder(
-                            builder: (context) => FrostedGlass(
-                              key: MainNavigationScreen.dockKey,
-                              color: AppColors.surface,
-                              fill: AppGlass.barFill,
-                              sheen: false,
-                              shadow: hasTrack,
-                              shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-                              border: FrostedGlass.showsThrough(context) ? null : Border.all(color: AppColors.border),
+                          // Only the glass's glow follows the colour's fade
+                          // (each frame of it); what's inside is built here,
+                          // once, and handed over as it is.
+                          child: _DockGlass(
+                              hasTrack: hasTrack,
                               child: RepaintBoundary(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -337,7 +394,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                   ],
                                 ),
                               ),
-                            ),
                           ),
                         ),
                       ),
@@ -390,7 +446,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       };
 
   void _onNavItemTap(MainTab tab) {
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     final wasActive = _tabNotifier.value == tab;
     final now = DateTime.now();
     // A double tap only on the tab already open: tapping a new tab twice
@@ -457,23 +513,27 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   /// E-02: holding a tab shows what it can do, above it; choosing opens the
   /// tab and runs the shortcut.
   Future<void> _onNavItemLongPress(MainTab tab, Rect anchor) async {
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     Haptics.longPress();
     final locale = ref.read(localeProvider);
     final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
     final size = overlay.size;
+    final shortcuts = _shortcuts(tab);
+    // Above the tab: a menu goes down from its top unless it doesn't fit.
+    final top = anchor.top - 8 - (shortcuts.length * 48 + 16);
     final chosen = await showMenu<VoidCallback? Function()>(
       context: context,
       useRootNavigator: true,
       color: AppColors.surfaceRaised,
-      elevation: 8,
+      // Lifted by its rim, not a heavy shadow.
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
-        side: const BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.borderGlow),
       ),
-      position: RelativeRect.fromLTRB(anchor.left, anchor.top - 8, size.width - anchor.right, size.height - anchor.top + 8),
+      position: RelativeRect.fromLTRB(anchor.left, top, size.width - anchor.right, size.height - top),
       items: [
-        for (final (icon, label, action) in _shortcuts(tab))
+        for (final (icon, label, action) in shortcuts)
           PopupMenuItem(
             value: action,
             height: 48,
@@ -533,8 +593,53 @@ class MainTabsScope extends InheritedWidget {
 
 /// The four tabs (Home, Search, Explore, Library), the first page of the
 /// shell navigator; detail pages are pushed over them.
-class MainTabsView extends StatelessWidget {
+///
+/// Home is built at once. The others are built in the background a little
+/// after the app settles, one per idle frame, hidden and muted: the first
+/// time one is opened it's ready, with nothing heavy to build in the frame
+/// of the change.
+class MainTabsView extends StatefulWidget {
   const MainTabsView({super.key});
+
+  /// How long after the first frame the other tabs start being built, and
+  /// the pause between one and the next.
+  static const Duration warmUpAfter = Duration(milliseconds: 2500);
+  static const Duration warmUpStep = Duration(milliseconds: 300);
+
+  @override
+  State<MainTabsView> createState() => _MainTabsViewState();
+}
+
+class _MainTabsViewState extends State<MainTabsView> {
+  Timer? _warmUp;
+
+  @override
+  void initState() {
+    super.initState();
+    _warmUp = Timer(MainTabsView.warmUpAfter, _warmNext);
+  }
+
+  /// Builds the next tab not built yet while nothing is moving (no
+  /// animation running), then the next a moment later. If something is
+  /// moving, it waits and looks again.
+  void _warmNext() {
+    if (!mounted) return;
+    final scope = MainTabsScope.of(context);
+    final next = MainTab.values.where((t) => !scope.loadedTabs.contains(t)).firstOrNull;
+    if (next == null) return;
+    if (SchedulerBinding.instance.transientCallbackCount > 0) {
+      _warmUp = Timer(MainTabsView.warmUpStep, _warmNext);
+      return;
+    }
+    setState(() => scope.loadedTabs.add(next));
+    _warmUp = Timer(MainTabsView.warmUpStep, _warmNext);
+  }
+
+  @override
+  void dispose() {
+    _warmUp?.cancel();
+    super.dispose();
+  }
 
   Widget _screen(MainTab tab) => switch (tab) {
         MainTab.home => const HomeScreen(),
@@ -565,4 +670,49 @@ class MainTabsView extends StatelessWidget {
       },
     );
   }
+}
+
+/// The page's MediaQuery under the dock: its bottom padding is the dock's
+/// height. Its own small widget, the only one here that follows the
+/// keyboard frame by frame (the pages below need its height; the shell
+/// around doesn't).
+class _PageInsets extends StatelessWidget {
+  const _PageInsets({required this.bottom, required this.child});
+
+  final double bottom;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(
+        padding: media.padding.copyWith(bottom: bottom),
+        viewPadding: media.viewPadding.copyWith(bottom: bottom),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// The dock's glass, glowing in the player's colour as it fades from one
+/// song's to the next.
+class _DockGlass extends StatelessWidget {
+  final bool hasTrack;
+  final Widget child;
+
+  const _DockGlass({required this.hasTrack, required this.child});
+
+  @override
+  Widget build(BuildContext context) => FrostedGlass(
+        key: MainNavigationScreen.dockKey,
+        color: AppColors.surface,
+        fill: AppGlass.barFill,
+        sheen: false,
+        shadow: hasTrack,
+        shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        border: FrostedGlass.showsThrough(context) ? null : Border.all(color: AppColors.border),
+        child: child,
+      );
 }

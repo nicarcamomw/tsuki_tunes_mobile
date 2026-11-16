@@ -301,7 +301,7 @@ class _DateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = locale.strings;
-    final reduce = MediaQuery.of(context).disableAnimations;
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.page, 22, AppSpacing.page, 8),
       child: Row(

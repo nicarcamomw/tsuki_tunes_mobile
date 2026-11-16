@@ -402,7 +402,7 @@ class _RadarSweepState extends State<_RadarSweep>
   }
 
   void _sync() {
-    final reduce = MediaQuery.of(context).disableAnimations;
+    final reduce = MediaQuery.disableAnimationsOf(context);
     if (widget.active && !reduce) {
       if (!_spin.isAnimating) _spin.repeat();
     } else {

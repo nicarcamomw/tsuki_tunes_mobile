@@ -37,16 +37,25 @@ class PlaybackSourceBadge extends ConsumerWidget {
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: locale.getTextStyle(fontSize: AppFontSize.micro, color: PlayerTint.of(context), letterSpacing: 2),
+          // On a narrow phone (360 dp) it shrinks a little to fit between
+          // the two buttons beside it, instead of pushing one off screen.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            // Its own context: the label follows the colour's fade between
+            // songs, the tap area around it isn't rebuilt each frame.
+            child: Builder(
+              builder: (context) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: locale.getTextStyle(fontSize: AppFontSize.micro, color: PlayerTint.of(context), letterSpacing: 2),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.info_outline_rounded, size: 11, color: PlayerTint.of(context).withValues(alpha: 0.7)),
+                ],
               ),
-              const SizedBox(width: 4),
-              Icon(Icons.info_outline_rounded, size: 11, color: PlayerTint.of(context).withValues(alpha: 0.7)),
-            ],
+            ),
           ),
         ),
       ),

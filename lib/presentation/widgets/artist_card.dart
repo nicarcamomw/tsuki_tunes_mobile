@@ -28,7 +28,7 @@ class ArtistCard extends ConsumerWidget {
     return TapScale(
       semanticLabel: '${artist.name}, ${locale.strings.tabArtists}',
       onTap: () {
-        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
         ArtistRoute(id: artist.id, $extra: artist).push(context);
       },
       scaleDown: 0.95,

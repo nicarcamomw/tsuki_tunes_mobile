@@ -64,7 +64,12 @@ class ExpandedPlayerScreen extends ConsumerStatefulWidget {
 
 class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
     with SingleTickerProviderStateMixin {
-  double _dragDy = 0;
+  /// How far the player is pulled down. Only the [Transform] that moves
+  /// it listens: following the finger (or springing back) then moves the
+  /// screen as it is, without rebuilding the cover, the controls and the
+  /// lyrics every frame.
+  final ValueNotifier<double> _drag = ValueNotifier(0);
+  double get _dragDy => _drag.value;
   bool _reduceMotion = false;
   _CenterViewMode _viewMode = _CenterViewMode.artwork;
   late final AnimationController _snapBack;
@@ -80,20 +85,19 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
       duration: AppMotion.normal,
     );
     _snapAnimation = const AlwaysStoppedAnimation(0.0);
-    _snapBack.addListener(() {
-      setState(() => _dragDy = _snapAnimation.value);
-    });
+    _snapBack.addListener(() => _drag.value = _snapAnimation.value);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
   }
 
   @override
   void dispose() {
     _snapBack.dispose();
+    _drag.dispose();
     _lyrics.dispose();
     super.dispose();
   }
@@ -123,7 +127,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
         n.dragDetails != null &&
         n.overscroll < 0) {
       _snapBack.stop();
-      setState(() => _dragDy = (_dragDy - n.overscroll * 0.6).clamp(0, 400));
+      _drag.value = (_dragDy - n.overscroll * 0.6).clamp(0, 400);
     } else if (n is ScrollEndNotification && _dragDy > 0) {
       _onVerticalDragEnd(
         DragEndDetails(primaryVelocity: n.dragDetails?.primaryVelocity ?? 0),
@@ -144,7 +148,12 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
         final bottom = MediaQuery.paddingOf(context).bottom;
         return NotificationListener<ScrollNotification>(
           onNotification: _onPageScroll,
-          child: SingleChildScrollView(
+          // No stretch: pulling down at the top moves the whole player
+          // (above); stretching the page too was two answers to one pull,
+          // and the stretch's own animation every frame of it.
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+            child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
             child: Column(
               children: [
@@ -161,6 +170,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
               ],
             ),
           ),
+          ),
         );
       },
     );
@@ -168,7 +178,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     if (details.delta.dy > 0 || _dragDy > 0) {
-      setState(() => _dragDy = (_dragDy + details.delta.dy * 0.6).clamp(0, 400));
+      _drag.value = (_dragDy + details.delta.dy * 0.6).clamp(0, 400);
     }
   }
 
@@ -179,7 +189,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
       Navigator.of(context).pop();
     } else {
       if (_reduceMotion) {
-        setState(() => _dragDy = 0);
+        _drag.value = 0;
       } else {
         final startValue = _dragDy;
         _snapAnimation = Tween<double>(begin: startValue, end: 0).animate(
@@ -267,8 +277,9 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
       child: GestureDetector(
         onVerticalDragUpdate: _onVerticalDragUpdate,
         onVerticalDragEnd: _onVerticalDragEnd,
-        child: Transform.translate(
-          offset: Offset(0, _dragDy),
+        child: ValueListenableBuilder<double>(
+          valueListenable: _drag,
+          builder: (context, dy, child) => Transform.translate(offset: Offset(0, dy), child: child),
           child: Scaffold(
             backgroundColor: AppColors.bgDeep,
             body: _CoverBackdrop(child: SafeArea(
@@ -299,7 +310,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       child: RinneganVisualizer(
                         isPlaying: isPlaying,
                         imageUrl: track.coverUrl,
-                        size: MediaQuery.of(context).size.width * 0.72,
+                        size: MediaQuery.sizeOf(context).width * 0.72,
                         trackId: track.id,
                         fullSong: !ref.watch(audioProvider.select((a) => a.canChangeTempo)),
                         position: () => audio.position,
@@ -362,7 +373,7 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       _AmbientButton(locale: locale),
                       // The whole song or a 30 s preview (what really
                       // plays, not whether Spotify is on); tap for why.
-                      const PlaybackSourceBadge(),
+                      const Flexible(child: PlaybackSourceBadge()),
                       _SleepTimerButton(audio: audio, locale: locale),
                     ],
                   ),
@@ -418,19 +429,23 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      track.albumTitle.isNotEmpty
-                          ? track.albumTitle
-                          : (track.artistName.isNotEmpty
-                              ? track.artistName
-                              : 'DEEZER PREVIEW'),
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
-                        fontWeight: FontWeight.w700,
-                        color: PlayerTint.textOf(context),
+                    // Its own context: only this name follows the colour's
+                    // fade between songs, not the whole player.
+                    Builder(
+                      builder: (context) => Text(
+                        track.albumTitle.isNotEmpty
+                            ? track.albumTitle
+                            : (track.artistName.isNotEmpty
+                                ? track.artistName
+                                : 'DEEZER PREVIEW'),
+                        style: locale.getTextStyle(
+                          fontSize: AppFontSize.caption,
+                          fontWeight: FontWeight.w700,
+                          color: PlayerTint.textOf(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

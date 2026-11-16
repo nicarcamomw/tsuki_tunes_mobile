@@ -1,70 +1,63 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/fade_indexed_stack.dart';
 
-/// A tab with an endless animation (like the orb or a visualizer) that
-/// counts the frames it gets.
-class _Spinner extends StatefulWidget {
-  const _Spinner(this.ticks);
-  final List<int> ticks;
-
+/// A tab that counts its taps, to see it keep its state.
+class _Counter extends StatefulWidget {
+  const _Counter(this.name);
+  final String name;
   @override
-  State<_Spinner> createState() => _SpinnerState();
+  State<_Counter> createState() => _CounterState();
 }
 
-class _SpinnerState extends State<_Spinner> with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-
+class _CounterState extends State<_Counter> {
+  int taps = 0;
   @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(seconds: 1))
-      ..addListener(() => widget.ticks[0]++)
-      ..repeat();
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox();
+  Widget build(BuildContext context) => Center(
+        child: TextButton(onPressed: () => setState(() => taps++), child: Text('${widget.name} $taps')),
+      );
 }
 
 void main() {
-  Widget tabs(int index, List<int> first, List<int> second) => Directionality(
-        textDirection: TextDirection.ltr,
-        child: FadeIndexedStack(
-          index: index,
-          duration: const Duration(milliseconds: 100),
-          children: [_Spinner(first), _Spinner(second)],
-        ),
-      );
+  Future<void> pump(WidgetTester tester, int index) => tester.pumpWidget(MaterialApp(
+        home: FadeIndexedStack(index: index, children: const [_Counter('A'), _Counter('B')]),
+      ));
 
-  testWidgets("a hidden tab's animations stop, and run again when it's shown", (tester) async {
-    final home = [0], search = [0];
-    await tester.pumpWidget(tabs(0, home, search));
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(home[0], greaterThan(0));
-    expect(search[0], 0, reason: 'the search tab is hidden');
+  double opacityOf(WidgetTester tester, String text) {
+    final fade = tester.widget<FadeTransition>(
+        find.ancestor(of: find.text(text, skipOffstage: false), matching: find.byType(FadeTransition)).first);
+    return fade.opacity.value;
+  }
 
-    // Switch to search; once the fade is over, home stops.
-    await tester.pumpWidget(tabs(1, home, search));
-    await tester.pump(const Duration(milliseconds: 150));
+  bool offstage(WidgetTester tester, String text) => tester
+      .widget<Offstage>(find.ancestor(of: find.text(text, skipOffstage: false), matching: find.byType(Offstage)).first)
+      .offstage;
+
+  testWidgets('changing tabs: the old one goes at once, only the new one fades in (one layer, not two)', (tester) async {
+    await pump(tester, 0);
+    await pump(tester, 1);
     await tester.pump(const Duration(milliseconds: 50));
-    final homeAfterFade = home[0];
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(home[0], homeAfterFade, reason: 'home is hidden now');
-    expect(search[0], greaterThan(0));
+    expect(offstage(tester, 'A 0'), isTrue, reason: 'no cross-fade of two whole screens');
+    expect(opacityOf(tester, 'B 0'), inExclusiveRange(0, 1));
+    await tester.pumpAndSettle();
+    expect(opacityOf(tester, 'B 0'), 1);
+  });
 
-    // Back to home: it picks up again.
-    await tester.pumpWidget(tabs(0, home, search));
-    await tester.pump(const Duration(milliseconds: 150));
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(home[0], greaterThan(homeAfterFade));
+  testWidgets('a tab keeps its state while hidden', (tester) async {
+    await pump(tester, 0);
+    await tester.tap(find.text('A 0'));
+    await tester.pump();
+    await pump(tester, 1);
+    await tester.pumpAndSettle();
+    await pump(tester, 0);
+    await tester.pumpAndSettle();
+    expect(find.text('A 1'), findsOneWidget);
+  });
+
+  testWidgets('hidden tabs are muted: their animations don\'t ask for frames', (tester) async {
+    await pump(tester, 1);
+    await tester.pumpAndSettle();
+    final hidden = tester.element(find.text('A 0', skipOffstage: false));
+    expect(TickerMode.valuesOf(hidden).enabled, isFalse);
   });
 }

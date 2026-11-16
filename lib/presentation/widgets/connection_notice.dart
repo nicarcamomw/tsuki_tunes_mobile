@@ -21,6 +21,13 @@ class ConnectionNotice extends StatefulWidget {
   /// How long "back online" stays before the pill leaves.
   static const Duration backFor = Duration(milliseconds: 2400);
 
+  /// Whether the pill is showing: the app-wide banners (a mask, a level, a
+  /// birthday) sit below it instead of on top of it.
+  static final ValueNotifier<bool> visible = ValueNotifier(false);
+
+  /// How far below the top the pill reaches, for those banners.
+  static const double clearance = 46;
+
   @override
   State<ConnectionNotice> createState() => _ConnectionNoticeState();
 }
@@ -48,6 +55,10 @@ class _ConnectionNoticeState extends State<ConnectionNotice> {
   @override
   void dispose() {
     _leave?.cancel();
+    // After this frame: the tree is locked while it's torn down.
+    if (ConnectionNotice.visible.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => ConnectionNotice.visible.value = false);
+    }
     super.dispose();
   }
 
@@ -55,6 +66,9 @@ class _ConnectionNoticeState extends State<ConnectionNotice> {
   Widget build(BuildContext context) {
     final strings = widget.locale.strings;
     final shown = !widget.online || _back;
+    if (ConnectionNotice.visible.value != shown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => ConnectionNotice.visible.value = shown);
+    }
     final still = reduceMotion(context);
     final (icon, color, text) = widget.online
         ? (Icons.wifi_rounded, AppColors.success, strings.backOnline)

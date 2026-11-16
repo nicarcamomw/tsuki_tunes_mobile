@@ -173,6 +173,14 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     final empty = MockClient((_) async => http.Response('{"data":[]}', 200));
 
+    test('closed before its history has loaded (a screen gone at once): nothing breaks', () async {
+      SharedPreferences.setMockInitialValues({'search_history': ['deftones']});
+      final search = SearchProvider(fuzzyArtistNames: (_) async => const []);
+      search.dispose();
+      // The history landing after it's gone is dropped, not announced.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    });
+
     test('a search with no results offers the closest name the user knows',
         () async {
       SharedPreferences.setMockInitialValues({});

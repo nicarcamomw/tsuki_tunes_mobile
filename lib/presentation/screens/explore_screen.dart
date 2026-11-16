@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/logger.dart';
@@ -334,7 +333,7 @@ class _Header extends StatelessWidget {
               strings.exploreTelemetry,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.notoSansJp(
+              style: const TextStyle(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w700,
                 color: AppColors.accentText,

@@ -149,3 +149,14 @@ abstract final class AppGlass {
   /// The soft shadow that lifts it off the page.
   static const double shadow = 0.35;
 }
+
+/// The typefaces, bundled with the app (never fetched: nothing to wait for
+/// on first launch, nothing that jumps when it arrives).
+abstract final class AppFonts {
+  /// The interface: Plus Jakarta Sans, 300 to 800. Japanese falls back to
+  /// the system's Noto Sans CJK, the same family the design uses.
+  static const String jakarta = 'PlusJakartaSans';
+
+  /// Google's own sign-in button wants Roboto: Android's system font.
+  static const String roboto = 'Roboto';
+}

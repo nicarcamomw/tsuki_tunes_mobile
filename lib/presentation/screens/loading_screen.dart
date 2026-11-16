@@ -72,7 +72,10 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
   final ValueNotifier<double> _time = ValueNotifier(0);
   // The ring's turn: one every 16 s.
   final ValueNotifier<double> _rotation = ValueNotifier(0);
+  Duration _lastSky = Duration.zero;
   late final Ticker _ticker = createTicker((elapsed) {
+    if (!ambientDue(elapsed, _lastSky)) return;
+    _lastSky = elapsed;
     _time.value = elapsed.inMicroseconds / 1e6;
     _rotation.value = _time.value / 16 * 2 * math.pi;
   });

@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -137,7 +136,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       text: query,
       selection: TextSelection.collapsed(offset: query.length),
     );
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     final search = ref.read(searchProvider);
     if (_selectedTabIndex == 4) {
       search.searchLyrics(query);
@@ -185,7 +184,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Future<void> _startVoiceSearch() async {
     Haptics.tap();
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     final locale = ref.read(localeProvider);
     final audio = ref.read(audioProvider);
     final search = ref.read(searchProvider);
@@ -274,7 +273,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       behavior: HitTestBehavior.translucent,
       // Only closes the keyboard: nothing for screen readers.
         excludeFromSemantics: true,
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: AppColors.bgDeep,
         body: Center(
@@ -325,7 +324,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     // Flavour, not information: screen readers skip it.
                     ExcludeSemantics(child: Text(
                       strings.searchTelemetry,
-                      style: GoogleFonts.notoSansJp(
+                      style: const TextStyle(
                         fontSize: AppFontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentText,
@@ -410,7 +409,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         label: tabs[index],
                         selected: _selectedTabIndex == index,
                         onTap: () {
-                          FocusScope.of(context).unfocus();
+                          FocusManager.instance.primaryFocus?.unfocus();
                           final prev = _selectedTabIndex;
                           setState(() => _selectedTabIndex = index);
                           if (index == 4 && prev != 4) {

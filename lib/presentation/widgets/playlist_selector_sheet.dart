@@ -39,7 +39,7 @@ class _PlaylistSelectorContent extends ConsumerWidget {
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

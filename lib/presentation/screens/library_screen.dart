@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -60,6 +59,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   List<ListenedTrackData>? _songTracksOf;
   List<Track> _songTracks = const [];
   int _visibleCount = 50;
+
+  // How many albums the last build had to show, and whether a page has been
+  // asked for since: near the end of the list a scroll ticks every frame,
+  // and each tick used to add 50 and rebuild the whole screen, even with
+  // every album already shown.
+  int _albumsAvailable = 0;
+  bool _pageAsked = false;
   final Set<String> _expandedAlbums = {};
   bool _hasError = false;
 
@@ -80,7 +86,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (!scrollController.hasClients) return;
     final maxScroll = scrollController.position.maxScrollExtent;
     final currentScroll = scrollController.offset;
-    if (currentScroll >= maxScroll - 200) {
+    if (currentScroll >= maxScroll - 200 && !_pageAsked && _visibleCount < _albumsAvailable) {
+      _pageAsked = true;
       setState(() => _visibleCount += 50);
     }
   }
@@ -138,6 +145,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
     // Paginate
     final visible = albumGroups.take(_visibleCount).toList();
+    _albumsAvailable = albumGroups.length;
+    _pageAsked = false;
 
     return Scaffold(
       backgroundColor: AppColors.bgDeep,
@@ -189,7 +198,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   // Flavour, not information: screen readers skip it.
                   ExcludeSemantics(child: Text(
                     strings.libraryTelemetry,
-                    style: GoogleFonts.notoSansJp(
+                    style: const TextStyle(
                       fontSize: AppFontSize.micro,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accentText,
@@ -518,7 +527,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.4,
+                        height: MediaQuery.sizeOf(context).height * 0.4,
                         child: _hasError
                             ? ErrorState(message: strings.loadError, onRetry: _refreshData)
                             : EmptyState(

@@ -51,7 +51,7 @@ class _OniMaskIconState extends ConsumerState<OniMaskIcon>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       _controller.duration = Duration.zero;
       _controller.reverseDuration = Duration.zero;
     }

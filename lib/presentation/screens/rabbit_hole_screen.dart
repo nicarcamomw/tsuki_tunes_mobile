@@ -178,7 +178,7 @@ class _RabbitHoleScreenState extends ConsumerState<RabbitHoleScreen>
         anim.addStatusListener(onStatus);
       }
     }
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion) {
       _pulse.stop();
     } else if (!_pulse.isAnimating) {
