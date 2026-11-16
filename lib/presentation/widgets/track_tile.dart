@@ -159,16 +159,19 @@ class TrackTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (currentTrackId, isAudioPlaying) = ref.watch(audioProvider.select(
-        (a) => (a.currentTrack?.id, a.isPlaying)));
+    // Only whether *this* song is the one playing: a pause, a play or the
+    // next song then rebuilds the rows that change, not every row on
+    // screen.
+    final (isCurrent, isPlaying) = ref.watch(audioProvider.select((a) {
+      final current = a.currentTrack?.id == track.id;
+      return (current, current && a.isPlaying);
+    }));
     final isListened = ref.watch(isTrackListenedProvider(track.id));
     final locale = ref.read(localeProvider);
     // Its Spotify link is looked up while it's on screen, so a tap plays it
-    // at once (once per song; nothing without Spotify).
+    // at once (once per song, inside; nothing without Spotify).
     final audio = ref.read(audioProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) => audio.warmSpotifyUri(track));
-    final isCurrent = currentTrackId == track.id;
-    final isPlaying = isCurrent && isAudioPlaying;
     final strings = locale.strings;
 
     final tile = Semantics(

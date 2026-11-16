@@ -7,11 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/data/repositories/library_repository_impl.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/track.dart';
 import 'package:tsuki_tunes_mobile/domain/logic/playback_source.dart';
+import 'package:tsuki_tunes_mobile/presentation/screens/expanded_player_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/main_navigation_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/track_tile.dart';
 
 import 'helpers/test_scope.dart';
@@ -39,11 +41,23 @@ final _songs = [
 class _Playing extends AudioProvider {
   final ValueNotifier<int> ticks = ValueNotifier(0);
   Duration at = const Duration(seconds: 30);
+  Track playing = _songs.first;
+  bool paused = false;
+
+  void moveToNext() {
+    playing = _songs[(_songs.indexOf(playing) + 1) % _songs.length];
+    notifyListeners();
+  }
+
+  void togglePause() {
+    paused = !paused;
+    notifyListeners();
+  }
 
   @override
-  Track? get currentTrack => _songs.first;
+  Track? get currentTrack => playing;
   @override
-  bool get isPlaying => true;
+  bool get isPlaying => !paused;
   @override
   Duration get position => at;
   @override
@@ -199,6 +213,120 @@ void main() {
         expect(counts[untouched] ?? 0, 0, reason: '$untouched rebuilt on a tab change: ${top(counts)}');
       }
       await tester.pump(const Duration(seconds: 1));
+    });
+  });
+
+  testWidgets('pause, play, next song: only the rows whose state changes are rebuilt', (tester) async {
+    await run(tester, list, () async {
+      final counts = await countRebuilds(() async {
+        audio.togglePause();
+        await tester.pump(const Duration(milliseconds: 16));
+        audio.togglePause();
+        await tester.pump(const Duration(milliseconds: 16));
+        audio.moveToNext();
+        await tester.pump(const Duration(milliseconds: 16));
+      });
+      debugPrint('ROWS ${counts['TrackTile']}: ${top(counts)}');
+      // Pause and play touch the playing row; the next song, the two that
+      // swap. Not every row on screen each time.
+      expect(counts['TrackTile'] ?? 0, lessThanOrEqualTo(4), reason: top(counts));
+    });
+  });
+
+  testWidgets('dragging the player down to close it: it moves, nothing in it is rebuilt', (tester) async {
+    tester.view.physicalSize = const Size(400 * 2, 860 * 2);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => library),
+          connectivityProvider.overrideWith((ref) => _Online()),
+          audioProvider.overrideWith((ref) => audio),
+          playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
+          playerBackgroundColorProvider.overrideWithValue(null),
+          playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
+        ],
+        child: const MaterialApp(home: ExpandedPlayerScreen()),
+      ));
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
+      // What the player redraws on its own (the disc turning), to tell
+      // apart from what the drag adds.
+      final idle = await countRebuilds(() async {
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      });
+      final gesture = await tester.startGesture(const Offset(200, 60));
+      await gesture.moveBy(const Offset(0, 30));
+      await tester.pump(const Duration(milliseconds: 16));
+      final pulling = await countRebuilds(() async {
+        for (var i = 0; i < 6; i++) {
+          await gesture.moveBy(const Offset(0, 8));
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      });
+      // Let go short of closing: it springs back.
+      final springing = await countRebuilds(() async {
+        await gesture.up();
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      });
+      final perFrame = total(idle) / 6;
+      debugPrint('IDLE ${total(idle)}: ${top(idle)}');
+      debugPrint('PULL ${total(pulling)}: ${top(pulling)}');
+      debugPrint('SPRING ${total(springing)}: ${top(springing)}');
+      // Only the offset follows the finger: one widget a frame on top of
+      // what it already redraws, not the cover, the controls and the lyrics.
+      expect(total(pulling) - 6 * perFrame, lessThanOrEqualTo(6 * 1), reason: top(pulling));
+      expect(total(springing) - 20 * perFrame, lessThanOrEqualTo(20 * 1), reason: top(springing));
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 15));
+    }, () => MockClient((_) async => http.Response('{"data":[]}', 200)));
+  });
+
+  testWidgets('swiping or lifting the mini player: it moves, its cover, title and buttons aren\'t rebuilt', (tester) async {
+    await run(tester, list, () async {
+      final mini = tester.getCenter(find.byType(MiniPlayer));
+      Future<Map<String, int>> drag(Offset step) async {
+        final gesture = await tester.startGesture(mini);
+        await gesture.moveBy(step * 3);
+        await tester.pump(const Duration(milliseconds: 16));
+        final counts = await countRebuilds(() async {
+          for (var i = 0; i < 6; i++) {
+            await gesture.moveBy(step);
+            await tester.pump(const Duration(milliseconds: 16));
+          }
+        });
+        // Slowly back where it started, and let go: nothing happens; it
+        // settles before the next drag.
+        for (var i = 0; i < 9; i++) {
+          await gesture.moveBy(-step);
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        await gesture.up();
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        return counts;
+      }
+
+      final sideways = await drag(const Offset(-6, 0));
+      final up = await drag(const Offset(0, -4));
+      debugPrint('SWIPE ${total(sideways)}: ${top(sideways)}');
+      debugPrint('LIFT ${total(up)}: ${top(up)}');
+      for (final counts in [sideways, up]) {
+        for (final heavy in ['MiniPlayer', 'TapScale', 'CachedNetworkImage', 'OniMaskIcon', 'AnimatedSwitcher']) {
+          expect(counts[heavy] ?? 0, 0, reason: '$heavy rebuilt as the row moved: ${top(counts)}');
+        }
+      }
+      // Sideways, only the hint of the song it goes to follows the finger;
+      // lifting, only the row's offset.
+      expect(total(sideways), lessThanOrEqualTo(6 * 6), reason: top(sideways));
+      expect(total(up), lessThanOrEqualTo(6 * 1), reason: top(up));
     });
   });
 }

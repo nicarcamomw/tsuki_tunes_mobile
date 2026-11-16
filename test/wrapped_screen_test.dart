@@ -172,4 +172,29 @@ void main() {
     expect(find.text('2026'), findsOneWidget);
     expect(find.text('¿Listo para revivir tu año?'), findsOneWidget);
   });
+
+  testWidgets('pulling it down to close: the slide moves without being rebuilt', (tester) async {
+    await pump(tester, _data(month: 9));
+    final gesture = await tester.startGesture(const Offset(200, 400));
+    await gesture.moveBy(const Offset(0, 30));
+    await tester.pump(const Duration(milliseconds: 16));
+    final counts = <String, int>{};
+    debugOnRebuildDirtyWidget = (element, _) {
+      final name = element.widget.runtimeType.toString();
+      counts[name] = (counts[name] ?? 0) + 1;
+    };
+    for (var i = 0; i < 6; i++) {
+      await gesture.moveBy(const Offset(0, 8));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    debugOnRebuildDirtyWidget = null;
+    // Not far enough: it comes back.
+    await gesture.moveBy(const Offset(0, -60));
+    await gesture.up();
+    await tester.pump();
+    for (final heavy in ['WrappedScreen', 'PageView', 'Text']) {
+      expect(counts[heavy] ?? 0, 0, reason: '$heavy rebuilt as it was pulled: $counts');
+    }
+    expect(find.byType(WrappedScreen), findsOneWidget);
+  });
 }

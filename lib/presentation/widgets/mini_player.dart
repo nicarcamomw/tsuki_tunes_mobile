@@ -54,10 +54,14 @@ class MiniPlayer extends ConsumerStatefulWidget {
 }
 
 class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProviderStateMixin {
-  double _swipeDx = 0;
-  // The row lifted (negative, towards the player) or pulled down (towards
-  // stopping).
-  double _liftDy = 0;
+  // How far the row is swiped sideways, and lifted (negative, towards the
+  // player) or pulled down (towards stopping). Only what moves listens:
+  // following the finger doesn't rebuild the cover, the title and the
+  // buttons every frame.
+  final ValueNotifier<double> _swipe = ValueNotifier(0);
+  final ValueNotifier<double> _lift = ValueNotifier(0);
+  double get _swipeDx => _swipe.value;
+  double get _liftDy => _lift.value;
   bool _swipeLocked = false;
   bool _hapticFired = false;
   int _skipDirection = 1;
@@ -73,12 +77,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
   void initState() {
     super.initState();
     _springCtrl = AnimationController.unbounded(vsync: this, value: 0)
-      ..addListener(() => setState(() => _swipeDx = _springCtrl.value));
+      ..addListener(() => _swipe.value = _springCtrl.value);
   }
 
   @override
   void dispose() {
     _springCtrl.dispose();
+    _swipe.dispose();
+    _lift.dispose();
     super.dispose();
   }
 
@@ -89,15 +95,13 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     if (_swipeLocked) return;
-    setState(() {
-      _swipeDx = (_swipeDx + details.delta.dx).clamp(-160.0, 160.0);
-      if (!_hapticFired && _swipeDx.abs() > _swipeThreshold) {
-        _hapticFired = true;
-        Haptics.threshold();
-      } else if (_hapticFired && _swipeDx.abs() < _swipeThreshold * 0.6) {
-        _hapticFired = false;
-      }
-    });
+    _swipe.value = (_swipeDx + details.delta.dx).clamp(-160.0, 160.0);
+    if (!_hapticFired && _swipeDx.abs() > _swipeThreshold) {
+      _hapticFired = true;
+      Haptics.threshold();
+    } else if (_hapticFired && _swipeDx.abs() < _swipeThreshold * 0.6) {
+      _hapticFired = false;
+    }
   }
 
   void _onHorizontalDragEnd(DragEndDetails details, AudioProvider audio) {
@@ -118,7 +122,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
-    setState(() => _liftDy = (_liftDy + details.delta.dy * 0.5).clamp(-_openLift * 1.4, _dismissPull * 1.3));
+    _lift.value = (_liftDy + details.delta.dy * 0.5).clamp(-_openLift * 1.4, _dismissPull * 1.3);
   }
 
   void _onVerticalDragEnd(DragEndDetails details, AudioProvider audio) {
@@ -130,7 +134,7 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
       unawaited(_stopWithUndo(audio));
       return;
     }
-    setState(() => _liftDy = 0);
+    _lift.value = 0;
   }
 
   /// Stops, and offers to bring it all back: the song, its queue and where
@@ -258,9 +262,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
     final locale = ref.read(localeProvider);
     final strings = locale.strings;
     final coverBackground = ref.watch(playerBackgroundColorProvider);
-    final swipeOpacity = (1 - (_swipeDx.abs() / 200)).clamp(0.3, 1.0);
-    // Pulled down towards stopping, the row fades.
-    final pullOpacity = 1 - (_liftDy.clamp(0.0, _dismissPull) / _dismissPull) * 0.6;
     // A 30 s preview is said after the artist; tinted when it's a surprise
     // (Spotify connected but falling back), quiet when it's the usual.
     final preview = !ref.watch(playbackSourceProvider.select((s) => s.isFullSong));
@@ -291,11 +292,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
           onHorizontalDragEnd: (d) => _onHorizontalDragEnd(d, audio),
           // On the dock's glass: the cover's colour seeps in from the
           // artwork's side.
-          child: Transform.translate(
-            offset: Offset(0, _liftDy),
-            child: Opacity(
-              opacity: pullOpacity,
-              child: AnimatedContainer(
+          child: ValueListenableBuilder<double>(
+            valueListenable: _lift,
+            builder: (context, dy, child) => Transform.translate(
+              offset: Offset(0, dy),
+              // Pulled down towards stopping, the row fades.
+              child: Opacity(opacity: 1 - (dy.clamp(0.0, _dismissPull) / _dismissPull) * 0.6, child: child),
+            ),
+            child: AnimatedContainer(
                 duration: AnimatedPlayerTint.duration,
                 curve: Curves.easeOut,
                 decoration: BoxDecoration(
@@ -318,26 +322,33 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                         children: [
                           // --- Track info (swipeable) ---
                           Expanded(
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // The song a swipe goes to, on its side.
-                                if (hasQueue && _swipeDx != 0)
-                                  Positioned.fill(
-                                    child: _SwipeHint(
-                                      dx: _swipeDx,
-                                      threshold: _swipeThreshold,
-                                      target: _swipeDx < 0 ? audio.nextPreview : audio.previousPreview,
-                                      fromStart: strings.miniFromStart,
-                                      locale: locale,
+                            child: ValueListenableBuilder<double>(
+                              valueListenable: _swipe,
+                              builder: (context, dx, child) => Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // The song a swipe goes to, on its side.
+                                  if (hasQueue && dx != 0)
+                                    Positioned.fill(
+                                      child: _SwipeHint(
+                                        dx: dx,
+                                        threshold: _swipeThreshold,
+                                        target: dx < 0 ? audio.nextPreview : audio.previousPreview,
+                                        fromStart: strings.miniFromStart,
+                                        locale: locale,
+                                      ),
+                                    ),
+                                  Transform.translate(
+                                    offset: Offset(dx * 0.3, 0),
+                                    // Opacity at 1.0 adds no layer.
+                                    child: Opacity(
+                                      opacity: 1.0 - (1.0 - (1 - (dx.abs() / 200)).clamp(0.3, 1.0)) * 0.7,
+                                      child: child,
                                     ),
                                   ),
-                                Transform.translate(
-                                  offset: Offset(_swipeDx * 0.3, 0),
-                                  // Opacity at 1.0 adds no layer.
-                                  child: Opacity(
-                                    opacity: 1.0 - (1.0 - swipeOpacity) * 0.7,
-                                    child: AnimatedSwitcher(
+                                ],
+                              ),
+                              child: AnimatedSwitcher(
                                       duration: AppMotion.normal,
                                       switchInCurve: Curves.easeOutCubic,
                                       switchOutCurve: Curves.easeInCubic,
@@ -400,9 +411,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                                         ],
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -470,7 +478,6 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                   ],
                 ),
               ),
-            ),
           ),
         ),
       ),

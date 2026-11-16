@@ -58,7 +58,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   final AudioPlayer _preview = AudioPlayer();
   String? _playingId;
   bool _paused = false;
-  double _drag = 0;
+  // How far the top card is dragged. Only the cards' movement and the
+  // stamp listen: following the finger doesn't rebuild the screen (both
+  // cards, the buttons) every frame.
+  final ValueNotifier<double> _drag = ValueNotifier(0);
   bool _flying = false;
 
   @override
@@ -73,6 +76,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   @override
   void dispose() {
     unawaited(_preview.dispose());
+    _drag.dispose();
     super.dispose();
   }
 
@@ -101,18 +105,14 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   Future<void> _answer(DiscoveryCard card, {required bool liked}) async {
     if (_flying) return;
     liked ? Haptics.confirm() : Haptics.selection();
-    setState(() {
-      _flying = true;
-      _drag = liked ? 600 : -600;
-    });
+    setState(() => _flying = true);
+    _drag.value = liked ? 600 : -600;
     await Future<void>.delayed(const Duration(milliseconds: 220));
     if (!mounted) return;
     final deck = ref.read(discoveryProvider);
     deck.answer(card, liked: liked);
-    setState(() {
-      _flying = false;
-      _drag = 0;
-    });
+    setState(() => _flying = false);
+    _drag.value = 0;
     if (liked) unawaited(_save(card.track));
   }
 
@@ -164,62 +164,70 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       );
     } else {
       final next = cards.length > 1 ? cards[1] : null;
-      final progress = (_drag / 120).clamp(-1.0, 1.0);
+      // Built once per card; the drag only moves them.
+      final topCard = _SongCard(card: top, locale: locale);
+      final nextCard = next == null ? null : Opacity(opacity: 0.6, child: _SongCard(card: next, locale: locale));
       body = Column(
         children: [
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.page, 8, AppSpacing.page, 12),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (next != null)
-                    Transform.scale(
-                      scale: 0.92 + 0.06 * progress.abs(),
-                      child: Opacity(opacity: 0.6, child: _SongCard(card: next, locale: locale)),
-                    ),
-                  GestureDetector(
-                    onHorizontalDragUpdate: (d) => setState(() => _drag += d.delta.dx),
-                    onHorizontalDragEnd: (d) {
-                      final v = d.primaryVelocity ?? 0;
-                      if (_drag > 110 || v > 900) {
-                        unawaited(_answer(top, liked: true));
-                      } else if (_drag < -110 || v < -900) {
-                        unawaited(_answer(top, liked: false));
-                      } else {
-                        setState(() => _drag = 0);
-                      }
-                    },
-                    child: AnimatedContainer(
-                      duration: _flying || _drag == 0 ? AppMotion.fast : Duration.zero,
-                      curve: Curves.easeOut,
-                      transform: Matrix4.identity()
-                        ..translateByDouble(_drag, 0, 0, 1)
-                        ..rotateZ(_drag / 900 * math.pi / 6),
-                      transformAlignment: Alignment.bottomCenter,
-                      child: Stack(
-                        children: [
-                          _SongCard(card: top, locale: locale),
-                          // What letting go does, as it's being dragged.
-                          if (progress.abs() > 0.15)
-                            Positioned(
-                              top: 24,
-                              left: progress > 0 ? 20 : null,
-                              right: progress < 0 ? 20 : null,
-                              child: Opacity(
-                                opacity: progress.abs(),
-                                child: _Stamp(
-                                  text: progress > 0 ? strings.discoverySave : strings.discoveryPass,
-                                  color: progress > 0 ? AppColors.success : AppColors.accent,
-                                  locale: locale,
+              child: ValueListenableBuilder<double>(
+                valueListenable: _drag,
+                builder: (context, drag, _) {
+                  final progress = (drag / 120).clamp(-1.0, 1.0);
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (nextCard != null)
+                        Transform.scale(
+                          scale: 0.92 + 0.06 * progress.abs(),
+                          child: nextCard,
+                        ),
+                      GestureDetector(
+                        onHorizontalDragUpdate: (d) => _drag.value += d.delta.dx,
+                        onHorizontalDragEnd: (d) {
+                          final v = d.primaryVelocity ?? 0;
+                          if (_drag.value > 110 || v > 900) {
+                            unawaited(_answer(top, liked: true));
+                          } else if (_drag.value < -110 || v < -900) {
+                            unawaited(_answer(top, liked: false));
+                          } else {
+                            _drag.value = 0;
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: _flying || drag == 0 ? AppMotion.fast : Duration.zero,
+                          curve: Curves.easeOut,
+                          transform: Matrix4.identity()
+                            ..translateByDouble(drag, 0, 0, 1)
+                            ..rotateZ(drag / 900 * math.pi / 6),
+                          transformAlignment: Alignment.bottomCenter,
+                          child: Stack(
+                            children: [
+                              topCard,
+                              // What letting go does, as it's being dragged.
+                              if (progress.abs() > 0.15)
+                                Positioned(
+                                  top: 24,
+                                  left: progress > 0 ? 20 : null,
+                                  right: progress < 0 ? 20 : null,
+                                  child: Opacity(
+                                    opacity: progress.abs(),
+                                    child: _Stamp(
+                                      text: progress > 0 ? strings.discoverySave : strings.discoveryPass,
+                                      color: progress > 0 ? AppColors.success : AppColors.accent,
+                                      locale: locale,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ),
