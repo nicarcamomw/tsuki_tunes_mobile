@@ -90,7 +90,7 @@ dependencies:
   drift: ^2.35.3
   drift_flutter: ^0.3.1
   collection: ^1.19.1
-  google_mlkit_language_id: ^0.15.1
+  google_mlkit_language_id: ^1.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
