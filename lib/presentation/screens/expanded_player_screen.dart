@@ -429,19 +429,23 @@ class _ExpandedPlayerScreenState extends ConsumerState<ExpandedPlayerScreen>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      track.albumTitle.isNotEmpty
-                          ? track.albumTitle
-                          : (track.artistName.isNotEmpty
-                              ? track.artistName
-                              : 'DEEZER PREVIEW'),
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.caption,
-                        fontWeight: FontWeight.w700,
-                        color: PlayerTint.textOf(context),
+                    // Its own context: only this name follows the colour's
+                    // fade between songs, not the whole player.
+                    Builder(
+                      builder: (context) => Text(
+                        track.albumTitle.isNotEmpty
+                            ? track.albumTitle
+                            : (track.artistName.isNotEmpty
+                                ? track.artistName
+                                : 'DEEZER PREVIEW'),
+                        style: locale.getTextStyle(
+                          fontSize: AppFontSize.caption,
+                          fontWeight: FontWeight.w700,
+                          color: PlayerTint.textOf(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

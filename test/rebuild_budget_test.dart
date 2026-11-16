@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -102,6 +103,15 @@ Future<Map<String, int>> countRebuilds(Future<void> Function() body) async {
   return counts;
 }
 
+/// The player's colour, changeable as a song with another cover starts.
+class _Tint extends Notifier<Color> {
+  @override
+  Color build() => const Color(0xFF8B5CF6);
+  void set(Color c) => state = c;
+}
+
+final _tint = NotifierProvider<_Tint, Color>(_Tint.new);
+
 int total(Map<String, int> m) => m.values.fold(0, (a, b) => a + b);
 
 String top(Map<String, int> m) {
@@ -132,7 +142,7 @@ void main() {
           libraryProvider.overrideWith((ref) => library),
           connectivityProvider.overrideWith((ref) => _Online()),
           audioProvider.overrideWith((ref) => audio),
-          playerTintColorProvider.overrideWithValue(const Color(0xFF8B5CF6)),
+          playerTintColorProvider.overrideWith((ref) => ref.watch(_tint)),
           playerBackgroundColorProvider.overrideWithValue(null),
           playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
         ],
@@ -328,5 +338,72 @@ void main() {
       expect(total(sideways), lessThanOrEqualTo(6 * 6), reason: top(sideways));
       expect(total(up), lessThanOrEqualTo(6 * 1), reason: top(up));
     });
+  });
+
+  testWidgets('the colour fading to the new cover\'s: the mini player is rebuilt once, only the tinted bits follow the fade', (tester) async {
+    await run(tester, list, () async {
+      final container = ProviderScope.containerOf(tester.element(find.byType(MiniPlayer)));
+      final counts = await countRebuilds(() async {
+        container.read(_tint.notifier).set(const Color(0xFF3B82F6));
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      });
+      debugPrint('TINT ${total(counts)}: ${top(counts)}');
+      // The bar, the row's buttons, texts and cover: at most once (as the
+      // colour changes), not on each of the fade's ~30 frames. Only what's
+      // painted in the colour follows it.
+      for (final (heavy, instances) in [
+        ('TsukiNavBar', 1),
+        ('_NavItem', 4),
+        ('TapScale', 7),
+        ('Tooltip', 1),
+        ('OniMaskIcon', 1),
+        ('_MarqueeText', 1),
+        ('_BreathingCover', 1),
+        ('PlayerArtHero', 1),
+      ]) {
+        expect(counts[heavy] ?? 0, lessThanOrEqualTo(instances), reason: '$heavy rebuilt through the fade: ${top(counts)}');
+      }
+      expect(total(counts), lessThan(40 * 20), reason: top(counts));
+    });
+  });
+
+  testWidgets('the colour fading to the new cover\'s in the open player: only what\'s painted in it follows', (tester) async {
+    tester.view.physicalSize = const Size(400 * 2, 860 * 2);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => library),
+          connectivityProvider.overrideWith((ref) => _Online()),
+          audioProvider.overrideWith((ref) => audio),
+          playerTintColorProvider.overrideWith((ref) => ref.watch(_tint)),
+          playerBackgroundColorProvider.overrideWithValue(null),
+          playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
+        ],
+        child: const MaterialApp(home: ExpandedPlayerScreen()),
+      ));
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
+      final container = ProviderScope.containerOf(tester.element(find.byType(ExpandedPlayerScreen)));
+      final counts = await countRebuilds(() async {
+        container.read(_tint.notifier).set(const Color(0xFF3B82F6));
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+      });
+      debugPrint('PLAYER TINT ${total(counts)}: ${top(counts)}');
+      // The screen's layout (top bar, cover, title, controls, lyrics card):
+      // at most once, as the colour changes; not on each frame of the fade.
+      for (final heavy in ['Scaffold', 'LyricsCard', 'Spacer', 'SafeArea', 'InkWell', 'TapScale']) {
+        expect(counts[heavy] ?? 0, lessThanOrEqualTo(8), reason: '$heavy rebuilt through the fade: ${top(counts)}');
+      }
+      expect(total(counts), lessThan(40 * 30), reason: top(counts));
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 15));
+    }, () => MockClient((_) async => http.Response('{"data":[]}', 200)));
   });
 }

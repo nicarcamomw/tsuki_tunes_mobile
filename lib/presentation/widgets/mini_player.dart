@@ -266,8 +266,8 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
     // (Spotify connected but falling back), quiet when it's the usual.
     final preview = !ref.watch(playbackSourceProvider.select((s) => s.isFullSong));
     final hasQueue = audio.queue.length > 1;
-    final tint = PlayerTint.of(context);
-    final iconColor = iconTint(tint);
+    // The colour isn't read here: it fades between songs (a frame at a
+    // time), and only what's painted in it should follow, not the whole row.
 
     return Semantics(
       label: '${track.title}, ${track.fullArtistName}',
@@ -392,17 +392,19 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                                                 const SizedBox(height: 2),
                                                 // One line moves at a time:
                                                 // the artist ends in "…".
-                                                Text(
-                                                  preview
-                                                      ? '${track.fullArtistName}  ·  ${strings.sourcePreviewShort}'
-                                                      : track.fullArtistName,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: locale.getTextStyle(
-                                                    fontSize: AppFontSize.body,
-                                                    color: spotifyFallbackActive
-                                                        ? PlayerTint.textOf(context)
-                                                        : AppColors.textSecondary,
+                                                Builder(
+                                                  builder: (context) => Text(
+                                                    preview
+                                                        ? '${track.fullArtistName}  ·  ${strings.sourcePreviewShort}'
+                                                        : track.fullArtistName,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: locale.getTextStyle(
+                                                      fontSize: AppFontSize.body,
+                                                      color: spotifyFallbackActive
+                                                          ? PlayerTint.textOf(context)
+                                                          : AppColors.textSecondary,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -442,9 +444,11 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                                 children: [
                                   if (isBuffering)
                                     SizedBox.expand(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1.8,
-                                        valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                                      child: Builder(
+                                        builder: (context) => CircularProgressIndicator(
+                                          strokeWidth: 1.8,
+                                          valueColor: AlwaysStoppedAnimation<Color>(iconTint(PlayerTint.of(context))),
+                                        ),
                                       ),
                                     ),
                                   AnimatedSwitcher(
@@ -454,11 +458,14 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer> with SingleTickerProvid
                                       turns: Tween(begin: -0.12, end: 0.0).animate(a),
                                       child: ScaleTransition(scale: a, child: child),
                                     ),
-                                    child: Icon(
-                                      isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                                    // Only the icon follows the colour's fade.
+                                    child: Builder(
                                       key: ValueKey(isPlaying),
-                                      size: isBuffering ? 26 : 32,
-                                      color: iconColor.withValues(alpha: isBuffering ? 0.5 : 1),
+                                      builder: (context) => Icon(
+                                        isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                                        size: isBuffering ? 26 : 32,
+                                        color: iconTint(PlayerTint.of(context)).withValues(alpha: isBuffering ? 0.5 : 1),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -598,27 +605,27 @@ class _BreathingCoverState extends State<_BreathingCover>
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
                           Container(color: AppColors.bgMid),
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppColors.bgMid,
-                        child: Icon(
-                          Icons.music_note_rounded,
-                          color: PlayerTint.of(context),
-                        ),
-                      ),
+                      errorWidget: (_, __, ___) => const _NoCover(),
                     )
-                  : Container(
-                      color: AppColors.bgMid,
-                      child: Icon(
-                        Icons.music_note_rounded,
-                        color: PlayerTint.of(context),
-                      ),
-                    ),
+                  : const _NoCover(),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// No cover: a note in the player's colour (it alone follows the colour's
+/// fade, not the cover around it).
+class _NoCover extends StatelessWidget {
+  const _NoCover();
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: AppColors.bgMid,
+        child: Center(child: Icon(Icons.music_note_rounded, color: PlayerTint.of(context))),
+      );
 }
 
 // ---------------------------------------------------------------------------

@@ -364,16 +364,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> wit
                         // dock's lit top edge, its colour the dock's glow.
                         child: AnimatedPlayerTint(
                           color: ref.watch(playerTintColorProvider),
-                          child: Builder(
-                            builder: (context) => FrostedGlass(
-                              key: MainNavigationScreen.dockKey,
-                              color: AppColors.surface,
-                              fill: AppGlass.barFill,
-                              sheen: false,
-                              shadow: hasTrack,
-                              shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-                              border: FrostedGlass.showsThrough(context) ? null : Border.all(color: AppColors.border),
+                          // Only the glass's glow follows the colour's fade
+                          // (each frame of it); what's inside is built here,
+                          // once, and handed over as it is.
+                          child: _DockGlass(
+                              hasTrack: hasTrack,
                               child: RepaintBoundary(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -399,7 +394,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> wit
                                   ],
                                 ),
                               ),
-                            ),
                           ),
                         ),
                       ),
@@ -699,4 +693,26 @@ class _PageInsets extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// The dock's glass, glowing in the player's colour as it fades from one
+/// song's to the next.
+class _DockGlass extends StatelessWidget {
+  final bool hasTrack;
+  final Widget child;
+
+  const _DockGlass({required this.hasTrack, required this.child});
+
+  @override
+  Widget build(BuildContext context) => FrostedGlass(
+        key: MainNavigationScreen.dockKey,
+        color: AppColors.surface,
+        fill: AppGlass.barFill,
+        sheen: false,
+        shadow: hasTrack,
+        shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        border: FrostedGlass.showsThrough(context) ? null : Border.all(color: AppColors.border),
+        child: child,
+      );
 }
