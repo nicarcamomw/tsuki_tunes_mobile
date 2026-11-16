@@ -55,65 +55,75 @@ extension _SearchResultsView on _SearchScreenState {
       );
     }
 
-    return ListView(
+    // The songs are built as they scroll into view (a search brings dozens:
+    // all of them in one frame stuttered just as the results arrived).
+    final showSongs = showTracks && hasTracks;
+    return CustomScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.only(bottom: dockBottom(context)),
-      children: [
-        _buildDidYouMean(search, locale),
+      slivers: [
+        SliverToBoxAdapter(child: _buildDidYouMean(search, locale)),
 
         // B-04: the best match, highlighted first on "All".
-        if (showAll) _topResult(search, strings, locale),
+        if (showAll) SliverToBoxAdapter(child: _topResult(search, strings, locale)),
 
         // Artists Section
         if (showArtists && hasArtists) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 8),
-            child: SectionLabel(locale: locale, text: strings.tabArtists),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 12, AppSpacing.page, 8),
+              child: SectionLabel(locale: locale, text: strings.tabArtists),
+            ),
           ),
-          SizedBox(
-            height: 155,
-            child: ListView.builder(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
-              itemCount: search.artists.length,
-              itemBuilder: (context, i) => ArtistCard(artist: search.artists[i]),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 155,
+              child: ListView.builder(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+                itemCount: search.artists.length,
+                itemBuilder: (context, i) => ArtistCard(artist: search.artists[i]),
+              ),
             ),
           ),
         ],
 
         // Albums Section
         if (showAlbums && hasAlbums) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
-            child: SectionLabel(locale: locale, text: strings.tabAlbums),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
+              child: SectionLabel(locale: locale, text: strings.tabAlbums),
+            ),
           ),
-          SizedBox(
-            height: 185,
-            child: ListView.builder(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
-              itemCount: search.albums.length,
-              itemBuilder: (context, i) => AlbumCard(album: search.albums[i]),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 185,
+              child: ListView.builder(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
+                itemCount: search.albums.length,
+                itemBuilder: (context, i) => AlbumCard(album: search.albums[i]),
+              ),
             ),
           ),
         ],
 
         // Tracks Section
-        if (showTracks && hasTracks) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
-            child: SectionLabel(locale: locale, text: strings.tabTracks),
+        if (showSongs) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.page, 16, AppSpacing.page, 8),
+              child: SectionLabel(locale: locale, text: strings.tabTracks),
+            ),
           ),
-          ...search.tracks.asMap().entries.map(
-                (entry) => TrackTile(
-                  track: entry.value,
-                  index: entry.key,
-                  queue: search.tracks,
-                ),
-              ),
+          SliverList.builder(
+            itemCount: search.tracks.length,
+            itemBuilder: (context, i) => TrackTile(track: search.tracks[i], index: i, queue: search.tracks),
+          ),
         ],
+        SliverToBoxAdapter(child: SizedBox(height: dockBottom(context))),
       ],
     );
   }
