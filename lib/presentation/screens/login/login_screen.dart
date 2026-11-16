@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -44,7 +43,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   /// How long the entrance takes (the mask rising, then the rest).
-  static const Duration intro = Duration(milliseconds: 1100);
+  static const Duration intro = AppMotion.reveal;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -96,6 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
   }
 
   void _tick(Duration elapsed) {
+    if (!ambientDue(elapsed, _lastTick)) return;
     final dt = (elapsed - _lastTick).inMicroseconds / 1e6;
     _lastTick = elapsed;
     _time.value = elapsed.inMicroseconds / 1e6;
@@ -262,15 +262,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                 ),
 
               // The mask with its glow and ring, rising into place.
-              AnimatedBuilder(
-                animation: rise,
-                child: _MaskAndRing(time: _time, rotation: _rotation, bloom: bloom, still: still),
-                builder: (context, child) => Positioned(
-                  top: ui.lerpDouble(from, to, rise.value)! - 160,
-                  left: 0,
-                  right: 0,
-                  height: 320,
-                  child: child!,
+              // Laid out once in its place; the rise only moves it (a
+              // translation repaints, it doesn't lay the screen out again).
+              Positioned(
+                top: to - 160,
+                left: 0,
+                right: 0,
+                height: 320,
+                child: AnimatedBuilder(
+                  animation: rise,
+                  child: _MaskAndRing(time: _time, rotation: _rotation, bloom: bloom, still: still),
+                  builder: (context, child) =>
+                      Transform.translate(offset: Offset(0, (from - to) * (1 - rise.value)), child: child),
                 ),
               ),
 
@@ -332,6 +335,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                           children: [
                             FrostedGlass(
                               borderRadius: BorderRadius.circular(AppRadius.sheet),
+                              // The nebula behind is soft already: no blur
+                              // to work out again on every frame it moves.
+                              blur: false,
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
                                 child: Column(

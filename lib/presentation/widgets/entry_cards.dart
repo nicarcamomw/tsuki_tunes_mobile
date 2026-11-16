@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -46,10 +45,10 @@ class WrappedEntryCard extends StatelessWidget {
                   border: Border.all(
                       color: AppColors.accent.withValues(alpha: 0.6)),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     '月',
-                    style: GoogleFonts.notoSansJp(
+                    style: TextStyle(
                       fontSize: AppFontSize.titleLg,
                       fontWeight: FontWeight.w700,
                       color: AppColors.accent,

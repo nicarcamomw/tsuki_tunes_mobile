@@ -230,7 +230,10 @@ Future<void> _loadFonts() async {
       ..add('$_fontDir/NotoSansJP-Regular.otf')
       ..add('$_fontDir/NotoSansJP-Bold.otf');
   } else {
-    latin.addAll(['$material/Roboto-Regular.ttf', '$material/Roboto-Medium.ttf', '$material/Roboto-Bold.ttf']);
+    // The app's own typeface, bundled with it.
+    for (final w in ['Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold']) {
+      latin.add('assets/fonts/plus_jakarta/PlusJakartaSans-$w.ttf');
+    }
   }
 
   // google_fonts names a family per weight ("PlusJakartaSans_700") and

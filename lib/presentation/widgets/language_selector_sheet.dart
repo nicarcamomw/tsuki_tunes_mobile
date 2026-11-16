@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
@@ -193,7 +192,7 @@ class LanguageSelectorSheet extends ConsumerWidget {
                               Text(
                                 strings.languageCardSubtitle(lang),
                                 style: lang == AppLanguage.ja
-                                    ? GoogleFonts.notoSansJp(
+                                    ? TextStyle(
                                         fontSize: AppFontSize.caption,
                                         fontWeight: FontWeight.w500,
                                         color: isSelected

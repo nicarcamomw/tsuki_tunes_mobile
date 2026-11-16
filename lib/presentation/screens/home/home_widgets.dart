@@ -84,7 +84,7 @@ class _HomeHeader extends StatelessWidget {
                         strings.homeTelemetry,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.notoSansJp(
+                        style: const TextStyle(
                           fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w700,
                           color: AppColors.accentText,

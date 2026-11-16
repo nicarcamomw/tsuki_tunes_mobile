@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 
@@ -165,7 +164,7 @@ class _CyberGlitchTextState extends State<CyberGlitchText> {
   @override
   Widget build(BuildContext context) {
     final baseStyle = widget.style ??
-        GoogleFonts.plusJakartaSans(
+        const TextStyle(fontFamily: AppFonts.jakarta, 
           fontSize: AppFontSize.body,
           fontWeight: FontWeight.w900,
           letterSpacing: 2.4,

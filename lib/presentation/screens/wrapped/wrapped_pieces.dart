@@ -51,7 +51,7 @@ class _SlideContext {
           fontSize: size, fontWeight: weight, color: color, letterSpacing: spacing, height: height);
 
   TextStyle kanji(double size, Color color) =>
-      GoogleFonts.notoSansJp(fontSize: size, fontWeight: FontWeight.w900, color: color);
+      TextStyle(fontSize: size, fontWeight: FontWeight.w900, color: color);
 }
 
 /// The look every slide shares: night background with a tint, an optional
@@ -113,7 +113,7 @@ class _Backdrop extends StatelessWidget {
               bottom: 40,
               child: Text(
                 kanji!,
-                style: GoogleFonts.notoSansJp(
+                style: TextStyle(
                   fontSize: AppFontSize.mega * 5, // a watermark glyph, not text
                   fontWeight: FontWeight.w900,
                   color: tint.withValues(alpha: 0.07),

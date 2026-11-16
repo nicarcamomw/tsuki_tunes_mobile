@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -52,7 +51,7 @@ class LoreScreen extends ConsumerWidget {
             const SizedBox(height: 22),
             Row(
               children: [
-                Text(tomo.kanji, style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: _gold)),
+                Text(tomo.kanji, style: const TextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: _gold)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -121,7 +120,7 @@ class _Header extends StatelessWidget {
               boxShadow: [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 28, spreadRadius: 2)],
             ),
             alignment: Alignment.center,
-            child: Text('月', style: GoogleFonts.notoSansJp(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
+            child: const Text('月', style: TextStyle(fontSize: AppFontSize.display, fontWeight: FontWeight.w900, color: AppColors.shrineBorder)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -274,7 +273,7 @@ class _ChapterTile extends ConsumerWidget {
                 ),
                 child: open
                     ? Text(chapter.kanji,
-                        style: GoogleFonts.notoSansJp(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: accent))
+                        style: TextStyle(fontSize: AppFontSize.headline, fontWeight: FontWeight.w900, color: accent))
                     : const Icon(Icons.lock_rounded, size: 18, color: AppColors.textMuted),
               ),
               const SizedBox(width: 12),
@@ -349,7 +348,7 @@ class LoreChapterScreen extends ConsumerWidget {
         children: [
           Center(
             child: Text(chapter.kanji,
-                style: GoogleFonts.notoSansJp(
+                style: TextStyle(
                   fontSize: AppFontSize.mega,
                   fontWeight: FontWeight.w900,
                   color: accent,

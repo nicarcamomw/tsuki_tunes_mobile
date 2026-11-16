@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -582,8 +583,53 @@ class MainTabsScope extends InheritedWidget {
 
 /// The four tabs (Home, Search, Explore, Library), the first page of the
 /// shell navigator; detail pages are pushed over them.
-class MainTabsView extends StatelessWidget {
+///
+/// Home is built at once. The others are built in the background a little
+/// after the app settles, one per idle frame, hidden and muted: the first
+/// time one is opened it's ready, with nothing heavy to build in the frame
+/// of the change.
+class MainTabsView extends StatefulWidget {
   const MainTabsView({super.key});
+
+  /// How long after the first frame the other tabs start being built, and
+  /// the pause between one and the next.
+  static const Duration warmUpAfter = Duration(milliseconds: 2500);
+  static const Duration warmUpStep = Duration(milliseconds: 300);
+
+  @override
+  State<MainTabsView> createState() => _MainTabsViewState();
+}
+
+class _MainTabsViewState extends State<MainTabsView> {
+  Timer? _warmUp;
+
+  @override
+  void initState() {
+    super.initState();
+    _warmUp = Timer(MainTabsView.warmUpAfter, _warmNext);
+  }
+
+  /// Builds the next tab not built yet while nothing is moving (no
+  /// animation running), then the next a moment later. If something is
+  /// moving, it waits and looks again.
+  void _warmNext() {
+    if (!mounted) return;
+    final scope = MainTabsScope.of(context);
+    final next = MainTab.values.where((t) => !scope.loadedTabs.contains(t)).firstOrNull;
+    if (next == null) return;
+    if (SchedulerBinding.instance.transientCallbackCount > 0) {
+      _warmUp = Timer(MainTabsView.warmUpStep, _warmNext);
+      return;
+    }
+    setState(() => scope.loadedTabs.add(next));
+    _warmUp = Timer(MainTabsView.warmUpStep, _warmNext);
+  }
+
+  @override
+  void dispose() {
+    _warmUp?.cancel();
+    super.dispose();
+  }
 
   Widget _screen(MainTab tab) => switch (tab) {
         MainTab.home => const HomeScreen(),

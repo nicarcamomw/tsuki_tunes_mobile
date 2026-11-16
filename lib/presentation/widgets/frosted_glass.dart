@@ -25,6 +25,7 @@ class FrostedGlass extends StatelessWidget {
     this.shadowColor,
     this.sheen = true,
     this.opacity = 1,
+    this.blur = true,
     this.child,
   });
 
@@ -47,6 +48,12 @@ class FrostedGlass extends StatelessWidget {
   /// The sheen inside. Off for a wide bar, where it reads as a grey band.
   final bool sheen;
   final double opacity;
+
+  /// Whether what's behind is blurred. Off over a background that's soft
+  /// already (the entrance's nebula): blurring a blur looks the same, and
+  /// over something that moves it's worked out again every frame.
+  final bool blur;
+
   final Widget? child;
 
   /// The veil's key, for tests.
@@ -102,7 +109,7 @@ class FrostedGlass extends StatelessWidget {
         ? ClipOval(child: w)
         : (borderRadius == BorderRadius.zero ? ClipRect(child: w) : ClipRRect(borderRadius: borderRadius, child: w));
 
-    glass = !clear || t == 0
+    glass = !clear || t == 0 || !blur
         ? clip(glass)
         // Grouped: glasses under one BackdropGroup (the dock) read what's
         // behind them once, for all of them.

@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -141,7 +140,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           const Spacer(),
           Text(
             '◈ $_year',
-            style: GoogleFonts.notoSansJp(
+            style: const TextStyle(
               fontSize: AppFontSize.body,
               fontWeight: FontWeight.w700,
               color: AppColors.accent,
@@ -281,7 +280,7 @@ class _ListeningClockScreenState extends ConsumerState<ListeningClockScreen> {
           Center(
             child: Text(
               strings.clockTotalYear(_totalTracks),
-              style: GoogleFonts.notoSansJp(
+              style: TextStyle(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w600,
                 color: AppColors.accent.withValues(alpha: 0.5),
@@ -573,7 +572,7 @@ class _SharinganRadarPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: '$i',
-          style: GoogleFonts.plusJakartaSans(
+          style: TextStyle(fontFamily: AppFonts.jakarta, 
             fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted.withValues(alpha: 0.8),

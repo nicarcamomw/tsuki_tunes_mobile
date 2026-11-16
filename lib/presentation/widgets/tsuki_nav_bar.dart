@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
@@ -50,7 +49,7 @@ class TsukiNavBar extends StatefulWidget {
 }
 
 class _TsukiNavBarState extends State<TsukiNavBar> with SingleTickerProviderStateMixin {
-  late final AnimationController _move = AnimationController(vsync: this, duration: AppMotion.slow, value: 1);
+  late final AnimationController _move = AnimationController(vsync: this, duration: AppMotion.normal, value: 1);
   late double _from = widget.selected.index.toDouble();
   late double _to = _from;
 
@@ -257,7 +256,10 @@ class _NavItem extends StatelessWidget {
                       duration: AppMotion.fast,
                       style: locale.getTextStyle(
                         fontSize: AppFontSize.micro,
-                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                        // One weight for every tab: a weight that changes
+                        // re-measures the word each frame (it trembles);
+                        // only its colour moves.
+                        fontWeight: FontWeight.w800,
                         color: selected ? AppColors.accentText : AppColors.textMuted,
                         letterSpacing: 1,
                       ),
@@ -277,7 +279,7 @@ class _NavItem extends StatelessWidget {
                       child: Text(
                         locale.strings.navHudSubtitle(tab.name),
                         maxLines: 1,
-                        style: GoogleFonts.notoSansJp(
+                        style: TextStyle(
                           fontSize: AppFontSize.micro,
                           fontWeight: FontWeight.w700,
                           color: AppColors.accentText.withValues(alpha: 0.75),

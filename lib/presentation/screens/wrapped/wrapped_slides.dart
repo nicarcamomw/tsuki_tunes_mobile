@@ -72,7 +72,7 @@ class _IntroSlide extends StatelessWidget {
           ],
           const SizedBox(height: 36),
           Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
-              style: GoogleFonts.notoSansJp(
+              style: TextStyle(
                   fontSize: AppFontSize.micro, fontWeight: FontWeight.w700, color: AppColors.accent.withValues(alpha: 0.55), letterSpacing: 2.5)),
         ],
       ),
@@ -1037,7 +1037,7 @@ class _SummarySlide extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 14),
                                 Text('◈ ${strings.wrappedReportTag(monthly: c.monthly)}',
-                                    style: GoogleFonts.notoSansJp(
+                                    style: TextStyle(
                                         fontSize: AppFontSize.micro,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.accent.withValues(alpha: 0.6),
@@ -1154,7 +1154,7 @@ class _Empty extends StatelessWidget {
     return SafeArea(
       child: EmptyState(
         art: Text(monthly ? '月' : '年',
-            style: GoogleFonts.notoSansJp(
+            style: TextStyle(
                 fontSize: AppFontSize.mega, fontWeight: FontWeight.w900, color: AppColors.accent.withValues(alpha: 0.35))),
         title: strings.wrappedNoDataFor(monthly: monthly),
         message: strings.wrappedNoDataSubtitle,

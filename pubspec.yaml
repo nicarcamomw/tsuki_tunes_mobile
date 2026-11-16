@@ -16,7 +16,6 @@ dependencies:
 
   # UI, Fonts and Icons
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
   lucide_icons: ^0.257.0
   flutter_animate: ^4.5.2
   cached_network_image: ^3.4.1
@@ -135,6 +134,22 @@ flutter:
     - assets/images/masks/dios/
 
   fonts:
+    # The interface's typeface, inside the app: fetched from the network on
+    # first launch, the text would draw in another font, then jump (OFL).
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-Light.ttf
+          weight: 300
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/plus_jakarta/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
     - family: SystemOfADown
       fonts:
         - asset: assets/fonts/sf_hollywood_hills.ttf
