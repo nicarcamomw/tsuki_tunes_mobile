@@ -247,12 +247,17 @@ class TsukiTunesApp extends StatelessWidget {
           );
           return MediaQuery(
             data: mediaQuery.copyWith(textScaler: clampedScaler),
-            child: MaskUnlockLayer(
+            // Perf: every glass on screen (a header's buttons and title, a
+            // notice) reads what's behind it once per frame between them,
+            // not once each.
+            child: BackdropGroup(
+              child: MaskUnlockLayer(
               onOpenCollection: () {
                 final nav = rootNavigatorKey.currentContext;
                 if (nav != null) MaskCollectionScreen.open(nav);
               },
               child: AscensionPrompt(child: MoonAtmosphere(child: child!)),
+              ),
             ),
           );
         },

@@ -306,7 +306,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             builder: (context) => FrostedGlass(
                               key: MainNavigationScreen.dockKey,
                               color: AppColors.surface,
-                              fill: AppGlass.barFill,
+                              // Perf: no blur under the dock (see AppGlass.dockFill).
+                              fill: AppGlass.dockFill,
+                              blur: 0,
                               sheen: false,
                               shadow: hasTrack,
                               shadowColor: hasTrack ? PlayerTint.glowOf(context) : null,

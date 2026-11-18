@@ -24,6 +24,12 @@ final Future<ui.FragmentProgram?> tsukiNebulaProgram = ui.FragmentProgram.fromAs
 /// A slow breath (0..1) every 2.8 s, from the continuous time.
 double breathAt(double t) => 0.5 - 0.5 * math.cos(2 * math.pi * t / 2.8);
 
+/// The nebula, baked (perf): the shader is several octaves of warped noise
+/// per pixel, which at full resolution and 60 fps was the heaviest thing the
+/// entrance drew (on a mid-range phone the login and onboarding lagged).
+/// It's smoke, soft and slow, so it's rendered at half the logical size and
+/// refreshed [bakesPerSecond] times a second; each frame draws that image
+/// scaled up, which costs next to nothing.
 class NebulaPainter extends CustomPainter {
   NebulaPainter(this.shader, {required this.time, required this.intensity, required this.still})
     : super(repaint: still ? intensity : Listenable.merge([time, intensity]));
@@ -33,14 +39,60 @@ class NebulaPainter extends CustomPainter {
   final Animation<double> intensity;
   final bool still;
 
+  /// How often the drifting nebula is re-rendered.
+  static const double bakesPerSecond = 15;
+
+  /// The baked image's size against the logical size.
+  static const double resolution = 0.5;
+
+  // One nebula is on screen at a time (loading, login, onboarding share it).
+  static ui.Image? _image;
+  static Size _size = Size.zero;
+  static double _bakedTime = double.negativeInfinity;
+  static double _bakedIntensity = -1;
+
+  /// How many times the shader has run (for tests).
+  @visibleForTesting
+  static int bakes = 0;
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final t = still ? 0.0 : time.value;
+    final k = intensity.value;
+    final stale = _image == null ||
+        size != _size ||
+        (k - _bakedIntensity).abs() > 0.01 ||
+        (t - _bakedTime).abs() >= 1 / bakesPerSecond;
+    if (stale) _bake(size, t, k);
+    final image = _image!;
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Offset.zero & size,
+      Paint()..filterQuality = FilterQuality.medium,
+    );
+  }
+
+  void _bake(Size size, double t, double k) {
+    final w = math.max(1, (size.width * resolution).round());
+    final h = math.max(1, (size.height * resolution).round());
     shader
-      ..setFloat(0, size.width)
-      ..setFloat(1, size.height)
-      ..setFloat(2, still ? 0 : time.value)
-      ..setFloat(3, intensity.value);
-    canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
+      ..setFloat(0, w.toDouble())
+      ..setFloat(1, h.toDouble())
+      ..setFloat(2, t)
+      ..setFloat(3, k);
+    final recorder = ui.PictureRecorder();
+    Canvas(recorder).drawRect(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()), Paint()..shader = shader);
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(w, h);
+    picture.dispose();
+    _image?.dispose();
+    _image = image;
+    bakes++;
+    _size = size;
+    _bakedTime = t;
+    _bakedIntensity = k;
   }
 
   @override

@@ -134,6 +134,13 @@ abstract final class AppGlass {
   /// (its rows and covers averaged by the blur, up to 10% luminance).
   static const double barFill = 0.8;
 
+  /// The dock without a blur (perf): a backdrop blur re-reads the screen
+  /// behind it every frame, and the dock is on screen all the time (with a
+  /// song playing, every frame animates). At 94% its labels keep AA even
+  /// over pure white, unblurred: white 13.5:1, textMuted 5.2:1, the chosen
+  /// tab's red 4.9:1.
+  static const double dockFill = 0.94;
+
   /// A round glass button over a picture: clear enough to see it, dark
   /// enough that its white icon keeps 3:1 over a white cover.
   static const double buttonFill = 0.72;

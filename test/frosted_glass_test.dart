@@ -58,13 +58,11 @@ void main() {
     expect(1.05 / (worst.computeLuminance() + 0.05), greaterThanOrEqualTo(3));
   });
 
-  test('the dock keeps its labels at AA over the blurred page', () {
-    // A dark app's page, blurred under the dock, averages to 10% luminance
-    // at most: grey that light.
-    final page = const HSLColor.fromAHSL(1, 0, 0, 0.37).toColor();
-    expect(page.computeLuminance(), closeTo(0.1, 0.02));
+  test('the dock, unblurred, keeps its labels at AA even over pure white', () {
+    // The dock draws no blur (it's on screen every frame); the worst page
+    // behind it is a white cover, seen sharp through the veil.
     for (final surface in [AppColors.surface, AppColors.surfaceCard]) {
-      final behind = Color.alphaBlend(surface.withValues(alpha: AppGlass.barFill), page);
+      final behind = Color.alphaBlend(surface.withValues(alpha: AppGlass.dockFill), Colors.white);
       double ratio(Color text) => (text.computeLuminance() + 0.05) / (behind.computeLuminance() + 0.05);
       expect(ratio(AppColors.textBright), greaterThanOrEqualTo(4.5));
       expect(ratio(AppColors.textMuted), greaterThanOrEqualTo(4.5));
@@ -73,6 +71,11 @@ void main() {
         expect(ratio(AppColors.accentText), greaterThanOrEqualTo(4.5), reason: 'the chosen tab');
       }
     }
+  });
+
+  testWidgets('with blur 0 it draws no backdrop filter', (tester) async {
+    await _pump(tester, const FrostedGlass(blur: 0));
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('faded out, it draws no blur at all', (tester) async {

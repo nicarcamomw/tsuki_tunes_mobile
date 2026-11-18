@@ -25,6 +25,7 @@ class FrostedGlass extends StatelessWidget {
     this.shadowColor,
     this.sheen = true,
     this.opacity = 1,
+    this.blur = AppGlass.blur,
     this.child,
   });
 
@@ -47,6 +48,10 @@ class FrostedGlass extends StatelessWidget {
   /// The sheen inside. Off for a wide bar, where it reads as a grey band.
   final bool sheen;
   final double opacity;
+
+  /// How far what's behind is blurred; 0 draws no backdrop filter at all
+  /// (a veil only, for glass that's always on screen: the dock).
+  final double blur;
   final Widget? child;
 
   /// The veil's key, for tests.
@@ -102,12 +107,12 @@ class FrostedGlass extends StatelessWidget {
         ? ClipOval(child: w)
         : (borderRadius == BorderRadius.zero ? ClipRect(child: w) : ClipRRect(borderRadius: borderRadius, child: w));
 
-    glass = !clear || t == 0
+    glass = !clear || t == 0 || blur == 0
         ? clip(glass)
         // Grouped: glasses under one BackdropGroup (the dock) read what's
         // behind them once, for all of them.
         : clip(BackdropFilter.grouped(
-            filter: ImageFilter.blur(sigmaX: AppGlass.blur * t, sigmaY: AppGlass.blur * t),
+            filter: ImageFilter.blur(sigmaX: blur * t, sigmaY: blur * t),
             child: glass,
           ));
     if (!shadow || t == 0) return glass;
