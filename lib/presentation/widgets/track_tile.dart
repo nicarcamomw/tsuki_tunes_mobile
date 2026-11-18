@@ -34,67 +34,68 @@ class _PlayingIndicator extends StatefulWidget {
   State<_PlayingIndicator> createState() => _PlayingIndicatorState();
 }
 
-class _PlayingIndicatorState extends State<_PlayingIndicator>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  bool _reduceMotion = false;
+class _PlayingIndicatorState extends State<_PlayingIndicator> {
+  // Perf: stepped by a timer at about 7 frames a second rather than by a
+  // ticker at the screen's rate. Three little bars read as alive either
+  // way, and a list with the song playing in it no longer redraws the app
+  // 60 times a second. Still when hidden (TickerMode) or reduce motion.
+  static const _step = Duration(milliseconds: 150);
+  Timer? _timer;
+  double _t = 0.3;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.slow,
-    );
-    if (widget.isPlaying) _controller.repeat(reverse: true);
+  bool _shouldRun(BuildContext context) =>
+      widget.isPlaying &&
+      !MediaQuery.of(context).disableAnimations &&
+      TickerMode.valuesOf(context).enabled;
+
+  void _sync() {
+    final run = _shouldRun(context);
+    if (run && _timer == null) {
+      _timer = Timer.periodic(_step, (_) {
+        if (mounted) setState(() => _t = (_t + 0.12) % 1.0);
+      });
+    } else if (!run && _timer != null) {
+      _timer!.cancel();
+      _timer = null;
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (_reduceMotion && _controller.isAnimating) _controller.stop();
+    _sync();
   }
 
   @override
   void didUpdateWidget(_PlayingIndicator old) {
     super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
-      _controller.repeat(reverse: true);
-    } else if (!widget.isPlaying && _controller.isAnimating) {
-      _controller.stop();
-    }
+    _sync();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = widget.isPlaying ? _t : 0.3;
     return SizedBox(
       width: 24,
       height: 24,
       child: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            final t = widget.isPlaying ? _controller.value : 0.3;
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _bar(height: 4 + 8 * _wave(t, 0.0)),
-                const SizedBox(width: 2),
-                _bar(height: 4 + 8 * _wave(t, 0.33)),
-                const SizedBox(width: 2),
-                _bar(height: 4 + 8 * _wave(t, 0.66)),
-              ],
-            );
-          },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _bar(height: 4 + 8 * _wave(t, 0.0)),
+            const SizedBox(width: 2),
+            _bar(height: 4 + 8 * _wave(t, 0.33)),
+            const SizedBox(width: 2),
+            _bar(height: 4 + 8 * _wave(t, 0.66)),
+          ],
         ),
       ),
     );

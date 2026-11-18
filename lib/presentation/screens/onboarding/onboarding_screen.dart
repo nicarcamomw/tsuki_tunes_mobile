@@ -387,6 +387,11 @@ class _StepPage extends StatelessWidget {
                           FrostedGlass(
                             color: AppColors.surface,
                             fill: AppGlass.clearFill + 0.15,
+                            // Perf: unblurred. What's behind is a smooth
+                            // glow and the nebula, which a blur leaves as
+                            // they are, yet it re-read the screen every
+                            // frame of the demos.
+                            blur: 0,
                             borderRadius: BorderRadius.circular(AppRadius.sheet),
                             child: SizedBox(
                               width: double.infinity,

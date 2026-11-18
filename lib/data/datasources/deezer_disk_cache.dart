@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -110,45 +111,54 @@ class DeezerDiskCache {
     }
   }
 
+  /// Perf: on a worker isolate. It reads and decodes every entry (up to
+  /// [_maxEntries], some large), and it starts with the app's first frame:
+  /// on the UI isolate it stuttered the entrance.
   Future<void> _pruneExpired() async {
     if (!_ready) return;
+    final path = _dir!.path;
     try {
-      final files = _dir!.listSync().whereType<File>().toList();
-      final now = DateTime.now().millisecondsSinceEpoch;
-      var removed = 0;
-
-      for (final file in files) {
-        try {
-          final content = await file.readAsString();
-          final envelope = json.decode(content) as Map<String, dynamic>;
-          if (envelope['e'] is int && now > (envelope['e'] as int)) {
-            await file.delete();
-            removed++;
-          }
-        } catch (_) {
-          await file.delete().catchError((_) => file);
-          removed++;
-        }
-      }
-
-      final remaining = files.length - removed;
-      if (remaining > _maxEntries) {
-        final live = _dir!.listSync().whereType<File>().toList();
-        live.sort(
-            (a, b) => a.statSync().modified.compareTo(b.statSync().modified));
-        final excess = live.length - _maxEntries;
-        for (var i = 0; i < excess; i++) {
-          await live[i].delete().catchError((_) => live[i]);
-        }
-        removed += excess;
-      }
-
-      if (removed > 0) {
-        _log.fine('pruned $removed expired entries');
-      }
+      final removed = await Isolate.run(() => _prune(path, _maxEntries));
+      if (removed > 0) _log.fine('pruned $removed expired entries');
     } catch (e) {
       _log.severe('prune error: $e');
     }
+  }
+
+  /// Deletes the expired or unreadable entries in [path], then the oldest
+  /// past [maxEntries]; returns how many went.
+  static int _prune(String path, int maxEntries) {
+    final dir = Directory(path);
+    final files = dir.listSync().whereType<File>().toList();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var removed = 0;
+    for (final file in files) {
+      try {
+        final envelope = json.decode(file.readAsStringSync()) as Map<String, dynamic>;
+        if (envelope['e'] is int && now > (envelope['e'] as int)) {
+          file.deleteSync();
+          removed++;
+        }
+      } catch (_) {
+        try {
+          file.deleteSync();
+        } catch (_) {}
+        removed++;
+      }
+    }
+    final remaining = files.length - removed;
+    if (remaining > maxEntries) {
+      final live = dir.listSync().whereType<File>().toList()
+        ..sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+      final excess = live.length - maxEntries;
+      for (var i = 0; i < excess; i++) {
+        try {
+          live[i].deleteSync();
+        } catch (_) {}
+      }
+      removed += excess;
+    }
+    return removed;
   }
 
   // ---------------------------------------------------------------------------

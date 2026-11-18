@@ -400,10 +400,17 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
 }
 
 // ---------------------------------------------------------------------------
-// Breathing cover art
+// Cover art
 // ---------------------------------------------------------------------------
 
-class _BreathingCover extends StatefulWidget {
+/// The cover, lit in the player's colour while it plays.
+///
+/// Perf: it used to breathe (glow and border pulsing, the blur radius
+/// with them) for as long as music played. Being in the dock on every
+/// screen, that asked for a new frame of the whole app 60 times a second
+/// the whole time a song was on, and the app stuttered under it (a tab
+/// switch felt like the music stuck). The glow now stands still.
+class _BreathingCover extends StatelessWidget {
   final String trackId;
   final String coverUrl;
   final bool isPlaying;
@@ -415,89 +422,33 @@ class _BreathingCover extends StatefulWidget {
   });
 
   @override
-  State<_BreathingCover> createState() => _BreathingCoverState();
-}
-
-class _BreathingCoverState extends State<_BreathingCover>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  bool _reduceMotion = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.breath,
-    );
-    if (widget.isPlaying) _controller.repeat(reverse: true);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (_reduceMotion && _controller.isAnimating) _controller.stop();
-  }
-
-  @override
-  void didUpdateWidget(_BreathingCover old) {
-    super.didUpdateWidget(old);
-    if (widget.isPlaying && !_controller.isAnimating && !_reduceMotion) {
-      _controller.repeat(reverse: true);
-    } else if (!widget.isPlaying && _controller.isAnimating) {
-      _controller.stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = widget.isPlaying ? _controller.value : 0.0;
-        final glowAlpha = 0.15 + 0.35 * t;
-        final borderAlpha = 0.3 + 0.7 * t;
-
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-              color: PlayerTint.of(context).withValues(alpha: borderAlpha),
-              width: 1.5,
-            ),
-            boxShadow: widget.isPlaying
-                ? [
-                    BoxShadow(
-                      color: PlayerTint.of(context).withValues(alpha: glowAlpha),
-                      blurRadius: 8 + 4 * t,
-                    ),
-                  ]
-                : null,
-          ),
-          child: child,
-        );
-      },
+    final tint = PlayerTint.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        border: Border.all(
+          color: tint.withValues(alpha: isPlaying ? 0.75 : 0.3),
+          width: 1.5,
+        ),
+        boxShadow: isPlaying
+            ? [BoxShadow(color: tint.withValues(alpha: 0.32), blurRadius: 10)]
+            : null,
+      ),
       child: PlayerArtHero(
-        trackId: widget.trackId,
-        coverUrl: widget.coverUrl,
-        isPlaying: widget.isPlaying,
+        trackId: trackId,
+        coverUrl: coverUrl,
+        isPlaying: isPlaying,
         child: ExcludeSemantics(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.chip),
             child: SizedBox(
               width: 44,
               height: 44,
-              child: widget.coverUrl.isNotEmpty
+              child: coverUrl.isNotEmpty
                   ? CachedNetworkImage(
                     memCacheWidth: imageCacheSize(context, (44).toDouble()),
-                      imageUrl: widget.coverUrl,
+                      imageUrl: coverUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
                           Container(color: AppColors.bgMid),
@@ -554,7 +505,10 @@ class _MiniProgressBar extends StatelessWidget {
       selector: (a) {
         final total = a.duration.inMilliseconds;
         if (total <= 0) return 0.0;
-        return (a.position.inMilliseconds / total).clamp(0.0, 1.0);
+        // Perf: in steps of 1/400 (under a pixel on a phone), so the dock
+        // (on every screen) is redrawn when the line visibly moves, not on
+        // every position tick, five times a second.
+        return ((a.position.inMilliseconds / total).clamp(0.0, 1.0) * 400).round() / 400;
       },
       builder: (context, progress) => Semantics(
         // The player's own bar is the one to read and move.

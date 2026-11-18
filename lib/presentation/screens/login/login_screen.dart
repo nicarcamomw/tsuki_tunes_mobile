@@ -332,6 +332,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                           children: [
                             FrostedGlass(
                               borderRadius: BorderRadius.circular(AppRadius.sheet),
+                              // Perf: no backdrop blur. Behind it is only
+                              // the dark nebula and a few embers, which a
+                              // blur barely changes, yet it re-read the
+                              // screen on every frame the night moves.
+                              blur: 0,
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(18, 20, 18, 10),
                                 child: Column(

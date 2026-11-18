@@ -22,24 +22,34 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final base = locale.getTextStyle(
+      fontSize: AppFontSize.bodyLg,
+      fontWeight: FontWeight.w800,
+      color: Colors.white,
+      letterSpacing: 1.2,
+    );
+    // Perf: the gradient is the text's own paint, across the line's width,
+    // not a ShaderMask (an offscreen layer per heading, every frame a
+    // screen of them scrolls).
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: base),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    final shader = const LinearGradient(
+      colors: [AppColors.textBright, AppColors.accent],
+      stops: [0.5, 1.0],
+    ).createShader(Rect.fromLTWH(0, 0, width <= 0 ? 1 : width, 1));
     return Semantics(
       header: true,
-      child: ShaderMask(
-        shaderCallback: (bounds) => const LinearGradient(
-          colors: [AppColors.textBright, AppColors.accent],
-          stops: [0.5, 1.0],
-        ).createShader(bounds),
-        child: Text(
-          text,
-          maxLines: maxLines,
-          overflow: maxLines != null ? TextOverflow.ellipsis : null,
-          style: locale.getTextStyle(
-            fontSize: AppFontSize.bodyLg,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
+      child: Text(
+        text,
+        maxLines: maxLines,
+        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+        style: base.copyWith(foreground: Paint()..shader = shader),
       ),
     );
   }

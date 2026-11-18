@@ -39,6 +39,8 @@ const _song = Track(
 class _Playing extends AudioProvider {
   @override
   Track? get currentTrack => _song;
+  @override
+  bool get isPlaying => true;
 }
 
 class _Online extends ChangeNotifier implements ConnectivityProvider {
@@ -85,6 +87,34 @@ void main() {
       expect(find.byKey(MainNavigationScreen.dockKey), findsOneWidget);
       expect(find.descendant(of: find.byKey(MainNavigationScreen.dockKey), matching: find.byType(BackdropFilter)),
           findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 2));
+    }, () => _noNetwork);
+  });
+
+  testWidgets('a song playing asks for no frames: the shell sits still between its ticks', (tester) async {
+    // The mini player's cover used to breathe at the screen's rate for as
+    // long as a song played: the whole app redrawn 60 times a second.
+    tester.view.physicalSize = const Size(400 * 3, 860 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(TestScope(
+        overrides: [
+          libraryProvider.overrideWith((ref) => LibraryRepositoryImpl()),
+          connectivityProvider.overrideWith((ref) => _Online()),
+          audioProvider.overrideWith((ref) => _Playing()),
+          playerTintColorProvider.overrideWithValue(const Color(0xFFFFC83D)),
+          playerBackgroundColorProvider.overrideWithValue(null),
+          playbackSourceProvider.overrideWithValue(PlaybackSource.fullSong),
+        ],
+        child: const MaterialApp(home: MainNavigationScreen(child: SizedBox.expand())),
+      ));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      expect(find.text('Misis Guiñi'), findsWidgets);
+      expect(tester.binding.hasScheduledFrame, isFalse, reason: 'nothing animates while it just plays');
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 2));
     }, () => _noNetwork);
