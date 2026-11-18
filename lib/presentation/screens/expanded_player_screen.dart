@@ -25,6 +25,7 @@ import '../widgets/eco_widgets.dart';
 import '../widgets/haptics.dart';
 import '../widgets/listened_undo.dart';
 import '../widgets/lyrics_view.dart';
+import '../widgets/marquee_text.dart';
 import '../widgets/motion.dart';
 import '../widgets/oni_mask_icon.dart';
 import '../widgets/playback_error_text.dart';

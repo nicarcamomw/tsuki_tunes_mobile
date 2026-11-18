@@ -17,6 +17,7 @@ import '../state/cover_colors.dart';
 import 'audio_progress_selector.dart';
 import 'haptics.dart';
 import 'listened_undo.dart';
+import 'marquee_text.dart';
 import 'oni_mask_icon.dart';
 import 'player_art_hero.dart';
 import 'player_tint.dart';
@@ -527,113 +528,14 @@ class _BreathingCoverState extends State<_BreathingCover>
 // Marquee text — AnimationController-driven (no async while-loop)
 // ---------------------------------------------------------------------------
 
-class _MarqueeText extends StatefulWidget {
+/// The mini player's scrolling title (perf: see [MarqueeText]).
+class _MarqueeText extends StatelessWidget {
   final String text;
   final TextStyle style;
-
   const _MarqueeText({required this.text, required this.style});
 
   @override
-  State<_MarqueeText> createState() => _MarqueeTextState();
-}
-
-class _MarqueeTextState extends State<_MarqueeText>
-    with SingleTickerProviderStateMixin {
-  late final ScrollController _scroll;
-  late final AnimationController _anim;
-  double _maxScroll = 0;
-  bool _reduceMotion = false;
-
-  static const int _pauseMs = 1800;
-  static const int _returnMs = 700;
-
-  @override
-  void initState() {
-    super.initState();
-    _scroll = ScrollController();
-    _anim = AnimationController(vsync: this)
-      ..addListener(_onTick)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) _restart();
-      });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-    if (_reduceMotion && _anim.isAnimating) _anim.stop();
-  }
-
-  @override
-  void didUpdateWidget(_MarqueeText old) {
-    super.didUpdateWidget(old);
-    if (widget.text != old.text) {
-      _anim.stop();
-      if (_scroll.hasClients) _scroll.jumpTo(0);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-    }
-  }
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _measure() {
-    if (!mounted || !_scroll.hasClients || _reduceMotion) return;
-    _maxScroll = _scroll.position.maxScrollExtent;
-    if (_maxScroll <= 0) return;
-    _start();
-  }
-
-  void _start() {
-    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0).toInt();
-    _anim.duration =
-        Duration(milliseconds: _pauseMs + scrollMs + _pauseMs + _returnMs);
-    _anim.forward(from: 0);
-  }
-
-  void _restart() {
-    if (!mounted || _reduceMotion) return;
-    _measure();
-  }
-
-  void _onTick() {
-    if (!_scroll.hasClients || _maxScroll <= 0) return;
-
-    final scrollMs = (_maxScroll * 40).clamp(1200.0, 6000.0);
-    final totalMs = _pauseMs + scrollMs + _pauseMs + _returnMs;
-    final elapsed = _anim.value * totalMs;
-
-    double pos;
-    if (elapsed < _pauseMs) {
-      pos = 0;
-    } else if (elapsed < _pauseMs + scrollMs) {
-      pos = _maxScroll * ((elapsed - _pauseMs) / scrollMs);
-    } else if (elapsed < _pauseMs + scrollMs + _pauseMs) {
-      pos = _maxScroll;
-    } else {
-      final t =
-          ((elapsed - _pauseMs - scrollMs - _pauseMs) / _returnMs).clamp(0, 1);
-      pos = _maxScroll * (1 - Curves.easeOutCubic.transform(t.toDouble()));
-    }
-
-    _scroll.jumpTo(pos.clamp(0, _maxScroll));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scroll,
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      child: Text(widget.text, style: widget.style, maxLines: 1),
-    );
-  }
+  Widget build(BuildContext context) => MarqueeText(text, style: style);
 }
 
 // ---------------------------------------------------------------------------

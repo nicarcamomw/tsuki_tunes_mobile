@@ -47,12 +47,19 @@ class PlayerArtHero extends StatelessWidget {
         .map((c) => c.findRenderObject())
         .map((box) => box is RenderBox && box.hasSize ? box.size.shortestSide : 0.0)
         .fold<double>(0, (a, b) => a > b ? a : b);
-    return PlayerArtFlight(
-      animation: animation,
-      coverUrl: coverUrl,
-      isPlaying: isPlaying,
-      rotation: spin,
-      coverCacheWidth: imageCacheSize(flightContext, disc * RinneganVisualizer.coverFraction),
+    // The flight is drawn in the navigator's overlay, outside both players'
+    // PlayerTint: without carrying it, the disc's rim flew in the default red
+    // and jumped to the cover's colour on landing (and back on closing).
+    final tint = PlayerTint.of(direction == HeroFlightDirection.push ? toHeroContext : fromHeroContext);
+    return PlayerTint(
+      color: tint,
+      child: PlayerArtFlight(
+        animation: animation,
+        coverUrl: coverUrl,
+        isPlaying: isPlaying,
+        rotation: spin,
+        coverCacheWidth: imageCacheSize(flightContext, disc * RinneganVisualizer.coverFraction),
+      ),
     );
   }
 }
