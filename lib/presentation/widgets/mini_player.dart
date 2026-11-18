@@ -657,7 +657,10 @@ class _MiniProgressBar extends StatelessWidget {
       builder: (context, progress) => Semantics(
         // The player's own bar is the one to read and move.
         excludeSemantics: true,
+        // The whole width: without it the Stack shrank to the played part
+        // and the column centred it (a bar growing from the middle).
         child: SizedBox(
+          width: double.infinity,
           height: 2.5,
           child: Stack(
             clipBehavior: Clip.none,
@@ -671,6 +674,8 @@ class _MiniProgressBar extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
+                // From the start, not the centre (the default).
+                alignment: AlignmentDirectional.centerStart,
                 widthFactor: progress,
                 heightFactor: 1,
                 child: DecoratedBox(

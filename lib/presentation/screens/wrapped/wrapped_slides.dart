@@ -229,6 +229,8 @@ class _DaysBar extends StatelessWidget {
           children: [
             Container(color: Colors.white.withValues(alpha: 0.08)),
             FractionallySizedBox(
+              // From the start, not the centre (the default).
+              alignment: AlignmentDirectional.centerStart,
               widthFactor: total == 0 ? 0 : (active / total).clamp(0.0, 1.0),
               child: Container(
                 decoration: const BoxDecoration(
@@ -698,6 +700,8 @@ class _HourSlide extends StatelessWidget {
                           children: [
                             Container(color: Colors.white.withValues(alpha: 0.06)),
                             FractionallySizedBox(
+                              // From the start, not the centre (the default).
+                              alignment: AlignmentDirectional.centerStart,
                               widthFactor: parts[p],
                               child: Container(color: partColors[p]),
                             ),

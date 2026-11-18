@@ -55,6 +55,8 @@ class AlbumProgressBar extends ConsumerWidget {
 
         // Progress bar
         Container(
+          // The whole width: without it the track shrank to the filled part.
+          width: double.infinity,
           height: 6,
           decoration: BoxDecoration(
             color: AppColors.bgMid,
@@ -70,6 +72,8 @@ class AlbumProgressBar extends ConsumerWidget {
               children: [
                 // Fill
                 FractionallySizedBox(
+                  // From the start, not the centre (the default).
+                  alignment: AlignmentDirectional.centerStart,
                   widthFactor: progress,
                   child: Container(
                     decoration: BoxDecoration(
