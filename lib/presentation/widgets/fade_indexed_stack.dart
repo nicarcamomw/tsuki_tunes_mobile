@@ -86,22 +86,12 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
         return Stack(
           fit: StackFit.expand,
           children: List.generate(widget.children.length, (i) {
+            // Perf: only the tab coming in fades (one full-screen layer),
+            // the one leaving goes at once. Cross-fading drew both screens
+            // as translucent layers on every frame of the switch.
             final isTarget = i == _targetIndex;
-            final isPrevious = i == _previousIndex && isAnimating;
-            final isOffstage = !isTarget && !isPrevious;
-
-            double opacity;
-            if (isAnimating) {
-              if (isTarget) {
-                opacity = progress;
-              } else if (isPrevious) {
-                opacity = 1.0 - progress;
-              } else {
-                opacity = 0.0;
-              }
-            } else {
-              opacity = isTarget ? 1.0 : 0.0;
-            }
+            final isOffstage = !isTarget;
+            final opacity = isTarget ? (isAnimating ? progress : 1.0) : 0.0;
 
             return Offstage(
               offstage: isOffstage,
@@ -115,6 +105,8 @@ class _FadeIndexedStackState extends State<FadeIndexedStack>
                   excluding: !isTarget,
                   child: IgnorePointer(
                     ignoring: !isTarget,
+                    // Always the same wrapper (changing it would rebuild the
+                    // tab from scratch); fully opaque it draws no layer.
                     child: FadeTransition(
                       opacity: AlwaysStoppedAnimation(opacity.clamp(0.0, 1.0)),
                       child: widget.children[i],
