@@ -15,6 +15,7 @@ import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/audio_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/connectivity_provider.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/cover_colors.dart';
+import 'package:tsuki_tunes_mobile/presentation/widgets/mini_player.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/tsuki_sky.dart';
 
 import 'helpers/test_scope.dart';
@@ -92,9 +93,9 @@ void main() {
     }, () => _noNetwork);
   });
 
-  testWidgets('a song playing asks for no frames: the shell sits still between its ticks', (tester) async {
-    // The mini player's cover used to breathe at the screen's rate for as
-    // long as a song played: the whole app redrawn 60 times a second.
+  testWidgets('a song playing runs no ticker: the cover breathes on a timer', (tester) async {
+    // The mini player's cover breathed at the screen's rate for as long as
+    // a song played: the whole app redrawn 60 times a second.
     tester.view.physicalSize = const Size(400 * 3, 860 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -114,7 +115,27 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
       }
       expect(find.text('Misis Guiñi'), findsWidgets);
-      expect(tester.binding.hasScheduledFrame, isFalse, reason: 'nothing animates while it just plays');
+      // No ticker runs (a ticker asks for every frame the screen has); the
+      // cover's breath steps on a timer, 12 times a second.
+      Color? border() {
+        // The cover's frame: lit border and glow.
+        final box = tester.widget<DecoratedBox>(find
+            .descendant(
+              of: find.byType(MiniPlayer),
+              matching: find.byWidgetPredicate((w) =>
+                  w is DecoratedBox &&
+                  w.decoration is BoxDecoration &&
+                  (w.decoration as BoxDecoration).border != null &&
+                  (w.decoration as BoxDecoration).boxShadow != null),
+            )
+            .first);
+        return ((box.decoration as BoxDecoration).border! as Border).top.color;
+      }
+      expect(tester.binding.transientCallbackCount, 0, reason: 'the dock is on every screen');
+      final before = border();
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(border(), isNot(before), reason: 'the cover still breathes');
+      expect(tester.binding.transientCallbackCount, 0);
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 2));
     }, () => _noNetwork);

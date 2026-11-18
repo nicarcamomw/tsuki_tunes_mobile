@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -403,14 +404,15 @@ class _MiniPlayerState extends ConsumerState<MiniPlayer>
 // Cover art
 // ---------------------------------------------------------------------------
 
-/// The cover, lit in the player's colour while it plays.
+/// The cover, lit in the player's colour, breathing while it plays.
 ///
-/// Perf: it used to breathe (glow and border pulsing, the blur radius
-/// with them) for as long as music played. Being in the dock on every
-/// screen, that asked for a new frame of the whole app 60 times a second
-/// the whole time a song was on, and the app stuttered under it (a tab
-/// switch felt like the music stuck). The glow now stands still.
-class _BreathingCover extends StatelessWidget {
+/// Perf: the breath is stepped by a timer at 12 frames a second, not a
+/// ticker at the screen's rate. Being in the dock on every screen, the
+/// ticker asked for a frame of the whole app 60 times a second for as long
+/// as a song played, and the phone (Spotify's audio with it) struggled. A
+/// breath of 2.8 s moves too little between steps to see them. Still when
+/// hidden (TickerMode) or with less motion asked for.
+class _BreathingCover extends StatefulWidget {
   final String trackId;
   final String coverUrl;
   final bool isPlaying;
@@ -421,34 +423,88 @@ class _BreathingCover extends StatelessWidget {
     required this.isPlaying,
   });
 
+  /// Steps of the breath per second.
+  static const int fps = 12;
+
+  @override
+  State<_BreathingCover> createState() => _BreathingCoverState();
+}
+
+class _BreathingCoverState extends State<_BreathingCover> {
+  Timer? _timer;
+  final Stopwatch _clock = Stopwatch();
+  double _t = 0;
+
+  bool _shouldRun(BuildContext context) =>
+      widget.isPlaying &&
+      !MediaQuery.of(context).disableAnimations &&
+      TickerMode.valuesOf(context).enabled;
+
+  void _sync() {
+    final run = _shouldRun(context);
+    if (run && _timer == null) {
+      _clock.start();
+      _timer = Timer.periodic(const Duration(milliseconds: 1000 ~/ _BreathingCover.fps), (_) {
+        if (!mounted) return;
+        // 0 → 1 → 0 over one breath, eased like the old reverse repeat.
+        final phase = (_clock.elapsedMilliseconds % AppMotion.breath.inMilliseconds) / AppMotion.breath.inMilliseconds;
+        setState(() => _t = 0.5 - 0.5 * math.cos(2 * math.pi * phase));
+      });
+    } else if (!run && _timer != null) {
+      _timer!.cancel();
+      _timer = null;
+      _clock.stop();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_BreathingCover old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tint = PlayerTint.of(context);
+    final playing = widget.isPlaying;
+    final t = playing ? _t : 0.0;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
-          color: tint.withValues(alpha: isPlaying ? 0.75 : 0.3),
+          color: tint.withValues(alpha: 0.3 + 0.7 * t),
           width: 1.5,
         ),
-        boxShadow: isPlaying
-            ? [BoxShadow(color: tint.withValues(alpha: 0.32), blurRadius: 10)]
+        boxShadow: playing
+            ? [BoxShadow(color: tint.withValues(alpha: 0.15 + 0.35 * t), blurRadius: 8 + 4 * t)]
             : null,
       ),
       child: PlayerArtHero(
-        trackId: trackId,
-        coverUrl: coverUrl,
-        isPlaying: isPlaying,
+        trackId: widget.trackId,
+        coverUrl: widget.coverUrl,
+        isPlaying: widget.isPlaying,
         child: ExcludeSemantics(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.chip),
             child: SizedBox(
               width: 44,
               height: 44,
-              child: coverUrl.isNotEmpty
+              child: widget.coverUrl.isNotEmpty
                   ? CachedNetworkImage(
                     memCacheWidth: imageCacheSize(context, (44).toDouble()),
-                      imageUrl: coverUrl,
+                      imageUrl: widget.coverUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
                           Container(color: AppColors.bgMid),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/design_tokens.dart';
 import '../navigation/session_gate.dart';
 import '../state/app_providers.dart';
+import '../state/locale_provider.dart';
 import '../widgets/motion.dart';
 import '../widgets/tsuki_sky.dart';
 
@@ -72,9 +74,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
   final ValueNotifier<double> _time = ValueNotifier(0);
   // The ring's turn: one every 16 s.
   final ValueNotifier<double> _rotation = ValueNotifier(0);
+  // The caret's blink (on/off twice a second for a moment after typing):
+  // its own notifier, so the name rebuilds when it blinks, not every frame.
+  final ValueNotifier<bool> _blink = ValueNotifier(true);
   late final Ticker _ticker = createTicker((elapsed) {
     _time.value = elapsed.inMicroseconds / 1e6;
     _rotation.value = _time.value / 16 * 2 * math.pi;
+    _blink.value = (_time.value * 2).floor().isEven;
   });
   ui.FragmentShader? _shader;
   Timer? _patience;
@@ -116,6 +122,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     _ticker.dispose();
     _time.dispose();
     _rotation.dispose();
+    _blink.dispose();
     _intro.dispose();
     _exit.dispose();
     _shader?.dispose();
@@ -144,6 +151,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     final pulse = _part(0.82, 1, Curves.easeOutCubic);
     final ticks = _part(0.7, 1, AppMotion.enter);
     final type = _part(0.35, 0.85);
+    final rule = _part(0.7, 1, AppMotion.enter);
     final exit = CurvedAnimation(parent: _exit, curve: AppMotion.exit);
     const mask = _Mask();
 
@@ -165,6 +173,24 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                     ),
                   ),
                 ),
+              // Depth: the corners sink into the night. Static, it fades
+              // in with the sky (the splash's first frame has none).
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: FadeTransition(
+                    opacity: sky,
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          radius: 1.05,
+                          colors: [Colors.transparent, Color.fromRGBO(0, 0, 0, 0.5)],
+                          stops: [0.55, 1],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               // A few embers rising slowly through it.
               if (!still)
                 Positioned.fill(
@@ -215,33 +241,35 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                   },
                 ),
               ),
-              // The name, typing itself under the ring.
+              // The name, typing itself under the ring with a caret, as
+              // the login will show it (TSUKI white, TUNES red), and a line
+              // of light drawing out beneath it.
               Positioned(
-                top: MediaQuery.sizeOf(context).height / 2 + 150,
+                top: MediaQuery.sizeOf(context).height / 2 + 146,
                 child: ExcludeSemantics(
                   child: AnimatedBuilder(
-                    animation: Listenable.merge([type, _exit]),
-                    builder: (context, _) {
-                      const name = 'TSUKI TUNES';
-                      final shown = (name.length * type.value).round();
-                      return Opacity(
-                        opacity: 1 - exit.value,
-                        child: Text(
-                          name.substring(0, shown).padRight(name.length),
-                          style: locale.getTextStyle(
-                            fontSize: AppFontSize.caption,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textMuted,
-                            letterSpacing: 6,
-                            tabular: true,
-                          ),
-                        ),
-                      );
-                    },
+                    animation: Listenable.merge([type, rule, _exit, _blink]),
+                    builder: (context, _) => Opacity(
+                      opacity: 1 - exit.value,
+                      child: _TypedName(
+                        locale: locale,
+                        typed: type.value,
+                        rule: rule.value,
+                        // The caret blinks while it types and a moment after.
+                        // Not before typing starts: the first frames are
+                        // Android's splash, carried on as it was.
+                        caret: still || _intro.value < 0.3
+                            ? 0
+                            : type.value < 1
+                                ? 1
+                                : (_time.value < 3 && _blink.value ? 1 : 0),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              // At the bottom, only if waking takes a moment.
+              // At the bottom, only if waking takes a moment: a thin
+              // light running along a hairline, and the words.
               Positioned(
                 left: 32,
                 right: 32,
@@ -251,15 +279,28 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                   duration: AppMotion.slow,
                   curve: AppMotion.enter,
                   child: ExcludeSemantics(
-                    child: Text(
-                      strings.loadingWaking,
-                      textAlign: TextAlign.center,
-                      style: locale.getTextStyle(
-                        fontSize: AppFontSize.body,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.2,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_slow)
+                          RepaintBoundary(
+                            child: CustomPaint(
+                              size: const Size(72, 2),
+                              painter: _WakingLinePainter(time: _time, still: still),
+                            ),
+                          ),
+                        const SizedBox(height: 14),
+                        Text(
+                          strings.loadingWaking,
+                          textAlign: TextAlign.center,
+                          style: locale.getTextStyle(
+                            fontSize: AppFontSize.body,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -270,6 +311,117 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
       ),
     );
   }
+}
+
+/// TSUKI TUNES as the login shows it, [typed] (0–1) of it written, the rest
+/// held in place unseen (so the letters never shift), a [caret] after the
+/// last letter, and a short line of light [rule] (0–1) drawn out under it.
+class _TypedName extends StatelessWidget {
+  const _TypedName({required this.locale, required this.typed, required this.rule, required this.caret});
+
+  final LocaleProvider locale;
+  final double typed;
+  final double rule;
+  final double caret;
+
+  static const _name = 'TSUKI TUNES';
+  static const _split = 6; // "TSUKI "
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = (_name.length * typed).round();
+    final style = locale.getTextStyle(
+      fontSize: AppFontSize.titleLg,
+      fontWeight: FontWeight.w900,
+      color: AppColors.textBright,
+      letterSpacing: 6,
+    );
+    const hidden = TextStyle(color: Colors.transparent);
+    final white = _name.substring(0, math.min(shown, _split));
+    final red = shown > _split ? _name.substring(_split, shown) : '';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text.rich(
+          TextSpan(children: [
+            TextSpan(text: white),
+            TextSpan(text: red, style: const TextStyle(color: AppColors.accentText)),
+            // The caret takes no room: it sits over the next letter's
+            // place, which is there already, unseen.
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: SizedBox(
+                width: 0,
+                height: AppFontSize.titleLg * 1.1,
+                child: OverflowBox(
+                  maxWidth: 4,
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 2.5,
+                    height: AppFontSize.titleLg * 1.1,
+                    color: AppColors.accent.withValues(alpha: caret),
+                  ),
+                ),
+              ),
+            ),
+            TextSpan(text: _name.substring(shown), style: hidden),
+          ]),
+          style: style,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: 72 * rule,
+          height: 1.5,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              AppColors.accent.withValues(alpha: 0),
+              AppColors.accent,
+              AppColors.accent.withValues(alpha: 0),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A hairline with a short light running along it, over and over, while
+/// waking takes a moment. Still: the hairline, lit in the middle.
+class _WakingLinePainter extends CustomPainter {
+  _WakingLinePainter({required this.time, required this.still}) : super(repaint: still ? null : time);
+
+  final ValueListenable<double> time;
+  final bool still;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final y = size.height / 2;
+    final track = Paint()
+      ..color = AppColors.textMuted.withValues(alpha: 0.25)
+      ..strokeWidth = size.height
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), track);
+    final t = still ? 0.5 : (time.value / 1.4) % 1;
+    final head = Curves.easeInOut.transform(t);
+    final w = size.width * 0.35;
+    final x = -w + (size.width + w) * head;
+    final light = Paint()
+      ..shader = ui.Gradient.linear(Offset(x, y), Offset(x + w, y), [
+        AppColors.accent.withValues(alpha: 0),
+        AppColors.accent,
+        AppColors.accent.withValues(alpha: 0),
+      ], const [0, 0.5, 1])
+      ..strokeWidth = size.height
+      ..strokeCap = StrokeCap.round;
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawLine(Offset(x, y), Offset(x + w, y), light);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_WakingLinePainter old) => old.still != still;
 }
 
 class _Mask extends StatelessWidget {

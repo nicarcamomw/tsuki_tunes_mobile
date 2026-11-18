@@ -260,18 +260,16 @@ class _LyricLine extends StatelessWidget {
       _LineState.upcoming => (tint == AppColors.accent ? tint : readableTint(tint)).withValues(alpha: 0.32),
       _LineState.plain => bright.withValues(alpha: 0.9),
     };
-    // Perf: only the line being sung glows, with one shadow. A blurred
-    // shadow is a blur of the whole line drawn on every frame the list
-    // moves; on every line (two on the current one) changing line, which
-    // scrolls the list, was slow.
+    // Perf: only the line being sung glows. A blurred shadow is a blur of
+    // the whole line drawn on every frame the list moves; on every line,
+    // changing line (which scrolls the list) was slow.
     final style = base.copyWith(
       color: color,
       shadows: [
-        if (current)
-          Shadow(
-            color: tint.withValues(alpha: 0.85),
-            blurRadius: 18,
-          ),
+        if (current) ...[
+          Shadow(color: tint.withValues(alpha: 0.9), blurRadius: 16),
+          Shadow(color: tint.withValues(alpha: 0.5), blurRadius: 32),
+        ],
       ],
     );
 
