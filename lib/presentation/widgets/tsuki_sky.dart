@@ -303,3 +303,261 @@ class MoonRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(MoonRingPainter old) => old.still != still;
 }
+
+/// The login's halo around the mask: a lunar dial.
+///
+/// From the inside out: a dotted ring turning the other way, the track
+/// with a comet running on it (a long tail, a white-hot head), sixty ticks
+/// (a longer one every five) and the eight phases of the moon, from new to
+/// full. Ticks, dots and phases light up as the comet passes them, so the
+/// dial reads as one thing in motion.
+///
+/// [assemble] (0 to 1) builds it: the track draws itself from the top, the
+/// ticks grow out in turn, the dotted ring turns into place and the phases
+/// pop in one by one. [exit] fades it out, opening a little.
+///
+/// Light on purpose (it repaints every frame on the login): a few hundred
+/// short lines and circles, gradients instead of blurs, the phases' shapes
+/// made once.
+class HaloRingPainter extends CustomPainter {
+  HaloRingPainter({
+    required this.rotation,
+    required this.assemble,
+    required this.exit,
+    required this.still,
+    this.radius = 112,
+  }) : super(repaint: Listenable.merge([rotation, assemble, exit]));
+
+  /// The comet's turn, in radians (its owner sets the pace: calm, or fast
+  /// while signing in).
+  final ValueListenable<double> rotation;
+  final Animation<double> assemble;
+  final Animation<double> exit;
+  final bool still;
+  final double radius;
+
+  static const int tickCount = 60;
+  static const int dotCount = 90;
+  static const int phaseCount = 8;
+
+  /// How far behind its head the comet's tail runs, in radians.
+  static const double tail = 2.6;
+
+  // Each phase's lit shape on a unit disc: new moon (none) to full, waxing.
+  static final List<Path?> _phases = List.generate(phaseCount, (k) {
+    if (k == 0) return null;
+    final disc = Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: 1));
+    if (k == phaseCount ~/ 2) return disc;
+    // Lit fraction 0..1..0 over the cycle; the shadow is the disc shifted.
+    final f = k <= phaseCount ~/ 2 ? k / (phaseCount / 2) : 2 - k / (phaseCount / 2);
+    final waxing = k < phaseCount ~/ 2;
+    final shift = 2 * f * (waxing ? -1 : 1);
+    final shadow = Path()..addOval(Rect.fromCircle(center: Offset(shift, 0), radius: 1));
+    return Path.combine(PathOperation.difference, disc, shadow);
+  });
+
+  static double _ease(double t) => Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
+
+  /// How close [a] is to the comet's head [head] (1 on it, 0 a bit away),
+  /// stronger along the tail behind it than ahead.
+  static double _near(double a, double head) {
+    var d = (head - a) % (2 * math.pi);
+    if (d > math.pi) d -= 2 * math.pi; // -π..π, positive = behind the head
+    if (d >= 0) return math.max(0, 1 - d / 0.9);
+    return math.max(0, 1 + d / 0.25);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final fade = 1 - exit.value;
+    final a = assemble.value;
+    if (fade <= 0 || a <= 0) return;
+    final r = radius * (1 + 0.35 * exit.value);
+    final turn = still ? 0.0 : rotation.value;
+    final head = -math.pi / 2 + turn;
+    final accent = AppColors.accent;
+
+    // The track, drawing itself clockwise from the top.
+    final drawn = 2 * math.pi * _ease(a / 0.7);
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      -math.pi / 2,
+      drawn,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = accent.withValues(alpha: 0.28 * fade),
+    );
+
+    // A faint sweep trailing the comet across the inside, like a radar's.
+    final sweepIn = _ease((a - 0.45) / 0.4);
+    if (sweepIn > 0 && !still) {
+      const wedge = 1.1;
+      final inner = r - 16;
+      canvas
+        ..save()
+        ..translate(c.dx, c.dy)
+        ..rotate(head - wedge)
+        ..drawPath(
+          Path()
+            ..moveTo(0, 0)
+            ..arcTo(Rect.fromCircle(center: Offset.zero, radius: inner), 0, wedge, false)
+            ..close(),
+          Paint()
+            ..shader = ui.Gradient.sweep(
+              Offset.zero,
+              [accent.withValues(alpha: 0), accent.withValues(alpha: 0.10 * sweepIn * fade)],
+              const [0, 1],
+              TileMode.clamp,
+              0,
+              wedge,
+            ),
+        )
+        ..restore();
+    }
+
+    // Two brackets of a HUD outside the ticks, turning slowly the other way.
+    final brackets = _ease((a - 0.3) / 0.5);
+    if (brackets > 0) {
+      final spin = -turn * 0.18 + (1 - brackets) * math.pi / 3;
+      final rb = r + 21;
+      final bracket = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..strokeCap = StrokeCap.round
+        ..color = accent.withValues(alpha: 0.42 * brackets * fade);
+      for (final base in const [math.pi / 4, math.pi * 5 / 4]) {
+        canvas.drawArc(Rect.fromCircle(center: c, radius: rb), base + spin, 0.62 * brackets, false, bracket);
+      }
+    }
+
+    // The dotted ring inside, turning the other way, into place.
+    final dotsIn = _ease((a - 0.15) / 0.6);
+    if (dotsIn > 0) {
+      final spin = -turn * 0.35 - (1 - dotsIn) * math.pi / 2;
+      final rd = r - 12;
+      final dot = Paint()..strokeCap = StrokeCap.round;
+      for (var i = 0; i < dotCount; i++) {
+        final ang = spin + i * 2 * math.pi / dotCount;
+        final lit = _near(ang, head);
+        dot
+          ..strokeWidth = 1.4 + 0.8 * lit
+          ..color = Color.lerp(AppColors.textMuted, accent, 0.4 + 0.6 * lit)!
+              .withValues(alpha: (0.16 + 0.6 * lit) * dotsIn * fade);
+        final p = c + Offset(math.cos(ang), math.sin(ang)) * rd;
+        canvas.drawLine(p, p, dot);
+      }
+    }
+
+    // Sixty ticks outside, growing out in turn from the top.
+    final tick = Paint()
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < tickCount; i++) {
+      final grow = _ease((a - 0.1 - 0.4 * i / tickCount) / 0.3);
+      if (grow <= 0) continue;
+      final ang = -math.pi / 2 + i * 2 * math.pi / tickCount;
+      final major = i % 5 == 0;
+      final lit = _near(ang, head);
+      final dir = Offset(math.cos(ang), math.sin(ang));
+      final len = (major ? 9.0 : 4.5) * grow * (1 + 0.4 * lit);
+      tick.color = (lit > 0.5 ? Color.lerp(accent, Colors.white, (lit - 0.5) * 0.8)! : accent)
+          .withValues(alpha: ((major ? 0.5 : 0.28) + 0.5 * lit).clamp(0.0, 1.0) * fade);
+      canvas.drawLine(c + dir * (r + 7), c + dir * (r + 7 + len), tick);
+    }
+
+    // The comet: a long tail fading in behind a white-hot head.
+    final comet = _ease((a - 0.35) / 0.4);
+    if (comet > 0) {
+      final rect = Rect.fromCircle(center: Offset.zero, radius: r);
+      canvas
+        ..save()
+        ..translate(c.dx, c.dy)
+        ..rotate(head - tail)
+        ..drawArc(
+          rect,
+          0,
+          tail,
+          false,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.4
+            ..strokeCap = StrokeCap.round
+            ..shader = ui.Gradient.sweep(
+              Offset.zero,
+              [
+                accent.withValues(alpha: 0),
+                accent.withValues(alpha: 0.55 * comet * fade),
+                Color.lerp(accent, Colors.white, 0.5)!.withValues(alpha: comet * fade),
+              ],
+              const [0, 0.7, 1],
+              TileMode.clamp,
+              0,
+              tail,
+            ),
+        )
+        ..restore();
+      // Its head: a soft glow (a gradient, not a blur) and a bright core.
+      final h = c + Offset(math.cos(head), math.sin(head)) * r;
+      canvas
+        ..drawCircle(
+          h,
+          14,
+          Paint()
+            ..shader = ui.Gradient.radial(h, 14, [
+              accent.withValues(alpha: 0.55 * comet * fade),
+              accent.withValues(alpha: 0),
+            ]),
+        )
+        ..drawCircle(h, 2.4, Paint()..color = Colors.white.withValues(alpha: comet * fade));
+    }
+
+    // The eight phases of the moon on their own faint orbit, popping in one
+    // by one.
+    final rp = r + 30;
+    final orbit = _ease((a - 0.4) / 0.4);
+    if (orbit > 0) {
+      canvas.drawCircle(
+        c,
+        rp,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6
+          ..color = AppColors.textMuted.withValues(alpha: 0.10 * orbit * fade),
+      );
+    }
+    for (var k = 0; k < phaseCount; k++) {
+      final pop = Curves.easeOutBack.transform(((a - 0.45 - k * 0.05) / 0.25).clamp(0.0, 1.0));
+      if (pop <= 0) continue;
+      final ang = -math.pi / 2 + k * 2 * math.pi / phaseCount;
+      final lit = _near(ang, head);
+      final p = c + Offset(math.cos(ang), math.sin(ang)) * rp;
+      final s = 4.4 * pop * (1 + 0.25 * lit);
+      // The whole disc, faint (the unlit side), then its lit part.
+      canvas.drawCircle(
+        p,
+        s,
+        Paint()..color = AppColors.textMuted.withValues(alpha: (0.14 + 0.1 * lit) * fade),
+      );
+      final shape = _phases[k];
+      if (shape != null) {
+        canvas
+          ..save()
+          ..translate(p.dx, p.dy)
+          ..scale(s)
+          ..drawPath(
+            shape,
+            Paint()
+              ..color = Color.lerp(AppColors.textMuted, Colors.white, 0.35 + 0.65 * lit)!
+                  .withValues(alpha: (0.45 + 0.55 * lit) * fade),
+          )
+          ..restore();
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(HaloRingPainter old) => old.still != still || old.radius != radius;
+}

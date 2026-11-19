@@ -18,6 +18,7 @@ import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
+import '../../widgets/circular_reveal.dart';
 import '../../widgets/frosted_glass.dart';
 import '../../widgets/haptics.dart';
 import '../../widgets/motion.dart';
@@ -44,7 +45,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   /// How long the entrance takes (the mask rising, then the rest).
-  static const Duration intro = Duration(milliseconds: 1100);
+  static const Duration intro = Duration(milliseconds: 1400);
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -53,7 +54,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderStateMixin {
   late final AnimationController _intro = AnimationController(vsync: this, duration: LoginScreen.intro);
   late final AnimationController _shake = AnimationController(vsync: this, duration: AppMotion.slow);
-  late final AnimationController _bloom = AnimationController(vsync: this, duration: AppMotion.slow);
+  late final AnimationController _bloom = AnimationController(vsync: this, duration: AppMotion.flash);
+
+  /// Where the mask stands, for the app to open out of it (RevealOrigin).
+  Alignment _maskAt = Alignment.center;
+  bool _entering = false;
   final ValueNotifier<double> _time = ValueNotifier(0);
   final ValueNotifier<double> _rotation = ValueNotifier(0);
   late final Ticker _ticker = createTicker(_tick);
@@ -78,8 +83,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
       if (!mounted || program == null) return;
       setState(() => _shader = program.fragmentShader());
     }));
-    _bloom.addStatusListener((status) {
-      if (status == AnimationStatus.completed) _enter();
+    // In: the app starts opening out of the mask while the halo flashes,
+    // not after (one movement, no wait in between).
+    _bloom.addListener(() {
+      if (_bloom.value >= 0.3) _enter();
     });
   }
 
@@ -180,7 +187,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
   /// takes it from here (the tutorial for a new account, the main screen
   /// otherwise, or the page a link pointed to).
   void _enter() {
-    if (!mounted) return;
+    if (!mounted || _entering) return;
+    _entering = true;
+    RevealOrigin.value = _maskAt;
     final auth = ref.read(authProvider);
     if (auth.uid != null && !auth.isGuest) {
       final uid = auth.uid!;
@@ -197,7 +206,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
   Future<void> _enterAsObserver() async {
     Haptics.tap();
     await ref.read(authProvider).loginAsGuest();
-    if (mounted) context.go(AppPaths.home);
+    if (!mounted) return;
+    // In the same way as signing in: the halo flashes, the app opens.
+    if (reduceMotion(context)) {
+      _enter();
+    } else {
+      unawaited(_bloom.forward());
+    }
   }
 
   Future<void> _open(String url) async {
@@ -217,10 +232,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
     final throttle = auth.loginThrottleRemaining;
     final waiting = throttle > Duration.zero ? (throttle.inMilliseconds / 1000).ceil() : 0;
 
-    final rise = _part(0, 0.55, Curves.easeOutCubic);
-    final title = _part(0.32, 0.72);
-    final tagline = _part(0.42, 0.82);
-    final panel = _part(0.5, 1);
+    // The mask rises from where the entrance left it once the reveal has
+    // opened around it (routes.dart's revealPage), on Material's emphasized
+    // curve; the halo builds itself meanwhile.
+    final rise = _part(0.36, 0.9, Curves.easeInOutCubicEmphasized);
+    final halo = _part(0.05, 1, Curves.linear);
+    final title = _part(0.5, 0.85);
+    final tagline = _part(0.6, 0.92);
+    final panel = _part(0.6, 1);
     final bloom = CurvedAnimation(parent: _bloom, curve: AppMotion.exit);
     const still1 = AlwaysStoppedAnimation<double>(1);
     const zero = AlwaysStoppedAnimation<double>(0);
@@ -240,10 +259,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
           final top = MediaQuery.paddingOf(context).top;
           // The mask: from the centre (where the entrance left it) to the
           // middle of the room above the panel, with the name under it (the
-          // ring's top 126 above the mask's centre, the line's end 198 below).
+          // halo's top 126 above the mask's centre, the line's end 222 below, under
+          // the halo's moon phases).
           final from = h / 2;
           final panelTop = h - MediaQuery.paddingOf(context).bottom - _panelHeight;
-          final to = math.max(top + 140, top + (panelTop - top - 324) / 2 + 126);
+          final to = math.max(top + 140, top + (panelTop - top - 348) / 2 + 126);
+          _maskAt = Alignment(0, h <= 0 ? 0 : to / h * 2 - 1);
           return Stack(
             alignment: Alignment.topCenter,
             children: [
@@ -264,7 +285,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
               // The mask with its glow and ring, rising into place.
               AnimatedBuilder(
                 animation: rise,
-                child: _MaskAndRing(time: _time, rotation: _rotation, bloom: bloom, still: still),
+                child: _MaskAndRing(time: _time, rotation: _rotation, assemble: halo, bloom: bloom, still: still),
                 builder: (context, child) => Positioned(
                   top: ui.lerpDouble(from, to, rise.value)! - 160,
                   left: 0,
@@ -276,7 +297,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
 
               // The name and the line under it.
               Positioned(
-                top: to + 128,
+                top: to + 152,
                 left: AppSpacing.page,
                 right: AppSpacing.page,
                 child: FadeTransition(
@@ -438,15 +459,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
 /// The entrance's mask, its glow and its moon ring (complete, turning at
 /// the pace the screen sets), blooming on the way in.
 class _MaskAndRing extends StatelessWidget {
-  const _MaskAndRing({required this.time, required this.rotation, required this.bloom, required this.still});
+  const _MaskAndRing({
+    required this.time,
+    required this.rotation,
+    required this.assemble,
+    required this.bloom,
+    required this.still,
+  });
 
   final ValueNotifier<double> time;
   final ValueNotifier<double> rotation;
+
+  /// The halo building itself as the screen comes in (0 to 1).
+  final Animation<double> assemble;
   final Animation<double> bloom;
   final bool still;
 
   static const _full = AlwaysStoppedAnimation<double>(1);
-  static const _none = AlwaysStoppedAnimation<double>(0);
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -458,14 +487,14 @@ class _MaskAndRing extends StatelessWidget {
               painter: MoonGlowPainter(grow: _full, time: time, exit: bloom, still: still),
             ),
           ),
+          // The lunar dial (HaloRingPainter): it carries on the entrance's
+          // ring and builds itself as the screen comes in.
           RepaintBoundary(
             child: CustomPaint(
               size: const Size.square(320),
-              painter: MoonRingPainter(
-                sweep: _full,
-                pulse: _none,
-                ticks: _full,
+              painter: HaloRingPainter(
                 rotation: rotation,
+                assemble: still ? _full : assemble,
                 exit: bloom,
                 still: still,
               ),

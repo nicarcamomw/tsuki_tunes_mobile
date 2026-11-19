@@ -228,16 +228,16 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                   child: mask,
                   builder: (context, mask) {
                     final breath = still ? 0.0 : breathAt(_time.value);
-                    final scale = (1 + 0.025 * breath) * (1 + 0.12 * exit.value);
+                    // It stays as it is on the way out: the next screen
+                    // opens out of it (CircularReveal), and the login's
+                    // own mask starts right here.
+                    final scale = 1 + 0.025 * breath;
                     final scanning = !still && _intro.value > 0.15 && _intro.value < 0.65;
                     final glitch = !still && _intro.value > 0.55 && _intro.value < 0.72 ? _intro.value : null;
                     Widget out = mask!;
                     if (scanning) out = _Scan(progress: scan.value, child: out);
                     if (glitch != null) out = _Glitch(seed: glitch, child: out);
-                    return Opacity(
-                      opacity: 1 - exit.value,
-                      child: Transform.scale(scale: scale, child: out),
-                    );
+                    return Transform.scale(scale: scale, child: out);
                   },
                 ),
               ),

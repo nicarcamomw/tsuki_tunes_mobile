@@ -30,7 +30,9 @@ import '../screens/time_machine_screen.dart';
 import '../screens/user_profile_screen.dart';
 import '../screens/wrapped_screen.dart';
 import '../state/use_cases.dart';
+import '../widgets/circular_reveal.dart';
 import '../widgets/load_by_id.dart';
+import '../widgets/motion.dart';
 import 'app_router.dart';
 
 part 'routes.g.dart';
@@ -57,7 +59,8 @@ class LoginRoute extends GoRouteData with $LoginRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) =>
-      fadePage(state, const LoginScreen());
+      // Out of the entrance's mask, where the login's own mask starts.
+      revealPage(state, const LoginScreen(), origin: Alignment.center);
 }
 
 @TypedGoRoute<OnboardingRoute>(path: AppPaths.onboarding)
@@ -114,7 +117,9 @@ class MainShellRoute extends ShellRouteData {
 
   @override
   Page<void> pageBuilder(BuildContext context, GoRouterState state, Widget navigator) =>
-      fadePage(state, MainNavigationScreen(child: navigator));
+      // The app opens out of the mask: the entrance's, or the login's
+      // (RevealOrigin, set as it signs in).
+      revealPage(state, MainNavigationScreen(child: navigator));
 }
 
 /// The three tabs.
@@ -451,6 +456,20 @@ CustomTransitionPage<void> fadePage(GoRouterState state, Widget child) => Custom
       child: child,
       transitionDuration: AppMotion.normal,
       transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+    );
+
+/// A gate opening into the next screen: a circle growing out of the mask
+/// (CircularReveal), from [origin] or where the leaving screen set
+/// RevealOrigin. A plain fade with less motion asked for.
+CustomTransitionPage<void> revealPage(GoRouterState state, Widget child, {Alignment? origin}) =>
+    CustomTransitionPage(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: AppMotion.portal,
+      reverseTransitionDuration: AppMotion.normal,
+      transitionsBuilder: (context, animation, _, child) => reduceMotion(context)
+          ? FadeTransition(opacity: animation, child: child)
+          : CircularReveal(animation: animation, origin: origin, child: child),
     );
 
 /// The app's page transition: a short fade and slide.

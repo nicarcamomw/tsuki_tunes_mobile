@@ -107,7 +107,7 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('ready, the mask blooms into the next screen', (tester) async {
+  testWidgets('ready, the name leaves and the mask stays for the next screen to open out of', (tester) async {
     final gate = _Gate();
     await tester.pumpWidget(
       ProviderScope(
@@ -118,16 +118,21 @@ void main() {
         child: const MaterialApp(home: LoadingScreen()),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 500));
-    double maskOpacity() =>
-        tester.widget<Opacity>(find.ancestor(of: find.byType(Image).last, matching: find.byType(Opacity)).first).opacity;
-    expect(maskOpacity(), 1);
+    await tester.pump(const Duration(milliseconds: 2000));
+    final name = find.textContaining('TSUKI', findRichText: true);
+    double nameOpacity() =>
+        tester.widget<Opacity>(find.ancestor(of: name, matching: find.byType(Opacity)).first).opacity;
+    final mask = find.byType(Image).last;
+    final before = tester.getSize(mask).width;
+    expect(nameOpacity(), 1);
     gate.ready();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
-    expect(maskOpacity(), lessThan(1));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(maskOpacity(), 0);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(nameOpacity(), 0);
+    // The login's mask starts where this one is (routes.dart's revealPage
+    // opens the next screen out of it): it neither fades nor grows.
+    expect(find.ancestor(of: mask, matching: find.byType(Opacity)), findsNothing);
+    expect(tester.getSize(mask).width, closeTo(before, before * 0.03));
   });
 
   testWidgets('with less motion asked for, the mask holds still', (tester) async {

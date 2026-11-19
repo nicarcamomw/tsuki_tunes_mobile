@@ -75,6 +75,13 @@ abstract final class AppMotion {
   /// Big moves: the player opening, a hero flight, a reveal.
   static const Duration slow = Duration(milliseconds: 450);
 
+  /// A gate opening: the circle the login and the app open through, out of
+  /// the mask (CircularReveal).
+  static const Duration portal = Duration(milliseconds: 750);
+
+  /// The login's halo flashing as it lets you in (the app opens meanwhile).
+  static const Duration flash = Duration(milliseconds: 600);
+
   /// A value or a scene unfolding: a number counting up, a bar filling,
   /// a shockwave, a long scroll back to the top.
   static const Duration reveal = Duration(milliseconds: 900);
