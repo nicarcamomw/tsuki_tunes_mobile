@@ -1,4 +1,9 @@
-"""App icons from the login's mask (assets/images/tsuki_mask.webp)."""
+"""App icons from the login's mask (assets/images/tsuki_mask.webp).
+
+The launcher icon is ic_launcher_tsuki (not ic_launcher): a new resource
+name makes launchers that cache icons (MIUI/HyperOS among them) load it
+again on update instead of keeping the old picture.
+"""
 import json, math, os, sys
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -64,7 +69,7 @@ for d, k in densities.items():
     m = mask_layer(fs, 31 / 108)
     fg.alpha_composite(shadow_under(fs, m))
     fg.alpha_composite(m)
-    fg.save(f'{res}/mipmap-{d}/ic_launcher_foreground.png', optimize=True)
+    fg.save(f'{res}/mipmap-{d}/ic_launcher_tsuki_foreground.png', optimize=True)
     mask_layer(fs, 31 / 108, mono=True).save(f'{res}/mipmap-{d}/ic_launcher_monochrome.png', optimize=True)
     # Legacy (before Android 8): 48 dp, a rounded square.
     ls = round(48 * k)
@@ -77,7 +82,7 @@ for d, k in densities.items():
     rounded = Image.new('L', (big, big), 0)
     ImageDraw.Draw(rounded).rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 0.2, fill=255)
     leg.putalpha(rounded)
-    leg.resize((ls, ls), Image.LANCZOS).save(f'{res}/mipmap-{d}/ic_launcher.png', optimize=True)
+    leg.resize((ls, ls), Image.LANCZOS).save(f'{res}/mipmap-{d}/ic_launcher_tsuki.png', optimize=True)
 
 def full_square(size, frac=0.40, rounded=False):
     big = size * 2

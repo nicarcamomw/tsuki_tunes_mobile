@@ -11,7 +11,7 @@ import 'package:image/image.dart' as img;
 // The silhouette is solid; only large dark areas (eyes, mouth, vents) are
 // cut out, so the face reads once Android tints it.
 // Run from tool/monochrome_icon (dart pub get first):
-//   dart run bin/generate.dart ../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png mono.png preview.png 14 4 12 24
+//   dart run bin/generate.dart ../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_tsuki_foreground.png mono.png preview.png 14 4 12 24
 //   dart run bin/sizes.dart mono.png ../../android/app/src/main/res
 // args: <foreground.png> <out.png> [preview.png or -] [darkLuma] [radius] [protect] [tolerance]
 const bg = (24, 27, 34);
