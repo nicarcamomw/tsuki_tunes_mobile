@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/logger.dart';
 import '../../domain/logic/beat_clock.dart';
+import 'blob_store.dart';
 
 export '../../domain/logic/beat_clock.dart';
 
@@ -25,8 +25,8 @@ class BeatSyncStore {
 
   Future<void> _load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_key);
+      // A file of its own (BlobStore): it grows with every song.
+      final raw = await BlobStore.read(_key);
       if (raw == null) return;
       (jsonDecode(raw) as Map<String, dynamic>).forEach((k, v) {
         final g = BeatGrid.fromJson(v);
@@ -57,8 +57,7 @@ class BeatSyncStore {
 
   Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await BlobStore.write(
           _key, jsonEncode({for (final e in _grids.entries) e.key: e.value.toJson()}));
     } catch (_) {}
   }

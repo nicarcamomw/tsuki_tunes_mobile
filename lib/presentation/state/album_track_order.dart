@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/datasources/blob_store.dart';
 import '../../domain/entities/listened_track.dart';
 import 'use_cases.dart';
 
@@ -89,8 +89,8 @@ class AlbumTrackOrder extends ChangeNotifier {
 
   Future<void> _load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(storageKey);
+      // A file of its own (BlobStore): up to $maxAlbums albums.
+      final raw = await BlobStore.read(storageKey);
       if (raw == null) return;
       final decoded = json.decode(raw);
       if (decoded is! Map) return;
@@ -113,8 +113,7 @@ class AlbumTrackOrder extends ChangeNotifier {
 
   Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(storageKey, json.encode(_order));
+      await BlobStore.write(storageKey, json.encode(_order));
     } catch (_) {}
   }
 

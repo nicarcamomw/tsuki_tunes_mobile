@@ -63,6 +63,8 @@ void main() {
   test('no tags: the album\'s Deezer genres, and asked again a month later', () async {
     final a = service();
     expect((await a.styleOf(_t('Nobody'))).styles, {MusicStyle.rock});
+    // Its save (not awaited) lands first, then the phone forgets it all.
+    await pumpEventQueue();
 
     SharedPreferences.setMockInitialValues({});
     final b = StyleService(

@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
+import 'blob_store.dart';
 import 'deezer_api_service.dart';
 
 export '../../domain/logic/bpm_flow.dart';
@@ -46,8 +46,8 @@ class BpmService {
 
   Future<void> _doLoad() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_cacheKey);
+      // A file of its own (BlobStore): it grows with every song.
+      final raw = await BlobStore.read(_cacheKey);
       if (raw == null) return;
       final m = jsonDecode(raw) as Map<String, dynamic>;
       (m['bpm'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _bpm[k] = (v as num).toDouble());
@@ -60,8 +60,7 @@ class BpmService {
 
   Future<void> _save() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await BlobStore.write(
           _cacheKey, jsonEncode({'bpm': _bpm, 'gain': _gain, 'unknown': _unknownSince}));
     } catch (_) {}
   }

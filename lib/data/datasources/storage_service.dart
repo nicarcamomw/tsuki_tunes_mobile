@@ -458,10 +458,19 @@ class StorageService implements StorageContract {
     for (final key in prefs.getKeys().where((k) => !deviceSettingKeys.contains(k)).toList()) {
       await prefs.remove(key);
     }
-    // What's kept as files of its own: the queue and the play history.
+    // What's kept as files of its own (BlobStore): the queue, the play
+    // history and the caches that grow with what's played.
     _savedQueueIds = null;
     _savedQueueJson = null;
-    for (final key in const [_playbackQueueKey, 'play_log_v1', 'play_log_tracks_v1']) {
+    for (final key in const [
+      _playbackQueueKey,
+      'play_log_v1',
+      'play_log_tracks_v1',
+      'bpm_cache_v1',
+      'beat_sync_v1',
+      'artist_styles_v1',
+      'album_track_order_v1',
+    ]) {
       await BlobStore.delete(key);
     }
     try {

@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
 import '../../domain/entities/track.dart';
 import '../../domain/logic/artist_names.dart';
 import '../../domain/logic/music_styles.dart';
+import 'blob_store.dart';
 import 'deezer_api_service.dart';
 import 'lastfm_service.dart';
 
@@ -91,8 +91,8 @@ class StyleService {
     if (loaded != null) return loaded;
     final cache = <String, _Entry>{};
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_cacheKey);
+      // A file of its own (BlobStore): up to $maxArtists artists.
+      final raw = await BlobStore.read(_cacheKey);
       if (raw != null) {
         (jsonDecode(raw) as Map<String, dynamic>).forEach((k, v) {
           if (v is Map) cache[k] = _Entry.fromJson(v);
@@ -108,8 +108,7 @@ class StyleService {
     final cache = _cache;
     if (cache == null) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_cacheKey, jsonEncode({for (final e in cache.entries) e.key: e.value.toJson()}));
+      await BlobStore.write(_cacheKey, jsonEncode({for (final e in cache.entries) e.key: e.value.toJson()}));
     } catch (e) {
       _log.warning('cache not saved: $e');
     }
@@ -119,8 +118,7 @@ class StyleService {
   Future<void> clear() async {
     _cache = {};
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_cacheKey);
+      await BlobStore.delete(_cacheKey);
     } catch (_) {}
   }
 }
