@@ -79,8 +79,9 @@ abstract final class AppMotion {
   /// the mask (CircularReveal).
   static const Duration portal = Duration(milliseconds: 750);
 
-  /// The login's halo flashing as it lets you in (the app opens meanwhile).
-  static const Duration flash = Duration(milliseconds: 600);
+  /// The login's halo letting you in: its burst of waves (the app opens
+  /// meanwhile).
+  static const Duration flash = Duration(milliseconds: 900);
 
   /// A value or a scene unfolding: a number counting up, a bar filling,
   /// a shockwave, a long scroll back to the top.

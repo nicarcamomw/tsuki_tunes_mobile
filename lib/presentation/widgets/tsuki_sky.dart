@@ -325,8 +325,9 @@ class HaloRingPainter extends CustomPainter {
     required this.assemble,
     required this.exit,
     required this.still,
+    this.burst = const AlwaysStoppedAnimation<double>(0),
     this.radius = 112,
-  }) : super(repaint: Listenable.merge([rotation, assemble, exit]));
+  }) : super(repaint: Listenable.merge([rotation, assemble, exit, burst]));
 
   /// The comet's turn, in radians (its owner sets the pace: calm, or fast
   /// while signing in).
@@ -336,7 +337,15 @@ class HaloRingPainter extends CustomPainter {
   final bool still;
   final double radius;
 
+  /// Letting you in (0 to 1, linear): a burst of waves runs out of the
+  /// ring, the track flashes, the ticks fly out and the phases scatter.
+  final Animation<double> burst;
+
   static const int tickCount = 60;
+
+  /// The waves of the burst: when each leaves (0 to 1 of it) and how far
+  /// it runs, as a multiple of the ring.
+  static const List<(double, double)> _waves = [(0, 2.1), (0.1, 2.5), (0.2, 2.9), (0.32, 3.4)];
   static const int dotCount = 90;
   static const int phaseCount = 8;
 
@@ -370,9 +379,13 @@ class HaloRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
+    final b = burst.value;
+    if (b > 0 && b < 1 && !still) _paintBurst(canvas, c, b);
     final fade = 1 - exit.value;
     final a = assemble.value;
     if (fade <= 0 || a <= 0) return;
+    // The burst throws what's around the ring outwards.
+    final fling = 46 * Curves.easeOutCubic.transform(b);
     final r = radius * (1 + 0.35 * exit.value);
     final turn = still ? 0.0 : rotation.value;
     final head = -math.pi / 2 + turn;
@@ -387,8 +400,9 @@ class HaloRingPainter extends CustomPainter {
       false,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = accent.withValues(alpha: 0.28 * fade),
+        ..strokeWidth = 1 + 2.5 * _flash(b)
+        ..color = Color.lerp(accent, Colors.white, 0.5 * _flash(b))!
+            .withValues(alpha: ((0.28 + 0.72 * _flash(b)) * fade).clamp(0.0, 1.0)),
     );
 
     // A faint sweep trailing the comet across the inside, like a radar's.
@@ -465,7 +479,8 @@ class HaloRingPainter extends CustomPainter {
       final len = (major ? 9.0 : 4.5) * grow * (1 + 0.4 * lit);
       tick.color = (lit > 0.5 ? Color.lerp(accent, Colors.white, (lit - 0.5) * 0.8)! : accent)
           .withValues(alpha: ((major ? 0.5 : 0.28) + 0.5 * lit).clamp(0.0, 1.0) * fade);
-      canvas.drawLine(c + dir * (r + 7), c + dir * (r + 7 + len), tick);
+      final out = r + 7 + fling * (major ? 1.2 : 0.8);
+      canvas.drawLine(c + dir * out, c + dir * (out + len * (1 + b)), tick);
     }
 
     // The comet: a long tail fading in behind a white-hot head.
@@ -533,7 +548,7 @@ class HaloRingPainter extends CustomPainter {
       if (pop <= 0) continue;
       final ang = -math.pi / 2 + k * 2 * math.pi / phaseCount;
       final lit = _near(ang, head);
-      final p = c + Offset(math.cos(ang), math.sin(ang)) * rp;
+      final p = c + Offset(math.cos(ang), math.sin(ang)) * (rp + fling * 1.6);
       final s = 4.4 * pop * (1 + 0.25 * lit);
       // The whole disc, faint (the unlit side), then its lit part.
       canvas.drawCircle(
@@ -555,6 +570,54 @@ class HaloRingPainter extends CustomPainter {
           )
           ..restore();
       }
+    }
+  }
+
+  /// The track's flash: up at once as the burst starts, then down.
+  static double _flash(double b) => b <= 0 ? 0 : (b < 0.08 ? b / 0.08 : math.max(0, 1 - (b - 0.08) / 0.5));
+
+  void _paintBurst(Canvas canvas, Offset c, double b) {
+    for (var i = 0; i < _waves.length; i++) {
+      final (start, reach) = _waves[i];
+      final t = (b - start) / 0.6;
+      if (t <= 0 || t >= 1) continue;
+      final e = Curves.easeOutCubic.transform(t);
+      final wr = radius * (1 + (reach - 1) * e);
+      final alpha = math.pow(1 - t, 1.4).toDouble();
+      final last = i == _waves.length - 1;
+      final color = last ? Color.lerp(AppColors.accent, Colors.white, 0.6)! : AppColors.accent;
+      // A soft band and a sharp edge, thinning as it runs out.
+      canvas
+        ..drawCircle(
+          c,
+          wr,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 18 * (1 - t) + 2
+            ..color = AppColors.accent.withValues(alpha: 0.12 * alpha),
+        )
+        ..drawCircle(
+          c,
+          wr,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3.2 * (1 - t) + 0.6
+            ..color = color.withValues(alpha: 0.85 * alpha),
+        );
+    }
+    // A flash at the heart, under the mask.
+    final glow = math.max(0.0, 1 - b / 0.35);
+    if (glow > 0) {
+      final gr = radius * (0.8 + 0.6 * b);
+      canvas.drawCircle(
+        c,
+        gr,
+        Paint()
+          ..shader = ui.Gradient.radial(c, gr, [
+            AppColors.accent.withValues(alpha: 0.35 * glow),
+            AppColors.accent.withValues(alpha: 0),
+          ]),
+      );
     }
   }
 

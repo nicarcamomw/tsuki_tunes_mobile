@@ -50,6 +50,7 @@ GoRouter createAppRouter(SessionGate session) {
       session.status,
       state.uri,
       guest: session.isGuest,
+      loginHeld: session.loginHeld,
     ),
     routes: $appRoutes,
   );
@@ -85,16 +86,19 @@ String? deepLinkLocation(Uri uri) {
 /// The router's redirect: a deep link becomes the app's location first,
 /// then the session decides whether it can be shown yet ([sessionRedirect]).
 @visibleForTesting
-String? appRedirect(SessionStatus status, Uri uri, {bool guest = false}) =>
-    deepLinkLocation(uri) ?? sessionRedirect(status, uri, guest: guest);
+String? appRedirect(SessionStatus status, Uri uri, {bool guest = false, bool loginHeld = false}) =>
+    deepLinkLocation(uri) ?? sessionRedirect(status, uri, guest: guest, loginHeld: loginHeld);
 
 const _gatePaths = {AppPaths.loading, AppPaths.login, AppPaths.onboarding};
 
 /// Where [uri] should go for the session [status]; null to stay. Kept
 /// apart from the router so tests can check every case.
 @visibleForTesting
-String? sessionRedirect(SessionStatus status, Uri uri, {bool guest = false}) {
+String? sessionRedirect(SessionStatus status, Uri uri, {bool guest = false, bool loginHeld = false}) {
   final path = uri.path;
+  // Letting someone in: the login plays its way out (the halo's burst, the
+  // app opening out of the mask) before the session moves on.
+  if (loginHeld && path == AppPaths.login) return null;
   // The page a link asked for, held while the session gets ready.
   final from = uri.queryParameters['from'];
   String gate(String gatePath) {
@@ -111,6 +115,8 @@ String? sessionRedirect(SessionStatus status, Uri uri, {bool guest = false}) {
     SessionStatus.loading => stayOr(gate(AppPaths.loading)),
     SessionStatus.signedOut => stayOr(gate(AppPaths.login)),
     SessionStatus.onboarding => stayOr(gate(AppPaths.onboarding)),
+    // The first start getting ready: on the loading screen, which says so.
+    SessionStatus.preparing => stayOr(gate(AppPaths.loading)),
     // A guest may open the login to sign in with Google.
     SessionStatus.ready when path == AppPaths.login && guest => null,
     SessionStatus.ready when _gatePaths.contains(path) => from ?? AppPaths.home,

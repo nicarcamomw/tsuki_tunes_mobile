@@ -919,6 +919,8 @@ class AppStrings {
 
   /// Under the mask while the session wakes up, if it takes a moment.
   String get loadingWaking => _es('Despertando la luna…', 'Waking the moon…', '月を起こしています…');
+  String get loadingPrepLibrary => _es('Trayendo tu biblioteca…', 'Bringing your library…', 'ライブラリを取得しています…');
+  String get loadingPrepSettling => _es('Preparando la luna…', 'Getting the moon ready…', '月の準備をしています…');
   String get ecoColorDefaultA11y => _es('Color base, rojo Tsuki', 'Base colour, Tsuki red', 'ベースカラー、ツキの赤');
   String get ecoCoverColors => _es('Colores según la canción', 'Colours from each song', '曲ごとの色');
   String get ecoCoverColorsBody => _es(

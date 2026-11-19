@@ -39,6 +39,34 @@ class _SignedIn extends ChangeNotifier implements AuthProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Signed in with Google (the library comes from the account).
+class _Account extends _SignedIn {
+  @override
+  bool get isGuest => false;
+  @override
+  String? takeGuestUidToMigrate() => null;
+}
+
+/// The account's library, loaded when the test says.
+class _Library extends LibraryRepositoryImpl {
+  bool loaded = false;
+  @override
+  bool get listenedTracksLoaded => loaded;
+  @override
+  Future<void> connectToFirestore(String uid) async {}
+  void arrive() {
+    loaded = true;
+    notifyListeners();
+  }
+}
+
+class _AccountPlaylists implements PlaylistRepositoryImpl {
+  @override
+  Future<void> connectToFirestore(String uid) async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 /// The phone's storage failing to answer.
 class _BrokenStorage implements StorageService {
   @override
@@ -59,6 +87,14 @@ class _Gate extends ChangeNotifier implements SessionGate {
   SessionStatus _status = SessionStatus.loading;
   @override
   SessionStatus get status => _status;
+  @override
+  final ValueNotifier<PrepStep?> prepStep = ValueNotifier(null);
+  void preparing(PrepStep step) {
+    _status = SessionStatus.preparing;
+    prepStep.value = step;
+    notifyListeners();
+  }
+
   void ready() {
     _status = SessionStatus.ready;
     notifyListeners();
@@ -191,6 +227,91 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(gate.status, SessionStatus.ready);
     gate.dispose();
+  });
+
+  test('an account\'s first start on this phone waits for its library, says so, and only once', () async {
+    SharedPreferences.setMockInitialValues({'tsuki_has_completed_onboarding': true});
+    final library = _Library();
+    final gate = SessionGate(
+      auth: _Account(),
+      library: library,
+      playlists: _AccountPlaylists(),
+      storage: StorageService(),
+    );
+    final previousSettle = SessionGate.prepSettle;
+    SessionGate.prepSettle = const Duration(milliseconds: 5);
+    addTearDown(() => SessionGate.prepSettle = previousSettle);
+    for (var i = 0; i < 5; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(gate.status, SessionStatus.preparing);
+    expect(gate.prepStep.value, PrepStep.library);
+
+    library.arrive();
+    await Future<void>.delayed(Duration.zero);
+    expect(gate.prepStep.value, PrepStep.settling);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(gate.status, SessionStatus.ready);
+    expect(gate.prepStep.value, isNull);
+    gate.dispose();
+
+    // The next start of that account: straight in.
+    final next = SessionGate(
+      auth: _Account(),
+      library: _Library(),
+      playlists: _AccountPlaylists(),
+      storage: StorageService(),
+    );
+    for (var i = 0; i < 5; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(next.status, SessionStatus.ready);
+    next.dispose();
+  });
+
+  test('no network on a first start: the app opens anyway after a while', () async {
+    SharedPreferences.setMockInitialValues({'tsuki_has_completed_onboarding': true});
+    final previous = (SessionGate.prepPatience, SessionGate.prepSettle);
+    SessionGate.prepPatience = const Duration(milliseconds: 30);
+    SessionGate.prepSettle = Duration.zero;
+    addTearDown(() {
+      SessionGate.prepPatience = previous.$1;
+      SessionGate.prepSettle = previous.$2;
+    });
+    final gate = SessionGate(
+      auth: _Account(),
+      library: _Library(),
+      playlists: _AccountPlaylists(),
+      storage: StorageService(),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(gate.status, SessionStatus.preparing);
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(gate.status, SessionStatus.ready);
+    gate.dispose();
+  });
+
+  testWidgets('getting a first start ready, the loading screen stays and says what it does', (tester) async {
+    final gate = _Gate();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        localeProvider.overrideWith((ref) => LocaleProvider()),
+        sessionGateProvider.overrideWith((ref) => gate),
+      ],
+      child: const MaterialApp(home: LoadingScreen()),
+    ));
+    // The name typed out (the caret no longer splits it).
+    await tester.pump(const Duration(milliseconds: 3200));
+    gate.preparing(PrepStep.library);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Trayendo tu biblioteca…'), findsOneWidget);
+    // Not leaving: the name is still there.
+    final name = find.textContaining('TSUKI', findRichText: true);
+    expect(tester.widget<Opacity>(find.ancestor(of: name, matching: find.byType(Opacity)).first).opacity, 1);
+    gate.preparing(PrepStep.settling);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Preparando la luna…'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('Firebase not answering: after a while the app stops waiting', (tester) async {

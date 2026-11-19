@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsuki_tunes_mobile/domain/entities/auth_error.dart';
+import 'package:tsuki_tunes_mobile/presentation/navigation/session_gate.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/loading_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/screens/login/login_screen.dart';
 import 'package:tsuki_tunes_mobile/presentation/state/app_providers.dart';
@@ -43,11 +44,29 @@ class _Auth extends ChangeNotifier implements AuthProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// The session as the login sees it: holding the router while it lets
+/// someone in.
+class _Gate extends ChangeNotifier implements SessionGate {
+  final holds = <bool>[];
+  @override
+  bool loginHeld = false;
+  @override
+  void holdLogin(bool held) {
+    holds.add(held);
+    loginHeld = held;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   late _Auth auth;
+  late _Gate gate;
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     auth = _Auth();
+    gate = _Gate();
   });
 
   Future<void> pump(WidgetTester tester, {bool online = true}) async {
@@ -65,6 +84,7 @@ void main() {
         overrides: [
           localeProvider.overrideWith((ref) => LocaleProvider()),
           authProvider.overrideWith((ref) => auth),
+          sessionGateProvider.overrideWith((ref) => gate),
           isOnlineProvider.overrideWithValue(online),
         ],
         child: MaterialApp.router(routerConfig: router),
@@ -137,6 +157,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('HOME'), findsOneWidget);
+    // The router was held while the login played its way out, then let go.
+    expect(gate.holds, [true, false]);
   });
 
   testWidgets('the observer comes in as a guest', (tester) async {

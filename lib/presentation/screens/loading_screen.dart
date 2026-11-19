@@ -13,6 +13,7 @@ import '../navigation/session_gate.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
 import '../widgets/motion.dart';
+import '../widgets/render_warm_up.dart';
 import '../widgets/tsuki_sky.dart';
 
 /// The entrance, while the session wakes up (auth, the tutorial flag).
@@ -129,6 +130,18 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     super.dispose();
   }
 
+  bool _warmed = false;
+
+  /// A first start getting ready: the effects the app draws (gradients,
+  /// blurs, clips, layers, the halo) drawn once off screen, so the GPU
+  /// builds what it needs for them here, while this screen waits, and not
+  /// on the first frames of the app.
+  void _warmUp() {
+    if (_warmed) return;
+    _warmed = true;
+    unawaited(Future<void>.delayed(AppMotion.normal, () => RenderWarmUp.run()));
+  }
+
   Animation<double> _part(double begin, double end, [Curve curve = Curves.linear]) => CurvedAnimation(
     parent: _intro,
     curve: Interval(begin, end, curve: curve),
@@ -136,9 +149,14 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    // Ready: bloom into the next screen (it fades in over this one).
+    // Ready: the name leaves and the next screen opens out of the mask.
+    // A first start getting ready stays here, saying what it's doing.
+    final status = ref.watch(sessionGateProvider.select((g) => g.status));
+    final preparing = status == SessionStatus.preparing;
+    if (preparing) _warmUp();
     ref.listen<SessionStatus>(sessionGateProvider.select((g) => g.status), (_, status) {
-      if (status != SessionStatus.loading && !reduceMotion(context)) unawaited(_exit.forward());
+      final leaving = status != SessionStatus.loading && status != SessionStatus.preparing;
+      if (leaving && !reduceMotion(context)) unawaited(_exit.forward());
     });
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;
@@ -275,14 +293,14 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                 right: 32,
                 bottom: MediaQuery.paddingOf(context).bottom + 56,
                 child: AnimatedOpacity(
-                  opacity: _slow ? 1 : 0,
+                  opacity: _slow || preparing ? 1 : 0,
                   duration: AppMotion.slow,
                   curve: AppMotion.enter,
                   child: ExcludeSemantics(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_slow)
+                        if (_slow || preparing)
                           RepaintBoundary(
                             child: CustomPaint(
                               size: const Size(72, 2),
@@ -290,8 +308,17 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                             ),
                           ),
                         const SizedBox(height: 14),
-                        Text(
-                          strings.loadingWaking,
+                        ValueListenableBuilder<PrepStep?>(
+                          valueListenable: ref.read(sessionGateProvider).prepStep,
+                          builder: (context, step, _) => AnimatedSwitcher(
+                            duration: AppMotion.normal,
+                            child: Text(
+                          switch (step) {
+                            PrepStep.library => strings.loadingPrepLibrary,
+                            PrepStep.settling => strings.loadingPrepSettling,
+                            null => strings.loadingWaking,
+                          },
+                          key: ValueKey(step),
                           textAlign: TextAlign.center,
                           style: locale.getTextStyle(
                             fontSize: AppFontSize.body,
@@ -299,6 +326,8 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
                             color: AppColors.textMuted,
                             letterSpacing: 1.2,
                           ),
+                          ),
+                        ),
                         ),
                       ],
                     ),

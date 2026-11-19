@@ -170,10 +170,14 @@ void main() {
           uid, DateTime.now().subtract(const Duration(days: 8)));
       await db.collection('users').doc(uid).collection('listenedTracks').doc('old').delete();
 
-      // Back with a bad network: the full download fails, the song stays...
+      // Back with a bad network: the daily full download waits until the
+      // app has settled (owed from the start), then fails; the song stays...
       final again = newDevice(local: local);
       again.failFullDownloadsForTesting = 1;
       await again.connectToFirestore(uid);
+      await _settle();
+      expect(again.owesFullSyncForTesting, isTrue);
+      await again.retryOwedFullSyncForTesting();
       await _settle();
       expect(again.owesFullSyncForTesting, isTrue);
       expect(again.isTrackListened('old'), isTrue);

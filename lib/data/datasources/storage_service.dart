@@ -339,6 +339,19 @@ class StorageService implements StorageContract {
     await prefs.setBool(_onboardingKey, completed);
   }
 
+  // --- First start of an account on this phone (SessionGate.preparing) ---
+  static String _preparedKey(String uid) => 'tsuki_first_start_prepared_$uid';
+
+  Future<bool> isFirstStartPrepared(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_preparedKey(uid)) ?? false;
+  }
+
+  Future<void> setFirstStartPrepared(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_preparedKey(uid), true);
+  }
+
   // --- Language Persistence ---
   static const String _languageKey = 'tsuki_app_language';
 

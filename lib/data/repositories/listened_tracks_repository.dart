@@ -129,6 +129,11 @@ class ListenedTracksRepository {
   /// between, so once a day is enough. Must stay well under
   /// [_deletionLogRetention].
   static const Duration _fullSyncInterval = Duration(hours: 24);
+
+  /// How long after start the daily full download waits (the first one,
+  /// with nothing on the phone yet, goes at once).
+  @visibleForTesting
+  static Duration deferredFullSync = const Duration(seconds: 45);
   static const Duration _deletionLogRetention = Duration(days: 7);
 
   /// A full download that failed (bad network) is owed: tried again after
@@ -294,7 +299,15 @@ class ListenedTracksRepository {
         _tracks.isEmpty || lastFullSync == null || now.difference(lastFullSync) > _fullSyncInterval;
     DateTime deletionsSince = (lastFullSync ?? now).subtract(const Duration(minutes: 5));
 
-    if (needsFullSync) {
+    if (needsFullSync && _tracks.isNotEmpty) {
+      // Perf: the daily one waits until the app has settled. Run at start,
+      // it fetched and re-saved the whole library (thousands of songs,
+      // decoded on the UI thread) while the first screens drew. Changes
+      // and deletions keep arriving from the listeners below meanwhile.
+      _owedFullSync = (uid: uid, userDoc: userDoc, isCurrent: isCurrent);
+      _fullSyncRetry?.cancel();
+      _fullSyncRetry = Timer(deferredFullSync, () => unawaited(_retryOwedFullSync()));
+    } else if (needsFullSync) {
       final fetchStartedAt = await _fullDownload(uid, userDoc, isCurrent);
       if (!isCurrent()) return false;
       if (fetchStartedAt != null) {

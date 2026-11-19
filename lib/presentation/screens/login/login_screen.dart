@@ -16,6 +16,7 @@ import '../../../core/constants/legal_links.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../domain/entities/auth_error.dart';
 import '../../navigation/app_router.dart';
+import '../../navigation/session_gate.dart';
 import '../../state/app_providers.dart';
 import '../../state/locale_provider.dart';
 import '../../widgets/circular_reveal.dart';
@@ -59,6 +60,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
   /// Where the mask stands, for the app to open out of it (RevealOrigin).
   Alignment _maskAt = Alignment.center;
   bool _entering = false;
+
+  /// The session, while this screen holds it (signing someone in), kept to
+  /// let go on the way out, when ref isn't usable any more.
+  SessionGate? _held;
+
+  void _hold() {
+    final gate = ref.read(sessionGateProvider);
+    _held = gate;
+    gate.holdLogin(true);
+  }
+
+  void _release() {
+    _held?.holdLogin(false);
+    _held = null;
+  }
   final ValueNotifier<double> _time = ValueNotifier(0);
   final ValueNotifier<double> _rotation = ValueNotifier(0);
   late final Ticker _ticker = createTicker(_tick);
@@ -86,7 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
     // In: the app starts opening out of the mask while the halo flashes,
     // not after (one movement, no wait in between).
     _bloom.addListener(() {
-      if (_bloom.value >= 0.3) _enter();
+      if (_bloom.value >= 0.22) _enter();
     });
   }
 
@@ -114,6 +130,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
 
   @override
   void dispose() {
+    // Never leave the router held on a login that's gone.
+    final held = _held;
+    if (held != null) scheduleMicrotask(() => held.holdLogin(false));
     _countdown?.cancel();
     _ticker.dispose();
     _time.dispose();
@@ -142,8 +161,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
       _status = _Status.signingIn;
       _error = null;
     });
+    // Signed in, the router waits for this screen's way out.
+    _hold();
     final ok = await auth.loginWithGoogle();
     if (!mounted) return;
+    if (!ok) _release();
     if (ok) {
       Haptics.success();
       setState(() => _status = _Status.granted);
@@ -200,11 +222,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
         if (guestUid != null) playlists.importGuestPlaylists(guestUid);
       }));
     }
+    // Let go: the router takes it from here (the app, the tutorial, or the
+    // first start getting ready, on the loading screen).
+    _release();
     context.go(AppPaths.home);
   }
 
   Future<void> _enterAsObserver() async {
     Haptics.tap();
+    _hold();
     await ref.read(authProvider).loginAsGuest();
     if (!mounted) return;
     // In the same way as signing in: the halo flashes, the app opens.
@@ -285,7 +311,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
               // The mask with its glow and ring, rising into place.
               AnimatedBuilder(
                 animation: rise,
-                child: _MaskAndRing(time: _time, rotation: _rotation, assemble: halo, bloom: bloom, still: still),
+                child: _MaskAndRing(
+                  time: _time,
+                  rotation: _rotation,
+                  assemble: halo,
+                  bloom: bloom,
+                  burst: _bloom,
+                  still: still,
+                ),
                 builder: (context, child) => Positioned(
                   top: ui.lerpDouble(from, to, rise.value)! - 160,
                   left: 0,
@@ -464,6 +497,7 @@ class _MaskAndRing extends StatelessWidget {
     required this.rotation,
     required this.assemble,
     required this.bloom,
+    required this.burst,
     required this.still,
   });
 
@@ -473,6 +507,9 @@ class _MaskAndRing extends StatelessWidget {
   /// The halo building itself as the screen comes in (0 to 1).
   final Animation<double> assemble;
   final Animation<double> bloom;
+
+  /// Letting you in, linear (the halo's burst of waves).
+  final Animation<double> burst;
   final bool still;
 
   static const _full = AlwaysStoppedAnimation<double>(1);
@@ -480,6 +517,8 @@ class _MaskAndRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Stack(
         alignment: Alignment.center,
+        // The burst's waves run well past the halo.
+        clipBehavior: Clip.none,
         children: [
           RepaintBoundary(
             child: CustomPaint(
@@ -496,6 +535,7 @@ class _MaskAndRing extends StatelessWidget {
                 rotation: rotation,
                 assemble: still ? _full : assemble,
                 exit: bloom,
+                burst: burst,
                 still: still,
               ),
             ),

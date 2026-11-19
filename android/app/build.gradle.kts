@@ -114,6 +114,12 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Installs the startup profiles the AndroidX and Firebase libraries
+    // ship, also for an APK installed by hand (the Play Store does it on its
+    // own): their Java code is compiled at install instead of running
+    // interpreted through the first starts, which felt slow until Android
+    // compiled it days later.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     // The versions the integration_test plugin already brings to debug
     // builds: Gradle requires the test APK to use the very same ones.
     androidTestImplementation("androidx.test:runner:1.3.0")
