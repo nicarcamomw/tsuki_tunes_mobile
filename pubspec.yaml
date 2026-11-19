@@ -15,7 +15,7 @@ dependencies:
   intl: any
 
   # UI, Fonts and Icons
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   google_fonts: ^6.2.1
   lucide_icons: ^0.257.0
   flutter_animate: ^4.5.2
