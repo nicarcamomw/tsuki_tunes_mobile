@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -69,6 +71,17 @@ abstract final class BlobStore {
     }
     return legacy;
   }
+
+  /// The JSON under [key], decoded, or null. Large ones are decoded on a
+  /// worker isolate (the result comes back without a copy), so reading a
+  /// cache of thousands of entries doesn't freeze a frame.
+  static Future<Object?> readJson(String key) async {
+    final raw = await read(key);
+    if (raw == null) return null;
+    return raw.length > _isolateFrom ? Isolate.run(() => jsonDecode(raw)) : jsonDecode(raw);
+  }
+
+  static const int _isolateFrom = 32 * 1024;
 
   /// Writes of each key, in turn: two saves close together never write
   /// the same file at once, and the later one lands last.

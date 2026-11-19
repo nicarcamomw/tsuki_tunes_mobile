@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 
@@ -37,23 +38,38 @@ class PlayHistory extends ChangeNotifier {
       // Files of their own (BlobStore), not SharedPreferences: see there.
       final rawLog = await BlobStore.read(_logKey);
       final rawTracks = await BlobStore.read(_tracksKey);
-      if (rawTracks != null) {
-        final m = jsonDecode(rawTracks) as Map<String, dynamic>;
-        m.forEach((id, json) {
-          _tracks[id] = Track.fromJson(Map<String, dynamic>.from(json as Map));
-        });
-      }
-      if (rawLog != null) {
-        for (final e in jsonDecode(rawLog) as List) {
-          final pair = e as List;
-          _entries.add(PlayEntry(pair[0] as String,
-              DateTime.fromMillisecondsSinceEpoch((pair[1] as int) * 1000, isUtc: true)));
-        }
-      }
+      // Perf: up to 2000 songs (a megabyte or more), read as the app
+      // starts: decoded on a worker isolate, not under the entrance.
+      final (entries, tracks) = (rawLog?.length ?? 0) + (rawTracks?.length ?? 0) > _isolateFrom
+          ? await Isolate.run(() => _parse(rawLog, rawTracks))
+          : _parse(rawLog, rawTracks);
+      _tracks.addAll(tracks);
+      _entries.addAll(entries);
       notifyListeners();
     } catch (e) {
       _log.severe('load error: $e');
     }
+  }
+
+  /// From this size on, parsed off the UI isolate.
+  static const int _isolateFrom = 32 * 1024;
+
+  static (List<PlayEntry>, Map<String, Track>) _parse(String? rawLog, String? rawTracks) {
+    final tracks = <String, Track>{};
+    final entries = <PlayEntry>[];
+    if (rawTracks != null) {
+      (jsonDecode(rawTracks) as Map<String, dynamic>).forEach((id, json) {
+        tracks[id] = Track.fromJson(Map<String, dynamic>.from(json as Map));
+      });
+    }
+    if (rawLog != null) {
+      for (final e in jsonDecode(rawLog) as List) {
+        final pair = e as List;
+        entries.add(PlayEntry(pair[0] as String,
+            DateTime.fromMillisecondsSinceEpoch((pair[1] as int) * 1000, isUtc: true)));
+      }
+    }
+    return (entries, tracks);
   }
 
   /// Each song's JSON, written once: saving after a play encodes the new

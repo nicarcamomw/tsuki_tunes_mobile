@@ -92,9 +92,9 @@ class StyleService {
     final cache = <String, _Entry>{};
     try {
       // A file of its own (BlobStore): up to $maxArtists artists.
-      final raw = await BlobStore.read(_cacheKey);
-      if (raw != null) {
-        (jsonDecode(raw) as Map<String, dynamic>).forEach((k, v) {
+      final decoded = await BlobStore.readJson(_cacheKey) as Map<String, dynamic>?;
+      if (decoded != null) {
+        decoded.forEach((k, v) {
           if (v is Map) cache[k] = _Entry.fromJson(v);
         });
       }

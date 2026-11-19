@@ -26,9 +26,9 @@ class BeatSyncStore {
   Future<void> _load() async {
     try {
       // A file of its own (BlobStore): it grows with every song.
-      final raw = await BlobStore.read(_key);
-      if (raw == null) return;
-      (jsonDecode(raw) as Map<String, dynamic>).forEach((k, v) {
+      final decoded = await BlobStore.readJson(_key) as Map<String, dynamic>?;
+      if (decoded == null) return;
+      decoded.forEach((k, v) {
         final g = BeatGrid.fromJson(v);
         if (g != null) _grids[k] = g;
       });

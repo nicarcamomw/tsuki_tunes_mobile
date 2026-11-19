@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -625,7 +626,9 @@ class StorageService implements StorageContract {
       if (state['queue'] == null) {
         final queue = _savedQueueJson ?? await BlobStore.read(_playbackQueueKey);
         if (queue == null) return null;
-        state['queue'] = json.decode(queue);
+        // Perf: read as the app starts, up to thousands of songs: decoded
+        // on a worker isolate (its result comes back without a copy).
+        state['queue'] = queue.length > 32 * 1024 ? await Isolate.run(() => json.decode(queue)) : json.decode(queue);
       }
       return state;
     } catch (_) {

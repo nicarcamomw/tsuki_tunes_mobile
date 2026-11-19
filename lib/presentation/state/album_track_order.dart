@@ -90,9 +90,7 @@ class AlbumTrackOrder extends ChangeNotifier {
   Future<void> _load() async {
     try {
       // A file of its own (BlobStore): up to $maxAlbums albums.
-      final raw = await BlobStore.read(storageKey);
-      if (raw == null) return;
-      final decoded = json.decode(raw);
+      final decoded = await BlobStore.readJson(storageKey);
       if (decoded is! Map) return;
       var added = false;
       for (final MapEntry(:key, :value) in decoded.entries) {

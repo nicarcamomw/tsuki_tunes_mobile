@@ -47,9 +47,8 @@ class BpmService {
   Future<void> _doLoad() async {
     try {
       // A file of its own (BlobStore): it grows with every song.
-      final raw = await BlobStore.read(_cacheKey);
-      if (raw == null) return;
-      final m = jsonDecode(raw) as Map<String, dynamic>;
+      final m = await BlobStore.readJson(_cacheKey) as Map<String, dynamic>?;
+      if (m == null) return;
       (m['bpm'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _bpm[k] = (v as num).toDouble());
       (m['gain'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _gain[k] = (v as num).toDouble());
       (m['unknown'] as Map<String, dynamic>? ?? {}).forEach((k, v) => _unknownSince[k] = v as int);

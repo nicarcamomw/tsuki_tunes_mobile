@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +34,16 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.containsKey('play_log_v1'), isFalse);
     expect(await BlobStore.read('play_log_v1'), '[["a",1]]', reason: 'now from its file');
+  });
+
+  test('large JSON is decoded off the UI isolate, small at once, the same either way', () async {
+    SharedPreferences.setMockInitialValues({});
+    final big = {for (var i = 0; i < 4000; i++) 'album$i': ['t${i}a', 't${i}b']};
+    await BlobStore.write('order', jsonEncode(big));
+    expect(await BlobStore.readJson('order'), big);
+    await BlobStore.write('small', '{"a":1}');
+    expect(await BlobStore.readJson('small'), {'a': 1});
+    expect(await BlobStore.readJson('missing'), isNull);
   });
 
   test('writes close together land in order; delete waits for them', () async {
