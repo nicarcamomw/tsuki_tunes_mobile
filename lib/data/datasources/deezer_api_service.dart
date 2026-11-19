@@ -14,6 +14,7 @@ import '../../domain/entities/track.dart';
 import '../../domain/repositories/genre_catalog.dart';
 import '../../domain/repositories/music_catalog.dart';
 import '../contracts/music_api_contract.dart';
+import 'app_http.dart';
 import 'backend_proxy.dart';
 import 'deezer_disk_cache.dart';
 import 'perf_tracker.dart';
@@ -129,7 +130,7 @@ class DeezerApiService
       // timed by endpoint in Firebase Performance (PerfTracker).
       final uri = Uri.parse(url);
       Future<http.Response> get() => PerfTracker.instance.request(
-          'GET', uri, () => http.get(uri).timeout(const Duration(seconds: 10)));
+          'GET', uri, () => AppHttp.get(uri).timeout(const Duration(seconds: 10)));
       try {
         var res = await get();
 
@@ -188,7 +189,7 @@ class DeezerApiService
 
     try {
       final res =
-          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+          await AppHttp.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
       if (res.statusCode == 200) return await _decode(res.body);
     } catch (e) {
       if (e is DeezerApiException) rethrow;

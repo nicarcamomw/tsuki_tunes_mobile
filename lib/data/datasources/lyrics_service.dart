@@ -9,6 +9,7 @@ import '../../core/logger.dart';
 import '../../domain/entities/lyrics_search_result.dart';
 import '../../domain/entities/synced_lyrics.dart';
 import '../../domain/logic/artist_names.dart';
+import 'app_http.dart';
 
 
 final _log = Log.named('LyricsService');
@@ -128,7 +129,7 @@ class LyricsService {
       'artist_name': artistName,
       if (duration != null) 'duration': '$duration',
     });
-    final response = await http.get(uri, headers: _headers).timeout(_timeout);
+    final response = await AppHttp.get(uri, headers: _headers).timeout(_timeout);
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) {
       throw http.ClientException('lrclib get ${response.statusCode}', uri);
@@ -174,7 +175,7 @@ class LyricsService {
       'track_name': title,
       'artist_name': artistName,
     });
-    final response = await http.get(uri, headers: _headers).timeout(_timeout);
+    final response = await AppHttp.get(uri, headers: _headers).timeout(_timeout);
     if (response.statusCode != 200) {
       throw http.ClientException('lrclib search ${response.statusCode}', uri);
     }
@@ -219,7 +220,7 @@ class LyricsService {
     try {
       final uri = Uri.https('lrclib.net', '/api/search', {'q': query});
       final response =
-          await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+          await AppHttp.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

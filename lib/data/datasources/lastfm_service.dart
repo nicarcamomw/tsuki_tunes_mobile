@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
 import '../../core/logger.dart';
 import '../../domain/entities/similar_track.dart';
+import 'app_http.dart';
 import 'backend_proxy.dart';
 
 
@@ -73,7 +73,7 @@ class LastFmService {
     // The backend isn't there (not deployed yet, or down): the old way.
     final direct = Uri.https('ws.audioscrobbler.com', '/2.0/',
         {...params, 'api_key': _apiKey, 'format': 'json'});
-    final response = await http.get(direct).timeout(timeout);
+    final response = await AppHttp.get(direct).timeout(timeout);
     return response.statusCode == 200 ? _decode(response.body) : null;
   }
 

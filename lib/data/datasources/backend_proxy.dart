@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/constants/firebase_emulators.dart';
 import '../../core/logger.dart';
+import 'app_http.dart';
 
 final _log = Log.named('Backend');
 
@@ -85,7 +86,7 @@ class BackendProxy {
   Future<http.Response?> getUri(Uri target,
       {Duration timeout = const Duration(seconds: 8)}) async {
     try {
-      return await http.get(target, headers: await _headers()).timeout(timeout);
+      return await AppHttp.get(target, headers: await _headers()).timeout(timeout);
     } catch (e) {
       _log.warning('backend unreachable (${target.path}): $e');
       return null;

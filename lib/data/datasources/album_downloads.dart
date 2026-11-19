@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
-import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/album.dart';
+import 'app_http.dart';
 
 final _log = Log.named('AlbumDownloads');
 
@@ -110,7 +110,7 @@ class AlbumDownloads {
     for (final t in songs) {
       if (pathFor(t.id) == null) {
         try {
-          final res = await http.get(Uri.parse(t.previewUrl)).timeout(const Duration(seconds: 20));
+          final res = await AppHttp.get(Uri.parse(t.previewUrl)).timeout(const Duration(seconds: 20));
           if (res.statusCode == 200 && res.bodyBytes.length > 10000) {
             final file = File('${dir.path}/preview_${t.id}.mp3');
             await file.writeAsBytes(res.bodyBytes, flush: true);

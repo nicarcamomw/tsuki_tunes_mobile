@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart'
     show AppLifecycleListener, WidgetsFlutterBinding;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:workmanager/workmanager.dart';
@@ -21,6 +20,7 @@ import '../../domain/entities/album.dart';
 import '../../domain/entities/artist.dart';
 import '../../domain/entities/notification_payloads.dart';
 import '../../domain/entities/radar_release.dart';
+import 'app_http.dart';
 import 'time_machine_service.dart';
 
 
@@ -508,7 +508,7 @@ class ReleaseRadarService {
     final uri = Uri.parse(ApiEndpoints.artistAlbums(artistId, limit: 50));
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final res = await http.get(uri).timeout(const Duration(seconds: 10));
+        final res = await AppHttp.get(uri).timeout(const Duration(seconds: 10));
         if (res.statusCode == 429) {
           await Future.delayed(const Duration(seconds: 2));
           continue;
@@ -730,7 +730,7 @@ class ReleaseRadarService {
     if (url.isEmpty) return null;
     try {
       final res =
-          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+          await AppHttp.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
       return res.statusCode == 200 ? res.bodyBytes : null;
     } catch (_) {
       return null;
