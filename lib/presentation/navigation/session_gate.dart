@@ -74,6 +74,11 @@ class SessionGate extends ChangeNotifier {
   @visibleForTesting
   static Duration prepPatience = const Duration(seconds: 12);
 
+  /// How long after signing out the account's library is let go: the
+  /// app's way out (CircularReveal's portal).
+  @visibleForTesting
+  static Duration signOutLetGo = const Duration(milliseconds: 800);
+
   /// A moment for the library's lists to be built and saved before the
   /// first screens draw.
   @visibleForTesting
@@ -117,9 +122,12 @@ class SessionGate extends ChangeNotifier {
         _preparedFor = null;
         _prepared = null;
         prepStep.value = null;
-        // Outside the current build or notification, like the old gate's
-        // post-frame callback.
-        scheduleMicrotask(() {
+        // Once the app has left (the login opens over it as it fades): let
+        // go of the account's library then, not under the screen still
+        // showing it (it emptied before the eyes). Only if no one signed in
+        // meanwhile.
+        Future<void>.delayed(signOutLetGo, () {
+          if (_connectedUid != null) return;
           _library.disconnectFirestore();
           _playlists.disconnectFirestore();
         });

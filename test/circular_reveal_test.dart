@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsuki_tunes_mobile/presentation/widgets/circular_reveal.dart';
@@ -33,5 +35,23 @@ void main() {
     expect(clip().clipBehavior, Clip.none);
     expect(scale(), 1);
     expect(builds, 1, reason: 'the page under it is built once');
+  });
+
+  testWidgets('leaving, it just fades: no circle closing over the next screen', (tester) async {
+    final opening = AnimationController(vsync: const TestVSync(), duration: const Duration(milliseconds: 750), value: 1);
+    addTearDown(opening.dispose);
+    await tester.pumpWidget(MaterialApp(
+      home: CircularReveal(
+        animation: opening,
+        child: const ColoredBox(color: Colors.black, child: SizedBox.expand()),
+      ),
+    ));
+    unawaited(opening.reverse());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ClipPath), findsNothing);
+    final fade = tester.widget<Opacity>(find.byType(Opacity));
+    expect(fade.opacity, inExclusiveRange(0, 1));
+    await tester.pump(const Duration(seconds: 1));
   });
 }

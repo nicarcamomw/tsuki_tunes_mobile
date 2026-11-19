@@ -70,6 +70,7 @@ Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
 }
 
 Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
+  var signedOut = false;
   try {
     final audio = context.readState(audioProvider);
     await audio.stop();
@@ -80,18 +81,16 @@ Future<void> _handleLogout(BuildContext context, AuthProvider auth) async {
     await audio.spotify.clearUriCache();
     await audio.updateSpotifyState();
 
-    if (context.mounted) {
-      context.readState(libraryProvider).disconnectFirestore();
-    }
-
+    // The library is let go by the session once the app has left (it
+    // emptied the screen before the eyes when done here).
     await auth.logout();
+    signedOut = true;
   } catch (e) {
     _log.severe('Error durante el cierre de sesión: $e');
   } finally {
-    if (context.mounted) {
-      // Signed out, the router shows the login on its own; this covers a
-      // sign-out that failed halfway.
-      GoRouter.of(context).go(AppPaths.login);
-    }
+    // Signed out, the router opens the login on its own (going there here
+    // too ran a second transition over it); this covers a sign-out that
+    // failed halfway.
+    if (!signedOut && context.mounted) GoRouter.of(context).go(AppPaths.login);
   }
 }

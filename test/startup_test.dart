@@ -67,6 +67,31 @@ class _AccountPlaylists implements PlaylistRepositoryImpl {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// An account that signs out and back in when the test says.
+class _Switching extends _Account {
+  bool signedIn = true;
+  @override
+  bool get isLoggedIn => signedIn;
+  @override
+  String? get uid => signedIn ? 'u1' : null;
+  void flip(bool to) {
+    signedIn = to;
+    notifyListeners();
+  }
+}
+
+class _CountingLibrary extends _Library {
+  int disconnects = 0;
+  @override
+  void disconnectFirestore() => disconnects++;
+}
+
+class _CountingPlaylists extends _AccountPlaylists {
+  int disconnects = 0;
+  @override
+  void disconnectFirestore() => disconnects++;
+}
+
 /// The phone's storage failing to answer.
 class _BrokenStorage implements StorageService {
   @override

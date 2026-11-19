@@ -39,6 +39,12 @@ class CircularReveal extends StatelessWidget {
       animation: animation,
       child: child,
       builder: (context, child) {
+        // Leaving (the route popped or replaced: signing out), it simply
+        // fades: closing the circle back into a mask that isn't there
+        // crossed the next screen's own opening.
+        if (animation.status == AnimationStatus.reverse) {
+          return Opacity(opacity: animation.value.clamp(0.0, 1.0), child: child);
+        }
         final t = curve.transform(animation.value);
         final open = animation.value >= 1;
         return CustomPaint(
