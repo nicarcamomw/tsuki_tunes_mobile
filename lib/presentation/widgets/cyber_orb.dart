@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_fonts.dart';
 import '../../core/theme/design_tokens.dart';
 import 'motion.dart';
 
@@ -199,7 +199,7 @@ class _CyberOrbState extends State<CyberOrb>
             left: pad,
             child: Text(
               'SYS // TS-01',
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakartaSans(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent.withValues(alpha: 0.75),
@@ -213,7 +213,7 @@ class _CyberOrbState extends State<CyberOrb>
             right: pad,
             child: Text(
               'ORB.CORE: 432HZ',
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakartaSans(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary.withValues(alpha: 0.6),
@@ -227,7 +227,7 @@ class _CyberOrbState extends State<CyberOrb>
             left: pad,
             child: Text(
               'RADIAL: LOCK',
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakartaSans(
                 fontSize: AppFontSize.micro,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textSecondary.withValues(alpha: 0.6),
@@ -253,7 +253,7 @@ class _CyberOrbState extends State<CyberOrb>
                 const SizedBox(width: 4),
                 Text(
                   'SYNC: 99.8%',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakartaSans(
                     fontSize: AppFontSize.micro,
                     fontWeight: FontWeight.w800,
                     color: AppColors.accent,

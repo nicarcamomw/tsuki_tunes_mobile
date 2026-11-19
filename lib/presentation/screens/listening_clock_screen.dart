@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/app_fonts.dart';
 import '../../core/theme/design_tokens.dart';
 import '../state/app_providers.dart';
 import '../state/locale_provider.dart';
@@ -573,7 +574,7 @@ class _SharinganRadarPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: '$i',
-          style: GoogleFonts.plusJakartaSans(
+          style: AppFonts.plusJakartaSans(
             fontSize: AppFontSize.micro,
             fontWeight: FontWeight.w700,
             color: AppColors.textMuted.withValues(alpha: 0.8),

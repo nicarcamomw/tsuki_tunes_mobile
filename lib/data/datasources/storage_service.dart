@@ -11,6 +11,7 @@ import '../../domain/entities/artist.dart';
 import '../../domain/entities/track.dart';
 import '../contracts/storage_contract.dart';
 import '../local/library_store.dart';
+import 'blob_store.dart';
 
 
 final _log = Log.named('Storage');
@@ -457,6 +458,12 @@ class StorageService implements StorageContract {
     for (final key in prefs.getKeys().where((k) => !deviceSettingKeys.contains(k)).toList()) {
       await prefs.remove(key);
     }
+    // What's kept as files of its own: the queue and the play history.
+    _savedQueueIds = null;
+    _savedQueueJson = null;
+    for (final key in const [_playbackQueueKey, 'play_log_v1', 'play_log_tracks_v1']) {
+      await BlobStore.delete(key);
+    }
     try {
       final file = await _listenedFile(uid);
       if (file != null && await file.exists()) await file.delete();
@@ -571,6 +578,17 @@ class StorageService implements StorageContract {
   // --- Playback State Persistence ---
   static const String _playbackStateKey = 'tsuki_playback_state';
 
+  /// The saved queue, a file of its own (BlobStore): it's written when the
+  /// queue changes, while the position beside it is saved every few
+  /// seconds of playback (perf: the whole queue, up to thousands of songs,
+  /// was encoded and rewritten with it each time).
+  static const String _playbackQueueKey = 'tsuki_playback_queue';
+
+  /// The songs of the queue last written, to skip writing it again, and
+  /// that queue as written (read back from here, not the file).
+  String? _savedQueueIds;
+  String? _savedQueueJson;
+
   @override
   Future<Map<String, dynamic>?> getPlaybackState() async {
     final prefs = await SharedPreferences.getInstance();
@@ -579,10 +597,15 @@ class StorageService implements StorageContract {
 
     try {
       final decoded = json.decode(raw);
-      if (decoded is Map) {
-        return Map<String, dynamic>.from(decoded);
+      if (decoded is! Map) return null;
+      final state = Map<String, dynamic>.from(decoded);
+      // Saved before the queue had a file of its own: it's in here.
+      if (state['queue'] == null) {
+        final queue = _savedQueueJson ?? await BlobStore.read(_playbackQueueKey);
+        if (queue == null) return null;
+        state['queue'] = json.decode(queue);
       }
-      return null;
+      return state;
     } catch (_) {
       return null;
     }
@@ -595,22 +618,37 @@ class StorageService implements StorageContract {
       bool? wasPlaying,
       Map<String, dynamic>? radio,
       Map<String, dynamic>? modes]) async {
-    final prefs = await SharedPreferences.getInstance();
     if (queue == null || queue.isEmpty) {
+      _savedQueueIds = null;
+      _savedQueueJson = null;
+      final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_playbackStateKey);
-    } else {
-      final state = {
-        'queue': queue.map((t) => t.toJson()).toList(),
-        'currentIndex': currentIndex ?? 0,
-        'position': positionMs ?? 0,
-        'wasPlaying': wasPlaying ?? false,
-        'savedAt': DateTime.now().millisecondsSinceEpoch,
-        // Same snapshot as the queue, so the radio always matches it.
-        if (radio != null) 'radio': radio,
-        // Shuffle and repeat, so a closed app comes back the same way.
-        if (modes != null) 'modes': modes,
-      };
-      await prefs.setString(_playbackStateKey, json.encode(state));
+      await BlobStore.delete(_playbackQueueKey);
+      return;
+    }
+    // Known here at once (before any wait), so a read right after a save
+    // finds this queue even while its file is still being written.
+    final ids = queue.map((t) => t.id).join(',');
+    final queueChanged = ids != _savedQueueIds;
+    if (queueChanged) {
+      _savedQueueIds = ids;
+      _savedQueueJson = json.encode(queue.map((t) => t.toJson()).toList());
+    }
+    final state = {
+      'currentIndex': currentIndex ?? 0,
+      'position': positionMs ?? 0,
+      'wasPlaying': wasPlaying ?? false,
+      'savedAt': DateTime.now().millisecondsSinceEpoch,
+      // Same snapshot as the queue, so the radio always matches it.
+      if (radio != null) 'radio': radio,
+      // Shuffle and repeat, so a closed app comes back the same way.
+      if (modes != null) 'modes': modes,
+    };
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_playbackStateKey, json.encode(state));
+    if (queueChanged) {
+      final written = _savedQueueJson;
+      if (written != null) await BlobStore.write(_playbackQueueKey, written);
     }
   }
 }

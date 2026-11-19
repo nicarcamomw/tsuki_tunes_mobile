@@ -133,8 +133,28 @@ flutter:
     - assets/images/masks/ssr/
     - assets/images/masks/ul/
     - assets/images/masks/dios/
+    # Plus Jakarta Sans' licence (the font is under fonts: below).
+    - assets/fonts/plus_jakarta_sans_OFL.txt
 
   fonts:
+    # The app's text font, with the app so it's there for the first frame
+    # (see AppFonts). Files named so google_fonts never picks them up.
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/plus_jakarta_sans_200.ttf
+          weight: 200
+        - asset: assets/fonts/plus_jakarta_sans_300.ttf
+          weight: 300
+        - asset: assets/fonts/plus_jakarta_sans_400.ttf
+          weight: 400
+        - asset: assets/fonts/plus_jakarta_sans_500.ttf
+          weight: 500
+        - asset: assets/fonts/plus_jakarta_sans_600.ttf
+          weight: 600
+        - asset: assets/fonts/plus_jakarta_sans_700.ttf
+          weight: 700
+        - asset: assets/fonts/plus_jakarta_sans_800.ttf
+          weight: 800
     - family: SystemOfADown
       fonts:
         - asset: assets/fonts/sf_hollywood_hills.ttf

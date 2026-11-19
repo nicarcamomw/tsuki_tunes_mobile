@@ -163,7 +163,9 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
+    // Perf: its own layer, so its breathing glow doesn't re-record the
+    // controls around it every frame.
+    return RepaintBoundary(child: AnimatedBuilder(
       animation: _glow,
       builder: (context, child) => Container(
         width: 68,
@@ -198,6 +200,6 @@ class _PulsingGlowPlayState extends State<_PulsingGlowPlay>
                 color: AppColors.textBright,
               ),
       ),
-    );
+    ));
   }
 }

@@ -80,6 +80,7 @@ void main() async {
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.
   await _initFirebaseCore();
+  _registerFontLicence();
   // Before runApp: where release pushes go while the app is in the background.
   PushRadarService.registerBackgroundHandler();
   // Built here, not in the widget tree: when Android Auto starts the app
@@ -102,6 +103,15 @@ final GoRouter appRouter = createAppRouter(appContainer.read(sessionGateProvider
 
 /// The app's one player.
 AudioProvider get _audio => appContainer.read(audioProvider);
+
+/// Plus Jakarta Sans ships with the app (pubspec `fonts:`, see AppFonts):
+/// its licence goes with the others in the app's licences page.
+void _registerFontLicence() {
+  LicenseRegistry.addLicense(() async* {
+    final text = await rootBundle.loadString('assets/fonts/plus_jakarta_sans_OFL.txt');
+    yield LicenseEntryWithLineBreaks(const ['Plus Jakarta Sans'], text);
+  });
+}
 
 /// Minimal pre-frame Firebase init: just Firebase.initializeApp() so
 /// AuthProvider (which calls FirebaseService().initialize()) can proceed.

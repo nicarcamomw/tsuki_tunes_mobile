@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/logger.dart';
 import '../../domain/entities/track.dart';
+import 'blob_store.dart';
 
 
 final _log = Log.named('PlayHistory');
@@ -34,9 +34,9 @@ class PlayHistory extends ChangeNotifier {
 
   Future<void> _load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawLog = prefs.getString(_logKey);
-      final rawTracks = prefs.getString(_tracksKey);
+      // Files of their own (BlobStore), not SharedPreferences: see there.
+      final rawLog = await BlobStore.read(_logKey);
+      final rawTracks = await BlobStore.read(_tracksKey);
       if (rawTracks != null) {
         final m = jsonDecode(rawTracks) as Map<String, dynamic>;
         m.forEach((id, json) {
@@ -56,29 +56,47 @@ class PlayHistory extends ChangeNotifier {
     }
   }
 
+  /// Each song's JSON, written once: saving after a play encodes the new
+  /// song only, not the thousands already kept (perf: it ran on every play,
+  /// on the UI thread).
+  final Map<String, String> _trackJson = {};
+
+  String _encodeTracks() {
+    final out = StringBuffer('{');
+    var first = true;
+    for (final MapEntry(key: id, value: track) in _tracks.entries) {
+      if (!first) out.write(',');
+      first = false;
+      out
+        ..write(jsonEncode(id))
+        ..write(':')
+        ..write(_trackJson[id] ??= jsonEncode(track.toJson()));
+    }
+    out.write('}');
+    return out.toString();
+  }
+
   Future<void> record(Track track, {DateTime? at}) async {
     if (track.id.isEmpty) return;
     await load();
     _entries.add(PlayEntry(track.id, (at ?? DateTime.now()).toUtc()));
+    if (_tracks[track.id] != track) _trackJson.remove(track.id);
     _tracks[track.id] = track;
     if (_entries.length > maxEntries) {
       _entries.removeRange(0, _entries.length - maxEntries);
       final live = _entries.map((e) => e.trackId).toSet();
       _tracks.removeWhere((id, _) => !live.contains(id));
+      _trackJson.removeWhere((id, _) => !live.contains(id));
     }
     notifyListeners();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await BlobStore.write(
         _logKey,
         jsonEncode(_entries
             .map((e) => [e.trackId, e.at.millisecondsSinceEpoch ~/ 1000])
             .toList()),
       );
-      await prefs.setString(
-        _tracksKey,
-        jsonEncode(_tracks.map((id, t) => MapEntry(id, t.toJson()))),
-      );
+      await BlobStore.write(_tracksKey, _encodeTracks());
     } catch (e) {
       _log.severe('save error: $e');
     }

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_language.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/app_fonts.dart';
 import '../../data/datasources/storage_service.dart';
 
 class LocaleProvider extends ChangeNotifier {
@@ -87,7 +88,7 @@ class LocaleProvider extends ChangeNotifier {
         fontFeatures: features,
       );
     }
-    return GoogleFonts.plusJakartaSans(
+    return AppFonts.plusJakartaSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

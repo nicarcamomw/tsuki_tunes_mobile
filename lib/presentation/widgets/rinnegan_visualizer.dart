@@ -429,7 +429,10 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
       ),
     );
 
-    return Listener(
+    // Perf: its glow and rings repaint every frame while it plays; on a
+    // layer of their own, the rest of the player (titles, buttons, the bar)
+    // isn't recorded again with them.
+    return RepaintBoundary(child: Listener(
       onPointerDown: _onPointerDown,
       onPointerUp: _onPointerUp,
       child: GestureDetector(
@@ -475,7 +478,7 @@ class _RinneganVisualizerState extends ConsumerState<RinneganVisualizer>
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

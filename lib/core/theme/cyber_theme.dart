@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
+import 'app_fonts.dart';
 import 'design_tokens.dart';
 
 class CyberTheme {
@@ -19,47 +19,47 @@ class CyberTheme {
         onSecondary: AppColors.bgDeep,
         outline: AppColors.border,
       ),
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamily: AppFonts.jakarta,
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.plusJakartaSans(
+        displayLarge: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.display,
           fontWeight: FontWeight.w900,
           color: AppColors.textBright,
           letterSpacing: 2.0,
         ),
-        displayMedium: GoogleFonts.plusJakartaSans(
+        displayMedium: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.headline,
           fontWeight: FontWeight.w800,
           color: AppColors.textBright,
           letterSpacing: 1.5,
         ),
-        headlineSmall: GoogleFonts.plusJakartaSans(
+        headlineSmall: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           letterSpacing: 1.0,
         ),
-        titleLarge: GoogleFonts.plusJakartaSans(
+        titleLarge: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.titleLg,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        titleMedium: GoogleFonts.plusJakartaSans(
+        titleMedium: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.title,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        bodyLarge: GoogleFonts.plusJakartaSans(
+        bodyLarge: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.title,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
         ),
-        bodyMedium: GoogleFonts.plusJakartaSans(
+        bodyMedium: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.body,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
         ),
-        labelSmall: GoogleFonts.plusJakartaSans(
+        labelSmall: AppFonts.plusJakartaSans(
           fontSize: AppFontSize.micro,
           fontWeight: FontWeight.w700,
           color: AppColors.accentText,
@@ -75,7 +75,7 @@ class CyberTheme {
           backgroundColor: AppColors.accentFill,
           foregroundColor: AppColors.textBright,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+          textStyle: AppFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
@@ -84,7 +84,7 @@ class CyberTheme {
           foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.borderGlow),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.chip)),
-          textStyle: GoogleFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700),
+          textStyle: AppFonts.plusJakartaSans(fontSize: AppFontSize.bodyLg, fontWeight: FontWeight.w700),
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
@@ -116,7 +116,7 @@ class CyberTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.bgMid,
-        hintStyle: GoogleFonts.plusJakartaSans(
+        hintStyle: AppFonts.plusJakartaSans(
           color: AppColors.textMuted,
           fontSize: AppFontSize.bodyLg,
         ),
