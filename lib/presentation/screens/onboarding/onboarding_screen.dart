@@ -55,12 +55,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Single
   @override
   void initState() {
     super.initState();
-    unawaited(
-      tsukiNebulaProgram.then((program) {
+    // On the first frame when loaded already (it is, after the entrance).
+    _shader = tsukiNebulaShaderNow();
+    if (_shader == null) {
+      unawaited(tsukiNebulaProgram.then((program) {
         if (!mounted || program == null) return;
         setState(() => _shader = program.fragmentShader());
-      }),
-    );
+      }));
+    }
   }
 
   @override
@@ -77,6 +79,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Single
   void dispose() {
     _pages.dispose();
     _ticker.dispose();
+    NebulaPainter.forget(_time);
     _time.dispose();
     _shader?.dispose();
     super.dispose();

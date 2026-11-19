@@ -316,6 +316,33 @@ void main() {
     gate.dispose();
   });
 
+  test('signing out lets go of the library once the app has left, not under it, and not if back in', () async {
+    SharedPreferences.setMockInitialValues({'tsuki_has_completed_onboarding': true});
+    final previous = SessionGate.signOutLetGo;
+    SessionGate.signOutLetGo = const Duration(milliseconds: 30);
+    addTearDown(() => SessionGate.signOutLetGo = previous);
+    final auth = _Switching();
+    final library = _CountingLibrary()..loaded = true;
+    final playlists = _CountingPlaylists();
+    final gate = SessionGate(auth: auth, library: library, playlists: playlists, storage: StorageService());
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+
+    auth.flip(false);
+    expect(gate.status, SessionStatus.signedOut);
+    expect(library.disconnects, 0, reason: 'the app is still on screen, leaving');
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(library.disconnects, 1);
+    expect(playlists.disconnects, 1);
+
+    // Out and straight back in: the new session's library stays.
+    auth.flip(true);
+    auth.flip(false);
+    auth.flip(true);
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(library.disconnects, 1);
+    gate.dispose();
+  });
+
   testWidgets('getting a first start ready, the loading screen stays and says what it does', (tester) async {
     final gate = _Gate();
     await tester.pumpWidget(ProviderScope(

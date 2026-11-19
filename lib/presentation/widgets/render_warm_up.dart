@@ -20,8 +20,13 @@ import 'tsuki_sky.dart';
 abstract final class RenderWarmUp {
   static const double _size = 96;
 
-  /// Draws the scene into a small image and drops it.
+  static bool _done = false;
+
+  /// Draws the scene into a small image and drops it (once per run of the
+  /// app; later calls return at once).
   static Future<void> run() async {
+    if (_done) return;
+    _done = true;
     try {
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);

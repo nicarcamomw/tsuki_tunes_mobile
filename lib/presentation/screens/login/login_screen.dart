@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,10 +96,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
   @override
   void initState() {
     super.initState();
-    unawaited(tsukiNebulaProgram.then((program) {
-      if (!mounted || program == null) return;
-      setState(() => _shader = program.fragmentShader());
-    }));
+    // On the first frame when loaded already (it is, after the entrance).
+    _shader = tsukiNebulaShaderNow();
+    if (_shader == null) {
+      unawaited(tsukiNebulaProgram.then((program) {
+        if (!mounted || program == null) return;
+        setState(() => _shader = program.fragmentShader());
+      }));
+    }
     // In: the app starts opening out of the mask while the halo flashes,
     // not after (one movement, no wait in between).
     _bloom.addListener(() {
@@ -135,6 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
     if (held != null) scheduleMicrotask(() => held.holdLogin(false));
     _countdown?.cancel();
     _ticker.dispose();
+    NebulaPainter.forget(_time);
     _time.dispose();
     _rotation.dispose();
     _intro.dispose();
@@ -464,13 +470,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                             ),
                             const SizedBox(height: 12),
                             ExcludeSemantics(
-                              child: Text(
-                                'METAWORKS COMPANY',
-                                style: locale.getTextStyle(
-                                  fontSize: AppFontSize.micro,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textMuted,
-                                  letterSpacing: 3,
+                              child: RepaintBoundary(
+                                child: CustomPaint(
+                                  size: const Size(double.infinity, 16),
+                                  painter: _CompanyPainter(
+                                    time: _time,
+                                    style: locale.getTextStyle(
+                                      fontSize: AppFontSize.micro,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 2.2,
+                                    ),
+                                    still: still,
+                                  ),
                                 ),
                               ),
                             ),
@@ -658,3 +670,65 @@ class _Terms extends StatelessWidget {
     );
   }
 }
+
+/// METAWORKS COMPANY between a cyan and a red point, its letters running
+/// from cyan through blue into the app's red, the colours drifting slowly
+/// side to side (the login's signature since its first version).
+///
+/// Light: the gradient is the text's own paint (no layer, no ShaderMask)
+/// and the points' glow a gradient (no blur); one small line laid out per
+/// frame, on a layer of its own.
+class _CompanyPainter extends CustomPainter {
+  _CompanyPainter({required this.time, required this.style, required this.still}) : super(repaint: still ? null : time);
+
+  final ValueListenable<double> time;
+  final TextStyle style;
+  final bool still;
+
+  static const String _name = 'METAWORKS COMPANY';
+  static const _colors = [AppColors.neonCyan, AppColors.skyBlue, AppColors.crimsonNeon, AppColors.accent];
+  static const _stops = [0.0, 0.35, 0.7, 1.0];
+
+  // The line's size, measured once (the painter lives across frames).
+  Size? _measured;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final measured = _measured ??= () {
+      final m = TextPainter(text: TextSpan(text: _name, style: style), textDirection: TextDirection.ltr)..layout();
+      final s = m.size;
+      m.dispose();
+      return s;
+    }();
+    final w = measured.width;
+    final h = measured.height;
+    final left = (size.width - w) / 2;
+    final top = (size.height - h) / 2;
+    // The colours drift a third of the way each side, slowly (about 10 s).
+    final shift = still ? 0.0 : math.sin(time.value * 0.6) * 0.35;
+    final from = Offset(left + w * (-0.05 + shift / 2), 0);
+    final to = Offset(left + w * (1.05 + shift / 2), 0);
+    final text = TextPainter(
+      text: TextSpan(
+        text: _name,
+        style: style.copyWith(foreground: Paint()..shader = ui.Gradient.linear(from, to, _colors, _stops)),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    text.paint(canvas, Offset(left, top));
+    text.dispose();
+    final cy = size.height / 2;
+    _dot(canvas, Offset(left - 12, cy), AppColors.neonCyan);
+    _dot(canvas, Offset(left + w + 10, cy), AppColors.accent);
+  }
+
+  static void _dot(Canvas canvas, Offset c, Color color) {
+    canvas
+      ..drawCircle(c, 7, Paint()..shader = ui.Gradient.radial(c, 7, [color.withValues(alpha: 0.6), color.withValues(alpha: 0)]))
+      ..drawCircle(c, 2, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_CompanyPainter old) => old.style != style || old.still != still;
+}
+

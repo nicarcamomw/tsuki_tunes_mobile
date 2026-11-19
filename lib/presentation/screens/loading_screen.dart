@@ -94,12 +94,19 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     _patience = Timer(LoadingScreen.patience, () {
       if (mounted) setState(() => _slow = true);
     });
-    unawaited(
-      LoadingScreen.nebula.then((program) {
-        if (!mounted || program == null) return;
-        setState(() => _shader = program.fragmentShader());
-      }),
-    );
+    _shader = tsukiNebulaShaderNow();
+    if (_shader == null) {
+      unawaited(
+        LoadingScreen.nebula.then((program) {
+          if (!mounted || program == null) return;
+          setState(() => _shader = program.fragmentShader());
+        }),
+      );
+    }
+    // The GPU's head start (RenderWarmUp), on this screen's first frame:
+    // Android's splash carried on, nothing moving yet to stutter. What the
+    // login and the app's portal draw is then ready when they come.
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(RenderWarmUp.run()));
   }
 
   @override
@@ -113,7 +120,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
         _started = true;
         unawaited(_intro.forward());
       }
-      if (!_ticker.isActive) unawaited(_ticker.start());
+      if (!_ticker.isActive && !_leaving) unawaited(_ticker.start());
     }
   }
 
@@ -121,6 +128,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
   void dispose() {
     _patience?.cancel();
     _ticker.dispose();
+    NebulaPainter.forget(_time);
     _time.dispose();
     _rotation.dispose();
     _blink.dispose();
@@ -132,6 +140,9 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
 
   bool _warmed = false;
 
+  /// On its way out: its night holds still.
+  bool _leaving = false;
+
   /// A first start getting ready: the effects the app draws (gradients,
   /// blurs, clips, layers, the halo) drawn once off screen, so the GPU
   /// builds what it needs for them here, while this screen waits, and not
@@ -139,7 +150,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
   void _warmUp() {
     if (_warmed) return;
     _warmed = true;
-    unawaited(Future<void>.delayed(AppMotion.normal, () => RenderWarmUp.run()));
+    unawaited(RenderWarmUp.run());
   }
 
   Animation<double> _part(double begin, double end, [Curve curve = Curves.linear]) => CurvedAnimation(
@@ -157,6 +168,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen> with TickerProvid
     ref.listen<SessionStatus>(sessionGateProvider.select((g) => g.status), (_, status) {
       final leaving = status != SessionStatus.loading && status != SessionStatus.preparing;
       if (leaving && !reduceMotion(context)) unawaited(_exit.forward());
+      // Perf: the next screen opens over this one; its night stops here
+      // (the sky, ring and embers hold their last frame) so only one
+      // screen animates under the portal.
+      if (leaving) {
+        _leaving = true;
+        if (_ticker.isActive) _ticker.stop();
+      }
     });
     final locale = ref.watch(localeProvider);
     final strings = locale.strings;

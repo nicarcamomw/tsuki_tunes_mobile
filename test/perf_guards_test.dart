@@ -158,9 +158,38 @@ void main() {
     }, () => _noNetwork);
   });
 
+  testWidgets('two nebulas on screen (one screen opening over another) share their bakes, never thrash', (tester) async {
+    final program = await tester.runAsync(() => tsukiNebulaProgram);
+    if (program == null) return;
+    NebulaPainter.useSkyClock = false;
+    addTearDown(() => NebulaPainter.useSkyClock = true);
+    // Two screens, each with its own clock and look, painted every frame.
+    final timeA = ValueNotifier<double>(0);
+    final timeB = ValueNotifier<double>(0);
+    final a = NebulaPainter(program.fragmentShader(), time: timeA, intensity: const AlwaysStoppedAnimation(1), still: false);
+    final b = NebulaPainter(program.fragmentShader(), time: timeB, intensity: const AlwaysStoppedAnimation(0.6), still: false);
+    final before = NebulaPainter.bakes;
+    for (var f = 0; f < 60; f++) {
+      timeA.value = 5 + f / 60;
+      timeB.value = f / 60;
+      for (final p in [a, b]) {
+        final recorder = ui.PictureRecorder();
+        p.paint(Canvas(recorder), const Size(400, 860));
+        recorder.endRecording().dispose();
+      }
+    }
+    // A second of both: each at most 15 bakes, not one per frame each.
+    expect(NebulaPainter.bakes - before, lessThanOrEqualTo(2 * (NebulaPainter.bakesPerSecond + 1)));
+    NebulaPainter.forget(timeA);
+    NebulaPainter.forget(timeB);
+  });
+
   testWidgets('the nebula runs its shader 15 times a second at most, not every frame', (tester) async {
     final program = await tester.runAsync(() => tsukiNebulaProgram);
     if (program == null) return; // No shaders in this test engine: nothing to bake.
+    // The test drives the shader's time (the app runs it on the sky clock).
+    NebulaPainter.useSkyClock = false;
+    addTearDown(() => NebulaPainter.useSkyClock = true);
     final time = ValueNotifier<double>(0);
     final painter = NebulaPainter(program.fragmentShader(),
         time: time, intensity: const AlwaysStoppedAnimation(1), still: false);

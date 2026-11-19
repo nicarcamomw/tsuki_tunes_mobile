@@ -19,7 +19,16 @@ const double splashGlowAlpha = 0.20;
 /// night stays plain).
 final Future<ui.FragmentProgram?> tsukiNebulaProgram = ui.FragmentProgram.fromAsset(
   'shaders/tsuki_nebula.frag',
-).then<ui.FragmentProgram?>((p) => p).catchError((Object _) => null);
+).then<ui.FragmentProgram?>((p) => _nebulaProgram = p).catchError((Object _) => null);
+
+ui.FragmentProgram? _nebulaProgram;
+
+/// A fresh shader of the nebula's program if it's loaded already (it is
+/// by the time the login or the tutorial opens), else null: a screen that
+/// takes it in initState has its night on its first frame, instead of a
+/// first frame without it and a rebuild of the whole screen on the next
+/// one (as the login came in, through its portal).
+ui.FragmentShader? tsukiNebulaShaderNow() => _nebulaProgram?.fragmentShader();
 
 /// A slow breath (0..1) every 2.8 s, from the continuous time.
 double breathAt(double t) => 0.5 - 0.5 * math.cos(2 * math.pi * t / 2.8);
@@ -45,36 +54,64 @@ class NebulaPainter extends CustomPainter {
   /// The baked image's size against the logical size.
   static const double resolution = 0.5;
 
-  // One nebula is on screen at a time (loading, login, onboarding share it).
-  static ui.Image? _image;
-  static Size _size = Size.zero;
-  static double _bakedTime = double.negativeInfinity;
-  static double _bakedIntensity = -1;
+  /// One sky clock for every nebula: the entrance, the login and the
+  /// tutorial draw the same smoke at the same moment, so where one screen
+  /// opens over another (CircularReveal) the night carries on, and a
+  /// single bake serves both.
+  static final Stopwatch _sky = Stopwatch()..start();
+
+  /// The bakes, one per screen ([time] is each screen's own): two nebulas
+  /// are on screen while one opens over the other, and sharing one cache
+  /// between them made each throw the other's image away, so the shader
+  /// ran twice every frame of the transition (a hitch as the login came).
+  static final Expando<_NebulaBake> _cache = Expando('nebula');
+
+  /// Lets go of the image baked for [time]'s screen (on its way out).
+  static void forget(Object time) {
+    final bake = _cache[time];
+    if (bake == null) return;
+    if (identical(_shared, bake)) _shared = null;
+    bake.image?.dispose();
+    bake.image = null;
+    _cache[time] = null;
+  }
 
   /// How many times the shader has run (for tests).
   @visibleForTesting
   static int bakes = 0;
 
+  /// The shader's time: the sky clock, unless a test drives it.
+  @visibleForTesting
+  static bool useSkyClock = true;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    final t = still ? 0.0 : time.value;
+    final t = still ? 0.0 : (useSkyClock ? _sky.elapsedMicroseconds / 1e6 : time.value);
     final k = intensity.value;
-    final stale = _image == null ||
-        size != _size ||
-        (k - _bakedIntensity).abs() > 0.01 ||
-        (t - _bakedTime).abs() >= 1 / bakesPerSecond;
-    if (stale) _bake(size, t, k);
-    final image = _image!;
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      Offset.zero & size,
-      Paint()..filterQuality = FilterQuality.medium,
-    );
+    final bake = _cache[time] ??= _NebulaBake();
+    // The same moment and look as the other screen's: its image will do.
+    final shared = _shared;
+    if (shared != null && !identical(shared, bake) && shared.matches(size, t, k)) {
+      _draw(canvas, size, shared.image!);
+      return;
+    }
+    if (!bake.matches(size, t, k)) _bake(bake, size, t, k);
+    _shared = bake;
+    _draw(canvas, size, bake.image!);
   }
 
-  void _bake(Size size, double t, double k) {
+  // The latest bake, which another screen drawing the same sky can reuse.
+  static _NebulaBake? _shared;
+
+  static void _draw(Canvas canvas, Size size, ui.Image image) => canvas.drawImageRect(
+        image,
+        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+        Offset.zero & size,
+        Paint()..filterQuality = FilterQuality.medium,
+      );
+
+  void _bake(_NebulaBake bake, Size size, double t, double k) {
     final w = math.max(1, (size.width * resolution).round());
     final h = math.max(1, (size.height * resolution).round());
     shader
@@ -87,16 +124,32 @@ class NebulaPainter extends CustomPainter {
     final picture = recorder.endRecording();
     final image = picture.toImageSync(w, h);
     picture.dispose();
-    _image?.dispose();
-    _image = image;
+    bake.image?.dispose();
+    bake
+      ..image = image
+      ..size = size
+      ..time = t
+      ..intensity = k;
     bakes++;
-    _size = size;
-    _bakedTime = t;
-    _bakedIntensity = k;
   }
 
   @override
   bool shouldRepaint(NebulaPainter old) => old.shader != shader || old.still != still;
+}
+
+/// One screen's baked nebula.
+class _NebulaBake {
+  ui.Image? image;
+  Size size = Size.zero;
+  double time = double.negativeInfinity;
+  double intensity = -1;
+
+  /// Still good for drawing [size] at [t] with intensity [k].
+  bool matches(Size size, double t, double k) =>
+      image != null &&
+      size == this.size &&
+      (k - intensity).abs() <= 0.01 &&
+      (t - time).abs() < 1 / NebulaPainter.bakesPerSecond;
 }
 
 /// Sixteen embers rising slowly and twinkling out, each on its own path.
@@ -367,6 +420,16 @@ class HaloRingPainter extends CustomPainter {
 
   static double _ease(double t) => Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
 
+  // The ticks' and phases' fixed directions, worked out once.
+  static final List<(double, Offset)> _tickDirs = List.generate(tickCount, (i) {
+    final a = -math.pi / 2 + i * 2 * math.pi / tickCount;
+    return (a, Offset(math.cos(a), math.sin(a)));
+  });
+  static final List<(double, Offset)> _phaseDirs = List.generate(phaseCount, (k) {
+    final a = -math.pi / 2 + k * 2 * math.pi / phaseCount;
+    return (a, Offset(math.cos(a), math.sin(a)));
+  });
+
   /// How close [a] is to the comet's head [head] (1 on it, 0 a bit away),
   /// stronger along the tail behind it than ahead.
   static double _near(double a, double head) {
@@ -472,10 +535,9 @@ class HaloRingPainter extends CustomPainter {
     for (var i = 0; i < tickCount; i++) {
       final grow = _ease((a - 0.1 - 0.4 * i / tickCount) / 0.3);
       if (grow <= 0) continue;
-      final ang = -math.pi / 2 + i * 2 * math.pi / tickCount;
+      final (ang, dir) = _tickDirs[i];
       final major = i % 5 == 0;
       final lit = _near(ang, head);
-      final dir = Offset(math.cos(ang), math.sin(ang));
       final len = (major ? 9.0 : 4.5) * grow * (1 + 0.4 * lit);
       tick.color = (lit > 0.5 ? Color.lerp(accent, Colors.white, (lit - 0.5) * 0.8)! : accent)
           .withValues(alpha: ((major ? 0.5 : 0.28) + 0.5 * lit).clamp(0.0, 1.0) * fade);
@@ -546,9 +608,9 @@ class HaloRingPainter extends CustomPainter {
     for (var k = 0; k < phaseCount; k++) {
       final pop = Curves.easeOutBack.transform(((a - 0.45 - k * 0.05) / 0.25).clamp(0.0, 1.0));
       if (pop <= 0) continue;
-      final ang = -math.pi / 2 + k * 2 * math.pi / phaseCount;
+      final (ang, dir) = _phaseDirs[k];
       final lit = _near(ang, head);
-      final p = c + Offset(math.cos(ang), math.sin(ang)) * (rp + fling * 1.6);
+      final p = c + dir * (rp + fling * 1.6);
       final s = 4.4 * pop * (1 + 0.25 * lit);
       // The whole disc, faint (the unlit side), then its lit part.
       canvas.drawCircle(
