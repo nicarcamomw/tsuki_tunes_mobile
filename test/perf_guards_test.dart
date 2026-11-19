@@ -132,10 +132,27 @@ void main() {
         return ((box.decoration as BoxDecoration).border! as Border).top.color;
       }
       expect(tester.binding.transientCallbackCount, 0, reason: 'the dock is on every screen');
+      expect(MiniPlayer.breathing, 1);
       final before = border();
       await tester.pump(const Duration(milliseconds: 700));
       expect(border(), isNot(before), reason: 'the cover still breathes');
       expect(tester.binding.transientCallbackCount, 0);
+
+      // Screen off, music on: its timer stops (a timer, unlike a ticker,
+      // would keep waking the phone), and starts again when shown.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      expect(MiniPlayer.breathing, 0, reason: 'nothing ticks in the background');
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(MiniPlayer.breathing, 1, reason: 'back on screen, it breathes again');
+      final awake = border();
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(border(), isNot(awake));
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 2));
     }, () => _noNetwork);

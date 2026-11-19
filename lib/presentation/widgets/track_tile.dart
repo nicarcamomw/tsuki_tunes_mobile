@@ -43,8 +43,20 @@ class _PlayingIndicatorState extends State<_PlayingIndicator> {
   Timer? _timer;
   double _t = 0.3;
 
+  // A timer, unlike a ticker, would keep waking the phone with the screen
+  // off (music in the background): it runs only while the app is shown.
+  late final AppLifecycleListener _lifecycle = AppLifecycleListener(onStateChange: (_) {
+    if (mounted) _sync();
+  });
+
+  static bool get _appShown {
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state == null || state == AppLifecycleState.resumed;
+  }
+
   bool _shouldRun(BuildContext context) =>
       widget.isPlaying &&
+      _appShown &&
       !MediaQuery.of(context).disableAnimations &&
       TickerMode.valuesOf(context).enabled;
 
@@ -63,6 +75,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _lifecycle; // listening from the first build
     _sync();
   }
 
@@ -74,6 +87,7 @@ class _PlayingIndicatorState extends State<_PlayingIndicator> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _timer?.cancel();
     super.dispose();
   }

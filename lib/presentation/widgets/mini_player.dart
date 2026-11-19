@@ -33,6 +33,10 @@ import 'tap_scale.dart';
 class MiniPlayer extends ConsumerStatefulWidget {
   const MiniPlayer({super.key});
 
+  /// How many covers are breathing right now (their timers running).
+  @visibleForTesting
+  static int breathing = 0;
+
   @override
   ConsumerState<MiniPlayer> createState() => _MiniPlayerState();
 }
@@ -435,8 +439,20 @@ class _BreathingCoverState extends State<_BreathingCover> {
   final Stopwatch _clock = Stopwatch();
   double _t = 0;
 
+  // A timer, unlike a ticker, would keep waking the phone with the screen
+  // off (music in the background): it runs only while the app is shown.
+  late final AppLifecycleListener _lifecycle = AppLifecycleListener(onStateChange: (_) {
+    if (mounted) _sync();
+  });
+
+  static bool get _appShown {
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state == null || state == AppLifecycleState.resumed;
+  }
+
   bool _shouldRun(BuildContext context) =>
       widget.isPlaying &&
+      _appShown &&
       !MediaQuery.of(context).disableAnimations &&
       TickerMode.valuesOf(context).enabled;
 
@@ -444,6 +460,7 @@ class _BreathingCoverState extends State<_BreathingCover> {
     final run = _shouldRun(context);
     if (run && _timer == null) {
       _clock.start();
+      MiniPlayer.breathing++;
       _timer = Timer.periodic(const Duration(milliseconds: 1000 ~/ _BreathingCover.fps), (_) {
         if (!mounted) return;
         // 0 → 1 → 0 over one breath, eased like the old reverse repeat.
@@ -453,6 +470,7 @@ class _BreathingCoverState extends State<_BreathingCover> {
     } else if (!run && _timer != null) {
       _timer!.cancel();
       _timer = null;
+      MiniPlayer.breathing--;
       _clock.stop();
     }
   }
@@ -460,6 +478,7 @@ class _BreathingCoverState extends State<_BreathingCover> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _lifecycle; // listening from the first build
     _sync();
   }
 
@@ -471,6 +490,8 @@ class _BreathingCoverState extends State<_BreathingCover> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    if (_timer != null) MiniPlayer.breathing--;
     _timer?.cancel();
     super.dispose();
   }
