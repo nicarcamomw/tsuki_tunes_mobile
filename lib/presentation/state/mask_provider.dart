@@ -568,23 +568,34 @@ class MaskProvider extends ChangeNotifier {
     if (_uid != null) unawaited(_syncFromCloud());
   }
 
+  /// What each key last held as written, to skip writing it unchanged.
+  final Map<String, Object?> _written = {};
+
+  /// Saves what changed. It runs every 30 s while music plays (the stats'
+  /// counters move): writing the five keys each time, each one a rewrite
+  /// of Android's whole SharedPreferences file, cost far more than the one
+  /// that changed (perf).
   Future<void> _saveLocal() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_unlockedKey,
-          jsonEncode(_unlocked.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))));
-      if (_equipped != null) {
-        await prefs.setString(_equippedKey, _equipped!);
-      } else {
-        await prefs.remove(_equippedKey);
+      Future<void> put(String key, Object? value) async {
+        if (_written.containsKey(key) && _written[key] == value) return;
+        _written[key] = value;
+        switch (value) {
+          case null:
+            await prefs.remove(key);
+          case final String v:
+            await prefs.setString(key, v);
+          case final bool v:
+            await prefs.setBool(key, v);
+        }
       }
-      if (_profileMask != null) {
-        await prefs.setString(_profileKey, _profileMask!);
-      } else {
-        await prefs.remove(_profileKey);
-      }
-      await prefs.setBool(_coverTintKey, _coverTint);
-      await prefs.setString(_statsKey, _stats.encode());
+
+      await put(_unlockedKey, jsonEncode(_unlocked.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))));
+      await put(_equippedKey, _equipped);
+      await put(_profileKey, _profileMask);
+      await put(_coverTintKey, _coverTint);
+      await put(_statsKey, _stats.encode());
     } catch (e) {
       _log.severe('save error: $e');
     }
@@ -620,6 +631,9 @@ class MaskProvider extends ChangeNotifier {
         _historyTriedFor = null;
         _historyTriedAt = null;
         notifyListeners();
+        // Everything again: the phone's copy may have been wiped meanwhile
+        // (account deletion), and what's unchanged here isn't there.
+        _written.clear();
         await _saveLocal();
       }));
     }
