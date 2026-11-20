@@ -453,6 +453,8 @@ class StorageService implements StorageContract {
     'product_analytics_enabled',
     'battery_guide_dismissed',
     'asked_run_in_background',
+    // About the phone: its first start already happened (FirstLaunch).
+    'tsuki_first_launch_done_v1',
   };
 
   /// Removes all that this phone keeps of the person whose account [uid]

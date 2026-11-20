@@ -15,6 +15,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_environment.dart';
+import 'core/first_launch.dart';
 import 'core/logger.dart';
 import 'core/theme/cyber_theme.dart';
 import 'data/datasources/audio_precache_service.dart';
@@ -79,7 +80,7 @@ void main() async {
 
   // Only Firebase.initializeApp() before first frame — AuthProvider needs it
   // but Crashlytics, AppCheck, disk cache and media session can wait.
-  await _initFirebaseCore();
+  await Future.wait([_initFirebaseCore(), FirstLaunch.check()]);
   _registerFontLicence();
   // Before runApp: where release pushes go while the app is in the background.
   PushRadarService.registerBackgroundHandler();
@@ -130,17 +131,24 @@ Future<void> _initFirebaseCore() async {
 /// Everything that doesn't need to block the first frame.
 void _deferredInit() {
   var started = false;
+  var framed = false;
   Future<void> start() async {
     if (started) return;
     started = true;
-    final mediaFuture = _initMediaSession();
-    await Future.wait([
-      _initCrashReporting(),
-      DeezerDiskCache().init(),
-      AudioPrecacheService().init(),
-      mediaFuture,
-    ]);
-    final handler = await mediaFuture;
+    // Light, Dart-side: the caches' folders.
+    unawaited(DeezerDiskCache().init());
+    unawaited(AudioPrecacheService().init());
+    // The services start natively on Android's main thread, the one that
+    // also paces Flutter's frames: run then, they stuttered the entrance.
+    // So they wait until it has played (and the login's or the app's first
+    // moments), and go one after the other. Not on a first start, which
+    // waits for them on the loading screen (FirstLaunch), nor without a
+    // screen (Android Auto needs its media session at once).
+    if (framed && !FirstLaunch.isFirst) await Future<void>.delayed(_servicesAfter);
+    Future<void> gap() => Future<void>.delayed(const Duration(milliseconds: 200));
+    await _initCrashReporting();
+    await gap();
+    final handler = await _initMediaSession();
     if (handler != null) {
       // Album art for Android Auto's lists, served by ArtworkProvider.
       if (!kIsWeb && Platform.isAndroid) {
@@ -156,18 +164,34 @@ void _deferredInit() {
         play: (track, queue) => getIt<PlayTrack>()(track, queue: queue),
       );
     }
+    await gap();
     // Rooted phone or emulator: only reported (Crashlytics, analytics).
     unawaited(DeviceIntegrity.report());
     unawaited(ReleaseRadarService().initForeground());
+    await gap();
     unawaited(PushRadarService().init());
+    await gap();
     unawaited(HomeWidgetService().initialize());
     unawaited(HomeWidgetService().registerInteractivityCallback());
+    // A first start: the login opens once the one-time work has passed and
+    // the entrance runs smooth.
+    if (FirstLaunch.isFirst) {
+      await FirstLaunch.settle();
+      await FirstLaunch.finish();
+    }
   }
 
-  WidgetsBinding.instance.addPostFrameCallback((_) => start());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    framed = true;
+    start();
+  });
   // No frame ever comes when Android Auto starts the app without a screen.
   Timer(const Duration(seconds: 1), start);
 }
+
+/// How long after the first frame the services start on a usual start:
+/// past the entrance's intro and the next screen's opening.
+const Duration _servicesAfter = Duration(milliseconds: 2600);
 
 /// Sends uncaught Flutter and async errors to Crashlytics, with the state of
 /// playback and the events before them (CrashReporter). Collection is off

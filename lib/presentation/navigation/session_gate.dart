@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/first_launch.dart';
 import '../../data/datasources/storage_service.dart';
 import '../../data/repositories/library_repository_impl.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
@@ -47,8 +48,25 @@ class SessionGate extends ChangeNotifier {
         _playlists = playlists,
         _storage = storage {
     _auth.addListener(_sync);
+    if (!_deviceReady) {
+      // The first start after install: the loading screen holds while the
+      // phone's one-time work passes (FirstLaunch), at most a while.
+      prepStep.value = PrepStep.settling;
+      unawaited(FirstLaunch.ready.timeout(firstLaunchPatience, onTimeout: () {}).then((_) {
+        _deviceReady = true;
+        if (prepStep.value == PrepStep.settling) prepStep.value = null;
+        _sync();
+      }));
+    }
     _sync();
   }
+
+  /// False while the first start after install gets the phone ready.
+  bool _deviceReady = !FirstLaunch.isFirst;
+
+  /// The longest a first start holds on the loading screen.
+  @visibleForTesting
+  static Duration firstLaunchPatience = const Duration(seconds: 10);
 
   final AuthProvider _auth;
   final LibraryRepositoryImpl _library;
@@ -112,6 +130,7 @@ class SessionGate extends ChangeNotifier {
   }
 
   SessionStatus _compute() {
+    if (!_deviceReady) return SessionStatus.preparing;
     if (_auth.loading) return SessionStatus.loading;
 
     if (!_auth.isLoggedIn) {
