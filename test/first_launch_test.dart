@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,8 +82,8 @@ void main() {
 
   testWidgets('settling ends, smooth frames or not, within its bounds', (tester) async {
     var done = false;
-    FirstLaunch.settle(atLeast: const Duration(milliseconds: 100), atMost: const Duration(milliseconds: 300))
-        .then((_) => done = true);
+    unawaited(FirstLaunch.settle(atLeast: const Duration(milliseconds: 100), atMost: const Duration(milliseconds: 300))
+        .then((_) => done = true));
     await tester.pump(const Duration(milliseconds: 50));
     expect(done, isFalse, reason: 'not before its minimum');
     await tester.pump(const Duration(milliseconds: 400));
