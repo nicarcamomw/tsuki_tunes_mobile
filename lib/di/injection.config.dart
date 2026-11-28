@@ -82,6 +82,8 @@ import 'package:tsuki_tunes_mobile/domain/usecases/library/unmark_album.dart'
     as _i522;
 import 'package:tsuki_tunes_mobile/domain/usecases/library/unmark_track_listened.dart'
     as _i102;
+import 'package:tsuki_tunes_mobile/domain/usecases/library/unmark_with_undo.dart'
+    as _i269;
 import 'package:tsuki_tunes_mobile/domain/usecases/playback/add_to_queue.dart'
     as _i317;
 import 'package:tsuki_tunes_mobile/domain/usecases/playback/play_next.dart'
@@ -268,6 +270,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i102.UnmarkTrackListened>(
       () => _i102.UnmarkTrackListened(gh<_i409.LibraryRepository>()),
+    );
+    gh.factory<_i269.UnmarkWithUndo>(
+      () => _i269.UnmarkWithUndo(gh<_i409.LibraryRepository>()),
     );
     return this;
   }

@@ -111,18 +111,16 @@ RouteBase get $mainShellRoute => ShellRouteData.$route(
           path: 'artist/:id',
           hasOverriddenOnExit: false,
           factory: $ArtistRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: 'albums',
-              hasOverriddenOnExit: false,
-              factory: $ArtistDiscographyRoute._fromState,
-            ),
-            GoRouteData.$route(
-              path: 'rabbit-hole',
-              hasOverriddenOnExit: false,
-              factory: $RabbitHoleRoute._fromState,
-            ),
-          ],
+        ),
+        GoRouteData.$route(
+          path: 'artist/:id/albums',
+          hasOverriddenOnExit: false,
+          factory: $ArtistDiscographyRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'artist/:id/rabbit-hole',
+          hasOverriddenOnExit: false,
+          factory: $RabbitHoleRoute._fromState,
         ),
         GoRouteData.$route(
           path: 'playlist/:id',
@@ -305,7 +303,7 @@ mixin $ArtistDiscographyRoute on GoRouteData {
       ArtistDiscographyRoute(
         id: state.pathParameters['id']!,
         filter: state.uri.queryParameters['filter'] ?? 'all',
-        $extra: state.extra as DiscographyArgs,
+        $extra: state.extra as DiscographyArgs?,
       );
 
   ArtistDiscographyRoute get _self => this as ArtistDiscographyRoute;

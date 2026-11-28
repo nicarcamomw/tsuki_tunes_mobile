@@ -81,13 +81,12 @@ class OnboardingRoute extends GoRouteData with $OnboardingRoute {
       path: AppPaths.home,
       routes: [
         TypedGoRoute<AlbumRoute>(path: 'album/:id'),
-        TypedGoRoute<ArtistRoute>(
-          path: 'artist/:id',
-          routes: [
-            TypedGoRoute<ArtistDiscographyRoute>(path: 'albums'),
-            TypedGoRoute<RabbitHoleRoute>(path: 'rabbit-hole'),
-          ],
-        ),
+        // Siblings of the artist, not its children: go_router builds and
+        // redirects every route in a match, and the artist's would read the
+        // discography's extra (DiscographyArgs) as an Artist and throw.
+        TypedGoRoute<ArtistRoute>(path: 'artist/:id'),
+        TypedGoRoute<ArtistDiscographyRoute>(path: 'artist/:id/albums'),
+        TypedGoRoute<RabbitHoleRoute>(path: 'artist/:id/rabbit-hole'),
         TypedGoRoute<PlaylistRoute>(path: 'playlist/:id'),
         TypedGoRoute<TrackRoute>(path: 'track/:id'),
         TypedGoRoute<UserProfileRoute>(path: 'user/:uid'),
@@ -178,25 +177,43 @@ class DiscographyArgs {
 
 /// The artist's full discography, filtered by [filter] (all, album,
 /// single...). Opened from the artist page, which hands over the albums it
-/// has ([$extra]); it pops with the longer list it loaded.
+/// has ([$extra]); it pops with the longer list it loaded. A link (or a
+/// location restored after the login) brings only the id: the artist loads
+/// for its name and the albums load from the start.
 class ArtistDiscographyRoute extends GoRouteData with $ArtistDiscographyRoute {
-  const ArtistDiscographyRoute({required this.id, this.filter = 'all', required this.$extra});
+  const ArtistDiscographyRoute({required this.id, this.filter = 'all', this.$extra});
 
   final String id;
   final String filter;
-  final DiscographyArgs $extra;
+  final DiscographyArgs? $extra;
 
   @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) => cyberPage(
-        state,
-        ArtistDiscographyScreen(
-          artistId: id,
-          artistName: $extra.artistName,
-          albums: $extra.albums,
-          totalAlbums: $extra.totalAlbums,
-          initialFilter: filter,
-        ),
-      );
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    final args = $extra;
+    return cyberPage(
+      state,
+      args != null
+          ? ArtistDiscographyScreen(
+              artistId: id,
+              artistName: args.artistName,
+              albums: args.albums,
+              totalAlbums: args.totalAlbums,
+              initialFilter: filter,
+            )
+          : LoadById<Artist>(
+              initial: null,
+              load: (ref) => ref.read(getArtistProvider)(id),
+              builder: (artist) => ArtistDiscographyScreen(
+                artistId: id,
+                artistName: artist.name,
+                albums: const [],
+                // Unknown yet: more than none, so the first page loads.
+                totalAlbums: artist.albumsCount > 0 ? artist.albumsCount : 1,
+                initialFilter: filter,
+              ),
+            ),
+    );
+  }
 }
 
 /// Rabbit hole: one related artist after another, starting from this one.

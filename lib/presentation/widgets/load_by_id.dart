@@ -38,7 +38,14 @@ class _LoadByIdState<T extends Object> extends ConsumerState<LoadById<T>> {
 
   Future<void> _fetch() async {
     setState(() => _loading = true);
-    final value = await widget.load(ref);
+    T? value;
+    try {
+      value = await widget.load(ref);
+    } catch (_) {
+      // Offline or a failed request: the not-found page, with its retry,
+      // instead of the skeleton forever.
+      value = null;
+    }
     if (!mounted) return;
     setState(() {
       _value = value;
